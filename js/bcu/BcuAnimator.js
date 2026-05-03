@@ -27,12 +27,14 @@ function valueAt(track, frame, prop) {
   return a.value + (b.value - a.value) * p;
 }
 
+const BASE_FPS = 30;
+
 export class BcuAnimator {
   constructor(anim) { this.anim = anim; this.frame = 0; this.playing = true; this.speed = 1; }
   restart() { this.frame = 0; }
   step(v) { this.frame = Math.max(0, this.frame + v); }
   setSpeed(s) { this.speed = s; }
-  tick(dt) { if (!this.playing) return; const max = Math.max(1, this.anim?.maxFrame || 1); this.frame = (this.frame + (dt * 60 * this.speed) / 1000) % max; }
+  tick(dt) { if (!this.playing) return; const max = Math.max(1, this.anim?.maxFrame || 1); this.frame = (this.frame + (dt * BASE_FPS * this.speed) / 1000) % max; }
 
   getValuesAtFrame(frame = this.frame) {
     const values = [];

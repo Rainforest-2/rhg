@@ -7,7 +7,7 @@ import { PreviewRenderer } from './PreviewRenderer.js';
 import { PreviewUi } from './PreviewUi.js';
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '' }; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; }
   async start() {
     this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
     this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
@@ -18,48 +18,65 @@ export class PreviewApp {
     requestAnimationFrame(loop);
   }
   findAsset(id) { return this.assets.find((a) => a.id === id) || this.assets[0]; }
+
+  async probeAnimations(asset) {
+    const available = new Set();
+    for (const a of asset.animations) {
+      const r = await this.loader.loadAnimation(asset, a);
+      if (r.status === 'loaded') available.add(a.id);
+      else this.ui.log('warn', `missing animation: ${a.id} (${(r.missing || []).join(', ') || r.file})`);
+    }
+    this.ui.setAnimationAvailability(asset, available);
+    return available;
+  }
+
   async load(id, animId) {
     this.current = this.findAsset(id);
+    this.state.assetMeta = { label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir };
     this.ui.log('info', `load asset ${this.current.label}`);
     const r = await this.loader.loadAssetSet(this.current);
     r.errors.forEach((e) => this.ui.log('error', e));
+    r.missing.forEach((m) => this.ui.log('warn', `missing file: ${m}`));
+    this.state.loadedFiles = r.loaded;
+    this.state.missingFiles = r.missing;
     this.state.sprite = r.image && r.imgcut ? new BcuSpriteSheet(r.image, r.imgcut) : null;
     this.state.model = r.model ? new BcuModelInstance(r.model) : null;
+    const available = await this.probeAnimations(this.current);
+    this.state.availableAnimations = available;
     this.ui.log('info', `loaded files: ${r.loaded.join(', ') || 'none'}`);
     await this.loadAnim(animId || this.current.animations[0]?.id);
   }
+
   async loadAnim(animId) {
     const ad = this.current.animations.find((a) => a.id === animId) || this.current.animations[0];
     if (!ad) return;
     this.state.currentAnimLabel = ad.file;
-    const { anim, error } = await this.loader.loadAnimation(this.current, ad);
-    if (error) this.ui.log('error', error);
-    this.state.anim = anim;
-    this.animator = new BcuAnimator(anim || { tracks: [], maxFrame: 1 });
-    if (anim) {
-      this.ui.log('info', `animation file: ${ad.file}`);
-      this.ui.log('info', `tracks: ${anim.tracks.length}, maxFrame: ${anim.maxFrame}`);
-      this.ui.log('info', `mod histogram: ${Object.entries(anim.modificationHistogram || {}).map(([k,v]) => `${k}=${v}`).join(', ') || 'none'}`);
-      if (anim.tracks[0]) {
-        this.ui.log('info', `first rawHeader: ${anim.tracks[0].rawHeader}`);
-        this.ui.log('info', `first keyframes: ${JSON.stringify(anim.tracks[0].keyframes)}`);
-      }
-      (anim.warnings || []).forEach((w) => this.ui.log('warn', w));
-      this.ui.setDebug(anim, this.state.debugApplied);
+    const result = await this.loader.loadAnimation(this.current, ad);
+    if (result.status === 'missing') this.ui.log('warn', `missing animation: ${ad.id} (${result.missing.join(', ')})`);
+    result.errors.forEach((e) => this.ui.log('error', e));
+    this.state.anim = result.anim;
+    this.animator = new BcuAnimator(result.anim || { tracks: [], maxFrame: 1 });
+    if (result.anim) {
+      this.ui.log('info', `animation file: ${result.file}`);
+      this.ui.log('info', `tracks: ${result.anim.tracks.length}, maxFrame: ${result.anim.maxFrame}`);
+      this.ui.log('info', `mod histogram: ${Object.entries(result.anim.modificationHistogram || {}).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`);
     }
     this.applyAnim();
   }
+
   applyAnim() {
     if (!this.state.model) return;
     this.state.model.reset();
     this.state.debugApplied = this.animator?.apply(this.state.model) || [];
     this.state.lastAppliedByPart = new Map(this.state.debugApplied.filter((x) => x.applied).map((x) => [x.partId, x]));
-    this.ui.setDebug(this.state.anim, this.state.debugApplied);
+    this.ui.setDebug(this.state);
   }
+
   updateStatus() {
     const frame = (this.animator?.frame || 0).toFixed(2), parts = this.state.sprite?.imgcut?.parts?.length || 0, m = this.state.model?.parts?.length || 0, t = this.state.anim?.tracks?.length || 0;
     const applied = (this.state.debugApplied || []).filter((x) => x.applied).length;
-    this.state.debugStats = { frame, maxFrame: this.state.anim?.maxFrame || 0, tracks: t, appliedCount: applied, currentAnimLabel: this.state.currentAnimLabel };
+    this.state.debugStats = { frame, parts, modelParts: m, maxFrame: this.state.anim?.maxFrame || 0, tracks: t, appliedCount: applied, currentAnimLabel: Array.isArray(this.state.currentAnimLabel) ? this.state.currentAnimLabel.join('|') : this.state.currentAnimLabel };
     this.ui.setStatus(`frame:${frame} | parts:${parts} | model parts:${m} | tracks:${t} | applied:${applied} | ${this.animator?.playing ? 'playing' : 'paused'}`);
+    this.ui.setDebug(this.state);
   }
 }

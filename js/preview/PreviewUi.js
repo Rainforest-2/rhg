@@ -1,30 +1,44 @@
+const ROLE_TAG = { dogs: 'DOG', cats: 'CAT', effects: 'FX', castles: 'CASTLE' };
+
 export class PreviewUi {
   constructor(root, logEl) { this.root = root; this.logEl = logEl; this.logs = []; }
+  formatAssetLabel(a) { return `[${ROLE_TAG[a.group] || a.group?.toUpperCase() || 'UNK'}] ${a.label}`; }
   init(assets, on) {
     this.root.innerHTML = `<h2>BCU Preview Controls</h2>
 <div class='group'><label>Asset set</label><select id='asset'></select><label>Animation</label><select id='anim'></select></div>
 <div class='group row'><button id='play'>Play/Pause</button><button id='restart'>Restart</button><button id='stepm'>Step -1</button><button id='stepp'>Step +1</button></div>
-<div class='group'><label>Speed</label><select id='speed'><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option></select><label>Scale <span id='scalev'>1.00</span></label><input id='scale' type='range' min='0.2' max='3' step='0.05' value='1'></div>
+<div class='group'><label>Speed</label><select id='speed'><option value='0.25'>0.25x</option><option value='0.5'>0.5x</option><option value='1' selected>1x</option><option value='1.5'>1.5x</option><option value='2'>2x</option></select><label>Scale <span id='scalev'>1.00</span></label><input id='scale' type='range' min='0.2' max='3' step='0.05' value='1'></div>
 <div class='group checks'>${['raw', 'parts', 'pivots', 'bounds'].map((k) => `<label><input type='checkbox' id='${k}'> Show ${k === 'raw' ? 'raw imgcut frames' : k}</label>`).join('')}</div>
 <div class='group stat' id='status'></div>
 <div class='group stat'><div><strong>Debug</strong></div><pre id='debug' class='debug-box'></pre></div>`;
     const as = this.root.querySelector('#asset'), an = this.root.querySelector('#anim');
-    assets.forEach((a) => as.add(new Option(a.label, a.id)));
-    const bindAnim = (a) => { an.innerHTML = ''; a.animations.forEach((x) => an.add(new Option(x.label, x.id))); };
+    assets.forEach((a) => as.add(new Option(this.formatAssetLabel(a), a.id)));
+    const bindAnim = (a, available = null) => {
+      an.innerHTML = '';
+      a.animations.forEach((x) => {
+        const exists = available ? available.has(x.id) : true;
+        const opt = new Option(`${x.label}${exists ? '' : ' (missing)'}`, x.id);
+        if (!exists) opt.disabled = true;
+        an.add(opt);
+      });
+    };
     bindAnim(assets[0]);
     as.onchange = () => { const a = assets.find((v) => v.id === as.value); bindAnim(a); on.asset(a.id, an.value); };
     an.onchange = () => on.anim(an.value);
+    this.bindAnim = bindAnim;
     this.root.querySelector('#play').onclick = () => on.play(); this.root.querySelector('#restart').onclick = () => on.restart(); this.root.querySelector('#stepm').onclick = () => on.step(-1); this.root.querySelector('#stepp').onclick = () => on.step(1);
     this.root.querySelector('#speed').onchange = (e) => on.speed(+e.target.value);
     this.root.querySelector('#scale').oninput = (e) => { this.root.querySelector('#scalev').textContent = (+e.target.value).toFixed(2); on.scale(+e.target.value); };
     ['raw', 'parts', 'pivots', 'bounds'].forEach((k) => this.root.querySelector(`#${k}`).onchange = (e) => on.toggle(k, e.target.checked));
   }
+  setAnimationAvailability(asset, available) { this.bindAnim?.(asset, available); }
   setStatus(t) { this.root.querySelector('#status').textContent = t; }
-  setDebug(anim, applied) {
-    const ap = (applied || []).slice(0, 10).map((v) => `${v.applied ? 'OK' : 'NG'} p:${v.partId} prop:${v.prop} v:${v.value} ${v.reason || ''}`).join('\n');
+  setDebug(state) {
+    const anim = state.anim;
     const first = anim?.tracks?.[0];
     const hist = Object.entries(anim?.modificationHistogram || {}).map(([k, v]) => `${k}=${v}`).join(', ') || 'none';
-    this.root.querySelector('#debug').textContent = `modificationHistogram: ${hist}\nfirstTrack: ${first?.rawHeader || '-'}\nfirstKeyframes: ${JSON.stringify(first?.keyframes || [])}\napplied:\n${ap}`;
+    const applied = (state.debugApplied || []).slice(0, 12).map((v) => `${v.applied ? 'OK' : 'NG'} p:${v.partId} pi:${v.partIndex} ${v.prop}=${v.value} ${v.reason || ''}`).join('\n');
+    this.root.querySelector('#debug').textContent = `role=${state.assetMeta?.role || '-'}\ngroup=${state.assetMeta?.group || '-'}\nbaseDir=${state.assetMeta?.baseDir || '-'}\nloaded=${(state.loadedFiles||[]).join(', ') || '-'}\nmissing=${(state.missingFiles||[]).join(', ') || '-'}\nparts=${state.debugStats?.parts || 0} modelParts=${state.debugStats?.modelParts || 0} tracks=${state.debugStats?.tracks || 0} maxFrame=${state.debugStats?.maxFrame || 0}\nframe=${state.debugStats?.frame || 0} applied=${state.debugStats?.appliedCount || 0}\nmodificationHistogram: ${hist}\nfirstTrack: ${first?.rawHeader || '-'}\nfirstKeyframes: ${JSON.stringify(first?.keyframes || [])}\napplied:\n${applied}`;
   }
   log(level, msg) { this.logs.push({ level, msg, time: new Date().toISOString().slice(11, 19) }); if (this.logs.length > 120) this.logs.shift(); this.logEl.innerHTML = this.logs.map((l) => `<div class='log-item log-${l.level}'>[${l.time}] ${l.level.toUpperCase()} ${l.msg}</div>`).join(''); this.logEl.scrollTop = this.logEl.scrollHeight; }
 }

@@ -1,12 +1,21 @@
+const ROLE_SHORT = { 'player-dog-candidate': 'DOG', 'enemy-cat-candidate': 'CAT', 'battle-effect': 'FX', castle: 'CASTLE' };
+
 export class PreviewRenderer {
   constructor(canvas) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.logicalW = 1280; this.logicalH = 720; this.resize(); window.addEventListener('resize', () => this.resize()); }
   resize() { const r = this.canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; this.canvas.width = Math.max(1, Math.floor(r.width * dpr)); this.canvas.height = Math.max(1, Math.floor(r.height * dpr)); this.ctx.setTransform(this.canvas.width / this.logicalW, 0, 0, this.canvas.height / this.logicalH, 0, 0); }
   drawHud(state) {
     const c = this.ctx; const s = state.debugStats || {};
-    c.fillStyle = '#0009'; c.fillRect(10, 10, 520, 62);
+    c.fillStyle = '#0009'; c.fillRect(10, 10, 700, 66);
     c.fillStyle = '#dbeafe'; c.font = '14px ui-monospace,monospace';
-    c.fillText(`frame:${s.frame ?? '0.00'} / max:${s.maxFrame ?? 0}  tracks:${s.tracks ?? 0}  applied:${s.appliedCount ?? 0}`, 18, 34);
-    c.fillText(`anim:${s.currentAnimLabel || '-'}`, 18, 56);
+    c.fillText(`[${ROLE_SHORT[state.assetMeta?.role] || 'UNK'}] ${state.assetMeta?.label || '-'} (${state.assetMeta?.group || '-'})`, 18, 30);
+    c.fillText(`frame:${s.frame ?? '0.00'} / max:${s.maxFrame ?? 0} tracks:${s.tracks ?? 0} applied:${s.appliedCount ?? 0} anim:${s.currentAnimLabel || '-'}`, 18, 52);
+  }
+  drawMissing(state) {
+    const c = this.ctx;
+    c.fillStyle = '#000b'; c.fillRect(this.logicalW * 0.2, this.logicalH * 0.4, this.logicalW * 0.6, 120);
+    c.fillStyle = '#fda4af'; c.font = '24px ui-monospace,monospace'; c.fillText('missing image/imgcut', this.logicalW * 0.34, this.logicalH * 0.48);
+    c.font = '14px ui-monospace,monospace'; c.fillStyle = '#fecdd3';
+    c.fillText((state.missingFiles || []).slice(0, 3).join(', '), this.logicalW * 0.22, this.logicalH * 0.54);
   }
   render(state) {
     const c = this.ctx; c.clearRect(0, 0, this.logicalW, this.logicalH);
@@ -15,7 +24,8 @@ export class PreviewRenderer {
     this.drawHud(state);
     const ox = this.logicalW * 0.5, oy = this.logicalH * 0.78; c.strokeStyle = '#4da3ff'; c.beginPath(); c.moveTo(ox - 14, oy); c.lineTo(ox + 14, oy); c.moveTo(ox, oy - 14); c.lineTo(ox, oy + 14); c.stroke();
     if (state.rawMode && state.sprite) { state.sprite.drawRawGrid(c, 20, 80); return; }
-    if (!state.sprite || !state.model) return;
+    if (!state.sprite) { this.drawMissing(state); return; }
+    if (!state.model) return;
     for (const p of state.model.getDrawList()) {
       const w = p.world; const applied = state.lastAppliedByPart?.get(p.index);
       c.save(); c.translate(ox + w.x * state.scale, oy + w.y * state.scale); c.rotate((w.a / (state.model.baseAngle || 3600)) * Math.PI * 2); c.globalAlpha = w.o ?? 1;

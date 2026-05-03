@@ -1,0 +1,806 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.1.0",
+    "id": "asset_100906",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100906",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/bg/bgEffect_000.imgcut",
+      "size": 104,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_00.mamodel",
+      "size": 133,
+      "offset": 112
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_00_0.maanim",
+      "size": 64,
+      "offset": 256
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_01.mamodel",
+      "size": 128,
+      "offset": 320
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_01_0.maanim",
+      "size": 74,
+      "offset": 448
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_01_1.maanim",
+      "size": 122,
+      "offset": 528
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_02.mamodel",
+      "size": 120,
+      "offset": 656
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_02_0.maanim",
+      "size": 64,
+      "offset": 784
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_03.mamodel",
+      "size": 120,
+      "offset": 848
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_03_0.maanim",
+      "size": 64,
+      "offset": 976
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_04.mamodel",
+      "size": 120,
+      "offset": 1040
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_04_0.maanim",
+      "size": 64,
+      "offset": 1168
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_05.mamodel",
+      "size": 120,
+      "offset": 1232
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_000_05_0.maanim",
+      "size": 64,
+      "offset": 1360
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_001.imgcut",
+      "size": 94,
+      "offset": 1424
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_001_00.mamodel",
+      "size": 142,
+      "offset": 1520
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_001_00_0.maanim",
+      "size": 64,
+      "offset": 1664
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_001_01.mamodel",
+      "size": 142,
+      "offset": 1728
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_001_01_0.maanim",
+      "size": 64,
+      "offset": 1872
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_001_02.mamodel",
+      "size": 139,
+      "offset": 1936
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_001_02_0.maanim",
+      "size": 64,
+      "offset": 2080
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_002.imgcut",
+      "size": 85,
+      "offset": 2144
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_002_00.mamodel",
+      "size": 129,
+      "offset": 2240
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_002_00_0.maanim",
+      "size": 186,
+      "offset": 2384
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_002_01.mamodel",
+      "size": 129,
+      "offset": 2576
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_002_01_0.maanim",
+      "size": 185,
+      "offset": 2720
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003.imgcut",
+      "size": 291,
+      "offset": 2912
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_00.mamodel",
+      "size": 177,
+      "offset": 3216
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_00_0.maanim",
+      "size": 187,
+      "offset": 3408
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_00_1.maanim",
+      "size": 221,
+      "offset": 3600
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_00_2.maanim",
+      "size": 277,
+      "offset": 3824
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_00_3.maanim",
+      "size": 201,
+      "offset": 4112
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_00_4.maanim",
+      "size": 232,
+      "offset": 4320
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_00_5.maanim",
+      "size": 221,
+      "offset": 4560
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_01.maanim",
+      "size": 617,
+      "offset": 4784
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_01.mamodel",
+      "size": 362,
+      "offset": 5408
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_02.maanim",
+      "size": 81,
+      "offset": 5776
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_02.mamodel",
+      "size": 135,
+      "offset": 5872
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_03.mamodel",
+      "size": 151,
+      "offset": 6016
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_03_0.maanim",
+      "size": 138,
+      "offset": 6176
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_03_1.maanim",
+      "size": 154,
+      "offset": 6320
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_004.imgcut",
+      "size": 48,
+      "offset": 6480
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_004_00.mamodel",
+      "size": 135,
+      "offset": 6528
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_004_00_0.maanim",
+      "size": 8285,
+      "offset": 6672
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_004_01.mamodel",
+      "size": 135,
+      "offset": 14960
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_004_01_0.maanim",
+      "size": 6422,
+      "offset": 15104
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_004_02.mamodel",
+      "size": 136,
+      "offset": 21536
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_004_02_0.maanim",
+      "size": 160,
+      "offset": 21680
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_005.imgcut",
+      "size": 48,
+      "offset": 21840
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_005_00.mamodel",
+      "size": 137,
+      "offset": 21888
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_005_00_0.maanim",
+      "size": 136,
+      "offset": 22032
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006.imgcut",
+      "size": 281,
+      "offset": 22176
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00.mamodel",
+      "size": 762,
+      "offset": 22464
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_0.maanim",
+      "size": 343,
+      "offset": 23232
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_1.maanim",
+      "size": 504,
+      "offset": 23584
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_2.maanim",
+      "size": 440,
+      "offset": 24096
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_3.maanim",
+      "size": 450,
+      "offset": 24544
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_4.maanim",
+      "size": 440,
+      "offset": 25008
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_5.maanim",
+      "size": 451,
+      "offset": 25456
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_6.maanim",
+      "size": 451,
+      "offset": 25920
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_006_00_7.maanim",
+      "size": 451,
+      "offset": 26384
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007.imgcut",
+      "size": 364,
+      "offset": 26848
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007.mamodel",
+      "size": 4179,
+      "offset": 27216
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_0.maanim",
+      "size": 8385,
+      "offset": 31408
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_1.maanim",
+      "size": 8417,
+      "offset": 39808
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_2.maanim",
+      "size": 8430,
+      "offset": 48240
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_3.maanim",
+      "size": 8439,
+      "offset": 56672
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_4.maanim",
+      "size": 8461,
+      "offset": 65120
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_5.maanim",
+      "size": 3361,
+      "offset": 73584
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_6.maanim",
+      "size": 302,
+      "offset": 76960
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_7.maanim",
+      "size": 290,
+      "offset": 77264
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_007_00_8.maanim",
+      "size": 293,
+      "offset": 77568
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_008_00.mamodel",
+      "size": 179,
+      "offset": 77872
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_008_00_0.maanim",
+      "size": 709,
+      "offset": 78064
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_008_00_1.maanim",
+      "size": 724,
+      "offset": 78784
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_008_00_2.maanim",
+      "size": 283,
+      "offset": 79520
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_009.imgcut",
+      "size": 74,
+      "offset": 79808
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_009_00.mamodel",
+      "size": 177,
+      "offset": 79888
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_009_00_0.maanim",
+      "size": 180,
+      "offset": 80080
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_010.imgcut",
+      "size": 77,
+      "offset": 80272
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_010_00.mamodel",
+      "size": 608,
+      "offset": 80352
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_010_00_0.maanim",
+      "size": 2092,
+      "offset": 80960
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_011.imgcut",
+      "size": 103,
+      "offset": 83056
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_011_00.mamodel",
+      "size": 1479,
+      "offset": 83168
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_011_00_0.maanim",
+      "size": 2792,
+      "offset": 84656
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_011_00_1.maanim",
+      "size": 516,
+      "offset": 87456
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_011_00_2.maanim",
+      "size": 518,
+      "offset": 87984
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_011_00_3.maanim",
+      "size": 520,
+      "offset": 88512
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_011_00_4.maanim",
+      "size": 812,
+      "offset": 89040
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012.imgcut",
+      "size": 154,
+      "offset": 89856
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012_00.mamodel",
+      "size": 376,
+      "offset": 90016
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012_00_0.maanim",
+      "size": 270,
+      "offset": 90400
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012_00_1.maanim",
+      "size": 337,
+      "offset": 90672
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012_00_2.maanim",
+      "size": 264,
+      "offset": 91024
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012_00_3.maanim",
+      "size": 349,
+      "offset": 91296
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012_00_4.maanim",
+      "size": 251,
+      "offset": 91648
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_012_00_5.maanim",
+      "size": 245,
+      "offset": 91904
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_013.imgcut",
+      "size": 57,
+      "offset": 92160
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_013_00.mamodel",
+      "size": 151,
+      "offset": 92224
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_013_00_0.maanim",
+      "size": 161,
+      "offset": 92384
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_014.imgcut",
+      "size": 96,
+      "offset": 92560
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_014_00.mamodel",
+      "size": 208,
+      "offset": 92656
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_014_00_0.maanim",
+      "size": 101,
+      "offset": 92864
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_014_00_1.maanim",
+      "size": 100,
+      "offset": 92976
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_014_00_2.maanim",
+      "size": 133,
+      "offset": 93088
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015.imgcut",
+      "size": 155,
+      "offset": 93232
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015_00.mamodel",
+      "size": 305,
+      "offset": 93392
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015_00_0.maanim",
+      "size": 88,
+      "offset": 93712
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015_00_1.maanim",
+      "size": 108,
+      "offset": 93808
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015_00_2.maanim",
+      "size": 98,
+      "offset": 93920
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015_00_3.maanim",
+      "size": 190,
+      "offset": 94032
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015_00_4.maanim",
+      "size": 114,
+      "offset": 94224
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_015_00_5.maanim",
+      "size": 204,
+      "offset": 94352
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016.imgcut",
+      "size": 1036,
+      "offset": 94560
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016.mamodel",
+      "size": 82,
+      "offset": 95600
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016_00_0.maanim",
+      "size": 84,
+      "offset": 95696
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016_00_1.maanim",
+      "size": 89,
+      "offset": 95792
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016_00_2.maanim",
+      "size": 89,
+      "offset": 95888
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016_00_3.maanim",
+      "size": 89,
+      "offset": 95984
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016_00_4.maanim",
+      "size": 89,
+      "offset": 96080
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016_00_5.maanim",
+      "size": 89,
+      "offset": 96176
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_016_00_6.maanim",
+      "size": 89,
+      "offset": 96272
+    },
+    {
+      "path": "./org/data/bg102.json",
+      "size": 1168,
+      "offset": 96368
+    },
+    {
+      "path": "./org/data/bg103.json",
+      "size": 1350,
+      "offset": 97536
+    },
+    {
+      "path": "./org/data/bg110.json",
+      "size": 5667,
+      "offset": 98896
+    },
+    {
+      "path": "./org/data/bg117.json",
+      "size": 2144,
+      "offset": 104576
+    },
+    {
+      "path": "./org/data/bg121.json",
+      "size": 1820,
+      "offset": 106720
+    },
+    {
+      "path": "./org/data/bg128.json",
+      "size": 10271,
+      "offset": 108544
+    },
+    {
+      "path": "./org/data/bg132.json",
+      "size": 3157,
+      "offset": 118816
+    },
+    {
+      "path": "./org/data/bg137.json",
+      "size": 691,
+      "offset": 121984
+    },
+    {
+      "path": "./org/data/bg141.json",
+      "size": 4510,
+      "offset": 122688
+    },
+    {
+      "path": "./org/data/bg142.json",
+      "size": 14929,
+      "offset": 127200
+    },
+    {
+      "path": "./org/data/bg145.json",
+      "size": 9658,
+      "offset": 142144
+    },
+    {
+      "path": "./org/data/bg148.json",
+      "size": 1350,
+      "offset": 151808
+    },
+    {
+      "path": "./org/data/bg153.json",
+      "size": 295,
+      "offset": 153168
+    },
+    {
+      "path": "./org/data/bg154.json",
+      "size": 621,
+      "offset": 153472
+    },
+    {
+      "path": "./org/data/bg155.json",
+      "size": 3629,
+      "offset": 154096
+    },
+    {
+      "path": "./org/data/bg157.json",
+      "size": 5964,
+      "offset": 157728
+    },
+    {
+      "path": "./org/data/bg158.json",
+      "size": 1847,
+      "offset": 163696
+    },
+    {
+      "path": "./org/data/bg159.json",
+      "size": 3842,
+      "offset": 165552
+    },
+    {
+      "path": "./org/data/bg164.json",
+      "size": 5017,
+      "offset": 169408
+    },
+    {
+      "path": "./org/data/bg166.json",
+      "size": 7308,
+      "offset": 174432
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_000.png",
+      "size": 14560,
+      "offset": 181744
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_001.png",
+      "size": 7104,
+      "offset": 196304
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_002.png",
+      "size": 2128,
+      "offset": 203408
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_003.png",
+      "size": 45555,
+      "offset": 205536
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_004.png",
+      "size": 1649,
+      "offset": 251104
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_005.png",
+      "size": 12413,
+      "offset": 252768
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_006.png",
+      "size": 13152,
+      "offset": 265184
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_007.png",
+      "size": 23176,
+      "offset": 278336
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_009.png",
+      "size": 24274,
+      "offset": 301520
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_010.png",
+      "size": 5396,
+      "offset": 325808
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_011.png",
+      "size": 3040,
+      "offset": 331216
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_012.png",
+      "size": 21292,
+      "offset": 334256
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_013.png",
+      "size": 7497,
+      "offset": 355552
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_014.png",
+      "size": 21362,
+      "offset": 363056
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_015.png",
+      "size": 114262,
+      "offset": 384432
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_016.png",
+      "size": 12565,
+      "offset": 498704
+    }
+  ]
+}

@@ -1,0 +1,345 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.2",
+    "id": "asset_100204",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100204",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/t_unit.csv",
+      "size": 106331,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/392/392_e.imgcut",
+      "size": 2080,
+      "offset": 106336
+    },
+    {
+      "path": "./org/enemy/392/392_e.mamodel",
+      "size": 5773,
+      "offset": 108416
+    },
+    {
+      "path": "./org/enemy/392/392_e.png",
+      "size": 103588,
+      "offset": 114192
+    },
+    {
+      "path": "./org/enemy/392/392_e00.maanim",
+      "size": 6030,
+      "offset": 217792
+    },
+    {
+      "path": "./org/enemy/392/392_e01.maanim",
+      "size": 2135,
+      "offset": 223824
+    },
+    {
+      "path": "./org/enemy/392/392_e02.maanim",
+      "size": 9844,
+      "offset": 225968
+    },
+    {
+      "path": "./org/enemy/392/392_e03.maanim",
+      "size": 1623,
+      "offset": 235824
+    },
+    {
+      "path": "./org/enemy/535/535_e.imgcut",
+      "size": 2809,
+      "offset": 237456
+    },
+    {
+      "path": "./org/enemy/535/535_e.mamodel",
+      "size": 11508,
+      "offset": 240272
+    },
+    {
+      "path": "./org/enemy/535/535_e.png",
+      "size": 157431,
+      "offset": 251792
+    },
+    {
+      "path": "./org/enemy/535/535_e00.maanim",
+      "size": 18000,
+      "offset": 409232
+    },
+    {
+      "path": "./org/enemy/535/535_e01.maanim",
+      "size": 19924,
+      "offset": 427232
+    },
+    {
+      "path": "./org/enemy/535/535_e02.maanim",
+      "size": 54027,
+      "offset": 447168
+    },
+    {
+      "path": "./org/enemy/535/535_e03.maanim",
+      "size": 2621,
+      "offset": 501200
+    },
+    {
+      "path": "./org/enemy/535/edi_535.png",
+      "size": 6773,
+      "offset": 503824
+    },
+    {
+      "path": "./org/enemy/538/538_e.imgcut",
+      "size": 703,
+      "offset": 510608
+    },
+    {
+      "path": "./org/enemy/538/538_e.mamodel",
+      "size": 1231,
+      "offset": 511312
+    },
+    {
+      "path": "./org/enemy/538/538_e.png",
+      "size": 12707,
+      "offset": 512544
+    },
+    {
+      "path": "./org/enemy/538/538_e00.maanim",
+      "size": 557,
+      "offset": 525264
+    },
+    {
+      "path": "./org/enemy/538/538_e01.maanim",
+      "size": 89,
+      "offset": 525824
+    },
+    {
+      "path": "./org/enemy/538/538_e02.maanim",
+      "size": 2892,
+      "offset": 525920
+    },
+    {
+      "path": "./org/enemy/538/538_e03.maanim",
+      "size": 774,
+      "offset": 528816
+    },
+    {
+      "path": "./org/enemy/538/edi_538.png",
+      "size": 5070,
+      "offset": 529600
+    },
+    {
+      "path": "./org/enemy/539/539_e.imgcut",
+      "size": 680,
+      "offset": 534672
+    },
+    {
+      "path": "./org/enemy/539/539_e.mamodel",
+      "size": 793,
+      "offset": 535360
+    },
+    {
+      "path": "./org/enemy/539/539_e.png",
+      "size": 8398,
+      "offset": 536160
+    },
+    {
+      "path": "./org/enemy/539/539_e00.maanim",
+      "size": 575,
+      "offset": 544560
+    },
+    {
+      "path": "./org/enemy/539/539_e01.maanim",
+      "size": 76,
+      "offset": 545136
+    },
+    {
+      "path": "./org/enemy/539/539_e02.maanim",
+      "size": 1254,
+      "offset": 545216
+    },
+    {
+      "path": "./org/enemy/539/539_e03.maanim",
+      "size": 210,
+      "offset": 546480
+    },
+    {
+      "path": "./org/enemy/539/edi_539.png",
+      "size": 5309,
+      "offset": 546704
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS246_00.csv",
+      "size": 424,
+      "offset": 552016
+    },
+    {
+      "path": "./org/unit/259/c/259_c.imgcut",
+      "size": 2185,
+      "offset": 552448
+    },
+    {
+      "path": "./org/unit/259/c/259_c.mamodel",
+      "size": 7541,
+      "offset": 554640
+    },
+    {
+      "path": "./org/unit/259/c/259_c.png",
+      "size": 220259,
+      "offset": 562192
+    },
+    {
+      "path": "./org/unit/259/c/259_c00.maanim",
+      "size": 2857,
+      "offset": 782464
+    },
+    {
+      "path": "./org/unit/259/c/259_c01.maanim",
+      "size": 2443,
+      "offset": 785328
+    },
+    {
+      "path": "./org/unit/259/c/259_c02.maanim",
+      "size": 36438,
+      "offset": 787776
+    },
+    {
+      "path": "./org/unit/259/c/259_c03.maanim",
+      "size": 2124,
+      "offset": 824224
+    },
+    {
+      "path": "./org/unit/259/c/udi259_c.png",
+      "size": 18300,
+      "offset": 826352
+    },
+    {
+      "path": "./org/unit/259/c/uni259_c00.png",
+      "size": 8421,
+      "offset": 844656
+    },
+    {
+      "path": "./org/unit/259/f/259_f.imgcut",
+      "size": 2225,
+      "offset": 853088
+    },
+    {
+      "path": "./org/unit/259/f/259_f.mamodel",
+      "size": 7075,
+      "offset": 855328
+    },
+    {
+      "path": "./org/unit/259/f/259_f.png",
+      "size": 187660,
+      "offset": 862416
+    },
+    {
+      "path": "./org/unit/259/f/259_f00.maanim",
+      "size": 2701,
+      "offset": 1050080
+    },
+    {
+      "path": "./org/unit/259/f/259_f01.maanim",
+      "size": 2669,
+      "offset": 1052784
+    },
+    {
+      "path": "./org/unit/259/f/259_f02.maanim",
+      "size": 31658,
+      "offset": 1055456
+    },
+    {
+      "path": "./org/unit/259/f/259_f03.maanim",
+      "size": 1782,
+      "offset": 1087120
+    },
+    {
+      "path": "./org/unit/259/f/udi259_f.png",
+      "size": 17682,
+      "offset": 1088912
+    },
+    {
+      "path": "./org/unit/259/f/uni259_f00.png",
+      "size": 7266,
+      "offset": 1106608
+    },
+    {
+      "path": "./org/unit/259/s/259_s.imgcut",
+      "size": 3313,
+      "offset": 1113888
+    },
+    {
+      "path": "./org/unit/259/s/259_s.mamodel",
+      "size": 10996,
+      "offset": 1117216
+    },
+    {
+      "path": "./org/unit/259/s/259_s.png",
+      "size": 277070,
+      "offset": 1128224
+    },
+    {
+      "path": "./org/unit/259/s/259_s00.maanim",
+      "size": 7182,
+      "offset": 1405296
+    },
+    {
+      "path": "./org/unit/259/s/259_s01.maanim",
+      "size": 6690,
+      "offset": 1412480
+    },
+    {
+      "path": "./org/unit/259/s/259_s02.maanim",
+      "size": 51648,
+      "offset": 1419184
+    },
+    {
+      "path": "./org/unit/259/s/259_s03.maanim",
+      "size": 4688,
+      "offset": 1470832
+    },
+    {
+      "path": "./org/unit/259/s/udi259_s.png",
+      "size": 16959,
+      "offset": 1475520
+    },
+    {
+      "path": "./org/unit/259/s/uni259_s00.png",
+      "size": 5066,
+      "offset": 1492480
+    },
+    {
+      "path": "./org/unit/259/unit259.csv",
+      "size": 648,
+      "offset": 1497552
+    },
+    {
+      "path": "./org/unit/286/s/edi286_s.png",
+      "size": 6099,
+      "offset": 1498208
+    },
+    {
+      "path": "./org/unit/547/c/edi547_c.png",
+      "size": 5814,
+      "offset": 1504320
+    },
+    {
+      "path": "./org/unit/547/f/edi547_f.png",
+      "size": 5880,
+      "offset": 1510144
+    },
+    {
+      "path": "./org/unit/548/c/edi548_c.png",
+      "size": 5265,
+      "offset": 1516032
+    },
+    {
+      "path": "./org/unit/548/f/edi548_f.png",
+      "size": 5280,
+      "offset": 1521312
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.0.0",
+    "id": "asset_120003",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120003",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/E/MSDRE/MapStageDataRE_058.csv",
+      "size": 42,
+      "offset": 0
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX058_00.csv",
+      "size": 893,
+      "offset": 48
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_02.csv",
+      "size": 686,
+      "offset": 944
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_03.csv",
+      "size": 706,
+      "offset": 1632
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_04.csv",
+      "size": 707,
+      "offset": 2352
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_05.csv",
+      "size": 740,
+      "offset": 3072
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_06.csv",
+      "size": 880,
+      "offset": 3824
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_07.csv",
+      "size": 601,
+      "offset": 4704
+    }
+  ]
+}

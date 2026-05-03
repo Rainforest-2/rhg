@@ -1,0 +1,71 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.1.1",
+    "id": "asset_110101",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 110101",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/unit/314/s/314_s.imgcut",
+      "size": 2834,
+      "offset": 0
+    },
+    {
+      "path": "./org/unit/314/s/314_s.mamodel",
+      "size": 8378,
+      "offset": 2848
+    },
+    {
+      "path": "./org/unit/314/s/314_s.png",
+      "size": 52635,
+      "offset": 11232
+    },
+    {
+      "path": "./org/unit/314/s/314_s00.maanim",
+      "size": 4249,
+      "offset": 63872
+    },
+    {
+      "path": "./org/unit/314/s/314_s01.maanim",
+      "size": 2146,
+      "offset": 68128
+    },
+    {
+      "path": "./org/unit/314/s/314_s02.maanim",
+      "size": 12125,
+      "offset": 70288
+    },
+    {
+      "path": "./org/unit/314/s/314_s03.maanim",
+      "size": 3162,
+      "offset": 82416
+    },
+    {
+      "path": "./org/unit/314/s/edi314_s.png",
+      "size": 5321,
+      "offset": 85584
+    },
+    {
+      "path": "./org/unit/314/s/udi314_s.png",
+      "size": 12061,
+      "offset": 90912
+    },
+    {
+      "path": "./org/unit/314/s/uni314_s00.png",
+      "size": 5241,
+      "offset": 102976
+    },
+    {
+      "path": "./org/unit/314/unit314.csv",
+      "size": 639,
+      "offset": 108224
+    }
+  ]
+}

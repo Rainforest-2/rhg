@@ -1,0 +1,23 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.4.0",
+    "id": "asset_110403",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110403",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/icons/CannonX.png",
+      "size": 4169,
+      "offset": 0
+    }
+  ]
+}

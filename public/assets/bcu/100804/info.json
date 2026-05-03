@@ -1,0 +1,51 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.6.0",
+    "id": "asset_100804",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100804",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/s3/poison/poison.imgcut",
+      "size": 144,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/s3/poison/poison.maanim",
+      "size": 926,
+      "offset": 144
+    },
+    {
+      "path": "./org/battle/s3/poison/poison.mamodel",
+      "size": 351,
+      "offset": 1072
+    },
+    {
+      "path": "./org/battle/s3/poison/poison_e.imgcut",
+      "size": 159,
+      "offset": 1424
+    },
+    {
+      "path": "./org/battle/s3/poison/poison_e.maanim",
+      "size": 930,
+      "offset": 1584
+    },
+    {
+      "path": "./org/battle/s3/poison/poison_e.mamodel",
+      "size": 346,
+      "offset": 2528
+    },
+    {
+      "path": "./org/battle/s3/poison.png",
+      "size": 22123,
+      "offset": 2880
+    }
+  ]
+}

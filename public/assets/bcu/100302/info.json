@@ -1,0 +1,225 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.1.1",
+    "id": "asset_100302",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100302",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/medal/medal_000_en.png",
+      "size": 5040,
+      "offset": 0
+    },
+    {
+      "path": "./org/page/medal/medal_000_kr.png",
+      "size": 5008,
+      "offset": 5040
+    },
+    {
+      "path": "./org/page/medal/medal_000_tw.png",
+      "size": 5040,
+      "offset": 10048
+    },
+    {
+      "path": "./org/page/medal/medal_001_en.png",
+      "size": 5424,
+      "offset": 15088
+    },
+    {
+      "path": "./org/page/medal/medal_001_kr.png",
+      "size": 5264,
+      "offset": 20512
+    },
+    {
+      "path": "./org/page/medal/medal_001_tw.png",
+      "size": 5248,
+      "offset": 25776
+    },
+    {
+      "path": "./org/page/medal/medal_002_en.png",
+      "size": 5136,
+      "offset": 31024
+    },
+    {
+      "path": "./org/page/medal/medal_002_kr.png",
+      "size": 5136,
+      "offset": 36160
+    },
+    {
+      "path": "./org/page/medal/medal_002_tw.png",
+      "size": 5072,
+      "offset": 41296
+    },
+    {
+      "path": "./org/page/medal/medal_003_en.png",
+      "size": 5328,
+      "offset": 46368
+    },
+    {
+      "path": "./org/page/medal/medal_003_kr.png",
+      "size": 5248,
+      "offset": 51696
+    },
+    {
+      "path": "./org/page/medal/medal_003_tw.png",
+      "size": 5312,
+      "offset": 56944
+    },
+    {
+      "path": "./org/page/medal/medal_004_en.png",
+      "size": 5584,
+      "offset": 62256
+    },
+    {
+      "path": "./org/page/medal/medal_004_kr.png",
+      "size": 5520,
+      "offset": 67840
+    },
+    {
+      "path": "./org/page/medal/medal_004_tw.png",
+      "size": 5472,
+      "offset": 73360
+    },
+    {
+      "path": "./org/page/medal/medal_005_en.png",
+      "size": 5376,
+      "offset": 78832
+    },
+    {
+      "path": "./org/page/medal/medal_005_kr.png",
+      "size": 5344,
+      "offset": 84208
+    },
+    {
+      "path": "./org/page/medal/medal_005_tw.png",
+      "size": 5344,
+      "offset": 89552
+    },
+    {
+      "path": "./org/page/medal/medal_006_en.png",
+      "size": 5088,
+      "offset": 94896
+    },
+    {
+      "path": "./org/page/medal/medal_006_kr.png",
+      "size": 5104,
+      "offset": 99984
+    },
+    {
+      "path": "./org/page/medal/medal_006_tw.png",
+      "size": 5056,
+      "offset": 105088
+    },
+    {
+      "path": "./org/page/medal/medal_007_en.png",
+      "size": 5376,
+      "offset": 110144
+    },
+    {
+      "path": "./org/page/medal/medal_007_kr.png",
+      "size": 5328,
+      "offset": 115520
+    },
+    {
+      "path": "./org/page/medal/medal_007_tw.png",
+      "size": 5312,
+      "offset": 120848
+    },
+    {
+      "path": "./org/page/medal/medal_008_en.png",
+      "size": 5168,
+      "offset": 126160
+    },
+    {
+      "path": "./org/page/medal/medal_008_kr.png",
+      "size": 5136,
+      "offset": 131328
+    },
+    {
+      "path": "./org/page/medal/medal_008_tw.png",
+      "size": 5184,
+      "offset": 136464
+    },
+    {
+      "path": "./org/page/medal/medal_009_en.png",
+      "size": 5360,
+      "offset": 141648
+    },
+    {
+      "path": "./org/page/medal/medal_009_kr.png",
+      "size": 5376,
+      "offset": 147008
+    },
+    {
+      "path": "./org/page/medal/medal_009_tw.png",
+      "size": 5344,
+      "offset": 152384
+    },
+    {
+      "path": "./org/page/medal/medal_010_en.png",
+      "size": 5664,
+      "offset": 157728
+    },
+    {
+      "path": "./org/page/medal/medal_010_kr.png",
+      "size": 5568,
+      "offset": 163392
+    },
+    {
+      "path": "./org/page/medal/medal_010_tw.png",
+      "size": 5536,
+      "offset": 168960
+    },
+    {
+      "path": "./org/page/medal/medal_011_en.png",
+      "size": 5168,
+      "offset": 174496
+    },
+    {
+      "path": "./org/page/medal/medal_011_kr.png",
+      "size": 5168,
+      "offset": 179664
+    },
+    {
+      "path": "./org/page/medal/medal_011_tw.png",
+      "size": 5120,
+      "offset": 184832
+    },
+    {
+      "path": "./org/page/medal/medal_012_en.png",
+      "size": 5520,
+      "offset": 189952
+    },
+    {
+      "path": "./org/page/medal/medal_012_kr.png",
+      "size": 5472,
+      "offset": 195472
+    },
+    {
+      "path": "./org/page/medal/medal_012_tw.png",
+      "size": 5344,
+      "offset": 200944
+    },
+    {
+      "path": "./org/page/medal/medal_013_en.png",
+      "size": 5312,
+      "offset": 206288
+    },
+    {
+      "path": "./org/page/medal/medal_013_kr.png",
+      "size": 5312,
+      "offset": 211600
+    },
+    {
+      "path": "./org/page/medal/medal_013_tw.png",
+      "size": 5216,
+      "offset": 216912
+    }
+  ]
+}

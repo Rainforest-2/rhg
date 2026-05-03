@@ -1,0 +1,23 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.16.0",
+    "id": "asset_150303",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 150303",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/icons/ImuDelay.png",
+      "size": 3669,
+      "offset": 0
+    }
+  ]
+}

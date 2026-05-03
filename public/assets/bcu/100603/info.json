@@ -1,0 +1,76 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.4.1",
+    "id": "asset_100603",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100603",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/s3/burn/burn.imgcut",
+      "size": 173,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/s3/burn/burn.maanim",
+      "size": 345,
+      "offset": 176
+    },
+    {
+      "path": "./org/battle/s3/burn/burn.mamodel",
+      "size": 372,
+      "offset": 528
+    },
+    {
+      "path": "./org/battle/s3/burn/burn.png",
+      "size": 13307,
+      "offset": 912
+    },
+    {
+      "path": "./org/battle/s3/heal/heal.imgcut",
+      "size": 121,
+      "offset": 14224
+    },
+    {
+      "path": "./org/battle/s3/heal/heal.maanim",
+      "size": 3004,
+      "offset": 14352
+    },
+    {
+      "path": "./org/battle/s3/heal/heal.mamodel",
+      "size": 2648,
+      "offset": 17360
+    },
+    {
+      "path": "./org/battle/s3/heal/heal.png",
+      "size": 3607,
+      "offset": 20016
+    },
+    {
+      "path": "./org/battle/s3/heal_e/heal_e.imgcut",
+      "size": 121,
+      "offset": 23632
+    },
+    {
+      "path": "./org/battle/s3/heal_e/heal_e.maanim",
+      "size": 3004,
+      "offset": 23760
+    },
+    {
+      "path": "./org/battle/s3/heal_e/heal_e.mamodel",
+      "size": 2648,
+      "offset": 26768
+    },
+    {
+      "path": "./org/battle/s3/heal_e/heal_e.png",
+      "size": 3756,
+      "offset": 29424
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.4.1",
+    "id": "asset_120503",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120503",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/LockSkipData.csv",
+      "size": 207,
+      "offset": 0
+    }
+  ]
+}

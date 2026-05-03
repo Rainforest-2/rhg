@@ -1,0 +1,55 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.3.0",
+    "id": "asset_100401",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100401",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/img002.imgcut",
+      "size": 2262,
+      "offset": 0
+    },
+    {
+      "path": "./org/page/img002.png",
+      "size": 272840,
+      "offset": 2272
+    },
+    {
+      "path": "./org/page/img002_en.imgcut",
+      "size": 2262,
+      "offset": 275120
+    },
+    {
+      "path": "./org/page/img002_en.png",
+      "size": 252182,
+      "offset": 277392
+    },
+    {
+      "path": "./org/page/img002_ko.imgcut",
+      "size": 2262,
+      "offset": 529584
+    },
+    {
+      "path": "./org/page/img002_ko.png",
+      "size": 265567,
+      "offset": 531856
+    },
+    {
+      "path": "./org/page/img002_tw.imgcut",
+      "size": 2262,
+      "offset": 797424
+    },
+    {
+      "path": "./org/page/img002_tw.png",
+      "size": 261677,
+      "offset": 799696
+    }
+  ]
+}

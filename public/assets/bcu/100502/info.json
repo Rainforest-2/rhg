@@ -1,0 +1,30 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.3.1",
+    "id": "asset_100502",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100502",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/img015.imgcut",
+      "size": 11786,
+      "offset": 0
+    },
+    {
+      "path": "./org/page/img015.png",
+      "size": 598882,
+      "offset": 11792
+    },
+    {
+      "path": "./org/stage/A/StageRNA/stageRNA021_01.csv",
+      "size": 765,
+      "offset": 610688
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.1.0",
+    "id": "asset_101002",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 101002",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/s3/counter/counter.imgcut",
+      "size": 129,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/s3/counter/counter.maanim",
+      "size": 661,
+      "offset": 144
+    },
+    {
+      "path": "./org/battle/s3/counter/counter.mamodel",
+      "size": 625,
+      "offset": 816
+    },
+    {
+      "path": "./org/battle/s3/counter/counter.png",
+      "size": 11899,
+      "offset": 1456
+    },
+    {
+      "path": "./org/battle/s3/dmgcap/dmgcap.imgcut",
+      "size": 161,
+      "offset": 13360
+    },
+    {
+      "path": "./org/battle/s3/dmgcap/dmgcap.mamodel",
+      "size": 537,
+      "offset": 13536
+    },
+    {
+      "path": "./org/battle/s3/dmgcap/dmgcap.png",
+      "size": 65218,
+      "offset": 14080
+    },
+    {
+      "path": "./org/battle/s3/dmgcap/dmgcap_fail.maanim",
+      "size": 1202,
+      "offset": 79312
+    },
+    {
+      "path": "./org/battle/s3/dmgcap/dmgcap_success.maanim",
+      "size": 938,
+      "offset": 80528
+    },
+    {
+      "path": "./org/battle/s3/dmgcut/dmgcut.imgcut",
+      "size": 182,
+      "offset": 81472
+    },
+    {
+      "path": "./org/battle/s3/dmgcut/dmgcut.maanim",
+      "size": 1633,
+      "offset": 81664
+    },
+    {
+      "path": "./org/battle/s3/dmgcut/dmgcut.mamodel",
+      "size": 989,
+      "offset": 83312
+    },
+    {
+      "path": "./org/battle/s3/dmgcut/dmgcut.png",
+      "size": 8245,
+      "offset": 84304
+    },
+    {
+      "path": "./org/battle/s3/seal/seal.imgcut",
+      "size": 358,
+      "offset": 92560
+    },
+    {
+      "path": "./org/battle/s3/seal/seal.maanim",
+      "size": 2022,
+      "offset": 92928
+    },
+    {
+      "path": "./org/battle/s3/seal/seal.mamodel",
+      "size": 1031,
+      "offset": 94960
+    },
+    {
+      "path": "./org/battle/s3/seal/seal.png",
+      "size": 13979,
+      "offset": 96000
+    },
+    {
+      "path": "./org/battle/s3/seal_e/seal_e.imgcut",
+      "size": 374,
+      "offset": 109984
+    },
+    {
+      "path": "./org/battle/s3/seal_e/seal_e.maanim",
+      "size": 2022,
+      "offset": 110368
+    },
+    {
+      "path": "./org/battle/s3/seal_e/seal_e.mamodel",
+      "size": 1031,
+      "offset": 112400
+    },
+    {
+      "path": "./org/battle/s3/seal_e/seal_e.png",
+      "size": 13979,
+      "offset": 113440
+    },
+    {
+      "path": "./org/page/icons/ArmorBreakX.png",
+      "size": 3939,
+      "offset": 127424
+    },
+    {
+      "path": "./org/page/icons/Barrier.png",
+      "size": 2948,
+      "offset": 131376
+    },
+    {
+      "path": "./org/page/icons/Counter.png",
+      "size": 3625,
+      "offset": 134336
+    },
+    {
+      "path": "./org/page/icons/DmgCap.png",
+      "size": 3751,
+      "offset": 137968
+    },
+    {
+      "path": "./org/page/icons/DmgCut.png",
+      "size": 3987,
+      "offset": 141728
+    },
+    {
+      "path": "./org/page/icons/SpeedX.png",
+      "size": 3481,
+      "offset": 145728
+    },
+    {
+      "path": "./org/page/icons/SummonX.png",
+      "size": 3564,
+      "offset": 149216
+    },
+    {
+      "path": "./org/page/Trait.png",
+      "size": 1152,
+      "offset": 152784
+    }
+  ]
+}

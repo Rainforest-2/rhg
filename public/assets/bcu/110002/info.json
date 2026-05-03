@@ -1,0 +1,51 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.1.1",
+    "id": "asset_110002",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 110002",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_273.csv",
+      "size": 779,
+      "offset": 0
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_276.csv",
+      "size": 1001,
+      "offset": 784
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS273_00.csv",
+      "size": 758,
+      "offset": 1792
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS276_00.csv",
+      "size": 480,
+      "offset": 2560
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS276_01.csv",
+      "size": 536,
+      "offset": 3040
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS276_02.csv",
+      "size": 517,
+      "offset": 3584
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS276_03.csv",
+      "size": 488,
+      "offset": 4112
+    }
+  ]
+}

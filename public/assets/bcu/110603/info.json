@@ -1,0 +1,83 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.5.0",
+    "id": "asset_110603",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110603",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ000_05.csv",
+      "size": 953,
+      "offset": 0
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ000_06.csv",
+      "size": 854,
+      "offset": 960
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ000_07.csv",
+      "size": 328,
+      "offset": 1824
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ001_05.csv",
+      "size": 595,
+      "offset": 2160
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ001_06.csv",
+      "size": 668,
+      "offset": 2768
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ001_07.csv",
+      "size": 327,
+      "offset": 3440
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ002_05.csv",
+      "size": 882,
+      "offset": 3776
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ002_06.csv",
+      "size": 768,
+      "offset": 4672
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ002_07.csv",
+      "size": 327,
+      "offset": 5440
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_04.csv",
+      "size": 703,
+      "offset": 5776
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_05.csv",
+      "size": 736,
+      "offset": 6480
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_06.csv",
+      "size": 875,
+      "offset": 7216
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS267_07.csv",
+      "size": 596,
+      "offset": 8096
+    }
+  ]
+}

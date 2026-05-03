@@ -1,0 +1,21 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.3.1",
+    "id": "asset_100508",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100508",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/D/RandomDungeon_000.csv",
+      "size": 189,
+      "offset": 0
+    }
+  ]
+}

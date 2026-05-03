@@ -1,0 +1,48 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.6.0",
+    "id": "asset_130202",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 130202",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 246853,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 20379,
+      "offset": 246864
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_200_f.png",
+      "size": 5476,
+      "offset": 267248
+    },
+    {
+      "path": "./org/unit/733/gatyachara_733_f.png",
+      "size": 6136,
+      "offset": 272736
+    },
+    {
+      "path": "./org/unit/735/gatyachara_735_f.png",
+      "size": 12684,
+      "offset": 278880
+    },
+    {
+      "path": "./org/unit/736/gatyachara_736_f.png",
+      "size": 4455,
+      "offset": 291568
+    }
+  ]
+}

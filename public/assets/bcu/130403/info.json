@@ -1,0 +1,463 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.7.0",
+    "id": "asset_130403",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 130403",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/448/448_e.imgcut",
+      "size": 1862,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/448/448_e.mamodel",
+      "size": 3476,
+      "offset": 1872
+    },
+    {
+      "path": "./org/enemy/448/448_e00.maanim",
+      "size": 3621,
+      "offset": 5360
+    },
+    {
+      "path": "./org/enemy/448/448_e01.maanim",
+      "size": 2412,
+      "offset": 8992
+    },
+    {
+      "path": "./org/enemy/448/448_e02.maanim",
+      "size": 6085,
+      "offset": 11408
+    },
+    {
+      "path": "./org/enemy/448/448_e03.maanim",
+      "size": 1523,
+      "offset": 17504
+    },
+    {
+      "path": "./org/enemy/451/451_e.imgcut",
+      "size": 1295,
+      "offset": 19040
+    },
+    {
+      "path": "./org/enemy/451/451_e.mamodel",
+      "size": 4241,
+      "offset": 20336
+    },
+    {
+      "path": "./org/enemy/451/451_e00.maanim",
+      "size": 2609,
+      "offset": 24592
+    },
+    {
+      "path": "./org/enemy/451/451_e01.maanim",
+      "size": 1842,
+      "offset": 27216
+    },
+    {
+      "path": "./org/enemy/451/451_e02.maanim",
+      "size": 4168,
+      "offset": 29072
+    },
+    {
+      "path": "./org/enemy/451/451_e03.maanim",
+      "size": 1235,
+      "offset": 33248
+    },
+    {
+      "path": "./org/enemy/465/465_e.imgcut",
+      "size": 826,
+      "offset": 34496
+    },
+    {
+      "path": "./org/enemy/465/465_e.mamodel",
+      "size": 1939,
+      "offset": 35328
+    },
+    {
+      "path": "./org/enemy/465/465_e00.maanim",
+      "size": 1178,
+      "offset": 37280
+    },
+    {
+      "path": "./org/enemy/465/465_e01.maanim",
+      "size": 709,
+      "offset": 38464
+    },
+    {
+      "path": "./org/enemy/465/465_e02.maanim",
+      "size": 2718,
+      "offset": 39184
+    },
+    {
+      "path": "./org/enemy/465/465_e03.maanim",
+      "size": 998,
+      "offset": 41904
+    },
+    {
+      "path": "./org/enemy/466/466_e.imgcut",
+      "size": 1561,
+      "offset": 42912
+    },
+    {
+      "path": "./org/enemy/466/466_e.mamodel",
+      "size": 3747,
+      "offset": 44480
+    },
+    {
+      "path": "./org/enemy/466/466_e00.maanim",
+      "size": 2834,
+      "offset": 48240
+    },
+    {
+      "path": "./org/enemy/466/466_e01.maanim",
+      "size": 2240,
+      "offset": 51088
+    },
+    {
+      "path": "./org/enemy/466/466_e02.maanim",
+      "size": 6076,
+      "offset": 53328
+    },
+    {
+      "path": "./org/enemy/466/466_e03.maanim",
+      "size": 3187,
+      "offset": 59408
+    },
+    {
+      "path": "./org/enemy/467/467_e.imgcut",
+      "size": 1807,
+      "offset": 62608
+    },
+    {
+      "path": "./org/enemy/467/467_e.mamodel",
+      "size": 3618,
+      "offset": 64416
+    },
+    {
+      "path": "./org/enemy/467/467_e00.maanim",
+      "size": 1800,
+      "offset": 68048
+    },
+    {
+      "path": "./org/enemy/467/467_e01.maanim",
+      "size": 2604,
+      "offset": 69856
+    },
+    {
+      "path": "./org/enemy/467/467_e02.maanim",
+      "size": 3342,
+      "offset": 72464
+    },
+    {
+      "path": "./org/enemy/467/467_e03.maanim",
+      "size": 1345,
+      "offset": 75808
+    },
+    {
+      "path": "./org/enemy/470/470_e.imgcut",
+      "size": 214,
+      "offset": 77168
+    },
+    {
+      "path": "./org/enemy/470/470_e.mamodel",
+      "size": 177,
+      "offset": 77392
+    },
+    {
+      "path": "./org/enemy/470/470_e00.maanim",
+      "size": 98,
+      "offset": 77584
+    },
+    {
+      "path": "./org/enemy/470/470_e01.maanim",
+      "size": 70,
+      "offset": 77696
+    },
+    {
+      "path": "./org/enemy/470/470_e02.maanim",
+      "size": 106,
+      "offset": 77776
+    },
+    {
+      "path": "./org/enemy/470/470_e03.maanim",
+      "size": 238,
+      "offset": 77888
+    },
+    {
+      "path": "./org/enemy/471/471_e.imgcut",
+      "size": 241,
+      "offset": 78128
+    },
+    {
+      "path": "./org/enemy/471/471_e.mamodel",
+      "size": 181,
+      "offset": 78384
+    },
+    {
+      "path": "./org/enemy/471/471_e00.maanim",
+      "size": 101,
+      "offset": 78576
+    },
+    {
+      "path": "./org/enemy/471/471_e01.maanim",
+      "size": 70,
+      "offset": 78688
+    },
+    {
+      "path": "./org/enemy/471/471_e02.maanim",
+      "size": 420,
+      "offset": 78768
+    },
+    {
+      "path": "./org/enemy/471/471_e03.maanim",
+      "size": 190,
+      "offset": 79200
+    },
+    {
+      "path": "./org/enemy/472/472_e.imgcut",
+      "size": 202,
+      "offset": 79392
+    },
+    {
+      "path": "./org/enemy/472/472_e.mamodel",
+      "size": 331,
+      "offset": 79600
+    },
+    {
+      "path": "./org/enemy/472/472_e00.maanim",
+      "size": 247,
+      "offset": 79936
+    },
+    {
+      "path": "./org/enemy/472/472_e01.maanim",
+      "size": 247,
+      "offset": 80192
+    },
+    {
+      "path": "./org/enemy/472/472_e02.maanim",
+      "size": 499,
+      "offset": 80448
+    },
+    {
+      "path": "./org/enemy/472/472_e03.maanim",
+      "size": 189,
+      "offset": 80960
+    },
+    {
+      "path": "./org/enemy/473/473_e.imgcut",
+      "size": 575,
+      "offset": 81152
+    },
+    {
+      "path": "./org/enemy/473/473_e.mamodel",
+      "size": 1179,
+      "offset": 81728
+    },
+    {
+      "path": "./org/enemy/473/473_e00.maanim",
+      "size": 3168,
+      "offset": 82912
+    },
+    {
+      "path": "./org/enemy/473/473_e01.maanim",
+      "size": 474,
+      "offset": 86080
+    },
+    {
+      "path": "./org/enemy/473/473_e02.maanim",
+      "size": 2918,
+      "offset": 86560
+    },
+    {
+      "path": "./org/enemy/473/473_e03.maanim",
+      "size": 1273,
+      "offset": 89488
+    },
+    {
+      "path": "./org/enemy/474/474_e.imgcut",
+      "size": 1324,
+      "offset": 90768
+    },
+    {
+      "path": "./org/enemy/474/474_e.mamodel",
+      "size": 2547,
+      "offset": 92096
+    },
+    {
+      "path": "./org/enemy/474/474_e00.maanim",
+      "size": 4249,
+      "offset": 94656
+    },
+    {
+      "path": "./org/enemy/474/474_e01.maanim",
+      "size": 1208,
+      "offset": 98912
+    },
+    {
+      "path": "./org/enemy/474/474_e02.maanim",
+      "size": 5170,
+      "offset": 100128
+    },
+    {
+      "path": "./org/enemy/474/474_e03.maanim",
+      "size": 1431,
+      "offset": 105312
+    },
+    {
+      "path": "./org/enemy/475/475_e.imgcut",
+      "size": 411,
+      "offset": 106752
+    },
+    {
+      "path": "./org/enemy/475/475_e.mamodel",
+      "size": 1330,
+      "offset": 107168
+    },
+    {
+      "path": "./org/enemy/475/475_e00.maanim",
+      "size": 1937,
+      "offset": 108512
+    },
+    {
+      "path": "./org/enemy/475/475_e01.maanim",
+      "size": 91,
+      "offset": 110464
+    },
+    {
+      "path": "./org/enemy/475/475_e02.maanim",
+      "size": 1347,
+      "offset": 110560
+    },
+    {
+      "path": "./org/enemy/475/475_e03.maanim",
+      "size": 784,
+      "offset": 111920
+    },
+    {
+      "path": "./org/stage/C/MSDC/MapStageDataC_214.csv",
+      "size": 403,
+      "offset": 112704
+    },
+    {
+      "path": "./org/stage/C/MSDC/MapStageDataC_215.csv",
+      "size": 479,
+      "offset": 113120
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC214_00.csv",
+      "size": 743,
+      "offset": 113600
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC214_01.csv",
+      "size": 776,
+      "offset": 114352
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC214_02.csv",
+      "size": 1136,
+      "offset": 115136
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC214_03.csv",
+      "size": 723,
+      "offset": 116272
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC214_04.csv",
+      "size": 752,
+      "offset": 117008
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC215_00.csv",
+      "size": 732,
+      "offset": 117760
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC215_01.csv",
+      "size": 787,
+      "offset": 118496
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC215_02.csv",
+      "size": 811,
+      "offset": 119296
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC215_03.csv",
+      "size": 932,
+      "offset": 120112
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC215_04.csv",
+      "size": 854,
+      "offset": 121056
+    },
+    {
+      "path": "./org/stage/CA/MSDCA/MapStageDataCA_016.csv",
+      "size": 350,
+      "offset": 121920
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_00.csv",
+      "size": 870,
+      "offset": 122272
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_01.csv",
+      "size": 871,
+      "offset": 123152
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_02.csv",
+      "size": 871,
+      "offset": 124032
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_03.csv",
+      "size": 872,
+      "offset": 124912
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_04.csv",
+      "size": 873,
+      "offset": 125792
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_05.csv",
+      "size": 991,
+      "offset": 126672
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_06.csv",
+      "size": 991,
+      "offset": 127664
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_07.csv",
+      "size": 991,
+      "offset": 128656
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_08.csv",
+      "size": 991,
+      "offset": 129648
+    },
+    {
+      "path": "./org/stage/CA/StageRCA/stageRCA016_09.csv",
+      "size": 991,
+      "offset": 130640
+    }
+  ]
+}

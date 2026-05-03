@@ -1,0 +1,28 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.6.0",
+    "id": "asset_130203",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 130203",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/img/rc/rc120.png",
+      "size": 11936,
+      "offset": 0
+    },
+    {
+      "path": "./org/img/rc/rc160.png",
+      "size": 9779,
+      "offset": 11936
+    }
+  ]
+}

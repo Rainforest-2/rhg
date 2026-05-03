@@ -1,0 +1,23 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.15.1",
+    "id": "asset_150204",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 150204",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/icons/SupervillainSlayer.png",
+      "size": 3557,
+      "offset": 0
+    }
+  ]
+}

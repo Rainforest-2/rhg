@@ -1,0 +1,33 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.4.3",
+    "id": "asset_120703",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120703",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/bg/bgEffect_003_04_0.maanim",
+      "size": 140,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_04_1.maanim",
+      "size": 283,
+      "offset": 144
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_003_04_2.maanim",
+      "size": 108,
+      "offset": 432
+    }
+  ]
+}

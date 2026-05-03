@@ -1,0 +1,28 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.1.1",
+    "id": "asset_120204",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120204",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 223052,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 19377,
+      "offset": 223056
+    }
+  ]
+}

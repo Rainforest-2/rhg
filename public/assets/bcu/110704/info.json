@@ -1,0 +1,4158 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.6.0",
+    "id": "asset_110704",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110704",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/img/m/000/gatyachara_000_m.png",
+      "size": 3286,
+      "offset": 0
+    },
+    {
+      "path": "./org/img/m/001/gatyachara_001_m.png",
+      "size": 3011,
+      "offset": 3296
+    },
+    {
+      "path": "./org/img/m/002/gatyachara_002_m.png",
+      "size": 3345,
+      "offset": 6320
+    },
+    {
+      "path": "./org/img/m/003/gatyachara_003_m.png",
+      "size": 3212,
+      "offset": 9680
+    },
+    {
+      "path": "./org/img/m/004/gatyachara_004_m.png",
+      "size": 3261,
+      "offset": 12896
+    },
+    {
+      "path": "./org/img/m/005/gatyachara_005_m.png",
+      "size": 3481,
+      "offset": 16160
+    },
+    {
+      "path": "./org/img/m/006/gatyachara_006_m.png",
+      "size": 3276,
+      "offset": 19648
+    },
+    {
+      "path": "./org/img/m/007/gatyachara_007_m.png",
+      "size": 3175,
+      "offset": 22928
+    },
+    {
+      "path": "./org/img/m/008/gatyachara_008_m.png",
+      "size": 3203,
+      "offset": 26112
+    },
+    {
+      "path": "./org/img/m/009/gatyachara_009_m.png",
+      "size": 3197,
+      "offset": 29328
+    },
+    {
+      "path": "./org/img/m/010/gatyachara_010_m.png",
+      "size": 3166,
+      "offset": 32528
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_00_f.png",
+      "size": 9368,
+      "offset": 35696
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_01_f.png",
+      "size": 10919,
+      "offset": 45072
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_02_f.png",
+      "size": 11799,
+      "offset": 56000
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_03_f.png",
+      "size": 9800,
+      "offset": 67808
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_04_f.png",
+      "size": 9683,
+      "offset": 77616
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_05_f.png",
+      "size": 12086,
+      "offset": 87312
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_06_f.png",
+      "size": 5143,
+      "offset": 99408
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_07_f.png",
+      "size": 2424,
+      "offset": 104560
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_08_f.png",
+      "size": 1247,
+      "offset": 106992
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_09_f.png",
+      "size": 1247,
+      "offset": 108240
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_100_f.png",
+      "size": 5043,
+      "offset": 109488
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_101_f.png",
+      "size": 3281,
+      "offset": 114544
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_102_f.png",
+      "size": 5043,
+      "offset": 117840
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_103_f.png",
+      "size": 5043,
+      "offset": 122896
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_104_f.png",
+      "size": 3281,
+      "offset": 127952
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_105_f.png",
+      "size": 2159,
+      "offset": 131248
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_106_f.png",
+      "size": 5043,
+      "offset": 133408
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_107_f.png",
+      "size": 3281,
+      "offset": 138464
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_108_f.png",
+      "size": 5043,
+      "offset": 141760
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_109_f.png",
+      "size": 5043,
+      "offset": 146816
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_10_f.png",
+      "size": 14452,
+      "offset": 151872
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_110_f.png",
+      "size": 3281,
+      "offset": 166336
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_111_f.png",
+      "size": 5095,
+      "offset": 169632
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_112_f.png",
+      "size": 3281,
+      "offset": 174736
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_113_f.png",
+      "size": 5043,
+      "offset": 178032
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_114_f.png",
+      "size": 5043,
+      "offset": 183088
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_115_f.png",
+      "size": 5043,
+      "offset": 188144
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_116_f.png",
+      "size": 3281,
+      "offset": 193200
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_117_f.png",
+      "size": 3281,
+      "offset": 196496
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_118_f.png",
+      "size": 5043,
+      "offset": 199792
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_119_f.png",
+      "size": 5043,
+      "offset": 204848
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_11_f.png",
+      "size": 14578,
+      "offset": 209904
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_120_f.png",
+      "size": 5043,
+      "offset": 224496
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_121_f.png",
+      "size": 5043,
+      "offset": 229552
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_122_f.png",
+      "size": 3281,
+      "offset": 234608
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_123_f.png",
+      "size": 946,
+      "offset": 237904
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_124_f.png",
+      "size": 5043,
+      "offset": 238864
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_125_f.png",
+      "size": 5043,
+      "offset": 243920
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_126_f.png",
+      "size": 3281,
+      "offset": 248976
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_127_f.png",
+      "size": 3281,
+      "offset": 252272
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_128_f.png",
+      "size": 5043,
+      "offset": 255568
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_129_f.png",
+      "size": 5043,
+      "offset": 260624
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_12_f.png",
+      "size": 14729,
+      "offset": 265680
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_130_f.png",
+      "size": 5043,
+      "offset": 280416
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_131_f.png",
+      "size": 5043,
+      "offset": 285472
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_132_f.png",
+      "size": 3281,
+      "offset": 290528
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_133_f.png",
+      "size": 5043,
+      "offset": 293824
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_134_f.png",
+      "size": 3281,
+      "offset": 298880
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_135_f.png",
+      "size": 5043,
+      "offset": 302176
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_136_f.png",
+      "size": 3281,
+      "offset": 307232
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_137_f.png",
+      "size": 5095,
+      "offset": 310528
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_138_f.png",
+      "size": 5043,
+      "offset": 315632
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_139_f.png",
+      "size": 3281,
+      "offset": 320688
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_13_f.png",
+      "size": 14603,
+      "offset": 323984
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_140_f.png",
+      "size": 5472,
+      "offset": 338592
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_141_f.png",
+      "size": 5043,
+      "offset": 344064
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_142_f.png",
+      "size": 5043,
+      "offset": 349120
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_143_f.png",
+      "size": 3281,
+      "offset": 354176
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_144_f.png",
+      "size": 5043,
+      "offset": 357472
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_145_f.png",
+      "size": 3771,
+      "offset": 362528
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_146_f.png",
+      "size": 5043,
+      "offset": 366304
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_147_f.png",
+      "size": 3281,
+      "offset": 371360
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_148_f.png",
+      "size": 3281,
+      "offset": 374656
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_149_f.png",
+      "size": 5043,
+      "offset": 377952
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_14_f.png",
+      "size": 14262,
+      "offset": 383008
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_150_f.png",
+      "size": 5043,
+      "offset": 397280
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_154_f.png",
+      "size": 5043,
+      "offset": 402336
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_155_f.png",
+      "size": 3281,
+      "offset": 407392
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_156_f.png",
+      "size": 5043,
+      "offset": 410688
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_157_f.png",
+      "size": 3103,
+      "offset": 415744
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_158_f.png",
+      "size": 4941,
+      "offset": 418848
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_159_f.png",
+      "size": 4366,
+      "offset": 423792
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_15_f.png",
+      "size": 14474,
+      "offset": 428160
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_160_f.png",
+      "size": 3309,
+      "offset": 442640
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_161_f.png",
+      "size": 7916,
+      "offset": 445952
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_162_f.png",
+      "size": 4234,
+      "offset": 453872
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_163_f.png",
+      "size": 3051,
+      "offset": 458112
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_164_f.png",
+      "size": 4755,
+      "offset": 461168
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_165_f.png",
+      "size": 4363,
+      "offset": 465936
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_166_f.png",
+      "size": 5476,
+      "offset": 470304
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_167_f.png",
+      "size": 3634,
+      "offset": 475792
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_168_f.png",
+      "size": 3803,
+      "offset": 479440
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_169_f.png",
+      "size": 3678,
+      "offset": 483248
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_16_f.png",
+      "size": 13819,
+      "offset": 486928
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_170_f.png",
+      "size": 3617,
+      "offset": 500752
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_171_f.png",
+      "size": 3749,
+      "offset": 504384
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_172_f.png",
+      "size": 9940,
+      "offset": 508144
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_173_f.png",
+      "size": 14153,
+      "offset": 518096
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_17_f.png",
+      "size": 14202,
+      "offset": 532256
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_18_f.png",
+      "size": 14346,
+      "offset": 546464
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_19_f.png",
+      "size": 5659,
+      "offset": 560816
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_20_f.png",
+      "size": 10207,
+      "offset": 566480
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_21_f.png",
+      "size": 15755,
+      "offset": 576688
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_22_f.png",
+      "size": 8819,
+      "offset": 592448
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_23_f.png",
+      "size": 14113,
+      "offset": 601280
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_24_f.png",
+      "size": 15840,
+      "offset": 615408
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_25_f.png",
+      "size": 14021,
+      "offset": 631248
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_26_f.png",
+      "size": 14113,
+      "offset": 645280
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_27_f.png",
+      "size": 14113,
+      "offset": 659408
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_28_f.png",
+      "size": 14113,
+      "offset": 673536
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_29_f.png",
+      "size": 7322,
+      "offset": 687664
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_30_f.png",
+      "size": 6317,
+      "offset": 694992
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_31_f.png",
+      "size": 6230,
+      "offset": 701312
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_32_f.png",
+      "size": 6407,
+      "offset": 707552
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_33_f.png",
+      "size": 5965,
+      "offset": 713968
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_34_f.png",
+      "size": 6053,
+      "offset": 719936
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_35_f.png",
+      "size": 18697,
+      "offset": 726000
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_36_f.png",
+      "size": 18373,
+      "offset": 744704
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_37_f.png",
+      "size": 18430,
+      "offset": 763088
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_38_f.png",
+      "size": 17687,
+      "offset": 781520
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_39_f.png",
+      "size": 18219,
+      "offset": 799216
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_40_f.png",
+      "size": 26495,
+      "offset": 817440
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_41_f.png",
+      "size": 2734,
+      "offset": 843936
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_42_f.png",
+      "size": 7898,
+      "offset": 846672
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_43_f.png",
+      "size": 2312,
+      "offset": 854576
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_44_f.png",
+      "size": 6051,
+      "offset": 856896
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_45_f.png",
+      "size": 14113,
+      "offset": 862960
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_46_f.png",
+      "size": 14113,
+      "offset": 877088
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_47_f.png",
+      "size": 14113,
+      "offset": 891216
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_48_f.png",
+      "size": 14113,
+      "offset": 905344
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_49_f.png",
+      "size": 3281,
+      "offset": 919472
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_50_f.png",
+      "size": 12385,
+      "offset": 922768
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_51_f.png",
+      "size": 12416,
+      "offset": 935168
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_52_f.png",
+      "size": 11870,
+      "offset": 947584
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_53_f.png",
+      "size": 11989,
+      "offset": 959456
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_54_f.png",
+      "size": 4997,
+      "offset": 971456
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_55_f.png",
+      "size": 11695,
+      "offset": 976464
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_56_f.png",
+      "size": 12640,
+      "offset": 988160
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_57_f.png",
+      "size": 12331,
+      "offset": 1000800
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_58_f.png",
+      "size": 946,
+      "offset": 1013136
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_59_f.png",
+      "size": 946,
+      "offset": 1014096
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_60_f.png",
+      "size": 3923,
+      "offset": 1015056
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_61_f.png",
+      "size": 946,
+      "offset": 1018992
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_62_f.png",
+      "size": 3788,
+      "offset": 1019952
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_63_f.png",
+      "size": 3601,
+      "offset": 1023744
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_64_f.png",
+      "size": 3702,
+      "offset": 1027360
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_65_f.png",
+      "size": 3781,
+      "offset": 1031072
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_66_f.png",
+      "size": 3811,
+      "offset": 1034864
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_67_f.png",
+      "size": 3795,
+      "offset": 1038688
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_68_f.png",
+      "size": 3572,
+      "offset": 1042496
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_69_f.png",
+      "size": 3354,
+      "offset": 1046080
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_70_f.png",
+      "size": 946,
+      "offset": 1049440
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_71_f.png",
+      "size": 946,
+      "offset": 1050400
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_72_f.png",
+      "size": 946,
+      "offset": 1051360
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_73_f.png",
+      "size": 946,
+      "offset": 1052320
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_74_f.png",
+      "size": 946,
+      "offset": 1053280
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_75_f.png",
+      "size": 3281,
+      "offset": 1054240
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_76_f.png",
+      "size": 3281,
+      "offset": 1057536
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_77_f.png",
+      "size": 5043,
+      "offset": 1060832
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_78_f.png",
+      "size": 3514,
+      "offset": 1065888
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_80_f.png",
+      "size": 5143,
+      "offset": 1069408
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_81_f.png",
+      "size": 5143,
+      "offset": 1074560
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_82_f.png",
+      "size": 5143,
+      "offset": 1079712
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_83_f.png",
+      "size": 5143,
+      "offset": 1084864
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_84_f.png",
+      "size": 5143,
+      "offset": 1090016
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_85_f.png",
+      "size": 14268,
+      "offset": 1095168
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_86_f.png",
+      "size": 12131,
+      "offset": 1109440
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_87_f.png",
+      "size": 14553,
+      "offset": 1121584
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_88_f.png",
+      "size": 14801,
+      "offset": 1136144
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_89_f.png",
+      "size": 16520,
+      "offset": 1150960
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_90_f.png",
+      "size": 18030,
+      "offset": 1167488
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_91_f.png",
+      "size": 13537,
+      "offset": 1185520
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_92_f.png",
+      "size": 1999,
+      "offset": 1199072
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_93_f.png",
+      "size": 4170,
+      "offset": 1201072
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_94_f.png",
+      "size": 3892,
+      "offset": 1205248
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_95_f.png",
+      "size": 4993,
+      "offset": 1209152
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_96_f.png",
+      "size": 4993,
+      "offset": 1214160
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_97_f.png",
+      "size": 4993,
+      "offset": 1219168
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_98_f.png",
+      "size": 3892,
+      "offset": 1224176
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_99_f.png",
+      "size": 4170,
+      "offset": 1228080
+    },
+    {
+      "path": "./org/unit/000/gatyachara_000_f.png",
+      "size": 8749,
+      "offset": 1232256
+    },
+    {
+      "path": "./org/unit/001/gatyachara_001_f.png",
+      "size": 7318,
+      "offset": 1241008
+    },
+    {
+      "path": "./org/unit/002/gatyachara_002_f.png",
+      "size": 12513,
+      "offset": 1248336
+    },
+    {
+      "path": "./org/unit/003/gatyachara_003_f.png",
+      "size": 9136,
+      "offset": 1260864
+    },
+    {
+      "path": "./org/unit/004/gatyachara_004_f.png",
+      "size": 10685,
+      "offset": 1270000
+    },
+    {
+      "path": "./org/unit/005/gatyachara_005_f.png",
+      "size": 7954,
+      "offset": 1280688
+    },
+    {
+      "path": "./org/unit/006/gatyachara_006_f.png",
+      "size": 14019,
+      "offset": 1288656
+    },
+    {
+      "path": "./org/unit/007/gatyachara_007_f.png",
+      "size": 9797,
+      "offset": 1302688
+    },
+    {
+      "path": "./org/unit/008/gatyachara_008_f.png",
+      "size": 9902,
+      "offset": 1312496
+    },
+    {
+      "path": "./org/unit/027/gatyachara_027_f.png",
+      "size": 18131,
+      "offset": 1322400
+    },
+    {
+      "path": "./org/unit/028/gatyachara_028_f.png",
+      "size": 11394,
+      "offset": 1340544
+    },
+    {
+      "path": "./org/unit/029/gatyachara_029_f.png",
+      "size": 8046,
+      "offset": 1351952
+    },
+    {
+      "path": "./org/unit/030/gatyachara_030_f.png",
+      "size": 15251,
+      "offset": 1360000
+    },
+    {
+      "path": "./org/unit/031/gatyachara_031_f.png",
+      "size": 14564,
+      "offset": 1375264
+    },
+    {
+      "path": "./org/unit/032/gatyachara_032_f.png",
+      "size": 7871,
+      "offset": 1389840
+    },
+    {
+      "path": "./org/unit/033/gatyachara_033_f.png",
+      "size": 9672,
+      "offset": 1397712
+    },
+    {
+      "path": "./org/unit/034/gatyachara_034_f.png",
+      "size": 8067,
+      "offset": 1407392
+    },
+    {
+      "path": "./org/unit/035/gatyachara_035_f.png",
+      "size": 12262,
+      "offset": 1415472
+    },
+    {
+      "path": "./org/unit/036/gatyachara_036_f.png",
+      "size": 8856,
+      "offset": 1427744
+    },
+    {
+      "path": "./org/unit/037/gatyachara_037_f.png",
+      "size": 9034,
+      "offset": 1436608
+    },
+    {
+      "path": "./org/unit/038/gatyachara_038_f.png",
+      "size": 19682,
+      "offset": 1445648
+    },
+    {
+      "path": "./org/unit/039/gatyachara_039_f.png",
+      "size": 9609,
+      "offset": 1465344
+    },
+    {
+      "path": "./org/unit/040/gatyachara_040_f.png",
+      "size": 13816,
+      "offset": 1474960
+    },
+    {
+      "path": "./org/unit/041/gatyachara_041_f.png",
+      "size": 11249,
+      "offset": 1488784
+    },
+    {
+      "path": "./org/unit/042/gatyachara_042_f.png",
+      "size": 18429,
+      "offset": 1500048
+    },
+    {
+      "path": "./org/unit/043/gatyachara_043_f.png",
+      "size": 20428,
+      "offset": 1518480
+    },
+    {
+      "path": "./org/unit/044/gatyachara_044_f.png",
+      "size": 20977,
+      "offset": 1538912
+    },
+    {
+      "path": "./org/unit/045/gatyachara_045_f.png",
+      "size": 14196,
+      "offset": 1559904
+    },
+    {
+      "path": "./org/unit/046/gatyachara_046_f.png",
+      "size": 11762,
+      "offset": 1574112
+    },
+    {
+      "path": "./org/unit/047/gatyachara_047_f.png",
+      "size": 13180,
+      "offset": 1585888
+    },
+    {
+      "path": "./org/unit/048/gatyachara_048_f.png",
+      "size": 16053,
+      "offset": 1599072
+    },
+    {
+      "path": "./org/unit/049/gatyachara_049_f.png",
+      "size": 10460,
+      "offset": 1615136
+    },
+    {
+      "path": "./org/unit/050/gatyachara_050_f.png",
+      "size": 19044,
+      "offset": 1625600
+    },
+    {
+      "path": "./org/unit/051/gatyachara_051_f.png",
+      "size": 17791,
+      "offset": 1644656
+    },
+    {
+      "path": "./org/unit/052/gatyachara_052_f.png",
+      "size": 17310,
+      "offset": 1662448
+    },
+    {
+      "path": "./org/unit/053/gatyachara_053_f.png",
+      "size": 12121,
+      "offset": 1679760
+    },
+    {
+      "path": "./org/unit/054/gatyachara_054_f.png",
+      "size": 14398,
+      "offset": 1691888
+    },
+    {
+      "path": "./org/unit/055/gatyachara_055_f.png",
+      "size": 14918,
+      "offset": 1706288
+    },
+    {
+      "path": "./org/unit/056/gatyachara_056_f.png",
+      "size": 14895,
+      "offset": 1721216
+    },
+    {
+      "path": "./org/unit/057/gatyachara_057_f.png",
+      "size": 25349,
+      "offset": 1736112
+    },
+    {
+      "path": "./org/unit/058/gatyachara_058_f.png",
+      "size": 36657,
+      "offset": 1761472
+    },
+    {
+      "path": "./org/unit/059/gatyachara_059_f.png",
+      "size": 13451,
+      "offset": 1798144
+    },
+    {
+      "path": "./org/unit/060/gatyachara_060_f.png",
+      "size": 13642,
+      "offset": 1811600
+    },
+    {
+      "path": "./org/unit/061/gatyachara_061_f.png",
+      "size": 32765,
+      "offset": 1825248
+    },
+    {
+      "path": "./org/unit/062/gatyachara_062_f.png",
+      "size": 13322,
+      "offset": 1858016
+    },
+    {
+      "path": "./org/unit/063/gatyachara_063_f.png",
+      "size": 12438,
+      "offset": 1871344
+    },
+    {
+      "path": "./org/unit/064/gatyachara_064_f.png",
+      "size": 15246,
+      "offset": 1883792
+    },
+    {
+      "path": "./org/unit/065/gatyachara_065_f.png",
+      "size": 17086,
+      "offset": 1899040
+    },
+    {
+      "path": "./org/unit/066/gatyachara_066_f.png",
+      "size": 25609,
+      "offset": 1916128
+    },
+    {
+      "path": "./org/unit/067/gatyachara_067_f.png",
+      "size": 15615,
+      "offset": 1941744
+    },
+    {
+      "path": "./org/unit/068/gatyachara_068_f.png",
+      "size": 13762,
+      "offset": 1957360
+    },
+    {
+      "path": "./org/unit/069/gatyachara_069_f.png",
+      "size": 36214,
+      "offset": 1971136
+    },
+    {
+      "path": "./org/unit/070/gatyachara_070_f.png",
+      "size": 8201,
+      "offset": 2007360
+    },
+    {
+      "path": "./org/unit/071/gatyachara_071_f.png",
+      "size": 24151,
+      "offset": 2015568
+    },
+    {
+      "path": "./org/unit/072/gatyachara_072_f.png",
+      "size": 25053,
+      "offset": 2039728
+    },
+    {
+      "path": "./org/unit/073/gatyachara_073_f.png",
+      "size": 19266,
+      "offset": 2064784
+    },
+    {
+      "path": "./org/unit/074/gatyachara_074_f.png",
+      "size": 35309,
+      "offset": 2084064
+    },
+    {
+      "path": "./org/unit/075/gatyachara_075_f.png",
+      "size": 28359,
+      "offset": 2119376
+    },
+    {
+      "path": "./org/unit/076/gatyachara_076_f.png",
+      "size": 48642,
+      "offset": 2147744
+    },
+    {
+      "path": "./org/unit/077/gatyachara_077_f.png",
+      "size": 8063,
+      "offset": 2196400
+    },
+    {
+      "path": "./org/unit/078/gatyachara_078_f.png",
+      "size": 10928,
+      "offset": 2204464
+    },
+    {
+      "path": "./org/unit/079/gatyachara_079_f.png",
+      "size": 13578,
+      "offset": 2215392
+    },
+    {
+      "path": "./org/unit/081/gatyachara_081_f.png",
+      "size": 17400,
+      "offset": 2228976
+    },
+    {
+      "path": "./org/unit/082/gatyachara_082_f.png",
+      "size": 33407,
+      "offset": 2246384
+    },
+    {
+      "path": "./org/unit/083/gatyachara_083_f.png",
+      "size": 23917,
+      "offset": 2279792
+    },
+    {
+      "path": "./org/unit/084/gatyachara_084_f.png",
+      "size": 25465,
+      "offset": 2303712
+    },
+    {
+      "path": "./org/unit/085/gatyachara_085_f.png",
+      "size": 18814,
+      "offset": 2329184
+    },
+    {
+      "path": "./org/unit/086/gatyachara_086_f.png",
+      "size": 22866,
+      "offset": 2348000
+    },
+    {
+      "path": "./org/unit/087/gatyachara_087_f.png",
+      "size": 18142,
+      "offset": 2370880
+    },
+    {
+      "path": "./org/unit/088/gatyachara_088_f.png",
+      "size": 85321,
+      "offset": 2389024
+    },
+    {
+      "path": "./org/unit/089/gatyachara_089_f.png",
+      "size": 21753,
+      "offset": 2474352
+    },
+    {
+      "path": "./org/unit/090/gatyachara_090_f.png",
+      "size": 26326,
+      "offset": 2496112
+    },
+    {
+      "path": "./org/unit/091/gatyachara_091_f.png",
+      "size": 12981,
+      "offset": 2522448
+    },
+    {
+      "path": "./org/unit/092/gatyachara_092_f.png",
+      "size": 10720,
+      "offset": 2535440
+    },
+    {
+      "path": "./org/unit/093/gatyachara_093_f.png",
+      "size": 12982,
+      "offset": 2546160
+    },
+    {
+      "path": "./org/unit/094/gatyachara_094_f.png",
+      "size": 8948,
+      "offset": 2559152
+    },
+    {
+      "path": "./org/unit/095/gatyachara_095_f.png",
+      "size": 12255,
+      "offset": 2568112
+    },
+    {
+      "path": "./org/unit/096/gatyachara_096_f.png",
+      "size": 10671,
+      "offset": 2580368
+    },
+    {
+      "path": "./org/unit/097/gatyachara_097_f.png",
+      "size": 15384,
+      "offset": 2591040
+    },
+    {
+      "path": "./org/unit/098/gatyachara_098_f.png",
+      "size": 82465,
+      "offset": 2606432
+    },
+    {
+      "path": "./org/unit/099/gatyachara_099_f.png",
+      "size": 12331,
+      "offset": 2688912
+    },
+    {
+      "path": "./org/unit/100/gatyachara_100_f.png",
+      "size": 13926,
+      "offset": 2701248
+    },
+    {
+      "path": "./org/unit/101/gatyachara_101_f.png",
+      "size": 20197,
+      "offset": 2715184
+    },
+    {
+      "path": "./org/unit/102/gatyachara_102_f.png",
+      "size": 82395,
+      "offset": 2735392
+    },
+    {
+      "path": "./org/unit/103/gatyachara_103_f.png",
+      "size": 15799,
+      "offset": 2817792
+    },
+    {
+      "path": "./org/unit/104/gatyachara_104_f.png",
+      "size": 14362,
+      "offset": 2833600
+    },
+    {
+      "path": "./org/unit/105/gatyachara_105_f.png",
+      "size": 20315,
+      "offset": 2847968
+    },
+    {
+      "path": "./org/unit/106/gatyachara_106_f.png",
+      "size": 94132,
+      "offset": 2868288
+    },
+    {
+      "path": "./org/unit/107/gatyachara_107_f.png",
+      "size": 85310,
+      "offset": 2962432
+    },
+    {
+      "path": "./org/unit/108/gatyachara_108_f.png",
+      "size": 33548,
+      "offset": 3047744
+    },
+    {
+      "path": "./org/unit/109/gatyachara_109_f.png",
+      "size": 21525,
+      "offset": 3081296
+    },
+    {
+      "path": "./org/unit/110/gatyachara_110_f.png",
+      "size": 21717,
+      "offset": 3102832
+    },
+    {
+      "path": "./org/unit/111/gatyachara_111_f.png",
+      "size": 80967,
+      "offset": 3124560
+    },
+    {
+      "path": "./org/unit/112/gatyachara_112_f.png",
+      "size": 84910,
+      "offset": 3205536
+    },
+    {
+      "path": "./org/unit/113/gatyachara_113_f.png",
+      "size": 84910,
+      "offset": 3290448
+    },
+    {
+      "path": "./org/unit/114/gatyachara_114_f.png",
+      "size": 84904,
+      "offset": 3375360
+    },
+    {
+      "path": "./org/unit/115/gatyachara_115_f.png",
+      "size": 80967,
+      "offset": 3460272
+    },
+    {
+      "path": "./org/unit/116/gatyachara_116_f.png",
+      "size": 84910,
+      "offset": 3541248
+    },
+    {
+      "path": "./org/unit/117/gatyachara_117_f.png",
+      "size": 21953,
+      "offset": 3626160
+    },
+    {
+      "path": "./org/unit/118/gatyachara_118_f.png",
+      "size": 82193,
+      "offset": 3648128
+    },
+    {
+      "path": "./org/unit/119/gatyachara_119_f.png",
+      "size": 82414,
+      "offset": 3730336
+    },
+    {
+      "path": "./org/unit/120/gatyachara_120_f.png",
+      "size": 82665,
+      "offset": 3812752
+    },
+    {
+      "path": "./org/unit/121/gatyachara_121_f.png",
+      "size": 28694,
+      "offset": 3895424
+    },
+    {
+      "path": "./org/unit/122/gatyachara_122_f.png",
+      "size": 36507,
+      "offset": 3924128
+    },
+    {
+      "path": "./org/unit/123/gatyachara_123_f.png",
+      "size": 34493,
+      "offset": 3960640
+    },
+    {
+      "path": "./org/unit/124/gatyachara_124_f.png",
+      "size": 21874,
+      "offset": 3995136
+    },
+    {
+      "path": "./org/unit/125/gatyachara_125_f.png",
+      "size": 94553,
+      "offset": 4017024
+    },
+    {
+      "path": "./org/unit/126/gatyachara_126_f.png",
+      "size": 14017,
+      "offset": 4111584
+    },
+    {
+      "path": "./org/unit/127/gatyachara_127_f.png",
+      "size": 25940,
+      "offset": 4125616
+    },
+    {
+      "path": "./org/unit/128/gatyachara_128_f.png",
+      "size": 34953,
+      "offset": 4151568
+    },
+    {
+      "path": "./org/unit/129/gatyachara_129_f.png",
+      "size": 17621,
+      "offset": 4186528
+    },
+    {
+      "path": "./org/unit/130/gatyachara_130_f.png",
+      "size": 21547,
+      "offset": 4204160
+    },
+    {
+      "path": "./org/unit/131/gatyachara_131_f.png",
+      "size": 85393,
+      "offset": 4225712
+    },
+    {
+      "path": "./org/unit/132/gatyachara_132_f.png",
+      "size": 19567,
+      "offset": 4311120
+    },
+    {
+      "path": "./org/unit/133/gatyachara_133_f.png",
+      "size": 27537,
+      "offset": 4330688
+    },
+    {
+      "path": "./org/unit/134/gatyachara_134_f.png",
+      "size": 91938,
+      "offset": 4358240
+    },
+    {
+      "path": "./org/unit/135/gatyachara_135_f.png",
+      "size": 10372,
+      "offset": 4450192
+    },
+    {
+      "path": "./org/unit/136/gatyachara_136_f.png",
+      "size": 15443,
+      "offset": 4460576
+    },
+    {
+      "path": "./org/unit/137/gatyachara_137_f.png",
+      "size": 85110,
+      "offset": 4476032
+    },
+    {
+      "path": "./org/unit/138/gatyachara_138_f.png",
+      "size": 85110,
+      "offset": 4561152
+    },
+    {
+      "path": "./org/unit/139/gatyachara_139_f.png",
+      "size": 10495,
+      "offset": 4646272
+    },
+    {
+      "path": "./org/unit/140/gatyachara_140_f.png",
+      "size": 35580,
+      "offset": 4656768
+    },
+    {
+      "path": "./org/unit/141/gatyachara_141_f.png",
+      "size": 25152,
+      "offset": 4692352
+    },
+    {
+      "path": "./org/unit/142/gatyachara_142_f.png",
+      "size": 13381,
+      "offset": 4717504
+    },
+    {
+      "path": "./org/unit/143/gatyachara_143_f.png",
+      "size": 17019,
+      "offset": 4730896
+    },
+    {
+      "path": "./org/unit/144/gatyachara_144_f.png",
+      "size": 27572,
+      "offset": 4747920
+    },
+    {
+      "path": "./org/unit/145/gatyachara_145_f.png",
+      "size": 82439,
+      "offset": 4775504
+    },
+    {
+      "path": "./org/unit/146/gatyachara_146_f.png",
+      "size": 8115,
+      "offset": 4857952
+    },
+    {
+      "path": "./org/unit/147/gatyachara_147_f.png",
+      "size": 42243,
+      "offset": 4866080
+    },
+    {
+      "path": "./org/unit/148/gatyachara_148_f.png",
+      "size": 11690,
+      "offset": 4908336
+    },
+    {
+      "path": "./org/unit/149/gatyachara_149_f.png",
+      "size": 29998,
+      "offset": 4920032
+    },
+    {
+      "path": "./org/unit/150/gatyachara_150_f.png",
+      "size": 17553,
+      "offset": 4950032
+    },
+    {
+      "path": "./org/unit/151/gatyachara_151_f.png",
+      "size": 15518,
+      "offset": 4967600
+    },
+    {
+      "path": "./org/unit/152/gatyachara_152_f.png",
+      "size": 10790,
+      "offset": 4983120
+    },
+    {
+      "path": "./org/unit/153/gatyachara_153_f.png",
+      "size": 29049,
+      "offset": 4993920
+    },
+    {
+      "path": "./org/unit/154/gatyachara_154_f.png",
+      "size": 6972,
+      "offset": 5022976
+    },
+    {
+      "path": "./org/unit/155/gatyachara_155_f.png",
+      "size": 983,
+      "offset": 5029952
+    },
+    {
+      "path": "./org/unit/156/gatyachara_156_f.png",
+      "size": 7189,
+      "offset": 5030944
+    },
+    {
+      "path": "./org/unit/157/gatyachara_157_f.png",
+      "size": 11087,
+      "offset": 5038144
+    },
+    {
+      "path": "./org/unit/158/gatyachara_158_f.png",
+      "size": 45139,
+      "offset": 5049232
+    },
+    {
+      "path": "./org/unit/159/gatyachara_159_f.png",
+      "size": 15494,
+      "offset": 5094384
+    },
+    {
+      "path": "./org/unit/160/gatyachara_160_f.png",
+      "size": 16480,
+      "offset": 5109888
+    },
+    {
+      "path": "./org/unit/161/gatyachara_161_f.png",
+      "size": 12377,
+      "offset": 5126368
+    },
+    {
+      "path": "./org/unit/162/gatyachara_162_f.png",
+      "size": 10040,
+      "offset": 5138752
+    },
+    {
+      "path": "./org/unit/163/gatyachara_163_f.png",
+      "size": 31832,
+      "offset": 5148800
+    },
+    {
+      "path": "./org/unit/164/gatyachara_164_f.png",
+      "size": 8395,
+      "offset": 5180640
+    },
+    {
+      "path": "./org/unit/165/gatyachara_165_f.png",
+      "size": 10111,
+      "offset": 5189040
+    },
+    {
+      "path": "./org/unit/166/gatyachara_166_f.png",
+      "size": 9494,
+      "offset": 5199152
+    },
+    {
+      "path": "./org/unit/167/gatyachara_167_f.png",
+      "size": 10092,
+      "offset": 5208656
+    },
+    {
+      "path": "./org/unit/168/gatyachara_168_f.png",
+      "size": 8326,
+      "offset": 5218752
+    },
+    {
+      "path": "./org/unit/169/gatyachara_169_f.png",
+      "size": 7297,
+      "offset": 5227088
+    },
+    {
+      "path": "./org/unit/170/gatyachara_170_f.png",
+      "size": 8492,
+      "offset": 5234400
+    },
+    {
+      "path": "./org/unit/171/gatyachara_171_f.png",
+      "size": 8850,
+      "offset": 5242896
+    },
+    {
+      "path": "./org/unit/172/gatyachara_172_f.png",
+      "size": 11767,
+      "offset": 5251760
+    },
+    {
+      "path": "./org/unit/173/gatyachara_173_f.png",
+      "size": 1915,
+      "offset": 5263536
+    },
+    {
+      "path": "./org/unit/174/gatyachara_174_f.png",
+      "size": 3336,
+      "offset": 5265456
+    },
+    {
+      "path": "./org/unit/175/gatyachara_175_f.png",
+      "size": 9334,
+      "offset": 5268800
+    },
+    {
+      "path": "./org/unit/176/gatyachara_176_f.png",
+      "size": 8619,
+      "offset": 5278144
+    },
+    {
+      "path": "./org/unit/177/gatyachara_177_f.png",
+      "size": 38861,
+      "offset": 5286768
+    },
+    {
+      "path": "./org/unit/178/gatyachara_178_f.png",
+      "size": 10130,
+      "offset": 5325632
+    },
+    {
+      "path": "./org/unit/179/gatyachara_179_f.png",
+      "size": 21598,
+      "offset": 5335776
+    },
+    {
+      "path": "./org/unit/180/gatyachara_180_f.png",
+      "size": 13213,
+      "offset": 5357376
+    },
+    {
+      "path": "./org/unit/181/gatyachara_181_f.png",
+      "size": 17763,
+      "offset": 5370592
+    },
+    {
+      "path": "./org/unit/182/gatyachara_182_f.png",
+      "size": 15363,
+      "offset": 5388368
+    },
+    {
+      "path": "./org/unit/183/gatyachara_183_f.png",
+      "size": 13457,
+      "offset": 5403744
+    },
+    {
+      "path": "./org/unit/184/gatyachara_184_f.png",
+      "size": 9980,
+      "offset": 5417216
+    },
+    {
+      "path": "./org/unit/185/gatyachara_185_f.png",
+      "size": 30083,
+      "offset": 5427200
+    },
+    {
+      "path": "./org/unit/186/gatyachara_186_f.png",
+      "size": 21372,
+      "offset": 5457296
+    },
+    {
+      "path": "./org/unit/187/gatyachara_187_f.png",
+      "size": 17143,
+      "offset": 5478672
+    },
+    {
+      "path": "./org/unit/188/gatyachara_188_f.png",
+      "size": 37497,
+      "offset": 5495824
+    },
+    {
+      "path": "./org/unit/189/gatyachara_189_f.png",
+      "size": 11855,
+      "offset": 5533328
+    },
+    {
+      "path": "./org/unit/190/gatyachara_190_f.png",
+      "size": 9342,
+      "offset": 5545184
+    },
+    {
+      "path": "./org/unit/191/gatyachara_191_f.png",
+      "size": 16606,
+      "offset": 5554528
+    },
+    {
+      "path": "./org/unit/192/gatyachara_192_f.png",
+      "size": 10329,
+      "offset": 5571136
+    },
+    {
+      "path": "./org/unit/193/gatyachara_193_f.png",
+      "size": 12421,
+      "offset": 5581472
+    },
+    {
+      "path": "./org/unit/194/gatyachara_194_f.png",
+      "size": 13810,
+      "offset": 5593904
+    },
+    {
+      "path": "./org/unit/195/gatyachara_195_f.png",
+      "size": 20817,
+      "offset": 5607728
+    },
+    {
+      "path": "./org/unit/196/gatyachara_196_f.png",
+      "size": 17527,
+      "offset": 5628560
+    },
+    {
+      "path": "./org/unit/197/gatyachara_197_f.png",
+      "size": 10698,
+      "offset": 5646096
+    },
+    {
+      "path": "./org/unit/198/gatyachara_198_f.png",
+      "size": 10206,
+      "offset": 5656800
+    },
+    {
+      "path": "./org/unit/199/gatyachara_199_f.png",
+      "size": 14816,
+      "offset": 5667008
+    },
+    {
+      "path": "./org/unit/200/gatyachara_200_f.png",
+      "size": 15695,
+      "offset": 5681824
+    },
+    {
+      "path": "./org/unit/201/gatyachara_201_f.png",
+      "size": 11298,
+      "offset": 5697520
+    },
+    {
+      "path": "./org/unit/202/gatyachara_202_f.png",
+      "size": 6872,
+      "offset": 5708832
+    },
+    {
+      "path": "./org/unit/203/gatyachara_203_f.png",
+      "size": 15205,
+      "offset": 5715712
+    },
+    {
+      "path": "./org/unit/204/gatyachara_204_f.png",
+      "size": 16624,
+      "offset": 5730928
+    },
+    {
+      "path": "./org/unit/205/gatyachara_205_f.png",
+      "size": 18634,
+      "offset": 5747552
+    },
+    {
+      "path": "./org/unit/206/gatyachara_206_f.png",
+      "size": 23276,
+      "offset": 5766192
+    },
+    {
+      "path": "./org/unit/207/gatyachara_207_f.png",
+      "size": 22711,
+      "offset": 5789472
+    },
+    {
+      "path": "./org/unit/208/gatyachara_208_f.png",
+      "size": 10359,
+      "offset": 5812192
+    },
+    {
+      "path": "./org/unit/209/gatyachara_209_f.png",
+      "size": 3462,
+      "offset": 5822560
+    },
+    {
+      "path": "./org/unit/210/gatyachara_210_f.png",
+      "size": 3938,
+      "offset": 5826032
+    },
+    {
+      "path": "./org/unit/211/gatyachara_211_f.png",
+      "size": 6583,
+      "offset": 5829984
+    },
+    {
+      "path": "./org/unit/212/gatyachara_212_f.png",
+      "size": 9290,
+      "offset": 5836576
+    },
+    {
+      "path": "./org/unit/213/gatyachara_213_f.png",
+      "size": 9637,
+      "offset": 5845872
+    },
+    {
+      "path": "./org/unit/214/gatyachara_214_f.png",
+      "size": 16192,
+      "offset": 5855520
+    },
+    {
+      "path": "./org/unit/215/gatyachara_215_f.png",
+      "size": 16784,
+      "offset": 5871712
+    },
+    {
+      "path": "./org/unit/216/gatyachara_216_f.png",
+      "size": 17192,
+      "offset": 5888496
+    },
+    {
+      "path": "./org/unit/217/gatyachara_217_f.png",
+      "size": 21542,
+      "offset": 5905696
+    },
+    {
+      "path": "./org/unit/218/gatyachara_218_f.png",
+      "size": 17168,
+      "offset": 5927248
+    },
+    {
+      "path": "./org/unit/219/gatyachara_219_f.png",
+      "size": 3526,
+      "offset": 5944416
+    },
+    {
+      "path": "./org/unit/220/gatyachara_220_f.png",
+      "size": 8075,
+      "offset": 5947952
+    },
+    {
+      "path": "./org/unit/221/gatyachara_221_f.png",
+      "size": 2424,
+      "offset": 5956032
+    },
+    {
+      "path": "./org/unit/222/gatyachara_222_f.png",
+      "size": 17440,
+      "offset": 5958464
+    },
+    {
+      "path": "./org/unit/223/gatyachara_223_f.png",
+      "size": 13426,
+      "offset": 5975904
+    },
+    {
+      "path": "./org/unit/224/gatyachara_224_f.png",
+      "size": 5659,
+      "offset": 5989344
+    },
+    {
+      "path": "./org/unit/225/gatyachara_225_f.png",
+      "size": 7923,
+      "offset": 5995008
+    },
+    {
+      "path": "./org/unit/226/gatyachara_226_f.png",
+      "size": 16964,
+      "offset": 6002944
+    },
+    {
+      "path": "./org/unit/227/gatyachara_227_f.png",
+      "size": 16044,
+      "offset": 6019920
+    },
+    {
+      "path": "./org/unit/228/gatyachara_228_f.png",
+      "size": 9625,
+      "offset": 6035968
+    },
+    {
+      "path": "./org/unit/229/gatyachara_229_f.png",
+      "size": 16252,
+      "offset": 6045600
+    },
+    {
+      "path": "./org/unit/230/gatyachara_230_f.png",
+      "size": 47539,
+      "offset": 6061856
+    },
+    {
+      "path": "./org/unit/231/gatyachara_231_f.png",
+      "size": 33081,
+      "offset": 6109408
+    },
+    {
+      "path": "./org/unit/232/gatyachara_232_f.png",
+      "size": 15684,
+      "offset": 6142496
+    },
+    {
+      "path": "./org/unit/233/gatyachara_233_f.png",
+      "size": 13107,
+      "offset": 6158192
+    },
+    {
+      "path": "./org/unit/234/gatyachara_234_f.png",
+      "size": 16542,
+      "offset": 6171312
+    },
+    {
+      "path": "./org/unit/235/gatyachara_235_f.png",
+      "size": 43887,
+      "offset": 6187856
+    },
+    {
+      "path": "./org/unit/236/gatyachara_236_f.png",
+      "size": 19254,
+      "offset": 6231744
+    },
+    {
+      "path": "./org/unit/237/gatyachara_237_f.png",
+      "size": 11882,
+      "offset": 6251008
+    },
+    {
+      "path": "./org/unit/238/gatyachara_238_f.png",
+      "size": 7476,
+      "offset": 6262896
+    },
+    {
+      "path": "./org/unit/239/gatyachara_239_f.png",
+      "size": 14060,
+      "offset": 6270384
+    },
+    {
+      "path": "./org/unit/240/gatyachara_240_f.png",
+      "size": 8300,
+      "offset": 6284448
+    },
+    {
+      "path": "./org/unit/241/gatyachara_241_f.png",
+      "size": 14517,
+      "offset": 6292752
+    },
+    {
+      "path": "./org/unit/242/gatyachara_242_f.png",
+      "size": 14665,
+      "offset": 6307280
+    },
+    {
+      "path": "./org/unit/243/gatyachara_243_f.png",
+      "size": 38448,
+      "offset": 6321952
+    },
+    {
+      "path": "./org/unit/244/gatyachara_244_f.png",
+      "size": 16351,
+      "offset": 6360400
+    },
+    {
+      "path": "./org/unit/245/gatyachara_245_f.png",
+      "size": 6903,
+      "offset": 6376752
+    },
+    {
+      "path": "./org/unit/246/gatyachara_246_f.png",
+      "size": 4812,
+      "offset": 6383664
+    },
+    {
+      "path": "./org/unit/247/gatyachara_247_f.png",
+      "size": 3914,
+      "offset": 6388480
+    },
+    {
+      "path": "./org/unit/248/gatyachara_248_f.png",
+      "size": 14525,
+      "offset": 6392400
+    },
+    {
+      "path": "./org/unit/249/gatyachara_249_f.png",
+      "size": 14046,
+      "offset": 6406928
+    },
+    {
+      "path": "./org/unit/250/gatyachara_250_f.png",
+      "size": 18080,
+      "offset": 6420976
+    },
+    {
+      "path": "./org/unit/251/gatyachara_251_f.png",
+      "size": 20089,
+      "offset": 6439056
+    },
+    {
+      "path": "./org/unit/252/gatyachara_252_f.png",
+      "size": 21672,
+      "offset": 6459152
+    },
+    {
+      "path": "./org/unit/253/gatyachara_253_f.png",
+      "size": 25645,
+      "offset": 6480832
+    },
+    {
+      "path": "./org/unit/254/gatyachara_254_f.png",
+      "size": 25506,
+      "offset": 6506480
+    },
+    {
+      "path": "./org/unit/255/gatyachara_255_f.png",
+      "size": 25643,
+      "offset": 6532000
+    },
+    {
+      "path": "./org/unit/256/gatyachara_256_f.png",
+      "size": 14557,
+      "offset": 6557648
+    },
+    {
+      "path": "./org/unit/257/gatyachara_257_f.png",
+      "size": 31163,
+      "offset": 6572208
+    },
+    {
+      "path": "./org/unit/258/gatyachara_258_f.png",
+      "size": 18905,
+      "offset": 6603376
+    },
+    {
+      "path": "./org/unit/259/gatyachara_259_f.png",
+      "size": 36315,
+      "offset": 6622288
+    },
+    {
+      "path": "./org/unit/260/gatyachara_260_f.png",
+      "size": 10264,
+      "offset": 6658608
+    },
+    {
+      "path": "./org/unit/261/gatyachara_261_f.png",
+      "size": 16862,
+      "offset": 6668880
+    },
+    {
+      "path": "./org/unit/262/gatyachara_262_f.png",
+      "size": 16764,
+      "offset": 6685744
+    },
+    {
+      "path": "./org/unit/263/gatyachara_263_f.png",
+      "size": 10878,
+      "offset": 6702512
+    },
+    {
+      "path": "./org/unit/264/gatyachara_264_f.png",
+      "size": 8170,
+      "offset": 6713392
+    },
+    {
+      "path": "./org/unit/265/gatyachara_265_f.png",
+      "size": 15034,
+      "offset": 6721568
+    },
+    {
+      "path": "./org/unit/266/gatyachara_266_f.png",
+      "size": 18090,
+      "offset": 6736608
+    },
+    {
+      "path": "./org/unit/267/gatyachara_267_f.png",
+      "size": 14241,
+      "offset": 6754704
+    },
+    {
+      "path": "./org/unit/268/gatyachara_268_f.png",
+      "size": 28389,
+      "offset": 6768960
+    },
+    {
+      "path": "./org/unit/269/gatyachara_269_f.png",
+      "size": 12141,
+      "offset": 6797360
+    },
+    {
+      "path": "./org/unit/270/gatyachara_270_f.png",
+      "size": 12400,
+      "offset": 6809504
+    },
+    {
+      "path": "./org/unit/271/gatyachara_271_f.png",
+      "size": 21650,
+      "offset": 6821904
+    },
+    {
+      "path": "./org/unit/272/gatyachara_272_f.png",
+      "size": 30032,
+      "offset": 6843568
+    },
+    {
+      "path": "./org/unit/273/gatyachara_273_f.png",
+      "size": 10986,
+      "offset": 6873600
+    },
+    {
+      "path": "./org/unit/274/gatyachara_274_f.png",
+      "size": 41170,
+      "offset": 6884592
+    },
+    {
+      "path": "./org/unit/275/gatyachara_275_f.png",
+      "size": 29142,
+      "offset": 6925776
+    },
+    {
+      "path": "./org/unit/276/gatyachara_276_f.png",
+      "size": 8237,
+      "offset": 6954928
+    },
+    {
+      "path": "./org/unit/277/gatyachara_277_f.png",
+      "size": 11897,
+      "offset": 6963168
+    },
+    {
+      "path": "./org/unit/278/gatyachara_278_f.png",
+      "size": 22578,
+      "offset": 6975072
+    },
+    {
+      "path": "./org/unit/279/gatyachara_279_f.png",
+      "size": 15900,
+      "offset": 6997664
+    },
+    {
+      "path": "./org/unit/280/gatyachara_280_f.png",
+      "size": 19684,
+      "offset": 7013568
+    },
+    {
+      "path": "./org/unit/281/gatyachara_281_f.png",
+      "size": 12601,
+      "offset": 7033264
+    },
+    {
+      "path": "./org/unit/282/gatyachara_282_f.png",
+      "size": 8856,
+      "offset": 7045872
+    },
+    {
+      "path": "./org/unit/283/gatyachara_283_f.png",
+      "size": 12126,
+      "offset": 7054736
+    },
+    {
+      "path": "./org/unit/284/gatyachara_284_f.png",
+      "size": 8025,
+      "offset": 7066864
+    },
+    {
+      "path": "./org/unit/285/gatyachara_285_f.png",
+      "size": 1699,
+      "offset": 7074896
+    },
+    {
+      "path": "./org/unit/286/gatyachara_286_f.png",
+      "size": 14171,
+      "offset": 7076608
+    },
+    {
+      "path": "./org/unit/287/gatyachara_287_f.png",
+      "size": 10716,
+      "offset": 7090784
+    },
+    {
+      "path": "./org/unit/288/gatyachara_288_f.png",
+      "size": 33448,
+      "offset": 7101504
+    },
+    {
+      "path": "./org/unit/289/gatyachara_289_f.png",
+      "size": 13779,
+      "offset": 7134960
+    },
+    {
+      "path": "./org/unit/290/gatyachara_290_f.png",
+      "size": 18158,
+      "offset": 7148752
+    },
+    {
+      "path": "./org/unit/291/gatyachara_291_f.png",
+      "size": 14941,
+      "offset": 7166912
+    },
+    {
+      "path": "./org/unit/292/gatyachara_292_f.png",
+      "size": 14404,
+      "offset": 7181856
+    },
+    {
+      "path": "./org/unit/293/gatyachara_293_f.png",
+      "size": 14003,
+      "offset": 7196272
+    },
+    {
+      "path": "./org/unit/294/gatyachara_294_f.png",
+      "size": 19520,
+      "offset": 7210288
+    },
+    {
+      "path": "./org/unit/295/gatyachara_295_f.png",
+      "size": 18181,
+      "offset": 7229808
+    },
+    {
+      "path": "./org/unit/296/gatyachara_296_f.png",
+      "size": 19379,
+      "offset": 7248000
+    },
+    {
+      "path": "./org/unit/297/gatyachara_297_f.png",
+      "size": 18098,
+      "offset": 7267392
+    },
+    {
+      "path": "./org/unit/298/gatyachara_298_f.png",
+      "size": 22064,
+      "offset": 7285504
+    },
+    {
+      "path": "./org/unit/299/gatyachara_299_f.png",
+      "size": 21424,
+      "offset": 7307568
+    },
+    {
+      "path": "./org/unit/300/gatyachara_300_f.png",
+      "size": 19283,
+      "offset": 7328992
+    },
+    {
+      "path": "./org/unit/301/gatyachara_301_f.png",
+      "size": 8904,
+      "offset": 7348288
+    },
+    {
+      "path": "./org/unit/302/gatyachara_302_f.png",
+      "size": 17421,
+      "offset": 7357200
+    },
+    {
+      "path": "./org/unit/303/gatyachara_303_f.png",
+      "size": 11274,
+      "offset": 7374624
+    },
+    {
+      "path": "./org/unit/304/gatyachara_304_f.png",
+      "size": 16740,
+      "offset": 7385904
+    },
+    {
+      "path": "./org/unit/305/gatyachara_305_f.png",
+      "size": 14313,
+      "offset": 7402656
+    },
+    {
+      "path": "./org/unit/306/gatyachara_306_f.png",
+      "size": 16868,
+      "offset": 7416976
+    },
+    {
+      "path": "./org/unit/307/gatyachara_307_f.png",
+      "size": 5713,
+      "offset": 7433856
+    },
+    {
+      "path": "./org/unit/308/gatyachara_308_f.png",
+      "size": 8281,
+      "offset": 7439584
+    },
+    {
+      "path": "./org/unit/309/gatyachara_309_f.png",
+      "size": 21063,
+      "offset": 7447872
+    },
+    {
+      "path": "./org/unit/310/gatyachara_310_f.png",
+      "size": 16400,
+      "offset": 7468944
+    },
+    {
+      "path": "./org/unit/311/gatyachara_311_f.png",
+      "size": 5189,
+      "offset": 7485344
+    },
+    {
+      "path": "./org/unit/312/gatyachara_312_f.png",
+      "size": 4658,
+      "offset": 7490544
+    },
+    {
+      "path": "./org/unit/313/gatyachara_313_f.png",
+      "size": 5671,
+      "offset": 7495216
+    },
+    {
+      "path": "./org/unit/314/gatyachara_314_f.png",
+      "size": 10298,
+      "offset": 7500896
+    },
+    {
+      "path": "./org/unit/315/gatyachara_315_f.png",
+      "size": 16787,
+      "offset": 7511200
+    },
+    {
+      "path": "./org/unit/316/gatyachara_316_f.png",
+      "size": 25965,
+      "offset": 7528000
+    },
+    {
+      "path": "./org/unit/317/gatyachara_317_f.png",
+      "size": 10793,
+      "offset": 7553968
+    },
+    {
+      "path": "./org/unit/318/gatyachara_318_f.png",
+      "size": 15629,
+      "offset": 7564768
+    },
+    {
+      "path": "./org/unit/319/gatyachara_319_f.png",
+      "size": 6255,
+      "offset": 7580400
+    },
+    {
+      "path": "./org/unit/320/gatyachara_320_f.png",
+      "size": 1699,
+      "offset": 7586656
+    },
+    {
+      "path": "./org/unit/321/gatyachara_321_f.png",
+      "size": 14198,
+      "offset": 7588368
+    },
+    {
+      "path": "./org/unit/322/gatyachara_322_f.png",
+      "size": 9647,
+      "offset": 7602576
+    },
+    {
+      "path": "./org/unit/323/gatyachara_323_f.png",
+      "size": 19632,
+      "offset": 7612224
+    },
+    {
+      "path": "./org/unit/324/gatyachara_324_f.png",
+      "size": 7677,
+      "offset": 7631856
+    },
+    {
+      "path": "./org/unit/325/gatyachara_325_f.png",
+      "size": 8196,
+      "offset": 7639536
+    },
+    {
+      "path": "./org/unit/326/gatyachara_326_f.png",
+      "size": 16980,
+      "offset": 7647744
+    },
+    {
+      "path": "./org/unit/327/gatyachara_327_f.png",
+      "size": 34720,
+      "offset": 7664736
+    },
+    {
+      "path": "./org/unit/328/gatyachara_328_f.png",
+      "size": 20587,
+      "offset": 7699456
+    },
+    {
+      "path": "./org/unit/329/gatyachara_329_f.png",
+      "size": 10271,
+      "offset": 7720048
+    },
+    {
+      "path": "./org/unit/330/gatyachara_330_f.png",
+      "size": 23124,
+      "offset": 7730320
+    },
+    {
+      "path": "./org/unit/331/gatyachara_331_f.png",
+      "size": 18490,
+      "offset": 7753456
+    },
+    {
+      "path": "./org/unit/332/gatyachara_332_f.png",
+      "size": 8749,
+      "offset": 7771952
+    },
+    {
+      "path": "./org/unit/333/gatyachara_333_f.png",
+      "size": 12750,
+      "offset": 7780704
+    },
+    {
+      "path": "./org/unit/334/gatyachara_334_f.png",
+      "size": 15881,
+      "offset": 7793456
+    },
+    {
+      "path": "./org/unit/335/gatyachara_335_f.png",
+      "size": 16445,
+      "offset": 7809344
+    },
+    {
+      "path": "./org/unit/336/gatyachara_336_f.png",
+      "size": 17971,
+      "offset": 7825792
+    },
+    {
+      "path": "./org/unit/337/gatyachara_337_f.png",
+      "size": 16881,
+      "offset": 7843776
+    },
+    {
+      "path": "./org/unit/338/gatyachara_338_f.png",
+      "size": 18977,
+      "offset": 7860672
+    },
+    {
+      "path": "./org/unit/339/gatyachara_339_f.png",
+      "size": 1699,
+      "offset": 7879664
+    },
+    {
+      "path": "./org/unit/340/gatyachara_340_f.png",
+      "size": 19258,
+      "offset": 7881376
+    },
+    {
+      "path": "./org/unit/341/gatyachara_341_f.png",
+      "size": 14023,
+      "offset": 7900640
+    },
+    {
+      "path": "./org/unit/342/gatyachara_342_f.png",
+      "size": 11224,
+      "offset": 7914672
+    },
+    {
+      "path": "./org/unit/343/gatyachara_343_f.png",
+      "size": 1210,
+      "offset": 7925904
+    },
+    {
+      "path": "./org/unit/344/gatyachara_344_f.png",
+      "size": 13663,
+      "offset": 7927120
+    },
+    {
+      "path": "./org/unit/345/gatyachara_345_f.png",
+      "size": 43034,
+      "offset": 7940784
+    },
+    {
+      "path": "./org/unit/346/gatyachara_346_f.png",
+      "size": 23540,
+      "offset": 7983824
+    },
+    {
+      "path": "./org/unit/347/gatyachara_347_f.png",
+      "size": 12594,
+      "offset": 8007376
+    },
+    {
+      "path": "./org/unit/348/gatyachara_348_f.png",
+      "size": 10225,
+      "offset": 8019984
+    },
+    {
+      "path": "./org/unit/349/gatyachara_349_f.png",
+      "size": 9709,
+      "offset": 8030224
+    },
+    {
+      "path": "./org/unit/350/gatyachara_350_f.png",
+      "size": 16851,
+      "offset": 8039936
+    },
+    {
+      "path": "./org/unit/351/gatyachara_351_f.png",
+      "size": 17310,
+      "offset": 8056800
+    },
+    {
+      "path": "./org/unit/352/gatyachara_352_f.png",
+      "size": 45560,
+      "offset": 8074112
+    },
+    {
+      "path": "./org/unit/353/gatyachara_353_f.png",
+      "size": 1699,
+      "offset": 8119680
+    },
+    {
+      "path": "./org/unit/354/gatyachara_354_f.png",
+      "size": 14171,
+      "offset": 8121392
+    },
+    {
+      "path": "./org/unit/355/gatyachara_355_f.png",
+      "size": 18073,
+      "offset": 8135568
+    },
+    {
+      "path": "./org/unit/356/gatyachara_356_f.png",
+      "size": 6781,
+      "offset": 8153648
+    },
+    {
+      "path": "./org/unit/357/gatyachara_357_f.png",
+      "size": 15971,
+      "offset": 8160432
+    },
+    {
+      "path": "./org/unit/358/gatyachara_358_f.png",
+      "size": 21219,
+      "offset": 8176416
+    },
+    {
+      "path": "./org/unit/359/gatyachara_359_f.png",
+      "size": 7880,
+      "offset": 8197648
+    },
+    {
+      "path": "./org/unit/360/gatyachara_360_f.png",
+      "size": 11555,
+      "offset": 8205536
+    },
+    {
+      "path": "./org/unit/361/gatyachara_361_f.png",
+      "size": 9803,
+      "offset": 8217104
+    },
+    {
+      "path": "./org/unit/362/gatyachara_362_f.png",
+      "size": 12180,
+      "offset": 8226912
+    },
+    {
+      "path": "./org/unit/363/gatyachara_363_f.png",
+      "size": 8730,
+      "offset": 8239104
+    },
+    {
+      "path": "./org/unit/364/gatyachara_364_f.png",
+      "size": 10243,
+      "offset": 8247840
+    },
+    {
+      "path": "./org/unit/365/gatyachara_365_f.png",
+      "size": 14581,
+      "offset": 8258096
+    },
+    {
+      "path": "./org/unit/366/gatyachara_366_f.png",
+      "size": 11257,
+      "offset": 8272688
+    },
+    {
+      "path": "./org/unit/367/gatyachara_367_f.png",
+      "size": 14617,
+      "offset": 8283952
+    },
+    {
+      "path": "./org/unit/368/gatyachara_368_f.png",
+      "size": 7945,
+      "offset": 8298576
+    },
+    {
+      "path": "./org/unit/369/gatyachara_369_f.png",
+      "size": 14606,
+      "offset": 8306528
+    },
+    {
+      "path": "./org/unit/370/gatyachara_370_f.png",
+      "size": 14616,
+      "offset": 8321136
+    },
+    {
+      "path": "./org/unit/371/gatyachara_371_f.png",
+      "size": 15889,
+      "offset": 8335760
+    },
+    {
+      "path": "./org/unit/372/gatyachara_372_f.png",
+      "size": 18153,
+      "offset": 8351664
+    },
+    {
+      "path": "./org/unit/373/gatyachara_373_f.png",
+      "size": 12008,
+      "offset": 8369824
+    },
+    {
+      "path": "./org/unit/374/gatyachara_374_f.png",
+      "size": 13035,
+      "offset": 8381840
+    },
+    {
+      "path": "./org/unit/375/gatyachara_375_f.png",
+      "size": 7471,
+      "offset": 8394880
+    },
+    {
+      "path": "./org/unit/376/gatyachara_376_f.png",
+      "size": 9929,
+      "offset": 8402352
+    },
+    {
+      "path": "./org/unit/377/gatyachara_377_f.png",
+      "size": 6952,
+      "offset": 8412288
+    },
+    {
+      "path": "./org/unit/378/gatyachara_378_f.png",
+      "size": 24871,
+      "offset": 8419248
+    },
+    {
+      "path": "./org/unit/379/gatyachara_379_f.png",
+      "size": 31657,
+      "offset": 8444128
+    },
+    {
+      "path": "./org/unit/380/gatyachara_380_f.png",
+      "size": 15683,
+      "offset": 8475792
+    },
+    {
+      "path": "./org/unit/381/gatyachara_381_f.png",
+      "size": 16680,
+      "offset": 8491488
+    },
+    {
+      "path": "./org/unit/382/gatyachara_382_f.png",
+      "size": 47786,
+      "offset": 8508176
+    },
+    {
+      "path": "./org/unit/383/gatyachara_383_f.png",
+      "size": 15683,
+      "offset": 8555968
+    },
+    {
+      "path": "./org/unit/384/gatyachara_384_f.png",
+      "size": 8038,
+      "offset": 8571664
+    },
+    {
+      "path": "./org/unit/385/gatyachara_385_f.png",
+      "size": 11038,
+      "offset": 8579712
+    },
+    {
+      "path": "./org/unit/386/gatyachara_386_f.png",
+      "size": 22582,
+      "offset": 8590752
+    },
+    {
+      "path": "./org/unit/387/gatyachara_387_f.png",
+      "size": 14653,
+      "offset": 8613344
+    },
+    {
+      "path": "./org/unit/388/gatyachara_388_f.png",
+      "size": 16508,
+      "offset": 8628000
+    },
+    {
+      "path": "./org/unit/389/gatyachara_389_f.png",
+      "size": 14137,
+      "offset": 8644512
+    },
+    {
+      "path": "./org/unit/390/gatyachara_390_f.png",
+      "size": 14155,
+      "offset": 8658656
+    },
+    {
+      "path": "./org/unit/391/gatyachara_391_f.png",
+      "size": 15280,
+      "offset": 8672816
+    },
+    {
+      "path": "./org/unit/392/gatyachara_392_f.png",
+      "size": 14636,
+      "offset": 8688096
+    },
+    {
+      "path": "./org/unit/393/gatyachara_393_f.png",
+      "size": 12516,
+      "offset": 8702736
+    },
+    {
+      "path": "./org/unit/394/gatyachara_394_f.png",
+      "size": 12345,
+      "offset": 8715264
+    },
+    {
+      "path": "./org/unit/395/gatyachara_395_f.png",
+      "size": 14078,
+      "offset": 8727616
+    },
+    {
+      "path": "./org/unit/396/gatyachara_396_f.png",
+      "size": 15221,
+      "offset": 8741696
+    },
+    {
+      "path": "./org/unit/397/gatyachara_397_f.png",
+      "size": 12343,
+      "offset": 8756928
+    },
+    {
+      "path": "./org/unit/398/gatyachara_398_f.png",
+      "size": 3997,
+      "offset": 8769280
+    },
+    {
+      "path": "./org/unit/399/gatyachara_399_f.png",
+      "size": 15070,
+      "offset": 8773280
+    },
+    {
+      "path": "./org/unit/400/gatyachara_400_f.png",
+      "size": 15143,
+      "offset": 8788352
+    },
+    {
+      "path": "./org/unit/401/gatyachara_401_f.png",
+      "size": 15593,
+      "offset": 8803504
+    },
+    {
+      "path": "./org/unit/402/gatyachara_402_f.png",
+      "size": 17643,
+      "offset": 8819104
+    },
+    {
+      "path": "./org/unit/403/gatyachara_403_f.png",
+      "size": 20622,
+      "offset": 8836752
+    },
+    {
+      "path": "./org/unit/404/gatyachara_404_f.png",
+      "size": 13750,
+      "offset": 8857376
+    },
+    {
+      "path": "./org/unit/405/gatyachara_405_f.png",
+      "size": 5342,
+      "offset": 8871136
+    },
+    {
+      "path": "./org/unit/406/gatyachara_406_f.png",
+      "size": 19245,
+      "offset": 8876480
+    },
+    {
+      "path": "./org/unit/407/gatyachara_407_f.png",
+      "size": 19819,
+      "offset": 8895728
+    },
+    {
+      "path": "./org/unit/408/gatyachara_408_f.png",
+      "size": 21051,
+      "offset": 8915552
+    },
+    {
+      "path": "./org/unit/409/gatyachara_409_f.png",
+      "size": 21220,
+      "offset": 8936608
+    },
+    {
+      "path": "./org/unit/410/gatyachara_410_f.png",
+      "size": 21851,
+      "offset": 8957840
+    },
+    {
+      "path": "./org/unit/411/gatyachara_411_f.png",
+      "size": 19848,
+      "offset": 8979696
+    },
+    {
+      "path": "./org/unit/412/gatyachara_412_f.png",
+      "size": 25232,
+      "offset": 8999552
+    },
+    {
+      "path": "./org/unit/413/gatyachara_413_f.png",
+      "size": 17364,
+      "offset": 9024784
+    },
+    {
+      "path": "./org/unit/414/gatyachara_414_f.png",
+      "size": 20334,
+      "offset": 9042160
+    },
+    {
+      "path": "./org/unit/415/gatyachara_415_f.png",
+      "size": 17950,
+      "offset": 9062496
+    },
+    {
+      "path": "./org/unit/416/gatyachara_416_f.png",
+      "size": 20487,
+      "offset": 9080448
+    },
+    {
+      "path": "./org/unit/417/gatyachara_417_f.png",
+      "size": 12755,
+      "offset": 9100944
+    },
+    {
+      "path": "./org/unit/418/gatyachara_418_f.png",
+      "size": 13466,
+      "offset": 9113712
+    },
+    {
+      "path": "./org/unit/419/gatyachara_419_f.png",
+      "size": 7105,
+      "offset": 9127184
+    },
+    {
+      "path": "./org/unit/420/gatyachara_420_f.png",
+      "size": 8476,
+      "offset": 9134304
+    },
+    {
+      "path": "./org/unit/421/gatyachara_421_f.png",
+      "size": 9730,
+      "offset": 9142784
+    },
+    {
+      "path": "./org/unit/422/gatyachara_422_f.png",
+      "size": 5521,
+      "offset": 9152528
+    },
+    {
+      "path": "./org/unit/423/gatyachara_423_f.png",
+      "size": 4716,
+      "offset": 9158064
+    },
+    {
+      "path": "./org/unit/424/gatyachara_424_f.png",
+      "size": 5738,
+      "offset": 9162784
+    },
+    {
+      "path": "./org/unit/425/gatyachara_425_f.png",
+      "size": 4858,
+      "offset": 9168528
+    },
+    {
+      "path": "./org/unit/426/gatyachara_426_f.png",
+      "size": 4177,
+      "offset": 9173392
+    },
+    {
+      "path": "./org/unit/427/gatyachara_427_f.png",
+      "size": 4221,
+      "offset": 9177584
+    },
+    {
+      "path": "./org/unit/428/gatyachara_428_f.png",
+      "size": 4890,
+      "offset": 9181808
+    },
+    {
+      "path": "./org/unit/429/gatyachara_429_f.png",
+      "size": 4544,
+      "offset": 9186704
+    },
+    {
+      "path": "./org/unit/430/gatyachara_430_f.png",
+      "size": 5967,
+      "offset": 9191248
+    },
+    {
+      "path": "./org/unit/431/gatyachara_431_f.png",
+      "size": 2285,
+      "offset": 9197216
+    },
+    {
+      "path": "./org/unit/432/gatyachara_432_f.png",
+      "size": 1699,
+      "offset": 9199504
+    },
+    {
+      "path": "./org/unit/433/gatyachara_433_f.png",
+      "size": 1699,
+      "offset": 9201216
+    },
+    {
+      "path": "./org/unit/434/gatyachara_434_f.png",
+      "size": 3977,
+      "offset": 9202928
+    },
+    {
+      "path": "./org/unit/435/gatyachara_435_f.png",
+      "size": 2976,
+      "offset": 9206912
+    },
+    {
+      "path": "./org/unit/436/gatyachara_436_f.png",
+      "size": 2234,
+      "offset": 9209888
+    },
+    {
+      "path": "./org/unit/437/gatyachara_437_f.png",
+      "size": 2793,
+      "offset": 9212128
+    },
+    {
+      "path": "./org/unit/438/gatyachara_438_f.png",
+      "size": 2446,
+      "offset": 9214928
+    },
+    {
+      "path": "./org/unit/439/gatyachara_439_f.png",
+      "size": 5258,
+      "offset": 9217376
+    },
+    {
+      "path": "./org/unit/440/gatyachara_440_f.png",
+      "size": 4405,
+      "offset": 9222640
+    },
+    {
+      "path": "./org/unit/441/gatyachara_441_f.png",
+      "size": 4745,
+      "offset": 9227056
+    },
+    {
+      "path": "./org/unit/442/gatyachara_442_f.png",
+      "size": 2105,
+      "offset": 9231808
+    },
+    {
+      "path": "./org/unit/443/gatyachara_443_f.png",
+      "size": 2299,
+      "offset": 9233920
+    },
+    {
+      "path": "./org/unit/444/gatyachara_444_f.png",
+      "size": 3469,
+      "offset": 9236224
+    },
+    {
+      "path": "./org/unit/445/gatyachara_445_f.png",
+      "size": 2457,
+      "offset": 9239696
+    },
+    {
+      "path": "./org/unit/446/gatyachara_446_f.png",
+      "size": 2820,
+      "offset": 9242160
+    },
+    {
+      "path": "./org/unit/447/gatyachara_447_f.png",
+      "size": 2372,
+      "offset": 9244992
+    },
+    {
+      "path": "./org/unit/448/gatyachara_448_f.png",
+      "size": 3851,
+      "offset": 9247376
+    },
+    {
+      "path": "./org/unit/449/gatyachara_449_f.png",
+      "size": 3911,
+      "offset": 9251232
+    },
+    {
+      "path": "./org/unit/450/gatyachara_450_f.png",
+      "size": 9392,
+      "offset": 9255152
+    },
+    {
+      "path": "./org/unit/451/gatyachara_451_f.png",
+      "size": 6918,
+      "offset": 9264544
+    },
+    {
+      "path": "./org/unit/452/gatyachara_452_f.png",
+      "size": 2680,
+      "offset": 9271472
+    },
+    {
+      "path": "./org/unit/453/gatyachara_453_f.png",
+      "size": 4480,
+      "offset": 9274160
+    },
+    {
+      "path": "./org/unit/454/gatyachara_454_f.png",
+      "size": 4917,
+      "offset": 9278640
+    },
+    {
+      "path": "./org/unit/455/gatyachara_455_f.png",
+      "size": 5116,
+      "offset": 9283568
+    },
+    {
+      "path": "./org/unit/456/gatyachara_456_f.png",
+      "size": 2757,
+      "offset": 9288688
+    },
+    {
+      "path": "./org/unit/457/gatyachara_457_f.png",
+      "size": 4595,
+      "offset": 9291456
+    },
+    {
+      "path": "./org/unit/458/gatyachara_458_f.png",
+      "size": 4259,
+      "offset": 9296064
+    },
+    {
+      "path": "./org/unit/459/gatyachara_459_f.png",
+      "size": 3981,
+      "offset": 9300336
+    },
+    {
+      "path": "./org/unit/460/gatyachara_460_f.png",
+      "size": 4831,
+      "offset": 9304320
+    },
+    {
+      "path": "./org/unit/461/gatyachara_461_f.png",
+      "size": 6768,
+      "offset": 9309152
+    },
+    {
+      "path": "./org/unit/462/gatyachara_462_f.png",
+      "size": 4779,
+      "offset": 9315920
+    },
+    {
+      "path": "./org/unit/463/gatyachara_463_f.png",
+      "size": 4430,
+      "offset": 9320704
+    },
+    {
+      "path": "./org/unit/464/gatyachara_464_f.png",
+      "size": 5457,
+      "offset": 9325136
+    },
+    {
+      "path": "./org/unit/465/gatyachara_465_f.png",
+      "size": 1699,
+      "offset": 9330608
+    },
+    {
+      "path": "./org/unit/466/gatyachara_466_f.png",
+      "size": 7391,
+      "offset": 9332320
+    },
+    {
+      "path": "./org/unit/467/gatyachara_467_f.png",
+      "size": 7038,
+      "offset": 9339712
+    },
+    {
+      "path": "./org/unit/468/gatyachara_468_f.png",
+      "size": 6814,
+      "offset": 9346752
+    },
+    {
+      "path": "./org/unit/469/gatyachara_469_f.png",
+      "size": 5527,
+      "offset": 9353568
+    },
+    {
+      "path": "./org/unit/470/gatyachara_470_f.png",
+      "size": 7080,
+      "offset": 9359104
+    },
+    {
+      "path": "./org/unit/471/gatyachara_471_f.png",
+      "size": 6808,
+      "offset": 9366192
+    },
+    {
+      "path": "./org/unit/472/gatyachara_472_f.png",
+      "size": 5180,
+      "offset": 9373008
+    },
+    {
+      "path": "./org/unit/473/gatyachara_473_f.png",
+      "size": 10889,
+      "offset": 9378192
+    },
+    {
+      "path": "./org/unit/474/gatyachara_474_f.png",
+      "size": 4796,
+      "offset": 9389088
+    },
+    {
+      "path": "./org/unit/475/gatyachara_475_f.png",
+      "size": 5618,
+      "offset": 9393888
+    },
+    {
+      "path": "./org/unit/476/gatyachara_476_f.png",
+      "size": 4812,
+      "offset": 9399520
+    },
+    {
+      "path": "./org/unit/477/gatyachara_477_f.png",
+      "size": 5625,
+      "offset": 9404336
+    },
+    {
+      "path": "./org/unit/478/gatyachara_478_f.png",
+      "size": 3943,
+      "offset": 9409968
+    },
+    {
+      "path": "./org/unit/479/gatyachara_479_f.png",
+      "size": 4514,
+      "offset": 9413920
+    },
+    {
+      "path": "./org/unit/480/gatyachara_480_f.png",
+      "size": 4238,
+      "offset": 9418448
+    },
+    {
+      "path": "./org/unit/481/gatyachara_481_f.png",
+      "size": 5044,
+      "offset": 9422688
+    },
+    {
+      "path": "./org/unit/482/gatyachara_482_f.png",
+      "size": 2834,
+      "offset": 9427744
+    },
+    {
+      "path": "./org/unit/483/gatyachara_483_f.png",
+      "size": 6895,
+      "offset": 9430592
+    },
+    {
+      "path": "./org/unit/484/gatyachara_484_f.png",
+      "size": 3299,
+      "offset": 9437488
+    },
+    {
+      "path": "./org/unit/485/gatyachara_485_f.png",
+      "size": 5054,
+      "offset": 9440800
+    },
+    {
+      "path": "./org/unit/486/gatyachara_486_f.png",
+      "size": 6070,
+      "offset": 9445856
+    },
+    {
+      "path": "./org/unit/487/gatyachara_487_f.png",
+      "size": 4589,
+      "offset": 9451936
+    },
+    {
+      "path": "./org/unit/488/gatyachara_488_f.png",
+      "size": 3858,
+      "offset": 9456528
+    },
+    {
+      "path": "./org/unit/489/gatyachara_489_f.png",
+      "size": 4752,
+      "offset": 9460400
+    },
+    {
+      "path": "./org/unit/490/gatyachara_490_f.png",
+      "size": 4946,
+      "offset": 9465152
+    },
+    {
+      "path": "./org/unit/491/gatyachara_491_f.png",
+      "size": 5360,
+      "offset": 9470112
+    },
+    {
+      "path": "./org/unit/492/gatyachara_492_f.png",
+      "size": 1699,
+      "offset": 9475472
+    },
+    {
+      "path": "./org/unit/493/gatyachara_493_f.png",
+      "size": 4191,
+      "offset": 9477184
+    },
+    {
+      "path": "./org/unit/494/gatyachara_494_f.png",
+      "size": 4440,
+      "offset": 9481376
+    },
+    {
+      "path": "./org/unit/495/gatyachara_495_f.png",
+      "size": 3812,
+      "offset": 9485824
+    },
+    {
+      "path": "./org/unit/496/gatyachara_496_f.png",
+      "size": 6293,
+      "offset": 9489648
+    },
+    {
+      "path": "./org/unit/497/gatyachara_497_f.png",
+      "size": 1699,
+      "offset": 9495952
+    },
+    {
+      "path": "./org/unit/498/gatyachara_498_f.png",
+      "size": 1699,
+      "offset": 9497664
+    },
+    {
+      "path": "./org/unit/499/gatyachara_499_f.png",
+      "size": 1699,
+      "offset": 9499376
+    },
+    {
+      "path": "./org/unit/500/gatyachara_500_f.png",
+      "size": 1699,
+      "offset": 9501088
+    },
+    {
+      "path": "./org/unit/501/gatyachara_501_f.png",
+      "size": 2570,
+      "offset": 9502800
+    },
+    {
+      "path": "./org/unit/502/gatyachara_502_f.png",
+      "size": 4102,
+      "offset": 9505376
+    },
+    {
+      "path": "./org/unit/503/gatyachara_503_f.png",
+      "size": 1800,
+      "offset": 9509488
+    },
+    {
+      "path": "./org/unit/504/gatyachara_504_f.png",
+      "size": 3835,
+      "offset": 9511296
+    },
+    {
+      "path": "./org/unit/505/gatyachara_505_f.png",
+      "size": 5692,
+      "offset": 9515136
+    },
+    {
+      "path": "./org/unit/506/gatyachara_506_f.png",
+      "size": 6369,
+      "offset": 9520832
+    },
+    {
+      "path": "./org/unit/507/gatyachara_507_f.png",
+      "size": 3365,
+      "offset": 9527216
+    },
+    {
+      "path": "./org/unit/508/gatyachara_508_f.png",
+      "size": 4213,
+      "offset": 9530592
+    },
+    {
+      "path": "./org/unit/509/gatyachara_509_f.png",
+      "size": 5265,
+      "offset": 9534816
+    },
+    {
+      "path": "./org/unit/510/gatyachara_510_f.png",
+      "size": 4814,
+      "offset": 9540096
+    },
+    {
+      "path": "./org/unit/511/gatyachara_511_f.png",
+      "size": 4666,
+      "offset": 9544912
+    },
+    {
+      "path": "./org/unit/512/gatyachara_512_f.png",
+      "size": 4001,
+      "offset": 9549584
+    },
+    {
+      "path": "./org/unit/513/gatyachara_513_f.png",
+      "size": 4359,
+      "offset": 9553600
+    },
+    {
+      "path": "./org/unit/514/gatyachara_514_f.png",
+      "size": 5112,
+      "offset": 9557968
+    },
+    {
+      "path": "./org/unit/515/gatyachara_515_f.png",
+      "size": 5962,
+      "offset": 9563088
+    },
+    {
+      "path": "./org/unit/516/gatyachara_516_f.png",
+      "size": 4267,
+      "offset": 9569056
+    },
+    {
+      "path": "./org/unit/517/gatyachara_517_f.png",
+      "size": 4456,
+      "offset": 9573328
+    },
+    {
+      "path": "./org/unit/518/gatyachara_518_f.png",
+      "size": 4060,
+      "offset": 9577792
+    },
+    {
+      "path": "./org/unit/519/gatyachara_519_f.png",
+      "size": 4694,
+      "offset": 9581856
+    },
+    {
+      "path": "./org/unit/520/gatyachara_520_f.png",
+      "size": 5244,
+      "offset": 9586560
+    },
+    {
+      "path": "./org/unit/521/gatyachara_521_f.png",
+      "size": 3826,
+      "offset": 9591808
+    },
+    {
+      "path": "./org/unit/522/gatyachara_522_f.png",
+      "size": 4940,
+      "offset": 9595648
+    },
+    {
+      "path": "./org/unit/523/gatyachara_523_f.png",
+      "size": 4472,
+      "offset": 9600592
+    },
+    {
+      "path": "./org/unit/524/gatyachara_524_f.png",
+      "size": 3826,
+      "offset": 9605072
+    },
+    {
+      "path": "./org/unit/525/gatyachara_525_f.png",
+      "size": 4319,
+      "offset": 9608912
+    },
+    {
+      "path": "./org/unit/526/gatyachara_526_f.png",
+      "size": 5700,
+      "offset": 9613232
+    },
+    {
+      "path": "./org/unit/527/gatyachara_527_f.png",
+      "size": 3849,
+      "offset": 9618944
+    },
+    {
+      "path": "./org/unit/528/gatyachara_528_f.png",
+      "size": 3520,
+      "offset": 9622800
+    },
+    {
+      "path": "./org/unit/529/gatyachara_529_f.png",
+      "size": 3799,
+      "offset": 9626320
+    },
+    {
+      "path": "./org/unit/530/gatyachara_530_f.png",
+      "size": 4370,
+      "offset": 9630128
+    },
+    {
+      "path": "./org/unit/531/gatyachara_531_f.png",
+      "size": 2562,
+      "offset": 9634512
+    },
+    {
+      "path": "./org/unit/532/gatyachara_532_f.png",
+      "size": 4127,
+      "offset": 9637088
+    },
+    {
+      "path": "./org/unit/533/gatyachara_533_f.png",
+      "size": 4562,
+      "offset": 9641216
+    },
+    {
+      "path": "./org/unit/534/gatyachara_534_f.png",
+      "size": 5347,
+      "offset": 9645792
+    },
+    {
+      "path": "./org/unit/535/gatyachara_535_f.png",
+      "size": 5557,
+      "offset": 9651152
+    },
+    {
+      "path": "./org/unit/536/gatyachara_536_f.png",
+      "size": 5948,
+      "offset": 9656720
+    },
+    {
+      "path": "./org/unit/537/gatyachara_537_f.png",
+      "size": 5497,
+      "offset": 9662672
+    },
+    {
+      "path": "./org/unit/538/gatyachara_538_f.png",
+      "size": 4842,
+      "offset": 9668176
+    },
+    {
+      "path": "./org/unit/539/gatyachara_539_f.png",
+      "size": 4678,
+      "offset": 9673024
+    },
+    {
+      "path": "./org/unit/540/gatyachara_540_f.png",
+      "size": 2509,
+      "offset": 9677712
+    },
+    {
+      "path": "./org/unit/541/gatyachara_541_f.png",
+      "size": 2915,
+      "offset": 9680224
+    },
+    {
+      "path": "./org/unit/542/gatyachara_542_f.png",
+      "size": 2987,
+      "offset": 9683152
+    },
+    {
+      "path": "./org/unit/543/gatyachara_543_f.png",
+      "size": 3736,
+      "offset": 9686144
+    },
+    {
+      "path": "./org/unit/544/gatyachara_544_f.png",
+      "size": 6223,
+      "offset": 9689888
+    },
+    {
+      "path": "./org/unit/545/gatyachara_545_f.png",
+      "size": 5634,
+      "offset": 9696112
+    },
+    {
+      "path": "./org/unit/546/gatyachara_546_f.png",
+      "size": 4098,
+      "offset": 9701760
+    },
+    {
+      "path": "./org/unit/547/gatyachara_547_f.png",
+      "size": 6942,
+      "offset": 9705872
+    },
+    {
+      "path": "./org/unit/548/gatyachara_548_f.png",
+      "size": 5146,
+      "offset": 9712816
+    },
+    {
+      "path": "./org/unit/549/gatyachara_549_f.png",
+      "size": 5883,
+      "offset": 9717968
+    },
+    {
+      "path": "./org/unit/550/gatyachara_550_f.png",
+      "size": 4274,
+      "offset": 9723856
+    },
+    {
+      "path": "./org/unit/551/gatyachara_551_f.png",
+      "size": 4718,
+      "offset": 9728144
+    },
+    {
+      "path": "./org/unit/552/gatyachara_552_f.png",
+      "size": 6032,
+      "offset": 9732864
+    },
+    {
+      "path": "./org/unit/553/gatyachara_553_f.png",
+      "size": 5005,
+      "offset": 9738896
+    },
+    {
+      "path": "./org/unit/554/gatyachara_554_f.png",
+      "size": 3981,
+      "offset": 9743904
+    },
+    {
+      "path": "./org/unit/555/gatyachara_555_f.png",
+      "size": 4497,
+      "offset": 9747888
+    },
+    {
+      "path": "./org/unit/556/gatyachara_556_f.png",
+      "size": 5686,
+      "offset": 9752400
+    },
+    {
+      "path": "./org/unit/557/gatyachara_557_f.png",
+      "size": 5487,
+      "offset": 9758096
+    },
+    {
+      "path": "./org/unit/558/gatyachara_558_f.png",
+      "size": 2395,
+      "offset": 9763584
+    },
+    {
+      "path": "./org/unit/559/gatyachara_559_f.png",
+      "size": 3093,
+      "offset": 9765984
+    },
+    {
+      "path": "./org/unit/560/gatyachara_560_f.png",
+      "size": 5233,
+      "offset": 9769088
+    },
+    {
+      "path": "./org/unit/561/gatyachara_561_f.png",
+      "size": 5093,
+      "offset": 9774336
+    },
+    {
+      "path": "./org/unit/562/gatyachara_562_f.png",
+      "size": 6617,
+      "offset": 9779440
+    },
+    {
+      "path": "./org/unit/563/gatyachara_563_f.png",
+      "size": 4509,
+      "offset": 9786064
+    },
+    {
+      "path": "./org/unit/564/gatyachara_564_f.png",
+      "size": 3569,
+      "offset": 9790576
+    },
+    {
+      "path": "./org/unit/565/gatyachara_565_f.png",
+      "size": 6282,
+      "offset": 9794160
+    },
+    {
+      "path": "./org/unit/566/gatyachara_566_f.png",
+      "size": 2814,
+      "offset": 9800448
+    },
+    {
+      "path": "./org/unit/567/gatyachara_567_f.png",
+      "size": 4155,
+      "offset": 9803264
+    },
+    {
+      "path": "./org/unit/568/gatyachara_568_f.png",
+      "size": 4378,
+      "offset": 9807424
+    },
+    {
+      "path": "./org/unit/569/gatyachara_569_f.png",
+      "size": 5913,
+      "offset": 9811808
+    },
+    {
+      "path": "./org/unit/570/gatyachara_570_f.png",
+      "size": 4171,
+      "offset": 9817728
+    },
+    {
+      "path": "./org/unit/571/gatyachara_571_f.png",
+      "size": 8117,
+      "offset": 9821904
+    },
+    {
+      "path": "./org/unit/572/gatyachara_572_f.png",
+      "size": 5510,
+      "offset": 9830032
+    },
+    {
+      "path": "./org/unit/573/gatyachara_573_f.png",
+      "size": 4776,
+      "offset": 9835552
+    },
+    {
+      "path": "./org/unit/574/gatyachara_574_f.png",
+      "size": 5267,
+      "offset": 9840336
+    },
+    {
+      "path": "./org/unit/575/gatyachara_575_f.png",
+      "size": 3078,
+      "offset": 9845616
+    },
+    {
+      "path": "./org/unit/576/gatyachara_576_f.png",
+      "size": 3868,
+      "offset": 9848704
+    },
+    {
+      "path": "./org/unit/577/gatyachara_577_f.png",
+      "size": 3762,
+      "offset": 9852576
+    },
+    {
+      "path": "./org/unit/578/gatyachara_578_f.png",
+      "size": 3068,
+      "offset": 9856352
+    },
+    {
+      "path": "./org/unit/579/gatyachara_579_f.png",
+      "size": 3768,
+      "offset": 9859424
+    },
+    {
+      "path": "./org/unit/580/gatyachara_580_f.png",
+      "size": 4146,
+      "offset": 9863200
+    },
+    {
+      "path": "./org/unit/581/gatyachara_581_f.png",
+      "size": 5292,
+      "offset": 9867360
+    },
+    {
+      "path": "./org/unit/582/gatyachara_582_f.png",
+      "size": 7686,
+      "offset": 9872656
+    },
+    {
+      "path": "./org/unit/583/gatyachara_583_f.png",
+      "size": 6741,
+      "offset": 9880352
+    },
+    {
+      "path": "./org/unit/584/gatyachara_584_f.png",
+      "size": 6063,
+      "offset": 9887104
+    },
+    {
+      "path": "./org/unit/585/gatyachara_585_f.png",
+      "size": 4763,
+      "offset": 9893168
+    },
+    {
+      "path": "./org/unit/586/gatyachara_586_f.png",
+      "size": 5884,
+      "offset": 9897936
+    },
+    {
+      "path": "./org/unit/587/gatyachara_587_f.png",
+      "size": 5149,
+      "offset": 9903824
+    },
+    {
+      "path": "./org/unit/588/gatyachara_588_f.png",
+      "size": 4098,
+      "offset": 9908976
+    },
+    {
+      "path": "./org/unit/589/gatyachara_589_f.png",
+      "size": 2806,
+      "offset": 9913088
+    },
+    {
+      "path": "./org/unit/590/gatyachara_590_f.png",
+      "size": 5420,
+      "offset": 9915904
+    },
+    {
+      "path": "./org/unit/591/gatyachara_591_f.png",
+      "size": 4672,
+      "offset": 9921328
+    },
+    {
+      "path": "./org/unit/592/gatyachara_592_f.png",
+      "size": 5162,
+      "offset": 9926000
+    },
+    {
+      "path": "./org/unit/593/gatyachara_593_f.png",
+      "size": 4171,
+      "offset": 9931168
+    },
+    {
+      "path": "./org/unit/594/gatyachara_594_f.png",
+      "size": 3443,
+      "offset": 9935344
+    },
+    {
+      "path": "./org/unit/595/gatyachara_595_f.png",
+      "size": 5842,
+      "offset": 9938800
+    },
+    {
+      "path": "./org/unit/596/gatyachara_596_f.png",
+      "size": 4925,
+      "offset": 9944656
+    },
+    {
+      "path": "./org/unit/597/gatyachara_597_f.png",
+      "size": 3452,
+      "offset": 9949584
+    },
+    {
+      "path": "./org/unit/598/gatyachara_598_f.png",
+      "size": 3344,
+      "offset": 9953040
+    },
+    {
+      "path": "./org/unit/599/gatyachara_599_f.png",
+      "size": 2763,
+      "offset": 9956384
+    },
+    {
+      "path": "./org/unit/600/gatyachara_600_f.png",
+      "size": 3268,
+      "offset": 9959152
+    },
+    {
+      "path": "./org/unit/601/gatyachara_601_f.png",
+      "size": 2333,
+      "offset": 9962432
+    },
+    {
+      "path": "./org/unit/602/gatyachara_602_f.png",
+      "size": 4805,
+      "offset": 9964768
+    },
+    {
+      "path": "./org/unit/603/gatyachara_603_f.png",
+      "size": 4211,
+      "offset": 9969584
+    },
+    {
+      "path": "./org/unit/604/gatyachara_604_f.png",
+      "size": 4611,
+      "offset": 9973808
+    },
+    {
+      "path": "./org/unit/605/gatyachara_605_f.png",
+      "size": 3394,
+      "offset": 9978432
+    },
+    {
+      "path": "./org/unit/606/gatyachara_606_f.png",
+      "size": 3328,
+      "offset": 9981840
+    },
+    {
+      "path": "./org/unit/607/gatyachara_607_f.png",
+      "size": 4522,
+      "offset": 9985168
+    },
+    {
+      "path": "./org/unit/608/gatyachara_608_f.png",
+      "size": 4193,
+      "offset": 9989696
+    },
+    {
+      "path": "./org/unit/609/gatyachara_609_f.png",
+      "size": 7094,
+      "offset": 9993904
+    },
+    {
+      "path": "./org/unit/610/gatyachara_610_f.png",
+      "size": 4535,
+      "offset": 10001008
+    },
+    {
+      "path": "./org/unit/611/gatyachara_611_f.png",
+      "size": 5101,
+      "offset": 10005552
+    },
+    {
+      "path": "./org/unit/612/gatyachara_612_f.png",
+      "size": 4793,
+      "offset": 10010656
+    },
+    {
+      "path": "./org/unit/613/gatyachara_613_f.png",
+      "size": 4245,
+      "offset": 10015456
+    },
+    {
+      "path": "./org/unit/614/gatyachara_614_f.png",
+      "size": 4661,
+      "offset": 10019712
+    },
+    {
+      "path": "./org/unit/615/gatyachara_615_f.png",
+      "size": 5548,
+      "offset": 10024384
+    },
+    {
+      "path": "./org/unit/616/gatyachara_616_f.png",
+      "size": 5767,
+      "offset": 10029936
+    },
+    {
+      "path": "./org/unit/617/gatyachara_617_f.png",
+      "size": 4998,
+      "offset": 10035712
+    },
+    {
+      "path": "./org/unit/618/gatyachara_618_f.png",
+      "size": 3246,
+      "offset": 10040720
+    },
+    {
+      "path": "./org/unit/619/gatyachara_619_f.png",
+      "size": 5004,
+      "offset": 10043968
+    },
+    {
+      "path": "./org/unit/620/gatyachara_620_f.png",
+      "size": 4854,
+      "offset": 10048976
+    },
+    {
+      "path": "./org/unit/621/gatyachara_621_f.png",
+      "size": 3224,
+      "offset": 10053840
+    },
+    {
+      "path": "./org/unit/622/gatyachara_622_f.png",
+      "size": 3874,
+      "offset": 10057072
+    },
+    {
+      "path": "./org/unit/623/gatyachara_623_f.png",
+      "size": 4511,
+      "offset": 10060960
+    },
+    {
+      "path": "./org/unit/624/gatyachara_624_f.png",
+      "size": 1537,
+      "offset": 10065472
+    },
+    {
+      "path": "./org/unit/625/gatyachara_625_f.png",
+      "size": 3032,
+      "offset": 10067024
+    },
+    {
+      "path": "./org/unit/626/gatyachara_626_f.png",
+      "size": 3347,
+      "offset": 10070064
+    },
+    {
+      "path": "./org/unit/627/gatyachara_627_f.png",
+      "size": 3989,
+      "offset": 10073424
+    },
+    {
+      "path": "./org/unit/628/gatyachara_628_f.png",
+      "size": 3539,
+      "offset": 10077424
+    },
+    {
+      "path": "./org/unit/629/gatyachara_629_f.png",
+      "size": 2624,
+      "offset": 10080976
+    },
+    {
+      "path": "./org/unit/630/gatyachara_630_f.png",
+      "size": 3270,
+      "offset": 10083600
+    },
+    {
+      "path": "./org/unit/631/gatyachara_631_f.png",
+      "size": 3803,
+      "offset": 10086880
+    },
+    {
+      "path": "./org/unit/632/gatyachara_632_f.png",
+      "size": 8101,
+      "offset": 10090688
+    },
+    {
+      "path": "./org/unit/633/gatyachara_633_f.png",
+      "size": 6113,
+      "offset": 10098800
+    },
+    {
+      "path": "./org/unit/634/gatyachara_634_f.png",
+      "size": 4875,
+      "offset": 10104928
+    },
+    {
+      "path": "./org/unit/635/gatyachara_635_f.png",
+      "size": 3569,
+      "offset": 10109808
+    },
+    {
+      "path": "./org/unit/636/gatyachara_636_f.png",
+      "size": 1769,
+      "offset": 10113392
+    },
+    {
+      "path": "./org/unit/637/gatyachara_637_f.png",
+      "size": 5649,
+      "offset": 10115168
+    },
+    {
+      "path": "./org/unit/638/gatyachara_638_f.png",
+      "size": 6406,
+      "offset": 10120832
+    },
+    {
+      "path": "./org/unit/639/gatyachara_639_f.png",
+      "size": 4804,
+      "offset": 10127248
+    },
+    {
+      "path": "./org/unit/640/gatyachara_640_f.png",
+      "size": 5979,
+      "offset": 10132064
+    },
+    {
+      "path": "./org/unit/641/gatyachara_641_f.png",
+      "size": 5617,
+      "offset": 10138048
+    },
+    {
+      "path": "./org/unit/642/gatyachara_642_f.png",
+      "size": 7607,
+      "offset": 10143680
+    },
+    {
+      "path": "./org/unit/643/gatyachara_643_f.png",
+      "size": 3141,
+      "offset": 10151296
+    },
+    {
+      "path": "./org/unit/644/gatyachara_644_f.png",
+      "size": 7044,
+      "offset": 10154448
+    },
+    {
+      "path": "./org/unit/645/gatyachara_645_f.png",
+      "size": 3136,
+      "offset": 10161504
+    },
+    {
+      "path": "./org/unit/646/gatyachara_646_f.png",
+      "size": 3752,
+      "offset": 10164640
+    },
+    {
+      "path": "./org/unit/647/gatyachara_647_f.png",
+      "size": 5263,
+      "offset": 10168400
+    },
+    {
+      "path": "./org/unit/648/gatyachara_648_f.png",
+      "size": 4605,
+      "offset": 10173664
+    },
+    {
+      "path": "./org/unit/649/gatyachara_649_f.png",
+      "size": 5267,
+      "offset": 10178272
+    },
+    {
+      "path": "./org/unit/650/gatyachara_650_f.png",
+      "size": 4819,
+      "offset": 10183552
+    },
+    {
+      "path": "./org/unit/651/gatyachara_651_f.png",
+      "size": 4652,
+      "offset": 10188384
+    },
+    {
+      "path": "./org/unit/652/gatyachara_652_f.png",
+      "size": 5021,
+      "offset": 10193040
+    },
+    {
+      "path": "./org/unit/653/gatyachara_653_f.png",
+      "size": 4244,
+      "offset": 10198064
+    },
+    {
+      "path": "./org/unit/654/gatyachara_654_f.png",
+      "size": 2681,
+      "offset": 10202320
+    },
+    {
+      "path": "./org/unit/655/gatyachara_655_f.png",
+      "size": 5921,
+      "offset": 10205008
+    },
+    {
+      "path": "./org/unit/657/gatyachara_657_f.png",
+      "size": 4316,
+      "offset": 10210944
+    },
+    {
+      "path": "./org/unit/660/gatyachara_660_f.png",
+      "size": 5351,
+      "offset": 10215264
+    },
+    {
+      "path": "./org/unit/661/gatyachara_661_f.png",
+      "size": 5903,
+      "offset": 10220624
+    },
+    {
+      "path": "./org/unit/662/gatyachara_662_f.png",
+      "size": 8358,
+      "offset": 10226528
+    },
+    {
+      "path": "./org/unit/666/gatyachara_666_f.png",
+      "size": 6335,
+      "offset": 10234896
+    },
+    {
+      "path": "./org/unit/667/gatyachara_667_f.png",
+      "size": 2606,
+      "offset": 10241232
+    },
+    {
+      "path": "./org/unit/668/gatyachara_668_f.png",
+      "size": 4719,
+      "offset": 10243840
+    },
+    {
+      "path": "./org/unit/671/gatyachara_671_f.png",
+      "size": 4038,
+      "offset": 10248560
+    },
+    {
+      "path": "./org/unit/672/gatyachara_672_f.png",
+      "size": 3726,
+      "offset": 10252608
+    },
+    {
+      "path": "./org/unit/673/gatyachara_673_f.png",
+      "size": 1674,
+      "offset": 10256336
+    }
+  ]
+}

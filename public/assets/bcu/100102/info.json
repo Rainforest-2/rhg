@@ -1,0 +1,49 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.0",
+    "id": "asset_100102",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100102",
+    "time": null,
+    "version": 0,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/desktop.ini",
+      "size": 92,
+      "offset": 0
+    },
+    {
+      "path": "./org/page/img002_en.imgcut",
+      "size": 2250,
+      "offset": 96
+    },
+    {
+      "path": "./org/page/img002_en.png",
+      "size": 225893,
+      "offset": 2352
+    },
+    {
+      "path": "./org/page/img002_ko.imgcut",
+      "size": 2250,
+      "offset": 228256
+    },
+    {
+      "path": "./org/page/img002_ko.png",
+      "size": 232787,
+      "offset": 230512
+    },
+    {
+      "path": "./org/page/img002_tw.imgcut",
+      "size": 2250,
+      "offset": 463312
+    },
+    {
+      "path": "./org/page/img002_tw.png",
+      "size": 244246,
+      "offset": 465568
+    }
+  ]
+}

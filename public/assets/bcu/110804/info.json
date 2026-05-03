@@ -1,0 +1,98 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.7.0",
+    "id": "asset_110804",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110804",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/bg/bg.csv",
+      "size": 9742,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/bg.csv",
+      "size": 9742,
+      "offset": 9744
+    },
+    {
+      "path": "./org/data/Map_option.csv",
+      "size": 64162,
+      "offset": 19488
+    },
+    {
+      "path": "./org/data/Stage_option.csv",
+      "size": 9862,
+      "offset": 83664
+    },
+    {
+      "path": "./org/img/bg/bg185.png",
+      "size": 200025,
+      "offset": 93536
+    },
+    {
+      "path": "./org/img/rc/rc160.png",
+      "size": 9779,
+      "offset": 293568
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_293.csv",
+      "size": 711,
+      "offset": 303360
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS293_00.csv",
+      "size": 574,
+      "offset": 304080
+    },
+    {
+      "path": "./org/unit/484/c/484_c.imgcut",
+      "size": 3535,
+      "offset": 304656
+    },
+    {
+      "path": "./org/unit/484/c/484_c.mamodel",
+      "size": 13957,
+      "offset": 308192
+    },
+    {
+      "path": "./org/unit/484/c/484_c.png",
+      "size": 173669,
+      "offset": 322160
+    },
+    {
+      "path": "./org/unit/484/c/484_c00.maanim",
+      "size": 8214,
+      "offset": 495840
+    },
+    {
+      "path": "./org/unit/484/c/484_c01.maanim",
+      "size": 7200,
+      "offset": 504064
+    },
+    {
+      "path": "./org/unit/484/c/484_c02.maanim",
+      "size": 29096,
+      "offset": 511264
+    },
+    {
+      "path": "./org/unit/484/c/484_c03.maanim",
+      "size": 2741,
+      "offset": 540368
+    },
+    {
+      "path": "./org/unit/484/c/udi484_c.png",
+      "size": 14673,
+      "offset": 543120
+    }
+  ]
+}

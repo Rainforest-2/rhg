@@ -1,0 +1,36 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.1.0",
+    "id": "asset_100904",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100904",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/img/bgEffect/bubble.png",
+      "size": 642,
+      "offset": 0
+    },
+    {
+      "path": "./org/img/bgEffect/bubble02.png",
+      "size": 432,
+      "offset": 656
+    },
+    {
+      "path": "./org/img/bgEffect/bubble03_bg040.png",
+      "size": 748,
+      "offset": 1088
+    },
+    {
+      "path": "./org/img/bgEffect/img021.png",
+      "size": 223,
+      "offset": 1840
+    }
+  ]
+}

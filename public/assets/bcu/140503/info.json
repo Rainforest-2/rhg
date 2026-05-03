@@ -1,0 +1,28 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.12.0",
+    "id": "asset_140503",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 140503",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/unit/812/f/uni812_f00.png",
+      "size": 9128,
+      "offset": 0
+    },
+    {
+      "path": "./org/unit/816/f/uni816_f00.png",
+      "size": 8795,
+      "offset": 9136
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.12.2",
+    "id": "asset_140603",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 140603",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/bg/bgEffect_060_00_1.maanim",
+      "size": 240,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_060_00_4.maanim",
+      "size": 1310,
+      "offset": 240
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_060_00_3.maanim",
+      "size": 1301,
+      "offset": 1552
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_060_00_6.maanim",
+      "size": 2101,
+      "offset": 2864
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_058_00_2.maanim",
+      "size": 1150,
+      "offset": 4976
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_053_00_1.maanim",
+      "size": 85,
+      "offset": 6128
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_053_00_2.maanim",
+      "size": 1053,
+      "offset": 6224
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_060_00_2.maanim",
+      "size": 390,
+      "offset": 7280
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_059_00_4.maanim",
+      "size": 1425,
+      "offset": 7680
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_060_00_5.maanim",
+      "size": 2089,
+      "offset": 9120
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_058_00_1.maanim",
+      "size": 1111,
+      "offset": 11216
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_059_00_1.maanim",
+      "size": 1117,
+      "offset": 12336
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_056_00_1.maanim",
+      "size": 641,
+      "offset": 13456
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_059_00_3.maanim",
+      "size": 1802,
+      "offset": 14112
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_059_00_2.maanim",
+      "size": 2153,
+      "offset": 15920
+    }
+  ]
+}

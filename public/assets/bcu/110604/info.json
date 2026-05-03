@@ -1,0 +1,53 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.5.1",
+    "id": "asset_110604",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110604",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/CC_AllParts_status.csv",
+      "size": 149,
+      "offset": 0
+    },
+    {
+      "path": "./org/stage/C/MSDC/MapStageDataC_105.csv",
+      "size": 1166,
+      "offset": 160
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC105_00.csv",
+      "size": 941,
+      "offset": 1328
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC105_01.csv",
+      "size": 959,
+      "offset": 2272
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC105_02.csv",
+      "size": 962,
+      "offset": 3232
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC105_03.csv",
+      "size": 986,
+      "offset": 4208
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC105_04.csv",
+      "size": 958,
+      "offset": 5200
+    }
+  ]
+}

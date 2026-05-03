@@ -1,0 +1,29 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.0",
+    "id": "asset_090901",
+    "author": "PONOS",
+    "name": null,
+    "desc": "BC 9.9 content: enemy icons",
+    "time": null,
+    "version": 0,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/medal/medal_086.png",
+      "size": 7502,
+      "offset": 0
+    },
+    {
+      "path": "./org/page/medal/medal_085.png",
+      "size": 8330,
+      "offset": 7504
+    },
+    {
+      "path": "./org/enemy/526/enemy_icon_526.png",
+      "size": 1702,
+      "offset": 15840
+    }
+  ]
+}

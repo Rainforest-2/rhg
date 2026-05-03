@@ -1,0 +1,53 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.8.0",
+    "id": "asset_130502",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 130502",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 256244,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 20859,
+      "offset": 256256
+    },
+    {
+      "path": "./org/enemy/693/enemy_icon_693.png",
+      "size": 1166,
+      "offset": 277120
+    },
+    {
+      "path": "./org/enemy/694/enemy_icon_694.png",
+      "size": 2914,
+      "offset": 278288
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_203_f.png",
+      "size": 14153,
+      "offset": 281216
+    },
+    {
+      "path": "./org/unit/759/gatyachara_759_f.png",
+      "size": 6953,
+      "offset": 295376
+    },
+    {
+      "path": "./org/unit/760/gatyachara_760_f.png",
+      "size": 5180,
+      "offset": 302336
+    }
+  ]
+}

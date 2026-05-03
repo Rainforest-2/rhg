@@ -1,0 +1,123 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.7.0",
+    "id": "asset_130404",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 130404",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/unit/758/c/758_c.imgcut",
+      "size": 3804,
+      "offset": 0
+    },
+    {
+      "path": "./org/unit/758/c/758_c.mamodel",
+      "size": 8557,
+      "offset": 3808
+    },
+    {
+      "path": "./org/unit/758/c/758_c.png",
+      "size": 57977,
+      "offset": 12368
+    },
+    {
+      "path": "./org/unit/758/c/758_c00.maanim",
+      "size": 6647,
+      "offset": 70352
+    },
+    {
+      "path": "./org/unit/758/c/758_c01.maanim",
+      "size": 2967,
+      "offset": 77008
+    },
+    {
+      "path": "./org/unit/758/c/758_c02.maanim",
+      "size": 17079,
+      "offset": 79984
+    },
+    {
+      "path": "./org/unit/758/c/758_c03.maanim",
+      "size": 3761,
+      "offset": 97072
+    },
+    {
+      "path": "./org/unit/758/c/edi758_c.png",
+      "size": 3888,
+      "offset": 100848
+    },
+    {
+      "path": "./org/unit/758/c/udi758_c00.png",
+      "size": 10742,
+      "offset": 104736
+    },
+    {
+      "path": "./org/unit/758/c/uni758_c00.png",
+      "size": 5430,
+      "offset": 115488
+    },
+    {
+      "path": "./org/unit/758/f/758_f.imgcut",
+      "size": 3722,
+      "offset": 120928
+    },
+    {
+      "path": "./org/unit/758/f/758_f.mamodel",
+      "size": 9017,
+      "offset": 124656
+    },
+    {
+      "path": "./org/unit/758/f/758_f.png",
+      "size": 58292,
+      "offset": 133680
+    },
+    {
+      "path": "./org/unit/758/f/758_f00.maanim",
+      "size": 7139,
+      "offset": 191984
+    },
+    {
+      "path": "./org/unit/758/f/758_f01.maanim",
+      "size": 3352,
+      "offset": 199136
+    },
+    {
+      "path": "./org/unit/758/f/758_f02.maanim",
+      "size": 17585,
+      "offset": 202496
+    },
+    {
+      "path": "./org/unit/758/f/758_f03.maanim",
+      "size": 4649,
+      "offset": 220096
+    },
+    {
+      "path": "./org/unit/758/f/edi758_f.png",
+      "size": 2755,
+      "offset": 224752
+    },
+    {
+      "path": "./org/unit/758/f/udi758_f00.png",
+      "size": 10531,
+      "offset": 227520
+    },
+    {
+      "path": "./org/unit/758/f/uni758_f00.png",
+      "size": 4377,
+      "offset": 238064
+    },
+    {
+      "path": "./org/unit/758/unit758.csv",
+      "size": 746,
+      "offset": 242448
+    }
+  ]
+}

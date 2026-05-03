@@ -1,0 +1,43 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.1.1",
+    "id": "asset_120201",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120201",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/635/enemy_icon_635.png",
+      "size": 2279,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/636/enemy_icon_636.png",
+      "size": 1618,
+      "offset": 2288
+    },
+    {
+      "path": "./org/enemy/637/enemy_icon_637.png",
+      "size": 2458,
+      "offset": 3920
+    },
+    {
+      "path": "./org/enemy/638/enemy_icon_638.png",
+      "size": 1642,
+      "offset": 6384
+    },
+    {
+      "path": "./org/enemy/639/enemy_icon_639.png",
+      "size": 1717,
+      "offset": 8032
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.3.0",
+    "id": "asset_120301",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120301",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/medallist.json",
+      "size": 19097,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/640/enemy_icon_640.png",
+      "size": 1811,
+      "offset": 19104
+    },
+    {
+      "path": "./org/enemy/641/enemy_icon_641.png",
+      "size": 1774,
+      "offset": 20928
+    },
+    {
+      "path": "./org/enemy/642/enemy_icon_642.png",
+      "size": 1616,
+      "offset": 22704
+    },
+    {
+      "path": "./org/enemy/643/enemy_icon_643.png",
+      "size": 1739,
+      "offset": 24320
+    },
+    {
+      "path": "./org/enemy/644/enemy_icon_644.png",
+      "size": 608,
+      "offset": 26064
+    },
+    {
+      "path": "./org/enemy/645/enemy_icon_645.png",
+      "size": 1622,
+      "offset": 26672
+    },
+    {
+      "path": "./org/enemy/646/enemy_icon_646.png",
+      "size": 1294,
+      "offset": 28304
+    },
+    {
+      "path": "./org/page/medal/medal_105.png",
+      "size": 7819,
+      "offset": 29600
+    },
+    {
+      "path": "./org/page/medal/medal_106.png",
+      "size": 5746,
+      "offset": 37424
+    },
+    {
+      "path": "./org/page/medal/medal_107.png",
+      "size": 7929,
+      "offset": 43184
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.5.0",
+    "id": "asset_110503",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110503",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/R/StageRR/stageRR010_00.csv",
+      "size": 2293,
+      "offset": 0
+    }
+  ]
+}

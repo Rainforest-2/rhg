@@ -1,0 +1,33 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.7.0",
+    "id": "asset_110802",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110802",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 206769,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 17948,
+      "offset": 206784
+    },
+    {
+      "path": "./org/unit/674/gatyachara_674_f.png",
+      "size": 5386,
+      "offset": 224736
+    }
+  ]
+}

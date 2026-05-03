@@ -1,0 +1,38 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.12.1",
+    "id": "asset_140504",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 140504",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/orb/equipment_attribute_s.imgcut",
+      "size": 310,
+      "offset": 0
+    },
+    {
+      "path": "./org/page/orb/equipment_effect_s.png",
+      "size": 12802,
+      "offset": 320
+    },
+    {
+      "path": "./org/page/orb/equipment_attribute_s.png",
+      "size": 16528,
+      "offset": 13136
+    },
+    {
+      "path": "./org/page/orb/equipment_effect_s.imgcut",
+      "size": 617,
+      "offset": 29664
+    }
+  ]
+}

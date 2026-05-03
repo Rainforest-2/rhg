@@ -1,0 +1,98 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.4.3",
+    "id": "asset_120701",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120701",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/medallist.json",
+      "size": 20707,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/656/enemy_icon_656.png",
+      "size": 2045,
+      "offset": 20720
+    },
+    {
+      "path": "./org/enemy/657/enemy_icon_657.png",
+      "size": 1963,
+      "offset": 22768
+    },
+    {
+      "path": "./org/enemy/658/enemy_icon_658.png",
+      "size": 2084,
+      "offset": 24736
+    },
+    {
+      "path": "./org/enemy/659/enemy_icon_659.png",
+      "size": 1519,
+      "offset": 26832
+    },
+    {
+      "path": "./org/enemy/660/enemy_icon_660.png",
+      "size": 1767,
+      "offset": 28352
+    },
+    {
+      "path": "./org/enemy/661/enemy_icon_661.png",
+      "size": 1667,
+      "offset": 30128
+    },
+    {
+      "path": "./org/enemy/662/enemy_icon_662.png",
+      "size": 1953,
+      "offset": 31808
+    },
+    {
+      "path": "./org/enemy/663/enemy_icon_663.png",
+      "size": 1580,
+      "offset": 33776
+    },
+    {
+      "path": "./org/enemy/664/enemy_icon_664.png",
+      "size": 1488,
+      "offset": 35360
+    },
+    {
+      "path": "./org/enemy/665/enemy_icon_665.png",
+      "size": 1073,
+      "offset": 36848
+    },
+    {
+      "path": "./org/enemy/666/enemy_icon_666.png",
+      "size": 1681,
+      "offset": 37936
+    },
+    {
+      "path": "./org/enemy/667/enemy_icon_667.png",
+      "size": 1706,
+      "offset": 39632
+    },
+    {
+      "path": "./org/enemy/668/enemy_icon_668.png",
+      "size": 1571,
+      "offset": 41344
+    },
+    {
+      "path": "./org/page/medal/medal_111.png",
+      "size": 7055,
+      "offset": 42928
+    },
+    {
+      "path": "./org/page/medal/medal_112.png",
+      "size": 6836,
+      "offset": 49984
+    }
+  ]
+}

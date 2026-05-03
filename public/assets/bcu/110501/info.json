@@ -1,0 +1,73 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.5.0",
+    "id": "asset_110501",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110501",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/604/enemy_icon_604.png",
+      "size": 1663,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/605/enemy_icon_605.png",
+      "size": 2177,
+      "offset": 1664
+    },
+    {
+      "path": "./org/enemy/606/enemy_icon_606.png",
+      "size": 2131,
+      "offset": 3856
+    },
+    {
+      "path": "./org/enemy/607/enemy_icon_607.png",
+      "size": 1434,
+      "offset": 6000
+    },
+    {
+      "path": "./org/enemy/608/enemy_icon_608.png",
+      "size": 1198,
+      "offset": 7440
+    },
+    {
+      "path": "./org/enemy/609/enemy_icon_609.png",
+      "size": 1113,
+      "offset": 8640
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_167_f.png",
+      "size": 3634,
+      "offset": 9760
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_168_f.png",
+      "size": 3803,
+      "offset": 13408
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_169_f.png",
+      "size": 3678,
+      "offset": 17216
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_170_f.png",
+      "size": 3617,
+      "offset": 20896
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_171_f.png",
+      "size": 3749,
+      "offset": 24528
+    }
+  ]
+}

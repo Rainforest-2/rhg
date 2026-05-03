@@ -1,0 +1,31 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.1.0",
+    "id": "asset_100905",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100905",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/img/bg/bg041.png",
+      "size": 254981,
+      "offset": 0
+    },
+    {
+      "path": "./org/img/bg/bg081.png",
+      "size": 474586,
+      "offset": 254992
+    },
+    {
+      "path": "./org/img/bg/bg101.png",
+      "size": 180896,
+      "offset": 729584
+    }
+  ]
+}

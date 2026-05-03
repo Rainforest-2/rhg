@@ -1,0 +1,80 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.2",
+    "id": "asset_100201",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100201",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/bg/bg.csv",
+      "size": 6895,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/soul/013/battle_soul_013.imgcut",
+      "size": 393,
+      "offset": 6896
+    },
+    {
+      "path": "./org/battle/soul/013/battle_soul_013.maanim",
+      "size": 13595,
+      "offset": 7296
+    },
+    {
+      "path": "./org/battle/soul/013/battle_soul_013.mamodel",
+      "size": 3259,
+      "offset": 20896
+    },
+    {
+      "path": "./org/battle/soul/013/battle_soul_013.png",
+      "size": 54387,
+      "offset": 24160
+    },
+    {
+      "path": "./org/battle/soul/014/battle_soul_014.imgcut",
+      "size": 223,
+      "offset": 78560
+    },
+    {
+      "path": "./org/battle/soul/014/battle_soul_014.maanim",
+      "size": 1444,
+      "offset": 78784
+    },
+    {
+      "path": "./org/battle/soul/014/battle_soul_014.mamodel",
+      "size": 586,
+      "offset": 80240
+    },
+    {
+      "path": "./org/battle/soul/014/battle_soul_014.png",
+      "size": 11529,
+      "offset": 80832
+    },
+    {
+      "path": "./org/battle/soul/015/battle_soul_015.imgcut",
+      "size": 223,
+      "offset": 92368
+    },
+    {
+      "path": "./org/battle/soul/015/battle_soul_015.maanim",
+      "size": 1444,
+      "offset": 92592
+    },
+    {
+      "path": "./org/battle/soul/015/battle_soul_015.mamodel",
+      "size": 580,
+      "offset": 94048
+    },
+    {
+      "path": "./org/battle/soul/015/battle_soul_015.png",
+      "size": 11529,
+      "offset": 94640
+    }
+  ]
+}

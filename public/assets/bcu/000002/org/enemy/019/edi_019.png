@@ -1,0 +1,583 @@
+<!DOCTYPE html><html>
+<head>
+<script>if(location.host=="j2k.naver.com"||location.host=="jptrans.naver.net"||location.host=="archive.org"){window.top.location="http://battlecats-db.com/";}window.onload=function(){var a=document.getElementsByClassName("adsbygoogle");a.length&&!a[0].getElementsByTagName("iframe").length&&($("body").css({display:"none"}),$("html").css({"background-color":"#b06000"}))};</script><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create', 'UA-48689104-8', 'auto');ga('send', 'pageview');</script><meta charset="utf-8">
+<link rel="stylesheet" href="css/pc.css">
+<script src="script/import.js" type="text/javascript"></script>
+<title>にゃんこ大戦争データベース</title>
+<meta name="description" content="「にゃんこ大戦争」のデータベース掲載サイトです。敵味方キャラ・各ステージデータ詳細、スケジュール確認が行えます。">
+<meta name="keywords" content="にゃんこ,にゃんこ大戦争,battlecats,データベース,database,DB,攻略,日程,スケジュール,イベント,event">
+<meta name="robots" content="index,follow">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="cache-Control" content="no-cache">
+<meta http-equiv="expires" content="0">
+</head>
+<body>
+<div id="main">
+ <div id="header-img"><img src="https://battlecats-db.imgs-server.com/logo.png"></div>
+<div id="header-menu">
+ <ul class="clearfix">
+  <li class="home"><a href="./">スケジュール</a></li>
+  <li><a href="./stage/">ステージ</a></li>
+  <li><a href="./unit/">味方詳細</a></li>
+  <li><a href="./unit/index_status.html">味方ステータス</a></li>
+  <li><a href="./enemy/">敵詳細</a></li>
+  <li><a href="./enemy/index_status.html">敵ステータス</a></li>
+  <li><a href="./unit/index_lot.html">ガチャ</a></li>
+  <li><a href="./unit/index_combo.html">にゃんコンボ</a></li>
+ </ul>
+</div>
+ <div id="header-img">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcHeader -->
+<ins class="adsbygoogle bcHeader"
+     style="display:block;width:950px;"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="1342520817"
+     data-ad-format="horizontal"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+ </div>
+ <div id="container">
+  <div id="contents">
+   <h2>更新履歴 ＆ スケジュール</h2>
+   <div class="news">
+<table class="schedule fs12 pd1 bgc02"><tr class="bgc12"><td>更新履歴</td><td class="adj"></td></tr>
+<tr><td colspan="2">
+2018.07.03　スケジュール更新<hr class="line">
+　　　　　　Ver7.2 ステージデータ「SPステージ」・他、後日追加予定<hr class="line">
+2018.06.30　Ver7.2 ステージデータ「<a href="stage/s03007.html">宇宙編 第2章</a>」「<a href="stage/index_true_legendstory.html">真レジェンド</a>」追加<hr class="line">
+2018.06.28　Ver7.2「<a href="enemy/ver070200.html">敵キャラ</a>」追加 ※スターエイリアンの初期ステータスをお宝所持200％に変更<hr class="line">
+2018.06.27　Ver7.2「<a href="unit/ver070200.html">味方キャラ</a>」追加<hr class="line">
+2018.06.21　スケジュール更新<hr class="line">
+</td></tr>
+<tr class="bgc12"><td>　　　　　　過去の更新履歴 ※別ページ作成予定</td><td class="adj"></td></tr>
+</table>
+   </div>
+   <div class="maincontents">
+<table class="schedule mainline fs12 pd1 bgc02">
+<!--
+<tr class="bgc12"><td>Ver5.10追加</td><td></td><td class="adj"></td></tr>
+<tr class="bgc06"><td class="R">キャラ</td><td>「<a href="unit/ver051000.html">味方キャラ</a>」「<a href="enemy/ver051000.html">敵キャラ</a>」</td><td class="adj"></td></tr>
+<tr class="bgc04"><td class="R">ステージ</td><td>「<a href="stage/index_sp_event.html">SP（イベント）</a>」「<a href="stage/index_sp_small.html">SP（ちびキャラ開眼）</a>」「<a href="stage/index_collabo.html">コラボ</a>」</td><td class="adj"></td></tr>
+<tr class="bgc04 space"><td colspan="3"></td></tr>
+-->
+<tr class="bgc12"><td>スケジュール</td><td></td><td class="adj"></td></tr>
+<tr class="bgc06"><td class="R">定期</td><td>「<a href="./schedule/regular.html">定期イベント</a>」</td><td class="adj"></td></tr>
+<tr class="bgc04"><td class="R">履歴</td><td>「<a href="./schedule/201806.html">2018年07月</a>」</td><td class="adj"></td></tr>
+<tr class="bgc06"><td></td><td>「<a href="./schedule/201806.html">2018年06月</a>」「<a href="./schedule/201805.html">2018年05月</a>」「<a href="./schedule/201804.html">2018年04月</a>」「<a href="./schedule/201803.html">2018年03月</a>」「<a href="./schedule/201802.html">2018年02月</a>」「<a href="./schedule/201801.html">2018年01月</a>」</td><td class="adj"></td></tr>
+</table>
+   </div>
+<div id="event" class="tab">
+   <table class="schedule fs12 pd1"><tr class="bgc12"><td><font class="H">イベント</font>　<a href="#tab2" class="tab2" onclick="ChangeTab('lot');mChangeTab('m_lot');return false;">通常レアガチャ</a>　<a href="#tab3" class="tab3" onclick="ChangeTab('mission');mChangeTab('m_mission');return false;">にゃんこミッション</a>　<a href="#tab4" class="tab4" onclick="ChangeTab('sale');mChangeTab('m_sale');return false;">セール</a></td><td class="adj"></td></tr></table>
+   <div class="maincontents">
+<table class="schedule mainline fs12 pd1 bgc02">
+
+<tr class="bgc12"><td>06月27日</td><td>Ver7.2</td></tr>
+<tr class="bgc06"><td></td><td>ステージ「<a href="./stage/s03007.html">宇宙編 第2章</a>」</td></tr>
+<tr><td></td><td>EX「<a href="./unit/438.html">激・神さま</a>」</td></tr>
+<tr><td></td><td>新敵「<a href="./enemy/419.html">マナブくん</a>」「<a href="./enemy/420.html">ゲコック</a>」「<a href="./enemy/421.html">神さま（本気）</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u438-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e419.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e420.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e421.png"></td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc06"><td></td><td>真レジェンドステージ「<a href="./stage/s13004.html">ワンワン湾</a>」</td></tr>
+<tr><td></td><td>新敵「<a href="./enemy/422.html">ダテメガネル</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e422.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月01日11時～</td><td>月間イベント＆開眼ステージ</td></tr>
+<tr class="bgc06"><td>　08月01日11時</td><td>期間限定開催</td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/s01031.png"></td></tr>
+<tr class="bgc06"><td class="R">01日11時～</td><td>SPステージ「<a href="./stage/s01031.html">だって夏じゃニャーイ！</a>」</td></tr>
+<tr><td></td><td>レア「<a href="./unit/123.html">女王様の休日</a>」</td></tr>
+<tr><td></td><td>固有敵「<a href="./enemy/101.html">夏セレブ</a>」「<a href="./enemy/102.html">ビキニグマ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u123-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e101.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e102.png"></td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc06"><td class="R">16日11時～</td><td>SPステージ「<a href="./stage/s01089.html">開眼の女王様の休日襲来！</a>」</td></tr>
+<tr><td></td><td>レア「<a href="./unit/123.html">コールセンターのOL</a> <font class="H">第3形態</font>」</td></tr>
+<tr><td></td><td>固有敵「<a href="./enemy/255.html">コールセンターのOL</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u123-3.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e255.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>06月28日11時～</td><td>スペシャルステージ</td></tr>
+<tr class="bgc06"><td>　07月12日11時</td><td>SPステージ「<a href="./stage/s07000.html">風雲にゃんこ塔</a>」<font class="H">※ 報酬・クリア状況リセット</font></td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/s07000.png"></td></tr>
+<tr><td></td><td>EX「<a href="./unit/353.html">ネコ仙人</a>」※ 風雲にゃんこ塔 30階 クリア後、にゃんこミッション（SP）で取得</td></tr>
+<tr><td></td><td>EX「<a href="./unit/384.html">謎仮面のウララー</a>」※ 風雲にゃんこ塔 40階 クリア後、にゃんこミッション（SP）で取得</td></tr>
+<tr><td></td><td>固有敵「<a href="./enemy/356.html">ネコ仙人</a>」「<a href="./enemy/382.html">謎仮面のウララー</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u353-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u384-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e356.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e382.png"></td></tr>
+<tr><td></td><td>※ 16F以降の条件 未来編 第2章クリア</td></tr>
+<tr><td></td><td>※ 21F以降の条件 ユーザーランク1600以上</td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月03日11時～</td><td>スペシャルステージ</td></tr>
+<tr class="bgc06"><td>　07月09日11時</td><td>SPステージ「闇討ち」</td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/s01061.png"></td></tr>
+<tr class="bgc06"><td class="R">03日11時～</td><td>SPステージ「<a href="./stage/s01061.html">闇討ち 1st</a>」 <font class="L">採点報酬</font></td></tr>
+<tr class="bgc04"><td class="R">04日11時～</td><td>SPステージ「<a href="./stage/s01062.html">闇討ち 2nd</a>」 <font class="L">採点報酬</font></td></tr>
+<tr class="bgc06"><td class="R">06日11時～</td><td>SPステージ「<a href="./stage/s01063.html">闇討ち 3rd</a>」 <font class="L">採点報酬</font></td></tr>
+<tr class="bgc04"><td class="R">08日11時～</td><td>SPステージ「<a href="./stage/s01064.html">闇討ち Last</a>」 <font class="L">採点報酬</font></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月07日00時～</td><td>マタタビ！フェスティバル！！</td></tr>
+<tr class="bgc06"><td>　07月08日末</td><td>期間限定開催</td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/fes_matatabi.png"></td></tr>
+<tr class="bgc06"><td class="R">07日</td><td>SPステージ「<a href="./stage/s01097.html">進化の緑マタタビ</a>」「<a href="./stage/s01098.html">進化の紫マタタビ</a>」「<a href="./stage/s01099.html">進化の赤マタタビ</a>」</td></tr>
+<tr class="bgc04"><td class="R">08日</td><td>SPステージ「<a href="./stage/s01100.html">進化の青マタタビ</a>」「<a href="./stage/s01101.html">進化の黄マタタビ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/i033.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i030.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i031.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i032.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i034.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/i038.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i035.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i036.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i037.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i039.png"> <img class="char" src="https://battlecats-db.imgs-server.com/i040.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月12日11時～</td><td>3700万ダウンロード突破！！記念キャンペーン！！</td></tr>
+<tr class="bgc06"><td>　07月26日15時</td><td>期間限定開催</td></tr>
+<tr><td></td><td></td></tr>
+<!--<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/event_2018_3700dl.png"></td></tr>-->
+<tr class="bgc06"><td></td><td>感謝感激！世界累計3500万ダウンロード突破を記念して毎日ネコカン20個プレゼント</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/i013.png"></td></tr>
+<tr><td></td><td>※ 合計15日間で、ネコカン300個</td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc06"><td></td><td>「イベントオールスターズ」登場！</td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/event_2016_allstars.png"></td></tr>
+<tr class="bgc04"><td class="R">12日11時～</td><td>SPステージ「<a href="./stage/s01033.html">月イベントオールスターズ スペシャル記念！</a>」</td></tr>
+<tr><td class="R">15日11時</td><td>固有敵「<a href="./enemy/086.html">高校教師</a>」「<a href="./enemy/087.html">武者わんこ</a>」「<a href="./enemy/089.html">ゴリ婿</a>」「<a href="./enemy/102.html">ビキニグマ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e086.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e087.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e089.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e102.png"></td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc04"><td class="R">15日11時～</td><td>SPステージ「<a href="./stage/s01034.html">月イベントオールスターズ ウルトラ記念！</a>」</td></tr>
+<tr><td class="R">17日11時</td><td>固有敵「<a href="./enemy/064.html">ペ課長</a>」「<a href="./enemy/065.html">悪魔王サンタ</a>」「<a href="./enemy/068.html">福の神</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e064.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e065.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e068.png"></td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc04"><td class="R">17日11時～</td><td>SPステージ「<a href="./stage/s01035.html">月イベントオールスターズ ミラクル記念！</a>」</td></tr>
+<tr><td class="R">19日11時</td><td>固有敵「<a href="./enemy/067.html">獅子カバブー</a>」「<a href="./enemy/069.html">クマトーク</a>」「<a href="./enemy/101.html">夏セレブ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e067.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e069.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e101.png"></td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc04"><td class="R">19日11時～</td><td>SPステージ「<a href="./stage/s01070.html">月イベントオールスターズ ワンダフル記念！</a>」</td></tr>
+<tr><td class="R">21日11時</td><td>固有敵「<a href="./enemy/103.html">閻魔大王</a>」「<a href="./enemy/104.html">ハシル君</a>」「<a href="./enemy/110.html">バトルクマッチョ</a>」「<a href="./enemy/111.html">ペ仙人</a>」</td></tr>
+<tr><td></td><td>固有敵「<a href="./enemy/112.html">マスターダッフン</a>」「<a href="./enemy/113.html">豚戦わんこ</a>」「<a href="./enemy/158.html">マーチン</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e103.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e104.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e110.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e111.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/e112.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e113.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e158.png"></td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc04"><td class="R">21日11時～</td><td>SPステージ「<a href="./stage/s01079.html">イベントオールスターズ エクセレント記念！</a>」</td></tr>
+<tr><td class="R">23日11時</td><td>固有敵「<a href="./enemy/088.html">メガニャンコ</a>」「<a href="./enemy/199.html">わんぷきん</a>」「<a href="./enemy/200.html">まゆげ伯爵</a>」「<a href="./enemy/201.html">ドバット</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e088.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e199.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e200.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e201.png"></td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc04"><td class="R">23日11時～</td><td>SPステージ「<a href="./stage/s01146.html">イベントオールスターズ グレイト記念！</a>」</td></tr>
+<tr><td class="R">26日11時</td><td>固有敵「<a href="./enemy/215.html">ナカイサンタ</a>」「<a href="./enemy/265.html">ぼったくラッコ</a>」「<a href="./enemy/284.html">売り子エル</a>」</td></tr>
+<tr><td></td><td>固有敵「<a href="./enemy/308.html">パオンモス</a>」「<a href="./enemy/309.html">アイスわんこ</a>」「<a href="./enemy/310.html">雪玉</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e215.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e265.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e284.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e308.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e309.png"> <img class="char" src="https://battlecats-db.imgs-server.com/e310.png"> </td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc06"><td class="R">～26日末</td><td>トレジャーフェスティバル</td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/fes_treasure.png"></td></tr>
+<tr class="bgc04"><td class="R">偶数日</td><td>「<a href="./stage/s03000.html">日本編 第1章</a>」「<a href="./stage/s03001.html">日本編 第2章</a>」「<a href="./stage/s03002.html">日本編 第3章</a>」 お宝出現率x2 （全ステージ）</td></tr>
+<tr class="bgc03"><td class="R">奇数日</td><td>「<a href="./stage/s03003.html">未来編 第1章</a>」「<a href="./stage/s03004.html">未来編 第2章</a>」「<a href="./stage/s03005.html">未来編 第3章</a>」 お宝出現率x2 （全ステージ）</td></tr>
+<tr class="bgc04"><td></td><td>「<a href="./stage/s03006.html">宇宙編 第1章</a>」 お宝出現率x2 （全ステージ）</td></tr>
+<tr><td></td><td>14日 17日 20日 23日 26日</td></tr>
+<tr><td></td><td>※ トレジャーフェスティバル「日本編」「未来編」は、日本編 第1章 クリア後出現</td></tr>
+<tr><td></td><td>※ トレジャーフェスティバル「宇宙編」は、未来編 第1章 クリア後出現</td></tr>
+<tr class="space"><td></td></tr>
+<tr class="bgc06"><td></td><td>ガマトト探検隊</td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/event_2016_gamatoto.png"></td></tr>
+<tr class="bgc04"><td class="R">～19日11時</td><td>「ネコの目洞窟」<!--5003--></td></tr>
+<tr class="bgc03"><td class="R">19日11時～</td><td>「XP大収穫祭 初級」<!--5000-->「XP大収穫祭 中級」<!--5001-->「XP大収穫祭 上級」<!--5002--></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月13日11時～</td><td>ランキングステージ</td></tr>
+<tr class="bgc06"><td>　07月20日11時</td><td>「<a href="./stage/s11002.html">不死鳥大会</a>」</td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/s11001.png"></td></tr>
+<tr><td></td><td>固有敵「<a href="./enemy/285.html">木人城</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/e285.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月16日</td><td>海の日記念☆</td></tr>
+<tr class="bgc06"><td></td><td>祝日感謝！海の日を記念してレアチケット1枚プレゼント！</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/i012.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+
+<!---->
+<tr><td></td><td class="adj"></td></tr>
+</table>
+   </div>
+<!-- ０ -->
+<div style="width:336px;float:left;"><!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcFooterL -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:336px;height:280px"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="7109852816"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+<div style="width:336px;float:right;">
+<!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcFooterR -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:336px;height:280px"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="1063319217"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+</div><!--tab-->
+
+<div id="lot" class="tab">
+   <table class="schedule fs12 pd1"><tr class="bgc12"><td><a href="#tab1" class="tab1" onclick="ChangeTab('event');mChangeTab('m_event');return false;">イベント</a>　<font class="H">通常レアガチャ</font>　<a href="#tab3" class="tab3" onclick="ChangeTab('mission');mChangeTab('m_mission');return false;">にゃんこミッション</a>　<a href="#tab4" class="tab4" onclick="ChangeTab('sale');mChangeTab('m_sale');return false;">セール</a></td><td class="adj"></td></tr></table>
+   <div class="maincontents">
+<table class="schedule mainline fs12 pd1 bgc02">
+
+<tr class="bgc12"><td>07月07日11時～</td><td>レアガチャ 超激05％ 激25％ レア70％</td></tr>
+<tr class="bgc06"><td>　07月09日11時</td><td>「<a href="./unit/lot010.html">超古代勇者ウルトラソウルズガチャ</a>」 <a href="./unit/status_lot010.html">ステータス一覧</a></td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/lot230.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/135.html">うらしまタロウ</a>」「<a href="./unit/136.html">ツルの恩返し</a>」「<a href="./unit/137.html">ももたろう</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/138.html">かさじぞう</a>」「<a href="./unit/139.html">かぐやひめ</a>」「<a href="./unit/204.html">カチカチヤマンズ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/323.html">さるかに合戦</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u135-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u136-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u137-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u138-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u139-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u204-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u323-1.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月09日11時～</td><td>レアガチャ <font class="H">おまけアップ</font> 超激05％ 激25％ レア70％</td></tr>
+<tr class="bgc06"><td>　07月12日11時</td><td>「<a href="./unit/lot039.html">メタルバスターズガチャ</a>」＋激レア <a href="./unit/status_lot039.html">ステータス一覧</a></td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/lot273.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/398.html">風隼さくら</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u398-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/058.html">ネコシュバリエ</a>」「<a href="./unit/139.html">かぐやひめ</a>」「<a href="./unit/171.html">テコルガ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/262.html">天誅ハヤブサ</a>」「<a href="./unit/317.html">海王神ポセイドン</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u058-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u139-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u171-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u262-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u317-1.png"></td></tr>
+<tr><td></td><td>激レア「<a href="./unit/229.html">ハロウィンねねこ</a>」「<a href="./unit/277.html">夏色ねねこ</a>」「<a href="./unit/315.html">大掃除ねねこ</a>」</td></tr>
+<tr><td></td><td>激レア「<a href="./unit/333.html">イースターねねこ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u229-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u277-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u315-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u333-1.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月12日11時～</td><td>レアガチャ 超激05％ 激25％ レア70％</td></tr>
+<tr class="bgc06"><td>　07月13日11時</td><td>「<a href="./unit/lot002.html">超激ダイナマイツガチャ</a>」 <a href="./unit/status_lot002.html">ステータス一覧</a></td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/lot289.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/043.html">ネコアイス</a>」「<a href="./unit/044.html">ネコマシン</a>」「<a href="./unit/045.html">鬼にゃんま</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/058.html">ネコシュバリエ</a>」「<a href="./unit/060.html">ねこベビー</a>」「<a href="./unit/144.html">ねこナース</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/428.html">ネコクエスト</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u043-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u044-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u045-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u058-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u060-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u144-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u428-1.png"></td></tr>
+<tr><td></td><td>※ 1枚/1回 福引チケットプレゼント</td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>07月13日11時～</td><td>レアガチャ 超激09％ 激26％ レア65％</td></tr>
+<tr class="bgc06"><td>　07月16日11時</td><td>「<a href="./unit/lot034.html">極ネコ祭ガチャ</a>」 <a href="./unit/status_lot034.html">ステータス一覧</a></td></tr>
+<tr><td></td><td><img class="bnr" src="https://battlecats-db.imgs-server.com/lot302.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/334.html">黒獣ガオウ</a>」「<a href="./unit/379.html">黒無垢のミタマ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u334-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u379-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/035.html">ネコルガ</a>」「<a href="./unit/169.html">アシルガ</a>」「<a href="./unit/170.html">クビルガ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/171.html">テコルガ</a>」「<a href="./unit/172.html">バララガ</a>」「<a href="./unit/241.html">トゲルガ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u035-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u169-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u170-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u171-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u172-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u241-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/072.html">真田幸村</a>」「<a href="./unit/073.html">前田慶次</a>」「<a href="./unit/074.html">織田信長</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/125.html">伊達政宗</a>」「<a href="./unit/126.html">武田信玄</a>」「<a href="./unit/159.html">上杉謙信</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/339.html">今川義元</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u072-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u073-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u074-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u125-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u126-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u159-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u339-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/084.html">地龍ソドム</a>」「<a href="./unit/085.html">聖龍メギドラ</a>」「<a href="./unit/086.html">竜騎士バルス</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/087.html">神龍かむくら</a>」「<a href="./unit/088.html">竜戦機ライデン</a>」「<a href="./unit/178.html">覇龍ディオラムス</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/397.html">古龍ガングリオン</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u084-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u085-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u086-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u087-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u088-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u178-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u397-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/043.html">ネコアイス</a>」「<a href="./unit/044.html">ネコマシン</a>」「<a href="./unit/045.html">鬼にゃんま</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/058.html">ネコシュバリエ</a>」「<a href="./unit/060.html">ねこベビー</a>」「<a href="./unit/144.html">ねこナース</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u043-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u044-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u045-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u058-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u060-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u144-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/135.html">うらしまタロウ</a>」「<a href="./unit/136.html">ツルの恩返し</a>」「<a href="./unit/137.html">ももたろう</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/138.html">かさじぞう</a>」「<a href="./unit/139.html">かぐやひめ</a>」「<a href="./unit/204.html">カチカチヤマンズ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/323.html">さるかに合戦</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u135-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u136-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u137-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u138-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u139-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u204-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u323-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/076.html">風神のウィンディ</a>」「<a href="./unit/077.html">雷神のサンディア</a>」「<a href="./unit/106.html">猿帝のクウ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/107.html">召し豚のカイ</a>」「<a href="./unit/108.html">宝杖のカッパーマイン</a>」「<a href="./unit/160.html">冥界のカリファ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/352.html">双掌星のシシル＆コマリ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u076-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u077-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u106-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u107-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u108-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u160-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u352-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/195.html">アキラ</a>」「<a href="./unit/196.html">西園寺メカ子</a>」「<a href="./unit/197.html">キャットマンダディ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/213.html">ホワイトラビット</a>」「<a href="./unit/227.html">呪術師デスピエロ</a>」「<a href="./unit/262.html">天誅ハヤブサ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/432.html">亡者探偵ヴィグラー</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u195-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u196-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u197-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u213-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u227-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u262-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u432-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/258.html">天空神ゼウス</a>」「<a href="./unit/259.html">守護神アヌビス</a>」「<a href="./unit/260.html">美女神アフロディーテ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/272.html">太陽神アマテラス</a>」「<a href="./unit/273.html">繁栄神ガネーシャ</a>」「<a href="./unit/317.html">海王神ポセイドン</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u258-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u259-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u260-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u272-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u273-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u317-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/305.html">帝国陸軍カタパルズ</a>」「<a href="./unit/306.html">古代軍船ガレーズ</a>」「<a href="./unit/307.html">飛空襲撃ボンバーズ</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/356.html">観測兵器ガリレオ</a>」「<a href="./unit/418.html">温泉天国テルマエ</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u305-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u306-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u307-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u356-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u418-1.png"></td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/360.html">火の精霊メララ</a>」「<a href="./unit/361.html">水の精霊ミズリィ</a>」「<a href="./unit/362.html">風の精霊エアル</a>」</td></tr>
+<tr><td></td><td>超激レア「<a href="./unit/402.html">雷の精霊ボルト</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u360-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u361-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u362-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u402-1.png"></td></tr>
+<tr><td></td><td>激レア「<a href="./unit/130.html">金ネコ</a>」「<a href="./unit/132.html">ねねこ</a>」「<a href="./unit/145.html">にゃんこ城Mini</a>」「<a href="./unit/201.html">メタルネコ</a>」</td></tr>
+<tr><td></td><td>激レア「<a href="./unit/238.html">おかめはちもくネコ</a>」「<a href="./unit/239.html">ボンボンネコ</a>」「<a href="./unit/240.html">見習いスニャイパー</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u130-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u132-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u145-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u201-1.png"><br><img class="char" src="https://battlecats-db.imgs-server.com/u238-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u239-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u240-1.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<!---->
+<tr><td></td><td class="adj"></td></tr>
+</table>
+   </div>
+<!-- ０ -->
+<div style="width:336px;float:left;"><!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcFooterL -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:336px;height:280px"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="7109852816"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+<div style="width:336px;float:right;">
+<!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcFooterR -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:336px;height:280px"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="1063319217"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+</div><!--tab-->
+
+<div id="mission" class="tab">
+   <table class="schedule fs12 pd1"><tr class="bgc12"><td><a href="#tab1" class="tab1" onclick="ChangeTab('event');mChangeTab('m_event');return false;">イベント</a>　<a href="#tab2" class="tab2" onclick="ChangeTab('lot');mChangeTab('m_lot');return false;">通常レアガチャ</a>　<font class="H">にゃんこミッション</font>　<a href="#tab4" class="tab4" onclick="ChangeTab('sale');mChangeTab('m_sale');return false;">セール</a></td><td class="adj"></td></tr></table>
+   <div class="maincontents">
+<table class="schedule mainline fs12 pd1 bgc02">
+
+<tr class="bgc12"><td>06月28日11時～</td><td>にゃんこミッション <font class="H">スペシャル</font></td></tr>
+<tr class="bgc06"><td>　07月12日11時</td><td>期間限定開催</td></tr>
+<tr><td></td><td><img class="bnrs" src="https://battlecats-db.imgs-server.com/s07000.png"></td></tr>
+<tr class="bgc04"><td class="R">01</td><td>風雲にゃんこ塔の30階をクリアしよう ※ミッションは、29階クリア後に出現<br>報酬：EX「<a href="./unit/353.html">ネコ仙人</a>」</td></tr>
+<tr class="bgc02"><td class="R">02</td><td>風雲にゃんこ塔の40階をクリアしよう ※ミッションは、39階クリア後に出現<br>報酬：EX「<a href="./unit/384.html">謎仮面のウララー</a>」</td></tr>
+<tr><td></td><td><img class="char" src="https://battlecats-db.imgs-server.com/u353-1.png"> <img class="char" src="https://battlecats-db.imgs-server.com/u384-1.png"></td></tr>
+<tr class="space"><td></td></tr>
+
+<tr class="bgc12"><td>月曜日～</td><td>にゃんこミッション <font class="H">ウィークリー</font></td></tr>
+<tr class="bgc06"><td>　日曜日</td><td>隔週開催</td></tr>
+<tr class="bgc04"><td class="R">01</td><td>にゃんチケドロップステージ3回クリアしよう<br>報酬：XP+100,000</td></tr>
+<tr class="bgc02"><td class="R">02</td><td>XPドロップステージを5回クリアしよう<br>報酬：にゃんこチケット 1枚</td></tr>
+<tr class="bgc04"><td class="R">03</td><td>ガマトトを探検に出発させて10回探検終了させよう<br>報酬：XP+100,000</td></tr>
+<tr class="bgc02"><td class="R">04</td><td>マタタビドロップステージを3回クリアしよう<br>報酬：にゃんこチケット 1枚</td></tr>
+<tr class="bgc04"><td class="R">05</td><td>ウィークリーミッションをすべてクリアしよう<br>報酬：ネコカン30個</td></tr>
+
+<tr class="bgc12"><td>月曜日～</td><td>にゃんこミッション <font class="H">ウィークリー</font></td></tr>
+<tr class="bgc06"><td>　日曜日</td><td>隔週開催</td></tr>
+<tr class="bgc04"><td class="R">01</td><td>にゃんチケドロップステージ3回クリアしよう<br>報酬：XP+100,000</td></tr>
+<tr class="bgc02"><td class="R">02</td><td>XPドロップステージを5回クリアしよう<br>報酬：にゃんこチケット 1枚</td></tr>
+<tr class="bgc04"><td class="R">03</td><td>ガマトトを探検に出発させて10回探検終了させよう<br>報酬：XP+100,000</td></tr>
+<tr class="bgc02"><td class="R">04</td><td>レジェンドステージを10回クリアしよう<br>報酬：にゃんこチケット 1枚</td></tr>
+<tr class="bgc04"><td class="R">05</td><td>ウィークリーミッションをすべてクリアしよう<br>報酬：ネコカン30個</td></tr>
+
+<tr class="bgc12"><td>常時</td><td>にゃんこミッション <font class="H">メイン</font></td></tr>
+<tr class="bgc04"><td class="R">01</td><td>パワーアップ画面でキャラクターをレベルアップさせよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">02</td><td>ユーザーランクを10上げよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc04"><td class="R">03</td><td>日本編1章の福岡県をクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">04</td><td>日本編1章の香川県をクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc04"><td class="R">05</td><td>日本編1章の鳥取県をクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">06</td><td>日本編1章の滋賀県をクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc04"><td class="R">07</td><td>日本編1章の新潟県をクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">08</td><td>日本編1章の茨城県をクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc04"><td class="R">09</td><td>日本編1章の青森県をクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">10</td><td>日本編1章をクリアしよう<br>報酬：ネコカン50個</td></tr>
+<tr class="bgc04"><td class="R">11</td><td>日本編2章をクリアしよう<br>報酬：ネコカン50個</td></tr>
+<tr class="bgc02"><td class="R">12</td><td>日本編3章をクリアしよう<br>報酬：ネコカン100個</td></tr>
+<tr class="bgc04"><td class="R">13</td><td>未来編1章をクリアしよう<br>報酬：ネコカン50個</td></tr>
+<tr class="bgc02"><td class="R">14</td><td>未来編2章をクリアしよう<br>報酬：ネコカン50個</td></tr>
+<tr class="bgc04"><td class="R">15</td><td>未来編3章をクリアしよう<br>報酬：ネコカン100個</td></tr>
+<tr class="bgc02"><td class="R">16</td><td>日本編1章で九州のお宝をすべて集めよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc04"><td class="R">17</td><td>ネコ基地でにゃんこガチャを1回引こう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">18</td><td>ガマトト探検隊で隊員を発見しよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc04"><td class="R">19</td><td>にゃんコンボを発動してステージをクリアしよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">20</td><td>ネコ道場に挑戦しよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc04"><td class="R">21</td><td>基本キャラクターを合計レベル30で第3形態に進化させよう<br>報酬：ネコカン20個</td></tr>
+<tr class="bgc02"><td class="R">22</td><td>宇宙編1章をクリアしよう<br>報酬：ネコカン100個</td></tr>
+<tr class="bgc04"><td class="R">23</td><td>友達を招待しよう<br>報酬：ネコカン20個</td></tr>
+
+
+<!---->
+<tr><td></td><td class="adj"></td></tr>
+</table>
+   </div>
+<!-- ０ -->
+<div style="width:336px;float:left;"><!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcFooterL -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:336px;height:280px"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="7109852816"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+<div style="width:336px;float:right;">
+<!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcFooterR -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:336px;height:280px"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="1063319217"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+</div><!--tab-->
+
+<div id="sale" class="tab">
+   <table class="schedule fs12 pd1"><tr class="bgc12"><td><a href="#tab1" class="tab1" onclick="ChangeTab('event');mChangeTab('m_event');return false;">イベント</a>　<a href="#tab2" class="tab2" onclick="ChangeTab('lot');mChangeTab('m_lot');return false;">通常レアガチャ</a>　<a href="#tab3" class="tab3" onclick="ChangeTab('mission');mChangeTab('m_mission');return false;">にゃんこミッション</a>　<font class="H">セール</font></td><td class="adj"></td></tr></table>
+   <div class="maincontents">
+<table class="schedule mainline fs12 pd1 bgc02">
+
+<tr class="bgc12"><td>毎月</td><td>アイテム半額セール</td></tr>
+<tr class="bgc06"><td></td><td>「アイテムショップ」内での販売価格が50％OFF</td></tr>
+<tr><td></td><td>06日 12日 18日 24日</td></tr>
+<tr><td></td><td></td></tr>
+
+
+<!---->
+<tr class="bgc04"><td></td><td class="adj"></td></tr>
+</table>
+   </div>
+<!-- ０ -->
+<div style="width:336px;float:left;"><!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcFooterL -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:336px;height:280px"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="7109852816"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+<div style="width:336px;float:right;">
+<a href="https://hb.afl.rakuten.co.jp/hgc/g00qco56.66izbcb3.g00qco56.66izc281/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fjoshin-cddvd%2F4517331040019%2F&amp;m=http%3A%2F%2Fm.rakuten.co.jp%2Fjoshin-cddvd%2Fi%2F10668348%2F" target="_blank"><table class="raku fs12"><tr class="space"></tr><tr><td><img src="https://thumbnail.image.rakuten.co.jp/@0_mall/joshin-cddvd/cabinet/019/sscx-10388.jpg?_ex=256x256"></td></tr><tr class="space"></tr><tr><td>にゃんこ大戦争 音楽大全集/ゲーム・ミュージック[CD]【返品種別A】</td></tr><tr class="space"></tr><tr><td align="right"><img src="https://battlecats-db.imgs-server.com/rakuten.gif"></td></tr><tr class="space"></tr></table></a></div>
+</div><!--tab-->
+
+  </div>
+<div class="menu">
+ <h3>メインメニュー</h3>
+ <ul>
+  <li><div class="menutop arrows"><a id="arrow1" class="arrow" href="javascript:void(0)">スケジュール</a></div>
+   <ul id="panel1" class="panel">
+
+    <div id="m_event" class="tab">
+    <li><div class="menusub"><font class="H non_non">イベント</font></div></li>
+    <li><div class="menusub"><a href="#tab2" class="tab2" onclick="ChangeTab('lot');mChangeTab('m_lot');return false;">通常レアガチャ</a></div></li>
+    <li><div class="menusub"><a href="#tab3" class="tab3" onclick="ChangeTab('mission');mChangeTab('m_mission');return false;">にゃんこミッション</a></div></li>
+    <li><div class="menusub"><a href="#tab4" class="tab4" onclick="ChangeTab('sale');mChangeTab('m_sale');return false;">セール</a></div></li>
+    </div>
+    <div id="m_lot" class="tab">
+    <li><div class="menusub"><a href="#tab1" class="tab1" onclick="ChangeTab('event');mChangeTab('m_event');return false;">イベント</a></div></li>
+    <li><div class="menusub"><font class="H non_non">通常レアガチャ</font></div></li>
+    <li><div class="menusub"><a href="#tab3" class="tab3" onclick="ChangeTab('mission');mChangeTab('m_mission');return false;">にゃんこミッション</a></div></li>
+    <li><div class="menusub"><a href="#tab4" class="tab4" onclick="ChangeTab('sale');mChangeTab('m_sale');return false;">セール</a></div></li>
+    </div>
+    <div id="m_mission" class="tab">
+    <li><div class="menusub"><a href="#tab1" class="tab1" onclick="ChangeTab('event');mChangeTab('m_event');return false;">イベント</a></div></li>
+    <li><div class="menusub"><a href="#tab2" class="tab2" onclick="ChangeTab('lot');mChangeTab('m_lot');return false;">通常レアガチャ</a></div></li>
+    <li><div class="menusub"><font class="H non_non">にゃんこミッション</font></div></li>
+    <li><div class="menusub"><a href="#tab4" class="tab4" onclick="ChangeTab('sale');mChangeTab('m_sale');return false;">セール</a></div></li>
+    </div>
+    <div id="m_sale" class="tab">
+    <li><div class="menusub"><a href="#tab1" class="tab1" onclick="ChangeTab('event');mChangeTab('m_event');return false;">イベント</a></div></li>
+    <li><div class="menusub"><a href="#tab2" class="tab2" onclick="ChangeTab('lot');mChangeTab('m_lot');return false;">通常レアガチャ</a></div></li>
+    <li><div class="menusub"><a href="#tab3" class="tab3" onclick="ChangeTab('mission');mChangeTab('m_mission');return false;">にゃんこミッション</a></div></li>
+    <li><div class="menusub"><font class="H non_non">セール</font></div></li>
+    </div>
+
+    <li><div class="menusub"><a href="./schedule/regular.html">定期イベント</a></div></li>
+    <li><div class="menusub"><a href="./schedule/201807.html">履歴</a></div></li>
+    <!--<li><div class="menusub"><font class="non_non">準備中</font></div></li>-->
+   </ul>
+  </li>
+  <li><div class="menutop arrows"><a id="arrow2" class="arrow" href="javascript:void(0)">各種データ</a></div>
+   <ul id="panel2" class="panel">
+    <li><div class="menusub"><a href="./unit/userrank.html">ユーザーランク</a></div></li>
+    <li><div class="menusub"><a href="./unit/login.html">ログインボーナス</a></div></li>
+    <li><div class="menusub"><a href="./unit/powerup.html">パワーアップ</a></div></li>
+   </ul>
+  </li>
+  <li><div class="menutop arrows"><a id="arrow3" class="arrow" href="javascript:void(0)">味方キャラ</a></div>
+   <ul id="panel3" class="panel">
+    <li><div class="menusub"><a href="./unit/">味方詳細</a></div></li>
+    <li><div class="menusub"><a href="./unit/index_status.html">味方ステータス</a></div></li>
+    <li><div class="menusub"><a href="./unit/index_lot.html">ガチャ</a></div></li>
+    <li><div class="menusub"><a href="./unit/index_combo.html">にゃんコンボ</a></div></li>
+   </ul>
+  </li>
+  <li><div class="menutop arrows"><a id="arrow5" class="arrow" href="javascript:void(0)">敵キャラ</a></div>
+   <ul id="panel5" class="panel">
+    <li><div class="menusub"><a href="./enemy/">敵詳細</a></div></li>
+    <li><div class="menusub"><a href="./enemy/index_status.html">敵ステータス</a></div></li>
+   </ul>
+  </li>
+  <li><div class="menutop arrows"><a id="arrow7" class="arrow" href="javascript:void(0)">ステージ</a></div>
+   <ul id="panel7" class="panel">
+    <li><div class="menusub"><a href="./stage/">index</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_japan.html">日本編</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_japan_zombie.html">日本編 ゾンビ襲来</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_future.html">未来編</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_space.html">宇宙編</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_legendstory.html">レジェンドステージ</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_sp.html">スペシャルステージ</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_collabo.html">コラボステージ</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_ranking.html">ランキングステージ</a></div></li>
+    <li><div class="menusub"><a href="./stage/index_drop.html">ドロップ・採点報酬別</a></div></li>
+<!--<li><div class="menusub"><font class="non_non">チャレンジモード 準備中</font></div></li>-->
+   </ul>
+  </li>
+ </ul>
+</div>
+
+<div class="menulist2">
+<!-- ０ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- bcSide -->
+<ins class="adsbygoogle"
+     style="display:block;width:210px;"
+     data-ad-client="ca-pub-2731002088029446"
+     data-ad-slot="3192085611"
+     data-ad-format="vertical"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+
+<div class="menulist2">
+<table><tr><td width="208" class="bgc08">
+<a class="twitter-timeline" href="https://twitter.com/PONOS_GAME" data-theme="dark" data-tweet-limit="8" data-link-color="#f0f0f0" data-chrome="noheader nofooter transparent" data-show-replies="false" data-border-color="#a05000">Tweets by PONOS_GAME</a> <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+</td></tr></table>
+</div>
+
+<div class="menulist2">
+<table class="schedule fs12 pd1" width="210px">
+<tr class="bgc12"><td>連絡用メール</td></tr>
+<tr class="bgc08"><td>掲載間違い等ありましたら<br>こちらへご連絡お願いします。</td></tr>
+<tr class="bgc08"><td><a href="mailto:mail@battlecats-db.com?subject=連絡&amp;body=ご記入下さい">mail@battlecats-db.com</a></td></tr>
+<tr class="bgc08"><td><font class="H">注意</font><br>ゲーム内容についてやバグ報告<br>お問い合わせコードの送信は<br>受け付けていません。</td></tr>
+</table>
+</div>
+ </div>
+<div id="footer"><a href="#main">↑ ページトップに戻る</a></div>
+</div>
+
+<script type="text/javascript">
+function ChangeTab(tabname){
+ document.getElementById('event').style.display = 'none';
+ document.getElementById('lot').style.display = 'none';
+ document.getElementById('mission').style.display = 'none';
+ document.getElementById('sale').style.display = 'none';
+ document.getElementById(tabname).style.display = 'block';
+}
+ChangeTab('event');<!--デフォルトタブ-->
+
+function mChangeTab(tabname) {
+ document.getElementById('m_event').style.display = 'none';
+ document.getElementById('m_lot').style.display = 'none';
+ document.getElementById('m_mission').style.display = 'none';
+ document.getElementById('m_sale').style.display = 'none';
+ document.getElementById(tabname).style.display = 'block';
+}
+mChangeTab('m_event');<!--デフォルトタブ-->
+</script>
+
+</body>
+</html>

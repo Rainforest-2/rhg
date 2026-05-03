@@ -1,0 +1,58 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.13.0",
+    "id": "asset_140703",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 140703",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/747/edi_747.png",
+      "size": 4329,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/747/747_e03.maanim",
+      "size": 218,
+      "offset": 4336
+    },
+    {
+      "path": "./org/enemy/747/747_e02.maanim",
+      "size": 116,
+      "offset": 4560
+    },
+    {
+      "path": "./org/enemy/747/747_e.imgcut",
+      "size": 229,
+      "offset": 4688
+    },
+    {
+      "path": "./org/enemy/747/747_e00.maanim",
+      "size": 108,
+      "offset": 4928
+    },
+    {
+      "path": "./org/enemy/747/747_e01.maanim",
+      "size": 76,
+      "offset": 5040
+    },
+    {
+      "path": "./org/enemy/747/747_e.png",
+      "size": 13636,
+      "offset": 5120
+    },
+    {
+      "path": "./org/enemy/747/747_e.mamodel",
+      "size": 178,
+      "offset": 18768
+    }
+  ]
+}

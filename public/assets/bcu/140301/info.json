@@ -1,0 +1,68 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.10.0",
+    "id": "asset_140301",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 140301",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/719/enemy_icon_719.png",
+      "size": 801,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/722/enemy_icon_722.png",
+      "size": 1586,
+      "offset": 816
+    },
+    {
+      "path": "./org/enemy/723/enemy_icon_723.png",
+      "size": 1168,
+      "offset": 2416
+    },
+    {
+      "path": "./org/enemy/724/enemy_icon_724.png",
+      "size": 2587,
+      "offset": 3584
+    },
+    {
+      "path": "./org/enemy/726/enemy_icon_726.png",
+      "size": 2128,
+      "offset": 6176
+    },
+    {
+      "path": "./org/enemy/725/enemy_icon_725.png",
+      "size": 2972,
+      "offset": 8304
+    },
+    {
+      "path": "./org/enemy/727/enemy_icon_727.png",
+      "size": 1253,
+      "offset": 11280
+    },
+    {
+      "path": "./org/enemy/728/enemy_icon_728.png",
+      "size": 1597,
+      "offset": 12544
+    },
+    {
+      "path": "./org/enemy/721/enemy_icon_721.png",
+      "size": 1162,
+      "offset": 14144
+    },
+    {
+      "path": "./org/enemy/720/enemy_icon_720.png",
+      "size": 2607,
+      "offset": 15312
+    }
+  ]
+}

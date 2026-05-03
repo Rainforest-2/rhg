@@ -1,0 +1,24 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.0",
+    "id": "asset_100101",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100101",
+    "time": null,
+    "version": 0,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/536/enemy_icon_536.png",
+      "size": 1845,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/537/enemy_icon_537.png",
+      "size": 1730,
+      "offset": 1856
+    }
+  ]
+}

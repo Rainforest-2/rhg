@@ -1,0 +1,28 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.8.3",
+    "id": "asset_130703",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 130703",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/unit/758/c/udi758_c.png",
+      "size": 10742,
+      "offset": 0
+    },
+    {
+      "path": "./org/unit/758/f/udi758_f.png",
+      "size": 10531,
+      "offset": 10752
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.7.0",
+    "id": "asset_130301",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 130301",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/medallist.json",
+      "size": 21184,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/682/enemy_icon_682.png",
+      "size": 1570,
+      "offset": 21184
+    },
+    {
+      "path": "./org/enemy/683/enemy_icon_683.png",
+      "size": 2728,
+      "offset": 22768
+    },
+    {
+      "path": "./org/enemy/684/enemy_icon_684.png",
+      "size": 2685,
+      "offset": 25504
+    },
+    {
+      "path": "./org/enemy/685/enemy_icon_685.png",
+      "size": 2230,
+      "offset": 28192
+    },
+    {
+      "path": "./org/page/medal/medal_115.png",
+      "size": 6988,
+      "offset": 30432
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.4.3",
+    "id": "asset_120704",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120704",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/bg/000_a.imgcut",
+      "size": 1982,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/bg/rain.maanim",
+      "size": 30,
+      "offset": 1984
+    },
+    {
+      "path": "./org/battle/bg/rain.mamodel",
+      "size": 168,
+      "offset": 2016
+    },
+    {
+      "path": "./org/img/bgEffect/000_a.png",
+      "size": 14912,
+      "offset": 2192
+    }
+  ]
+}

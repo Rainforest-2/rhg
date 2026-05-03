@@ -1,0 +1,21 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.7.0",
+    "id": "asset_100903",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100903",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/medal/medal_090_en.png",
+      "size": 5212,
+      "offset": 0
+    }
+  ]
+}

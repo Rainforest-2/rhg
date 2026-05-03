@@ -1,0 +1,788 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.15.0",
+    "id": "asset_150100",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 150100",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/R/StageRR/stageRR008_00.csv",
+      "size": 3396,
+      "offset": 0
+    },
+    {
+      "path": "./org/stage/R/StageRR/stageRR041_00.csv",
+      "size": 2275,
+      "offset": 3408
+    },
+    {
+      "path": "./org/stage/R/StageRR/stageRR040_00.csv",
+      "size": 2365,
+      "offset": 5696
+    },
+    {
+      "path": "./org/stage/R/MSDR/MapStageDataR_040.csv",
+      "size": 52,
+      "offset": 8064
+    },
+    {
+      "path": "./org/stage/R/MSDR/MapStageDataR_041.csv",
+      "size": 52,
+      "offset": 8128
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_06.csv",
+      "size": 662,
+      "offset": 8192
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_03.csv",
+      "size": 657,
+      "offset": 8864
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_09.csv",
+      "size": 663,
+      "offset": 9536
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_07.csv",
+      "size": 662,
+      "offset": 10208
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_01.csv",
+      "size": 653,
+      "offset": 10880
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_08.csv",
+      "size": 662,
+      "offset": 11536
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_04.csv",
+      "size": 658,
+      "offset": 12208
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_05.csv",
+      "size": 703,
+      "offset": 12880
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_02.csv",
+      "size": 653,
+      "offset": 13584
+    },
+    {
+      "path": "./org/stage/RA/StageRA/stageRA077_00.csv",
+      "size": 647,
+      "offset": 14240
+    },
+    {
+      "path": "./org/stage/RA/MSDRA/MapStageDataA_041.csv",
+      "size": 447,
+      "offset": 14896
+    },
+    {
+      "path": "./org/stage/RA/MSDRA/MapStageDataA_077.csv",
+      "size": 345,
+      "offset": 15344
+    },
+    {
+      "path": "./org/stage/SR/MSDSR/MapStageDataSR_019.csv",
+      "size": 174,
+      "offset": 15696
+    },
+    {
+      "path": "./org/stage/SR/MSDSR/MapStageDataSR_018.csv",
+      "size": 176,
+      "offset": 15872
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR019_03.csv",
+      "size": 961,
+      "offset": 16048
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR018_03.csv",
+      "size": 766,
+      "offset": 17024
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR019_01.csv",
+      "size": 950,
+      "offset": 17792
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR018_01.csv",
+      "size": 668,
+      "offset": 18752
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR018_04.csv",
+      "size": 740,
+      "offset": 19424
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR019_04.csv",
+      "size": 790,
+      "offset": 20176
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR019_02.csv",
+      "size": 1007,
+      "offset": 20976
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR018_00.csv",
+      "size": 757,
+      "offset": 21984
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR018_02.csv",
+      "size": 731,
+      "offset": 22752
+    },
+    {
+      "path": "./org/stage/SR/StageRSR/stageRSR019_00.csv",
+      "size": 982,
+      "offset": 23488
+    },
+    {
+      "path": "./org/stage/E/MSDRE/MapStageDataRE_079.csv",
+      "size": 141,
+      "offset": 24480
+    },
+    {
+      "path": "./org/stage/E/MSDRE/MapStageDataRE_078.csv",
+      "size": 142,
+      "offset": 24624
+    },
+    {
+      "path": "./org/stage/E/MSDRE/MapStageDataRE_080.csv",
+      "size": 150,
+      "offset": 24768
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX079_00.csv",
+      "size": 1046,
+      "offset": 24928
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX079_02.csv",
+      "size": 773,
+      "offset": 25984
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX080_01.csv",
+      "size": 727,
+      "offset": 26768
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX080_03.csv",
+      "size": 727,
+      "offset": 27504
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX078_02.csv",
+      "size": 713,
+      "offset": 28240
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX079_01.csv",
+      "size": 824,
+      "offset": 28960
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX078_00.csv",
+      "size": 668,
+      "offset": 29792
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX078_03.csv",
+      "size": 574,
+      "offset": 30464
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX080_02.csv",
+      "size": 727,
+      "offset": 31040
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX078_01.csv",
+      "size": 805,
+      "offset": 31776
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX080_00.csv",
+      "size": 728,
+      "offset": 32592
+    },
+    {
+      "path": "./org/stage/E/StageEX/stageEX079_03.csv",
+      "size": 705,
+      "offset": 33328
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_419.csv",
+      "size": 1087,
+      "offset": 34048
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_420.csv",
+      "size": 264,
+      "offset": 35136
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_418.csv",
+      "size": 159,
+      "offset": 35408
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_286.csv",
+      "size": 1116,
+      "offset": 35568
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS418_03.csv",
+      "size": 878,
+      "offset": 36688
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS019_00.csv",
+      "size": 982,
+      "offset": 37568
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_00.csv",
+      "size": 679,
+      "offset": 38560
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS419_00.csv",
+      "size": 411,
+      "offset": 39248
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS420_01.csv",
+      "size": 361,
+      "offset": 39664
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS419_04.csv",
+      "size": 410,
+      "offset": 40032
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_06.csv",
+      "size": 880,
+      "offset": 40448
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_07.csv",
+      "size": 601,
+      "offset": 41328
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS420_02.csv",
+      "size": 430,
+      "offset": 41936
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS419_01.csv",
+      "size": 412,
+      "offset": 42368
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS419_03.csv",
+      "size": 410,
+      "offset": 42784
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_01.csv",
+      "size": 686,
+      "offset": 43200
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS420_00.csv",
+      "size": 360,
+      "offset": 43888
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS419_05.csv",
+      "size": 410,
+      "offset": 44256
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS418_00.csv",
+      "size": 582,
+      "offset": 44672
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_03.csv",
+      "size": 707,
+      "offset": 45264
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_02.csv",
+      "size": 687,
+      "offset": 45984
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_04.csv",
+      "size": 708,
+      "offset": 46672
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS418_02.csv",
+      "size": 906,
+      "offset": 47392
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS418_01.csv",
+      "size": 455,
+      "offset": 48304
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS286_05.csv",
+      "size": 741,
+      "offset": 48768
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS419_02.csv",
+      "size": 412,
+      "offset": 49520
+    },
+    {
+      "path": "./org/stage/ND/MSDND/MapStageDataND_026.csv",
+      "size": 215,
+      "offset": 49936
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND026_02.csv",
+      "size": 536,
+      "offset": 50160
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND026_05.csv",
+      "size": 433,
+      "offset": 50704
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND026_00.csv",
+      "size": 1030,
+      "offset": 51152
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND026_04.csv",
+      "size": 605,
+      "offset": 52192
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND026_01.csv",
+      "size": 919,
+      "offset": 52800
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND026_03.csv",
+      "size": 456,
+      "offset": 53728
+    },
+    {
+      "path": "./org/stage/C/MSDC/MapStageDataC_001.csv",
+      "size": 557,
+      "offset": 54192
+    },
+    {
+      "path": "./org/unit/839/unit839.csv",
+      "size": 258,
+      "offset": 54752
+    },
+    {
+      "path": "./org/unit/839/f/839_f.imgcut",
+      "size": 1219,
+      "offset": 55024
+    },
+    {
+      "path": "./org/unit/839/f/839_f.mamodel",
+      "size": 4964,
+      "offset": 56256
+    },
+    {
+      "path": "./org/unit/839/f/uni839_f00.png",
+      "size": 7441,
+      "offset": 61232
+    },
+    {
+      "path": "./org/unit/839/f/edi839_f.png",
+      "size": 2717,
+      "offset": 68688
+    },
+    {
+      "path": "./org/unit/839/f/839_f02.maanim",
+      "size": 6838,
+      "offset": 71408
+    },
+    {
+      "path": "./org/unit/839/f/839_f.png",
+      "size": 26578,
+      "offset": 78256
+    },
+    {
+      "path": "./org/unit/838/unit838.csv",
+      "size": 257,
+      "offset": 104848
+    },
+    {
+      "path": "./org/unit/838/f/uni838_f00.png",
+      "size": 5494,
+      "offset": 105120
+    },
+    {
+      "path": "./org/unit/838/f/838_f.png",
+      "size": 23245,
+      "offset": 110624
+    },
+    {
+      "path": "./org/unit/838/f/838_f02.maanim",
+      "size": 7722,
+      "offset": 133872
+    },
+    {
+      "path": "./org/unit/838/f/edi838_f.png",
+      "size": 2270,
+      "offset": 141600
+    },
+    {
+      "path": "./org/unit/838/f/838_f.mamodel",
+      "size": 5400,
+      "offset": 143872
+    },
+    {
+      "path": "./org/unit/838/f/838_f.imgcut",
+      "size": 1149,
+      "offset": 149280
+    },
+    {
+      "path": "./org/unit/837/c/837_c.png",
+      "size": 214928,
+      "offset": 150432
+    },
+    {
+      "path": "./org/unit/837/c/837_c02.maanim",
+      "size": 47386,
+      "offset": 365360
+    },
+    {
+      "path": "./org/unit/837/c/udi837_c.png",
+      "size": 15671,
+      "offset": 412752
+    },
+    {
+      "path": "./org/unit/837/c/uni837_c00.png",
+      "size": 4928,
+      "offset": 428432
+    },
+    {
+      "path": "./org/unit/837/c/edi837_c.png",
+      "size": 5447,
+      "offset": 433360
+    },
+    {
+      "path": "./org/unit/837/c/837_c00.maanim",
+      "size": 11790,
+      "offset": 438816
+    },
+    {
+      "path": "./org/unit/837/c/837_c.mamodel",
+      "size": 13197,
+      "offset": 450608
+    },
+    {
+      "path": "./org/unit/837/c/837_c03.maanim",
+      "size": 3830,
+      "offset": 463808
+    },
+    {
+      "path": "./org/unit/837/c/837_c01.maanim",
+      "size": 7148,
+      "offset": 467648
+    },
+    {
+      "path": "./org/unit/837/c/837_c.imgcut",
+      "size": 5029,
+      "offset": 474800
+    },
+    {
+      "path": "./org/unit/837/unit837.csv",
+      "size": 790,
+      "offset": 479840
+    },
+    {
+      "path": "./org/unit/837/f/837_f03.maanim",
+      "size": 1914,
+      "offset": 480640
+    },
+    {
+      "path": "./org/unit/837/f/837_f01.maanim",
+      "size": 5534,
+      "offset": 482560
+    },
+    {
+      "path": "./org/unit/837/f/uni837_f00.png",
+      "size": 4095,
+      "offset": 488096
+    },
+    {
+      "path": "./org/unit/837/f/837_f.png",
+      "size": 39990,
+      "offset": 492192
+    },
+    {
+      "path": "./org/unit/837/f/837_f02.maanim",
+      "size": 29981,
+      "offset": 532192
+    },
+    {
+      "path": "./org/unit/837/f/udi837_f.png",
+      "size": 9022,
+      "offset": 562176
+    },
+    {
+      "path": "./org/unit/837/f/837_f00.maanim",
+      "size": 7156,
+      "offset": 571200
+    },
+    {
+      "path": "./org/unit/837/f/edi837_f.png",
+      "size": 2815,
+      "offset": 578368
+    },
+    {
+      "path": "./org/unit/837/f/837_f.imgcut",
+      "size": 3469,
+      "offset": 581184
+    },
+    {
+      "path": "./org/unit/837/f/837_f.mamodel",
+      "size": 9371,
+      "offset": 584656
+    },
+    {
+      "path": "./org/unit/712/unit712.csv",
+      "size": 782,
+      "offset": 594032
+    },
+    {
+      "path": "./org/unit/712/s/udi712_s.png",
+      "size": 6109,
+      "offset": 594816
+    },
+    {
+      "path": "./org/unit/712/s/712_s03.maanim",
+      "size": 2555,
+      "offset": 600928
+    },
+    {
+      "path": "./org/unit/712/s/712_s01.maanim",
+      "size": 4286,
+      "offset": 603488
+    },
+    {
+      "path": "./org/unit/712/s/uni712_s00.png",
+      "size": 2640,
+      "offset": 607776
+    },
+    {
+      "path": "./org/unit/712/s/712_s00.maanim",
+      "size": 5663,
+      "offset": 610416
+    },
+    {
+      "path": "./org/unit/712/s/712_s.png",
+      "size": 51572,
+      "offset": 616080
+    },
+    {
+      "path": "./org/unit/712/s/712_s02.maanim",
+      "size": 29911,
+      "offset": 667664
+    },
+    {
+      "path": "./org/unit/712/s/712_s.mamodel",
+      "size": 9581,
+      "offset": 697584
+    },
+    {
+      "path": "./org/unit/712/s/712_s.imgcut",
+      "size": 2621,
+      "offset": 707168
+    },
+    {
+      "path": "./org/unit/712/s/edi712_s.png",
+      "size": 2920,
+      "offset": 709792
+    },
+    {
+      "path": "./org/data/unitbuy.csv",
+      "size": 163855,
+      "offset": 712720
+    },
+    {
+      "path": "./org/data/equipmentlist.json",
+      "size": 32948,
+      "offset": 876576
+    },
+    {
+      "path": "./org/data/enemy_dictionary_list.csv",
+      "size": 5276,
+      "offset": 909536
+    },
+    {
+      "path": "./org/data/unitexp.csv",
+      "size": 53756,
+      "offset": 914816
+    },
+    {
+      "path": "./org/data/MapStageDataClearCountReward.json",
+      "size": 1448,
+      "offset": 968576
+    },
+    {
+      "path": "./org/data/EX_option.csv",
+      "size": 104,
+      "offset": 970032
+    },
+    {
+      "path": "./org/data/difficulty_level.tsv",
+      "size": 30810,
+      "offset": 970144
+    },
+    {
+      "path": "./org/data/t_unit.csv",
+      "size": 186647,
+      "offset": 1000960
+    },
+    {
+      "path": "./org/data/unitlevel.csv",
+      "size": 42986,
+      "offset": 1187616
+    },
+    {
+      "path": "./org/data/SpecialRulesMap.json",
+      "size": 8771,
+      "offset": 1230608
+    },
+    {
+      "path": "./org/data/unitlimit.csv",
+      "size": 20669,
+      "offset": 1239392
+    },
+    {
+      "path": "./org/data/NyancomboData.csv",
+      "size": 17692,
+      "offset": 1260064
+    },
+    {
+      "path": "./org/data/Map_option.csv",
+      "size": 94675,
+      "offset": 1277760
+    },
+    {
+      "path": "./org/data/equipmentslot.csv",
+      "size": 1217,
+      "offset": 1372448
+    },
+    {
+      "path": "./org/data/DropItem.csv",
+      "size": 8075,
+      "offset": 1373680
+    },
+    {
+      "path": "./org/data/SkillAcquisition.csv",
+      "size": 47890,
+      "offset": 1381760
+    },
+    {
+      "path": "./org/enemy/760/760_e.imgcut",
+      "size": 449,
+      "offset": 1429664
+    },
+    {
+      "path": "./org/enemy/760/760_e00.maanim",
+      "size": 433,
+      "offset": 1430128
+    },
+    {
+      "path": "./org/enemy/760/760_e.png",
+      "size": 11937,
+      "offset": 1430576
+    },
+    {
+      "path": "./org/enemy/760/760_e02.maanim",
+      "size": 542,
+      "offset": 1442528
+    },
+    {
+      "path": "./org/enemy/760/760_e01.maanim",
+      "size": 60,
+      "offset": 1443072
+    },
+    {
+      "path": "./org/enemy/760/760_e03.maanim",
+      "size": 454,
+      "offset": 1443136
+    },
+    {
+      "path": "./org/enemy/760/760_e.mamodel",
+      "size": 777,
+      "offset": 1443600
+    },
+    {
+      "path": "./org/enemy/760/edi_760.png",
+      "size": 2847,
+      "offset": 1444384
+    },
+    {
+      "path": "./org/page/img029.imgcut",
+      "size": 5867,
+      "offset": 1447232
+    },
+    {
+      "path": "./org/page/img015.png",
+      "size": 789967,
+      "offset": 1453104
+    },
+    {
+      "path": "./org/page/img015.imgcut",
+      "size": 15478,
+      "offset": 2243072
+    },
+    {
+      "path": "./org/page/img029.png",
+      "size": 228109,
+      "offset": 2258560
+    },
+    {
+      "path": "./org/page/orb/equipment_effect.png",
+      "size": 69503,
+      "offset": 2486672
+    },
+    {
+      "path": "./org/page/orb/equipment_effect.imgcut",
+      "size": 986,
+      "offset": 2556176
+    }
+  ]
+}

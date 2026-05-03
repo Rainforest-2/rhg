@@ -1,0 +1,24 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.0",
+    "id": "asset_100103",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100103",
+    "time": null,
+    "version": 0,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/SkillAcquisition.csv",
+      "size": 13810,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/SkillLevel.csv",
+      "size": 333,
+      "offset": 13824
+    }
+  ]
+}

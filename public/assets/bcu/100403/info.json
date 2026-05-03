@@ -1,0 +1,25 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.2",
+    "id": "asset_100403",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100403",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/548/548_e02.maanim",
+      "size": 7207,
+      "offset": 0
+    },
+    {
+      "path": "./org/unit/608/c/608_c02.maanim",
+      "size": 7189,
+      "offset": 7216
+    }
+  ]
+}

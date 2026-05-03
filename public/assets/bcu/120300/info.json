@@ -1,0 +1,1213 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.3.0",
+    "id": "asset_120300",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120300",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/bg/bg.csv",
+      "size": 11534,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_037.imgcut",
+      "size": 91,
+      "offset": 11536
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_037_00.mamodel",
+      "size": 163,
+      "offset": 11632
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_037_00_0.maanim",
+      "size": 70,
+      "offset": 11808
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_037_00_1.maanim",
+      "size": 209,
+      "offset": 11888
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_038.imgcut",
+      "size": 42,
+      "offset": 12112
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_038_00.mamodel",
+      "size": 121,
+      "offset": 12160
+    },
+    {
+      "path": "./org/battle/bg/bgEffect_038_00_0.maanim",
+      "size": 48,
+      "offset": 12288
+    },
+    {
+      "path": "./org/battle/s15/skill015.imgcut",
+      "size": 440,
+      "offset": 12336
+    },
+    {
+      "path": "./org/battle/s15/skill015.png",
+      "size": 11665,
+      "offset": 12784
+    },
+    {
+      "path": "./org/battle/s15/skill_smallvolcano.mamodel",
+      "size": 4308,
+      "offset": 24464
+    },
+    {
+      "path": "./org/battle/s15/skill_smallvolcano00.maanim",
+      "size": 4754,
+      "offset": 28784
+    },
+    {
+      "path": "./org/battle/s15/skill_smallvolcano01.maanim",
+      "size": 46369,
+      "offset": 33552
+    },
+    {
+      "path": "./org/battle/s15/skill_smallvolcano02.maanim",
+      "size": 3271,
+      "offset": 79936
+    },
+    {
+      "path": "./org/battle/s16/skill016.imgcut",
+      "size": 439,
+      "offset": 83216
+    },
+    {
+      "path": "./org/battle/s16/skill016.png",
+      "size": 10967,
+      "offset": 83664
+    },
+    {
+      "path": "./org/battle/s16/skill_smallvolcano_e.mamodel",
+      "size": 4308,
+      "offset": 94640
+    },
+    {
+      "path": "./org/battle/s16/skill_smallvolcano_e00.maanim",
+      "size": 4754,
+      "offset": 98960
+    },
+    {
+      "path": "./org/battle/s16/skill_smallvolcano_e01.maanim",
+      "size": 46369,
+      "offset": 103728
+    },
+    {
+      "path": "./org/battle/s16/skill_smallvolcano_e02.maanim",
+      "size": 3228,
+      "offset": 150112
+    },
+    {
+      "path": "./org/data/bg.csv",
+      "size": 11534,
+      "offset": 153344
+    },
+    {
+      "path": "./org/data/bg1035.json",
+      "size": 11,
+      "offset": 164880
+    },
+    {
+      "path": "./org/data/bg1036.json",
+      "size": 11,
+      "offset": 164896
+    },
+    {
+      "path": "./org/data/bg1037.json",
+      "size": 11,
+      "offset": 164912
+    },
+    {
+      "path": "./org/data/bg1038.json",
+      "size": 711,
+      "offset": 164928
+    },
+    {
+      "path": "./org/data/bg1039.json",
+      "size": 2822,
+      "offset": 165648
+    },
+    {
+      "path": "./org/data/bg1040.json",
+      "size": 265,
+      "offset": 168480
+    },
+    {
+      "path": "./org/data/bg198.json",
+      "size": 11,
+      "offset": 168752
+    },
+    {
+      "path": "./org/data/DropItem.csv",
+      "size": 6275,
+      "offset": 168768
+    },
+    {
+      "path": "./org/data/enemy_dictionary_list.csv",
+      "size": 1939,
+      "offset": 175056
+    },
+    {
+      "path": "./org/data/equipmentslot.csv",
+      "size": 825,
+      "offset": 177008
+    },
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 223052,
+      "offset": 177840
+    },
+    {
+      "path": "./org/data/Map_option.csv",
+      "size": 67893,
+      "offset": 400896
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 19377,
+      "offset": 468800
+    },
+    {
+      "path": "./org/data/NyancomboData.csv",
+      "size": 15167,
+      "offset": 488192
+    },
+    {
+      "path": "./org/data/SkillAcquisition.csv",
+      "size": 35381,
+      "offset": 503360
+    },
+    {
+      "path": "./org/data/Stage_option.csv",
+      "size": 10291,
+      "offset": 538752
+    },
+    {
+      "path": "./org/data/t_unit.csv",
+      "size": 148079,
+      "offset": 549056
+    },
+    {
+      "path": "./org/data/unitbuy.csv",
+      "size": 135389,
+      "offset": 697136
+    },
+    {
+      "path": "./org/data/unitexp.csv",
+      "size": 45371,
+      "offset": 832528
+    },
+    {
+      "path": "./org/data/unitlevel.csv",
+      "size": 36277,
+      "offset": 877904
+    },
+    {
+      "path": "./org/data/unitlimit.csv",
+      "size": 18006,
+      "offset": 914192
+    },
+    {
+      "path": "./org/enemy/640/640_e.imgcut",
+      "size": 717,
+      "offset": 932208
+    },
+    {
+      "path": "./org/enemy/640/640_e.mamodel",
+      "size": 2466,
+      "offset": 932928
+    },
+    {
+      "path": "./org/enemy/640/640_e.png",
+      "size": 18942,
+      "offset": 935408
+    },
+    {
+      "path": "./org/enemy/640/640_e00.maanim",
+      "size": 1576,
+      "offset": 954352
+    },
+    {
+      "path": "./org/enemy/640/640_e01.maanim",
+      "size": 68,
+      "offset": 955936
+    },
+    {
+      "path": "./org/enemy/640/640_e02.maanim",
+      "size": 4053,
+      "offset": 956016
+    },
+    {
+      "path": "./org/enemy/640/640_e03.maanim",
+      "size": 685,
+      "offset": 960080
+    },
+    {
+      "path": "./org/enemy/640/edi_640.png",
+      "size": 3394,
+      "offset": 960768
+    },
+    {
+      "path": "./org/enemy/641/641_e.imgcut",
+      "size": 477,
+      "offset": 964176
+    },
+    {
+      "path": "./org/enemy/641/641_e.mamodel",
+      "size": 1009,
+      "offset": 964656
+    },
+    {
+      "path": "./org/enemy/641/641_e.png",
+      "size": 22763,
+      "offset": 965680
+    },
+    {
+      "path": "./org/enemy/641/641_e00.maanim",
+      "size": 474,
+      "offset": 988448
+    },
+    {
+      "path": "./org/enemy/641/641_e01.maanim",
+      "size": 315,
+      "offset": 988928
+    },
+    {
+      "path": "./org/enemy/641/641_e02.maanim",
+      "size": 1713,
+      "offset": 989248
+    },
+    {
+      "path": "./org/enemy/641/641_e03.maanim",
+      "size": 708,
+      "offset": 990976
+    },
+    {
+      "path": "./org/enemy/641/edi_641.png",
+      "size": 1832,
+      "offset": 991696
+    },
+    {
+      "path": "./org/enemy/642/642_e.imgcut",
+      "size": 3204,
+      "offset": 993536
+    },
+    {
+      "path": "./org/enemy/642/642_e.mamodel",
+      "size": 13703,
+      "offset": 996752
+    },
+    {
+      "path": "./org/enemy/642/642_e.png",
+      "size": 59118,
+      "offset": 1010464
+    },
+    {
+      "path": "./org/enemy/642/642_e00.maanim",
+      "size": 8333,
+      "offset": 1069584
+    },
+    {
+      "path": "./org/enemy/642/642_e01.maanim",
+      "size": 7878,
+      "offset": 1077920
+    },
+    {
+      "path": "./org/enemy/642/642_e02.maanim",
+      "size": 50050,
+      "offset": 1085808
+    },
+    {
+      "path": "./org/enemy/642/642_e03.maanim",
+      "size": 1912,
+      "offset": 1135872
+    },
+    {
+      "path": "./org/enemy/642/edi_642.png",
+      "size": 2437,
+      "offset": 1137792
+    },
+    {
+      "path": "./org/enemy/643/643_e.imgcut",
+      "size": 2912,
+      "offset": 1140240
+    },
+    {
+      "path": "./org/enemy/643/643_e.mamodel",
+      "size": 10654,
+      "offset": 1143152
+    },
+    {
+      "path": "./org/enemy/643/643_e.png",
+      "size": 159709,
+      "offset": 1153808
+    },
+    {
+      "path": "./org/enemy/643/643_e00.maanim",
+      "size": 4912,
+      "offset": 1313520
+    },
+    {
+      "path": "./org/enemy/643/643_e01.maanim",
+      "size": 3423,
+      "offset": 1318432
+    },
+    {
+      "path": "./org/enemy/643/643_e02.maanim",
+      "size": 64950,
+      "offset": 1321856
+    },
+    {
+      "path": "./org/enemy/643/643_e03.maanim",
+      "size": 2801,
+      "offset": 1386816
+    },
+    {
+      "path": "./org/enemy/643/edi_643.png",
+      "size": 3138,
+      "offset": 1389632
+    },
+    {
+      "path": "./org/enemy/644/644_e.imgcut",
+      "size": 215,
+      "offset": 1392784
+    },
+    {
+      "path": "./org/enemy/644/644_e.mamodel",
+      "size": 169,
+      "offset": 1393008
+    },
+    {
+      "path": "./org/enemy/644/644_e.png",
+      "size": 13636,
+      "offset": 1393184
+    },
+    {
+      "path": "./org/enemy/644/644_e00.maanim",
+      "size": 98,
+      "offset": 1406832
+    },
+    {
+      "path": "./org/enemy/644/644_e01.maanim",
+      "size": 70,
+      "offset": 1406944
+    },
+    {
+      "path": "./org/enemy/644/644_e02.maanim",
+      "size": 105,
+      "offset": 1407024
+    },
+    {
+      "path": "./org/enemy/644/644_e03.maanim",
+      "size": 200,
+      "offset": 1407136
+    },
+    {
+      "path": "./org/enemy/644/edi_644.png",
+      "size": 4399,
+      "offset": 1407344
+    },
+    {
+      "path": "./org/enemy/645/645_e.imgcut",
+      "size": 1390,
+      "offset": 1411744
+    },
+    {
+      "path": "./org/enemy/645/645_e.mamodel",
+      "size": 5581,
+      "offset": 1413136
+    },
+    {
+      "path": "./org/enemy/645/645_e.png",
+      "size": 41069,
+      "offset": 1418720
+    },
+    {
+      "path": "./org/enemy/645/645_e00.maanim",
+      "size": 4603,
+      "offset": 1459792
+    },
+    {
+      "path": "./org/enemy/645/645_e01.maanim",
+      "size": 2144,
+      "offset": 1464400
+    },
+    {
+      "path": "./org/enemy/645/645_e02.maanim",
+      "size": 10690,
+      "offset": 1466544
+    },
+    {
+      "path": "./org/enemy/645/645_e03.maanim",
+      "size": 1411,
+      "offset": 1477248
+    },
+    {
+      "path": "./org/enemy/645/edi_645.png",
+      "size": 2506,
+      "offset": 1478672
+    },
+    {
+      "path": "./org/enemy/646/646_e.imgcut",
+      "size": 2388,
+      "offset": 1481184
+    },
+    {
+      "path": "./org/enemy/646/646_e.mamodel",
+      "size": 3449,
+      "offset": 1483584
+    },
+    {
+      "path": "./org/enemy/646/646_e.png",
+      "size": 177755,
+      "offset": 1487040
+    },
+    {
+      "path": "./org/enemy/646/646_e00.maanim",
+      "size": 1873,
+      "offset": 1664800
+    },
+    {
+      "path": "./org/enemy/646/646_e01.maanim",
+      "size": 2301,
+      "offset": 1666688
+    },
+    {
+      "path": "./org/enemy/646/646_e02.maanim",
+      "size": 11734,
+      "offset": 1668992
+    },
+    {
+      "path": "./org/enemy/646/646_e03.maanim",
+      "size": 1551,
+      "offset": 1680736
+    },
+    {
+      "path": "./org/enemy/646/edi_646.png",
+      "size": 2484,
+      "offset": 1682288
+    },
+    {
+      "path": "./org/img/bg/bg192.png",
+      "size": 125468,
+      "offset": 1684784
+    },
+    {
+      "path": "./org/img/bg/bg197.png",
+      "size": 97450,
+      "offset": 1810256
+    },
+    {
+      "path": "./org/img/bg/bg198.png",
+      "size": 202625,
+      "offset": 1907712
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_037.png",
+      "size": 4754,
+      "offset": 2110352
+    },
+    {
+      "path": "./org/img/bgEffect/bgEffect_038.png",
+      "size": 9767,
+      "offset": 2115120
+    },
+    {
+      "path": "./org/page/img015.imgcut",
+      "size": 12636,
+      "offset": 2124896
+    },
+    {
+      "path": "./org/page/img015.png",
+      "size": 647024,
+      "offset": 2137536
+    },
+    {
+      "path": "./org/stage/A/StageRNA/stageRNA040_04.csv",
+      "size": 421,
+      "offset": 2784560
+    },
+    {
+      "path": "./org/stage/C/MSDC/MapStageDataC_204.csv",
+      "size": 789,
+      "offset": 2784992
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC204_00.csv",
+      "size": 862,
+      "offset": 2785792
+    },
+    {
+      "path": "./org/stage/C/StageRC/stageRC204_01.csv",
+      "size": 847,
+      "offset": 2786656
+    },
+    {
+      "path": "./org/stage/L/MSDL/MapStageDataL_000.csv",
+      "size": 5764,
+      "offset": 2787504
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_112.csv",
+      "size": 613,
+      "offset": 2793280
+    },
+    {
+      "path": "./org/stage/ND/MSDND/MapStageDataND_002.csv",
+      "size": 205,
+      "offset": 2793904
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND002_00.csv",
+      "size": 448,
+      "offset": 2794112
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND002_01.csv",
+      "size": 756,
+      "offset": 2794560
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND002_02.csv",
+      "size": 598,
+      "offset": 2795328
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND002_03.csv",
+      "size": 761,
+      "offset": 2795936
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND002_04.csv",
+      "size": 888,
+      "offset": 2796704
+    },
+    {
+      "path": "./org/stage/ND/StageRND/stageRND002_05.csv",
+      "size": 837,
+      "offset": 2797600
+    },
+    {
+      "path": "./org/stage/Q/MSDQ/MapStageDataQ_000.csv",
+      "size": 2008,
+      "offset": 2798448
+    },
+    {
+      "path": "./org/stage/Q/MSDQ/MapStageDataQ_001.csv",
+      "size": 2307,
+      "offset": 2800464
+    },
+    {
+      "path": "./org/stage/Q/MSDQ/MapStageDataQ_002.csv",
+      "size": 2324,
+      "offset": 2802784
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ000_13.csv",
+      "size": 819,
+      "offset": 2805120
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ000_14.csv",
+      "size": 869,
+      "offset": 2805952
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ000_15.csv",
+      "size": 775,
+      "offset": 2806832
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ000_16.csv",
+      "size": 328,
+      "offset": 2807616
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ001_13.csv",
+      "size": 859,
+      "offset": 2807952
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ001_14.csv",
+      "size": 522,
+      "offset": 2808816
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ001_15.csv",
+      "size": 970,
+      "offset": 2809344
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ001_16.csv",
+      "size": 328,
+      "offset": 2810320
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ002_13.csv",
+      "size": 592,
+      "offset": 2810656
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ002_14.csv",
+      "size": 495,
+      "offset": 2811248
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ002_15.csv",
+      "size": 551,
+      "offset": 2811744
+    },
+    {
+      "path": "./org/stage/Q/StageRQ/stageRQ002_16.csv",
+      "size": 327,
+      "offset": 2812304
+    },
+    {
+      "path": "./org/stage/R/StageRR/stageRR024_00.csv",
+      "size": 4318,
+      "offset": 2812640
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_279.csv",
+      "size": 1021,
+      "offset": 2816960
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_340.csv",
+      "size": 134,
+      "offset": 2817984
+    },
+    {
+      "path": "./org/stage/S/MSDS/MapStageDataS_341.csv",
+      "size": 708,
+      "offset": 2818128
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS340_00.csv",
+      "size": 843,
+      "offset": 2818848
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS340_01.csv",
+      "size": 670,
+      "offset": 2819696
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS340_02.csv",
+      "size": 518,
+      "offset": 2820368
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS340_03.csv",
+      "size": 714,
+      "offset": 2820896
+    },
+    {
+      "path": "./org/stage/S/StageRS/stageRS341_00.csv",
+      "size": 732,
+      "offset": 2821616
+    },
+    {
+      "path": "./org/stage/V/MSDV/MapStageDataV_008.csv",
+      "size": 406,
+      "offset": 2822352
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_00.csv",
+      "size": 908,
+      "offset": 2822768
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_01.csv",
+      "size": 1008,
+      "offset": 2823680
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_02.csv",
+      "size": 827,
+      "offset": 2824688
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_03.csv",
+      "size": 898,
+      "offset": 2825520
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_04.csv",
+      "size": 853,
+      "offset": 2826432
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_05.csv",
+      "size": 789,
+      "offset": 2827296
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_06.csv",
+      "size": 747,
+      "offset": 2828096
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_07.csv",
+      "size": 914,
+      "offset": 2828848
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_08.csv",
+      "size": 807,
+      "offset": 2829776
+    },
+    {
+      "path": "./org/stage/V/StageRV/stageRV008_09.csv",
+      "size": 947,
+      "offset": 2830592
+    },
+    {
+      "path": "./org/unit/340/s/340_s.imgcut",
+      "size": 2388,
+      "offset": 2831552
+    },
+    {
+      "path": "./org/unit/340/s/340_s.mamodel",
+      "size": 3483,
+      "offset": 2833952
+    },
+    {
+      "path": "./org/unit/340/s/340_s.png",
+      "size": 177755,
+      "offset": 2837440
+    },
+    {
+      "path": "./org/unit/340/s/340_s00.maanim",
+      "size": 1874,
+      "offset": 3015200
+    },
+    {
+      "path": "./org/unit/340/s/340_s01.maanim",
+      "size": 2305,
+      "offset": 3017088
+    },
+    {
+      "path": "./org/unit/340/s/340_s02.maanim",
+      "size": 11702,
+      "offset": 3019408
+    },
+    {
+      "path": "./org/unit/340/s/340_s03.maanim",
+      "size": 1547,
+      "offset": 3031120
+    },
+    {
+      "path": "./org/unit/340/s/edi340_s.png",
+      "size": 3697,
+      "offset": 3032672
+    },
+    {
+      "path": "./org/unit/340/s/udi340_s.png",
+      "size": 9671,
+      "offset": 3036384
+    },
+    {
+      "path": "./org/unit/340/s/uni340_s00.png",
+      "size": 3994,
+      "offset": 3046064
+    },
+    {
+      "path": "./org/unit/340/unit340.csv",
+      "size": 715,
+      "offset": 3050064
+    },
+    {
+      "path": "./org/unit/620/s/620_s.imgcut",
+      "size": 3724,
+      "offset": 3050784
+    },
+    {
+      "path": "./org/unit/620/s/620_s.mamodel",
+      "size": 18047,
+      "offset": 3054512
+    },
+    {
+      "path": "./org/unit/620/s/620_s.png",
+      "size": 93999,
+      "offset": 3072560
+    },
+    {
+      "path": "./org/unit/620/s/620_s00.maanim",
+      "size": 9018,
+      "offset": 3166560
+    },
+    {
+      "path": "./org/unit/620/s/620_s01.maanim",
+      "size": 9053,
+      "offset": 3175584
+    },
+    {
+      "path": "./org/unit/620/s/620_s02.maanim",
+      "size": 123910,
+      "offset": 3184640
+    },
+    {
+      "path": "./org/unit/620/s/620_s03.maanim",
+      "size": 3696,
+      "offset": 3308560
+    },
+    {
+      "path": "./org/unit/620/s/edi620_s.png",
+      "size": 5032,
+      "offset": 3312256
+    },
+    {
+      "path": "./org/unit/620/s/udi620_s.png",
+      "size": 13370,
+      "offset": 3317296
+    },
+    {
+      "path": "./org/unit/620/s/uni620_s00.png",
+      "size": 4421,
+      "offset": 3330672
+    },
+    {
+      "path": "./org/unit/620/unit620.csv",
+      "size": 655,
+      "offset": 3335104
+    },
+    {
+      "path": "./org/unit/705/c/705_c.imgcut",
+      "size": 5661,
+      "offset": 3335760
+    },
+    {
+      "path": "./org/unit/705/c/705_c.mamodel",
+      "size": 17478,
+      "offset": 3341424
+    },
+    {
+      "path": "./org/unit/705/c/705_c.png",
+      "size": 72264,
+      "offset": 3358912
+    },
+    {
+      "path": "./org/unit/705/c/705_c00.maanim",
+      "size": 13219,
+      "offset": 3431184
+    },
+    {
+      "path": "./org/unit/705/c/705_c01.maanim",
+      "size": 8042,
+      "offset": 3444416
+    },
+    {
+      "path": "./org/unit/705/c/705_c02.maanim",
+      "size": 155874,
+      "offset": 3452464
+    },
+    {
+      "path": "./org/unit/705/c/705_c03.maanim",
+      "size": 4507,
+      "offset": 3608352
+    },
+    {
+      "path": "./org/unit/705/c/edi705_c.png",
+      "size": 4365,
+      "offset": 3612864
+    },
+    {
+      "path": "./org/unit/705/c/udi705_c.png",
+      "size": 10331,
+      "offset": 3617232
+    },
+    {
+      "path": "./org/unit/705/c/uni705_c00.png",
+      "size": 4892,
+      "offset": 3627568
+    },
+    {
+      "path": "./org/unit/705/f/705_f.imgcut",
+      "size": 4358,
+      "offset": 3632464
+    },
+    {
+      "path": "./org/unit/705/f/705_f.mamodel",
+      "size": 13908,
+      "offset": 3636832
+    },
+    {
+      "path": "./org/unit/705/f/705_f.png",
+      "size": 48966,
+      "offset": 3650752
+    },
+    {
+      "path": "./org/unit/705/f/705_f00.maanim",
+      "size": 9719,
+      "offset": 3699728
+    },
+    {
+      "path": "./org/unit/705/f/705_f01.maanim",
+      "size": 5314,
+      "offset": 3709456
+    },
+    {
+      "path": "./org/unit/705/f/705_f02.maanim",
+      "size": 121440,
+      "offset": 3714784
+    },
+    {
+      "path": "./org/unit/705/f/705_f03.maanim",
+      "size": 3497,
+      "offset": 3836224
+    },
+    {
+      "path": "./org/unit/705/f/edi705_f.png",
+      "size": 3632,
+      "offset": 3839728
+    },
+    {
+      "path": "./org/unit/705/f/udi705_f.png",
+      "size": 9514,
+      "offset": 3843360
+    },
+    {
+      "path": "./org/unit/705/f/uni705_f00.png",
+      "size": 4501,
+      "offset": 3852880
+    },
+    {
+      "path": "./org/unit/705/unit705.csv",
+      "size": 806,
+      "offset": 3857392
+    },
+    {
+      "path": "./org/unit/706/s/706_s.imgcut",
+      "size": 813,
+      "offset": 3858208
+    },
+    {
+      "path": "./org/unit/706/s/706_s.mamodel",
+      "size": 1780,
+      "offset": 3859024
+    },
+    {
+      "path": "./org/unit/706/s/706_s.png",
+      "size": 15557,
+      "offset": 3860816
+    },
+    {
+      "path": "./org/unit/706/s/706_s00.maanim",
+      "size": 3447,
+      "offset": 3876384
+    },
+    {
+      "path": "./org/unit/706/s/706_s01.maanim",
+      "size": 3317,
+      "offset": 3879840
+    },
+    {
+      "path": "./org/unit/706/s/706_s02.maanim",
+      "size": 3314,
+      "offset": 3883168
+    },
+    {
+      "path": "./org/unit/706/s/706_s03.maanim",
+      "size": 364,
+      "offset": 3886496
+    },
+    {
+      "path": "./org/unit/706/s/edi706_s.png",
+      "size": 3326,
+      "offset": 3886864
+    },
+    {
+      "path": "./org/unit/706/s/udi706_s.png",
+      "size": 7537,
+      "offset": 3890192
+    },
+    {
+      "path": "./org/unit/706/s/uni706_s00.png",
+      "size": 3232,
+      "offset": 3897744
+    },
+    {
+      "path": "./org/unit/706/unit706.csv",
+      "size": 709,
+      "offset": 3900976
+    },
+    {
+      "path": "./org/unit/707/s/707_s.imgcut",
+      "size": 486,
+      "offset": 3901696
+    },
+    {
+      "path": "./org/unit/707/s/707_s.mamodel",
+      "size": 2286,
+      "offset": 3902192
+    },
+    {
+      "path": "./org/unit/707/s/707_s.png",
+      "size": 7487,
+      "offset": 3904480
+    },
+    {
+      "path": "./org/unit/707/s/707_s00.maanim",
+      "size": 1442,
+      "offset": 3911968
+    },
+    {
+      "path": "./org/unit/707/s/707_s01.maanim",
+      "size": 2585,
+      "offset": 3913424
+    },
+    {
+      "path": "./org/unit/707/s/707_s02.maanim",
+      "size": 5409,
+      "offset": 3916016
+    },
+    {
+      "path": "./org/unit/707/s/707_s03.maanim",
+      "size": 719,
+      "offset": 3921440
+    },
+    {
+      "path": "./org/unit/707/s/edi707_s.png",
+      "size": 3272,
+      "offset": 3922160
+    },
+    {
+      "path": "./org/unit/707/s/udi707_s.png",
+      "size": 8324,
+      "offset": 3925440
+    },
+    {
+      "path": "./org/unit/707/s/uni707_s00.png",
+      "size": 3033,
+      "offset": 3933776
+    },
+    {
+      "path": "./org/unit/707/unit707.csv",
+      "size": 708,
+      "offset": 3936816
+    },
+    {
+      "path": "./org/unit/708/c/708_c.imgcut",
+      "size": 1959,
+      "offset": 3937536
+    },
+    {
+      "path": "./org/unit/708/c/708_c.mamodel",
+      "size": 5191,
+      "offset": 3939504
+    },
+    {
+      "path": "./org/unit/708/c/708_c.png",
+      "size": 19963,
+      "offset": 3944704
+    },
+    {
+      "path": "./org/unit/708/c/708_c00.maanim",
+      "size": 4671,
+      "offset": 3964672
+    },
+    {
+      "path": "./org/unit/708/c/708_c01.maanim",
+      "size": 4114,
+      "offset": 3969344
+    },
+    {
+      "path": "./org/unit/708/c/708_c02.maanim",
+      "size": 25634,
+      "offset": 3973472
+    },
+    {
+      "path": "./org/unit/708/c/708_c03.maanim",
+      "size": 1590,
+      "offset": 3999120
+    },
+    {
+      "path": "./org/unit/708/c/edi708_c.png",
+      "size": 3713,
+      "offset": 4000720
+    },
+    {
+      "path": "./org/unit/708/c/udi708_c.png",
+      "size": 9560,
+      "offset": 4004448
+    },
+    {
+      "path": "./org/unit/708/c/uni708_c00.png",
+      "size": 3923,
+      "offset": 4014016
+    },
+    {
+      "path": "./org/unit/708/f/708_f.imgcut",
+      "size": 1013,
+      "offset": 4017952
+    },
+    {
+      "path": "./org/unit/708/f/708_f.mamodel",
+      "size": 4317,
+      "offset": 4018976
+    },
+    {
+      "path": "./org/unit/708/f/708_f.png",
+      "size": 16057,
+      "offset": 4023296
+    },
+    {
+      "path": "./org/unit/708/f/708_f00.maanim",
+      "size": 3896,
+      "offset": 4039360
+    },
+    {
+      "path": "./org/unit/708/f/708_f01.maanim",
+      "size": 3265,
+      "offset": 4043264
+    },
+    {
+      "path": "./org/unit/708/f/708_f02.maanim",
+      "size": 23279,
+      "offset": 4046544
+    },
+    {
+      "path": "./org/unit/708/f/708_f03.maanim",
+      "size": 920,
+      "offset": 4069824
+    },
+    {
+      "path": "./org/unit/708/f/edi708_f.png",
+      "size": 2435,
+      "offset": 4070752
+    },
+    {
+      "path": "./org/unit/708/f/udi708_f.png",
+      "size": 7277,
+      "offset": 4073200
+    },
+    {
+      "path": "./org/unit/708/f/uni708_f00.png",
+      "size": 3320,
+      "offset": 4080480
+    },
+    {
+      "path": "./org/unit/708/unit708.csv",
+      "size": 707,
+      "offset": 4083808
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.7.1",
+    "id": "asset_110902",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110902",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 209350,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 18126,
+      "offset": 209360
+    },
+    {
+      "path": "./org/enemy/617/enemy_icon_617.png",
+      "size": 608,
+      "offset": 227488
+    },
+    {
+      "path": "./org/enemy/618/enemy_icon_618.png",
+      "size": 608,
+      "offset": 228096
+    },
+    {
+      "path": "./org/enemy/619/enemy_icon_619.png",
+      "size": 608,
+      "offset": 228704
+    },
+    {
+      "path": "./org/enemy/620/enemy_icon_620.png",
+      "size": 608,
+      "offset": 229312
+    },
+    {
+      "path": "./org/enemy/621/enemy_icon_621.png",
+      "size": 608,
+      "offset": 229920
+    },
+    {
+      "path": "./org/enemy/622/enemy_icon_622.png",
+      "size": 1566,
+      "offset": 230528
+    },
+    {
+      "path": "./org/enemy/623/enemy_icon_623.png",
+      "size": 1652,
+      "offset": 232096
+    },
+    {
+      "path": "./org/enemy/624/enemy_icon_624.png",
+      "size": 1818,
+      "offset": 233760
+    },
+    {
+      "path": "./org/unit/677/gatyachara_677_f.png",
+      "size": 138,
+      "offset": 235584
+    },
+    {
+      "path": "./org/unit/678/gatyachara_678_f.png",
+      "size": 138,
+      "offset": 235728
+    },
+    {
+      "path": "./org/unit/679/gatyachara_679_f.png",
+      "size": 138,
+      "offset": 235872
+    },
+    {
+      "path": "./org/unit/680/gatyachara_680_f.png",
+      "size": 4532,
+      "offset": 236016
+    },
+    {
+      "path": "./org/unit/681/gatyachara_681_f.png",
+      "size": 3901,
+      "offset": 240560
+    },
+    {
+      "path": "./org/unit/682/gatyachara_682_f.png",
+      "size": 5580,
+      "offset": 244464
+    },
+    {
+      "path": "./org/unit/683/gatyachara_683_f.png",
+      "size": 4418,
+      "offset": 250048
+    },
+    {
+      "path": "./org/unit/684/gatyachara_684_f.png",
+      "size": 3911,
+      "offset": 254480
+    }
+  ]
+}

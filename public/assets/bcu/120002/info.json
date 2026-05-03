@@ -1,0 +1,93 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.9.1",
+    "id": "asset_120002",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120002",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 214577,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 18671,
+      "offset": 214592
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_174_f.png",
+      "size": 2556,
+      "offset": 233264
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_175_f.png",
+      "size": 2926,
+      "offset": 235824
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_176_f.png",
+      "size": 2896,
+      "offset": 238752
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_177_f.png",
+      "size": 4284,
+      "offset": 241648
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_179_f.png",
+      "size": 6071,
+      "offset": 245936
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_180_f.png",
+      "size": 6140,
+      "offset": 252016
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_181_f.png",
+      "size": 6048,
+      "offset": 258160
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_182_f.png",
+      "size": 6094,
+      "offset": 264208
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_183_f.png",
+      "size": 6152,
+      "offset": 270304
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_184_f.png",
+      "size": 3562,
+      "offset": 276464
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_185_f.png",
+      "size": 14063,
+      "offset": 280032
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_58_f.png",
+      "size": 3188,
+      "offset": 294096
+    },
+    {
+      "path": "./org/unit/690/gatyachara_690_f.png",
+      "size": 4266,
+      "offset": 297296
+    }
+  ]
+}

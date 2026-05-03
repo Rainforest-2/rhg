@@ -1,0 +1,93 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.9.1",
+    "id": "asset_120001",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120001",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/medallist.json",
+      "size": 17935,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/627/enemy_icon_627.png",
+      "size": 1301,
+      "offset": 17936
+    },
+    {
+      "path": "./org/enemy/628/enemy_icon_628.png",
+      "size": 2061,
+      "offset": 19248
+    },
+    {
+      "path": "./org/enemy/629/enemy_icon_629.png",
+      "size": 3848,
+      "offset": 21312
+    },
+    {
+      "path": "./org/enemy/630/enemy_icon_630.png",
+      "size": 1797,
+      "offset": 25168
+    },
+    {
+      "path": "./org/enemy/631/enemy_icon_631.png",
+      "size": 2781,
+      "offset": 26976
+    },
+    {
+      "path": "./org/enemy/632/enemy_icon_632.png",
+      "size": 2341,
+      "offset": 29760
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_179_f.png",
+      "size": 6071,
+      "offset": 32112
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_180_f.png",
+      "size": 6140,
+      "offset": 38192
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_181_f.png",
+      "size": 6048,
+      "offset": 44336
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_182_f.png",
+      "size": 6094,
+      "offset": 50384
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_183_f.png",
+      "size": 6152,
+      "offset": 56480
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_184_f.png",
+      "size": 3562,
+      "offset": 62640
+    },
+    {
+      "path": "./org/page/medal/medal_103.png",
+      "size": 4424,
+      "offset": 66208
+    },
+    {
+      "path": "./org/page/medal/medal_104.png",
+      "size": 4975,
+      "offset": 70640
+    }
+  ]
+}

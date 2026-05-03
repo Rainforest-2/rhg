@@ -1,0 +1,63 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.1.1",
+    "id": "asset_120203",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120203",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/L/MSDL/MapStageDataL_000.csv",
+      "size": 5712,
+      "offset": 0
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_104.csv",
+      "size": 643,
+      "offset": 5712
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_105.csv",
+      "size": 489,
+      "offset": 6368
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_106.csv",
+      "size": 615,
+      "offset": 6864
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_107.csv",
+      "size": 412,
+      "offset": 7488
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_108.csv",
+      "size": 386,
+      "offset": 7904
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_109.csv",
+      "size": 464,
+      "offset": 8304
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_110.csv",
+      "size": 514,
+      "offset": 8768
+    },
+    {
+      "path": "./org/stage/L/StageL/stageL000_111.csv",
+      "size": 384,
+      "offset": 9296
+    }
+  ]
+}

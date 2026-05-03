@@ -1,0 +1,170 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.2",
+    "id": "asset_100504",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100504",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/unit/025/c/025_c.imgcut",
+      "size": 581,
+      "offset": 0
+    },
+    {
+      "path": "./org/unit/025/c/025_c.mamodel",
+      "size": 3432,
+      "offset": 592
+    },
+    {
+      "path": "./org/unit/025/c/025_c.png",
+      "size": 102485,
+      "offset": 4032
+    },
+    {
+      "path": "./org/unit/025/c/025_c00.maanim",
+      "size": 4857,
+      "offset": 106528
+    },
+    {
+      "path": "./org/unit/025/c/025_c01.maanim",
+      "size": 4857,
+      "offset": 111392
+    },
+    {
+      "path": "./org/unit/025/c/025_c02.maanim",
+      "size": 17384,
+      "offset": 116256
+    },
+    {
+      "path": "./org/unit/025/c/025_c03.maanim",
+      "size": 631,
+      "offset": 133648
+    },
+    {
+      "path": "./org/unit/025/c/edi025_c.png",
+      "size": 4364,
+      "offset": 134288
+    },
+    {
+      "path": "./org/unit/025/c/udi025_c.png",
+      "size": 21982,
+      "offset": 138656
+    },
+    {
+      "path": "./org/unit/025/c/uni025_c00.png",
+      "size": 17389,
+      "offset": 160640
+    },
+    {
+      "path": "./org/unit/025/f/025_f.imgcut",
+      "size": 581,
+      "offset": 178032
+    },
+    {
+      "path": "./org/unit/025/f/025_f.mamodel",
+      "size": 2875,
+      "offset": 178624
+    },
+    {
+      "path": "./org/unit/025/f/025_f.png",
+      "size": 89138,
+      "offset": 181504
+    },
+    {
+      "path": "./org/unit/025/f/025_f00.maanim",
+      "size": 3600,
+      "offset": 270656
+    },
+    {
+      "path": "./org/unit/025/f/025_f01.maanim",
+      "size": 3607,
+      "offset": 274256
+    },
+    {
+      "path": "./org/unit/025/f/025_f02.maanim",
+      "size": 12645,
+      "offset": 277872
+    },
+    {
+      "path": "./org/unit/025/f/025_f03.maanim",
+      "size": 631,
+      "offset": 290528
+    },
+    {
+      "path": "./org/unit/025/f/edi025_f.png",
+      "size": 3257,
+      "offset": 291168
+    },
+    {
+      "path": "./org/unit/025/f/udi025_f.png",
+      "size": 15721,
+      "offset": 294432
+    },
+    {
+      "path": "./org/unit/025/f/uni025_f00.png",
+      "size": 14923,
+      "offset": 310160
+    },
+    {
+      "path": "./org/unit/025/s/025_s.imgcut",
+      "size": 1748,
+      "offset": 325088
+    },
+    {
+      "path": "./org/unit/025/s/025_s.mamodel",
+      "size": 4631,
+      "offset": 326848
+    },
+    {
+      "path": "./org/unit/025/s/025_s.png",
+      "size": 152183,
+      "offset": 331488
+    },
+    {
+      "path": "./org/unit/025/s/025_s00.maanim",
+      "size": 4948,
+      "offset": 483680
+    },
+    {
+      "path": "./org/unit/025/s/025_s01.maanim",
+      "size": 4948,
+      "offset": 488640
+    },
+    {
+      "path": "./org/unit/025/s/025_s02.maanim",
+      "size": 32105,
+      "offset": 493600
+    },
+    {
+      "path": "./org/unit/025/s/025_s03.maanim",
+      "size": 1005,
+      "offset": 525712
+    },
+    {
+      "path": "./org/unit/025/s/edi025_s.png",
+      "size": 8309,
+      "offset": 526720
+    },
+    {
+      "path": "./org/unit/025/s/udi025_s.png",
+      "size": 11070,
+      "offset": 535040
+    },
+    {
+      "path": "./org/unit/025/s/uni025_s00.png",
+      "size": 5092,
+      "offset": 546112
+    },
+    {
+      "path": "./org/unit/025/unit025.csv",
+      "size": 495,
+      "offset": 551216
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.10.0",
+    "id": "asset_140202",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 140202",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 282207,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 22615,
+      "offset": 282208
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_209_f.png",
+      "size": 646,
+      "offset": 304832
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_210_f.png",
+      "size": 646,
+      "offset": 305488
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_211_f.png",
+      "size": 646,
+      "offset": 306144
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_212_f.png",
+      "size": 7482,
+      "offset": 306800
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_213_f.png",
+      "size": 5476,
+      "offset": 314288
+    },
+    {
+      "path": "./org/unit/781/gatyachara_781_f.png",
+      "size": 3945,
+      "offset": 319776
+    },
+    {
+      "path": "./org/unit/783/gatyachara_783_f.png",
+      "size": 4165,
+      "offset": 323728
+    },
+    {
+      "path": "./org/unit/784/gatyachara_784_f.png",
+      "size": 3952,
+      "offset": 327904
+    },
+    {
+      "path": "./org/unit/785/gatyachara_785_f.png",
+      "size": 2105,
+      "offset": 331856
+    },
+    {
+      "path": "./org/unit/786/gatyachara_786_f.png",
+      "size": 6195,
+      "offset": 333968
+    }
+  ]
+}

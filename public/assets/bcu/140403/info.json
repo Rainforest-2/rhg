@@ -1,0 +1,128 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.11.0",
+    "id": "asset_140403",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 140403",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/unit/810/c/810_c01.maanim",
+      "size": 5160,
+      "offset": 0
+    },
+    {
+      "path": "./org/unit/810/c/810_c03.maanim",
+      "size": 2835,
+      "offset": 5168
+    },
+    {
+      "path": "./org/unit/810/c/810_c02.maanim",
+      "size": 30658,
+      "offset": 8016
+    },
+    {
+      "path": "./org/unit/810/c/810_c.mamodel",
+      "size": 8402,
+      "offset": 38688
+    },
+    {
+      "path": "./org/unit/810/c/edi810_c.png",
+      "size": 3896,
+      "offset": 47104
+    },
+    {
+      "path": "./org/unit/810/c/uni810_c00.png",
+      "size": 5334,
+      "offset": 51008
+    },
+    {
+      "path": "./org/unit/810/c/udi810_c00.png",
+      "size": 11145,
+      "offset": 56352
+    },
+    {
+      "path": "./org/unit/810/c/810_c00.maanim",
+      "size": 9570,
+      "offset": 67504
+    },
+    {
+      "path": "./org/unit/810/c/810_c.imgcut",
+      "size": 3093,
+      "offset": 77088
+    },
+    {
+      "path": "./org/unit/810/c/810_c.png",
+      "size": 86447,
+      "offset": 80192
+    },
+    {
+      "path": "./org/unit/810/unit810.csv",
+      "size": 780,
+      "offset": 166640
+    },
+    {
+      "path": "./org/unit/810/f/810_f.imgcut",
+      "size": 3597,
+      "offset": 167424
+    },
+    {
+      "path": "./org/unit/810/f/810_f01.maanim",
+      "size": 5448,
+      "offset": 171024
+    },
+    {
+      "path": "./org/unit/810/f/edi810_f.png",
+      "size": 3320,
+      "offset": 176480
+    },
+    {
+      "path": "./org/unit/810/f/uni810_f00.png",
+      "size": 4983,
+      "offset": 179808
+    },
+    {
+      "path": "./org/unit/810/f/810_f.mamodel",
+      "size": 8836,
+      "offset": 184800
+    },
+    {
+      "path": "./org/unit/810/f/810_f00.maanim",
+      "size": 10890,
+      "offset": 193648
+    },
+    {
+      "path": "./org/unit/810/f/udi810_f00.png",
+      "size": 10960,
+      "offset": 204544
+    },
+    {
+      "path": "./org/unit/810/f/810_f02.maanim",
+      "size": 28356,
+      "offset": 215504
+    },
+    {
+      "path": "./org/unit/810/f/810_f.png",
+      "size": 85352,
+      "offset": 243872
+    },
+    {
+      "path": "./org/unit/810/f/810_f03.maanim",
+      "size": 4155,
+      "offset": 329232
+    },
+    {
+      "path": "./org/data/unitbuy.csv",
+      "size": 158217,
+      "offset": 333392
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.9.1",
+    "id": "asset_111003",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "soul icon 111003",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/soulFG.png",
+      "size": 2255,
+      "offset": 0
+    }
+  ]
+}

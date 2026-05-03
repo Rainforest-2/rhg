@@ -1,0 +1,103 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.7.1.1",
+    "id": "asset_120202",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 120202",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/data/DropItem.csv",
+      "size": 6200,
+      "offset": 0
+    },
+    {
+      "path": "./org/data/GatyaDataSetR1.csv",
+      "size": 221859,
+      "offset": 6208
+    },
+    {
+      "path": "./org/data/Mission_Data.csv",
+      "size": 18971,
+      "offset": 228080
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_187_f.png",
+      "size": 4762,
+      "offset": 247056
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_188_f.png",
+      "size": 4582,
+      "offset": 251824
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_189_f.png",
+      "size": 5437,
+      "offset": 256416
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_190_f.png",
+      "size": 5492,
+      "offset": 261856
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_191_f.png",
+      "size": 5932,
+      "offset": 267360
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_192_f.png",
+      "size": 6181,
+      "offset": 273296
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_193_f.png",
+      "size": 5299,
+      "offset": 279488
+    },
+    {
+      "path": "./org/page/items/gatyaitemD_194_f.png",
+      "size": 5184,
+      "offset": 284800
+    },
+    {
+      "path": "./org/unit/698/gatyachara_698_f.png",
+      "size": 4738,
+      "offset": 289984
+    },
+    {
+      "path": "./org/unit/699/gatyachara_699_f.png",
+      "size": 4223,
+      "offset": 294736
+    },
+    {
+      "path": "./org/unit/701/gatyachara_701_f.png",
+      "size": 3004,
+      "offset": 298960
+    },
+    {
+      "path": "./org/unit/702/gatyachara_702_f.png",
+      "size": 3870,
+      "offset": 301968
+    },
+    {
+      "path": "./org/unit/703/gatyachara_703_f.png",
+      "size": 2758,
+      "offset": 305840
+    },
+    {
+      "path": "./org/unit/704/gatyachara_704_f.png",
+      "size": 2521,
+      "offset": 308608
+    }
+  ]
+}

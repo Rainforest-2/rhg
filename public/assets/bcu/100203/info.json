@@ -1,0 +1,35 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.3",
+    "id": "asset_100203",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100203",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/s3/heal/heal.imgcut",
+      "size": 51,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/s3/heal/heal.maanim",
+      "size": 117,
+      "offset": 64
+    },
+    {
+      "path": "./org/battle/s3/heal/heal.mamodel",
+      "size": 149,
+      "offset": 192
+    },
+    {
+      "path": "./org/battle/s3/heal/heal.png",
+      "size": 762,
+      "offset": 352
+    }
+  ]
+}

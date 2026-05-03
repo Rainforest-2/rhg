@@ -1,0 +1,26 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.7.0",
+    "id": "asset_100902",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100902",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/castle/001/nyankoCastle_001_05_01.maanim",
+      "size": 1046,
+      "offset": 0
+    },
+    {
+      "path": "./org/castle/001/nyankoCastle_001_05_01.mamodel",
+      "size": 258,
+      "offset": 1056
+    }
+  ]
+}

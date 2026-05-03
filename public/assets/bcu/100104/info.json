@@ -1,0 +1,54 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.1",
+    "id": "asset_100104",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100104",
+    "time": null,
+    "version": 0,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/battle/a/attack_smoke.maanim",
+      "size": 95,
+      "offset": 0
+    },
+    {
+      "path": "./org/battle/a/attack_smoke.mamodel",
+      "size": 149,
+      "offset": 96
+    },
+    {
+      "path": "./org/battle/a/white_smoke.maanim",
+      "size": 174,
+      "offset": 256
+    },
+    {
+      "path": "./org/battle/a/white_smoke.mamodel",
+      "size": 194,
+      "offset": 432
+    },
+    {
+      "path": "./org/battle/s2/skill_barrier_e.maanim",
+      "size": 2218,
+      "offset": 640
+    },
+    {
+      "path": "./org/battle/s2/skill_barrier_e.mamodel",
+      "size": 2747,
+      "offset": 2864
+    },
+    {
+      "path": "./org/battle/s2/skill_barrier_e_breaker.maanim",
+      "size": 3473,
+      "offset": 5616
+    },
+    {
+      "path": "./org/battle/s2/skill_barrier_e_destruction.maanim",
+      "size": 4294,
+      "offset": 9104
+    }
+  ]
+}

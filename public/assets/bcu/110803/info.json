@@ -1,0 +1,33 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.6.7.0",
+    "id": "asset_110803",
+    "author": "PONOS",
+    "names": {
+      "dat": []
+    },
+    "desc": "default required asset 110803",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "parentPassword": null,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/enemy/614/614_e_zombie00.maanim",
+      "size": 3239,
+      "offset": 0
+    },
+    {
+      "path": "./org/enemy/614/614_e_zombie01.maanim",
+      "size": 277,
+      "offset": 3248
+    },
+    {
+      "path": "./org/enemy/614/614_e_zombie02.maanim",
+      "size": 3368,
+      "offset": 3536
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.1.1",
+    "id": "asset_100304",
+    "author": "PONOS",
+    "name": null,
+    "desc": "default required asset 100304",
+    "time": null,
+    "version": 0,
+    "allowAnim": false,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/stage/N/StageRN/stageRN039_02.csv",
+      "size": 1050,
+      "offset": 0
+    },
+    {
+      "path": "./org/stage/N/stageRN-1/stageRN039_02.csv",
+      "size": 1041,
+      "offset": 1056
+    }
+  ]
+}

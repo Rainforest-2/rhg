@@ -1,0 +1,3144 @@
+{
+  "desc": {
+    "BCU_VERSION": "0.5.0.0",
+    "id": "asset_000010",
+    "author": "PONOS",
+    "name": null,
+    "desc": "enemy icons",
+    "time": null,
+    "version": 0,
+    "dependency": []
+  },
+  "files": [
+    {
+      "path": "./org/page/catfruit/xp.png",
+      "size": 5895,
+      "offset": 0
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_43_f.png",
+      "size": 2312,
+      "offset": 5904
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_41_f.png",
+      "size": 11912,
+      "offset": 8224
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_39_f.png",
+      "size": 18219,
+      "offset": 20144
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_38_f.png",
+      "size": 17687,
+      "offset": 38368
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_40_f.png",
+      "size": 26495,
+      "offset": 56064
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_42_f.png",
+      "size": 33196,
+      "offset": 82560
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_36_f.png",
+      "size": 18373,
+      "offset": 115760
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_34_f.png",
+      "size": 6053,
+      "offset": 134144
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_30_f.png",
+      "size": 6317,
+      "offset": 140208
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_32_f.png",
+      "size": 6407,
+      "offset": 146528
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_35_f.png",
+      "size": 18697,
+      "offset": 152944
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_37_f.png",
+      "size": 18430,
+      "offset": 171648
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_33_f.png",
+      "size": 5965,
+      "offset": 190080
+    },
+    {
+      "path": "./org/page/catfruit/gatyaitemD_31_f.png",
+      "size": 6230,
+      "offset": 196048
+    },
+    {
+      "path": "./org/page/medal/medal_008.png",
+      "size": 5040,
+      "offset": 202288
+    },
+    {
+      "path": "./org/page/medal/medal_034.png",
+      "size": 4768,
+      "offset": 207328
+    },
+    {
+      "path": "./org/page/medal/medal_020.png",
+      "size": 4832,
+      "offset": 212096
+    },
+    {
+      "path": "./org/page/medal/medal_021.png",
+      "size": 4672,
+      "offset": 216928
+    },
+    {
+      "path": "./org/page/medal/medal_035.png",
+      "size": 4304,
+      "offset": 221600
+    },
+    {
+      "path": "./org/page/medal/medal_009.png",
+      "size": 5232,
+      "offset": 225904
+    },
+    {
+      "path": "./org/page/medal/medal_023.png",
+      "size": 4912,
+      "offset": 231136
+    },
+    {
+      "path": "./org/page/medal/medal_037.png",
+      "size": 3984,
+      "offset": 236048
+    },
+    {
+      "path": "./org/page/medal/medal_036.png",
+      "size": 4464,
+      "offset": 240032
+    },
+    {
+      "path": "./org/page/medal/medal_022.png",
+      "size": 4752,
+      "offset": 244496
+    },
+    {
+      "path": "./org/page/medal/medal_026.png",
+      "size": 4992,
+      "offset": 249248
+    },
+    {
+      "path": "./org/page/medal/medal_032.png",
+      "size": 4992,
+      "offset": 254240
+    },
+    {
+      "path": "./org/page/medal/medal_033.png",
+      "size": 4096,
+      "offset": 259232
+    },
+    {
+      "path": "./org/page/medal/medal_027.png",
+      "size": 4800,
+      "offset": 263328
+    },
+    {
+      "path": "./org/page/medal/medal_031.png",
+      "size": 5040,
+      "offset": 268128
+    },
+    {
+      "path": "./org/page/medal/medal_025.png",
+      "size": 4880,
+      "offset": 273168
+    },
+    {
+      "path": "./org/page/medal/medal_019.png",
+      "size": 4880,
+      "offset": 278048
+    },
+    {
+      "path": "./org/page/medal/medal_018.png",
+      "size": 4768,
+      "offset": 282928
+    },
+    {
+      "path": "./org/page/medal/medal_024.png",
+      "size": 4800,
+      "offset": 287696
+    },
+    {
+      "path": "./org/page/medal/medal_030.png",
+      "size": 5168,
+      "offset": 292496
+    },
+    {
+      "path": "./org/page/medal/medal_080.png",
+      "size": 6992,
+      "offset": 297664
+    },
+    {
+      "path": "./org/page/medal/medal_057.png",
+      "size": 5360,
+      "offset": 304656
+    },
+    {
+      "path": "./org/page/medal/medal_043.png",
+      "size": 4576,
+      "offset": 310016
+    },
+    {
+      "path": "./org/page/medal/medal_042.png",
+      "size": 5136,
+      "offset": 314592
+    },
+    {
+      "path": "./org/page/medal/medal_056.png",
+      "size": 5472,
+      "offset": 319728
+    },
+    {
+      "path": "./org/page/medal/medal_081.png",
+      "size": 6795,
+      "offset": 325200
+    },
+    {
+      "path": "./org/page/medal/medal_083.png",
+      "size": 7349,
+      "offset": 332000
+    },
+    {
+      "path": "./org/page/medal/medal_068.png",
+      "size": 5072,
+      "offset": 339360
+    },
+    {
+      "path": "./org/page/medal/medal_040.png",
+      "size": 4752,
+      "offset": 344432
+    },
+    {
+      "path": "./org/page/medal/medal_054.png",
+      "size": 5088,
+      "offset": 349184
+    },
+    {
+      "path": "./org/page/medal/medal_055.png",
+      "size": 5392,
+      "offset": 354272
+    },
+    {
+      "path": "./org/page/medal/medal_041.png",
+      "size": 4944,
+      "offset": 359664
+    },
+    {
+      "path": "./org/page/medal/medal_069.png",
+      "size": 7136,
+      "offset": 364608
+    },
+    {
+      "path": "./org/page/medal/medal_082.png",
+      "size": 6933,
+      "offset": 371744
+    },
+    {
+      "path": "./org/page/medal/medal_045.png",
+      "size": 4928,
+      "offset": 378688
+    },
+    {
+      "path": "./org/page/medal/medal_051.png",
+      "size": 8160,
+      "offset": 383616
+    },
+    {
+      "path": "./org/page/medal/medal_079.png",
+      "size": 6992,
+      "offset": 391776
+    },
+    {
+      "path": "./org/page/medal/medal_078.png",
+      "size": 6176,
+      "offset": 398768
+    },
+    {
+      "path": "./org/page/medal/medal_050.png",
+      "size": 4720,
+      "offset": 404944
+    },
+    {
+      "path": "./org/page/medal/medal_044.png",
+      "size": 5216,
+      "offset": 409664
+    },
+    {
+      "path": "./org/page/medal/medal_052.png",
+      "size": 7440,
+      "offset": 414880
+    },
+    {
+      "path": "./org/page/medal/medal_046.png",
+      "size": 4960,
+      "offset": 422320
+    },
+    {
+      "path": "./org/page/medal/medal_047.png",
+      "size": 4816,
+      "offset": 427280
+    },
+    {
+      "path": "./org/page/medal/medal_053.png",
+      "size": 5024,
+      "offset": 432096
+    },
+    {
+      "path": "./org/page/medal/medal_084.png",
+      "size": 9369,
+      "offset": 437120
+    },
+    {
+      "path": "./org/page/medal/medal_076.png",
+      "size": 6416,
+      "offset": 446496
+    },
+    {
+      "path": "./org/page/medal/medal_062.png",
+      "size": 4624,
+      "offset": 452912
+    },
+    {
+      "path": "./org/page/medal/medal_063.png",
+      "size": 5120,
+      "offset": 457536
+    },
+    {
+      "path": "./org/page/medal/medal_077.png",
+      "size": 8176,
+      "offset": 462656
+    },
+    {
+      "path": "./org/page/medal/medal_049.png",
+      "size": 5056,
+      "offset": 470832
+    },
+    {
+      "path": "./org/page/medal/medal_061.png",
+      "size": 4864,
+      "offset": 475888
+    },
+    {
+      "path": "./org/page/medal/medal_075.png",
+      "size": 7024,
+      "offset": 480752
+    },
+    {
+      "path": "./org/page/medal/medal_074.png",
+      "size": 8336,
+      "offset": 487776
+    },
+    {
+      "path": "./org/page/medal/medal_060.png",
+      "size": 4848,
+      "offset": 496112
+    },
+    {
+      "path": "./org/page/medal/medal_048.png",
+      "size": 4800,
+      "offset": 500960
+    },
+    {
+      "path": "./org/page/medal/medal_064.png",
+      "size": 5104,
+      "offset": 505760
+    },
+    {
+      "path": "./org/page/medal/medal_070.png",
+      "size": 7984,
+      "offset": 510864
+    },
+    {
+      "path": "./org/page/medal/medal_058.png",
+      "size": 5376,
+      "offset": 518848
+    },
+    {
+      "path": "./org/page/medal/medal_059.png",
+      "size": 5392,
+      "offset": 524224
+    },
+    {
+      "path": "./org/page/medal/medal_071.png",
+      "size": 7744,
+      "offset": 529616
+    },
+    {
+      "path": "./org/page/medal/medal_065.png",
+      "size": 5232,
+      "offset": 537360
+    },
+    {
+      "path": "./org/page/medal/medal_073.png",
+      "size": 6336,
+      "offset": 542592
+    },
+    {
+      "path": "./org/page/medal/medal_067.png",
+      "size": 5264,
+      "offset": 548928
+    },
+    {
+      "path": "./org/page/medal/medal_066.png",
+      "size": 5216,
+      "offset": 554192
+    },
+    {
+      "path": "./org/page/medal/medal_072.png",
+      "size": 7008,
+      "offset": 559408
+    },
+    {
+      "path": "./org/page/medal/medal_029.png",
+      "size": 5136,
+      "offset": 566416
+    },
+    {
+      "path": "./org/page/medal/medal_015.png",
+      "size": 4592,
+      "offset": 571552
+    },
+    {
+      "path": "./org/page/medal/medal_001.png",
+      "size": 5376,
+      "offset": 576144
+    },
+    {
+      "path": "./org/page/medal/medal_000.png",
+      "size": 5376,
+      "offset": 581520
+    },
+    {
+      "path": "./org/page/medal/medal_014.png",
+      "size": 7728,
+      "offset": 586896
+    },
+    {
+      "path": "./org/page/medal/medal_028.png",
+      "size": 5536,
+      "offset": 594624
+    },
+    {
+      "path": "./org/page/medal/medal_002.png",
+      "size": 5104,
+      "offset": 600160
+    },
+    {
+      "path": "./org/page/medal/medal_016.png",
+      "size": 4576,
+      "offset": 605264
+    },
+    {
+      "path": "./org/page/medal/medal_017.png",
+      "size": 4720,
+      "offset": 609840
+    },
+    {
+      "path": "./org/page/medal/medal_003.png",
+      "size": 5440,
+      "offset": 614560
+    },
+    {
+      "path": "./org/page/medal/medal_007.png",
+      "size": 5200,
+      "offset": 620000
+    },
+    {
+      "path": "./org/page/medal/medal_013.png",
+      "size": 5216,
+      "offset": 625200
+    },
+    {
+      "path": "./org/page/medal/medal_012.png",
+      "size": 5344,
+      "offset": 630416
+    },
+    {
+      "path": "./org/page/medal/medal_006.png",
+      "size": 4896,
+      "offset": 635760
+    },
+    {
+      "path": "./org/page/medal/medal_010.png",
+      "size": 5424,
+      "offset": 640656
+    },
+    {
+      "path": "./org/page/medal/medal_004.png",
+      "size": 5616,
+      "offset": 646080
+    },
+    {
+      "path": "./org/page/medal/medal_038.png",
+      "size": 5008,
+      "offset": 651696
+    },
+    {
+      "path": "./org/page/medal/medal_039.png",
+      "size": 4848,
+      "offset": 656704
+    },
+    {
+      "path": "./org/page/medal/medal_005.png",
+      "size": 5392,
+      "offset": 661552
+    },
+    {
+      "path": "./org/page/medal/medal_011.png",
+      "size": 5120,
+      "offset": 666944
+    },
+    {
+      "path": "./org/enemy/135/enemy_icon_135.png",
+      "size": 1504,
+      "offset": 672064
+    },
+    {
+      "path": "./org/enemy/307/enemy_icon_307.png",
+      "size": 1424,
+      "offset": 673568
+    },
+    {
+      "path": "./org/enemy/338/enemy_icon_338.png",
+      "size": 1328,
+      "offset": 674992
+    },
+    {
+      "path": "./org/enemy/300/enemy_icon_300.png",
+      "size": 768,
+      "offset": 676320
+    },
+    {
+      "path": "./org/enemy/132/enemy_icon_132.png",
+      "size": 1760,
+      "offset": 677088
+    },
+    {
+      "path": "./org/enemy/336/enemy_icon_336.png",
+      "size": 1664,
+      "offset": 678848
+    },
+    {
+      "path": "./org/enemy/104/enemy_icon_104.png",
+      "size": 1440,
+      "offset": 680512
+    },
+    {
+      "path": "./org/enemy/309/enemy_icon_309.png",
+      "size": 1648,
+      "offset": 681952
+    },
+    {
+      "path": "./org/enemy/103/enemy_icon_103.png",
+      "size": 1472,
+      "offset": 683600
+    },
+    {
+      "path": "./org/enemy/331/enemy_icon_331.png",
+      "size": 1568,
+      "offset": 685072
+    },
+    {
+      "path": "./org/enemy/168/enemy_icon_168.png",
+      "size": 1488,
+      "offset": 686640
+    },
+    {
+      "path": "./org/enemy/391/enemy_icon_391.png",
+      "size": 1344,
+      "offset": 688128
+    },
+    {
+      "path": "./org/enemy/365/enemy_icon_365.png",
+      "size": 1408,
+      "offset": 689472
+    },
+    {
+      "path": "./org/enemy/157/enemy_icon_157.png",
+      "size": 1344,
+      "offset": 690880
+    },
+    {
+      "path": "./org/enemy/150/enemy_icon_150.png",
+      "size": 1008,
+      "offset": 692224
+    },
+    {
+      "path": "./org/enemy/362/enemy_icon_362.png",
+      "size": 1808,
+      "offset": 693232
+    },
+    {
+      "path": "./org/enemy/396/enemy_icon_396.png",
+      "size": 1792,
+      "offset": 695040
+    },
+    {
+      "path": "./org/enemy/159/enemy_icon_159.png",
+      "size": 976,
+      "offset": 696832
+    },
+    {
+      "path": "./org/enemy/502/enemy_icon_502.png",
+      "size": 1872,
+      "offset": 697808
+    },
+    {
+      "path": "./org/enemy/166/enemy_icon_166.png",
+      "size": 1600,
+      "offset": 699680
+    },
+    {
+      "path": "./org/enemy/354/enemy_icon_354.png",
+      "size": 1440,
+      "offset": 701280
+    },
+    {
+      "path": "./org/enemy/192/enemy_icon_192.png",
+      "size": 1840,
+      "offset": 702720
+    },
+    {
+      "path": "./org/enemy/398/enemy_icon_398.png",
+      "size": 1536,
+      "offset": 704560
+    },
+    {
+      "path": "./org/enemy/195/enemy_icon_195.png",
+      "size": 1584,
+      "offset": 706096
+    },
+    {
+      "path": "./org/enemy/353/enemy_icon_353.png",
+      "size": 1872,
+      "offset": 707680
+    },
+    {
+      "path": "./org/enemy/161/enemy_icon_161.png",
+      "size": 2064,
+      "offset": 709552
+    },
+    {
+      "path": "./org/enemy/505/enemy_icon_505.png",
+      "size": 1424,
+      "offset": 711616
+    },
+    {
+      "path": "./org/enemy/330/enemy_icon_330.png",
+      "size": 1568,
+      "offset": 713040
+    },
+    {
+      "path": "./org/enemy/102/enemy_icon_102.png",
+      "size": 1568,
+      "offset": 714608
+    },
+    {
+      "path": "./org/enemy/105/enemy_icon_105.png",
+      "size": 1616,
+      "offset": 716176
+    },
+    {
+      "path": "./org/enemy/337/enemy_icon_337.png",
+      "size": 1456,
+      "offset": 717792
+    },
+    {
+      "path": "./org/enemy/308/enemy_icon_308.png",
+      "size": 688,
+      "offset": 719248
+    },
+    {
+      "path": "./org/enemy/133/enemy_icon_133.png",
+      "size": 1488,
+      "offset": 719936
+    },
+    {
+      "path": "./org/enemy/301/enemy_icon_301.png",
+      "size": 912,
+      "offset": 721424
+    },
+    {
+      "path": "./org/enemy/306/enemy_icon_306.png",
+      "size": 1488,
+      "offset": 722336
+    },
+    {
+      "path": "./org/enemy/134/enemy_icon_134.png",
+      "size": 1424,
+      "offset": 723824
+    },
+    {
+      "path": "./org/enemy/339/enemy_icon_339.png",
+      "size": 960,
+      "offset": 725248
+    },
+    {
+      "path": "./org/enemy/399/enemy_icon_399.png",
+      "size": 1408,
+      "offset": 726208
+    },
+    {
+      "path": "./org/enemy/160/enemy_icon_160.png",
+      "size": 1488,
+      "offset": 727616
+    },
+    {
+      "path": "./org/enemy/352/enemy_icon_352.png",
+      "size": 1408,
+      "offset": 729104
+    },
+    {
+      "path": "./org/enemy/504/enemy_icon_504.png",
+      "size": 1888,
+      "offset": 730512
+    },
+    {
+      "path": "./org/enemy/194/enemy_icon_194.png",
+      "size": 2144,
+      "offset": 732400
+    },
+    {
+      "path": "./org/enemy/158/enemy_icon_158.png",
+      "size": 1840,
+      "offset": 734544
+    },
+    {
+      "path": "./org/enemy/193/enemy_icon_193.png",
+      "size": 2144,
+      "offset": 736384
+    },
+    {
+      "path": "./org/enemy/503/enemy_icon_503.png",
+      "size": 1840,
+      "offset": 738528
+    },
+    {
+      "path": "./org/enemy/355/enemy_icon_355.png",
+      "size": 1792,
+      "offset": 740368
+    },
+    {
+      "path": "./org/enemy/167/enemy_icon_167.png",
+      "size": 1792,
+      "offset": 742160
+    },
+    {
+      "path": "./org/enemy/397/enemy_icon_397.png",
+      "size": 2112,
+      "offset": 743952
+    },
+    {
+      "path": "./org/enemy/363/enemy_icon_363.png",
+      "size": 1472,
+      "offset": 746064
+    },
+    {
+      "path": "./org/enemy/151/enemy_icon_151.png",
+      "size": 1328,
+      "offset": 747536
+    },
+    {
+      "path": "./org/enemy/169/enemy_icon_169.png",
+      "size": 1440,
+      "offset": 748864
+    },
+    {
+      "path": "./org/enemy/156/enemy_icon_156.png",
+      "size": 1456,
+      "offset": 750304
+    },
+    {
+      "path": "./org/enemy/364/enemy_icon_364.png",
+      "size": 1616,
+      "offset": 751760
+    },
+    {
+      "path": "./org/enemy/390/enemy_icon_390.png",
+      "size": 1536,
+      "offset": 753376
+    },
+    {
+      "path": "./org/enemy/024/enemy_icon_024.png",
+      "size": 2048,
+      "offset": 754912
+    },
+    {
+      "path": "./org/enemy/216/enemy_icon_216.png",
+      "size": 1600,
+      "offset": 756960
+    },
+    {
+      "path": "./org/enemy/440/enemy_icon_440.png",
+      "size": 2080,
+      "offset": 758560
+    },
+    {
+      "path": "./org/enemy/229/enemy_icon_229.png",
+      "size": 1472,
+      "offset": 760640
+    },
+    {
+      "path": "./org/enemy/447/enemy_icon_447.png",
+      "size": 960,
+      "offset": 762112
+    },
+    {
+      "path": "./org/enemy/211/enemy_icon_211.png",
+      "size": 2240,
+      "offset": 763072
+    },
+    {
+      "path": "./org/enemy/023/enemy_icon_023.png",
+      "size": 1520,
+      "offset": 765312
+    },
+    {
+      "path": "./org/enemy/478/enemy_icon_478.png",
+      "size": 1632,
+      "offset": 766832
+    },
+    {
+      "path": "./org/enemy/227/enemy_icon_227.png",
+      "size": 1808,
+      "offset": 768464
+    },
+    {
+      "path": "./org/enemy/015/enemy_icon_015.png",
+      "size": 1664,
+      "offset": 770272
+    },
+    {
+      "path": "./org/enemy/471/enemy_icon_471.png",
+      "size": 1673,
+      "offset": 771936
+    },
+    {
+      "path": "./org/enemy/485/enemy_icon_485.png",
+      "size": 1616,
+      "offset": 773616
+    },
+    {
+      "path": "./org/enemy/218/enemy_icon_218.png",
+      "size": 1248,
+      "offset": 775232
+    },
+    {
+      "path": "./org/enemy/482/enemy_icon_482.png",
+      "size": 1664,
+      "offset": 776480
+    },
+    {
+      "path": "./org/enemy/476/enemy_icon_476.png",
+      "size": 2848,
+      "offset": 778144
+    },
+    {
+      "path": "./org/enemy/012/enemy_icon_012.png",
+      "size": 1392,
+      "offset": 780992
+    },
+    {
+      "path": "./org/enemy/220/enemy_icon_220.png",
+      "size": 1680,
+      "offset": 782384
+    },
+    {
+      "path": "./org/enemy/449/enemy_icon_449.png",
+      "size": 2000,
+      "offset": 784064
+    },
+    {
+      "path": "./org/enemy/079/enemy_icon_079.png",
+      "size": 2112,
+      "offset": 786064
+    },
+    {
+      "path": "./org/enemy/280/enemy_icon_280.png",
+      "size": 1696,
+      "offset": 788176
+    },
+    {
+      "path": "./org/enemy/422/enemy_icon_422.png",
+      "size": 1856,
+      "offset": 789872
+    },
+    {
+      "path": "./org/enemy/274/enemy_icon_274.png",
+      "size": 1520,
+      "offset": 791728
+    },
+    {
+      "path": "./org/enemy/046/enemy_icon_046.png",
+      "size": 1712,
+      "offset": 793248
+    },
+    {
+      "path": "./org/enemy/041/enemy_icon_041.png",
+      "size": 1424,
+      "offset": 794960
+    },
+    {
+      "path": "./org/enemy/273/enemy_icon_273.png",
+      "size": 2400,
+      "offset": 796384
+    },
+    {
+      "path": "./org/enemy/425/enemy_icon_425.png",
+      "size": 1568,
+      "offset": 798784
+    },
+    {
+      "path": "./org/enemy/287/enemy_icon_287.png",
+      "size": 1728,
+      "offset": 800352
+    },
+    {
+      "path": "./org/enemy/048/enemy_icon_048.png",
+      "size": 1568,
+      "offset": 802080
+    },
+    {
+      "path": "./org/enemy/413/enemy_icon_413.png",
+      "size": 2080,
+      "offset": 803648
+    },
+    {
+      "path": "./org/enemy/077/enemy_icon_077.png",
+      "size": 1792,
+      "offset": 805728
+    },
+    {
+      "path": "./org/enemy/245/enemy_icon_245.png",
+      "size": 1968,
+      "offset": 807520
+    },
+    {
+      "path": "./org/enemy/083/enemy_icon_083.png",
+      "size": 1664,
+      "offset": 809488
+    },
+    {
+      "path": "./org/enemy/289/enemy_icon_289.png",
+      "size": 1808,
+      "offset": 811152
+    },
+    {
+      "path": "./org/enemy/084/enemy_icon_084.png",
+      "size": 1440,
+      "offset": 812960
+    },
+    {
+      "path": "./org/enemy/242/enemy_icon_242.png",
+      "size": 1808,
+      "offset": 814400
+    },
+    {
+      "path": "./org/enemy/070/enemy_icon_070.png",
+      "size": 2208,
+      "offset": 816208
+    },
+    {
+      "path": "./org/enemy/414/enemy_icon_414.png",
+      "size": 1408,
+      "offset": 818416
+    },
+    {
+      "path": "./org/enemy/477/enemy_icon_477.png",
+      "size": 1808,
+      "offset": 819824
+    },
+    {
+      "path": "./org/enemy/221/enemy_icon_221.png",
+      "size": 1456,
+      "offset": 821632
+    },
+    {
+      "path": "./org/enemy/013/enemy_icon_013.png",
+      "size": 1312,
+      "offset": 823088
+    },
+    {
+      "path": "./org/enemy/483/enemy_icon_483.png",
+      "size": 1776,
+      "offset": 824400
+    },
+    {
+      "path": "./org/enemy/448/enemy_icon_448.png",
+      "size": 1584,
+      "offset": 826176
+    },
+    {
+      "path": "./org/enemy/484/enemy_icon_484.png",
+      "size": 2064,
+      "offset": 827760
+    },
+    {
+      "path": "./org/enemy/014/enemy_icon_014.png",
+      "size": 1616,
+      "offset": 829824
+    },
+    {
+      "path": "./org/enemy/226/enemy_icon_226.png",
+      "size": 1232,
+      "offset": 831440
+    },
+    {
+      "path": "./org/enemy/470/enemy_icon_470.png",
+      "size": 1544,
+      "offset": 832672
+    },
+    {
+      "path": "./org/enemy/219/enemy_icon_219.png",
+      "size": 1952,
+      "offset": 834224
+    },
+    {
+      "path": "./org/enemy/446/enemy_icon_446.png",
+      "size": 1472,
+      "offset": 836176
+    },
+    {
+      "path": "./org/enemy/022/enemy_icon_022.png",
+      "size": 1360,
+      "offset": 837648
+    },
+    {
+      "path": "./org/enemy/210/enemy_icon_210.png",
+      "size": 1040,
+      "offset": 839008
+    },
+    {
+      "path": "./org/enemy/479/enemy_icon_479.png",
+      "size": 1568,
+      "offset": 840048
+    },
+    {
+      "path": "./org/enemy/217/enemy_icon_217.png",
+      "size": 1168,
+      "offset": 841616
+    },
+    {
+      "path": "./org/enemy/025/enemy_icon_025.png",
+      "size": 1936,
+      "offset": 842784
+    },
+    {
+      "path": "./org/enemy/441/enemy_icon_441.png",
+      "size": 1392,
+      "offset": 844720
+    },
+    {
+      "path": "./org/enemy/228/enemy_icon_228.png",
+      "size": 1840,
+      "offset": 846112
+    },
+    {
+      "path": "./org/enemy/288/enemy_icon_288.png",
+      "size": 1792,
+      "offset": 847952
+    },
+    {
+      "path": "./org/enemy/071/enemy_icon_071.png",
+      "size": 2448,
+      "offset": 849744
+    },
+    {
+      "path": "./org/enemy/243/enemy_icon_243.png",
+      "size": 2000,
+      "offset": 852192
+    },
+    {
+      "path": "./org/enemy/415/enemy_icon_415.png",
+      "size": 1072,
+      "offset": 854192
+    },
+    {
+      "path": "./org/enemy/085/enemy_icon_085.png",
+      "size": 1936,
+      "offset": 855264
+    },
+    {
+      "path": "./org/enemy/049/enemy_icon_049.png",
+      "size": 2080,
+      "offset": 857200
+    },
+    {
+      "path": "./org/enemy/082/enemy_icon_082.png",
+      "size": 1968,
+      "offset": 859280
+    },
+    {
+      "path": "./org/enemy/412/enemy_icon_412.png",
+      "size": 1664,
+      "offset": 861248
+    },
+    {
+      "path": "./org/enemy/244/enemy_icon_244.png",
+      "size": 1984,
+      "offset": 862912
+    },
+    {
+      "path": "./org/enemy/076/enemy_icon_076.png",
+      "size": 1568,
+      "offset": 864896
+    },
+    {
+      "path": "./org/enemy/286/enemy_icon_286.png",
+      "size": 1536,
+      "offset": 866464
+    },
+    {
+      "path": "./org/enemy/272/enemy_icon_272.png",
+      "size": 2160,
+      "offset": 868000
+    },
+    {
+      "path": "./org/enemy/040/enemy_icon_040.png",
+      "size": 1680,
+      "offset": 870160
+    },
+    {
+      "path": "./org/enemy/424/enemy_icon_424.png",
+      "size": 1488,
+      "offset": 871840
+    },
+    {
+      "path": "./org/enemy/078/enemy_icon_078.png",
+      "size": 1360,
+      "offset": 873328
+    },
+    {
+      "path": "./org/enemy/423/enemy_icon_423.png",
+      "size": 1744,
+      "offset": 874688
+    },
+    {
+      "path": "./org/enemy/047/enemy_icon_047.png",
+      "size": 1616,
+      "offset": 876432
+    },
+    {
+      "path": "./org/enemy/275/enemy_icon_275.png",
+      "size": 1664,
+      "offset": 878048
+    },
+    {
+      "path": "./org/enemy/281/enemy_icon_281.png",
+      "size": 1888,
+      "offset": 879712
+    },
+    {
+      "path": "./org/enemy/257/enemy_icon_257.png",
+      "size": 2000,
+      "offset": 881600
+    },
+    {
+      "path": "./org/enemy/065/enemy_icon_065.png",
+      "size": 2048,
+      "offset": 883600
+    },
+    {
+      "path": "./org/enemy/401/enemy_icon_401.png",
+      "size": 1424,
+      "offset": 885648
+    },
+    {
+      "path": "./org/enemy/091/enemy_icon_091.png",
+      "size": 1328,
+      "offset": 887072
+    },
+    {
+      "path": "./org/enemy/268/enemy_icon_268.png",
+      "size": 1600,
+      "offset": 888400
+    },
+    {
+      "path": "./org/enemy/096/enemy_icon_096.png",
+      "size": 1312,
+      "offset": 890000
+    },
+    {
+      "path": "./org/enemy/406/enemy_icon_406.png",
+      "size": 2416,
+      "offset": 891312
+    },
+    {
+      "path": "./org/enemy/062/enemy_icon_062.png",
+      "size": 2160,
+      "offset": 893728
+    },
+    {
+      "path": "./org/enemy/250/enemy_icon_250.png",
+      "size": 1840,
+      "offset": 895888
+    },
+    {
+      "path": "./org/enemy/439/enemy_icon_439.png",
+      "size": 1888,
+      "offset": 897728
+    },
+    {
+      "path": "./org/enemy/292/enemy_icon_292.png",
+      "size": 1312,
+      "offset": 899616
+    },
+    {
+      "path": "./org/enemy/054/enemy_icon_054.png",
+      "size": 1632,
+      "offset": 900928
+    },
+    {
+      "path": "./org/enemy/266/enemy_icon_266.png",
+      "size": 1632,
+      "offset": 902560
+    },
+    {
+      "path": "./org/enemy/430/enemy_icon_430.png",
+      "size": 1632,
+      "offset": 904192
+    },
+    {
+      "path": "./org/enemy/259/enemy_icon_259.png",
+      "size": 1872,
+      "offset": 905824
+    },
+    {
+      "path": "./org/enemy/437/enemy_icon_437.png",
+      "size": 1040,
+      "offset": 907696
+    },
+    {
+      "path": "./org/enemy/261/enemy_icon_261.png",
+      "size": 1728,
+      "offset": 908736
+    },
+    {
+      "path": "./org/enemy/053/enemy_icon_053.png",
+      "size": 1376,
+      "offset": 910464
+    },
+    {
+      "path": "./org/enemy/295/enemy_icon_295.png",
+      "size": 1152,
+      "offset": 911840
+    },
+    {
+      "path": "./org/enemy/408/enemy_icon_408.png",
+      "size": 1344,
+      "offset": 912992
+    },
+    {
+      "path": "./org/enemy/098/enemy_icon_098.png",
+      "size": 1344,
+      "offset": 914336
+    },
+    {
+      "path": "./org/enemy/038/enemy_icon_038.png",
+      "size": 1760,
+      "offset": 915680
+    },
+    {
+      "path": "./org/enemy/463/enemy_icon_463.png",
+      "size": 2224,
+      "offset": 917440
+    },
+    {
+      "path": "./org/enemy/007/enemy_icon_007.png",
+      "size": 2064,
+      "offset": 919664
+    },
+    {
+      "path": "./org/enemy/235/enemy_icon_235.png",
+      "size": 1376,
+      "offset": 921728
+    },
+    {
+      "path": "./org/enemy/497/enemy_icon_497.png",
+      "size": 1056,
+      "offset": 923104
+    },
+    {
+      "path": "./org/enemy/490/enemy_icon_490.png",
+      "size": 1392,
+      "offset": 924160
+    },
+    {
+      "path": "./org/enemy/232/enemy_icon_232.png",
+      "size": 1328,
+      "offset": 925552
+    },
+    {
+      "path": "./org/enemy/000/enemy_icon_000.png",
+      "size": 1776,
+      "offset": 926880
+    },
+    {
+      "path": "./org/enemy/464/enemy_icon_464.png",
+      "size": 1728,
+      "offset": 928656
+    },
+    {
+      "path": "./org/enemy/499/enemy_icon_499.png",
+      "size": 1248,
+      "offset": 930384
+    },
+    {
+      "path": "./org/enemy/009/enemy_icon_009.png",
+      "size": 1408,
+      "offset": 931632
+    },
+    {
+      "path": "./org/enemy/452/enemy_icon_452.png",
+      "size": 2032,
+      "offset": 933040
+    },
+    {
+      "path": "./org/enemy/204/enemy_icon_204.png",
+      "size": 1648,
+      "offset": 935072
+    },
+    {
+      "path": "./org/enemy/036/enemy_icon_036.png",
+      "size": 1520,
+      "offset": 936720
+    },
+    {
+      "path": "./org/enemy/031/enemy_icon_031.png",
+      "size": 1488,
+      "offset": 938240
+    },
+    {
+      "path": "./org/enemy/203/enemy_icon_203.png",
+      "size": 2192,
+      "offset": 939728
+    },
+    {
+      "path": "./org/enemy/455/enemy_icon_455.png",
+      "size": 2272,
+      "offset": 941920
+    },
+    {
+      "path": "./org/enemy/294/enemy_icon_294.png",
+      "size": 2304,
+      "offset": 944192
+    },
+    {
+      "path": "./org/enemy/436/enemy_icon_436.png",
+      "size": 1280,
+      "offset": 946496
+    },
+    {
+      "path": "./org/enemy/052/enemy_icon_052.png",
+      "size": 1536,
+      "offset": 947776
+    },
+    {
+      "path": "./org/enemy/260/enemy_icon_260.png",
+      "size": 1712,
+      "offset": 949312
+    },
+    {
+      "path": "./org/enemy/099/enemy_icon_099.png",
+      "size": 1808,
+      "offset": 951024
+    },
+    {
+      "path": "./org/enemy/409/enemy_icon_409.png",
+      "size": 2160,
+      "offset": 952832
+    },
+    {
+      "path": "./org/enemy/267/enemy_icon_267.png",
+      "size": 1888,
+      "offset": 954992
+    },
+    {
+      "path": "./org/enemy/055/enemy_icon_055.png",
+      "size": 1136,
+      "offset": 956880
+    },
+    {
+      "path": "./org/enemy/431/enemy_icon_431.png",
+      "size": 1552,
+      "offset": 958016
+    },
+    {
+      "path": "./org/enemy/293/enemy_icon_293.png",
+      "size": 2016,
+      "offset": 959568
+    },
+    {
+      "path": "./org/enemy/258/enemy_icon_258.png",
+      "size": 1504,
+      "offset": 961584
+    },
+    {
+      "path": "./org/enemy/407/enemy_icon_407.png",
+      "size": 2176,
+      "offset": 963088
+    },
+    {
+      "path": "./org/enemy/251/enemy_icon_251.png",
+      "size": 1280,
+      "offset": 965264
+    },
+    {
+      "path": "./org/enemy/063/enemy_icon_063.png",
+      "size": 1504,
+      "offset": 966544
+    },
+    {
+      "path": "./org/enemy/097/enemy_icon_097.png",
+      "size": 1344,
+      "offset": 968048
+    },
+    {
+      "path": "./org/enemy/438/enemy_icon_438.png",
+      "size": 2448,
+      "offset": 969392
+    },
+    {
+      "path": "./org/enemy/090/enemy_icon_090.png",
+      "size": 1328,
+      "offset": 971840
+    },
+    {
+      "path": "./org/enemy/064/enemy_icon_064.png",
+      "size": 2176,
+      "offset": 973168
+    },
+    {
+      "path": "./org/enemy/256/enemy_icon_256.png",
+      "size": 1440,
+      "offset": 975344
+    },
+    {
+      "path": "./org/enemy/400/enemy_icon_400.png",
+      "size": 1616,
+      "offset": 976784
+    },
+    {
+      "path": "./org/enemy/269/enemy_icon_269.png",
+      "size": 1696,
+      "offset": 978400
+    },
+    {
+      "path": "./org/enemy/202/enemy_icon_202.png",
+      "size": 1760,
+      "offset": 980096
+    },
+    {
+      "path": "./org/enemy/030/enemy_icon_030.png",
+      "size": 1472,
+      "offset": 981856
+    },
+    {
+      "path": "./org/enemy/454/enemy_icon_454.png",
+      "size": 2464,
+      "offset": 983328
+    },
+    {
+      "path": "./org/enemy/008/enemy_icon_008.png",
+      "size": 1200,
+      "offset": 985792
+    },
+    {
+      "path": "./org/enemy/498/enemy_icon_498.png",
+      "size": 1680,
+      "offset": 986992
+    },
+    {
+      "path": "./org/enemy/453/enemy_icon_453.png",
+      "size": 2400,
+      "offset": 988672
+    },
+    {
+      "path": "./org/enemy/037/enemy_icon_037.png",
+      "size": 2144,
+      "offset": 991072
+    },
+    {
+      "path": "./org/enemy/205/enemy_icon_205.png",
+      "size": 1120,
+      "offset": 993216
+    },
+    {
+      "path": "./org/enemy/001/enemy_icon_001.png",
+      "size": 1840,
+      "offset": 994336
+    },
+    {
+      "path": "./org/enemy/233/enemy_icon_233.png",
+      "size": 1616,
+      "offset": 996176
+    },
+    {
+      "path": "./org/enemy/465/enemy_icon_465.png",
+      "size": 1504,
+      "offset": 997792
+    },
+    {
+      "path": "./org/enemy/491/enemy_icon_491.png",
+      "size": 1952,
+      "offset": 999296
+    },
+    {
+      "path": "./org/enemy/039/enemy_icon_039.png",
+      "size": 1120,
+      "offset": 1001248
+    },
+    {
+      "path": "./org/enemy/496/enemy_icon_496.png",
+      "size": 1360,
+      "offset": 1002368
+    },
+    {
+      "path": "./org/enemy/462/enemy_icon_462.png",
+      "size": 2512,
+      "offset": 1003728
+    },
+    {
+      "path": "./org/enemy/234/enemy_icon_234.png",
+      "size": 1552,
+      "offset": 1006240
+    },
+    {
+      "path": "./org/enemy/006/enemy_icon_006.png",
+      "size": 1728,
+      "offset": 1007792
+    },
+    {
+      "path": "./org/enemy/346/enemy_icon_346.png",
+      "size": 1168,
+      "offset": 1009520
+    },
+    {
+      "path": "./org/enemy/174/enemy_icon_174.png",
+      "size": 1504,
+      "offset": 1010688
+    },
+    {
+      "path": "./org/enemy/510/enemy_icon_510.png",
+      "size": 1248,
+      "offset": 1012192
+    },
+    {
+      "path": "./org/enemy/180/enemy_icon_180.png",
+      "size": 1552,
+      "offset": 1013440
+    },
+    {
+      "path": "./org/enemy/379/enemy_icon_379.png",
+      "size": 1456,
+      "offset": 1014992
+    },
+    {
+      "path": "./org/enemy/187/enemy_icon_187.png",
+      "size": 1520,
+      "offset": 1016448
+    },
+    {
+      "path": "./org/enemy/517/enemy_icon_517.png",
+      "size": 1824,
+      "offset": 1017968
+    },
+    {
+      "path": "./org/enemy/173/enemy_icon_173.png",
+      "size": 2048,
+      "offset": 1019792
+    },
+    {
+      "path": "./org/enemy/341/enemy_icon_341.png",
+      "size": 960,
+      "offset": 1021840
+    },
+    {
+      "path": "./org/enemy/383/enemy_icon_383.png",
+      "size": 1840,
+      "offset": 1022800
+    },
+    {
+      "path": "./org/enemy/145/enemy_icon_145.png",
+      "size": 1376,
+      "offset": 1024640
+    },
+    {
+      "path": "./org/enemy/377/enemy_icon_377.png",
+      "size": 2368,
+      "offset": 1026016
+    },
+    {
+      "path": "./org/enemy/521/enemy_icon_521.png",
+      "size": 1469,
+      "offset": 1028384
+    },
+    {
+      "path": "./org/enemy/348/enemy_icon_348.png",
+      "size": 1424,
+      "offset": 1029856
+    },
+    {
+      "path": "./org/enemy/370/enemy_icon_370.png",
+      "size": 1664,
+      "offset": 1031280
+    },
+    {
+      "path": "./org/enemy/142/enemy_icon_142.png",
+      "size": 1472,
+      "offset": 1032944
+    },
+    {
+      "path": "./org/enemy/384/enemy_icon_384.png",
+      "size": 2256,
+      "offset": 1034416
+    },
+    {
+      "path": "./org/enemy/519/enemy_icon_519.png",
+      "size": 1842,
+      "offset": 1036672
+    },
+    {
+      "path": "./org/enemy/189/enemy_icon_189.png",
+      "size": 1792,
+      "offset": 1038528
+    },
+    {
+      "path": "./org/enemy/129/enemy_icon_129.png",
+      "size": 1152,
+      "offset": 1040320
+    },
+    {
+      "path": "./org/enemy/116/enemy_icon_116.png",
+      "size": 6112,
+      "offset": 1041472
+    },
+    {
+      "path": "./org/enemy/324/enemy_icon_324.png",
+      "size": 1728,
+      "offset": 1047584
+    },
+    {
+      "path": "./org/enemy/323/enemy_icon_323.png",
+      "size": 1872,
+      "offset": 1049312
+    },
+    {
+      "path": "./org/enemy/111/enemy_icon_111.png",
+      "size": 2016,
+      "offset": 1051184
+    },
+    {
+      "path": "./org/enemy/118/enemy_icon_118.png",
+      "size": 1856,
+      "offset": 1053200
+    },
+    {
+      "path": "./org/enemy/315/enemy_icon_315.png",
+      "size": 1456,
+      "offset": 1055056
+    },
+    {
+      "path": "./org/enemy/127/enemy_icon_127.png",
+      "size": 1424,
+      "offset": 1056512
+    },
+    {
+      "path": "./org/enemy/120/enemy_icon_120.png",
+      "size": 1680,
+      "offset": 1057936
+    },
+    {
+      "path": "./org/enemy/312/enemy_icon_312.png",
+      "size": 1456,
+      "offset": 1059616
+    },
+    {
+      "path": "./org/enemy/385/enemy_icon_385.png",
+      "size": 1584,
+      "offset": 1061072
+    },
+    {
+      "path": "./org/enemy/143/enemy_icon_143.png",
+      "size": 1248,
+      "offset": 1062656
+    },
+    {
+      "path": "./org/enemy/371/enemy_icon_371.png",
+      "size": 1680,
+      "offset": 1063904
+    },
+    {
+      "path": "./org/enemy/188/enemy_icon_188.png",
+      "size": 1488,
+      "offset": 1065584
+    },
+    {
+      "path": "./org/enemy/518/enemy_icon_518.png",
+      "size": 1933,
+      "offset": 1067072
+    },
+    {
+      "path": "./org/enemy/376/enemy_icon_376.png",
+      "size": 1568,
+      "offset": 1069008
+    },
+    {
+      "path": "./org/enemy/144/enemy_icon_144.png",
+      "size": 1360,
+      "offset": 1070576
+    },
+    {
+      "path": "./org/enemy/520/enemy_icon_520.png",
+      "size": 1927,
+      "offset": 1071936
+    },
+    {
+      "path": "./org/enemy/382/enemy_icon_382.png",
+      "size": 1968,
+      "offset": 1073872
+    },
+    {
+      "path": "./org/enemy/349/enemy_icon_349.png",
+      "size": 1488,
+      "offset": 1075840
+    },
+    {
+      "path": "./org/enemy/516/enemy_icon_516.png",
+      "size": 1600,
+      "offset": 1077328
+    },
+    {
+      "path": "./org/enemy/340/enemy_icon_340.png",
+      "size": 1344,
+      "offset": 1078928
+    },
+    {
+      "path": "./org/enemy/172/enemy_icon_172.png",
+      "size": 1936,
+      "offset": 1080272
+    },
+    {
+      "path": "./org/enemy/186/enemy_icon_186.png",
+      "size": 1792,
+      "offset": 1082208
+    },
+    {
+      "path": "./org/enemy/181/enemy_icon_181.png",
+      "size": 1728,
+      "offset": 1084000
+    },
+    {
+      "path": "./org/enemy/175/enemy_icon_175.png",
+      "size": 1408,
+      "offset": 1085728
+    },
+    {
+      "path": "./org/enemy/347/enemy_icon_347.png",
+      "size": 1632,
+      "offset": 1087136
+    },
+    {
+      "path": "./org/enemy/511/enemy_icon_511.png",
+      "size": 1392,
+      "offset": 1088768
+    },
+    {
+      "path": "./org/enemy/378/enemy_icon_378.png",
+      "size": 1280,
+      "offset": 1090160
+    },
+    {
+      "path": "./org/enemy/313/enemy_icon_313.png",
+      "size": 1200,
+      "offset": 1091440
+    },
+    {
+      "path": "./org/enemy/121/enemy_icon_121.png",
+      "size": 1472,
+      "offset": 1092640
+    },
+    {
+      "path": "./org/enemy/119/enemy_icon_119.png",
+      "size": 976,
+      "offset": 1094112
+    },
+    {
+      "path": "./org/enemy/126/enemy_icon_126.png",
+      "size": 1536,
+      "offset": 1095088
+    },
+    {
+      "path": "./org/enemy/314/enemy_icon_314.png",
+      "size": 1440,
+      "offset": 1096624
+    },
+    {
+      "path": "./org/enemy/110/enemy_icon_110.png",
+      "size": 1456,
+      "offset": 1098064
+    },
+    {
+      "path": "./org/enemy/322/enemy_icon_322.png",
+      "size": 2240,
+      "offset": 1099520
+    },
+    {
+      "path": "./org/enemy/128/enemy_icon_128.png",
+      "size": 1536,
+      "offset": 1101760
+    },
+    {
+      "path": "./org/enemy/325/enemy_icon_325.png",
+      "size": 1936,
+      "offset": 1103296
+    },
+    {
+      "path": "./org/enemy/117/enemy_icon_117.png",
+      "size": 1232,
+      "offset": 1105232
+    },
+    {
+      "path": "./org/enemy/508/enemy_icon_508.png",
+      "size": 848,
+      "offset": 1106464
+    },
+    {
+      "path": "./org/enemy/198/enemy_icon_198.png",
+      "size": 1824,
+      "offset": 1107312
+    },
+    {
+      "path": "./org/enemy/361/enemy_icon_361.png",
+      "size": 1600,
+      "offset": 1109136
+    },
+    {
+      "path": "./org/enemy/153/enemy_icon_153.png",
+      "size": 1488,
+      "offset": 1110736
+    },
+    {
+      "path": "./org/enemy/395/enemy_icon_395.png",
+      "size": 1840,
+      "offset": 1112224
+    },
+    {
+      "path": "./org/enemy/359/enemy_icon_359.png",
+      "size": 864,
+      "offset": 1114064
+    },
+    {
+      "path": "./org/enemy/392/enemy_icon_392.png",
+      "size": 1616,
+      "offset": 1114928
+    },
+    {
+      "path": "./org/enemy/154/enemy_icon_154.png",
+      "size": 992,
+      "offset": 1116544
+    },
+    {
+      "path": "./org/enemy/366/enemy_icon_366.png",
+      "size": 1104,
+      "offset": 1117536
+    },
+    {
+      "path": "./org/enemy/196/enemy_icon_196.png",
+      "size": 1264,
+      "offset": 1118640
+    },
+    {
+      "path": "./org/enemy/162/enemy_icon_162.png",
+      "size": 1440,
+      "offset": 1119904
+    },
+    {
+      "path": "./org/enemy/350/enemy_icon_350.png",
+      "size": 1888,
+      "offset": 1121344
+    },
+    {
+      "path": "./org/enemy/506/enemy_icon_506.png",
+      "size": 1824,
+      "offset": 1123232
+    },
+    {
+      "path": "./org/enemy/368/enemy_icon_368.png",
+      "size": 1552,
+      "offset": 1125056
+    },
+    {
+      "path": "./org/enemy/501/enemy_icon_501.png",
+      "size": 2096,
+      "offset": 1126608
+    },
+    {
+      "path": "./org/enemy/357/enemy_icon_357.png",
+      "size": 1754,
+      "offset": 1128704
+    },
+    {
+      "path": "./org/enemy/165/enemy_icon_165.png",
+      "size": 1072,
+      "offset": 1130464
+    },
+    {
+      "path": "./org/enemy/191/enemy_icon_191.png",
+      "size": 1216,
+      "offset": 1131536
+    },
+    {
+      "path": "./org/enemy/131/enemy_icon_131.png",
+      "size": 1712,
+      "offset": 1132752
+    },
+    {
+      "path": "./org/enemy/303/enemy_icon_303.png",
+      "size": 1600,
+      "offset": 1134464
+    },
+    {
+      "path": "./org/enemy/304/enemy_icon_304.png",
+      "size": 928,
+      "offset": 1136064
+    },
+    {
+      "path": "./org/enemy/136/enemy_icon_136.png",
+      "size": 1680,
+      "offset": 1136992
+    },
+    {
+      "path": "./org/enemy/109/enemy_icon_109.png",
+      "size": 2240,
+      "offset": 1138672
+    },
+    {
+      "path": "./org/enemy/332/enemy_icon_332.png",
+      "size": 1680,
+      "offset": 1140912
+    },
+    {
+      "path": "./org/enemy/100/enemy_icon_100.png",
+      "size": 1504,
+      "offset": 1142592
+    },
+    {
+      "path": "./org/enemy/107/enemy_icon_107.png",
+      "size": 1184,
+      "offset": 1144096
+    },
+    {
+      "path": "./org/enemy/335/enemy_icon_335.png",
+      "size": 1456,
+      "offset": 1145280
+    },
+    {
+      "path": "./org/enemy/138/enemy_icon_138.png",
+      "size": 1744,
+      "offset": 1146736
+    },
+    {
+      "path": "./org/enemy/369/enemy_icon_369.png",
+      "size": 1152,
+      "offset": 1148480
+    },
+    {
+      "path": "./org/enemy/190/enemy_icon_190.png",
+      "size": 1840,
+      "offset": 1149632
+    },
+    {
+      "path": "./org/enemy/500/enemy_icon_500.png",
+      "size": 1904,
+      "offset": 1151472
+    },
+    {
+      "path": "./org/enemy/164/enemy_icon_164.png",
+      "size": 1552,
+      "offset": 1153376
+    },
+    {
+      "path": "./org/enemy/356/enemy_icon_356.png",
+      "size": 2096,
+      "offset": 1154928
+    },
+    {
+      "path": "./org/enemy/351/enemy_icon_351.png",
+      "size": 1824,
+      "offset": 1157024
+    },
+    {
+      "path": "./org/enemy/163/enemy_icon_163.png",
+      "size": 1376,
+      "offset": 1158848
+    },
+    {
+      "path": "./org/enemy/507/enemy_icon_507.png",
+      "size": 1920,
+      "offset": 1160224
+    },
+    {
+      "path": "./org/enemy/197/enemy_icon_197.png",
+      "size": 2144,
+      "offset": 1162144
+    },
+    {
+      "path": "./org/enemy/358/enemy_icon_358.png",
+      "size": 1712,
+      "offset": 1164288
+    },
+    {
+      "path": "./org/enemy/367/enemy_icon_367.png",
+      "size": 1680,
+      "offset": 1166000
+    },
+    {
+      "path": "./org/enemy/155/enemy_icon_155.png",
+      "size": 704,
+      "offset": 1167680
+    },
+    {
+      "path": "./org/enemy/393/enemy_icon_393.png",
+      "size": 1136,
+      "offset": 1168384
+    },
+    {
+      "path": "./org/enemy/199/enemy_icon_199.png",
+      "size": 1008,
+      "offset": 1169520
+    },
+    {
+      "path": "./org/enemy/509/enemy_icon_509.png",
+      "size": 1216,
+      "offset": 1170528
+    },
+    {
+      "path": "./org/enemy/394/enemy_icon_394.png",
+      "size": 1568,
+      "offset": 1171744
+    },
+    {
+      "path": "./org/enemy/152/enemy_icon_152.png",
+      "size": 1248,
+      "offset": 1173312
+    },
+    {
+      "path": "./org/enemy/360/enemy_icon_360.png",
+      "size": 1680,
+      "offset": 1174560
+    },
+    {
+      "path": "./org/enemy/334/enemy_icon_334.png",
+      "size": 1808,
+      "offset": 1176240
+    },
+    {
+      "path": "./org/enemy/106/enemy_icon_106.png",
+      "size": 1168,
+      "offset": 1178048
+    },
+    {
+      "path": "./org/enemy/139/enemy_icon_139.png",
+      "size": 1728,
+      "offset": 1179216
+    },
+    {
+      "path": "./org/enemy/101/enemy_icon_101.png",
+      "size": 1744,
+      "offset": 1180944
+    },
+    {
+      "path": "./org/enemy/333/enemy_icon_333.png",
+      "size": 1536,
+      "offset": 1182688
+    },
+    {
+      "path": "./org/enemy/137/enemy_icon_137.png",
+      "size": 1632,
+      "offset": 1184224
+    },
+    {
+      "path": "./org/enemy/305/enemy_icon_305.png",
+      "size": 1376,
+      "offset": 1185856
+    },
+    {
+      "path": "./org/enemy/108/enemy_icon_108.png",
+      "size": 2144,
+      "offset": 1187232
+    },
+    {
+      "path": "./org/enemy/302/enemy_icon_302.png",
+      "size": 1936,
+      "offset": 1189376
+    },
+    {
+      "path": "./org/enemy/130/enemy_icon_130.png",
+      "size": 1760,
+      "offset": 1191312
+    },
+    {
+      "path": "./org/enemy/419/enemy_icon_419.png",
+      "size": 1248,
+      "offset": 1193072
+    },
+    {
+      "path": "./org/enemy/089/enemy_icon_089.png",
+      "size": 1440,
+      "offset": 1194320
+    },
+    {
+      "path": "./org/enemy/270/enemy_icon_270.png",
+      "size": 1440,
+      "offset": 1195760
+    },
+    {
+      "path": "./org/enemy/042/enemy_icon_042.png",
+      "size": 1760,
+      "offset": 1197200
+    },
+    {
+      "path": "./org/enemy/426/enemy_icon_426.png",
+      "size": 1936,
+      "offset": 1198960
+    },
+    {
+      "path": "./org/enemy/284/enemy_icon_284.png",
+      "size": 2112,
+      "offset": 1200896
+    },
+    {
+      "path": "./org/enemy/248/enemy_icon_248.png",
+      "size": 1664,
+      "offset": 1203008
+    },
+    {
+      "path": "./org/enemy/283/enemy_icon_283.png",
+      "size": 1216,
+      "offset": 1204672
+    },
+    {
+      "path": "./org/enemy/421/enemy_icon_421.png",
+      "size": 1856,
+      "offset": 1205888
+    },
+    {
+      "path": "./org/enemy/045/enemy_icon_045.png",
+      "size": 1536,
+      "offset": 1207744
+    },
+    {
+      "path": "./org/enemy/277/enemy_icon_277.png",
+      "size": 1600,
+      "offset": 1209280
+    },
+    {
+      "path": "./org/enemy/428/enemy_icon_428.png",
+      "size": 1760,
+      "offset": 1210880
+    },
+    {
+      "path": "./org/enemy/087/enemy_icon_087.png",
+      "size": 1840,
+      "offset": 1212640
+    },
+    {
+      "path": "./org/enemy/073/enemy_icon_073.png",
+      "size": 1808,
+      "offset": 1214480
+    },
+    {
+      "path": "./org/enemy/241/enemy_icon_241.png",
+      "size": 1600,
+      "offset": 1216288
+    },
+    {
+      "path": "./org/enemy/417/enemy_icon_417.png",
+      "size": 1200,
+      "offset": 1217888
+    },
+    {
+      "path": "./org/enemy/279/enemy_icon_279.png",
+      "size": 1440,
+      "offset": 1219088
+    },
+    {
+      "path": "./org/enemy/410/enemy_icon_410.png",
+      "size": 2080,
+      "offset": 1220528
+    },
+    {
+      "path": "./org/enemy/246/enemy_icon_246.png",
+      "size": 2224,
+      "offset": 1222608
+    },
+    {
+      "path": "./org/enemy/074/enemy_icon_074.png",
+      "size": 2448,
+      "offset": 1224832
+    },
+    {
+      "path": "./org/enemy/080/enemy_icon_080.png",
+      "size": 1344,
+      "offset": 1227280
+    },
+    {
+      "path": "./org/enemy/444/enemy_icon_444.png",
+      "size": 1328,
+      "offset": 1228624
+    },
+    {
+      "path": "./org/enemy/020/enemy_icon_020.png",
+      "size": 2112,
+      "offset": 1229952
+    },
+    {
+      "path": "./org/enemy/212/enemy_icon_212.png",
+      "size": 1360,
+      "offset": 1232064
+    },
+    {
+      "path": "./org/enemy/215/enemy_icon_215.png",
+      "size": 1504,
+      "offset": 1233424
+    },
+    {
+      "path": "./org/enemy/027/enemy_icon_027.png",
+      "size": 1472,
+      "offset": 1234928
+    },
+    {
+      "path": "./org/enemy/443/enemy_icon_443.png",
+      "size": 2272,
+      "offset": 1236400
+    },
+    {
+      "path": "./org/enemy/488/enemy_icon_488.png",
+      "size": 1728,
+      "offset": 1238672
+    },
+    {
+      "path": "./org/enemy/018/enemy_icon_018.png",
+      "size": 1392,
+      "offset": 1240400
+    },
+    {
+      "path": "./org/enemy/481/enemy_icon_481.png",
+      "size": 1568,
+      "offset": 1241792
+    },
+    {
+      "path": "./org/enemy/475/enemy_icon_475.png",
+      "size": 1370,
+      "offset": 1243360
+    },
+    {
+      "path": "./org/enemy/223/enemy_icon_223.png",
+      "size": 1568,
+      "offset": 1244736
+    },
+    {
+      "path": "./org/enemy/011/enemy_icon_011.png",
+      "size": 1632,
+      "offset": 1246304
+    },
+    {
+      "path": "./org/enemy/016/enemy_icon_016.png",
+      "size": 1200,
+      "offset": 1247936
+    },
+    {
+      "path": "./org/enemy/224/enemy_icon_224.png",
+      "size": 1600,
+      "offset": 1249136
+    },
+    {
+      "path": "./org/enemy/472/enemy_icon_472.png",
+      "size": 1352,
+      "offset": 1250736
+    },
+    {
+      "path": "./org/enemy/486/enemy_icon_486.png",
+      "size": 1648,
+      "offset": 1252096
+    },
+    {
+      "path": "./org/enemy/029/enemy_icon_029.png",
+      "size": 1520,
+      "offset": 1253744
+    },
+    {
+      "path": "./org/enemy/278/enemy_icon_278.png",
+      "size": 1136,
+      "offset": 1255264
+    },
+    {
+      "path": "./org/enemy/081/enemy_icon_081.png",
+      "size": 1952,
+      "offset": 1256400
+    },
+    {
+      "path": "./org/enemy/411/enemy_icon_411.png",
+      "size": 1712,
+      "offset": 1258352
+    },
+    {
+      "path": "./org/enemy/075/enemy_icon_075.png",
+      "size": 1760,
+      "offset": 1260064
+    },
+    {
+      "path": "./org/enemy/247/enemy_icon_247.png",
+      "size": 1648,
+      "offset": 1261824
+    },
+    {
+      "path": "./org/enemy/429/enemy_icon_429.png",
+      "size": 1536,
+      "offset": 1263472
+    },
+    {
+      "path": "./org/enemy/240/enemy_icon_240.png",
+      "size": 1632,
+      "offset": 1265008
+    },
+    {
+      "path": "./org/enemy/072/enemy_icon_072.png",
+      "size": 1776,
+      "offset": 1266640
+    },
+    {
+      "path": "./org/enemy/416/enemy_icon_416.png",
+      "size": 1680,
+      "offset": 1268416
+    },
+    {
+      "path": "./org/enemy/086/enemy_icon_086.png",
+      "size": 1696,
+      "offset": 1270096
+    },
+    {
+      "path": "./org/enemy/249/enemy_icon_249.png",
+      "size": 2112,
+      "offset": 1271792
+    },
+    {
+      "path": "./org/enemy/420/enemy_icon_420.png",
+      "size": 1968,
+      "offset": 1273904
+    },
+    {
+      "path": "./org/enemy/276/enemy_icon_276.png",
+      "size": 1568,
+      "offset": 1275872
+    },
+    {
+      "path": "./org/enemy/044/enemy_icon_044.png",
+      "size": 1488,
+      "offset": 1277440
+    },
+    {
+      "path": "./org/enemy/282/enemy_icon_282.png",
+      "size": 2208,
+      "offset": 1278928
+    },
+    {
+      "path": "./org/enemy/088/enemy_icon_088.png",
+      "size": 1424,
+      "offset": 1281136
+    },
+    {
+      "path": "./org/enemy/418/enemy_icon_418.png",
+      "size": 1600,
+      "offset": 1282560
+    },
+    {
+      "path": "./org/enemy/285/enemy_icon_285.png",
+      "size": 1824,
+      "offset": 1284160
+    },
+    {
+      "path": "./org/enemy/043/enemy_icon_043.png",
+      "size": 1760,
+      "offset": 1285984
+    },
+    {
+      "path": "./org/enemy/271/enemy_icon_271.png",
+      "size": 1568,
+      "offset": 1287744
+    },
+    {
+      "path": "./org/enemy/427/enemy_icon_427.png",
+      "size": 1488,
+      "offset": 1289312
+    },
+    {
+      "path": "./org/enemy/487/enemy_icon_487.png",
+      "size": 1248,
+      "offset": 1290800
+    },
+    {
+      "path": "./org/enemy/225/enemy_icon_225.png",
+      "size": 1216,
+      "offset": 1292048
+    },
+    {
+      "path": "./org/enemy/017/enemy_icon_017.png",
+      "size": 1408,
+      "offset": 1293264
+    },
+    {
+      "path": "./org/enemy/473/enemy_icon_473.png",
+      "size": 1619,
+      "offset": 1294672
+    },
+    {
+      "path": "./org/enemy/028/enemy_icon_028.png",
+      "size": 1936,
+      "offset": 1296304
+    },
+    {
+      "path": "./org/enemy/474/enemy_icon_474.png",
+      "size": 1741,
+      "offset": 1298240
+    },
+    {
+      "path": "./org/enemy/010/enemy_icon_010.png",
+      "size": 1600,
+      "offset": 1299984
+    },
+    {
+      "path": "./org/enemy/222/enemy_icon_222.png",
+      "size": 1968,
+      "offset": 1301584
+    },
+    {
+      "path": "./org/enemy/480/enemy_icon_480.png",
+      "size": 1728,
+      "offset": 1303552
+    },
+    {
+      "path": "./org/enemy/026/enemy_icon_026.png",
+      "size": 1552,
+      "offset": 1305280
+    },
+    {
+      "path": "./org/enemy/214/enemy_icon_214.png",
+      "size": 1616,
+      "offset": 1306832
+    },
+    {
+      "path": "./org/enemy/442/enemy_icon_442.png",
+      "size": 1680,
+      "offset": 1308448
+    },
+    {
+      "path": "./org/enemy/019/enemy_icon_019.png",
+      "size": 1776,
+      "offset": 1310128
+    },
+    {
+      "path": "./org/enemy/489/enemy_icon_489.png",
+      "size": 1696,
+      "offset": 1311904
+    },
+    {
+      "path": "./org/enemy/445/enemy_icon_445.png",
+      "size": 992,
+      "offset": 1313600
+    },
+    {
+      "path": "./org/enemy/213/enemy_icon_213.png",
+      "size": 1536,
+      "offset": 1314592
+    },
+    {
+      "path": "./org/enemy/021/enemy_icon_021.png",
+      "size": 608,
+      "offset": 1316128
+    },
+    {
+      "path": "./org/enemy/458/enemy_icon_458.png",
+      "size": 1840,
+      "offset": 1316736
+    },
+    {
+      "path": "./org/enemy/493/enemy_icon_493.png",
+      "size": 3328,
+      "offset": 1318576
+    },
+    {
+      "path": "./org/enemy/003/enemy_icon_003.png",
+      "size": 1440,
+      "offset": 1321904
+    },
+    {
+      "path": "./org/enemy/231/enemy_icon_231.png",
+      "size": 1664,
+      "offset": 1323344
+    },
+    {
+      "path": "./org/enemy/467/enemy_icon_467.png",
+      "size": 1552,
+      "offset": 1325008
+    },
+    {
+      "path": "./org/enemy/209/enemy_icon_209.png",
+      "size": 1472,
+      "offset": 1326560
+    },
+    {
+      "path": "./org/enemy/460/enemy_icon_460.png",
+      "size": 1712,
+      "offset": 1328032
+    },
+    {
+      "path": "./org/enemy/236/enemy_icon_236.png",
+      "size": 2224,
+      "offset": 1329744
+    },
+    {
+      "path": "./org/enemy/004/enemy_icon_004.png",
+      "size": 1392,
+      "offset": 1331968
+    },
+    {
+      "path": "./org/enemy/494/enemy_icon_494.png",
+      "size": 1520,
+      "offset": 1333360
+    },
+    {
+      "path": "./org/enemy/469/enemy_icon_469.png",
+      "size": 1664,
+      "offset": 1334880
+    },
+    {
+      "path": "./org/enemy/200/enemy_icon_200.png",
+      "size": 1600,
+      "offset": 1336544
+    },
+    {
+      "path": "./org/enemy/032/enemy_icon_032.png",
+      "size": 1328,
+      "offset": 1338144
+    },
+    {
+      "path": "./org/enemy/456/enemy_icon_456.png",
+      "size": 2240,
+      "offset": 1339472
+    },
+    {
+      "path": "./org/enemy/238/enemy_icon_238.png",
+      "size": 1600,
+      "offset": 1341712
+    },
+    {
+      "path": "./org/enemy/451/enemy_icon_451.png",
+      "size": 1232,
+      "offset": 1343312
+    },
+    {
+      "path": "./org/enemy/035/enemy_icon_035.png",
+      "size": 1472,
+      "offset": 1344544
+    },
+    {
+      "path": "./org/enemy/207/enemy_icon_207.png",
+      "size": 1360,
+      "offset": 1346016
+    },
+    {
+      "path": "./org/enemy/095/enemy_icon_095.png",
+      "size": 1584,
+      "offset": 1347376
+    },
+    {
+      "path": "./org/enemy/405/enemy_icon_405.png",
+      "size": 2304,
+      "offset": 1348960
+    },
+    {
+      "path": "./org/enemy/253/enemy_icon_253.png",
+      "size": 1744,
+      "offset": 1351264
+    },
+    {
+      "path": "./org/enemy/061/enemy_icon_061.png",
+      "size": 1760,
+      "offset": 1353008
+    },
+    {
+      "path": "./org/enemy/298/enemy_icon_298.png",
+      "size": 1360,
+      "offset": 1354768
+    },
+    {
+      "path": "./org/enemy/066/enemy_icon_066.png",
+      "size": 1152,
+      "offset": 1356128
+    },
+    {
+      "path": "./org/enemy/254/enemy_icon_254.png",
+      "size": 1120,
+      "offset": 1357280
+    },
+    {
+      "path": "./org/enemy/402/enemy_icon_402.png",
+      "size": 1936,
+      "offset": 1358400
+    },
+    {
+      "path": "./org/enemy/092/enemy_icon_092.png",
+      "size": 1376,
+      "offset": 1360336
+    },
+    {
+      "path": "./org/enemy/059/enemy_icon_059.png",
+      "size": 1264,
+      "offset": 1361712
+    },
+    {
+      "path": "./org/enemy/434/enemy_icon_434.png",
+      "size": 2000,
+      "offset": 1362976
+    },
+    {
+      "path": "./org/enemy/050/enemy_icon_050.png",
+      "size": 1904,
+      "offset": 1364976
+    },
+    {
+      "path": "./org/enemy/262/enemy_icon_262.png",
+      "size": 1344,
+      "offset": 1366880
+    },
+    {
+      "path": "./org/enemy/296/enemy_icon_296.png",
+      "size": 1776,
+      "offset": 1368224
+    },
+    {
+      "path": "./org/enemy/291/enemy_icon_291.png",
+      "size": 1568,
+      "offset": 1370000
+    },
+    {
+      "path": "./org/enemy/265/enemy_icon_265.png",
+      "size": 2032,
+      "offset": 1371568
+    },
+    {
+      "path": "./org/enemy/057/enemy_icon_057.png",
+      "size": 1472,
+      "offset": 1373600
+    },
+    {
+      "path": "./org/enemy/433/enemy_icon_433.png",
+      "size": 1584,
+      "offset": 1375072
+    },
+    {
+      "path": "./org/enemy/068/enemy_icon_068.png",
+      "size": 2384,
+      "offset": 1376656
+    },
+    {
+      "path": "./org/enemy/239/enemy_icon_239.png",
+      "size": 1360,
+      "offset": 1379040
+    },
+    {
+      "path": "./org/enemy/450/enemy_icon_450.png",
+      "size": 1984,
+      "offset": 1380400
+    },
+    {
+      "path": "./org/enemy/206/enemy_icon_206.png",
+      "size": 1616,
+      "offset": 1382384
+    },
+    {
+      "path": "./org/enemy/034/enemy_icon_034.png",
+      "size": 1712,
+      "offset": 1384000
+    },
+    {
+      "path": "./org/enemy/468/enemy_icon_468.png",
+      "size": 1680,
+      "offset": 1385712
+    },
+    {
+      "path": "./org/enemy/033/enemy_icon_033.png",
+      "size": 1808,
+      "offset": 1387392
+    },
+    {
+      "path": "./org/enemy/201/enemy_icon_201.png",
+      "size": 1600,
+      "offset": 1389200
+    },
+    {
+      "path": "./org/enemy/457/enemy_icon_457.png",
+      "size": 1760,
+      "offset": 1390800
+    },
+    {
+      "path": "./org/enemy/208/enemy_icon_208.png",
+      "size": 1328,
+      "offset": 1392560
+    },
+    {
+      "path": "./org/enemy/495/enemy_icon_495.png",
+      "size": 1440,
+      "offset": 1393888
+    },
+    {
+      "path": "./org/enemy/461/enemy_icon_461.png",
+      "size": 2368,
+      "offset": 1395328
+    },
+    {
+      "path": "./org/enemy/005/enemy_icon_005.png",
+      "size": 1664,
+      "offset": 1397696
+    },
+    {
+      "path": "./org/enemy/237/enemy_icon_237.png",
+      "size": 1584,
+      "offset": 1399360
+    },
+    {
+      "path": "./org/enemy/459/enemy_icon_459.png",
+      "size": 1888,
+      "offset": 1400944
+    },
+    {
+      "path": "./org/enemy/230/enemy_icon_230.png",
+      "size": 1344,
+      "offset": 1402832
+    },
+    {
+      "path": "./org/enemy/002/enemy_icon_002.png",
+      "size": 2096,
+      "offset": 1404176
+    },
+    {
+      "path": "./org/enemy/466/enemy_icon_466.png",
+      "size": 1776,
+      "offset": 1406272
+    },
+    {
+      "path": "./org/enemy/492/enemy_icon_492.png",
+      "size": 1440,
+      "offset": 1408048
+    },
+    {
+      "path": "./org/enemy/056/enemy_icon_056.png",
+      "size": 1856,
+      "offset": 1409488
+    },
+    {
+      "path": "./org/enemy/264/enemy_icon_264.png",
+      "size": 1520,
+      "offset": 1411344
+    },
+    {
+      "path": "./org/enemy/432/enemy_icon_432.png",
+      "size": 1136,
+      "offset": 1412864
+    },
+    {
+      "path": "./org/enemy/290/enemy_icon_290.png",
+      "size": 1392,
+      "offset": 1414000
+    },
+    {
+      "path": "./org/enemy/069/enemy_icon_069.png",
+      "size": 2208,
+      "offset": 1415392
+    },
+    {
+      "path": "./org/enemy/297/enemy_icon_297.png",
+      "size": 1664,
+      "offset": 1417600
+    },
+    {
+      "path": "./org/enemy/435/enemy_icon_435.png",
+      "size": 1584,
+      "offset": 1419264
+    },
+    {
+      "path": "./org/enemy/263/enemy_icon_263.png",
+      "size": 1856,
+      "offset": 1420848
+    },
+    {
+      "path": "./org/enemy/051/enemy_icon_051.png",
+      "size": 1616,
+      "offset": 1422704
+    },
+    {
+      "path": "./org/enemy/093/enemy_icon_093.png",
+      "size": 1392,
+      "offset": 1424320
+    },
+    {
+      "path": "./org/enemy/255/enemy_icon_255.png",
+      "size": 1248,
+      "offset": 1425712
+    },
+    {
+      "path": "./org/enemy/067/enemy_icon_067.png",
+      "size": 2176,
+      "offset": 1426960
+    },
+    {
+      "path": "./org/enemy/403/enemy_icon_403.png",
+      "size": 1712,
+      "offset": 1429136
+    },
+    {
+      "path": "./org/enemy/058/enemy_icon_058.png",
+      "size": 1856,
+      "offset": 1430848
+    },
+    {
+      "path": "./org/enemy/404/enemy_icon_404.png",
+      "size": 2080,
+      "offset": 1432704
+    },
+    {
+      "path": "./org/enemy/060/enemy_icon_060.png",
+      "size": 1776,
+      "offset": 1434784
+    },
+    {
+      "path": "./org/enemy/252/enemy_icon_252.png",
+      "size": 2016,
+      "offset": 1436560
+    },
+    {
+      "path": "./org/enemy/094/enemy_icon_094.png",
+      "size": 1568,
+      "offset": 1438576
+    },
+    {
+      "path": "./org/enemy/299/enemy_icon_299.png",
+      "size": 528,
+      "offset": 1440144
+    },
+    {
+      "path": "./org/enemy/112/enemy_icon_112.png",
+      "size": 2032,
+      "offset": 1440672
+    },
+    {
+      "path": "./org/enemy/320/enemy_icon_320.png",
+      "size": 1584,
+      "offset": 1442704
+    },
+    {
+      "path": "./org/enemy/318/enemy_icon_318.png",
+      "size": 1280,
+      "offset": 1444288
+    },
+    {
+      "path": "./org/enemy/327/enemy_icon_327.png",
+      "size": 1376,
+      "offset": 1445568
+    },
+    {
+      "path": "./org/enemy/115/enemy_icon_115.png",
+      "size": 1712,
+      "offset": 1446944
+    },
+    {
+      "path": "./org/enemy/311/enemy_icon_311.png",
+      "size": 1600,
+      "offset": 1448656
+    },
+    {
+      "path": "./org/enemy/123/enemy_icon_123.png",
+      "size": 880,
+      "offset": 1450256
+    },
+    {
+      "path": "./org/enemy/329/enemy_icon_329.png",
+      "size": 1696,
+      "offset": 1451136
+    },
+    {
+      "path": "./org/enemy/124/enemy_icon_124.png",
+      "size": 1600,
+      "offset": 1452832
+    },
+    {
+      "path": "./org/enemy/316/enemy_icon_316.png",
+      "size": 1856,
+      "offset": 1454432
+    },
+    {
+      "path": "./org/enemy/184/enemy_icon_184.png",
+      "size": 1616,
+      "offset": 1456288
+    },
+    {
+      "path": "./org/enemy/514/enemy_icon_514.png",
+      "size": 1904,
+      "offset": 1457904
+    },
+    {
+      "path": "./org/enemy/342/enemy_icon_342.png",
+      "size": 976,
+      "offset": 1459808
+    },
+    {
+      "path": "./org/enemy/170/enemy_icon_170.png",
+      "size": 1312,
+      "offset": 1460784
+    },
+    {
+      "path": "./org/enemy/389/enemy_icon_389.png",
+      "size": 1808,
+      "offset": 1462096
+    },
+    {
+      "path": "./org/enemy/177/enemy_icon_177.png",
+      "size": 1760,
+      "offset": 1463904
+    },
+    {
+      "path": "./org/enemy/345/enemy_icon_345.png",
+      "size": 1600,
+      "offset": 1465664
+    },
+    {
+      "path": "./org/enemy/513/enemy_icon_513.png",
+      "size": 1216,
+      "offset": 1467264
+    },
+    {
+      "path": "./org/enemy/183/enemy_icon_183.png",
+      "size": 1712,
+      "offset": 1468480
+    },
+    {
+      "path": "./org/enemy/148/enemy_icon_148.png",
+      "size": 1888,
+      "offset": 1470192
+    },
+    {
+      "path": "./org/enemy/525/enemy_icon_525.png",
+      "size": 1173,
+      "offset": 1472080
+    },
+    {
+      "path": "./org/enemy/141/enemy_icon_141.png",
+      "size": 1392,
+      "offset": 1473264
+    },
+    {
+      "path": "./org/enemy/373/enemy_icon_373.png",
+      "size": 1184,
+      "offset": 1474656
+    },
+    {
+      "path": "./org/enemy/387/enemy_icon_387.png",
+      "size": 1504,
+      "offset": 1475840
+    },
+    {
+      "path": "./org/enemy/380/enemy_icon_380.png",
+      "size": 1856,
+      "offset": 1477344
+    },
+    {
+      "path": "./org/enemy/374/enemy_icon_374.png",
+      "size": 1200,
+      "offset": 1479200
+    },
+    {
+      "path": "./org/enemy/146/enemy_icon_146.png",
+      "size": 1568,
+      "offset": 1480400
+    },
+    {
+      "path": "./org/enemy/522/enemy_icon_522.png",
+      "size": 1486,
+      "offset": 1481968
+    },
+    {
+      "path": "./org/enemy/179/enemy_icon_179.png",
+      "size": 2208,
+      "offset": 1483456
+    },
+    {
+      "path": "./org/enemy/328/enemy_icon_328.png",
+      "size": 1744,
+      "offset": 1485664
+    },
+    {
+      "path": "./org/enemy/317/enemy_icon_317.png",
+      "size": 1808,
+      "offset": 1487408
+    },
+    {
+      "path": "./org/enemy/125/enemy_icon_125.png",
+      "size": 1712,
+      "offset": 1489216
+    },
+    {
+      "path": "./org/enemy/122/enemy_icon_122.png",
+      "size": 1344,
+      "offset": 1490928
+    },
+    {
+      "path": "./org/enemy/310/enemy_icon_310.png",
+      "size": 1504,
+      "offset": 1492272
+    },
+    {
+      "path": "./org/enemy/319/enemy_icon_319.png",
+      "size": 1664,
+      "offset": 1493776
+    },
+    {
+      "path": "./org/enemy/114/enemy_icon_114.png",
+      "size": 1936,
+      "offset": 1495440
+    },
+    {
+      "path": "./org/enemy/326/enemy_icon_326.png",
+      "size": 1888,
+      "offset": 1497376
+    },
+    {
+      "path": "./org/enemy/321/enemy_icon_321.png",
+      "size": 1824,
+      "offset": 1499264
+    },
+    {
+      "path": "./org/enemy/113/enemy_icon_113.png",
+      "size": 1728,
+      "offset": 1501088
+    },
+    {
+      "path": "./org/enemy/147/enemy_icon_147.png",
+      "size": 1904,
+      "offset": 1502816
+    },
+    {
+      "path": "./org/enemy/375/enemy_icon_375.png",
+      "size": 1488,
+      "offset": 1504720
+    },
+    {
+      "path": "./org/enemy/523/enemy_icon_523.png",
+      "size": 1793,
+      "offset": 1506208
+    },
+    {
+      "path": "./org/enemy/381/enemy_icon_381.png",
+      "size": 1824,
+      "offset": 1508016
+    },
+    {
+      "path": "./org/enemy/178/enemy_icon_178.png",
+      "size": 1648,
+      "offset": 1509840
+    },
+    {
+      "path": "./org/enemy/386/enemy_icon_386.png",
+      "size": 1328,
+      "offset": 1511488
+    },
+    {
+      "path": "./org/enemy/524/enemy_icon_524.png",
+      "size": 1327,
+      "offset": 1512816
+    },
+    {
+      "path": "./org/enemy/372/enemy_icon_372.png",
+      "size": 1216,
+      "offset": 1514144
+    },
+    {
+      "path": "./org/enemy/140/enemy_icon_140.png",
+      "size": 1360,
+      "offset": 1515360
+    },
+    {
+      "path": "./org/enemy/182/enemy_icon_182.png",
+      "size": 1664,
+      "offset": 1516720
+    },
+    {
+      "path": "./org/enemy/344/enemy_icon_344.png",
+      "size": 1152,
+      "offset": 1518384
+    },
+    {
+      "path": "./org/enemy/176/enemy_icon_176.png",
+      "size": 1040,
+      "offset": 1519536
+    },
+    {
+      "path": "./org/enemy/512/enemy_icon_512.png",
+      "size": 1856,
+      "offset": 1520576
+    },
+    {
+      "path": "./org/enemy/149/enemy_icon_149.png",
+      "size": 1376,
+      "offset": 1522432
+    },
+    {
+      "path": "./org/enemy/515/enemy_icon_515.png",
+      "size": 1936,
+      "offset": 1523808
+    },
+    {
+      "path": "./org/enemy/171/enemy_icon_171.png",
+      "size": 1376,
+      "offset": 1525744
+    },
+    {
+      "path": "./org/enemy/343/enemy_icon_343.png",
+      "size": 928,
+      "offset": 1527120
+    },
+    {
+      "path": "./org/enemy/185/enemy_icon_185.png",
+      "size": 1728,
+      "offset": 1528048
+    },
+    {
+      "path": "./org/enemy/388/enemy_icon_388.png",
+      "size": 2032,
+      "offset": 1529776
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+export class BcuSpriteSheet{constructor(image,imgcut){this.image=image;this.imgcut=imgcut;} drawPart(ctx,partIndex,dx,dy,opt={}){const p=this.imgcut?.parts?.[partIndex]; if(!p||p.w<=0||p.h<=0||p.x<0||p.y<0) return; if(p.x+p.w>this.image.width||p.y+p.h>this.image.height) return; ctx.drawImage(this.image,p.x,p.y,p.w,p.h,dx,dy,p.w*(opt.scaleX??1),p.h*(opt.scaleY??1));}
+ drawRawGrid(ctx,x,y,cols=8,pad=6){this.imgcut.parts.forEach((p,i)=>{const cx=i%cols,cy=(i/cols)|0,dx=x+cx*90,dy=y+cy*90; if(p.w>0&&p.h>0) this.drawPart(ctx,i,dx,dy,{scaleX:Math.min(1,80/p.w),scaleY:Math.min(1,80/p.h)}); ctx.strokeStyle='#4b5b77';ctx.strokeRect(dx,dy,80,80);ctx.fillStyle='#9ec5ff';ctx.font='10px monospace';ctx.fillText(`${i}:${p.name}`,dx,88+dy);});}
+}

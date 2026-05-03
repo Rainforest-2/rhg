@@ -1,4 +1,52 @@
-const MOD_MAP={4:'posX',5:'posY',8:'scaleX',9:'scaleY',11:'angle',12:'opacity'};
-export class BcuAnimator{constructor(anim){this.anim=anim;this.frame=0;this.playing=true;this.speed=1;} restart(){this.frame=0;} step(v){this.frame=Math.max(0,this.frame+v);} setSpeed(s){this.speed=s;} tick(dt){if(!this.playing)return; const max=Math.max(1,this.anim?.maxFrame||1); this.frame=(this.frame+dt*60*this.speed/1000)%max;}
-apply(model){if(!this.anim||!model)return; for(const t of this.anim.tracks){const prop=MOD_MAP[t.modification]; if(!prop||!t.keyframes.length) continue; let a=t.keyframes[0],b=t.keyframes[t.keyframes.length-1]; for(let i=0;i<t.keyframes.length-1;i++){if(this.frame>=t.keyframes[i].frame&&this.frame<=t.keyframes[i+1].frame){a=t.keyframes[i];b=t.keyframes[i+1];break;}} let v=a.value; if(a!==b){const p=(this.frame-a.frame)/Math.max(1,b.frame-a.frame); v=(a.easing===1)?a.value:a.value+(b.value-a.value)*Math.max(0,Math.min(1,p));} model.applyTrack(t.partId,prop,v);} }
+const MOD_MAP = { 2: 'partIndex', 4: 'posX', 5: 'posY', 8: 'scaleX', 9: 'scaleY', 11: 'angle', 12: 'opacity' };
+
+function valueAt(track, frame, prop) {
+  const kfs = track.keyframes || [];
+  if (!kfs.length) return 0;
+
+  if (prop === 'partIndex') {
+    let v = kfs[0].value;
+    for (const kf of kfs) {
+      if (frame >= kf.frame) v = kf.value;
+      else break;
+    }
+    return Math.round(v);
+  }
+
+  let a = kfs[0];
+  let b = kfs[kfs.length - 1];
+  for (let i = 0; i < kfs.length - 1; i += 1) {
+    if (frame >= kfs[i].frame && frame <= kfs[i + 1].frame) {
+      a = kfs[i];
+      b = kfs[i + 1];
+      break;
+    }
+  }
+  if (a === b || b.frame === a.frame || a.easing === 1) return a.value;
+  const p = Math.max(0, Math.min(1, (frame - a.frame) / (b.frame - a.frame)));
+  return a.value + (b.value - a.value) * p;
+}
+
+export class BcuAnimator {
+  constructor(anim) { this.anim = anim; this.frame = 0; this.playing = true; this.speed = 1; }
+  restart() { this.frame = 0; }
+  step(v) { this.frame = Math.max(0, this.frame + v); }
+  setSpeed(s) { this.speed = s; }
+  tick(dt) { if (!this.playing) return; const max = Math.max(1, this.anim?.maxFrame || 1); this.frame = (this.frame + (dt * 60 * this.speed) / 1000) % max; }
+
+  getValuesAtFrame(frame = this.frame) {
+    const values = [];
+    for (const t of this.anim?.tracks || []) {
+      const prop = MOD_MAP[t.modification];
+      if (!prop || !t.keyframes?.length) continue;
+      values.push({ partId: t.partId, modification: t.modification, prop, value: valueAt(t, frame, prop), track: t });
+    }
+    return values;
+  }
+
+  apply(model) {
+    if (!model) return [];
+    const values = this.getValuesAtFrame(this.frame);
+    return values.map((v) => model.applyTrack(v.partId, v.prop, v.value));
+  }
 }

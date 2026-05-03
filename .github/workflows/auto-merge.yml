@@ -80,15 +80,41 @@ jobs:
 
           if git diff --cached --quiet; then
             echo "No staged conflict resolution changes."
+            echo "conflict_resolved=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "Auto resolve conflicts: keep PR changes"
             git push origin "HEAD:$PR_BRANCH"
+            echo "conflict_resolved=true" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "conflict_resolved=true" >> "$GITHUB_OUTPUT"
+      - name: Wait for GitHub to update PR mergeability
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+
+          echo "Waiting for PR mergeability to update..."
+
+          for i in $(seq 1 20); do
+            MERGEABLE="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeable --jq '.mergeable')"
+            MERGE_STATE="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeStateStatus --jq '.mergeStateStatus')"
+
+            echo "Attempt $i: mergeable=$MERGEABLE mergeStateStatus=$MERGE_STATE"
+
+            if [ "$MERGEABLE" = "MERGEABLE" ] || [ "$MERGE_STATE" = "CLEAN" ] || [ "$MERGE_STATE" = "UNSTABLE" ] || [ "$MERGE_STATE" = "HAS_HOOKS" ]; then
+              exit 0
+            fi
+
+            sleep 3
+          done
+
+          echo "PR did not become mergeable in time."
+          gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeable,mergeStateStatus
+          exit 1
 
       - name: Merge PR
-        if: steps.resolve.outputs.conflict_resolved == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}

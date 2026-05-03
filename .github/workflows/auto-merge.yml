@@ -1,78 +1,90 @@
 name: Auto resolve conflicts and merge
 
 on:
-pull_request_target:
-types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
-contents: write
-pull-requests: write
+  contents: write
+  pull-requests: write
 
 concurrency:
-group: auto-merge-${{ github.event.pull_request.number }}
-cancel-in-progress: true
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-resolve-and-merge:
-if: >
-github.event.pull_request.draft == false &&
-github.event.pull_request.head.repo.full_name == github.repository
-runs-on: ubuntu-latest
+  resolve-and-merge:
+    if: ${{ github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout PR branch
-    uses: actions/checkout@v4
-    with:
-      repository: ${{ github.event.pull_request.head.repo.full_name }}
-      ref: ${{ github.event.pull_request.head.ref }}
-      fetch-depth: 0
-      token: ${{ secrets.GITHUB_TOKEN }}
-  - name: Configure git
-    run: |
-      git config user.name "github-actions[bot]"
-      git config user.email "github-actions[bot]@users.noreply.github.com"
-  - name: Resolve conflicts by keeping PR changes
-    id: resolve
-    run: |
-      set -e
-      BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
-      PR_BRANCH="${{ github.event.pull_request.head.ref }}"
-      git fetch origin "$BASE_BRANCH"
-      set +e
-      git merge "origin/$BASE_BRANCH" --no-edit
-      MERGE_STATUS=$?
-      set -e
-      if [ "$MERGE_STATUS" = "0" ]; then
-        echo "conflict_resolved=false" >> "$GITHUB_OUTPUT"
-        echo "No conflicts while merging origin/$BASE_BRANCH into $PR_BRANCH."
-        exit 0
-      fi
-      echo "Merge conflict detected. Keeping PR branch changes."
-      UNMERGED_FILES="$(git diff --name-only --diff-filter=U || true)"
-      if [ -z "$UNMERGED_FILES" ]; then
-        echo "Merge failed but no unmerged files were detected."
-        git status --short
-        exit 1
-      fi
-      echo "$UNMERGED_FILES" | while IFS= read -r file; do
-        if [ -n "$file" ]; then
-          echo "Keeping PR version: $file"
-          git checkout --ours -- "$file" || true
-          git add -- "$file" || true
-        fi
-      done
-      git add -A
-      if git diff --cached --quiet; then
-        echo "No staged conflict resolution changes."
-      else
-        git commit -m "Auto resolve conflicts: keep PR changes"
-        git push origin "HEAD:$PR_BRANCH"
-      fi
-      echo "conflict_resolved=true" >> "$GITHUB_OUTPUT"
-  - name: Merge PR
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PR_URL: ${{ github.event.pull_request.html_url }}
-    run: |
-      set -e
-      gh pr merge "$PR_URL" --squash --delete-branch --admin
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Resolve conflicts by keeping PR changes
+        id: resolve
+        run: |
+          set -e
+
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
+
+          git fetch origin "$BASE_BRANCH"
+
+          set +e
+          git merge "origin/$BASE_BRANCH" --no-edit
+          MERGE_STATUS=$?
+          set -e
+
+          if [ "$MERGE_STATUS" = "0" ]; then
+            echo "conflict_resolved=false" >> "$GITHUB_OUTPUT"
+            echo "No conflicts while merging origin/$BASE_BRANCH into $PR_BRANCH."
+            exit 0
+          fi
+
+          echo "Merge conflict detected. Keeping PR branch changes."
+
+          UNMERGED_FILES="$(git diff --name-only --diff-filter=U || true)"
+
+          if [ -z "$UNMERGED_FILES" ]; then
+            echo "Merge failed but no unmerged files were detected."
+            git status --short
+            exit 1
+          fi
+
+          echo "$UNMERGED_FILES" | while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              echo "Keeping PR version: $file"
+              git checkout --ours -- "$file" || true
+              git add -- "$file" || true
+            fi
+          done
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No staged conflict resolution changes."
+          else
+            git commit -m "Auto resolve conflicts: keep PR changes"
+            git push origin "HEAD:$PR_BRANCH"
+          fi
+
+          echo "conflict_resolved=true" >> "$GITHUB_OUTPUT"
+
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          set -e
+          gh pr merge "$PR_URL" --squash --delete-branch --admin

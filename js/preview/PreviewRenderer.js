@@ -25,6 +25,22 @@ export class PreviewRenderer {
     if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText('static image / no model', dx, dy - 8); }
   }
 
+  getLayerRect(layer) {
+    const anchor = layer.anchor || 'bottom-center';
+    const offsetX = layer.offsetX || 0;
+    const offsetY = layer.offsetY || 0;
+    if (anchor !== 'bottom-center') return null;
+    return {
+      ...layer,
+      offsetX,
+      offsetY,
+      x1: offsetX - layer.image.width * 0.5,
+      y1: offsetY - layer.image.height,
+      x2: offsetX + layer.image.width * 0.5,
+      y2: offsetY
+    };
+  }
+
   drawCompositeCastle(state, ox, oy) {
     const c = this.ctx;
     const layers = state.compositeLayers || [];
@@ -32,17 +48,15 @@ export class PreviewRenderer {
     const ordered = ['bottom', 'middle', 'top'].map((id) => layers.find((x) => x.id === id)).filter(Boolean);
     if (!ordered.length) return;
 
-    const rects = ordered.map((l) => {
-      const oxp = l.offsetX || 0;
-      const oyp = l.offsetY || 0;
-      return { ...l, x1: oxp - l.image.width * 0.5, y1: oyp - l.image.height, x2: oxp + l.image.width * 0.5, y2: oyp };
-    });
+    const rects = ordered.map((l) => this.getLayerRect(l)).filter(Boolean);
+    if (!rects.length) return;
+
     const minX = Math.min(...rects.map((r) => r.x1));
     const maxX = Math.max(...rects.map((r) => r.x2));
     const minY = Math.min(...rects.map((r) => r.y1));
     const maxY = Math.max(...rects.map((r) => r.y2));
-    const bw = maxX - minX;
-    const bh = maxY - minY;
+    const bw = Math.max(1, maxX - minX);
+    const bh = Math.max(1, maxY - minY);
     const scale = Math.min((this.logicalW * 0.72) / bw, (this.logicalH * 0.78) / bh, 1) * state.scale;
 
     for (const r of rects) {
@@ -52,7 +66,10 @@ export class PreviewRenderer {
       const y = oy + r.y1 * scale;
       c.drawImage(r.image, x, y, w, h);
       if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(x, y, w, h); }
-      if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText(`${r.id} (${r.offsetX || 0},${r.offsetY || 0})`, x + 4, y + 14); }
+      if (state.showParts) {
+        c.fillStyle = '#f8fafc'; c.font = '12px monospace';
+        c.fillText(`${r.id} (${r.offsetX},${r.offsetY}) rect:[${x.toFixed(1)},${y.toFixed(1)},${w.toFixed(1)},${h.toFixed(1)}]`, x + 4, y + 14);
+      }
     }
   }
 

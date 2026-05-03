@@ -1,4 +1,4 @@
-const MUTABLE = new Set(['posX', 'posY', 'scaleX', 'scaleY', 'angle', 'opacity', 'partIndex']);
+const MUTABLE = new Set(['posX', 'posY', 'scaleX', 'scaleY', 'angle', 'opacity', 'partIndex', 'imgcutIndex']);
 
 export class BcuModelInstance {
   constructor(model) {
@@ -8,8 +8,8 @@ export class BcuModelInstance {
     this.baseOpacity = model.baseOpacity || 255;
     this.parts = model.parts.map((p) => ({
       ...p,
-      base: { posX: p.posX, posY: p.posY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex },
-      current: { posX: p.posX, posY: p.posY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex }
+      base: { posX: p.posX, posY: p.posY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex, imgcutIndex: p.imgcutIndex },
+      current: { posX: p.posX, posY: p.posY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex, imgcutIndex: p.imgcutIndex }
     }));
   }
 

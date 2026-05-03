@@ -28,16 +28,21 @@ export class PreviewRenderer {
     if (!state.model) return;
     for (const p of state.model.getDrawList()) {
       const w = p.world; const applied = state.lastAppliedByPart?.get(p.index);
+      const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex;
+      const partIndex = p.current?.partIndex ?? p.partIndex;
+      if (!Number.isInteger(partIndex) || partIndex < 0) continue;
+      if ((imgcutIndex ?? 0) < 0) continue;
+      if (!w || (w.o ?? 1) <= 0) continue;
+      const part = state.sprite?.imgcut?.parts?.[partIndex];
+      if (!part || part.w <= 0 || part.h <= 0) continue;
+
       c.save(); c.translate(ox + w.x * state.scale, oy + w.y * state.scale); c.rotate((w.a / (state.model.baseAngle || 3600)) * Math.PI * 2); c.globalAlpha = w.o ?? 1;
-      const part = state.sprite.imgcut.parts[p.current.partIndex];
-      if (part && part.w > 0 && part.h > 0) {
-        const sx = w.sx * state.scale, sy = w.sy * state.scale;
-        state.sprite.drawPart(c, p.current.partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy });
-        if (applied?.prop === 'partIndex') { c.strokeStyle = '#f59e0b'; c.lineWidth = 3; c.strokeRect(-part.w * 0.5 * sx, -part.h * 0.5 * sy, part.w * sx, part.h * sy); }
-        if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(-part.w * 0.5 * sx, -part.h * 0.5 * sy, part.w * sx, part.h * sy); }
-        if (state.showPivots) { c.fillStyle = '#22d3ee'; c.fillRect(-2, -2, 4, 4); }
-        if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '11px monospace'; c.fillText(`m:${p.index} pi:${p.current.partIndex} ${applied ? `${applied.prop}=${applied.value}` : ''}`, 4, -4); }
-      }
+      const sx = w.sx * state.scale, sy = w.sy * state.scale;
+      state.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy });
+      if (applied?.prop === 'partIndex') { c.strokeStyle = '#f59e0b'; c.lineWidth = 3; c.strokeRect(-part.w * 0.5 * sx, -part.h * 0.5 * sy, part.w * sx, part.h * sy); }
+      if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(-part.w * 0.5 * sx, -part.h * 0.5 * sy, part.w * sx, part.h * sy); }
+      if (state.showPivots) { c.fillStyle = '#22d3ee'; c.fillRect(-2, -2, 4, 4); }
+      if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '11px monospace'; c.fillText(`m:${p.index} pi:${partIndex} ${applied ? `${applied.prop}=${applied.value}` : ''}`, 4, -4); }
       c.restore();
     }
   }

@@ -15,6 +15,8 @@ export class PreviewUi {
     assets.forEach((a) => as.add(new Option(this.formatAssetLabel(a), a.id)));
     const bindAnim = (a, available = null) => {
       an.innerHTML = '';
+      if (!a.animations?.length) { an.add(new Option('none', 'none')); an.disabled = true; return; }
+      an.disabled = false;
       a.animations.forEach((x) => {
         const exists = available ? available.has(x.id) : true;
         const opt = new Option(`${x.label}${exists ? '' : ' (missing)'}`, x.id);
@@ -38,7 +40,7 @@ export class PreviewUi {
     const first = anim?.tracks?.[0];
     const hist = Object.entries(anim?.modificationHistogram || {}).map(([k, v]) => `${k}=${v}`).join(', ') || 'none';
     const applied = (state.debugApplied || []).slice(0, 12).map((v) => `${v.applied ? 'OK' : 'NG'} p:${v.partId} pi:${v.partIndex} ${v.prop}=${v.value} ${v.reason || ''}`).join('\n');
-    this.root.querySelector('#debug').textContent = `role=${state.assetMeta?.role || '-'}\ngroup=${state.assetMeta?.group || '-'}\nbaseDir=${state.assetMeta?.baseDir || '-'}\nloaded=${(state.loadedFiles||[]).join(', ') || '-'}\nmissing=${(state.missingFiles||[]).join(', ') || '-'}\nparts=${state.debugStats?.parts || 0} modelParts=${state.debugStats?.modelParts || 0} tracks=${state.debugStats?.tracks || 0} maxFrame=${state.debugStats?.maxFrame || 0}\nframe=${state.debugStats?.frame || 0} applied=${state.debugStats?.appliedCount || 0}\nmodificationHistogram: ${hist}\nfirstTrack: ${first?.rawHeader || '-'}\nfirstKeyframes: ${JSON.stringify(first?.keyframes || [])}\napplied:\n${applied}`;
+    this.root.querySelector('#debug').textContent = `role=${state.assetMeta?.role || '-'}\ngroup=${state.assetMeta?.group || '-'}\nrenderMode=${state.renderMode || state.assetMeta?.renderMode || 'model'}\nmodel required=${state.modelRequired ? 'yes' : 'no'}\nanimation required=${state.animationRequired ? 'yes' : 'no'}\nbaseDir=${state.assetMeta?.baseDir || '-'}\nloaded=${(state.loadedFiles||[]).join(', ') || '-'}\nmissing=${(state.missingFiles||[]).join(', ') || '-'}\nparts=${state.debugStats?.parts || 0} modelParts=${state.debugStats?.modelParts || 0} tracks=${state.debugStats?.tracks || 0} maxFrame=${state.debugStats?.maxFrame || 0}\nframe=${state.debugStats?.frame || 0} applied=${state.debugStats?.appliedCount || 0}\nmodificationHistogram: ${hist}\nfirstTrack: ${first?.rawHeader || '-'}\nfirstKeyframes: ${JSON.stringify(first?.keyframes || [])}\napplied:\n${applied}`;
   }
   log(level, msg) { this.logs.push({ level, msg, time: new Date().toISOString().slice(11, 19) }); if (this.logs.length > 120) this.logs.shift(); this.logEl.innerHTML = this.logs.map((l) => `<div class='log-item log-${l.level}'>[${l.time}] ${l.level.toUpperCase()} ${l.msg}</div>`).join(''); this.logEl.scrollTop = this.logEl.scrollHeight; }
 }

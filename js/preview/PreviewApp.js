@@ -12,7 +12,7 @@ export class PreviewApp {
     this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
     this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
     this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; } });
-    await this.load(this.assets[0].id, this.assets[0].animations[0].id);
+    await this.load(this.assets[0].id, this.assets[0].animations[0]?.id);
     let last = performance.now();
     const loop = (t) => { const dt = t - last; last = t; if (this.animator) { this.animator.tick(dt); this.applyAnim(); } this.renderer.render(this.state); this.updateStatus(); requestAnimationFrame(loop); };
     requestAnimationFrame(loop);
@@ -32,24 +32,35 @@ export class PreviewApp {
 
   async load(id, animId) {
     this.current = this.findAsset(id);
-    this.state.assetMeta = { label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir };
+    this.state.assetMeta = { label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir, renderMode: this.current.renderMode || 'model' };
     this.ui.log('info', `load asset ${this.current.label}`);
     const r = await this.loader.loadAssetSet(this.current);
     r.errors.forEach((e) => this.ui.log('error', e));
     r.missing.forEach((m) => this.ui.log('warn', `missing file: ${m}`));
     this.state.loadedFiles = r.loaded;
     this.state.missingFiles = r.missing;
+    this.state.renderMode = r.renderMode;
+    this.state.modelRequired = r.modelRequired;
+    this.state.animationRequired = r.animationRequired;
     this.state.sprite = r.image && r.imgcut ? new BcuSpriteSheet(r.image, r.imgcut) : null;
     this.state.model = r.model ? new BcuModelInstance(r.model) : null;
-    const available = await this.probeAnimations(this.current);
+    let available = new Set();
+    if (this.current.animations?.length) available = await this.probeAnimations(this.current);
+    else this.ui.setAnimationAvailability(this.current, available);
     this.state.availableAnimations = available;
     this.ui.log('info', `loaded files: ${r.loaded.join(', ') || 'none'}`);
-    await this.loadAnim(animId || this.current.animations[0]?.id);
+    await this.loadAnim(animId || this.current.animations[0]?.id || null);
   }
 
   async loadAnim(animId) {
     const ad = this.current.animations.find((a) => a.id === animId) || this.current.animations[0];
-    if (!ad) return;
+    if (!ad) {
+      this.state.currentAnimLabel = 'none';
+      this.state.anim = null;
+      this.animator = new BcuAnimator({ tracks: [], maxFrame: 1 });
+      this.applyAnim();
+      return;
+    }
     this.state.currentAnimLabel = ad.file;
     const result = await this.loader.loadAnimation(this.current, ad);
     if (result.status === 'missing') this.ui.log('warn', `missing animation: ${ad.id} (${result.missing.join(', ')})`);
@@ -65,7 +76,7 @@ export class PreviewApp {
   }
 
   applyAnim() {
-    if (!this.state.model) return;
+    if (!this.state.model) { this.state.debugApplied = []; this.state.lastAppliedByPart = new Map(); this.ui.setDebug(this.state); return; }
     this.state.model.reset();
     this.state.debugApplied = this.animator?.apply(this.state.model) || [];
     this.state.lastAppliedByPart = new Map(this.state.debugApplied.filter((x) => x.applied).map((x) => [x.partId, x]));

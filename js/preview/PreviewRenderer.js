@@ -10,6 +10,21 @@ export class PreviewRenderer {
     c.fillText(`[${ROLE_SHORT[state.assetMeta?.role] || 'UNK'}] ${state.assetMeta?.label || '-'} (${state.assetMeta?.group || '-'})`, 18, 30);
     c.fillText(`frame:${s.frame ?? '0.00'} / max:${s.maxFrame ?? 0} tracks:${s.tracks ?? 0} applied:${s.appliedCount ?? 0} anim:${s.currentAnimLabel || '-'}`, 18, 52);
   }
+
+  drawStaticImage(state, ox, oy) {
+    const c = this.ctx;
+    const img = state.sprite?.image;
+    if (!img) return;
+    const maxW = this.logicalW * 0.7;
+    const maxH = this.logicalH * 0.6;
+    const scale = Math.min(maxW / img.width, maxH / img.height, 1) * state.scale;
+    const dw = img.width * scale, dh = img.height * scale;
+    const dx = ox - dw * 0.5, dy = oy - dh;
+    c.drawImage(img, dx, dy, dw, dh);
+    if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(dx, dy, dw, dh); }
+    if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText('static image / no model', dx, dy - 8); }
+  }
+
   drawMissing(state) {
     const c = this.ctx;
     c.fillStyle = '#000b'; c.fillRect(this.logicalW * 0.2, this.logicalH * 0.4, this.logicalW * 0.6, 120);
@@ -25,7 +40,10 @@ export class PreviewRenderer {
     const ox = this.logicalW * 0.5, oy = this.logicalH * 0.78; c.strokeStyle = '#4da3ff'; c.beginPath(); c.moveTo(ox - 14, oy); c.lineTo(ox + 14, oy); c.moveTo(ox, oy - 14); c.lineTo(ox, oy + 14); c.stroke();
     if (state.rawMode && state.sprite) { state.sprite.drawRawGrid(c, 20, 80); return; }
     if (!state.sprite) { this.drawMissing(state); return; }
-    if (!state.model) return;
+    if (!state.model) {
+      if ((state.renderMode || state.assetMeta?.renderMode) === 'static-imgcut') this.drawStaticImage(state, ox, oy);
+      return;
+    }
     for (const p of state.model.getDrawList()) {
       const w = p.world; const applied = state.lastAppliedByPart?.get(p.index);
       const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex;

@@ -1,0 +1,6 @@
+export const PREVIEW_ASSETS = [
+  { id:"enemy-000", label:"Enemy 000 / ワンコ候補", baseDir:"./public/assets/bcu/000002/org/enemy/000/", image:"000_e.png", imgcut:"000_e.imgcut", model:"000_e.mamodel", animations:[{id:"anim00",label:"00",file:"000_e00.maanim"},{id:"anim01",label:"01",file:"000_e01.maanim"},{id:"anim02",label:"02",file:"000_e02.maanim"},{id:"anim03",label:"03",file:"000_e03.maanim"}]},
+  { id:"unit-000-c", label:"Unit 000 c / ネコ候補", baseDir:"./public/assets/bcu/000004/org/unit/000/c/", image:"000_c.png", imgcut:"000_c.imgcut", model:"000_c.mamodel", animations:[{id:"anim00",label:"00",file:"000_c00.maanim"},{id:"anim01",label:"01",file:"000_c01.maanim"},{id:"anim02",label:"02",file:"000_c02.maanim"},{id:"anim03",label:"03",file:"000_c03.maanim"}]},
+  { id:"battle-critical", label:"Battle common / critical", baseDir:"./public/assets/bcu/000001/org/battle/a/", image:"000_a.png", imgcut:"000_a.imgcut", model:"critical.mamodel", animations:[{id:"critical",label:"critical",file:"critical.maanim"}]},
+  { id:"battle-boss-welcome", label:"Battle common / boss welcome", baseDir:"./public/assets/bcu/000001/org/battle/a/", image:"000_a.png", imgcut:"000_a.imgcut", model:"boss_welcome.mamodel", animations:[{id:"boss_welcome",label:"boss welcome",file:"boss_welcome.maanim"}]}
+];

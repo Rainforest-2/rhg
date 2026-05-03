@@ -49,6 +49,8 @@ export class PreviewApp {
       try { loaded.push({ id: layer.id, name: layer.name || layer.id, anchor: layer.anchor || 'bottom-center', offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
       catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); }
     }
+    const missingIds = ['bottom', 'middle', 'top'].filter((id) => !loaded.find((l) => l.id === id));
+    if (missingIds.length) this.ui?.log('warn', `castle-composite missing layer ids: ${missingIds.join(', ')}`);
     return { loaded, missing };
   }
 

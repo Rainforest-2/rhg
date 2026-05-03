@@ -45,8 +45,15 @@ export class PreviewRenderer {
     const c = this.ctx;
     const layers = state.compositeLayers || [];
     if (!layers.length) return;
-    const ordered = ['bottom', 'middle', 'top'].map((id) => layers.find((x) => x.id === id)).filter(Boolean);
-    if (!ordered.length) return;
+    const requiredOrder = ['bottom', 'middle', 'top'];
+    const ordered = requiredOrder.map((id) => layers.find((x) => x.id === id)).filter(Boolean);
+    if (!ordered.length) {
+      if (state.showParts) {
+        c.fillStyle = '#fca5a5'; c.font = '12px monospace';
+        c.fillText(`composite missing layers: expected ${requiredOrder.join(' -> ')}`, ox - 180, oy - 12);
+      }
+      return;
+    }
 
     const rects = ordered.map((l) => this.getLayerRect(l)).filter(Boolean);
     if (!rects.length) return;

@@ -1,0 +1,262 @@
+name: Asset inventory
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate asset inventory
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const ROOT = "public/assets/bcu";
+          const OUT_DIR = "asset-inventory";
+
+          function walk(dir) {
+            const out = [];
+            if (!fs.existsSync(dir)) return out;
+
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                out.push(...walk(full));
+              } else {
+                out.push(full.replaceAll("\\", "/"));
+              }
+            }
+            return out;
+          }
+
+          function extname(file) {
+            const ext = path.extname(file).toLowerCase();
+            return ext || "(no extension)";
+          }
+
+          function safeReadJson(file) {
+            try {
+              return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
+            } catch (e) {
+              return null;
+            }
+          }
+
+          function addCount(map, key, n = 1) {
+            map[key] = (map[key] || 0) + n;
+          }
+
+          function fileSize(file) {
+            try {
+              return fs.statSync(file).size;
+            } catch {
+              return 0;
+            }
+          }
+
+          function formatBytes(bytes) {
+            const units = ["B", "KB", "MB", "GB"];
+            let value = bytes;
+            let i = 0;
+            while (value >= 1024 && i < units.length - 1) {
+              value /= 1024;
+              i++;
+            }
+            return `${value.toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
+          }
+
+          fs.mkdirSync(OUT_DIR, { recursive: true });
+
+          const files = walk(ROOT);
+          const totalBytes = files.reduce((sum, f) => sum + fileSize(f), 0);
+
+          const byExt = {};
+          const byTopPack = {};
+          const byCategory = {};
+          const packSummaries = {};
+
+          for (const file of files) {
+            const rel = file.replace(/^public\/assets\/bcu\//, "");
+            const parts = rel.split("/");
+            const pack = parts[0] || "(unknown)";
+            const category = parts.slice(1, 3).join("/") || "(root)";
+            const ext = extname(file);
+
+            addCount(byExt, ext);
+            addCount(byTopPack, pack);
+            addCount(byCategory, category);
+
+            if (!packSummaries[pack]) {
+              packSummaries[pack] = {
+                pack,
+                fileCount: 0,
+                totalBytes: 0,
+                byExt: {},
+                byCategory: {},
+                infoJson: null,
+                infoFileCount: null,
+                infoTotalSize: null,
+                desc: null,
+              };
+            }
+
+            const p = packSummaries[pack];
+            p.fileCount++;
+            p.totalBytes += fileSize(file);
+            addCount(p.byExt, ext);
+            addCount(p.byCategory, category);
+          }
+
+          for (const pack of Object.keys(packSummaries)) {
+            const infoPath = path.join(ROOT, pack, "info.json");
+            if (fs.existsSync(infoPath)) {
+              const json = safeReadJson(infoPath);
+              const p = packSummaries[pack];
+              p.infoJson = infoPath.replaceAll("\\", "/");
+
+              if (json) {
+                p.desc = json.desc || null;
+                if (Array.isArray(json.files)) {
+                  p.infoFileCount = json.files.length;
+                  p.infoTotalSize = json.files.reduce((sum, f) => sum + (Number(f.size) || 0), 0);
+                }
+              }
+            }
+          }
+
+          const imgcuts = files.filter(f => f.toLowerCase().endsWith(".imgcut"));
+          const pngs = new Set(files.filter(f => f.toLowerCase().endsWith(".png")));
+
+          const imgcutPairs = imgcuts.map(imgcut => {
+            const base = imgcut.slice(0, -".imgcut".length);
+            const expectedPng = `${base}.png`;
+            return {
+              imgcut,
+              expectedPng,
+              pngExists: pngs.has(expectedPng),
+            };
+          });
+
+          const mamodels = files.filter(f => f.toLowerCase().endsWith(".mamodel"));
+          const maanims = files.filter(f => f.toLowerCase().endsWith(".maanim"));
+
+          const modelAnimGroups = {};
+          for (const f of [...mamodels, ...maanims]) {
+            const dir = path.dirname(f).replaceAll("\\", "/");
+            if (!modelAnimGroups[dir]) {
+              modelAnimGroups[dir] = { dir, mamodel: 0, maanim: 0 };
+            }
+            if (f.toLowerCase().endsWith(".mamodel")) modelAnimGroups[dir].mamodel++;
+            if (f.toLowerCase().endsWith(".maanim")) modelAnimGroups[dir].maanim++;
+          }
+
+          const inventory = {
+            generatedAt: new Date().toISOString(),
+            root: ROOT,
+            totalFiles: files.length,
+            totalBytes,
+            totalReadable: formatBytes(totalBytes),
+            byExt,
+            byTopPack,
+            byCategory,
+            packs: Object.values(packSummaries).sort((a, b) => a.pack.localeCompare(b.pack)),
+            imgcutPairs,
+            imgcutPairSummary: {
+              totalImgcut: imgcutPairs.length,
+              withMatchingPng: imgcutPairs.filter(x => x.pngExists).length,
+              missingPng: imgcutPairs.filter(x => !x.pngExists).length,
+            },
+            modelAnimGroups: Object.values(modelAnimGroups).sort((a, b) => a.dir.localeCompare(b.dir)),
+          };
+
+          fs.writeFileSync(path.join(OUT_DIR, "asset-summary.json"), JSON.stringify(inventory, null, 2));
+          fs.writeFileSync(path.join(OUT_DIR, "asset-files.txt"), files.join("\n"));
+
+          const lines = [];
+
+          lines.push("# Asset Inventory");
+          lines.push("");
+          lines.push(`Generated at: ${inventory.generatedAt}`);
+          lines.push("");
+          lines.push("## Overall");
+          lines.push("");
+          lines.push(`- Root: \`${ROOT}\``);
+          lines.push(`- Total files: ${inventory.totalFiles}`);
+          lines.push(`- Total size: ${inventory.totalReadable}`);
+          lines.push("");
+
+          lines.push("## Packs");
+          lines.push("");
+          lines.push("| Pack | Files | Size | info.json | info files | info size | Description |");
+          lines.push("|---|---:|---:|---|---:|---:|---|");
+          for (const p of inventory.packs) {
+            const desc = p.desc ? `${p.desc.id || ""} ${p.desc.desc || ""}`.trim() : "";
+            lines.push(
+              `| ${p.pack} | ${p.fileCount} | ${formatBytes(p.totalBytes)} | ${p.infoJson ? "yes" : "no"} | ${p.infoFileCount ?? ""} | ${p.infoTotalSize != null ? formatBytes(p.infoTotalSize) : ""} | ${desc} |`
+            );
+          }
+          lines.push("");
+
+          lines.push("## Extensions");
+          lines.push("");
+          lines.push("| Extension | Count |");
+          lines.push("|---|---:|");
+          for (const [ext, count] of Object.entries(byExt).sort((a, b) => b[1] - a[1])) {
+            lines.push(`| ${ext} | ${count} |`);
+          }
+          lines.push("");
+
+          lines.push("## Top categories");
+          lines.push("");
+          lines.push("| Category | Count |");
+          lines.push("|---|---:|");
+          for (const [cat, count] of Object.entries(byCategory).sort((a, b) => b[1] - a[1]).slice(0, 80)) {
+            lines.push(`| ${cat} | ${count} |`);
+          }
+          lines.push("");
+
+          lines.push("## imgcut / png pairing");
+          lines.push("");
+          lines.push(`- Total .imgcut: ${inventory.imgcutPairSummary.totalImgcut}`);
+          lines.push(`- With matching .png: ${inventory.imgcutPairSummary.withMatchingPng}`);
+          lines.push(`- Missing .png: ${inventory.imgcutPairSummary.missingPng}`);
+          lines.push("");
+
+          const missing = imgcutPairs.filter(x => !x.pngExists).slice(0, 100);
+          if (missing.length) {
+            lines.push("### Missing PNG examples");
+            lines.push("");
+            for (const m of missing) {
+              lines.push(`- imgcut: \`${m.imgcut}\` expected: \`${m.expectedPng}\``);
+            }
+            lines.push("");
+          }
+
+          lines.push("## Model / animation directories");
+          lines.push("");
+          lines.push("| Directory | .mamodel | .maanim |");
+          lines.push("|---|---:|---:|");
+          for (const g of inventory.modelAnimGroups.slice(0, 200)) {
+            lines.push(`| ${g.dir} | ${g.mamodel} | ${g.maanim} |`);
+          }
+          lines.push("");
+
+          fs.writeFileSync(path.join(OUT_DIR, "asset-summary.md"), lines.join("\n"));
+
+          console.log(`Generated inventory for ${files.length} files, ${formatBytes(totalBytes)}`);
+          NODE
+
+      - name: Upload asset inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: asset-inventory
+          path: asset-inventory/

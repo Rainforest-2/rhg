@@ -14,30 +14,35 @@ export class PreviewRenderer {
   drawStaticImage(state, ox, oy) {
     const c = this.ctx;
     const img = state.sprite?.image;
-    const parts = state.sprite?.imgcut?.parts || [];
     if (!img) return;
-    const valid = parts.map((p, i) => ({ ...p, i })).filter((p) => p.w > 0 && p.h > 0);
-    if (!valid.length) return;
-
-    const minX = Math.min(...valid.map((p) => p.x));
-    const minY = Math.min(...valid.map((p) => p.y));
-    const maxX = Math.max(...valid.map((p) => p.x + p.w));
-    const maxY = Math.max(...valid.map((p) => p.y + p.h));
-    const bw = maxX - minX;
-    const bh = maxY - minY;
     const maxW = this.logicalW * 0.7;
     const maxH = this.logicalH * 0.6;
-    const scale = Math.min(maxW / bw, maxH / bh, 1) * state.scale;
-    const left = ox - bw * scale * 0.5;
-    const top = oy - bh * scale * 0.5;
+    const scale = Math.min(maxW / img.width, maxH / img.height, 1) * state.scale;
+    const dw = img.width * scale, dh = img.height * scale;
+    const dx = ox - dw * 0.5, dy = oy - dh * 0.5;
+    c.drawImage(img, dx, dy, dw, dh);
+    if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(dx, dy, dw, dh); }
+    if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText('static image / no model', dx, dy - 8); }
+  }
 
-    for (const p of valid) {
-      const dx = left + (p.x - minX) * scale;
-      const dy = top + (p.y - minY) * scale;
-      c.drawImage(img, p.x, p.y, p.w, p.h, dx, dy, p.w * scale, p.h * scale);
-      if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText(`${p.i}`, dx + 2, dy + 12); }
+  drawCompositeCastle(state, ox, oy) {
+    const c = this.ctx;
+    const layers = state.compositeLayers || [];
+    if (!layers.length) return;
+    const ordered = ['bottom', 'middle', 'top'].map((id) => layers.find((x) => x.id === id)).filter(Boolean);
+    if (!ordered.length) return;
+    const maxW = Math.max(...ordered.map((l) => l.image.width));
+    const totalH = ordered.reduce((a, l) => a + l.image.height, 0);
+    const scale = Math.min((this.logicalW * 0.7) / maxW, (this.logicalH * 0.75) / totalH, 1) * state.scale;
+    let y = oy + (totalH * scale) * 0.5;
+    for (const layer of ordered) {
+      const w = layer.image.width * scale, h = layer.image.height * scale;
+      y -= h;
+      const x = ox - w * 0.5;
+      c.drawImage(layer.image, x, y, w, h);
+      if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(x, y, w, h); }
+      if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText(layer.id, x + 4, y + 14); }
     }
-    if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(left, top, bw * scale, bh * scale); }
   }
 
   drawMissing(state) {
@@ -54,9 +59,11 @@ export class PreviewRenderer {
     this.drawHud(state);
     const ox = this.logicalW * 0.5, oy = this.logicalH * 0.78; c.strokeStyle = '#4da3ff'; c.beginPath(); c.moveTo(ox - 14, oy); c.lineTo(ox + 14, oy); c.moveTo(ox, oy - 14); c.lineTo(ox, oy + 14); c.stroke();
     if (state.rawMode && state.sprite) { state.sprite.drawRawGrid(c, 20, 80); return; }
+    const mode = state.renderMode || state.assetMeta?.renderMode;
+    if (mode === 'castle-composite') { this.drawCompositeCastle(state, ox, oy); return; }
     if (!state.sprite) { this.drawMissing(state); return; }
     if (!state.model) {
-      if ((state.renderMode || state.assetMeta?.renderMode) === 'static-imgcut') this.drawStaticImage(state, ox, oy);
+      if (mode === 'static-imgcut') this.drawStaticImage(state, ox, oy);
       return;
     }
     for (const p of state.model.getDrawList()) {

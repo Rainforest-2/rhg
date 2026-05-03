@@ -6,6 +6,15 @@ import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { PreviewRenderer } from './PreviewRenderer.js';
 import { PreviewUi } from './PreviewUi.js';
 
+async function loadImage(url) {
+  return await new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error(`Image load failed: ${url}`));
+    img.src = url;
+  });
+}
+
 export class PreviewApp {
   constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; }
   async start() {
@@ -30,10 +39,36 @@ export class PreviewApp {
     return available;
   }
 
+  async loadCompositeLayers(asset) {
+    const loaded = [];
+    const missing = [];
+    for (const layer of (asset.layers || [])) {
+      try { loaded.push({ id: layer.id, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
+      catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); }
+    }
+    return { loaded, missing };
+  }
+
   async load(id, animId) {
     this.current = this.findAsset(id);
-    this.state.assetMeta = { label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir, renderMode: this.current.renderMode || 'model' };
+    this.state.assetMeta = { label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir || '-', renderMode: this.current.renderMode || 'model' };
     this.ui.log('info', `load asset ${this.current.label}`);
+    if ((this.current.renderMode || 'model') === 'castle-composite') {
+      const cr = await this.loadCompositeLayers(this.current);
+      this.state.loadedFiles = cr.loaded.map((x) => `${x.id}:${x.image.src.split('/').pop()}`);
+      this.state.missingFiles = cr.missing;
+      this.state.renderMode = 'castle-composite';
+      this.state.modelRequired = false;
+      this.state.animationRequired = false;
+      this.state.compositeLayers = cr.loaded;
+      this.state.sprite = null; this.state.model = null;
+      this.ui.setAnimationAvailability(this.current, new Set());
+      this.state.availableAnimations = new Set();
+      this.ui.log('info', `loaded files: ${this.state.loadedFiles.join(', ') || 'none'}`);
+      await this.loadAnim(null);
+      return;
+    }
+
     const r = await this.loader.loadAssetSet(this.current);
     r.errors.forEach((e) => this.ui.log('error', e));
     r.missing.forEach((m) => this.ui.log('warn', `missing file: ${m}`));
@@ -42,6 +77,7 @@ export class PreviewApp {
     this.state.renderMode = r.renderMode;
     this.state.modelRequired = r.modelRequired;
     this.state.animationRequired = r.animationRequired;
+    this.state.compositeLayers = null;
     this.state.sprite = r.image && r.imgcut ? new BcuSpriteSheet(r.image, r.imgcut) : null;
     this.state.model = r.model ? new BcuModelInstance(r.model) : null;
     let available = new Set();

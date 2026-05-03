@@ -43,7 +43,7 @@ export class PreviewApp {
     const loaded = [];
     const missing = [];
     for (const layer of (asset.layers || [])) {
-      try { loaded.push({ id: layer.id, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
+      try { loaded.push({ id: layer.id, offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
       catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); }
     }
     return { loaded, missing };

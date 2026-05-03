@@ -31,17 +31,28 @@ export class PreviewRenderer {
     if (!layers.length) return;
     const ordered = ['bottom', 'middle', 'top'].map((id) => layers.find((x) => x.id === id)).filter(Boolean);
     if (!ordered.length) return;
-    const maxW = Math.max(...ordered.map((l) => l.image.width));
-    const totalH = ordered.reduce((a, l) => a + l.image.height, 0);
-    const scale = Math.min((this.logicalW * 0.7) / maxW, (this.logicalH * 0.75) / totalH, 1) * state.scale;
-    let y = oy + (totalH * scale) * 0.5;
-    for (const layer of ordered) {
-      const w = layer.image.width * scale, h = layer.image.height * scale;
-      y -= h;
-      const x = ox - w * 0.5;
-      c.drawImage(layer.image, x, y, w, h);
+
+    const rects = ordered.map((l) => {
+      const oxp = l.offsetX || 0;
+      const oyp = l.offsetY || 0;
+      return { ...l, x1: oxp - l.image.width * 0.5, y1: oyp - l.image.height, x2: oxp + l.image.width * 0.5, y2: oyp };
+    });
+    const minX = Math.min(...rects.map((r) => r.x1));
+    const maxX = Math.max(...rects.map((r) => r.x2));
+    const minY = Math.min(...rects.map((r) => r.y1));
+    const maxY = Math.max(...rects.map((r) => r.y2));
+    const bw = maxX - minX;
+    const bh = maxY - minY;
+    const scale = Math.min((this.logicalW * 0.72) / bw, (this.logicalH * 0.78) / bh, 1) * state.scale;
+
+    for (const r of rects) {
+      const w = r.image.width * scale;
+      const h = r.image.height * scale;
+      const x = ox + r.x1 * scale;
+      const y = oy + r.y1 * scale;
+      c.drawImage(r.image, x, y, w, h);
       if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(x, y, w, h); }
-      if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText(layer.id, x + 4, y + 14); }
+      if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText(`${r.id} (${r.offsetX || 0},${r.offsetY || 0})`, x + 4, y + 14); }
     }
   }
 

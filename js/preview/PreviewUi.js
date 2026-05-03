@@ -9,6 +9,7 @@ export class PreviewUi {
 <div class='group row'><button id='play'>Play/Pause</button><button id='restart'>Restart</button><button id='stepm'>Step -1</button><button id='stepp'>Step +1</button></div>
 <div class='group'><label>Speed</label><select id='speed'><option value='0.25'>0.25x</option><option value='0.5'>0.5x</option><option value='1' selected>1x</option><option value='1.5'>1.5x</option><option value='2'>2x</option></select><label>Scale <span id='scalev'>1.00</span></label><input id='scale' type='range' min='0.2' max='3' step='0.05' value='1'></div>
 <div class='group checks'>${['raw', 'parts', 'pivots', 'bounds'].map((k) => `<label><input type='checkbox' id='${k}'> Show ${k === 'raw' ? 'raw imgcut frames' : k}</label>`).join('')}</div>
+<div class='group stat'><details id='asset-meta'><summary>Asset metadata</summary><pre id='asset-meta-pre' class='debug-box'></pre><div class='row'><button id='copy-asset-meta'>copy</button><button id='log-asset-meta'>console.log</button></div></details></div>
 <div class='group stat' id='status'></div>
 <div class='group stat'><div><strong>Debug</strong></div><pre id='debug' class='debug-box'></pre></div>`;
     const as = this.root.querySelector('#asset'), an = this.root.querySelector('#anim');
@@ -32,6 +33,13 @@ export class PreviewUi {
     this.root.querySelector('#speed').onchange = (e) => on.speed(+e.target.value);
     this.root.querySelector('#scale').oninput = (e) => { this.root.querySelector('#scalev').textContent = (+e.target.value).toFixed(2); on.scale(+e.target.value); };
     ['raw', 'parts', 'pivots', 'bounds'].forEach((k) => this.root.querySelector(`#${k}`).onchange = (e) => on.toggle(k, e.target.checked));
+    this.root.querySelector('#copy-asset-meta').onclick = async () => { const text = this.root.querySelector('#asset-meta-pre').textContent || ''; await navigator.clipboard?.writeText(text); this.log('info', 'copied asset metadata'); };
+    this.root.querySelector('#log-asset-meta').onclick = () => { const text = this.root.querySelector('#asset-meta-pre').textContent || ''; console.log(text); this.log('info', 'asset metadata logged'); };
+  }
+
+  setAssetMeta(meta) {
+    const text = `id=${meta?.id || '-'}\nlabel=${meta?.label || '-'}\ngroup=${meta?.group || '-'}\nrole=${meta?.role || '-'}\nrenderMode=${meta?.renderMode || '-'}\nbaseDir=${meta?.baseDir || '-'}\nlayers=${meta?.layers || 0}`;
+    this.root.querySelector('#asset-meta-pre').textContent = text;
   }
   setAnimationAvailability(asset, available) { this.bindAnim?.(asset, available); }
   setStatus(t) { this.root.querySelector('#status').textContent = t; }

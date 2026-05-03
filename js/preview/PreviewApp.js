@@ -16,60 +16,9 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.compositeUi = null; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; }
 
 
-  getCompositeLayersJson() {
-    const layers = (this.state.compositeLayers || []).map((l) => ({
-      id: l.assetId || l.id,
-      name: l.name || l.id,
-      offsetX: l.offsetX || 0,
-      offsetY: l.offsetY || 0,
-      anchor: l.anchor || 'bottom-center'
-    }));
-    return `layers: [\n${layers.map((l) => `  { id: "${l.id}", name: "${l.name}", offsetX: ${l.offsetX}, offsetY: ${l.offsetY}, anchor: "${l.anchor}" }`).join(',\n')}\n]`;
-  }
-
-  renderCompositeUi() {
-    if (!this.compositeUi) return;
-    const box = this.compositeUi.querySelector('.composite-layer-editor');
-    const jsonPre = this.compositeUi.querySelector('#composite-json');
-    box.innerHTML = '';
-    const layers = (this.state.compositeLayers || []).filter((l) => ['bottom', 'middle', 'top'].includes(l.id));
-    const addAdjuster = (row, layer, key, delta) => {
-      const b = document.createElement('button');
-      b.textContent = `${delta > 0 ? '+' : ''}${delta}`;
-      b.onclick = () => { layer[key] = (layer[key] || 0) + delta; this.renderCompositeUi(); };
-      row.appendChild(b);
-    };
-    for (const layer of layers) {
-      const row = document.createElement('div'); row.className = 'group row';
-      const label = document.createElement('strong'); label.textContent = layer.id; row.appendChild(label);
-      for (const key of ['offsetX', 'offsetY']) {
-        const sp = document.createElement('span'); sp.textContent = key; row.appendChild(sp);
-        const input = document.createElement('input'); input.type = 'number'; input.value = layer[key] || 0;
-        input.oninput = (e) => { layer[key] = Number(e.target.value) || 0; this.renderCompositeUi(); };
-        row.appendChild(input);
-        addAdjuster(row, layer, key, -5); addAdjuster(row, layer, key, -1); addAdjuster(row, layer, key, +1); addAdjuster(row, layer, key, +5);
-      }
-      box.appendChild(row);
-    }
-    const json = this.getCompositeLayersJson();
-    jsonPre.textContent = json;
-  }
-
-  setupCompositeUi() {
-    const panel = document.getElementById('control-panel');
-    const wrap = document.createElement('div');
-    wrap.className = 'group stat';
-    wrap.id = 'composite-editor';
-    wrap.style.display = 'none';
-    wrap.innerHTML = `<div><strong>Castle Composite Layer Adjust</strong> <button id='copy-composite-json'>copy</button> <button id='log-composite-json'>console.log</button></div><div class='composite-layer-editor'></div><pre id='composite-json' class='debug-box'></pre>`;
-    panel.appendChild(wrap);
-    wrap.querySelector('#copy-composite-json').onclick = async () => { const text = this.getCompositeLayersJson(); await navigator.clipboard?.writeText(text); this.ui.log('info', 'copied composite layers JSON'); };
-    wrap.querySelector('#log-composite-json').onclick = () => { const text = this.getCompositeLayersJson(); console.log(text); this.ui.log('info', 'composite layers JSON logged'); };
-    this.compositeUi = wrap;
-  }
   async start() {
     this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
     this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
@@ -97,7 +46,7 @@ export class PreviewApp {
     const loaded = [];
     const missing = [];
     for (const layer of (asset.layers || [])) {
-      try { loaded.push({ id: layer.id, name: layer.name || layer.id, assetId: layer.id, anchor: layer.anchor || 'bottom-center', offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
+      try { loaded.push({ id: layer.id, name: layer.name || layer.id, anchor: layer.anchor || 'bottom-center', offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
       catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); }
     }
     return { loaded, missing };
@@ -105,7 +54,8 @@ export class PreviewApp {
 
   async load(id, animId) {
     this.current = this.findAsset(id);
-    this.state.assetMeta = { label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir || '-', renderMode: this.current.renderMode || 'model' };
+    this.state.assetMeta = { id: this.current.id, label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir || '-', renderMode: this.current.renderMode || 'animated-unit', layers: this.current.layers?.length || 0 };
+    this.ui.setAssetMeta(this.state.assetMeta);
     this.ui.log('info', `load asset ${this.current.label}`);
     if ((this.current.renderMode || 'model') === 'castle-composite') {
       const cr = await this.loadCompositeLayers(this.current);

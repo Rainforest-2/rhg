@@ -87,12 +87,19 @@ export class PreviewRenderer {
     this.drawHud(state);
     const ox = this.logicalW * 0.5, oy = this.logicalH * 0.78; c.strokeStyle = '#4da3ff'; c.beginPath(); c.moveTo(ox - 14, oy); c.lineTo(ox + 14, oy); c.moveTo(ox, oy - 14); c.lineTo(ox, oy + 14); c.stroke();
     if (state.rawMode && state.sprite) { state.sprite.drawRawGrid(c, 20, 80); return; }
-    const mode = state.renderMode || state.assetMeta?.renderMode;
+    const mode = state.renderMode || state.assetMeta?.renderMode || 'animated-unit';
     if (mode === 'castle-composite') { this.drawCompositeCastle(state, ox, oy); return; }
-    if (!state.sprite) { this.drawMissing(state); return; }
-    if (!state.model) {
-      if (mode === 'static-imgcut') this.drawStaticImage(state, ox, oy);
+    if (mode === 'static-imgcut') {
+      if (!state.sprite) { this.drawMissing(state); return; }
+      this.drawStaticImage(state, ox, oy);
       return;
+    }
+    if (mode === 'animated-unit' || mode === 'battle-effect') {
+      if (!state.sprite) { this.drawMissing(state); return; }
+      if (!state.model) return;
+    } else {
+      if (!state.sprite) { this.drawMissing(state); return; }
+      if (!state.model) return;
     }
     for (const p of state.model.getDrawList()) {
       const w = p.world; const applied = state.lastAppliedByPart?.get(p.index);

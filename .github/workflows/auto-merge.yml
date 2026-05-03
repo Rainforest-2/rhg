@@ -1,21 +1,38 @@
-name: Enable auto-merge
+name: Resolve conflicts (prefer PR)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  auto-merge:
-    if: github.event.pull_request.draft == false
+  resolve:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Enable auto-merge
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - run: |
+          git fetch origin ${{ github.base_ref }}
+
+          set +e
+          git merge origin/${{ github.base_ref }} --no-edit
+          STATUS=$?
+          set -e
+
+          if [ "$STATUS" != "0" ]; then
+            git checkout --ours .
+            git add -A
+            git commit -m "Auto resolve: keep current (PR)"
+            git push
+          fi

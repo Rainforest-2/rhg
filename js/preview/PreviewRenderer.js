@@ -14,15 +14,30 @@ export class PreviewRenderer {
   drawStaticImage(state, ox, oy) {
     const c = this.ctx;
     const img = state.sprite?.image;
+    const parts = state.sprite?.imgcut?.parts || [];
     if (!img) return;
+    const valid = parts.map((p, i) => ({ ...p, i })).filter((p) => p.w > 0 && p.h > 0);
+    if (!valid.length) return;
+
+    const minX = Math.min(...valid.map((p) => p.x));
+    const minY = Math.min(...valid.map((p) => p.y));
+    const maxX = Math.max(...valid.map((p) => p.x + p.w));
+    const maxY = Math.max(...valid.map((p) => p.y + p.h));
+    const bw = maxX - minX;
+    const bh = maxY - minY;
     const maxW = this.logicalW * 0.7;
     const maxH = this.logicalH * 0.6;
-    const scale = Math.min(maxW / img.width, maxH / img.height, 1) * state.scale;
-    const dw = img.width * scale, dh = img.height * scale;
-    const dx = ox - dw * 0.5, dy = oy - dh;
-    c.drawImage(img, dx, dy, dw, dh);
-    if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(dx, dy, dw, dh); }
-    if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText('static image / no model', dx, dy - 8); }
+    const scale = Math.min(maxW / bw, maxH / bh, 1) * state.scale;
+    const left = ox - bw * scale * 0.5;
+    const top = oy - bh * scale * 0.5;
+
+    for (const p of valid) {
+      const dx = left + (p.x - minX) * scale;
+      const dy = top + (p.y - minY) * scale;
+      c.drawImage(img, p.x, p.y, p.w, p.h, dx, dy, p.w * scale, p.h * scale);
+      if (state.showParts) { c.fillStyle = '#f8fafc'; c.font = '12px monospace'; c.fillText(`${p.i}`, dx + 2, dy + 12); }
+    }
+    if (state.showBounds) { c.strokeStyle = '#a78bfa'; c.strokeRect(left, top, bw * scale, bh * scale); }
   }
 
   drawMissing(state) {

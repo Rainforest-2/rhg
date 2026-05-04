@@ -34,10 +34,11 @@ jobs:
       - name: Resolve conflicts by keeping PR changes
         id: resolve
         run: |
-          set -e
+          set -euo pipefail
 
           BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
           PR_BRANCH="${{ github.event.pull_request.head.ref }}"
+          BEFORE_MERGE_HEAD="$(git rev-parse HEAD)"
 
           git fetch origin "$BASE_BRANCH"
 
@@ -47,12 +48,19 @@ jobs:
           set -e
 
           if [ "$MERGE_STATUS" = "0" ]; then
-            echo "conflict_resolved=false" >> "$GITHUB_OUTPUT"
-            echo "No conflicts while merging origin/$BASE_BRANCH into $PR_BRANCH."
+            AFTER_MERGE_HEAD="$(git rev-parse HEAD)"
+            if [ "$BEFORE_MERGE_HEAD" != "$AFTER_MERGE_HEAD" ]; then
+              echo "Merged origin/$BASE_BRANCH into $PR_BRANCH without conflicts. Pushing updated PR branch."
+              git push origin "HEAD:$PR_BRANCH"
+              echo "branch_updated=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "No conflicts and PR branch already contained origin/$BASE_BRANCH."
+              echo "branch_updated=false" >> "$GITHUB_OUTPUT"
+            fi
             exit 0
           fi
 
-          echo "Merge conflict detected. Keeping PR branch changes."
+          echo "Merge conflict detected. Keeping PR branch changes for conflicted paths."
 
           UNMERGED_FILES="$(git diff --name-only --diff-filter=U || true)"
 
@@ -63,10 +71,19 @@ jobs:
           fi
 
           echo "$UNMERGED_FILES" | while IFS= read -r file; do
-            if [ -n "$file" ]; then
-              echo "Keeping PR version: $file"
-              git checkout --ours -- "$file" || true
-              git add -- "$file" || true
+            if [ -z "$file" ]; then
+              continue
+            fi
+
+            echo "Resolving conflicted path with PR version: $file"
+
+            # In this workflow, the checked-out branch is the PR branch, and origin/$BASE_BRANCH
+            # is being merged into it. Therefore --ours means "keep the PR branch version".
+            if git checkout --ours -- "$file" 2>/dev/null; then
+              git add -- "$file"
+            else
+              # Handles delete/modify and paths that do not have an --ours checkout candidate.
+              git rm --ignore-unmatch -- "$file"
             fi
           done
 
@@ -78,13 +95,23 @@ jobs:
             exit 1
           fi
 
+          # Important: even if the resolved tree is identical to the pre-merge PR tree,
+          # a merge commit is still required to record origin/$BASE_BRANCH as merged.
+          # Without this, GitHub keeps reporting mergeable=CONFLICTING / mergeStateStatus=DIRTY.
+          if [ -f .git/MERGE_HEAD ]; then
+            git commit -m "Auto resolve conflicts: keep PR changes"
+            git push origin "HEAD:$PR_BRANCH"
+            echo "branch_updated=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           if git diff --cached --quiet; then
-            echo "No staged conflict resolution changes."
-            echo "conflict_resolved=false" >> "$GITHUB_OUTPUT"
+            echo "No staged changes and no merge in progress."
+            echo "branch_updated=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "Auto resolve conflicts: keep PR changes"
             git push origin "HEAD:$PR_BRANCH"
-            echo "conflict_resolved=true" >> "$GITHUB_OUTPUT"
+            echo "branch_updated=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Wait for GitHub to update PR mergeability
@@ -93,11 +120,11 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
-          set -e
+          set -euo pipefail
 
           echo "Waiting for PR mergeability to update..."
 
-          for i in $(seq 1 20); do
+          for i in $(seq 1 60); do
             MERGEABLE="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeable --jq '.mergeable')"
             MERGE_STATE="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeStateStatus --jq '.mergeStateStatus')"
 
@@ -107,7 +134,11 @@ jobs:
               exit 0
             fi
 
-            sleep 3
+            if [ "$MERGEABLE" = "CONFLICTING" ] || [ "$MERGE_STATE" = "DIRTY" ]; then
+              echo "PR is still reported as conflicting. Waiting for GitHub to refresh the pushed merge commit."
+            fi
+
+            sleep 5
           done
 
           echo "PR did not become mergeable in time."
@@ -119,5 +150,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          set -e
+          set -euo pipefail
           gh pr merge "$PR_URL" --squash --delete-branch --admin

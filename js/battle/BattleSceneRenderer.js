@@ -4,7 +4,7 @@ export class BattleSceneRenderer {
   render(previewRenderer, scene, showParts = false) {
     const c = previewRenderer.ctx; const w = previewRenderer.logicalW; const h = previewRenderer.logicalH; const groundY = scene?.groundY || BATTLE_CONFIG.visualLayout?.groundY || BATTLE_CONFIG.groundY || 590;
     c.clearRect(0, 0, w, h);
-    if (scene?.stage?.background?.image && scene?.stage?.background?.crop) this.drawBackgroundCropCover(c, scene.stage.background, w, h); else this.drawFallbackBackground(c, w, h, groundY);
+    if (scene?.stage?.background?.image && scene?.stage?.background?.crop) { if (BATTLE_CONFIG.stage.backgroundMode === 'bcu-stage0') this.drawBackgroundBcuStage0(c, scene.stage.background, w, h); else this.drawBackgroundCropCover(c, scene.stage.background, w, h); } else this.drawFallbackBackground(c, w, h, groundY);
     this.drawBases(c, scene?.bases || [], groundY, showParts);
     const actorsForRender = this.getAliveActorsForRender(scene);
     for (const actor of actorsForRender) this.drawActor(c, actor);
@@ -15,6 +15,11 @@ export class BattleSceneRenderer {
     this.drawHud(c, scene, showParts);
   }
   getAliveActorsForRender(scene){return (scene?.actors||[]).filter((actor)=>actor?.isAlive?.()).slice().sort((a,b)=>{const ay=Number.isFinite(a.y)?a.y:0;const by=Number.isFinite(b.y)?b.y:0;if(ay!==by)return ay-by;const ax=Number.isFinite(a.x)?a.x:0;const bx=Number.isFinite(b.x)?b.x:0;if(ax!==bx)return ax-bx;const at=Number.isFinite(a.spawnedAtMs)?a.spawnedAtMs:0;const bt=Number.isFinite(b.spawnedAtMs)?b.spawnedAtMs:0;return at-bt;});}
+
+  rgb(color){return `rgb(${color.r},${color.g},${color.b})`;}
+  drawVerticalGradient(c,x,y,w,h,top,bottom){const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,this.rgb(top));g.addColorStop(1,this.rgb(bottom));c.fillStyle=g;c.fillRect(x,y,w,h);}
+  drawCropTiledX(c,image,crop,dx,dy,scale,targetW){const dw=crop.w*scale;const dh=crop.h*scale;if(dw<=0||dh<=0)return;let x=dx;while(x>0)x-=dw;while(x<targetW){c.drawImage(image,crop.x,crop.y,crop.w,crop.h,x,dy,dw,dh);x+=dw;}}
+  drawBackgroundBcuStage0(c,bg,w,h){const colors=bg.colors;const crop=bg.crop;const image=bg.image;const layout=BATTLE_CONFIG.stage.backgroundLayout||{};if(!image||!crop||!colors){this.drawBackgroundCropCover(c,bg,w,h);return;}const scale=Number.isFinite(layout.cropScale)?layout.cropScale:1.0;const dx=Number.isFinite(layout.cropOffsetX)?layout.cropOffsetX:0;const dy=Number.isFinite(layout.cropOffsetY)?layout.cropOffsetY:130;const cropBottomY=dy+crop.h*scale;this.drawVerticalGradient(c,0,0,w,h,colors.skyTop,colors.skyBottom);if(layout.tileX!==false)this.drawCropTiledX(c,image,crop,dx,dy,scale,w);else c.drawImage(image,crop.x,crop.y,crop.w,crop.h,dx,dy,crop.w*scale,crop.h*scale);if(cropBottomY<h)this.drawVerticalGradient(c,0,cropBottomY,w,h-cropBottomY,colors.groundTop,colors.groundBottom);}
   drawBackgroundCropCover(c,bg,w,h){const{image,crop}=bg;const scale=Math.max(w/crop.w,h/crop.h);const dw=crop.w*scale,dh=crop.h*scale;const dx=(w-dw)*0.5;const alignY=Number.isFinite(BATTLE_CONFIG.visualLayout?.backgroundVerticalAlign)?BATTLE_CONFIG.visualLayout.backgroundVerticalAlign:0.5;const dy=(h-dh)*alignY;c.drawImage(image,crop.x,crop.y,crop.w,crop.h,dx,dy,dw,dh)}
   drawFallbackBackground(c,w,h,groundY){const sky=c.createLinearGradient(0,0,0,groundY);sky.addColorStop(0,'#7dc7ff');sky.addColorStop(1,'#d9f0ff');c.fillStyle=sky;c.fillRect(0,0,w,groundY);c.fillStyle='#c9b78f';c.fillRect(0,groundY,w,h-groundY)}
   drawBases(c,bases,groundY,showParts){for(const base of bases) this.drawBase(c,base,groundY,showParts)}

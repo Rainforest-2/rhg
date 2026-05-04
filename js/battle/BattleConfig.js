@@ -1,6 +1,6 @@
 export const BATTLE_CONFIG = {
   groundY: 590,
-  tuning: { fps: 30, speedToPxPerSecond: 4.32, rangeToPx: 0.6, battleTimeScale: 0.65, minAttackWaitMs: 450, minAttackAnimMs: 500, knockbackPositionDistance: 50, defaultCollisionRadius: 42, dogCollisionRadius: 46, catCollisionRadius: 42, minVisualGapPx: 18, maxAliveActors: 30, maxAliveActorsPerSide: 15, spawnSeparationPx: 32 },
+  tuning: { fps: 30, speedToPxPerSecond: 4.32, rangeToPx: 0.54, battleTimeScale: 0.65, minAttackWaitMs: 450, minAttackAnimMs: 500, knockbackPositionDistance: 50, defaultCollisionRadius: 42, dogCollisionRadius: 46, catCollisionRadius: 42, minVisualGapPx: 18, maxAliveActors: 30, maxAliveActorsPerSide: 15, spawnSeparationPx: 32, deadRemoveAfterMs: 1000, maxEffects: 40 },
   stage: { id: 0, imagePath: './public/assets/bcu/000001/org/img/bg/bg000.png', imgcutPath: './public/assets/bcu/000001/org/battle/bg/bg00.imgcut', csvPath: './public/assets/bcu/000001/org/battle/bg/bg.csv', cropName: '背景bg', groundY: 590, backgroundMode: 'cover-crop' },
   bases: { dogBase: { id: 'dog-base', side: 'dog-player', label: 'ワンコ軍 拠点', x: 1120, y: 590, maxHp: 1000, collisionRadius: 80, visualKind: 'castle-composite', visualAssetId: 'castle-composite-000', scale: 1.0 }, catBase: { id: 'cat-base', side: 'cat-enemy', label: 'ネコ軍 拠点', x: 120, y: 590, maxHp: 1000, collisionRadius: 80, visualKind: 'simple-placeholder', visualAssetId: null, scale: 1.0 } },
   rosters: {

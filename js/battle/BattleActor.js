@@ -81,7 +81,7 @@ export class BattleActor {
     this.knockbackPositionDurationMs = this.knockbackAnimDurationMs;
     this.knockbackFromX = this.x;
     this.knockbackToX = this.x - this.direction * this.knockbackPositionDistance;
-    this.setAnimation(this.knockbackAnimId, 'knockback', true);
+    this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame();
   }
 
   takeDamage(amount) {
@@ -96,6 +96,8 @@ export class BattleActor {
     }
     return { dead: false, knockedBack: false };
   }
+
+  applyCurrentAnimationFrame() { if (!this.model) return; this.model.reset(); this.animator.apply(this.model); }
 
   tick(dt) {
     if (!this.model || !this.isAlive() || this.state === 'dead') return;

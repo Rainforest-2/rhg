@@ -26,8 +26,46 @@ export class BattleSceneRenderer {
   drawBackgroundBcuStage0(c,bg,w,h){const colors=bg.colors;const crop=bg.crop;const image=bg.image;const layout=BATTLE_CONFIG.stage.backgroundLayout||{};if(!image||!crop||!colors){this.drawBackgroundCropCover(c,bg,w,h);return;}const scale=Number.isFinite(layout.cropScale)?layout.cropScale:1.0;const dx=Number.isFinite(layout.cropOffsetX)?layout.cropOffsetX:0;const dy=Number.isFinite(layout.cropOffsetY)?layout.cropOffsetY:130;const fadeHeight=Number.isFinite(layout.cropTopFadeHeight)?layout.cropTopFadeHeight:0;const fadeStep=Number.isFinite(layout.cropTopFadeStep)?layout.cropTopFadeStep:4;const cropBottomY=dy+crop.h*scale;this.drawVerticalGradient(c,0,0,w,h,colors.skyTop,colors.skyBottom);if(layout.tileX!==false)this.drawCropTiledXWithTopFade(c,image,crop,dx,dy,scale,w,fadeHeight,fadeStep);else this.drawCropTiledXWithTopFade(c,image,crop,dx,dy,scale,dx+crop.w*scale,fadeHeight,fadeStep);if(cropBottomY<h)this.drawVerticalGradient(c,0,cropBottomY,w,h-cropBottomY,colors.groundTop,colors.groundBottom);}
   drawBackgroundCropCover(c,bg,w,h){const{image,crop}=bg;const scale=Math.max(w/crop.w,h/crop.h);const dw=crop.w*scale,dh=crop.h*scale;const dx=(w-dw)*0.5;const alignY=Number.isFinite(BATTLE_CONFIG.visualLayout?.backgroundVerticalAlign)?BATTLE_CONFIG.visualLayout.backgroundVerticalAlign:0.5;const dy=(h-dh)*alignY;c.drawImage(image,crop.x,crop.y,crop.w,crop.h,dx,dy,dw,dh)}
   drawFallbackBackground(c,w,h,groundY){const sky=c.createLinearGradient(0,0,0,groundY);sky.addColorStop(0,'#7dc7ff');sky.addColorStop(1,'#d9f0ff');c.fillStyle=sky;c.fillRect(0,0,w,groundY);c.fillStyle='#c9b78f';c.fillRect(0,groundY,w,h-groundY)}
+
+  getCompositeBaseLocalBounds(base) {
+    const layers = base?.layers || [];
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const layer of layers) {
+      if (!layer?.image) continue;
+      const offsetX = layer.offsetX || 0;
+      const offsetY = layer.offsetY || 0;
+
+      const x1 = offsetX - layer.image.width * 0.5;
+      const y1 = offsetY - layer.image.height;
+      const x2 = offsetX + layer.image.width * 0.5;
+      const y2 = offsetY;
+
+      minX = Math.min(minX, x1);
+      minY = Math.min(minY, y1);
+      maxX = Math.max(maxX, x2);
+      maxY = Math.max(maxY, y2);
+    }
+
+    if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
+    return { left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };
+  }
+
+  getBaseVisualYOffset(base) {
+    if (!base?.visualBottomToCurrentCenter) return 0;
+    if (base.visualKind !== 'castle-composite') return 0;
+
+    const bounds = this.getCompositeBaseLocalBounds(base);
+    if (!bounds) return 0;
+
+    const s = base.scale || 1;
+    return -bounds.height * s * 0.5;
+  }
   drawBases(c,bases,groundY,showParts){for(const base of bases) this.drawBase(c,base,groundY,showParts)}
-  drawBase(c,base,groundY,showParts){ if(base.visualKind==='castle-composite'&&base.layers?.length){ for(const layer of base.layers){const s=base.scale||1;const x=base.x+(layer.offsetX||0)*s-layer.image.width*0.5*s;const y=base.y+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; c.fillRect(base.x-pw*0.5, base.y-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', base.x-pw*0.44, base.y-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }
+  drawBase(c,base,groundY,showParts){ if(base.visualKind==='castle-composite'&&base.layers?.length){ const visualYOffset = this.getBaseVisualYOffset(base); for(const layer of base.layers){const s=base.scale||1;const x=base.x+(layer.offsetX||0)*s-layer.image.width*0.5*s;const y=base.y+visualYOffset+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; c.fillRect(base.x-pw*0.5, base.y-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', base.x-pw*0.44, base.y-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }
   drawBaseHpBar(c,base){const yOffset=BATTLE_CONFIG.visualLayout?.baseHpBarYOffset??210;const x=base.x-60,y=base.y-yOffset,w=120,h=10;const ratio=Math.max(0,Math.min(1,base.hp/Math.max(1,base.maxHp)));c.fillStyle='#111827';c.fillRect(x,y,w,h);c.fillStyle='#60a5fa';c.fillRect(x,y,w*ratio,h);c.strokeStyle='#e5e7eb';c.strokeRect(x,y,w,h);}
   drawBaseDebug(c,base){c.fillStyle='#0008';c.fillRect(base.x-90,base.y-250,180,34);c.fillStyle='#f8fafc';c.font='12px ui-monospace';c.fillText(`${base.label} hp:${base.hp}/${base.maxHp}`,base.x-84,base.y-230);}
   drawHud(c, scene, showParts) { const dog = scene?.actors?.find((a) => a.side === 'dog-player'); const cat = scene?.actors?.find((a) => a.side === 'cat-enemy'); const dogBase=scene?.bases?.find((b)=>b.side==='dog-player'); const catBase=scene?.bases?.find((b)=>b.side==='cat-enemy'); const aliveDogs=(scene?.actors||[]).filter(a=>a.isAlive()&&a.side==='dog-player').length; const aliveCats=(scene?.actors||[]).filter(a=>a.isAlive()&&a.side==='cat-enemy').length; c.fillStyle = '#0008'; c.fillRect(14, 14, 860, 170); c.fillStyle = '#f8fafc'; c.font = '20px ui-sans-serif'; c.fillText('Wanko Battle v0.7.2', 24, 40); c.font = '14px ui-monospace, monospace'; c.fillText(`dogBase HP:${dogBase?.hp ?? '-'} catBase HP:${catBase?.hp ?? '-'}`,24,62); c.fillText(`dog HP/state: ${dog?.hp ?? '-'} / ${dog?.state ?? '-'}`, 24, 84); c.fillText(`cat HP/state: ${cat?.hp ?? '-'} / ${cat?.state ?? '-'}`, 24, 104); c.fillText(`money:${Math.floor(scene?.economy?.money||0)}/${scene?.economy?.maxMoney||0} dogs:${aliveDogs} cats:${aliveCats}`,24,124); c.fillText(`battleState:${scene?.battleState || '-'} debug:${showParts?'ON':'OFF'} effects:${(scene?.effects||[]).length}`,24,144); }

@@ -7,7 +7,7 @@ export class PreviewUi {
     this.root.innerHTML = `<h2>BCU Preview Controls</h2>
 <div class='group'><label>Mode</label><select id='mode'><option value='preview' selected>Asset Preview</option><option value='battle'>Battle Scene</option></select><label>Asset set</label><select id='asset'></select><label>Animation</label><select id='anim'></select></div>
 <div class='group row'><button id='play'>Play/Pause</button><button id='restart'>Restart</button><button id='stepm'>Step -1</button><button id='stepp'>Step +1</button></div>
-<div class='group'><button id='reset-battle'>Reset Battle</button></div>
+<div class='group'><button id='reset-battle'>Reset Battle</button></div><div class='group' id='battle-prod' style='display:none'><div id='battle-econ'></div><div id='battle-buttons'></div></div>
 <div class='group'><label>Speed</label><select id='speed'><option value='0.25'>0.25x</option><option value='0.5'>0.5x</option><option value='1' selected>1x</option><option value='1.5'>1.5x</option><option value='2'>2x</option></select><label>Scale <span id='scalev'>1.00</span></label><input id='scale' type='range' min='0.2' max='3' step='0.05' value='1'></div>
 <div class='group checks'>${['raw', 'parts', 'pivots', 'bounds'].map((k) => `<label><input type='checkbox' id='${k}'> Show ${k === 'raw' ? 'raw imgcut frames' : k}</label>`).join('')}</div>
 <div class='group stat'><details id='asset-meta'><summary>Asset metadata</summary><pre id='asset-meta-pre' class='debug-box'></pre><div class='row'><button id='copy-asset-meta'>copy</button><button id='log-asset-meta'>console.log</button></div></details></div>
@@ -28,7 +28,7 @@ export class PreviewUi {
     };
     bindAnim(assets[0]);
     as.onchange = () => { const a = assets.find((v) => v.id === as.value); bindAnim(a); on.asset(a.id, an.value); };
-    this.root.querySelector('#mode').onchange = (e) => on.mode?.(e.target.value);
+    this.root.querySelector('#mode').onchange = (e) => { on.mode?.(e.target.value); this.root.querySelector('#battle-prod').style.display=e.target.value==='battle'?'block':'none';};
     an.onchange = () => on.anim(an.value);
     this.bindAnim = bindAnim;
     this.root.querySelector('#play').onclick = () => on.play(); this.root.querySelector('#restart').onclick = () => on.restart(); this.root.querySelector('#stepm').onclick = () => on.step(-1); this.root.querySelector('#stepp').onclick = () => on.step(1);
@@ -55,3 +55,6 @@ export class PreviewUi {
   }
   log(level, msg) { this.logs.push({ level, msg, time: new Date().toISOString().slice(11, 19) }); if (this.logs.length > 120) this.logs.shift(); this.logEl.innerHTML = this.logs.map((l) => `<div class='log-item log-${l.level}'>[${l.time}] ${l.level.toUpperCase()} ${l.msg}</div>`).join(''); this.logEl.scrollTop = this.logEl.scrollHeight; }
 }
+
+
+PreviewUi.prototype.setBattleProduction=function(status){const econ=this.root.querySelector('#battle-econ');const btns=this.root.querySelector('#battle-buttons'); if(!econ||!btns)return; econ.textContent=`money:${Math.floor(status.money||0)}/${status.maxMoney||0} income:${status.incomePerSecond||0}/s`; btns.innerHTML=(status.roster||[]).map(r=>`<button data-slot='${r.slotId}' ${r.canProduce?'':'disabled'}>${r.label} cost:${r.cost} cd:${(r.cooldownMs/1000).toFixed(1)}s</button>`).join(' '); btns.querySelectorAll('button').forEach(b=>b.onclick=()=>status.onSpawn?.(b.dataset.slot));};

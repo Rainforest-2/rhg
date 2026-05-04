@@ -34,6 +34,7 @@ export class PreviewApp {
         last = t;
         if (this.viewMode === 'battle') {
           this.battleScene?.tick(dt);
+          this.ui?.setBattleProduction?.({money:this.battleScene?.economy?.money,maxMoney:this.battleScene?.economy?.maxMoney,incomePerSecond:this.battleScene?.economy?.incomePerSecond,roster:this.battleScene?.getPlayerRosterStatus?.()||[],onSpawn:(slot)=>this.battleScene?.requestPlayerSpawn?.(slot)});
           this.renderer.ensureCanvasSize();
           this.battleSceneRenderer.render(this.renderer, this.battleScene, this.state.showParts);
         } else {

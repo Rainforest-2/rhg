@@ -2,12 +2,8 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 
 export class BattleBodyResolver {
   static getActorCombatPositionX(actor) {
-    const baseX = Number.isFinite(actor?.x) ? actor.x : 0;
-    const manual = Number.isFinite(actor?.combatPositionOffsetPx) ? actor.combatPositionOffsetPx : 0;
-    const scale = Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1;
-    const flip = actor?.renderFlipX ? -1 : 1;
-    const edgeLocal = Number.isFinite(actor?.resolvedCombatEdgeLocalX) ? actor.resolvedCombatEdgeLocalX : 0;
-    return baseX + edgeLocal * scale * flip + manual;
+    if (actor?.battleCoordinate && Number.isFinite(actor?.posBcu)) return actor.battleCoordinate.toScreenX(actor.posBcu);
+    return Number.isFinite(actor?.x) ? actor.x : 0;
   }
 
   static setCombatEdgeFallback(actor, source) {
@@ -23,7 +19,7 @@ export class BattleBodyResolver {
     if (!actor || actor.resolvedCombatEdgeInitialized) return;
     actor.resolvedCombatEdgeInitialized = true;
     const cfg = BATTLE_CONFIG.tuning?.combatEdgeResolver || {};
-    if (cfg.enabled === false) return BattleBodyResolver.setCombatEdgeFallback(actor, 'disabled');
+    if (cfg.enabled === false) return;
     if (!actor.model || !actor.sprite || typeof actor.model.getBattleDrawList !== 'function') return BattleBodyResolver.setCombatEdgeFallback(actor, 'fallback-no-model');
 
     const drawList = actor.model.getBattleDrawList();
@@ -146,7 +142,7 @@ export class BattleBodyResolver {
       const height = Number.isFinite(cfg.combatPointHeightPx) ? cfg.combatPointHeightPx : BattleBodyResolver.getActorCombatHeight(actor);
       const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx) ? actor.combatBodyYOffsetPx : 0;
       const bottom = (actor?.y ?? 0) + yOffset;
-      return { left: centerX - halfW, right: centerX + halfW, top: bottom - height, bottom, centerX, centerY: bottom - height * 0.5, width: halfW * 2, height, frontX: centerX, backX: centerX, combatPositionX: centerX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || 'visual-leading-edge', isCombatPoint: true };
+      return { left: centerX - halfW, right: centerX + halfW, top: bottom - height, bottom, centerX, centerY: bottom - height * 0.5, width: halfW * 2, height, frontX: centerX, backX: centerX, combatPositionX: centerX, source: 'bcu-pos', combatPositionBcu: actor?.posBcu, isCombatPoint: true };
     }
     const width = BattleBodyResolver.getActorCombatWidth(actor); const height = BattleBodyResolver.getActorCombatHeight(actor); const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx)?actor.combatBodyYOffsetPx:0; const bottom=(actor?.y??0)+yOffset; const frontX=BattleBodyResolver.getActorFrontX(actor); const dir=Number.isFinite(actor?.direction)?actor.direction:1; const left=dir<0?frontX:frontX-width; const right=dir<0?frontX+width:frontX;
     return { left, right, top: bottom - height, bottom, centerX: (left + right) * 0.5, centerY: bottom - height * 0.5, width, height, frontX, backX: dir < 0 ? right : left, combatPositionX: frontX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || '-', isCombatPoint: false };

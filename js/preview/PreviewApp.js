@@ -5,6 +5,8 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { PreviewRenderer } from './PreviewRenderer.js';
 import { PreviewUi } from './PreviewUi.js';
+import { BattleScene } from '../battle/BattleScene.js';
+import { BattleSceneRenderer } from '../battle/BattleSceneRenderer.js';
 
 async function loadImage(url) {
   return await new Promise((res, rej) => {
@@ -16,22 +18,28 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); }
 
 
   async start() {
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
-      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; } });
+      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, mode: (mode) => this.setViewMode(mode) });
       await this.load(this.assets[0].id, this.assets[0].animations[0]?.id);
       let last = performance.now();
       let firstRenderLogged = false;
       const loop = (t) => {
         const dt = t - last;
         last = t;
-        if (this.animator) { this.animator.tick(dt); this.applyAnim(); }
-        this.renderer.render(this.state);
+        if (this.viewMode === 'battle') {
+          this.battleScene?.tick(dt);
+          this.renderer.ensureCanvasSize();
+          this.battleSceneRenderer.render(this.renderer, this.battleScene);
+        } else {
+          if (this.animator) { this.animator.tick(dt); this.applyAnim(); }
+          this.renderer.render(this.state);
+        }
         if (!firstRenderLogged) {
           firstRenderLogged = true;
           console.log('[PreviewApp] first render');
@@ -47,6 +55,16 @@ export class PreviewApp {
       this.ui?.log('error', `[PreviewApp] start failed: ${message}`);
     }
   }
+
+  async setViewMode(mode) {
+    this.viewMode = mode === 'battle' ? 'battle' : 'preview';
+    if (this.viewMode !== 'battle') return;
+    if (!this.battleScene) {
+      this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
+      await this.battleScene.init();
+    }
+  }
+
   findAsset(id) { return this.assets.find((a) => a.id === id) || this.assets[0]; }
 
   async probeAnimations(asset) {

@@ -1,5 +1,6 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleBodyResolver } from './BattleBodyResolver.js';
+import { BattleAttackProfile } from './BattleAttackProfile.js';
 
 export class BattleActor {
   constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null }) {
@@ -31,6 +32,8 @@ export class BattleActor {
     this.nextAttackReadyMs = this.attackWaitMs;
     this.attackStartupMs = Math.max(0, (this.attackStartupFrames / fps) * 1000) * this.attackPhaseTimeMultiplier;
     this.attackElapsedMs = 0; this.attackWaitElapsedMs = 0; this.hasHitInCurrentAttack = false; this.attackCycleId = 0;
+    this.attackProfile = null;
+    this.resolvedAttackEventKeys = new Set();
     this.targetId = null; this.attackTarget = null; this.attackTargetType = null; this.attackStartedAtMs = 0; this.state = 'move'; this.isAliveFlag = true;
 
     this.moveAnimId = moveAnimId; this.idleAnimId = idleAnimId; this.attackAnimId = attackAnimId; this.knockbackAnimId = knockbackAnimId;
@@ -92,6 +95,15 @@ export class BattleActor {
   getBodyDistanceTo(other) { return Math.max(0, this.getCenterDistanceTo(other) - this.collisionRadius - (other?.collisionRadius || 0)); }
   getEngageDistanceTo(other) { return Math.min(this.detectionRangePx, other?.detectionRangePx || this.detectionRangePx); }
 
+  refreshAttackProfile() {
+    this.attackProfile = BattleAttackProfile.fromActor(this);
+    return this.attackProfile;
+  }
+
+  getAttackProfile() {
+    return BattleAttackProfile.ensure(this);
+  }
+
   isAlive() { return this.isAliveFlag && this.hp > 0 && this.state !== 'dead'; }
   setAnimation(animId, role, restart = false) {
     if (!animId) return;
@@ -107,7 +119,7 @@ export class BattleActor {
   setState(nextState) {
     if (this.state === nextState) return false;
     this.state = nextState;
-    if (nextState === 'attack') { this.attackElapsedMs = 0; this.hasHitInCurrentAttack = false; this.attackCycleId += 1; }
+    if (nextState === 'attack') { this.attackElapsedMs = 0; this.hasHitInCurrentAttack = false; this.resolvedAttackEventKeys = new Set(); this.attackCycleId += 1; }
     if (nextState === 'attack-wait') this.attackWaitElapsedMs = 0;
     return true;
   }

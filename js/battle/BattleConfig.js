@@ -7,7 +7,10 @@ export const BATTLE_CONFIG = {
     backgroundVerticalAlign: 0.64,
     actorHpBarYOffset: 170,
     baseHpBarYOffset: 220,
-    catBasePlaceholder: { width: 140, height: 125, labelYOffset: 12 }
+    catBasePlaceholder: { width: 140, height: 125, labelYOffset: 12 },
+    actorGroundY: 528,
+    actorGlobalScale: 0.9,
+    actorDepth: { enabled: true, laneCount: 13, minYOffset: -6, maxYOffset: 6, minScaleMultiplier: 0.985, maxScaleMultiplier: 1.0, randomizeOnSpawn: true }
   },
   tuning: { fps: 30, speedToPxPerSecond: 4.32, rangeToPx: 0.54, battleTimeScale: 0.65, minAttackWaitMs: 450, minAttackAnimMs: 500, knockbackPositionDistance: 50, defaultCollisionRadius: 42, dogCollisionRadius: 46, catCollisionRadius: 42, minVisualGapPx: 18, maxAliveActors: 30, maxAliveActorsPerSide: 15, spawnSeparationPx: 32, deadRemoveAfterMs: 1000, maxEffects: 40 },
   stage: { id: 0, imagePath: './public/assets/bcu/000001/org/img/bg/bg000.png', imgcutPath: './public/assets/bcu/000001/org/battle/bg/bg00.imgcut', csvPath: './public/assets/bcu/000001/org/battle/bg/bg.csv', cropName: '背景bg', groundY: 560, backgroundMode: 'cover-crop' },

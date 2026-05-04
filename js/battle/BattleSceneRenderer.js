@@ -6,13 +6,15 @@ export class BattleSceneRenderer {
     c.clearRect(0, 0, w, h);
     if (scene?.stage?.background?.image && scene?.stage?.background?.crop) this.drawBackgroundCropCover(c, scene.stage.background, w, h); else this.drawFallbackBackground(c, w, h, groundY);
     this.drawBases(c, scene?.bases || [], groundY, showParts);
-    for (const actor of (scene?.actors || [])) if (actor.isAlive()) this.drawActor(c, actor);
+    const actorsForRender = this.getAliveActorsForRender(scene);
+    for (const actor of actorsForRender) this.drawActor(c, actor);
     if (Array.isArray(scene?.effects) && scene.effects.length) this.drawEffects(c, scene.effects);
-    for (const actor of (scene?.actors || [])) if (actor.isAlive()) this.drawHpBar(c, actor);
+    for (const actor of actorsForRender) this.drawHpBar(c, actor);
     for (const base of (scene?.bases || [])) this.drawBaseHpBar(c, base);
-    if (showParts) { for (const actor of (scene?.actors || [])) if (actor.isAlive()) this.drawActorDebug(c, actor, scene?.battleState || 'running'); this.drawEventLog(c, scene?.debugEvents || []); }
+    if (showParts) { for (const actor of actorsForRender) this.drawActorDebug(c, actor, scene?.battleState || 'running'); this.drawEventLog(c, scene?.debugEvents || []); }
     this.drawHud(c, scene, showParts);
   }
+  getAliveActorsForRender(scene){return (scene?.actors||[]).filter((actor)=>actor?.isAlive?.()).slice().sort((a,b)=>{const ay=Number.isFinite(a.y)?a.y:0;const by=Number.isFinite(b.y)?b.y:0;if(ay!==by)return ay-by;const ax=Number.isFinite(a.x)?a.x:0;const bx=Number.isFinite(b.x)?b.x:0;if(ax!==bx)return ax-bx;const at=Number.isFinite(a.spawnedAtMs)?a.spawnedAtMs:0;const bt=Number.isFinite(b.spawnedAtMs)?b.spawnedAtMs:0;return at-bt;});}
   drawBackgroundCropCover(c,bg,w,h){const{image,crop}=bg;const scale=Math.max(w/crop.w,h/crop.h);const dw=crop.w*scale,dh=crop.h*scale;const dx=(w-dw)*0.5;const alignY=Number.isFinite(BATTLE_CONFIG.visualLayout?.backgroundVerticalAlign)?BATTLE_CONFIG.visualLayout.backgroundVerticalAlign:0.5;const dy=(h-dh)*alignY;c.drawImage(image,crop.x,crop.y,crop.w,crop.h,dx,dy,dw,dh)}
   drawFallbackBackground(c,w,h,groundY){const sky=c.createLinearGradient(0,0,0,groundY);sky.addColorStop(0,'#7dc7ff');sky.addColorStop(1,'#d9f0ff');c.fillStyle=sky;c.fillRect(0,0,w,groundY);c.fillStyle='#c9b78f';c.fillRect(0,groundY,w,h-groundY)}
   drawBases(c,bases,groundY,showParts){for(const base of bases) this.drawBase(c,base,groundY,showParts)}

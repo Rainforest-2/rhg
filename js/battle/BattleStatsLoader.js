@@ -9,29 +9,33 @@ export class BattleStatsLoader {
   parseUnitCsv(text) { return parseCsvRows(text).map(toNumbers); }
   parseEnemyTUnitCsv(text) { return parseCsvRows(text).map(toNumbers); }
 
+  validateStats(stats) {
+    const invalidFields = [];
+    if (!(stats.hp > 0)) invalidFields.push('hp');
+    if (!(stats.knockbacks >= 1)) invalidFields.push('knockbacks');
+    if (!(stats.speed >= 0)) invalidFields.push('speed');
+    if (!(stats.damage >= 0)) invalidFields.push('damage');
+    if (!(stats.detectionRange >= 0)) invalidFields.push('detectionRange');
+    if (!(stats.attackType === 0 || stats.attackType === 1)) invalidFields.push('attackType');
+    if (!(stats.attackStartupFrames >= 0)) invalidFields.push('attackStartupFrames');
+    if (!(stats.attackWaitFrames >= 0)) invalidFields.push('attackWaitFrames');
+    return { valid: invalidFields.length === 0, invalidFields };
+  }
+
   normalizeStats(raw, sourceInfo) {
     const v = raw || [];
-    return {
-      hp: v[0] ?? 1,
-      knockbacks: v[1] ?? 0,
-      speed: v[2] ?? 0,
-      damage: v[3] ?? 0,
-      attackWaitFrames: v[4] ?? 0,
-      detectionRange: v[5] ?? 0,
-      costOrReward: v[6] ?? 0,
-      respawnFrames: v[7] ?? 0,
-      detectAreaStartRaw: v[8] ?? 0,
-      detectAreaEndRaw: v[9] ?? 0,
-      attackType: v[12] ?? 0,
-      attackStartupFrames: v[13] ?? 0,
-      attackRangeStartRaw: v[38] ?? 0,
-      attackRangeEndRaw: v[39] ?? 0,
-      attackCountRaw: v.slice(49, 53),
-      multiHitRaw: v.slice(53, 57),
-      attackIntervalFrames: v[4] ?? 0,
-      rawValues: v,
-      source: sourceInfo
+    const stats = {
+      hp: v[0] ?? 1, knockbacks: v[1] ?? 0, speed: v[2] ?? 0, damage: v[3] ?? 0,
+      attackWaitFrames: v[4] ?? 0, detectionRange: v[5] ?? 0, costOrReward: v[6] ?? 0, respawnFrames: v[7] ?? 0,
+      detectAreaStartRaw: v[8] ?? 0, detectAreaEndRaw: v[9] ?? 0, attackType: v[12] ?? 0, attackStartupFrames: v[13] ?? 0,
+      attackRangeStartRaw: v[38] ?? 0, attackRangeEndRaw: v[39] ?? 0, attackCountRaw: v.slice(49, 53), multiHitRaw: v.slice(53, 57),
+      attackIntervalFrames: v[4] ?? 0, rawValues: v, source: { ...sourceInfo, mappingStatus: 'valid', fallbackFields: [] }
     };
+    const validation = this.validateStats(stats);
+    if (!validation.valid) stats.source.mappingStatus = 'invalid';
+    if (validation.invalidFields.includes('attackType')) { stats.attackType = 0; stats.source.fallbackFields.push('attackType'); }
+    if (validation.invalidFields.includes('attackStartupFrames')) { stats.attackStartupFrames = 8; stats.source.fallbackFields.push('attackStartupFrames'); }
+    return stats;
   }
 
   async loadUnitStats(unitId, form = 'f', formRow = 0) {
@@ -46,9 +50,7 @@ export class BattleStatsLoader {
   async loadEnemyStats(enemyId) {
     const file = `./public/assets/bcu/${ENEMY_VERSION}/org/data/t_unit.csv`;
     const rows = this.parseEnemyTUnitCsv(await fetchText(file));
-    const candidate = [90, 3, 5, 8, 20, 110, 15];
-    let rowIndex = rows.findIndex((r) => candidate.every((val, i) => r[i] === val));
-    if (rowIndex < 0) rowIndex = Number(enemyId) + 2;
+    const rowIndex = Number(enemyId) + 2;
     const row = rows[rowIndex];
     if (!row) throw new Error(`No enemy stat row found for enemyId=${enemyId} in ${file}`);
     return this.normalizeStats(row, { file, row: rowIndex, type: 'enemy', enemyId, provisional: true, note: 't_unit row mapping is provisional' });

@@ -35,7 +35,7 @@ export class PreviewApp {
         if (this.viewMode === 'battle') {
           this.battleScene?.tick(dt);
           this.renderer.ensureCanvasSize();
-          this.battleSceneRenderer.render(this.renderer, this.battleScene);
+          this.battleSceneRenderer.render(this.renderer, this.battleScene, this.state.showParts);
         } else {
           if (this.animator) { this.animator.tick(dt); this.applyAnim(); }
           this.renderer.render(this.state);

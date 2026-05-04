@@ -22,9 +22,18 @@ export class BattleActor {
     this.combatPositionOffsetPx = Number.isFinite(combatPositionOffsetPx) ? combatPositionOffsetPx : 0;
     this.combatPositionSource = combatPositionSource || 'default-logical';
     this.combatPositionMode = combatPositionMode || 'logical';
+    this.autoCombatPositionOffsetLocalX = 0;
+    this.autoCombatPositionOffsetWorldPx = 0;
+    this.autoCombatPositionInitialized = false;
+    this.autoCombatPositionSource = 'not-initialized';
+    this.autoCombatPositionCandidateCount = 0;
+    this.autoCombatPositionRejectedCount = 0;
+    this.autoCombatPositionDebug = null;
     this.combatPositionDebug = {
       mode: this.combatPositionMode,
-      offsetPx: this.combatPositionOffsetPx,
+      manualOffsetPx: this.combatPositionOffsetPx,
+      autoOffsetLocalX: this.autoCombatPositionOffsetLocalX,
+      autoOffsetWorldPx: this.autoCombatPositionOffsetWorldPx,
       source: this.combatPositionSource
     };
     this.attackWaitFrames = stats?.attackWaitFrames ?? 0; this.attackStartupFrames = stats?.attackStartupFrames ?? 0; this.attackType = stats?.attackType ?? 0;

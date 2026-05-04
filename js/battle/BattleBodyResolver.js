@@ -4,8 +4,70 @@ export class BattleBodyResolver {
   // BCU Entity.pos equivalent. This is a combat reference point, not a visual front edge.
   static getActorCombatPositionX(actor) {
     const baseX = Number.isFinite(actor?.x) ? actor.x : 0;
-    const offset = Number.isFinite(actor?.combatPositionOffsetPx) ? actor.combatPositionOffsetPx : 0;
-    return baseX + offset;
+    const manual = Number.isFinite(actor?.combatPositionOffsetPx) ? actor.combatPositionOffsetPx : 0;
+    const scale = Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1;
+    const flip = actor?.renderFlipX ? -1 : 1;
+    const local = Number.isFinite(actor?.autoCombatPositionOffsetLocalX) ? actor.autoCombatPositionOffsetLocalX : 0;
+    const auto = local * scale * flip;
+    return baseX + auto + manual;
+  }
+
+  static initializeActorCombatPositionFromModel(actor) {
+    if (!actor || actor.autoCombatPositionInitialized) return;
+    actor.autoCombatPositionInitialized = true;
+    const cfg = BATTLE_CONFIG.tuning?.combatPositionAutoAlign || {};
+    if (cfg.enabled === false) {
+      actor.autoCombatPositionOffsetLocalX = 0; actor.autoCombatPositionOffsetWorldPx = 0; actor.autoCombatPositionSource = 'disabled';
+      return;
+    }
+    if (!actor.model || !actor.sprite || typeof actor.model.getBattleDrawList !== 'function') {
+      actor.autoCombatPositionOffsetLocalX = 0; actor.autoCombatPositionOffsetWorldPx = 0; actor.autoCombatPositionSource = 'fallback-no-model';
+      return;
+    }
+    const drawList = actor.model.getBattleDrawList();
+    const parts = [];
+    for (const p of drawList || []) {
+      const b = BattleBodyResolver.getPartLocalBounds(actor, p);
+      if (!b) continue;
+      const area = Math.max(0, b.width * b.height);
+      parts.push({ ...b, area, centerX: (b.left + b.right) * 0.5, centerY: (b.top + b.bottom) * 0.5 });
+    }
+    if (!parts.length) { actor.autoCombatPositionOffsetLocalX = 0; actor.autoCombatPositionOffsetWorldPx = 0; actor.autoCombatPositionSource = 'fallback-no-parts'; return; }
+    const overall = { left: Math.min(...parts.map((b) => b.left)), right: Math.max(...parts.map((b) => b.right)), top: Math.min(...parts.map((b) => b.top)), bottom: Math.max(...parts.map((b) => b.bottom)) };
+    overall.width = overall.right - overall.left; overall.height = overall.bottom - overall.top; overall.area = Math.max(0, overall.width * overall.height);
+    const minW = Number.isFinite(cfg.minPartWidthPx) ? cfg.minPartWidthPx : 3;
+    const minH = Number.isFinite(cfg.minPartHeightPx) ? cfg.minPartHeightPx : 3;
+    const minA = Number.isFinite(cfg.minPartAreaPx) ? cfg.minPartAreaPx : 12;
+    const tinyRatio = Number.isFinite(cfg.ignoreTinyAreaRatio) ? cfg.ignoreTinyAreaRatio : 0.015;
+    const shadowRatio = Number.isFinite(cfg.ignoreFlatShadowHeightRatio) ? cfg.ignoreFlatShadowHeightRatio : 0.18;
+    const bodyTop = overall.top + overall.height * (Number.isFinite(cfg.bodyCoreTopRatio) ? cfg.bodyCoreTopRatio : 0.15);
+    const bodyBottom = overall.top + overall.height * (Number.isFinite(cfg.bodyCoreBottomRatio) ? cfg.bodyCoreBottomRatio : 0.98);
+    const minCoverage = Number.isFinite(cfg.bodyCoreMinCoverageRatio) ? cfg.bodyCoreMinCoverageRatio : 0.16;
+    const validParts = parts.filter((b) => {
+      if (b.width < minW || b.height < minH || b.area < minA) return false;
+      if (overall.area > 0 && b.area < overall.area * tinyRatio) return false;
+      const isFlatShadow = (b.height / Math.max(1, b.width)) < shadowRatio && b.bottom >= overall.bottom - overall.height * 0.08;
+      return !isFlatShadow;
+    });
+    let candidates = validParts.filter((b) => (b.bottom >= bodyTop && b.top <= bodyBottom) || b.height >= overall.height * minCoverage);
+    if (!candidates.length) candidates = validParts;
+    if (!candidates.length) candidates = parts;
+    let weightSum = 0; let weightedX = 0;
+    for (const b of candidates) { const w = Math.max(0, b.area); weightSum += w; weightedX += b.centerX * w; }
+    const rawLocalX = weightSum > 0 ? (weightedX / weightSum) : 0;
+    const scale = Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1;
+    const flip = actor?.renderFlipX ? -1 : 1;
+    const maxAuto = Number.isFinite(cfg.maxAutoOffsetPx) ? cfg.maxAutoOffsetPx : 90;
+    let finalLocalX = Number.isFinite(rawLocalX) ? rawLocalX : 0;
+    const worldOffset = finalLocalX * scale * flip;
+    if (Number.isFinite(worldOffset) && Math.abs(worldOffset) > maxAuto && maxAuto > 0) finalLocalX = (Math.sign(worldOffset) * maxAuto) / (scale * flip || 1);
+    actor.autoCombatPositionOffsetLocalX = Number.isFinite(finalLocalX) ? finalLocalX : 0;
+    actor.autoCombatPositionOffsetWorldPx = actor.autoCombatPositionOffsetLocalX * scale * flip;
+    actor.autoCombatPositionSource = 'body-core-center';
+    actor.autoCombatPositionCandidateCount = candidates.length;
+    actor.autoCombatPositionRejectedCount = Math.max(0, parts.length - candidates.length);
+    actor.autoCombatPositionDebug = { source: 'body-core-center', localX: actor.autoCombatPositionOffsetLocalX, worldPx: actor.autoCombatPositionOffsetWorldPx, candidateCount: actor.autoCombatPositionCandidateCount, rejectedCount: actor.autoCombatPositionRejectedCount, overall, mode: cfg.mode || 'body-core-center' };
+    actor.combatPositionDebug = { mode: actor.combatPositionMode, manualOffsetPx: actor.combatPositionOffsetPx || 0, autoOffsetLocalX: actor.autoCombatPositionOffsetLocalX, autoOffsetWorldPx: actor.autoCombatPositionOffsetWorldPx, source: actor.autoCombatPositionSource || actor.combatPositionSource };
   }
 
   static getActorCombatWidth(actor) {
@@ -51,14 +113,17 @@ export class BattleBodyResolver {
     const cfg = BATTLE_CONFIG.tuning || {};
     const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'logical';
     if (mode === 'logical') {
+      BattleBodyResolver.initializeActorCombatPositionFromModel(actor);
       actor.combatBodyFrontInitialized = true;
       actor.combatBodyFrontOffsetLocalX = 0;
-      actor.combatBodyFrontSource = actor.combatPositionSource || 'logical-position';
+      actor.combatBodyFrontSource = actor.autoCombatPositionSource || actor.combatPositionSource || 'logical-position';
       actor.combatBodyFrontDebug = {
         mode: 'logical',
         combatPositionX: BattleBodyResolver.getActorCombatPositionX(actor),
-        offsetPx: actor.combatPositionOffsetPx || 0,
-        source: actor.combatPositionSource || 'logical-position'
+        manualOffsetPx: actor.combatPositionOffsetPx || 0,
+        autoOffsetLocalX: actor.autoCombatPositionOffsetLocalX || 0,
+        autoOffsetWorldPx: actor.autoCombatPositionOffsetWorldPx || 0,
+        source: actor.combatBodyFrontSource
       };
       return;
     }

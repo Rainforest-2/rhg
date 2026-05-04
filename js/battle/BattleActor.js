@@ -1,7 +1,7 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
 export class BattleActor {
-  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [] }) {
+  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [] }) {
     this.assetDef = assetDef; this.sprite = sprite; this.model = model; this.side = side; this.x = x; this.y = y; this.scale = scale;
     this.facing = facing; this.direction = direction; this.renderFlipX = renderFlipX;
     this.currentAnimId = currentAnimId; this.rawStats = stats; this.animations = new Map(Object.entries(animations));
@@ -12,11 +12,13 @@ export class BattleActor {
     this.moveSpeed = 0; this.detectionRangePx = 0;
     this.attackWaitFrames = stats?.attackWaitFrames ?? 0; this.attackStartupFrames = stats?.attackStartupFrames ?? 0; this.attackType = stats?.attackType ?? 0;
     this.attackWaitMs = (this.attackWaitFrames / fps) * 1000;
+    this.attackPostHitWaitMs = this.attackWaitMs;
+    this.nextAttackReadyMs = this.attackWaitMs;
     this.attackStartupMs = Math.max(0, (this.attackStartupFrames / fps) * 1000);
     this.attackElapsedMs = 0; this.attackWaitElapsedMs = 0; this.hasHitInCurrentAttack = false; this.attackCycleId = 0;
     this.targetId = null; this.state = 'move'; this.isAliveFlag = true;
 
-    this.moveAnimId = moveAnimId; this.attackAnimId = attackAnimId; this.knockbackAnimId = knockbackAnimId;
+    this.moveAnimId = moveAnimId; this.idleAnimId = idleAnimId; this.attackAnimId = attackAnimId; this.knockbackAnimId = knockbackAnimId;
     this.attackAnimDurationMs = this.deriveAnimDurationMs(attackAnimId, fps, 250, 'attackAnimDuration fallback to 250ms');
     this.knockbackAnimDurationMs = this.deriveAnimDurationMs(knockbackAnimId, fps, 250, 'knockbackAnimDuration fallback to 250ms');
     this.knockbackAnimVerified = this.verifyKnockbackAnim(knockbackAnimId);

@@ -1,6 +1,14 @@
 export const BATTLE_CONFIG = {
   groundY: 590,
-  tuning: { fps: 30, speedToPxPerSecond: 8, rangeToPx: 1, minAttackDurationMs: 700 },
+  tuning: {
+    fps: 30,
+    speedToPxPerSecond: 3,
+    rangeToPx: 0.6,
+    battleTimeScale: 0.65,
+    minAttackWaitMs: 450,
+    minAttackAnimMs: 500,
+    knockbackPositionDistance: 50
+  },
   stage: { id: 0, imagePath: './public/assets/bcu/000001/org/img/bg/bg000.png', imgcutPath: './public/assets/bcu/000001/org/battle/bg/bg00.imgcut', csvPath: './public/assets/bcu/000001/org/battle/bg/bg.csv', cropName: '背景bg', groundY: 590, backgroundMode: 'cover-crop' },
   actors: {
     dogPlayerBasic: {

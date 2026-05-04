@@ -17,6 +17,14 @@ export class BattleAttackProfile {
       const attackBackPx = Math.max(0, (Number.isFinite(stats.width) ? stats.width : 0) * rangeToPx);
       const events = hits.map((hit, index) => {
         const rawAtMs = (Math.max(0, hit?.preFrames || 0) / fps) * 1000 * phaseMultiplier;
+        const ldStartRaw = Number.isFinite(hit?.ldStartRaw) ? hit.ldStartRaw : 0;
+        const ldRangeRaw = Number.isFinite(hit?.ldRangeRaw) ? hit.ldRangeRaw : 0;
+        const longPointRaw = ldStartRaw + ldRangeRaw;
+        const isOmni = !!hit?.isOmni;
+        const isLd = !!hit?.isLd;
+        const attackKind = isOmni ? 'omni' : (isLd ? 'ld' : 'normal');
+        const shortPointPx = attackKind === 'normal' ? 0 : Math.max(0, ldStartRaw * rangeToPx);
+        const longPointPx = attackKind === 'normal' ? 0 : (longPointRaw * rangeToPx);
         return {
           key: `hit-${hit?.hitIndex ?? index}`,
           hitIndex: hit?.hitIndex ?? index,
@@ -27,19 +35,24 @@ export class BattleAttackProfile {
           attackBackPx,
           targetMode,
           allowBaseHit: true,
+          attackKind,
+          shortPointPx,
+          longPointPx,
           raw: {
             preFrames: hit?.preFrames ?? 0,
             deltaFrames: hit?.deltaFrames ?? 0,
             abi: hit?.abi ?? 0,
-            ldStartRaw: hit?.ldStartRaw ?? 0,
-            ldRangeRaw: hit?.ldRangeRaw ?? 0,
-            isLd: !!hit?.isLd,
-            isOmni: !!hit?.isOmni,
+            ldStartRaw,
+            ldRangeRaw,
+            longPointRaw,
+            isLd,
+            isOmni,
+            attackKind,
             isRange: !!stats.isRange
           }
         };
       });
-      const safeEvents = events.length ? events : [{ key: 'hit-0', hitIndex: 0, atMs: minStartup, damage: actor?.damage ?? 0, rangeStartPx: 0, rangeEndPx: actor?.detectionRangePx ?? 0, attackBackPx, targetMode, allowBaseHit: true, raw: { isRange } }];
+      const safeEvents = events.length ? events : [{ key: 'hit-0', hitIndex: 0, atMs: minStartup, damage: actor?.damage ?? 0, rangeStartPx: 0, rangeEndPx: actor?.detectionRangePx ?? 0, attackBackPx, targetMode, allowBaseHit: true, attackKind: 'normal', shortPointPx: 0, longPointPx: 0, raw: { isRange, attackKind: 'normal', longPointRaw: 0 } }];
       const maxEventAtMs = Math.max(...safeEvents.map((e) => e.atMs));
       const minAnim = BATTLE_CONFIG.tuning?.minAttackAnimMs ?? 0;
       const animationMs = Math.max(actor?.attackAnimDurationMs || 0, maxEventAtMs, minAnim);
@@ -51,7 +64,7 @@ export class BattleAttackProfile {
     const minAnim = BATTLE_CONFIG.tuning?.minAttackAnimMs ?? 0;
     const attackEndMs = Math.max(actor?.attackAnimDurationMs || 0, effectiveStartupMs, minAnim);
     const fallbackIsRange = actor?.attackType === 1;
-    return { source: 'actor-current-stats', isRange: fallbackIsRange, events: [{ key: 'hit-0', hitIndex: 0, atMs: effectiveStartupMs, damage: actor?.damage ?? 0, rangeStartPx: 0, rangeEndPx: actor?.detectionRangePx ?? 0, attackBackPx: 0, targetMode: fallbackIsRange ? 'range' : 'single', allowBaseHit: true, raw: { isRange: fallbackIsRange } }], animationMs: attackEndMs, waitMs: actor?.attackWaitMs ?? 0, maxEventAtMs: effectiveStartupMs };
+    return { source: 'actor-current-stats', isRange: fallbackIsRange, events: [{ key: 'hit-0', hitIndex: 0, atMs: effectiveStartupMs, damage: actor?.damage ?? 0, rangeStartPx: 0, rangeEndPx: actor?.detectionRangePx ?? 0, attackBackPx: 0, targetMode: fallbackIsRange ? 'range' : 'single', allowBaseHit: true, attackKind: 'normal', shortPointPx: 0, longPointPx: 0, raw: { isRange: fallbackIsRange, attackKind: 'normal', longPointRaw: 0 } }], animationMs: attackEndMs, waitMs: actor?.attackWaitMs ?? 0, maxEventAtMs: effectiveStartupMs };
   }
 
   static ensure(actor) {

@@ -1,5 +1,6 @@
 import { BattleBodyResolver } from './BattleBodyResolver.js';
 import { BattleAttackProfile } from './BattleAttackProfile.js';
+import { BATTLE_CONFIG } from './BattleConfig.js';
 
 export class BattleAttackResolver {
   static getEventRange(actor, event) {
@@ -12,15 +13,32 @@ export class BattleAttackResolver {
   static getAttackInterval(actor, event) {
     const box = BattleBodyResolver.getActorCombatBodyBox(actor);
     const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
+    const frontX = box.frontX;
+    const kind = event?.attackKind || event?.raw?.attackKind || 'normal';
+
+    if (kind === 'ld' || kind === 'omni') {
+      const rangeToPx = BATTLE_CONFIG.tuning?.rangeToPx ?? 1;
+      const shortPointPx = Number.isFinite(event?.shortPointPx)
+        ? event.shortPointPx
+        : Math.max(0, Number(event?.raw?.ldStartRaw || 0) * rangeToPx);
+      const longPointPx = Number.isFinite(event?.longPointPx)
+        ? event.longPointPx
+        : ((Number(event?.raw?.ldStartRaw || 0) + Number(event?.raw?.ldRangeRaw || 0)) * rangeToPx);
+      const p0 = frontX + dir * shortPointPx;
+      const p1 = frontX + dir * longPointPx;
+      const left = Math.min(p0, p1);
+      const right = Math.max(p0, p1);
+      return { left, right, frontX, backX: null, forwardStartX: p0, forwardEndX: p1, shortPointX: p0, longPointX: p1, direction: dir, attackKind: kind, centerY: box.centerY, top: box.top - 18, bottom: box.bottom + 18 };
+    }
+
     const { startPx, endPx } = BattleAttackResolver.getEventRange(actor, event);
     const backPx = Math.max(0, Number.isFinite(event?.attackBackPx) ? event.attackBackPx : 0);
-    const frontX = box.frontX;
     const forwardStartX = frontX + dir * startPx;
     const forwardEndX = frontX + dir * endPx;
     const backX = frontX - dir * backPx;
     const left = Math.min(backX, forwardStartX, forwardEndX);
     const right = Math.max(backX, forwardStartX, forwardEndX);
-    return { left, right, frontX, backX, forwardStartX, forwardEndX, direction: dir, centerY: box.centerY, top: box.top - 18, bottom: box.bottom + 18 };
+    return { left, right, frontX, backX, forwardStartX, forwardEndX, shortPointX: null, longPointX: null, direction: dir, attackKind: 'normal', centerY: box.centerY, top: box.top - 18, bottom: box.bottom + 18 };
   }
 
   static isTargetInEventRange(attacker, target, event) {

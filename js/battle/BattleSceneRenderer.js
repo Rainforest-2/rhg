@@ -7,7 +7,7 @@ export class BattleSceneRenderer {
     if (scene?.stage?.background?.image && scene?.stage?.background?.crop) this.drawBackgroundCropCover(c, scene.stage.background, w, h); else this.drawFallbackBackground(c, w, h, groundY);
     this.drawBases(c, scene?.bases || [], groundY, showParts);
     for (const actor of (scene?.actors || [])) if (actor.isAlive()) this.drawActor(c, actor);
-    this.drawEffects(c, scene?.effects || []);
+    if (Array.isArray(scene?.effects) && scene.effects.length) this.drawEffects(c, scene.effects);
     for (const actor of (scene?.actors || [])) if (actor.isAlive()) this.drawHpBar(c, actor);
     for (const base of (scene?.bases || [])) this.drawBaseHpBar(c, base);
     if (showParts) { for (const actor of (scene?.actors || [])) if (actor.isAlive()) this.drawActorDebug(c, actor, scene?.battleState || 'running'); this.drawEventLog(c, scene?.debugEvents || []); }
@@ -23,5 +23,16 @@ export class BattleSceneRenderer {
   drawHpBar(c, actor) { const x = actor.x - 40, y = actor.y - 194, w = 80, h = 8; const ratio = Math.max(0, Math.min(1, actor.hp / Math.max(1, actor.maxHp))); c.fillStyle = '#111827'; c.fillRect(x, y, w, h); c.fillStyle = '#22c55e'; c.fillRect(x, y, w * ratio, h); c.strokeStyle = '#e5e7eb'; c.strokeRect(x, y, w, h); }
   drawActorDebug(c, actor, battleState) { const src = actor.rawStats?.source || {}; const d = actor.debugDistance || {}; const lines = [`${actor.instanceId||'-'} slot:${actor.slotId||'-'} state:${actor.state} battle:${battleState}`,`anim:${actor.currentAnimId} role:${actor.activeAnimRole} target:${actor.currentTargetLabel||'-'} type:${actor.currentTargetType||'-'}`,`bodyDistance:${(d.bodyDistance ?? 0).toFixed(1)} moveSpeed:${(actor.moveSpeed||0).toFixed(1)} sideBlocking:disabled spacing:spawn-only`,`kbElapsed:${(actor.knockbackPositionElapsedMs||0).toFixed(1)} kbDur:${(actor.knockbackPositionDurationMs||0).toFixed(1)} from:${(actor.knockbackFromX||0).toFixed(1)} to:${(actor.knockbackToX||0).toFixed(1)}`,`mappingStatus:${src.mappingStatus || '-'} fallback:${(src.fallbackFields||[]).join('|')||'-'}`]; c.fillStyle = '#0008'; c.fillRect(actor.x - 170, actor.y - 190, 560, 62); c.fillStyle = '#f8fafc'; c.font = '12px ui-monospace, monospace'; lines.forEach((line, i) => c.fillText(line, actor.x - 164, actor.y - 176 + i * 14)); }
   drawEventLog(c, events){c.fillStyle='#0008';c.fillRect(14,170,900,170);c.fillStyle='#fde68a';c.font='13px ui-monospace';c.fillText('battle events (latest 10)',24,190);c.fillStyle='#f8fafc';(events||[]).slice().reverse().forEach((e,i)=>c.fillText(`${Math.round(e.timeMs)} ${e.type} ${e.actor||'-'} -> ${e.target||'-'} ${e.targetType||''} dmg:${e.damage??'-'}`,24,210+i*14));}
+  drawEffects(c, effects) {
+    for (const effect of effects || []) {
+      if (!effect || effect.finished || !effect.image || !effect.currentPart) continue;
+      const p = effect.currentPart;
+      if (!p || p.w <= 0 || p.h <= 0) continue;
+      const s = effect.scale || 1;
+      const dw = p.w * s;
+      const dh = p.h * s;
+      c.drawImage(effect.image, p.x, p.y, p.w, p.h, effect.x - dw * 0.5, effect.y - dh * 0.5, dw, dh);
+    }
+  }
   drawActor(c, actor) { if (!actor?.sprite || !actor?.model || !actor.isAlive()) return; const baseAngle = actor.model.baseAngle || 3600; c.save(); c.translate(actor.x, actor.y); if (actor.renderFlipX) c.scale(-1, 1); for (const p of actor.model.getDrawList()) { const w = p.world; const partIndex = p.current?.partIndex ?? p.partIndex; const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex; if (!Number.isInteger(partIndex) || partIndex < 0) continue; if ((imgcutIndex ?? 0) < 0) continue; if (!w || (w.o ?? 1) <= 0) continue; const part = actor.sprite?.imgcut?.parts?.[partIndex]; if (!part || part.w <= 0 || part.h <= 0) continue; c.save(); c.translate(w.x * actor.scale, w.y * actor.scale); c.rotate((w.a / baseAngle) * Math.PI * 2); c.globalAlpha = w.o ?? 1; const sx = w.sx * actor.scale; const sy = w.sy * actor.scale; actor.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy }); c.restore(); } c.restore(); }
 }

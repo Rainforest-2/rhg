@@ -18,7 +18,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; }
 
 
   async start() {
@@ -33,10 +33,30 @@ export class PreviewApp {
         const dt = t - last;
         last = t;
         if (this.viewMode === 'battle') {
-          if (!this.battleLoading) this.battleScene?.tick(dt);
-          if (t - this.lastBattleUiUpdate > 200) { this.lastBattleUiUpdate = t; this.ui?.setBattleProduction?.({money:this.battleScene?.economy?.money,maxMoney:this.battleScene?.economy?.maxMoney,incomePerSecond:this.battleScene?.economy?.incomePerSecond,roster:this.battleScene?.getPlayerRosterStatus?.()||[],onSpawn:(slot)=>this.battleScene?.requestPlayerSpawn?.(slot)}); }
-          this.renderer.ensureCanvasSize();
-          this.battleSceneRenderer.render(this.renderer, this.battleScene, this.state.showParts);
+          try {
+            if (!this.battleLoading) this.battleScene?.tick(dt);
+            if (t - this.lastBattleUiUpdate > 200) { this.lastBattleUiUpdate = t; this.ui?.setBattleProduction?.({money:this.battleScene?.economy?.money,maxMoney:this.battleScene?.economy?.maxMoney,incomePerSecond:this.battleScene?.economy?.incomePerSecond,roster:this.battleScene?.getPlayerRosterStatus?.()||[],onSpawn:(slot)=>this.battleScene?.requestPlayerSpawn?.(slot)}); }
+            this.renderer.ensureCanvasSize();
+            this.battleSceneRenderer.render(this.renderer, this.battleScene, this.state.showParts);
+            this.lastBattleFrameErrorMessage = '';
+          } catch (e) {
+            const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+            if (this.lastBattleFrameErrorMessage !== message) {
+              this.lastBattleFrameErrorMessage = message;
+              console.error('[PreviewApp] battle frame failed', e);
+            }
+            const c = this.renderer?.ctx;
+            const w = this.renderer?.logicalW || 0;
+            const h = this.renderer?.logicalH || 0;
+            if (c && w > 0 && h > 0) {
+              c.clearRect(0, 0, w, h);
+              c.fillStyle = '#111827';
+              c.fillRect(0, 0, w, h);
+              c.fillStyle = '#fecaca';
+              c.font = '20px ui-sans-serif';
+              c.fillText('Battle render error', 24, 40);
+            }
+          }
         } else {
           if (this.animator) { this.animator.tick(dt); this.applyAnim(); }
           this.renderer.render(this.state);

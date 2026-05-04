@@ -45,36 +45,70 @@ export class BattleSceneRenderer {
       c.drawImage(effect.image, p.x, p.y, p.w, p.h, effect.x - dw * 0.5, effect.y - dh * 0.5, dw, dh);
     }
   }
+
+  getBattleDrawListLocalBounds(actor, drawList) {
+    if (!actor?.sprite || !Array.isArray(drawList)) return null;
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+    for (const p of drawList) {
+      const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
+      const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
+      if (!Number.isInteger(partIndex) || partIndex < 0) continue;
+      if ((imgcutIndex ?? 0) < 0) continue;
+      const opacity = Number.isFinite(p.opacity) ? p.opacity : (p.world?.o ?? 1);
+      if (opacity <= 0) continue;
+      const part = actor.sprite?.imgcut?.parts?.[partIndex];
+      if (!part || part.w <= 0 || part.h <= 0) continue;
+      const m = Array.isArray(p.matrix) && p.matrix.length === 6 ? p.matrix : null;
+      if (!m) continue;
+      const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
+      const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
+      const corners = [[-pivotX,-pivotY],[part.w-pivotX,-pivotY],[-pivotX,part.h-pivotY],[part.w-pivotX,part.h-pivotY]];
+      for (const [x,y] of corners){const rx=m[0]*x+m[2]*y+m[4];const ry=m[1]*x+m[3]*y+m[5];minX=Math.min(minX,rx);minY=Math.min(minY,ry);maxX=Math.max(maxX,rx);maxY=Math.max(maxY,ry);} }
+    if (!Number.isFinite(minX)||!Number.isFinite(minY)||!Number.isFinite(maxX)||!Number.isFinite(maxY)) return null;
+    return { left:minX, top:minY, right:maxX, bottom:maxY, width:maxX-minX, height:maxY-minY };
+  }
+  getActorGroundAnchorLocalY(actor, drawList) {
+    if (Number.isFinite(actor.visualGroundAnchorLocalY)) return actor.visualGroundAnchorLocalY;
+    const bounds = this.getBattleDrawListLocalBounds(actor, drawList);
+    const anchor = bounds && Number.isFinite(bounds.bottom) ? bounds.bottom : 0;
+    actor.visualGroundAnchorLocalY = anchor;
+    return anchor;
+  }
+  drawActorLegacy(c, actor, drawList) {
+    const baseAngle = actor.model.baseAngle || 3600;
+    c.save(); c.translate(actor.x, actor.y); if (actor.renderFlipX) c.scale(-1, 1);
+    for (const p of drawList) { const w = p.world; const partIndex = p.current?.partIndex ?? p.partIndex; const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex; if (!Number.isInteger(partIndex) || partIndex < 0) continue; if ((imgcutIndex ?? 0) < 0) continue; if (!w || (w.o ?? 1) <= 0) continue; const part = actor.sprite?.imgcut?.parts?.[partIndex]; if (!part || part.w <= 0 || part.h <= 0) continue; c.save(); c.translate(w.x * actor.scale, w.y * actor.scale); c.rotate((w.a / baseAngle) * Math.PI * 2); c.globalAlpha = w.o ?? 1; const sx = w.sx * actor.scale; const sy = w.sy * actor.scale; actor.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy }); c.restore(); }
+    c.restore();
+  }
   drawActor(c, actor) {
     if (!actor?.sprite || !actor?.model || !actor.isAlive()) return;
-    const baseAngle = actor.model.baseAngle || 3600;
-    const drawList = typeof actor.model.getBattleDrawList === 'function' ? actor.model.getBattleDrawList() : actor.model.getDrawList();
+    const hasBattleDrawList = typeof actor.model.getBattleDrawList === 'function';
+    const drawList = hasBattleDrawList ? actor.model.getBattleDrawList() : actor.model.getDrawList();
+    if (!hasBattleDrawList) { this.drawActorLegacy(c, actor, drawList); return; }
+    const anchorY = this.getActorGroundAnchorLocalY(actor, drawList);
     c.save();
     c.translate(actor.x, actor.y);
     if (actor.renderFlipX) c.scale(-1, 1);
+    const s = Number.isFinite(actor.scale) ? actor.scale : 1;
+    c.scale(s, s);
+    c.translate(0, -anchorY);
     for (const p of drawList) {
-      const w = p.world;
-      const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex ?? p.partIndex;
-      const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex ?? p.imgcutIndex;
+      const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
+      const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
       if (!Number.isInteger(partIndex) || partIndex < 0) continue;
       if ((imgcutIndex ?? 0) < 0) continue;
-      const opacity = Number.isFinite(p.opacity) ? p.opacity : (w?.o ?? 1);
-      if (!w || opacity <= 0) continue;
+      const opacity = Number.isFinite(p.opacity) ? p.opacity : (p.world?.o ?? 1);
+      if (opacity <= 0) continue;
       const part = actor.sprite?.imgcut?.parts?.[partIndex];
       if (!part || part.w <= 0 || part.h <= 0) continue;
+      const m = Array.isArray(p.matrix) && p.matrix.length === 6 ? p.matrix : null;
+      if (!m) continue;
       c.save();
-      if (Array.isArray(p.matrix) && p.matrix.length === 6) c.transform(p.matrix[0] * actor.scale, p.matrix[1] * actor.scale, p.matrix[2] * actor.scale, p.matrix[3] * actor.scale, p.matrix[4] * actor.scale, p.matrix[5] * actor.scale);
-      else {
-        c.translate(w.x * actor.scale, w.y * actor.scale);
-        c.rotate(((w.a ?? 0) / baseAngle) * Math.PI * 2);
-        c.scale((w.sx ?? 1) * actor.scale, (w.sy ?? 1) * actor.scale);
-      }
+      c.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
       c.globalAlpha = opacity;
-      const pivotX = p.pivotX;
-      const pivotY = p.pivotY;
-      const drawX = Number.isFinite(pivotX) ? -pivotX * actor.scale : -part.w * 0.5 * actor.scale;
-      const drawY = Number.isFinite(pivotY) ? -pivotY * actor.scale : -part.h * 0.5 * actor.scale;
-      actor.sprite.drawPart(c, partIndex, drawX, drawY, { scaleX: actor.scale, scaleY: actor.scale });
+      const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
+      const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
+      actor.sprite.drawPart(c, partIndex, -pivotX, -pivotY, { scaleX: 1, scaleY: 1 });
       c.restore();
     }
     c.restore();

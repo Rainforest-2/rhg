@@ -1,6 +1,13 @@
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
 export class BattleBodyResolver {
+  // BCU uses entity.pos/range/width for combat interaction; visual bounds are not combat position.
+  static getActorCombatPositionX(actor) {
+    const baseX = Number.isFinite(actor?.x) ? actor.x : 0;
+    const offset = Number.isFinite(actor?.combatPositionOffsetPx) ? actor.combatPositionOffsetPx : 0;
+    return baseX + offset;
+  }
+
   static getActorCombatWidth(actor) {
     const cfg = BATTLE_CONFIG.tuning || {};
     if (Number.isFinite(cfg.combatBodyWidthPx)) return cfg.combatBodyWidthPx;
@@ -41,6 +48,20 @@ export class BattleBodyResolver {
 
   static initializeActorCombatFront(actor) {
     if (!actor || actor.combatBodyFrontInitialized) return;
+    const cfg = BATTLE_CONFIG.tuning || {};
+    const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'logical';
+    if (mode === 'logical') {
+      actor.combatBodyFrontInitialized = true;
+      actor.combatBodyFrontOffsetLocalX = 0;
+      actor.combatBodyFrontSource = actor.combatPositionSource || 'logical-position';
+      actor.combatBodyFrontDebug = {
+        mode: 'logical',
+        combatPositionX: BattleBodyResolver.getActorCombatPositionX(actor),
+        offsetPx: actor.combatPositionOffsetPx || 0,
+        source: actor.combatPositionSource || 'logical-position'
+      };
+      return;
+    }
     actor.combatBodyFrontInitialized = true;
     if (!actor.model || !actor.sprite || typeof actor.model.getBattleDrawList !== 'function') {
       actor.combatBodyFrontOffsetLocalX = 0; actor.combatBodyFrontSource = 'fallback-no-model'; return;
@@ -71,6 +92,9 @@ export class BattleBodyResolver {
   }
 
   static getActorFrontX(actor) {
+    const cfg = BATTLE_CONFIG.tuning || {};
+    const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'logical';
+    if (mode === 'logical') return BattleBodyResolver.getActorCombatPositionX(actor);
     const localOffset = Number.isFinite(actor?.combatBodyFrontOffsetLocalX) ? actor.combatBodyFrontOffsetLocalX : 0;
     const s = Number.isFinite(actor?.scale) ? actor.scale : 1;
     const flip = actor?.renderFlipX ? -1 : 1;
@@ -86,7 +110,7 @@ export class BattleBodyResolver {
     const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
     const left = dir < 0 ? frontX : frontX - width;
     const right = dir < 0 ? frontX + width : frontX;
-    return { left, right, top: bottom - height, bottom, centerX: (left + right) * 0.5, centerY: bottom - height * 0.5, width, height, frontX, backX: dir < 0 ? right : left };
+    return { left, right, top: bottom - height, bottom, centerX: (left + right) * 0.5, centerY: bottom - height * 0.5, width, height, frontX, backX: dir < 0 ? right : left, combatPositionX: frontX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || "-" };
   }
 
   static getBaseCombatBodyBox(base) {
@@ -119,7 +143,7 @@ export class BattleBodyResolver {
     const box = BattleBodyResolver.getActorCombatBodyBox(actor);
     const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
     const range = Number.isFinite(actor?.detectionRangePx) ? actor.detectionRangePx : 0;
-    return { frontX: box.frontX, attackLineX: box.frontX + dir * range, centerY: box.centerY, top: box.top, bottom: box.bottom };
+    return { frontX: box.frontX, attackLineX: box.frontX + dir * range, centerY: box.centerY, top: box.top, bottom: box.bottom, combatPositionX: box.combatPositionX };
   }
 
   static getHitEffectPosition(attacker, target) {

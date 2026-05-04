@@ -1,14 +1,88 @@
 const ROLE_SHORT = { 'player-dog-candidate': 'DOG', 'enemy-cat-candidate': 'CAT', 'battle-effect': 'FX', castle: 'CASTLE' };
 
 export class PreviewRenderer {
-  constructor(canvas) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.logicalW = 1280; this.logicalH = 720; this.resize(); window.addEventListener('resize', () => this.resize()); }
-  resize() { const r = this.canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; this.canvas.width = Math.max(1, Math.floor(r.width * dpr)); this.canvas.height = Math.max(1, Math.floor(r.height * dpr)); this.ctx.setTransform(this.canvas.width / this.logicalW, 0, 0, this.canvas.height / this.logicalH, 0, 0); }
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.logicalW = 1280;
+    this.logicalH = 720;
+    this.lastCssW = 0;
+    this.lastCssH = 0;
+    this.lastDpr = 0;
+    this.hasPendingResizeRetry = false;
+    this.lastSizeLog = '';
+
+    this.resize();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.resize());
+      this.resizeObserver.observe(this.canvas);
+    }
+
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  ensureCanvasSize() {
+    const rect = this.canvas.getBoundingClientRect();
+    const cssW = Math.floor(rect.width);
+    const cssH = Math.floor(rect.height);
+    const dpr = window.devicePixelRatio || 1;
+    const expectedW = Math.max(1, Math.floor(cssW * dpr));
+    const expectedH = Math.max(1, Math.floor(cssH * dpr));
+
+    const changed = cssW !== this.lastCssW || cssH !== this.lastCssH || dpr !== this.lastDpr;
+    const mismatch = cssW > 0 && cssH > 0 && (this.canvas.width !== expectedW || this.canvas.height !== expectedH);
+
+    if (changed || mismatch) this.resize();
+  }
+
+  logCanvasSize(rect, dpr) {
+    const msg = `[PreviewRenderer] canvas rect=${rect.width.toFixed(2)}x${rect.height.toFixed(2)} backing=${this.canvas.width}x${this.canvas.height} dpr=${dpr.toFixed(2)}`;
+    if (msg !== this.lastSizeLog) {
+      console.log(msg);
+      this.lastSizeLog = msg;
+    }
+  }
+
+  resize() {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    this.logCanvasSize(rect, dpr);
+
+    if (rect.width <= 0 || rect.height <= 0) {
+      if (!this.hasPendingResizeRetry) {
+        this.hasPendingResizeRetry = true;
+        requestAnimationFrame(() => {
+          this.hasPendingResizeRetry = false;
+          this.resize();
+        });
+      }
+      return;
+    }
+
+    const nextW = Math.max(1, Math.floor(rect.width * dpr));
+    const nextH = Math.max(1, Math.floor(rect.height * dpr));
+
+    if (this.canvas.width !== nextW || this.canvas.height !== nextH) {
+      this.canvas.width = nextW;
+      this.canvas.height = nextH;
+    }
+
+    this.ctx.setTransform(this.canvas.width / this.logicalW, 0, 0, this.canvas.height / this.logicalH, 0, 0);
+    this.lastCssW = Math.floor(rect.width);
+    this.lastCssH = Math.floor(rect.height);
+    this.lastDpr = dpr;
+
+    this.logCanvasSize(rect, dpr);
+  }
   drawHud(state) {
     const c = this.ctx; const s = state.debugStats || {};
-    c.fillStyle = '#0009'; c.fillRect(10, 10, 700, 66);
+    c.fillStyle = '#0009'; c.fillRect(10, 10, 980, 84);
     c.fillStyle = '#dbeafe'; c.font = '14px ui-monospace,monospace';
     c.fillText(`[${ROLE_SHORT[state.assetMeta?.role] || 'UNK'}] ${state.assetMeta?.label || '-'} (${state.assetMeta?.group || '-'})`, 18, 30);
     c.fillText(`frame:${s.frame ?? '0.00'} / max:${s.maxFrame ?? 0} tracks:${s.tracks ?? 0} applied:${s.appliedCount ?? 0} anim:${s.currentAnimLabel || '-'}`, 18, 52);
+    c.fillText(`canvas css:${this.lastCssW}x${this.lastCssH} backing:${this.canvas.width}x${this.canvas.height} dpr:${this.lastDpr || (window.devicePixelRatio || 1)}`, 18, 74);
   }
 
   drawStaticImage(state, ox, oy) {
@@ -88,6 +162,7 @@ export class PreviewRenderer {
     c.fillText((state.missingFiles || []).slice(0, 3).join(', '), this.logicalW * 0.22, this.logicalH * 0.54);
   }
   render(state) {
+    this.ensureCanvasSize();
     const c = this.ctx; c.clearRect(0, 0, this.logicalW, this.logicalH);
     for (let x = 0; x < this.logicalW; x += 40) { c.strokeStyle = x % 200 === 0 ? '#2f3b4c' : '#1c2431'; c.beginPath(); c.moveTo(x, 0); c.lineTo(x, this.logicalH); c.stroke(); }
     for (let y = 0; y < this.logicalH; y += 40) { c.strokeStyle = y % 200 === 0 ? '#2f3b4c' : '#1c2431'; c.beginPath(); c.moveTo(0, y); c.lineTo(this.logicalW, y); c.stroke(); }

@@ -26,5 +26,16 @@ export const BATTLE_CONFIG = {
       idleAnimId: 'anim00', moveAnimId: 'anim00', attackAnimId: 'anim02', knockbackAnimId: 'anim03', collisionRadius: 42
     }
   },
-  castle: { assetId: 'castle-composite-000', x: 1120, y: 590, scale: 1.0 }
+  bases: {
+    dogBase: {
+      id: 'dog-base', side: 'dog-player', label: 'ワンコ軍 拠点', x: 1120, y: 590, maxHp: 1000, collisionRadius: 80,
+      visualKind: 'castle-composite', visualAssetId: 'castle-composite-000', scale: 1.0,
+      note: 'temporary visual: using nyanko castle composite as dog-player base placeholder'
+    },
+    catBase: {
+      id: 'cat-base', side: 'cat-enemy', label: 'ネコ軍 拠点', x: 120, y: 590, maxHp: 1000, collisionRadius: 80,
+      visualKind: 'simple-placeholder', visualAssetId: null, scale: 1.0,
+      note: 'temporary placeholder until enemy base asset is selected'
+    }
+  }
 };

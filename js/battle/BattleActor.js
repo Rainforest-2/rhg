@@ -54,6 +54,21 @@ export class BattleActor {
     this.knockbackFromX = this.x;
     this.knockbackToX = this.x;
 
+    this.pendingDamage = 0;
+    this.pendingHits = [];
+    this.lastHitBy = null;
+    this.lastKilledBy = null;
+    this.pendingKnockback = null;
+    this.deathPending = false;
+    this.deadAtMs = null;
+    this.deathElapsedMs = 0;
+    this.deathHoldMs = 650;
+    this.removeAfterMs = 1000;
+    this.deathResolved = false;
+    this.knockbackType = null;
+    this.knockbackReason = null;
+    this.deathAfterKnockback = false;
+
     this.activeAnimId = currentAnimId;
     this.activeAnimRole = 'move';
   }
@@ -105,7 +120,10 @@ export class BattleActor {
     return BattleAttackProfile.ensure(this);
   }
 
-  isAlive() { return this.isAliveFlag && this.hp > 0 && this.state !== 'dead'; }
+  isAlive() { return this.isAliveFlag && this.hp > 0 && this.state !== 'dead' && this.state !== 'dying'; }
+  isCombatAlive() { return this.isAliveFlag && this.hp > 0 && this.state !== 'dead' && this.state !== 'dying'; }
+  isRenderable() { return this.state !== 'removed' && (this.isAlive() || this.state === 'dying' || this.state === 'dead'); }
+  isRemovable(nowMs = 0) { if (this.state !== 'dead') return false; if (!Number.isFinite(this.deadAtMs)) return false; const removeAfter = Number.isFinite(this.removeAfterMs) ? this.removeAfterMs : 1000; return nowMs - this.deadAtMs >= removeAfter; }
   setAnimation(animId, role, restart = false) {
     if (!animId) return;
     if (this.currentAnimId === animId && !restart) return;
@@ -125,33 +143,82 @@ export class BattleActor {
     return true;
   }
 
-  startKnockback() {
+  startKnockback(knockback = null) {
+    const kb = knockback || {};
     this.setState('knockback');
     this.attackElapsedMs = 0; this.attackWaitElapsedMs = 0; this.hasHitInCurrentAttack = false;
+    this.resolvedAttackEventKeys = new Set();
+    this.knockbackType = kb.type || 'hp';
+    this.knockbackReason = kb.reason || 'hp-threshold';
+    this.deathAfterKnockback = !!kb.deathAfterKnockback;
     this.knockbackPositionElapsedMs = 0;
-    this.knockbackPositionDurationMs = this.knockbackAnimDurationMs;
+    this.knockbackPositionDurationMs = Number.isFinite(kb.durationMs) ? kb.durationMs : this.knockbackAnimDurationMs;
+    const distance = Number.isFinite(kb.distancePx) ? kb.distancePx : this.knockbackPositionDistance;
     this.knockbackFromX = this.x;
-    this.knockbackToX = this.x - this.direction * this.knockbackPositionDistance;
+    this.knockbackToX = this.x - this.direction * distance;
     this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame();
   }
 
-  takeDamage(amount) {
-    if (!this.isAlive()) return { dead: false, knockedBack: false };
-    this.hp = Math.max(0, this.hp - Math.max(0, amount));
-    if (this.hp <= 0) { this.isAliveFlag = false; this.state = 'dead'; return { dead: true, knockedBack: false }; }
-    if (this.hp <= this.nextKnockbackHp) {
-      this.startKnockback();
-      this.knockbackCount += 1;
-      this.nextKnockbackHp = Math.max(0, this.maxHp - this.knockbackHpStep * (this.knockbackCount + 1));
-      return { dead: false, knockedBack: true };
+  clearPendingDamage() { this.pendingDamage = 0; this.pendingHits = []; }
+
+  takeDamage(amount, meta = {}) {
+    if (!this.isAlive()) return { accepted: false, dead: false, knockedBack: false, pending: false };
+    const damage = Math.max(0, Number.isFinite(amount) ? amount : 0);
+    if (damage <= 0) return { accepted: false, dead: false, knockedBack: false, pending: false };
+    this.pendingDamage += damage;
+    this.pendingHits.push({ amount: damage, attacker: meta.attacker || null, hitIndex: meta.hitIndex ?? null, attackEventKey: meta.attackEventKey || null, timeMs: meta.timeMs ?? null });
+    this.lastHitBy = meta.attacker || this.lastHitBy;
+    return { accepted: true, pending: true, damage, dead: false, knockedBack: false };
+  }
+
+  resolvePostDamage({ nowMs = 0, tuning = {} } = {}) {
+    if (this.pendingDamage <= 0) return { damaged: false, dead: false, knockedBack: false };
+    if (!this.isAlive()) { this.clearPendingDamage(); return { damaged: false, dead: false, knockedBack: false }; }
+    const damage = Math.max(0, this.pendingDamage);
+    const hpBefore = this.hp;
+    const hpAfter = Math.max(0, hpBefore - damage);
+    let shouldKnockback = false;
+    const deathReached = hpAfter <= 0;
+    if (!deathReached && hpAfter <= this.nextKnockbackHp) shouldKnockback = true;
+    const finalKb = !!tuning.finalKnockbackBeforeDeath;
+    if (deathReached && finalKb && this.state !== 'knockback') shouldKnockback = true;
+    this.hp = hpAfter;
+    const result = { damaged: true, hpBefore, hpAfter, damage, dead: false, deathPending: false, knockedBack: false };
+    if (shouldKnockback) {
+      this.pendingKnockback = {
+        type: 'hp', reason: deathReached ? 'final-hp-death' : 'hp-threshold',
+        distancePx: Number.isFinite(tuning.hpKnockbackDistancePx) ? tuning.hpKnockbackDistancePx : (this.knockbackPositionDistance || 60),
+        durationMs: Number.isFinite(tuning.hpKnockbackDurationMs) ? tuning.hpKnockbackDurationMs : this.knockbackAnimDurationMs,
+        deathAfterKnockback: deathReached
+      };
     }
-    return { dead: false, knockedBack: false };
+    if (deathReached) { this.deathPending = true; this.isAliveFlag = false; this.lastKilledBy = this.pendingHits.slice(); result.deathPending = true; }
+    this.clearPendingDamage();
+    if (this.pendingKnockback) { this.startKnockback(this.pendingKnockback); result.knockedBack = true; this.pendingKnockback = null; }
+    else if (deathReached) { this.enterDeadState(nowMs); result.dead = true; }
+    if (!deathReached && shouldKnockback) { this.knockbackCount += 1; this.nextKnockbackHp = Math.max(0, this.maxHp - this.knockbackHpStep * (this.knockbackCount + 1)); }
+    return result;
+  }
+
+  enterDeadState(nowMs = 0) {
+    if (this.state === 'dead') return;
+    this.state = 'dead';
+    this.isAliveFlag = false;
+    this.deadAtMs = Number.isFinite(nowMs) ? nowMs : 0;
+    this.deathElapsedMs = 0;
+    this.attackTarget = null;
+    this.attackTargetType = null;
+    this.pendingKnockback = null;
+    this.deathPending = false;
+    this.deathResolved = true;
   }
 
   applyCurrentAnimationFrame() { if (!this.model) return; this.model.reset(); this.animator.apply(this.model); }
 
   tick(dt) {
-    if (!this.model || !this.isAlive() || this.state === 'dead') return;
+    if (!this.model || this.state === 'removed') return;
+    if (this.state === 'dead') { this.deathElapsedMs += dt; return; }
+    if (!this.isAlive() && this.state !== 'knockback') return;
     this.animator.tick(dt); this.model.reset(); this.animator.apply(this.model);
   }
 }

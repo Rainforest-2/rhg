@@ -13,7 +13,7 @@ export class BattleAttackResolver {
   static getAttackInterval(actor, event) {
     const box = BattleBodyResolver.getActorCombatBodyBox(actor);
     const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
-    const frontX = box.frontX;
+    const posX = BattleBodyResolver.getActorCombatPositionX(actor);
     const kind = event?.attackKind || event?.raw?.attackKind || 'normal';
 
     if (kind === 'ld' || kind === 'omni') {
@@ -24,41 +24,50 @@ export class BattleAttackResolver {
       const longPointPx = Number.isFinite(event?.longPointPx)
         ? event.longPointPx
         : ((Number(event?.raw?.ldStartRaw || 0) + Number(event?.raw?.ldRangeRaw || 0)) * rangeToPx);
-      const p0 = frontX + dir * shortPointPx;
-      const p1 = frontX + dir * longPointPx;
+      const p0 = posX + dir * shortPointPx;
+      const p1 = posX + dir * longPointPx;
       const left = Math.min(p0, p1);
       const right = Math.max(p0, p1);
-      return { left, right, frontX, backX: null, forwardStartX: p0, forwardEndX: p1, shortPointX: p0, longPointX: p1, direction: dir, attackKind: kind, centerY: box.centerY, top: box.top - 18, bottom: box.bottom + 18 };
+      return { left, right, posX, combatPositionX: posX, frontX: posX, backX: null, forwardStartX: p0, forwardEndX: p1, shortPointX: p0, longPointX: p1, direction: dir, attackKind: kind, centerY: box.centerY, top: box.top - 18, bottom: box.bottom + 18 };
     }
 
     const { startPx, endPx } = BattleAttackResolver.getEventRange(actor, event);
     const backPx = Math.max(0, Number.isFinite(event?.attackBackPx) ? event.attackBackPx : 0);
-    const forwardStartX = frontX + dir * startPx;
-    const forwardEndX = frontX + dir * endPx;
-    const backX = frontX - dir * backPx;
-    const left = Math.min(backX, forwardStartX, forwardEndX);
-    const right = Math.max(backX, forwardStartX, forwardEndX);
-    return { left, right, frontX, backX, forwardStartX, forwardEndX, shortPointX: null, longPointX: null, direction: dir, attackKind: 'normal', centerY: box.centerY, top: box.top - 18, bottom: box.bottom + 18 };
+    const p0 = posX + dir * endPx;
+    const p1 = posX - dir * backPx;
+    const left = Math.min(p0, p1);
+    const right = Math.max(p0, p1);
+    return { left, right, posX, combatPositionX: posX, frontX: posX, backX: p1, forwardStartX: posX + dir * startPx, forwardEndX: p0, shortPointX: null, longPointX: null, direction: dir, attackKind: 'normal', centerY: box.centerY, top: box.top - 18, bottom: box.bottom + 18 };
   }
 
   static isTargetInEventRange(attacker, target, event) {
     const interval = BattleAttackResolver.getAttackInterval(attacker, event);
     const targetBox = BattleBodyResolver.getCombatBodyBox(target);
     if (!targetBox) return false;
+    if (targetBox.isCombatPoint && Number.isFinite(targetBox.combatPositionX)) return targetBox.combatPositionX >= interval.left && targetBox.combatPositionX <= interval.right;
     return targetBox.right >= interval.left && targetBox.left <= interval.right;
+  }
+
+
+  static getTargetCombatSortX(target) {
+    const box = BattleBodyResolver.getCombatBodyBox(target);
+    if (Number.isFinite(box?.combatPositionX)) return box.combatPositionX;
+    if (Number.isFinite(box?.centerX)) return box.centerX;
+    return target?.x ?? 0;
   }
 
   static chooseSingleTarget(attacker, candidates) {
     if (!Array.isArray(candidates) || !candidates.length) return null;
     const dir = Number.isFinite(attacker?.direction) ? attacker.direction : 1;
+    const attackerPosX = BattleBodyResolver.getActorCombatPositionX(attacker);
     return candidates.slice().sort((a, b) => {
-      const boxA = BattleBodyResolver.getCombatBodyBox(a.target);
-      const boxB = BattleBodyResolver.getCombatBodyBox(b.target);
-      const frontCmp = dir > 0 ? (boxA.left - boxB.left) : (boxB.right - boxA.right);
+      const ax = BattleAttackResolver.getTargetCombatSortX(a.target);
+      const bx = BattleAttackResolver.getTargetCombatSortX(b.target);
+      const frontCmp = dir > 0 ? (ax - bx) : (bx - ax);
       if (frontCmp !== 0) return frontCmp;
-      const distCmp = BattleBodyResolver.getCombatBodyDistance(attacker, a.target) - BattleBodyResolver.getCombatBodyDistance(attacker, b.target);
+      const distCmp = Math.abs(ax - attackerPosX) - Math.abs(bx - attackerPosX);
       if (distCmp !== 0) return distCmp;
-      return Math.abs((a.target?.x ?? 0) - (attacker?.x ?? 0)) - Math.abs((b.target?.x ?? 0) - (attacker?.x ?? 0));
+      return 0;
     })[0] || null;
   }
 

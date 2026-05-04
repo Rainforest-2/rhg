@@ -1,7 +1,7 @@
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
 export class BattleBodyResolver {
-  // BCU uses entity.pos/range/width for combat interaction; visual bounds are not combat position.
+  // BCU Entity.pos equivalent. This is a combat reference point, not a visual front edge.
   static getActorCombatPositionX(actor) {
     const baseX = Number.isFinite(actor?.x) ? actor.x : 0;
     const offset = Number.isFinite(actor?.combatPositionOffsetPx) ? actor.combatPositionOffsetPx : 0;
@@ -94,6 +94,8 @@ export class BattleBodyResolver {
   static getActorFrontX(actor) {
     const cfg = BATTLE_CONFIG.tuning || {};
     const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'logical';
+    // In logical mode this returns combatPositionX for compatibility only.
+    // Do not treat this as a visual/front edge in combat logic.
     if (mode === 'logical') return BattleBodyResolver.getActorCombatPositionX(actor);
     const localOffset = Number.isFinite(actor?.combatBodyFrontOffsetLocalX) ? actor.combatBodyFrontOffsetLocalX : 0;
     const s = Number.isFinite(actor?.scale) ? actor.scale : 1;
@@ -102,6 +104,32 @@ export class BattleBodyResolver {
   }
 
   static getActorCombatBodyBox(actor) {
+    const cfg = BATTLE_CONFIG.tuning || {};
+    const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'logical';
+
+    if (mode === 'logical') {
+      const centerX = BattleBodyResolver.getActorCombatPositionX(actor);
+      const halfW = Number.isFinite(cfg.combatPointHalfWidthPx) ? cfg.combatPointHalfWidthPx : 6;
+      const height = Number.isFinite(cfg.combatPointHeightPx) ? cfg.combatPointHeightPx : BattleBodyResolver.getActorCombatHeight(actor);
+      const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx) ? actor.combatBodyYOffsetPx : 0;
+      const bottom = (actor?.y ?? 0) + yOffset;
+      return {
+        left: centerX - halfW,
+        right: centerX + halfW,
+        top: bottom - height,
+        bottom,
+        centerX,
+        centerY: bottom - height * 0.5,
+        width: halfW * 2,
+        height,
+        frontX: centerX,
+        backX: centerX,
+        combatPositionX: centerX,
+        source: actor?.combatPositionSource || actor?.combatBodyFrontSource || 'logical-position',
+        isCombatPoint: true
+      };
+    }
+
     const width = BattleBodyResolver.getActorCombatWidth(actor);
     const height = BattleBodyResolver.getActorCombatHeight(actor);
     const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx) ? actor.combatBodyYOffsetPx : 0;
@@ -110,7 +138,7 @@ export class BattleBodyResolver {
     const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
     const left = dir < 0 ? frontX : frontX - width;
     const right = dir < 0 ? frontX + width : frontX;
-    return { left, right, top: bottom - height, bottom, centerX: (left + right) * 0.5, centerY: bottom - height * 0.5, width, height, frontX, backX: dir < 0 ? right : left, combatPositionX: frontX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || "-" };
+    return { left, right, top: bottom - height, bottom, centerX: (left + right) * 0.5, centerY: bottom - height * 0.5, width, height, frontX, backX: dir < 0 ? right : left, combatPositionX: frontX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || '-', isCombatPoint: false };
   }
 
   static getBaseCombatBodyBox(base) {
@@ -134,6 +162,7 @@ export class BattleBodyResolver {
   static getCombatBodyDistance(a, b) {
     const boxA = BattleBodyResolver.getCombatBodyBox(a);
     const boxB = BattleBodyResolver.getCombatBodyBox(b);
+    if (boxA?.isCombatPoint && boxB?.isCombatPoint) return Math.abs((boxA.combatPositionX ?? boxA.centerX ?? 0) - (boxB.combatPositionX ?? boxB.centerX ?? 0));
     if (boxA.right < boxB.left) return boxB.left - boxA.right;
     if (boxB.right < boxA.left) return boxA.left - boxB.right;
     return 0;
@@ -143,7 +172,8 @@ export class BattleBodyResolver {
     const box = BattleBodyResolver.getActorCombatBodyBox(actor);
     const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
     const range = Number.isFinite(actor?.detectionRangePx) ? actor.detectionRangePx : 0;
-    return { frontX: box.frontX, attackLineX: box.frontX + dir * range, centerY: box.centerY, top: box.top, bottom: box.bottom, combatPositionX: box.combatPositionX };
+    const posX = BattleBodyResolver.getActorCombatPositionX(actor);
+    return { frontX: posX, attackLineX: posX + dir * range, centerY: box.centerY, top: box.top, bottom: box.bottom, combatPositionX: posX };
   }
 
   static getHitEffectPosition(attacker, target) {

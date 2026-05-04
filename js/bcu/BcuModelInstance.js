@@ -1,4 +1,15 @@
-const MUTABLE = new Set(['posX', 'posY', 'scaleX', 'scaleY', 'angle', 'opacity', 'partIndex', 'imgcutIndex']);
+const MUTABLE = new Set([
+  'posX',
+  'posY',
+  'pivotX',
+  'pivotY',
+  'scaleX',
+  'scaleY',
+  'angle',
+  'opacity',
+  'partIndex',
+  'imgcutIndex'
+]);
 
 export class BcuModelInstance {
   constructor(model) {
@@ -8,8 +19,8 @@ export class BcuModelInstance {
     this.baseOpacity = model.baseOpacity || 255;
     this.parts = model.parts.map((p) => ({
       ...p,
-      base: { posX: p.posX, posY: p.posY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex, imgcutIndex: p.imgcutIndex },
-      current: { posX: p.posX, posY: p.posY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex, imgcutIndex: p.imgcutIndex }
+      base: { posX: p.posX, posY: p.posY, pivotX: p.pivotX, pivotY: p.pivotY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex, imgcutIndex: p.imgcutIndex },
+      current: { posX: p.posX, posY: p.posY, pivotX: p.pivotX, pivotY: p.pivotY, scaleX: p.scaleX, scaleY: p.scaleY, angle: p.angle, opacity: p.opacity, partIndex: p.partIndex, imgcutIndex: p.imgcutIndex }
     }));
   }
 
@@ -27,7 +38,15 @@ export class BcuModelInstance {
     if (!p) return { applied: false, partId, partIndex: null, prop, value: val, reason: 'part not found' };
     if (!MUTABLE.has(prop)) return { applied: false, partId, partIndex: p.current.partIndex, prop, value: val, reason: 'unknown prop' };
 
-    p.current[prop] = prop === 'partIndex' ? Math.round(val) : val;
+    if (prop === 'partIndex') {
+      p.current[prop] = Math.round(val);
+    } else if (prop === 'pivotX') {
+      p.current.pivotX = (p.base.pivotX ?? 0) + val;
+    } else if (prop === 'pivotY') {
+      p.current.pivotY = (p.base.pivotY ?? 0) + val;
+    } else {
+      p.current[prop] = val;
+    }
     return { applied: true, partId, partIndex: p.current.partIndex, prop, value: p.current[prop], reason: '' };
   }
 
@@ -77,8 +96,8 @@ export class BcuModelInstance {
         z: (part.zOrder ?? 0) * partCount + part.index,
         opacity,
         matrix,
-        pivotX: part.pivotX,
-        pivotY: part.pivotY,
+        pivotX: Number.isFinite(c.pivotX) ? c.pivotX : part.pivotX,
+        pivotY: Number.isFinite(c.pivotY) ? c.pivotY : part.pivotY,
         scaleX: localScaleX,
         scaleY: localScaleY,
         angle: localAngle,

@@ -1,4 +1,14 @@
-const MOD_MAP = { 2: 'partIndex', 4: 'posX', 5: 'posY', 8: 'scaleX', 9: 'scaleY', 11: 'angle', 12: 'opacity' };
+const MOD_MAP = {
+  2: 'partIndex',
+  4: 'posX',
+  5: 'posY',
+  6: 'pivotX',
+  7: 'pivotY',
+  8: 'scaleX',
+  9: 'scaleY',
+  11: 'angle',
+  12: 'opacity'
+};
 
 function valueAt(track, frame, prop) {
   const kfs = track.keyframes || [];

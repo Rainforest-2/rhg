@@ -22,7 +22,7 @@ export class BattleSceneRenderer {
     c.stroke();
 
     this.drawCastle(c, scene?.castle, groundY);
-    for (const actor of (scene?.actors || [])) this.drawActor(c, actor);
+    for (const actor of (scene?.actors || [])) { this.drawActor(c, actor); this.drawActorDebug(c, actor); }
 
     c.fillStyle = '#0008';
     c.fillRect(14, 14, 360, 84);
@@ -56,6 +56,23 @@ export class BattleSceneRenderer {
     }
     c.strokeStyle = '#313e52';
     c.strokeRect(castle.x - 6, groundY - 6, 12, 12);
+  }
+
+  drawActorDebug(c, actor) {
+    const src = actor.rawStats?.source || {};
+    const fileName = (src.file || '-').split('/').slice(-2).join('/');
+    const lines = [
+      `${actor.assetDef?.label || '-'} ${actor.side}`,
+      `hp:${actor.hp}/${actor.maxHp} dmg:${actor.damage}`,
+      `spdRaw:${actor.rawStats?.speed ?? '-'} move:${actor.moveSpeed.toFixed(1)}px/s`,
+      `rangeRaw:${actor.rawStats?.range ?? '-'} atkF:${actor.attackIntervalFrames}`,
+      `src:${fileName} row:${src.row ?? '-'} prov:${src.provisional ? 'yes' : 'no'}`
+    ];
+    c.fillStyle = '#0009';
+    c.fillRect(actor.x - 120, actor.y - 150, 300, 78);
+    c.fillStyle = '#f8fafc';
+    c.font = '12px ui-monospace, monospace';
+    lines.forEach((line, i) => c.fillText(line, actor.x - 114, actor.y - 136 + i * 14));
   }
 
   drawActor(c, actor) {

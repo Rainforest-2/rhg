@@ -16,7 +16,7 @@ export class BattleActor {
     this.nextAttackReadyMs = this.attackWaitMs;
     this.attackStartupMs = Math.max(0, (this.attackStartupFrames / fps) * 1000);
     this.attackElapsedMs = 0; this.attackWaitElapsedMs = 0; this.hasHitInCurrentAttack = false; this.attackCycleId = 0;
-    this.targetId = null; this.state = 'move'; this.isAliveFlag = true;
+    this.targetId = null; this.attackTarget = null; this.attackTargetType = null; this.attackStartedAtMs = 0; this.state = 'move'; this.isAliveFlag = true;
 
     this.moveAnimId = moveAnimId; this.idleAnimId = idleAnimId; this.attackAnimId = attackAnimId; this.knockbackAnimId = knockbackAnimId;
     this.attackAnimDurationMs = this.deriveAnimDurationMs(attackAnimId, fps, 250, 'attackAnimDuration fallback to 250ms');

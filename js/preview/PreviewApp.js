@@ -25,7 +25,7 @@ export class PreviewApp {
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
-      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, mode: (mode) => this.setViewMode(mode) });
+      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, mode: (mode) => this.setViewMode(mode), resetBattle: () => this.resetBattle() });
       await this.load(this.assets[0].id, this.assets[0].animations[0]?.id);
       let last = performance.now();
       let firstRenderLogged = false;
@@ -63,6 +63,14 @@ export class PreviewApp {
       this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
       await this.battleScene.init();
     }
+  }
+
+
+  async resetBattle() {
+    if (this.viewMode !== 'battle') return;
+    this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
+    await this.battleScene.init();
+    this.ui?.log('info', 'Battle reset completed');
   }
 
   findAsset(id) { return this.assets.find((a) => a.id === id) || this.assets[0]; }

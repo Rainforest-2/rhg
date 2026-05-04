@@ -6,38 +6,12 @@ import { BattleActor } from './BattleActor.js';
 import { BattleStatsLoader } from './BattleStatsLoader.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
-async function loadImage(url) {
-  return await new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => res(img);
-    img.onerror = () => rej(new Error(`Image load failed: ${url}`));
-    img.src = url;
-  });
-}
+async function loadImage(url) { return await new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => rej(new Error(`Image load failed: ${url}`)); img.src = url; }); }
 
 export class BattleScene {
-  constructor(uiLog) {
-    this.loader = new BcuAssetLoader();
-    this.statsLoader = new BattleStatsLoader();
-    this.log = uiLog || (() => {});
-    this.mode = 'battle';
-    this.groundY = BATTLE_CONFIG.groundY;
-    this.actors = [];
-    this.castle = { ...BATTLE_CONFIG.castle, layers: [] };
-    this.loadFailed = false;
-    this.failureReason = '';
-  }
-
+  constructor(uiLog) { this.loader = new BcuAssetLoader(); this.statsLoader = new BattleStatsLoader(); this.log = uiLog || (() => {}); this.mode = 'battle'; this.groundY = BATTLE_CONFIG.groundY; this.actors = []; this.castle = { ...BATTLE_CONFIG.castle, layers: [] }; this.loadFailed = false; this.failureReason = ''; }
   findAsset(id) { return PREVIEW_ASSETS.find((a) => a.id === id); }
-
-  async loadCompositeLayers(asset) {
-    const loaded = []; const missing = [];
-    for (const layer of (asset.layers || [])) {
-      try { loaded.push({ id: layer.id, name: layer.name || layer.id, anchor: layer.anchor || 'bottom-center', offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
-      catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); }
-    }
-    return { loaded, missing };
-  }
+  async loadCompositeLayers(asset) { const loaded = []; const missing = []; for (const layer of (asset.layers || [])) { try { loaded.push({ id: layer.id, name: layer.name || layer.id, anchor: layer.anchor || 'bottom-center', offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); } catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); } } return { loaded, missing }; }
 
   async loadStats(actorDef) {
     try {
@@ -46,73 +20,45 @@ export class BattleScene {
       throw new Error(`Unknown stats type: ${actorDef.statsType}`);
     } catch (e) {
       this.log('warn', `stats fallback for ${actorDef.assetId}: ${e instanceof Error ? e.message : String(e)}`);
-      return {
-        hp: 100, knockbacks: 1, speed: 5, damage: 5, attackIntervalFrames: 30, range: 100, rawEconomyValue: 0,
-        rawValues: [], source: { file: 'fallback', row: -1, type: actorDef.statsType, provisional: true, note: 'fallback' }
-      };
+      return { hp: 100, knockbacks: 1, speed: 5, damage: 5, attackWaitFrames: 30, detectionRange: 100, costOrReward: 0, respawnFrames: 0, attackType: 0, attackStartupFrames: 8, rawValues: [], source: { file: 'fallback', row: -1, type: actorDef.statsType, provisional: true, note: 'fallback' } };
     }
   }
 
   async loadActor(actorDef) {
-    const assetDef = this.findAsset(actorDef.assetId);
-    if (!assetDef) throw new Error(`Battle asset not found: ${actorDef.assetId}`);
-    const set = await this.loader.loadAssetSet(assetDef);
-    set.errors.forEach((e) => this.log('error', e));
-    set.missing.forEach((m) => this.log('warn', `missing file: ${m}`));
-
+    const assetDef = this.findAsset(actorDef.assetId); if (!assetDef) throw new Error(`Battle asset not found: ${actorDef.assetId}`);
+    const set = await this.loader.loadAssetSet(assetDef); set.errors.forEach((e) => this.log('error', e)); set.missing.forEach((m) => this.log('warn', `missing file: ${m}`));
     const ad = assetDef.animations.find((a) => a.id === actorDef.idleAnimId) || assetDef.animations[0];
     const animResult = ad ? await this.loader.loadAnimation(assetDef, ad) : { anim: null, errors: [], missing: [] };
-    animResult.errors?.forEach((e) => this.log('error', e));
-    if (animResult.status === 'missing') this.log('warn', `missing animation: ${ad?.id || '-'} (${(animResult.missing || []).join(', ')})`);
+    animResult.errors?.forEach((e) => this.log('error', e)); if (animResult.status === 'missing') this.log('warn', `missing animation: ${ad?.id || '-'} (${(animResult.missing || []).join(', ')})`);
 
     const stats = await this.loadStats(actorDef);
-    const actor = new BattleActor({
-      assetDef,
-      side: actorDef.side,
-      x: actorDef.x,
-      y: actorDef.y,
-      facing: actorDef.facing,
-      scale: actorDef.scale,
-      currentAnimId: ad?.id || actorDef.idleAnimId,
-      sprite: set.image && set.imgcut ? new BcuSpriteSheet(set.image, set.imgcut) : null,
-      model: set.model ? new BcuModelInstance(set.model) : null,
-      anim: animResult.anim,
-      stats
-    });
-
+    const actor = new BattleActor({ assetDef, side: actorDef.side, x: actorDef.x, y: actorDef.y, facing: actorDef.facing, direction: actorDef.facing, scale: actorDef.scale, currentAnimId: ad?.id || actorDef.idleAnimId, sprite: set.image && set.imgcut ? new BcuSpriteSheet(set.image, set.imgcut) : null, model: set.model ? new BcuModelInstance(set.model) : null, anim: animResult.anim, stats });
     actor.moveSpeed = stats.speed * BATTLE_CONFIG.tuning.speedToPxPerSecond;
-    actor.attackRange = stats.range * BATTLE_CONFIG.tuning.rangeToPx;
-    actor.attackIntervalFrames = stats.attackIntervalFrames;
-    actor.attackDurationMs = Math.max(BATTLE_CONFIG.tuning.minAttackDurationMs, (actor.attackIntervalFrames / BATTLE_CONFIG.tuning.fps) * 1000);
+    actor.detectionRange = stats.detectionRange * BATTLE_CONFIG.tuning.rangeToPx;
+    actor.attackWaitFrames = stats.attackWaitFrames;
+    actor.attackStartupFrames = stats.attackStartupFrames;
+    actor.attackType = stats.attackType;
+    actor.attackDurationMs = Math.max(BATTLE_CONFIG.tuning.minAttackDurationMs, (actor.attackWaitFrames / BATTLE_CONFIG.tuning.fps) * 1000);
     return actor;
   }
 
   async init() {
-    try {
-      this.loadFailed = false;
-      this.failureReason = '';
-      const dog = await this.loadActor(BATTLE_CONFIG.actors.dogPlayerBasic);
-      const cat = await this.loadActor(BATTLE_CONFIG.actors.catEnemyBasic);
-      this.actors = [dog, cat];
-
-      const castleAsset = this.findAsset(BATTLE_CONFIG.castle.assetId);
-      if (!castleAsset) throw new Error(`Battle asset not found: ${BATTLE_CONFIG.castle.assetId}`);
-      const cr = await this.loadCompositeLayers(castleAsset);
-      if (cr.missing.length) this.log('warn', `battle castle missing: ${cr.missing.join(', ')}`);
-      this.castle.assetDef = castleAsset;
-      this.castle.layers = cr.loaded;
-      this.castle.missing = cr.missing;
-      this.log('info', 'BattleScene initialized');
-    } catch (e) {
-      this.loadFailed = true;
-      this.failureReason = e instanceof Error ? e.message : String(e);
-      console.error('[BattleScene] load failed', e);
-      this.log('error', `BattleScene load failed: ${this.failureReason}`);
-    }
+    try { this.loadFailed = false; this.failureReason = ''; const dog = await this.loadActor(BATTLE_CONFIG.actors.dogPlayerBasic); const cat = await this.loadActor(BATTLE_CONFIG.actors.catEnemyBasic); this.actors = [dog, cat]; const castleAsset = this.findAsset(BATTLE_CONFIG.castle.assetId); if (!castleAsset) throw new Error(`Battle asset not found: ${BATTLE_CONFIG.castle.assetId}`); const cr = await this.loadCompositeLayers(castleAsset); if (cr.missing.length) this.log('warn', `battle castle missing: ${cr.missing.join(', ')}`); this.castle.assetDef = castleAsset; this.castle.layers = cr.loaded; this.castle.missing = cr.missing; this.log('info', 'BattleScene initialized'); }
+    catch (e) { this.loadFailed = true; this.failureReason = e instanceof Error ? e.message : String(e); console.error('[BattleScene] load failed', e); this.log('error', `BattleScene load failed: ${this.failureReason}`); }
   }
 
   tick(dt) {
     if (this.loadFailed) return;
-    for (const actor of this.actors) actor.tick(dt);
+    const dtSec = dt / 1000;
+    for (const actor of this.actors) {
+      actor.tick(dt);
+      if (actor.state === 'move') actor.x += actor.direction * actor.moveSpeed * dtSec;
+    }
+    const dog = this.actors.find((a) => a.side === 'dog-player');
+    const cat = this.actors.find((a) => a.side === 'cat-enemy');
+    if (!dog || !cat) return;
+    const distance = Math.abs(dog.x - cat.x);
+    const stopDistance = Math.min(dog.detectionRange || 0, cat.detectionRange || 0);
+    if (distance <= stopDistance) { dog.state = 'idle'; cat.state = 'idle'; }
   }
 }

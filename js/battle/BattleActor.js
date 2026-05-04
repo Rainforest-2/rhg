@@ -1,27 +1,19 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
 export class BattleActor {
-  constructor({ assetDef, sprite, model, anim, side, x, y, scale = 1, facing = 1, currentAnimId = 'anim00', stats = null }) {
-    this.assetDef = assetDef;
-    this.sprite = sprite;
-    this.model = model;
-    this.anim = anim;
+  constructor({ assetDef, sprite, model, anim, side, x, y, scale = 1, facing = 1, direction = 1, currentAnimId = 'anim00', stats = null }) {
+    this.assetDef = assetDef; this.sprite = sprite; this.model = model; this.anim = anim;
     this.animator = new BcuAnimator(anim || { tracks: [], maxFrame: 1 });
-    this.side = side;
-    this.x = x;
-    this.y = y;
-    this.scale = scale;
-    this.facing = facing;
-    this.currentAnimId = currentAnimId;
-    this.rawStats = stats;
-    this.maxHp = stats?.hp ?? 100;
-    this.hp = this.maxHp;
-    this.damage = stats?.damage ?? 0;
-    this.moveSpeed = 0;
-    this.attackRange = 0;
-    this.attackIntervalFrames = stats?.attackIntervalFrames ?? 0;
+    this.side = side; this.x = x; this.y = y; this.scale = scale;
+    this.facing = facing; this.visualFacing = facing; this.direction = direction;
+    this.currentAnimId = currentAnimId; this.rawStats = stats;
+    this.maxHp = stats?.hp ?? 100; this.hp = this.maxHp; this.damage = stats?.damage ?? 0;
+    this.moveSpeed = 0; this.detectionRange = 0;
+    this.attackWaitFrames = stats?.attackWaitFrames ?? 0;
+    this.attackStartupFrames = stats?.attackStartupFrames ?? 0;
+    this.attackType = stats?.attackType ?? 0;
     this.attackDurationMs = 700;
-    this.state = 'idle';
+    this.state = 'move';
   }
 
   tick(dt) {

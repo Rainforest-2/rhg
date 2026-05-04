@@ -1,7 +1,7 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
 export class BattleActor {
-  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0 }) {
+  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0 }) {
     this.assetDef = assetDef; this.sprite = sprite; this.model = model; this.side = side; this.x = x; this.y = y; this.scale = scale;
     this.facing = facing; this.direction = direction; this.renderFlipX = renderFlipX;
     this.currentAnimId = currentAnimId; this.rawStats = stats; this.animations = new Map(Object.entries(animations));
@@ -10,6 +10,9 @@ export class BattleActor {
 
     this.maxHp = stats?.hp ?? 100; this.hp = this.maxHp; this.damage = stats?.damage ?? 0;
     this.moveSpeed = 0; this.detectionRangePx = 0; this.collisionRadius = collisionRadius;
+    this.combatBodyHalfWidthPx = Number.isFinite(combatBodyHalfWidthPx) ? combatBodyHalfWidthPx : this.collisionRadius;
+    this.combatBodyHeightPx = Number.isFinite(combatBodyHeightPx) ? combatBodyHeightPx : this.combatBodyHalfWidthPx * 2;
+    this.combatBodyYOffsetPx = Number.isFinite(combatBodyYOffsetPx) ? combatBodyYOffsetPx : 0;
     this.attackWaitFrames = stats?.attackWaitFrames ?? 0; this.attackStartupFrames = stats?.attackStartupFrames ?? 0; this.attackType = stats?.attackType ?? 0;
     this.attackWaitMultiplier = Number.isFinite(attackWaitMultiplier) ? attackWaitMultiplier : 1;
     this.attackPhaseTimeMultiplier = Number.isFinite(attackPhaseTimeMultiplier) ? attackPhaseTimeMultiplier : 1;
@@ -60,6 +63,26 @@ export class BattleActor {
     return (anim.tracks || []).some((t) => String(t?.name || '').includes('ノックバック') || String(t?.rawHeader || '').includes('ノックバック'));
   }
 
+
+
+  getCombatBodyBox() {
+    const halfW = Number.isFinite(this.combatBodyHalfWidthPx) ? this.combatBodyHalfWidthPx : this.collisionRadius;
+    const height = Number.isFinite(this.combatBodyHeightPx) ? this.combatBodyHeightPx : halfW * 2;
+    const bottom = this.y + (Number.isFinite(this.combatBodyYOffsetPx) ? this.combatBodyYOffsetPx : 0);
+    return { left: this.x - halfW, right: this.x + halfW, top: bottom - height, bottom, centerX: this.x, centerY: bottom - height * 0.5, halfWidth: halfW, height };
+  }
+
+  getCombatBodyDistanceTo(other) {
+    const a = this.getCombatBodyBox();
+    const b = typeof other?.getCombatBodyBox === 'function' ? other.getCombatBodyBox() : null;
+    if (!b) {
+      const otherHalfW = other?.collisionRadius || 0;
+      return Math.max(0, Math.abs(this.x - other.x) - a.halfWidth - otherHalfW);
+    }
+    if (a.right < b.left) return b.left - a.right;
+    if (b.right < a.left) return a.left - b.right;
+    return 0;
+  }
 
   getCenterDistanceTo(other) { return Math.abs(this.x - other.x); }
   getBodyDistanceTo(other) { return Math.max(0, this.getCenterDistanceTo(other) - this.collisionRadius - (other?.collisionRadius || 0)); }

@@ -20,14 +20,32 @@ export class PreviewApp {
 
 
   async start() {
-    this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
-    this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
-    this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; } });
-    this.setupCompositeUi();
-    await this.load(this.assets[0].id, this.assets[0].animations[0]?.id);
-    let last = performance.now();
-    const loop = (t) => { const dt = t - last; last = t; if (this.animator) { this.animator.tick(dt); this.applyAnim(); } this.renderer.render(this.state); this.updateStatus(); requestAnimationFrame(loop); };
-    requestAnimationFrame(loop);
+    try {
+      this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
+      this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
+      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; } });
+      await this.load(this.assets[0].id, this.assets[0].animations[0]?.id);
+      let last = performance.now();
+      let firstRenderLogged = false;
+      const loop = (t) => {
+        const dt = t - last;
+        last = t;
+        if (this.animator) { this.animator.tick(dt); this.applyAnim(); }
+        this.renderer.render(this.state);
+        if (!firstRenderLogged) {
+          firstRenderLogged = true;
+          console.log('[PreviewApp] first render');
+        }
+        this.updateStatus();
+        requestAnimationFrame(loop);
+      };
+      console.log('[PreviewApp] render loop started');
+      requestAnimationFrame(loop);
+    } catch (e) {
+      const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      console.error('[PreviewApp] start failed', e);
+      this.ui?.log('error', `[PreviewApp] start failed: ${message}`);
+    }
   }
   findAsset(id) { return this.assets.find((a) => a.id === id) || this.assets[0]; }
 
@@ -68,7 +86,6 @@ export class PreviewApp {
       this.state.animationRequired = false;
       this.state.compositeLayers = cr.loaded;
       this.state.sprite = null; this.state.model = null;
-      if (this.compositeUi) { this.compositeUi.style.display = ''; this.renderCompositeUi(); }
       this.ui.setAnimationAvailability(this.current, new Set());
       this.state.availableAnimations = new Set();
       this.ui.log('info', `loaded files: ${this.state.loadedFiles.join(', ') || 'none'}`);
@@ -76,7 +93,6 @@ export class PreviewApp {
       return;
     }
 
-    if (this.compositeUi) this.compositeUi.style.display = 'none';
     const r = await this.loader.loadAssetSet(this.current);
     r.errors.forEach((e) => this.ui.log('error', e));
     r.missing.forEach((m) => this.ui.log('warn', `missing file: ${m}`));

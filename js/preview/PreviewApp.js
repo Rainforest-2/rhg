@@ -37,7 +37,7 @@ export class PreviewApp {
             if (!this.battleLoading) this.battleScene?.tick(dt);
             if (t - this.lastBattleUiUpdate > 200) { this.lastBattleUiUpdate = t; this.ui?.setBattleProduction?.({money:this.battleScene?.economy?.money,maxMoney:this.battleScene?.economy?.maxMoney,incomePerSecond:this.battleScene?.economy?.incomePerSecond,roster:this.battleScene?.getPlayerRosterStatus?.()||[],onSpawn:(slot)=>this.battleScene?.requestPlayerSpawn?.(slot)}); }
             this.renderer.ensureCanvasSize();
-            this.battleSceneRenderer.render(this.renderer, this.battleScene, this.state.showParts);
+            this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
             this.lastBattleFrameErrorMessage = '';
           } catch (e) {
             const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);

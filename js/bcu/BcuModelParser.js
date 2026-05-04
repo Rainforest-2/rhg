@@ -43,10 +43,14 @@ export function parseModel(text) {
   const collisionCount = Math.max(0, parseInt(lines[cursor] || '0', 10) || 0);
   cursor += 1;
   const collisions = [];
+  const confs = [];
   for (let i = 0; i < collisionCount && cursor < lines.length; i += 1, cursor += 1) {
     const row = (lines[cursor] || '').split(',');
     collisions.push({ index: i, raw: row, name: row.slice(6).join(',').trim() || '' });
+    const values = [];
+    for (let j = 0; j < 6; j += 1) values.push(num(row, j, 0));
+    confs.push({ index: i, values, raw: row, name: row.slice(6).join(',').trim() || '' });
   }
 
-  return { type: 'model', version, declaredPartCount, baseScale, baseAngle, baseOpacity, parts, collisions };
+  return { type: 'model', version, declaredPartCount, baseScale, baseAngle, baseOpacity, parts, collisions, confs };
 }

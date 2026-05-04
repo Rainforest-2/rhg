@@ -45,5 +45,38 @@ export class BattleSceneRenderer {
       c.drawImage(effect.image, p.x, p.y, p.w, p.h, effect.x - dw * 0.5, effect.y - dh * 0.5, dw, dh);
     }
   }
-  drawActor(c, actor) { if (!actor?.sprite || !actor?.model || !actor.isAlive()) return; const baseAngle = actor.model.baseAngle || 3600; const bottomOffsetY = this.getActorBottomAnchorOffset(actor); c.save(); c.translate(actor.x, actor.y + bottomOffsetY); if (actor.renderFlipX) c.scale(-1, 1); for (const p of actor.model.getDrawList()) { const w = p.world; const partIndex = p.current?.partIndex ?? p.partIndex; const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex; if (!Number.isInteger(partIndex) || partIndex < 0) continue; if ((imgcutIndex ?? 0) < 0) continue; if (!w || (w.o ?? 1) <= 0) continue; const part = actor.sprite?.imgcut?.parts?.[partIndex]; if (!part || part.w <= 0 || part.h <= 0) continue; c.save(); c.translate(w.x * actor.scale, w.y * actor.scale); c.rotate((w.a / baseAngle) * Math.PI * 2); c.globalAlpha = w.o ?? 1; const sx = w.sx * actor.scale; const sy = w.sy * actor.scale; actor.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy }); c.restore(); } c.restore(); }
+  drawActor(c, actor) {
+    if (!actor?.sprite || !actor?.model || !actor.isAlive()) return;
+    const baseAngle = actor.model.baseAngle || 3600;
+    const drawList = typeof actor.model.getBattleDrawList === 'function' ? actor.model.getBattleDrawList() : actor.model.getDrawList();
+    c.save();
+    c.translate(actor.x, actor.y);
+    if (actor.renderFlipX) c.scale(-1, 1);
+    for (const p of drawList) {
+      const w = p.world;
+      const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex ?? p.partIndex;
+      const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex ?? p.imgcutIndex;
+      if (!Number.isInteger(partIndex) || partIndex < 0) continue;
+      if ((imgcutIndex ?? 0) < 0) continue;
+      const opacity = Number.isFinite(p.opacity) ? p.opacity : (w?.o ?? 1);
+      if (!w || opacity <= 0) continue;
+      const part = actor.sprite?.imgcut?.parts?.[partIndex];
+      if (!part || part.w <= 0 || part.h <= 0) continue;
+      c.save();
+      if (Array.isArray(p.matrix) && p.matrix.length === 6) c.transform(p.matrix[0] * actor.scale, p.matrix[1] * actor.scale, p.matrix[2] * actor.scale, p.matrix[3] * actor.scale, p.matrix[4] * actor.scale, p.matrix[5] * actor.scale);
+      else {
+        c.translate(w.x * actor.scale, w.y * actor.scale);
+        c.rotate(((w.a ?? 0) / baseAngle) * Math.PI * 2);
+        c.scale((w.sx ?? 1) * actor.scale, (w.sy ?? 1) * actor.scale);
+      }
+      c.globalAlpha = opacity;
+      const pivotX = p.pivotX;
+      const pivotY = p.pivotY;
+      const drawX = Number.isFinite(pivotX) ? -pivotX * actor.scale : -part.w * 0.5 * actor.scale;
+      const drawY = Number.isFinite(pivotY) ? -pivotY * actor.scale : -part.h * 0.5 * actor.scale;
+      actor.sprite.drawPart(c, partIndex, drawX, drawY, { scaleX: actor.scale, scaleY: actor.scale });
+      c.restore();
+    }
+    c.restore();
+  }
 }

@@ -18,7 +18,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; }
 
 
   async start() {
@@ -33,8 +33,8 @@ export class PreviewApp {
         const dt = t - last;
         last = t;
         if (this.viewMode === 'battle') {
-          this.battleScene?.tick(dt);
-          this.ui?.setBattleProduction?.({money:this.battleScene?.economy?.money,maxMoney:this.battleScene?.economy?.maxMoney,incomePerSecond:this.battleScene?.economy?.incomePerSecond,roster:this.battleScene?.getPlayerRosterStatus?.()||[],onSpawn:(slot)=>this.battleScene?.requestPlayerSpawn?.(slot)});
+          if (!this.battleLoading) this.battleScene?.tick(dt);
+          if (t - this.lastBattleUiUpdate > 200) { this.lastBattleUiUpdate = t; this.ui?.setBattleProduction?.({money:this.battleScene?.economy?.money,maxMoney:this.battleScene?.economy?.maxMoney,incomePerSecond:this.battleScene?.economy?.incomePerSecond,roster:this.battleScene?.getPlayerRosterStatus?.()||[],onSpawn:(slot)=>this.battleScene?.requestPlayerSpawn?.(slot)}); }
           this.renderer.ensureCanvasSize();
           this.battleSceneRenderer.render(this.renderer, this.battleScene, this.state.showParts);
         } else {
@@ -45,7 +45,7 @@ export class PreviewApp {
           firstRenderLogged = true;
           console.log('[PreviewApp] first render');
         }
-        this.updateStatus();
+        if (this.viewMode !== 'battle') this.updateStatus();
         requestAnimationFrame(loop);
       };
       console.log('[PreviewApp] render loop started');
@@ -60,9 +60,11 @@ export class PreviewApp {
   async setViewMode(mode) {
     this.viewMode = mode === 'battle' ? 'battle' : 'preview';
     if (this.viewMode !== 'battle') return;
+    if (this.battleInitPromise) return await this.battleInitPromise;
     if (!this.battleScene) {
-      this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
-      await this.battleScene.init();
+      this.battleLoading = true;
+      this.battleInitPromise = (async()=>{ try { this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg)); await this.battleScene.init(); } catch (e) { console.error('[PreviewApp] battle init failed', e); this.ui?.log('error', `battle init failed: ${e instanceof Error ? e.message : String(e)}`); } finally { this.battleLoading = false; this.battleInitPromise = null; } })();
+      await this.battleInitPromise;
     }
   }
 

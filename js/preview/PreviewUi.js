@@ -1,7 +1,7 @@
 const ROLE_TAG = { dogs: 'DOG', cats: 'CAT', effects: 'FX', castles: 'CASTLE' };
 
 export class PreviewUi {
-  constructor(root, logEl) { this.root = root; this.logEl = logEl; this.logs = []; }
+  constructor(root, logEl) { this.root = root; this.logEl = logEl; this.logs = []; this.lastBattleProductionSignature=''; this.currentBattleSpawnHandler=null; }
   formatAssetLabel(a) { return `[${ROLE_TAG[a.group] || a.group?.toUpperCase() || 'UNK'}] ${a.label}`; }
   init(assets, on) {
     this.root.innerHTML = `<h2>BCU Preview Controls</h2>
@@ -57,4 +57,4 @@ export class PreviewUi {
 }
 
 
-PreviewUi.prototype.setBattleProduction=function(status){const econ=this.root.querySelector('#battle-econ');const btns=this.root.querySelector('#battle-buttons'); if(!econ||!btns)return; econ.textContent=`money:${Math.floor(status.money||0)}/${status.maxMoney||0} income:${status.incomePerSecond||0}/s`; btns.innerHTML=(status.roster||[]).map(r=>`<button data-slot='${r.slotId}' ${r.canProduce?'':'disabled'}>${r.label} cost:${r.cost} cd:${(r.cooldownMs/1000).toFixed(1)}s</button>`).join(' '); btns.querySelectorAll('button').forEach(b=>b.onclick=()=>status.onSpawn?.(b.dataset.slot));};
+PreviewUi.prototype.setBattleProduction=function(status){const econ=this.root.querySelector('#battle-econ');const btns=this.root.querySelector('#battle-buttons'); if(!econ||!btns)return; this.currentBattleSpawnHandler=status.onSpawn||null; const signature=JSON.stringify({money:Math.floor(status.money||0),maxMoney:status.maxMoney||0,roster:(status.roster||[]).map(r=>[r.slotId,!!r.canProduce,Math.ceil((r.cooldownMs||0)/100),r.cost||0])}); if(signature===this.lastBattleProductionSignature) return; this.lastBattleProductionSignature=signature; econ.textContent=`money:${Math.floor(status.money||0)}/${status.maxMoney||0} income:${status.incomePerSecond||0}/s`; btns.innerHTML=(status.roster||[]).map(r=>`<button data-slot='${r.slotId}' ${r.canProduce?'':'disabled'}>${r.label} cost:${r.cost} cd:${((r.cooldownMs||0)/1000).toFixed(1)}s</button>`).join(' '); if(!btns.dataset.bound){btns.dataset.bound='1';btns.onclick=(ev)=>{const b=ev.target.closest('button[data-slot]');if(!b)return; this.currentBattleSpawnHandler?.(b.dataset.slot);};}};

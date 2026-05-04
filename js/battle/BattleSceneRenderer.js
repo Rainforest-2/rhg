@@ -46,33 +46,81 @@ export class BattleSceneRenderer {
     }
   }
 
+  getBattlePartLocalBounds(actor, p) {
+    const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
+    const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
+    if (!Number.isInteger(partIndex) || partIndex < 0) return null;
+    if ((imgcutIndex ?? 0) < 0) return null;
+    const opacity = Number.isFinite(p.opacity) ? p.opacity : (p.world?.o ?? 1);
+    if (opacity <= 0) return null;
+    const part = actor.sprite?.imgcut?.parts?.[partIndex];
+    if (!part || part.w <= 0 || part.h <= 0) return null;
+    const m = Array.isArray(p.matrix) && p.matrix.length === 6 ? p.matrix : null;
+    if (!m) return null;
+    const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
+    const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
+    const corners = [[-pivotX, -pivotY], [part.w - pivotX, -pivotY], [-pivotX, part.h - pivotY], [part.w - pivotX, part.h - pivotY]];
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+    for (const [x, y] of corners) { const rx = m[0] * x + m[2] * y + m[4]; const ry = m[1] * x + m[3] * y + m[5]; minX = Math.min(minX, rx); minY = Math.min(minY, ry); maxX = Math.max(maxX, rx); maxY = Math.max(maxY, ry); }
+    if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
+    return { modelPartIndex: Number.isInteger(p.index) ? p.index : p.rawPart?.index, partIndex, imgcutIndex, opacity, left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };
+  }
   getBattleDrawListLocalBounds(actor, drawList) {
     if (!actor?.sprite || !Array.isArray(drawList)) return null;
     let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
     for (const p of drawList) {
-      const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
-      const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
-      if (!Number.isInteger(partIndex) || partIndex < 0) continue;
-      if ((imgcutIndex ?? 0) < 0) continue;
-      const opacity = Number.isFinite(p.opacity) ? p.opacity : (p.world?.o ?? 1);
-      if (opacity <= 0) continue;
-      const part = actor.sprite?.imgcut?.parts?.[partIndex];
-      if (!part || part.w <= 0 || part.h <= 0) continue;
-      const m = Array.isArray(p.matrix) && p.matrix.length === 6 ? p.matrix : null;
-      if (!m) continue;
-      const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
-      const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
-      const corners = [[-pivotX,-pivotY],[part.w-pivotX,-pivotY],[-pivotX,part.h-pivotY],[part.w-pivotX,part.h-pivotY]];
-      for (const [x,y] of corners){const rx=m[0]*x+m[2]*y+m[4];const ry=m[1]*x+m[3]*y+m[5];minX=Math.min(minX,rx);minY=Math.min(minY,ry);maxX=Math.max(maxX,rx);maxY=Math.max(maxY,ry);} }
-    if (!Number.isFinite(minX)||!Number.isFinite(minY)||!Number.isFinite(maxX)||!Number.isFinite(maxY)) return null;
-    return { left:minX, top:minY, right:maxX, bottom:maxY, width:maxX-minX, height:maxY-minY };
+      const b = this.getBattlePartLocalBounds(actor, p);
+      if (!b) continue;
+      minX = Math.min(minX, b.left); minY = Math.min(minY, b.top); maxX = Math.max(maxX, b.right); maxY = Math.max(maxY, b.bottom);
+    }
+    if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
+    return { left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };
+  }
+  initializeActorGroundContact(actor, drawList) {
+    if (actor.visualGroundContactInitialized) return;
+    const partBounds = [];
+    for (const p of drawList) {
+      const b = this.getBattlePartLocalBounds(actor, p);
+      if (!b) continue;
+      if (!Number.isInteger(b.modelPartIndex)) continue;
+      if (b.opacity <= 0.05) continue;
+      partBounds.push(b);
+    }
+    if (!partBounds.length) { actor.visualGroundContactInitialized = true; actor.visualGroundContactPartIndices = []; actor.visualGroundAnchorLocalY = 0; return; }
+    const overallBottom = Math.max(...partBounds.map((b) => b.bottom));
+    const contactBand = 18;
+    let candidates = partBounds.filter((b) => b.bottom >= overallBottom - contactBand).filter((b) => b.width >= 4 && b.height >= 2).map((b) => b.modelPartIndex);
+    candidates = [...new Set(candidates)];
+    if (!candidates.length) {
+      const bottomPart = partBounds.slice().sort((a, b) => b.bottom - a.bottom)[0];
+      if (Number.isInteger(bottomPart?.modelPartIndex)) candidates = [bottomPart.modelPartIndex];
+    }
+    actor.visualGroundContactInitialized = true;
+    actor.visualGroundContactPartIndices = candidates;
+    actor.visualGroundReferenceBottomLocalY = overallBottom;
+    actor.visualGroundAnchorLocalY = overallBottom;
+  }
+  getCurrentGroundContactBottomLocalY(actor, drawList) {
+    const indices = actor.visualGroundContactPartIndices;
+    if (!Array.isArray(indices) || !indices.length) return null;
+    const allowed = new Set(indices);
+    let bottom = -Infinity;
+    for (const p of drawList) {
+      const modelPartIndex = Number.isInteger(p.index) ? p.index : p.rawPart?.index;
+      if (!allowed.has(modelPartIndex)) continue;
+      const b = this.getBattlePartLocalBounds(actor, p);
+      if (!b) continue;
+      bottom = Math.max(bottom, b.bottom);
+    }
+    return Number.isFinite(bottom) ? bottom : null;
   }
   getActorGroundAnchorLocalY(actor, drawList) {
+    this.initializeActorGroundContact(actor, drawList);
+    const currentContactBottom = this.getCurrentGroundContactBottomLocalY(actor, drawList);
+    if (Number.isFinite(currentContactBottom)) return currentContactBottom;
     if (Number.isFinite(actor.visualGroundAnchorLocalY)) return actor.visualGroundAnchorLocalY;
     const bounds = this.getBattleDrawListLocalBounds(actor, drawList);
-    const anchor = bounds && Number.isFinite(bounds.bottom) ? bounds.bottom : 0;
-    actor.visualGroundAnchorLocalY = anchor;
-    return anchor;
+    return bounds && Number.isFinite(bounds.bottom) ? bounds.bottom : 0;
   }
   drawActorLegacy(c, actor, drawList) {
     const baseAngle = actor.model.baseAngle || 3600;

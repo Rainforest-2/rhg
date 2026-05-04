@@ -73,7 +73,7 @@ export class BattleStatsLoader {
       attackType: val(v, 12, 0) === 1 ? 1 : 0, isRange: val(v, 12, 0) === 1, attackStartupFrames: Math.max(0, pre0),
       longPreFrames: Math.max(0, pre2 > 0 ? pre2 : (pre1 > 0 ? pre1 : pre0)), attackCount: attackHits.length, attackHits,
       front: val(v, 14, 0), back: val(v, 15, 0), ldStartRaw, ldRangeRaw, rawValues: v,
-      source: { ...sourceInfo, type: 'unit', mapping: 'bcu-unit', mappingStatus: 'valid', fallbackFields: [] }
+      source: { ...sourceInfo, type: 'unit', bcuAssetKind: 'unit', bcuRole: 'ally-unit', mapping: 'bcu-unit', assetSource: 'org/unit/{unit}/unit{unit}.csv', csvKind: 'unit-form-row', mappingStatus: 'valid', fallbackFields: [] }
     };
     const validation = this.validateStats(stats);
     if (!validation.valid) stats.source.mappingStatus = 'invalid';
@@ -98,13 +98,37 @@ export class BattleStatsLoader {
       attackType: val(v, 11, 0) === 1 ? 1 : 0, isRange: val(v, 11, 0) === 1, attackStartupFrames: Math.max(0, pre0),
       longPreFrames: Math.max(0, pre2 > 0 ? pre2 : (pre1 > 0 ? pre1 : pre0)), attackCount: attackHits.length, attackHits,
       front: 0, back: 0, ldStartRaw, ldRangeRaw, rawValues: v,
-      source: { ...sourceInfo, type: 'enemy', mapping: 'bcu-enemy', mappingStatus: 'valid', fallbackFields: [] }
+      source: { ...sourceInfo, type: 'enemy', bcuAssetKind: 'enemy', bcuRole: 'enemy', mapping: 'bcu-enemy', assetSource: 'org/data/t_unit.csv', csvKind: 'enemy-table-row', mappingStatus: 'valid', fallbackFields: [] }
     };
     const validation = this.validateStats(stats);
     if (!validation.valid) stats.source.mappingStatus = 'invalid';
     if (validation.suspiciousFields.length && stats.source.mappingStatus !== 'invalid') stats.source.mappingStatus = 'provisional';
     stats.source.fallbackFields.push(...validation.invalidFields, ...validation.suspiciousFields);
     return stats;
+  }
+
+
+  describeStats(stats) {
+    const source = stats?.source || {};
+    return {
+      type: source.type || '-',
+      bcuAssetKind: source.bcuAssetKind || source.type || '-',
+      bcuRole: source.bcuRole || '-',
+      mapping: source.mapping || '-',
+      file: source.file || '-',
+      row: Number.isFinite(source.row) ? source.row : null,
+      mappingStatus: source.mappingStatus || '-',
+      hp: stats?.hp ?? null,
+      damage: stats?.damage ?? null,
+      speed: stats?.speed ?? null,
+      range: stats?.range ?? stats?.detectionRange ?? null,
+      width: stats?.width ?? null,
+      isRange: !!stats?.isRange,
+      attackCount: stats?.attackCount ?? null,
+      attackHits: Array.isArray(stats?.attackHits)
+        ? stats.attackHits.map((h) => ({ hitIndex: h.hitIndex, damage: h.damage, preFrames: h.preFrames, ldStartRaw: h.ldStartRaw, ldRangeRaw: h.ldRangeRaw, isLd: !!h.isLd, isOmni: !!h.isOmni }))
+        : []
+    };
   }
 
   normalizeStats(raw, sourceInfo) {

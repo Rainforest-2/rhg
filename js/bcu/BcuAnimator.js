@@ -40,11 +40,18 @@ function valueAt(track, frame, prop) {
 const BASE_FPS = 30;
 
 export class BcuAnimator {
-  constructor(anim) { this.anim = anim; this.frame = 0; this.playing = true; this.speed = 1; }
+  constructor(anim) { this.anim = anim; this.frame = 0; this.playing = true; this.speed = 1; this.loop = true; }
   restart() { this.frame = 0; }
   step(v) { this.frame = Math.max(0, this.frame + v); }
   setSpeed(s) { this.speed = s; }
-  tick(dt) { if (!this.playing) return; const max = Math.max(1, this.anim?.maxFrame || 1); this.frame = (this.frame + (dt * BASE_FPS * this.speed) / 1000) % max; }
+  setLoop(loop) { this.loop = loop !== false; }
+  tick(dt) {
+    if (!this.playing) return;
+    const max = Math.max(1, this.anim?.maxFrame || 1);
+    const next = this.frame + (dt * BASE_FPS * this.speed) / 1000;
+    if (this.loop) this.frame = next % max;
+    else this.frame = Math.min(max - 0.0001, next);
+  }
 
   getValuesAtFrame(frame = this.frame) {
     const values = [];

@@ -1,7 +1,7 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
 export class BattleActor {
-  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1 }) {
+  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0 }) {
     this.assetDef = assetDef; this.sprite = sprite; this.model = model; this.side = side; this.x = x; this.y = y; this.scale = scale;
     this.facing = facing; this.direction = direction; this.renderFlipX = renderFlipX;
     this.currentAnimId = currentAnimId; this.rawStats = stats; this.animations = new Map(Object.entries(animations));
@@ -14,8 +14,12 @@ export class BattleActor {
     this.attackWaitMultiplier = Number.isFinite(attackWaitMultiplier) ? attackWaitMultiplier : 1;
     this.attackPhaseTimeMultiplier = Number.isFinite(attackPhaseTimeMultiplier) ? attackPhaseTimeMultiplier : 1;
     this.attackAnimationSpeedMultiplier = Number.isFinite(attackAnimationSpeedMultiplier) ? attackAnimationSpeedMultiplier : 1;
+    this.postAttackIdleHoldMs = Number.isFinite(postAttackIdleHoldMs) ? postAttackIdleHoldMs : 0;
+    this.minAttackWaitMs = Number.isFinite(minAttackWaitMs) ? minAttackWaitMs : 0;
     const rawAttackWaitMs = (this.attackWaitFrames / fps) * 1000;
-    this.attackWaitMs = rawAttackWaitMs * this.attackWaitMultiplier;
+    const scaledAttackWaitMs = rawAttackWaitMs * this.attackWaitMultiplier;
+    const scaledMinAttackWaitMs = this.minAttackWaitMs * this.attackWaitMultiplier;
+    this.attackWaitMs = Math.max(scaledAttackWaitMs, scaledMinAttackWaitMs, this.postAttackIdleHoldMs);
     this.attackPostHitWaitMs = this.attackWaitMs;
     this.nextAttackReadyMs = this.attackWaitMs;
     this.attackStartupMs = Math.max(0, (this.attackStartupFrames / fps) * 1000) * this.attackPhaseTimeMultiplier;
@@ -66,8 +70,8 @@ export class BattleActor {
     if (!animId) return;
     if (this.currentAnimId === animId && !restart) return;
     this.animator = new BcuAnimator(this.animations.get(animId) || this.animations.get('anim00') || { tracks: [], maxFrame: 1 });
-    if (role === 'attack') this.animator.setSpeed(this.attackAnimationSpeedMultiplier);
-    else this.animator.setSpeed(1);
+    if (role === 'attack') { this.animator.setSpeed(this.attackAnimationSpeedMultiplier); this.animator.setLoop(false); }
+    else { this.animator.setSpeed(1); this.animator.setLoop(true); }
     this.currentAnimId = animId;
     this.activeAnimId = animId;
     this.activeAnimRole = role || this.activeAnimRole;

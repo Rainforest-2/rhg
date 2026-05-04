@@ -55,14 +55,16 @@ export class BattleSceneRenderer {
   }
 
   getBaseVisualYOffset(base) {
-    if (!base?.visualBottomToCurrentCenter) return 0;
-    if (base.visualKind !== 'castle-composite') return 0;
-
-    const bounds = this.getCompositeBaseLocalBounds(base);
-    if (!bounds) return 0;
-
-    const s = base.scale || 1;
-    return -bounds.height * s * 0.5;
+    let y = 0;
+    if (base?.visualBottomToCurrentCenter && base.visualKind === 'castle-composite') {
+      const bounds = this.getCompositeBaseLocalBounds(base);
+      if (bounds) {
+        const s = base.scale || 1;
+        y += -bounds.height * s * 0.5;
+      }
+    }
+    if (Number.isFinite(base?.visualYOffsetPx)) y += base.visualYOffsetPx;
+    return y;
   }
   drawBases(c,bases,groundY,showParts){for(const base of bases) this.drawBase(c,base,groundY,showParts)}
   drawBase(c,base,groundY,showParts){ if(base.visualKind==='castle-composite'&&base.layers?.length){ const visualYOffset = this.getBaseVisualYOffset(base); for(const layer of base.layers){const s=base.scale||1;const x=base.x+(layer.offsetX||0)*s-layer.image.width*0.5*s;const y=base.y+visualYOffset+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; c.fillRect(base.x-pw*0.5, base.y-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', base.x-pw*0.44, base.y-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }

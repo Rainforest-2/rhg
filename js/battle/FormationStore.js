@@ -23,13 +23,13 @@ export function sanitizeFormation(rawFormation) {
   return { version: 1, slots: out };
 }
 
-function canUseStorage() { return typeof window !== 'undefined' && !!window.localStorage; }
+function canUseStorage() { return !!globalThis?.localStorage || (typeof window !== 'undefined' && !!window.localStorage); }
 
 export const FormationStore = {
   load() {
     if (!canUseStorage()) return getDefaultFormation();
     try {
-      const raw = window.localStorage.getItem(FORMATION_STORAGE_KEY);
+      const raw = globalThis.localStorage.getItem(FORMATION_STORAGE_KEY);
       if (!raw) return getDefaultFormation();
       return sanitizeFormation(JSON.parse(raw));
     } catch { return getDefaultFormation(); }
@@ -37,7 +37,7 @@ export const FormationStore = {
   save(formation) {
     const sanitized = sanitizeFormation(formation);
     if (canUseStorage()) {
-      try { window.localStorage.setItem(FORMATION_STORAGE_KEY, JSON.stringify(sanitized)); } catch {}
+      try { globalThis.localStorage.setItem(FORMATION_STORAGE_KEY, JSON.stringify(sanitized)); } catch {}
     }
     return sanitized;
   },

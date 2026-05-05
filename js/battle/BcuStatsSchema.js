@@ -1,4 +1,4 @@
-export const BCU_STATS_SCHEMA_VERSION = 'v0.11.1';
+export const BCU_STATS_SCHEMA_VERSION = 'v0.11.2';
 
 export const UNIT_FIELD_SCHEMA = Object.freeze({
   hp: 0, knockbacks: 1, speed: 2, atk0: 3, tba: 4, range: 5, price: 6, respawn: 7, width: 9,
@@ -56,7 +56,7 @@ export function buildBcuAttackHits({ rawValues, kind }) {
       ldRangeRaw: hitLdRange,
       shortPointRaw: hitLdStart,
       longPointRaw: hitLdStart + hitLdRange,
-      isLd: hitLdRange !== 0,
+      isLd: hitLdRange > 0,
       isOmni: hitLdRange < 0
     });
   }
@@ -69,3 +69,16 @@ export function summarizeBcuRawFields({ rawValues, kind }) {
   for (const [k, idx] of Object.entries(schema)) out[k] = { index: idx, value: val(rawValues, idx, 0) };
   return out;
 }
+
+export const UNIT_FIELD_NOTES = Object.freeze({
+  speed: 'user index memo: 2χ; keep raw BCU value, project to px in BattleActorFactory',
+  range: 'user index memo: 4χ; keep raw BCU value, project to px in BattleActorFactory',
+  price: 'user index memo: 100χ; BCU DataUnit.price=ints[6], display/economy may format separately',
+  respawn: 'BCU DataUnit.respawn=ints[7]*2'
+});
+
+export const ENEMY_FIELD_NOTES = Object.freeze({
+  speed: 'keep raw BCU DataEnemy speed value',
+  range: 'keep raw BCU DataEnemy range value',
+  reward: 'BCU DataEnemy.earn=ints[6], dropAmount=earn*100 for debug'
+});

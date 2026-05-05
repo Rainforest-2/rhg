@@ -3,11 +3,11 @@ import { BcuImgCut } from './BcuImgCut.js';
 import { BcuSpriteText } from './BcuSpriteText.js';
 
 const CARD = {
-  w: 110, h: 85,
-  innerX: 7, innerY: 6, innerW: 96, innerH: 74,
-  enemyPortraitX: 7, enemyPortraitY: 6, enemyPortraitW: 96, enemyPortraitH: 62,
-  costRightX: 106, costBottomY: 82, costScale: 0.9,
-  cooldownX: 10, cooldownY: 69, cooldownW: 90, cooldownH: 8
+  w: 128, h: 128,
+  innerX: 8, innerY: 8, innerW: 112, innerH: 112,
+  enemyPortraitX: 10, enemyPortraitY: 8, enemyPortraitW: 108, enemyPortraitH: 88,
+  costRightX: 124, costBottomY: 124, costScale: 0.9,
+  cooldownX: 12, cooldownY: 104, cooldownW: 104, cooldownH: 10
 };
 
 const loadImage = (src) => new Promise((res, rej) => {
@@ -16,18 +16,28 @@ const loadImage = (src) => new Promise((res, rej) => {
 
 export class PlayerProductionBar {
   constructor({ scene, mount = document.body }) {
-    this.scene = scene; this.mount = mount; this.lastTap = new Map(); this.ready = false; this.cards = []; this.lastRosterSignature = ''; this.didWarnRosterOverflow = false; this.setup();
+    this.scene = scene; this.mount = mount; this.lastTap = new Map(); this.ready = false; this.cards = []; this.lastRosterSignature = ''; this.didWarnRosterOverflow = false; this.didLogDeployMetrics = new Set(); this.setup();
   }
   resolveAssetPath(path) { if (!path) return ''; if (path.startsWith('./public/')) return path; if (path.startsWith('public/')) return `./${path}`; if (path.startsWith('assets/')) return `./public/${path}`; if (path.startsWith('/assets/')) return `./public${path}`; return path; }
   setVisible(v) { this.root?.classList.toggle('is-hidden', !v); }
-  updateLayout() { const panelW = this.mount?.getBoundingClientRect?.().width || 1280; const cardW = Math.round(Math.min(150, Math.max(88, panelW * 0.10))); const gap = Math.round(Math.min(10, Math.max(4, cardW * 0.055))); this.root?.style.setProperty('--prod-card-w', `${cardW}px`); this.root?.style.setProperty('--prod-card-gap', `${gap}px`); }
+  updateLayout() { const panelW = this.mount?.getBoundingClientRect?.().width || 1280; const cardW = Math.round(Math.min(132, Math.max(82, panelW * 0.085))); const gap = Math.round(Math.min(10, Math.max(4, cardW * 0.055))); this.root?.style.setProperty('--prod-card-w', `${cardW}px`); this.root?.style.setProperty('--prod-card-gap', `${gap}px`); }
   drawImageContain(ctx, image, x, y, w, h) { const iw = image?.naturalWidth || image?.width || 1; const ih = image?.naturalHeight || image?.height || 1; const s = Math.min(w / iw, h / ih); const dw = iw * s; const dh = ih * s; ctx.drawImage(image, x + (w - dw) * 0.5, y + (h - dh) * 0.5, dw, dh); }
   drawCardBase(ctx) { this.frameCut.draw(ctx, this.frameImage, this.framePart, 0, 0, CARD.w, CARD.h); ctx.fillStyle = '#fff'; ctx.fillRect(CARD.innerX, CARD.innerY, CARD.innerW, CARD.innerH); }
   drawEmptyCard(ctx) { this.drawCardBase(ctx); }
   isFullDeployCard(unitDef) { return unitDef?.uiIcon?.kind === 'unit'; }
-  drawFullDeployCard(ctx, image) { ctx.drawImage(image, 0, 0, CARD.w, CARD.h); }
+  drawFullDeployCard(ctx, image) {
+    const iw = image?.naturalWidth || image?.width || CARD.w;
+    const ih = image?.naturalHeight || image?.height || CARD.h;
+    const scale = Math.min(CARD.w / iw, CARD.h / ih);
+    const dw = Math.round(iw * scale);
+    const dh = Math.round(ih * scale);
+    const dx = Math.round((CARD.w - dw) * 0.5);
+    const dy = Math.round((CARD.h - dh) * 0.5);
+    ctx.drawImage(image, dx, dy, dw, dh);
+  }
   drawSyntheticEnemyCard(ctx, it) {
-    this.frameCut.draw(ctx, this.frameImage, this.framePart, 0, 0, CARD.w, CARD.h);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, CARD.w, CARD.h);
     ctx.fillStyle = '#fff';
     ctx.fillRect(CARD.innerX, CARD.innerY, CARD.innerW, CARD.innerH);
     if (it.icon) this.drawImageContain(ctx, it.icon, CARD.enemyPortraitX, CARD.enemyPortraitY, CARD.enemyPortraitW, CARD.enemyPortraitH);
@@ -42,6 +52,10 @@ export class PlayerProductionBar {
     if (!unitDef) return entry;
     try { entry.icon = await loadImage(this.resolveAssetPath(unitDef.uiIcon?.primary)); } catch {}
     if (!entry.icon) { try { entry.icon = await loadImage(this.resolveAssetPath(unitDef.uiIcon?.fallback)); } catch {} }
+    if (entry.icon && entry.iconMode === 'full-deploy-card' && !this.didLogDeployMetrics.has(unitDef.slotId)) {
+      this.didLogDeployMetrics.add(unitDef.slotId);
+      console.info('[PlayerProductionBar] deploy icon metrics', { slotId: unitDef.slotId, width: entry.icon.naturalWidth || entry.icon.width || 0, height: entry.icon.naturalHeight || entry.icon.height || 0 });
+    }
     const fire = (ev) => { ev.preventDefault(); const now = performance.now(); if (now - (this.lastTap.get(unitDef.slotId) || 0) < 200) return; this.lastTap.set(unitDef.slotId, now); c.classList.add('press'); setTimeout(() => c.classList.remove('press'), 80); this.scene?.requestPlayerSpawn?.(unitDef.slotId); };
     c.addEventListener('pointerdown', fire, { passive: false }); c.addEventListener('click', fire, { passive: false }); entry.fire = fire;
     return entry;

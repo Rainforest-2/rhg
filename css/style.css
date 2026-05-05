@@ -20,7 +20,7 @@ button{cursor:pointer}button:hover{border-color:var(--accent)}
 .prod-ui{position:absolute;inset:0;pointer-events:none;z-index:20}
 .prod-ui .battle-money{position:absolute;top:14px;right:18px;width:clamp(180px,24%,320px);height:auto;pointer-events:none}
 .prod-ui .cards{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:var(--prod-card-gap,6px);pointer-events:auto}
-.prod-ui .prod-card{width:var(--prod-card-w,120px);height:auto;aspect-ratio:110/85;touch-action:manipulation;border:0;background:transparent;transition:transform .08s}
+.prod-ui .prod-card{width:var(--prod-card-w,112px);height:var(--prod-card-w,112px);aspect-ratio: 1 / 1;touch-action:manipulation;border:0;background:transparent;transition:transform .08s}
 .prod-ui .prod-card.press{transform:scale(.95)}
 
 .prod-ui.is-hidden{display:none}

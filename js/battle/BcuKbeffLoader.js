@@ -5,7 +5,7 @@ import { BcuKbeffRuntime } from './BcuKbeffRuntime.js';
 import { verifyAssetPath } from './BcuAssetVerifier.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
-export const BCU_KBEFF_LOADER_VERSION = '0.11.8';
+export const BCU_KBEFF_LOADER_VERSION = '0.11.9';
 export const BCU_KBEFF_TYPE_TO_FILE = { INT_HB: 'kb_hb.maanim', INT_SW: 'kb_sw.maanim', INT_ASS: 'kb_ass.maanim' };
 const TYPE_TO_ENUM = { INT_HB: 'KB', INT_SW: 'SW', INT_ASS: 'ASS' };
 

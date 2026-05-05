@@ -121,6 +121,19 @@ export class BattleActor {
     this.visualRenderOffsetInitialized = false;
     this.visualRenderOffsetSource = 'not-initialized';
     this.visualRenderOffsetDebug = null;
+    this.stableRenderOffsetWorldPx = 0;
+    this.stableRenderOffsetLocalX = 0;
+    this.stableRenderOffsetInitialized = false;
+    this.stableRenderOffsetSource = 'not-initialized';
+    this.stableRenderOffsetDebug = null;
+    this.stableGroundAnchorLocalY = 0;
+    this.stableGroundAnchorInitialized = false;
+    this.stableGroundAnchorSource = 'not-initialized';
+    this.stableGroundAnchorDebug = null;
+    this.lastRenderOffsetWorldPx = 0;
+    this.lastGroundAnchorLocalY = 0;
+    this.lastGroundAnchorDebug = null;
+    this.lastRenderAnchorJumpDebug = null;
 
     this.visualCrowdLaneIndex = 0;
     this.visualCrowdLaneCount = 1;

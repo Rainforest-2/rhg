@@ -94,8 +94,8 @@ export class BattleBodyResolver {
     actor.combatPositionDebug = { mode: actor.combatPositionMode, edgeSource: actor.resolvedCombatEdgeSource, edgeInsetPx: actor.combatEdgeInsetPx, resolvedLocalX: actor.resolvedCombatEdgeLocalX, resolvedWorldOffsetPx: actor.resolvedCombatEdgeWorldOffsetPx, source: actor.combatPositionSource };
   }
 
-  static computeActorRenderAlignmentFromDrawList(actor, drawList, cfg = {}) {
-    if (!cfg?.enabled || !actor || !Array.isArray(drawList) || !actor.sprite) return 0;
+  static computeRenderOffsetFromDrawList(actor, drawList, cfg = {}) {
+    if (!cfg?.enabled || !actor || !Array.isArray(drawList) || !actor.sprite) return { offsetWorldPx: 0, offsetLocalX: 0, overall: null, bounds: null, frontScreenOffset: 0, candidateCount: 0, rejectedCount: 0, direction: Number.isFinite(actor?.direction) ? actor.direction : 1, flip: actor?.renderFlipX ? -1 : 1, scale: Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1, source: 'front-edge-derived-render-only' };
     const parts = [];
     for (const p of drawList) {
       const b = BattleBodyResolver.getPartLocalBounds(actor, p);
@@ -103,7 +103,7 @@ export class BattleBodyResolver {
       const area = Math.max(0, b.width * b.height);
       parts.push({ ...b, area });
     }
-    if (!parts.length) return 0;
+    if (!parts.length) return { offsetWorldPx: 0, offsetLocalX: 0, overall: null, bounds: null, frontScreenOffset: 0, candidateCount: 0, rejectedCount: 0, direction: Number.isFinite(actor?.direction) ? actor.direction : 1, flip: actor?.renderFlipX ? -1 : 1, scale: Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1, source: 'front-edge-derived-render-only' };
     const overall = { left: Math.min(...parts.map((b) => b.left)), right: Math.max(...parts.map((b) => b.right)), top: Math.min(...parts.map((b) => b.top)), bottom: Math.max(...parts.map((b) => b.bottom)) };
     overall.width = overall.right - overall.left;
     overall.height = overall.bottom - overall.top;
@@ -130,12 +130,46 @@ export class BattleBodyResolver {
     const frontScreenOffset = dir > 0 ? Math.max(leftOff, rightOff) : Math.min(leftOff, rightOff);
     const maxOffset = Number.isFinite(cfg.maxRenderOffsetPx) ? cfg.maxRenderOffsetPx : 180;
     const clamped = Math.max(-maxOffset, Math.min(maxOffset, -frontScreenOffset));
-    actor.visualRenderOffsetWorldPx = Number.isFinite(clamped) ? clamped : 0;
-    actor.visualRenderOffsetLocalX = scale !== 0 ? actor.visualRenderOffsetWorldPx / scale : 0;
+    const offsetWorldPx = Number.isFinite(clamped) ? clamped : 0;
+    const offsetLocalX = scale !== 0 ? offsetWorldPx / scale : 0;
+    return { offsetWorldPx, offsetLocalX, overall, bounds, frontScreenOffset, candidateCount: candidates.length, rejectedCount: Math.max(0, parts.length - candidates.length), direction: dir, flip, scale, source: 'front-edge-derived-render-only' };
+  }
+
+  static computeActorRenderAlignmentFromDrawList(actor, drawList, cfg = {}) {
+    const result = BattleBodyResolver.computeRenderOffsetFromDrawList(actor, drawList, cfg);
+    actor.visualRenderOffsetWorldPx = Number.isFinite(result?.offsetWorldPx) ? result.offsetWorldPx : 0;
+    actor.visualRenderOffsetLocalX = Number.isFinite(result?.offsetLocalX) ? result.offsetLocalX : 0;
     actor.visualRenderOffsetInitialized = true;
-    actor.visualRenderOffsetSource = 'front-edge-derived-render-only';
-    actor.visualRenderOffsetDebug = { overall, bounds, frontScreenOffset, candidateCount: candidates.length, rejectedCount: Math.max(0, parts.length - candidates.length), direction: dir, flip, scale };
+    actor.visualRenderOffsetSource = result?.source || 'front-edge-derived-render-only';
+    actor.visualRenderOffsetDebug = result || null;
     return actor.visualRenderOffsetWorldPx;
+  }
+
+  static initializeStableRenderAlignment(actor, drawList, cfg = {}) {
+    if (!actor || actor.stableRenderOffsetInitialized) return actor?.stableRenderOffsetWorldPx || 0;
+    const result = BattleBodyResolver.computeRenderOffsetFromDrawList(actor, drawList, cfg);
+    const offset = Number.isFinite(result?.offsetWorldPx) ? result.offsetWorldPx : 0;
+    actor.stableRenderOffsetWorldPx = offset;
+    actor.stableRenderOffsetLocalX = actor.scale ? offset / actor.scale : 0;
+    actor.stableRenderOffsetInitialized = true;
+    actor.stableRenderOffsetSource = result?.source || 'stable-render-anchor-v0113';
+    actor.stableRenderOffsetDebug = result || null;
+    actor.visualRenderOffsetWorldPx = actor.stableRenderOffsetWorldPx;
+    actor.visualRenderOffsetLocalX = actor.stableRenderOffsetLocalX;
+    actor.visualRenderOffsetInitialized = true;
+    actor.visualRenderOffsetSource = 'stable-render-anchor-v0113';
+    actor.visualRenderOffsetDebug = result || null;
+    return actor.stableRenderOffsetWorldPx;
+  }
+
+  static applyStableRenderAlignment(actor) {
+    if (!actor) return 0;
+    const offset = Number.isFinite(actor.stableRenderOffsetWorldPx) ? actor.stableRenderOffsetWorldPx : 0;
+    actor.visualRenderOffsetWorldPx = offset;
+    actor.visualRenderOffsetLocalX = actor.scale ? offset / actor.scale : 0;
+    actor.visualRenderOffsetInitialized = true;
+    actor.visualRenderOffsetSource = actor.stableRenderOffsetSource || 'stable-render-anchor-v0113';
+    return offset;
   }
 
   static getPartLocalBounds(actor, p) { /* unchanged */

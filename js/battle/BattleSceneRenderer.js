@@ -164,13 +164,23 @@ export class BattleSceneRenderer {
     }
     return Number.isFinite(bottom) ? bottom : null;
   }
-  getActorGroundAnchorLocalY(actor, drawList) {
+  initializeActorStableGroundAnchor(actor, drawList) {
+    if (!actor || actor.stableGroundAnchorInitialized) return;
     this.initializeActorGroundContact(actor, drawList);
-    const currentContactBottom = this.getCurrentGroundContactBottomLocalY(actor, drawList);
-    if (Number.isFinite(currentContactBottom)) return currentContactBottom;
-    if (Number.isFinite(actor.visualGroundAnchorLocalY)) return actor.visualGroundAnchorLocalY;
     const bounds = this.getBattleDrawListLocalBounds(actor, drawList);
-    return bounds && Number.isFinite(bounds.bottom) ? bounds.bottom : 0;
+    const anchor = Number.isFinite(actor.visualGroundAnchorLocalY) ? actor.visualGroundAnchorLocalY : (bounds && Number.isFinite(bounds.bottom) ? bounds.bottom : 0);
+    actor.stableGroundAnchorLocalY = anchor;
+    actor.stableGroundAnchorInitialized = true;
+    actor.stableGroundAnchorSource = 'initial-reference-frame';
+    actor.stableGroundAnchorDebug = { anchor, bounds, contactPartIndices: actor.visualGroundContactPartIndices || [] };
+  }
+  getActorGroundAnchorLocalY(actor, drawList) {
+    this.initializeActorStableGroundAnchor(actor, drawList);
+    const stable = Number.isFinite(actor.stableGroundAnchorLocalY) ? actor.stableGroundAnchorLocalY : 0;
+    const current = this.getCurrentGroundContactBottomLocalY(actor, drawList);
+    actor.lastGroundAnchorLocalY = stable;
+    actor.lastGroundAnchorDebug = { stable, current: Number.isFinite(current) ? current : null, delta: Number.isFinite(current) ? current - stable : null, source: 'stable-ground-anchor-v0113' };
+    return stable;
   }
   drawActorLegacy(c, actor, drawList) {
     const baseAngle = actor.model.baseAngle || 3600;
@@ -186,8 +196,21 @@ export class BattleSceneRenderer {
     if (!hasBattleDrawList) { this.drawActorLegacy(c, actor, drawList); return; }
     const anchorY = this.getActorGroundAnchorLocalY(actor, drawList);
     c.save();
-    BattleBodyResolver.computeActorRenderAlignmentFromDrawList(actor, drawList, BATTLE_CONFIG.tuning?.visualOriginAlignment || {});
+    const alignCfg = BATTLE_CONFIG.tuning?.visualOriginAlignment || {};
+    if (alignCfg?.enabled) {
+      if (alignCfg.recomputePerFrame === true) {
+        BattleBodyResolver.computeActorRenderAlignmentFromDrawList(actor, drawList, alignCfg);
+      } else if (!actor.stableRenderOffsetInitialized) {
+        BattleBodyResolver.initializeStableRenderAlignment(actor, drawList, alignCfg);
+      } else {
+        BattleBodyResolver.applyStableRenderAlignment(actor);
+      }
+    }
     const modelAlignOffsetX = Number.isFinite(actor.visualRenderOffsetWorldPx) ? actor.visualRenderOffsetWorldPx : 0;
+    const prevOffset = Number.isFinite(actor.lastRenderOffsetWorldPx) ? actor.lastRenderOffsetWorldPx : modelAlignOffsetX;
+    const deltaOffset = modelAlignOffsetX - prevOffset;
+    actor.lastRenderOffsetWorldPx = modelAlignOffsetX;
+    if (Math.abs(deltaOffset) > (alignCfg.maxAllowedOffsetJumpPx ?? 8)) actor.lastRenderAnchorJumpDebug = { state: actor.state, animId: actor.currentAnimId, activeAnimRole: actor.activeAnimRole, prevOffset, nextOffset: modelAlignOffsetX, delta: deltaOffset, source: actor.visualRenderOffsetSource };
     const crowdOffsetX = Number.isFinite(actor.visualCrowdFanoutPx) ? actor.visualCrowdFanoutPx : 0;
     const crowdOffsetY = Number.isFinite(actor.visualCrowdYOffsetPx) ? actor.visualCrowdYOffsetPx : 0;
     const kbOffsetX = Number.isFinite(actor.kbVisualOffsetX) ? actor.kbVisualOffsetX : 0;

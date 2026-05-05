@@ -4,5 +4,5 @@ export class BattleEconomy {
   getCooldown(slotId) { return this.cooldowns.get(slotId) || 0; }
   canProduce(unitDef) { return this.money >= (unitDef.cost || 0) && this.getCooldown(unitDef.slotId) <= 0; }
   produce(unitDef) { if (!this.canProduce(unitDef)) return false; this.money -= unitDef.cost || 0; this.cooldowns.set(unitDef.slotId, unitDef.cooldownMs || 0); return true; }
-  getStatus(unitDef) { return { canProduce: this.canProduce(unitDef), cooldownMs: this.getCooldown(unitDef.slotId), money: this.money, cost: unitDef.cost || 0 }; }
+  getStatus(unitDef) { const cooldownRemainingMs=this.getCooldown(unitDef.slotId); const cost=unitDef.cost||0; const affordable=this.money>=cost; const cooldownReady=cooldownRemainingMs<=0; return { canProduce: affordable&&cooldownReady, affordable, cooldownReady, cooldownRemainingMs, cooldownRatio:(unitDef.cooldownMs||0)>0?cooldownRemainingMs/(unitDef.cooldownMs||1):0, cooldownMs: cooldownRemainingMs, money:this.money, maxMoney:this.maxMoney, cost }; }
 }

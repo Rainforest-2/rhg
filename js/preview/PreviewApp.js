@@ -7,6 +7,7 @@ import { PreviewRenderer } from './PreviewRenderer.js';
 import { PreviewUi } from './PreviewUi.js';
 import { BattleScene } from '../battle/BattleScene.js';
 import { BattleSceneRenderer } from '../battle/BattleSceneRenderer.js';
+import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
 
 async function loadImage(url) {
   return await new Promise((res, rej) => {
@@ -18,7 +19,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; }
 
 
   async start() {
@@ -35,7 +36,7 @@ export class PreviewApp {
         if (this.viewMode === 'battle') {
           try {
             if (!this.battleLoading) this.battleScene?.tick(dt);
-            if (t - this.lastBattleUiUpdate > 200) { this.lastBattleUiUpdate = t; this.ui?.setBattleProduction?.({money:this.battleScene?.economy?.money,maxMoney:this.battleScene?.economy?.maxMoney,incomePerSecond:this.battleScene?.economy?.incomePerSecond,roster:this.battleScene?.getPlayerRosterStatus?.()||[],onSpawn:(slot)=>this.battleScene?.requestPlayerSpawn?.(slot)}); }
+            this.productionBar?.update(this.battleScene);
             this.renderer.ensureCanvasSize();
             this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
             this.lastBattleFrameErrorMessage = '';
@@ -84,7 +85,7 @@ export class PreviewApp {
     if (!this.battleScene) {
       this.battleLoading = true;
       this.battleInitPromise = (async()=>{ try { this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg)); await this.battleScene.init(); } catch (e) { console.error('[PreviewApp] battle init failed', e); this.ui?.log('error', `battle init failed: ${e instanceof Error ? e.message : String(e)}`); } finally { this.battleLoading = false; this.battleInitPromise = null; } })();
-      await this.battleInitPromise;
+      await this.battleInitPromise; if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:this.battleScene,mount:document.body});} else {this.productionBar.bindScene(this.battleScene);}
     }
   }
 
@@ -93,6 +94,7 @@ export class PreviewApp {
     if (this.viewMode !== 'battle') return;
     this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
     await this.battleScene.init();
+    this.productionBar?.bindScene(this.battleScene);
     this.ui?.log('info', 'Battle reset completed');
   }
 

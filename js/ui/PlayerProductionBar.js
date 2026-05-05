@@ -3,11 +3,19 @@ import { BcuImgCut } from './BcuImgCut.js';
 import { BcuSpriteText } from './BcuSpriteText.js';
 
 const CARD = {
-  w: 128, h: 128,
-  innerX: 8, innerY: 8, innerW: 112, innerH: 112,
-  enemyPortraitX: 10, enemyPortraitY: 8, enemyPortraitW: 108, enemyPortraitH: 88,
-  costRightX: 124, costBottomY: 124, costScale: 0.9,
-  cooldownX: 12, cooldownY: 104, cooldownW: 104, cooldownH: 10
+  w: 128,
+  h: 128,
+  costScale: 0.9,
+  fallbackVisibleRect: { x: 14, y: 14, w: 100, h: 100 },
+  syntheticPad: 5,
+  enemyPortraitPadX: 7,
+  enemyPortraitPadTop: 6,
+  enemyPortraitPadBottom: 24,
+  costPadRight: 2,
+  costPadBottom: 2,
+  cooldownPadX: 8,
+  cooldownPadBottom: 9,
+  cooldownH: 9
 };
 
 const loadImage = (src) => new Promise((res, rej) => {
@@ -16,16 +24,17 @@ const loadImage = (src) => new Promise((res, rej) => {
 
 export class PlayerProductionBar {
   constructor({ scene, mount = document.body }) {
-    this.scene = scene; this.mount = mount; this.lastTap = new Map(); this.ready = false; this.cards = []; this.lastRosterSignature = ''; this.didWarnRosterOverflow = false; this.didLogDeployMetrics = new Set(); this.setup();
+    this.scene = scene; this.mount = mount; this.lastTap = new Map(); this.ready = false; this.cards = []; this.lastRosterSignature = ''; this.didWarnRosterOverflow = false; this.didLogDeployMetrics = new Set(); this.visibleCardRect = null; this.setup();
   }
   resolveAssetPath(path) { if (!path) return ''; if (path.startsWith('./public/')) return path; if (path.startsWith('public/')) return `./${path}`; if (path.startsWith('assets/')) return `./public/${path}`; if (path.startsWith('/assets/')) return `./public${path}`; return path; }
   setVisible(v) { this.root?.classList.toggle('is-hidden', !v); }
   updateLayout() { const panelW = this.mount?.getBoundingClientRect?.().width || 1280; const cardW = Math.round(Math.min(132, Math.max(82, panelW * 0.085))); const gap = Math.round(Math.min(10, Math.max(4, cardW * 0.055))); this.root?.style.setProperty('--prod-card-w', `${cardW}px`); this.root?.style.setProperty('--prod-card-gap', `${gap}px`); }
   drawImageContain(ctx, image, x, y, w, h) { const iw = image?.naturalWidth || image?.width || 1; const ih = image?.naturalHeight || image?.height || 1; const s = Math.min(w / iw, h / ih); const dw = iw * s; const dh = ih * s; ctx.drawImage(image, x + (w - dw) * 0.5, y + (h - dh) * 0.5, dw, dh); }
-  drawCardBase(ctx) { this.frameCut.draw(ctx, this.frameImage, this.framePart, 0, 0, CARD.w, CARD.h); ctx.fillStyle = '#fff'; ctx.fillRect(CARD.innerX, CARD.innerY, CARD.innerW, CARD.innerH); }
+  drawCardBase(ctx) { this.frameCut.draw(ctx, this.frameImage, this.framePart, 0, 0, CARD.w, CARD.h); }
   drawEmptyCard(ctx) { this.drawCardBase(ctx); }
   isFullDeployCard(unitDef) { return unitDef?.uiIcon?.kind === 'unit'; }
   drawFullDeployCard(ctx, image) {
+    ctx.clearRect(0, 0, CARD.w, CARD.h);
     const iw = image?.naturalWidth || image?.width || CARD.w;
     const ih = image?.naturalHeight || image?.height || CARD.h;
     const scale = Math.min(CARD.w / iw, CARD.h / ih);
@@ -36,11 +45,85 @@ export class PlayerProductionBar {
     ctx.drawImage(image, dx, dy, dw, dh);
   }
   drawSyntheticEnemyCard(ctx, it) {
+    ctx.clearRect(0, 0, CARD.w, CARD.h);
+    const r = this.getVisibleCardRect();
+    const bodyW = Math.max(0, r.w - CARD.syntheticPad * 2);
+    const bodyH = Math.max(0, r.h - CARD.syntheticPad * 2);
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, CARD.w, CARD.h);
+    ctx.fillRect(r.x, r.y, r.w, r.h);
     ctx.fillStyle = '#fff';
-    ctx.fillRect(CARD.innerX, CARD.innerY, CARD.innerW, CARD.innerH);
-    if (it.icon) this.drawImageContain(ctx, it.icon, CARD.enemyPortraitX, CARD.enemyPortraitY, CARD.enemyPortraitW, CARD.enemyPortraitH);
+    ctx.fillRect(r.x + CARD.syntheticPad, r.y + CARD.syntheticPad, bodyW, bodyH);
+    if (it.icon) {
+      this.drawImageContain(
+        ctx,
+        it.icon,
+        r.x + CARD.enemyPortraitPadX,
+        r.y + CARD.enemyPortraitPadTop,
+        Math.max(0, r.w - CARD.enemyPortraitPadX * 2),
+        Math.max(0, r.h - CARD.enemyPortraitPadTop - CARD.enemyPortraitPadBottom)
+      );
+    }
+  }
+  computeImageAlphaBounds(image) {
+    const iw = image?.naturalWidth || image?.width || 0; const ih = image?.naturalHeight || image?.height || 0;
+    if (!iw || !ih) return null;
+    const canvas = document.createElement('canvas'); canvas.width = iw; canvas.height = ih;
+    const ctx = canvas.getContext('2d'); if (!ctx) return null;
+    ctx.clearRect(0, 0, iw, ih); ctx.drawImage(image, 0, 0, iw, ih);
+    const data = ctx.getImageData(0, 0, iw, ih).data;
+    let minX = iw; let minY = ih; let maxX = -1; let maxY = -1;
+    for (let y = 0; y < ih; y += 1) for (let x = 0; x < iw; x += 1) {
+      const i = (y * iw + x) * 4;
+      if (data[i + 3] > 8) { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
+    }
+    if (maxX < minX || maxY < minY) return null;
+    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+  }
+  computeImageDarkBounds(image) {
+    const iw = image?.naturalWidth || image?.width || 0; const ih = image?.naturalHeight || image?.height || 0;
+    if (!iw || !ih) return null;
+    const canvas = document.createElement('canvas'); canvas.width = iw; canvas.height = ih;
+    const ctx = canvas.getContext('2d'); if (!ctx) return null;
+    ctx.clearRect(0, 0, iw, ih); ctx.drawImage(image, 0, 0, iw, ih);
+    const data = ctx.getImageData(0, 0, iw, ih).data;
+    let minX = iw; let minY = ih; let maxX = -1; let maxY = -1;
+    for (let y = 0; y < ih; y += 1) for (let x = 0; x < iw; x += 1) {
+      const i = (y * iw + x) * 4;
+      if (data[i + 3] > 8 && data[i] < 40 && data[i + 1] < 40 && data[i + 2] < 40) { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
+    }
+    if (maxX < minX || maxY < minY) return null;
+    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+  }
+  deriveVisibleCardRect() {
+    const unitCard = this.cards.find((it) => it.d?.slotId === 'prod-cat-basic' && it.icon) || this.cards.find((it) => it.d?.uiIcon?.kind === 'unit' && it.icon);
+    if (!unitCard) { this.visibleCardRect = { ...CARD.fallbackVisibleRect }; return; }
+    let rect = this.computeImageAlphaBounds(unitCard.icon);
+    if (!rect || rect.w >= CARD.w - 2 || rect.h >= CARD.h - 2) rect = this.computeImageDarkBounds(unitCard.icon) || rect;
+    if (!rect || rect.w <= 0 || rect.h <= 0) rect = { ...CARD.fallbackVisibleRect };
+    this.visibleCardRect = rect;
+    console.info('[PlayerProductionBar] visible card rect', { slotId: unitCard.d.slotId, rect, image: { w: unitCard.icon.naturalWidth, h: unitCard.icon.naturalHeight } });
+  }
+  getVisibleCardRect() { return this.visibleCardRect || CARD.fallbackVisibleRect; }
+  drawCostForCard(ctx, cost, disabledCost) {
+    const r = this.getVisibleCardRect();
+    const metrics = this.spriteText.measureCostBox(cost || 0, { disabled: disabledCost, scale: CARD.costScale });
+    const costRightX = r.x + r.w - CARD.costPadRight;
+    const costBottomY = r.y + r.h - CARD.costPadBottom;
+    this.spriteText.drawCost(ctx, cost || 0, costRightX - metrics.width, costBottomY - metrics.height, { disabled: disabledCost, scale: CARD.costScale });
+  }
+  drawDisabledOverlay(ctx, reason) {
+    const r = this.getVisibleCardRect();
+    ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
+    ctx.fillStyle = reason === 'cooldown' ? 'rgba(0,0,0,0.38)' : 'rgba(0,0,0,0.32)';
+    ctx.fillRect(r.x, r.y, r.w, r.h); ctx.restore();
+  }
+  drawCooldownBar(ctx, status) {
+    const r = this.getVisibleCardRect();
+    const ratio = Math.max(0, Math.min(1, status.cooldownRatio ?? 0));
+    const barX = r.x + CARD.cooldownPadX; const barW = Math.max(0, r.w - CARD.cooldownPadX * 2); const barH = CARD.cooldownH; const barY = r.y + r.h - CARD.cooldownPadBottom - barH;
+    const remainingW = Math.round(barW * ratio); const completedW = Math.max(0, barW - remainingW);
+    ctx.fillStyle = '#111'; ctx.fillRect(barX, barY, barW, barH);
+    ctx.fillStyle = '#6fe6ff'; ctx.fillRect(barX, barY, completedW, barH);
   }
 
   getProductionRoster(scene = this.scene) { return scene?.getPlayerProductionRoster?.() || scene?.playerProductionRoster || BATTLE_CONFIG.rosters.dogPlayer || []; }
@@ -68,6 +151,7 @@ export class PlayerProductionBar {
     if (roster.length > 5 && !this.didWarnRosterOverflow) { this.didWarnRosterOverflow = true; console.warn('[PlayerProductionBar] roster overflow >5, truncating', roster.length); }
     const slots = Array.from({ length: 5 }, (_, index) => usable[index] || null);
     this.cards = await Promise.all(slots.map((unitDef) => this.createCardSlot(unitDef)));
+    this.deriveVisibleCardRect();
   }
 
   async ensureCardsForScene(scene = this.scene) {
@@ -105,19 +189,18 @@ export class PlayerProductionBar {
       if (it.iconMode === 'full-deploy-card' && it.icon) this.drawFullDeployCard(ctx, it.icon);
       else this.drawSyntheticEnemyCard(ctx, it);
       const s = scene.economy?.getStatus(it.d) || {};
-      const stopped = scene.battleState !== 'running'; const cooldown = (s.cooldownRemainingMs || 0) > 0; const notEnough = s.affordable === false; const disabled = stopped || cooldown || notEnough;
-      if (disabled) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, CARD.w, CARD.h); }
+      const stopped = scene.battleState !== 'running'; const cooldown = (s.cooldownRemainingMs || 0) > 0; const notEnough = s.affordable === false;
       if (cooldown) {
-        const ratio = Math.max(0, Math.min(1, s.cooldownRatio ?? 0)); const rem = Math.round(ratio * CARD.cooldownW);
-        ctx.fillStyle = '#111'; ctx.fillRect(CARD.cooldownX, CARD.cooldownY, CARD.cooldownW, CARD.cooldownH);
-        ctx.fillStyle = '#6fe6ff'; ctx.fillRect(CARD.cooldownX, CARD.cooldownY, CARD.cooldownW - rem, CARD.cooldownH);
+        this.drawDisabledOverlay(ctx, 'cooldown');
+        this.drawCooldownBar(ctx, s);
+      } else if (notEnough) {
+        this.drawDisabledOverlay(ctx, 'money');
+        this.drawCostForCard(ctx, it.d.cost || 0, true);
+      } else if (stopped) {
+        this.drawDisabledOverlay(ctx, 'stopped');
+        this.drawCostForCard(ctx, it.d.cost || 0, true);
       } else {
-        const disabledCost = disabled && !cooldown;
-        const costScale = CARD.costScale;
-        const metrics = this.spriteText.measureCostBox(it.d.cost || 0, { disabled: disabledCost, scale: costScale });
-        const costX = CARD.costRightX - metrics.width;
-        const costY = CARD.costBottomY - metrics.height;
-        this.spriteText.drawCost(ctx, it.d.cost || 0, costX, costY, { disabled: disabledCost, scale: costScale });
+        this.drawCostForCard(ctx, it.d.cost || 0, false);
       }
     }
   }

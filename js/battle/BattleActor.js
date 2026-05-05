@@ -76,6 +76,19 @@ export class BattleActor {
     this.knockbackPositionDistance = 60;
     this.knockbackFromX = this.x;
     this.knockbackToX = this.x;
+    this.knockbackSerial = 0;
+    this.damageResolveSerial = 0;
+    this.lastKnockbackDebug = null;
+    this.lastDamageResolveDebug = null;
+    this.kbStartedAtMs = null;
+    this.kbEndedAtMs = null;
+    this.kbTargetable = true;
+    this.kbTouchable = true;
+    this.kbVisualOffsetX = 0;
+    this.kbVisualOffsetY = 0;
+    this.kbVisualScale = 1;
+    this.kbVisualProgress = 0;
+    this.kbVisualSource = 'none';
 
     this.pendingDamage = 0;
     this.pendingHits = [];
@@ -161,10 +174,13 @@ export class BattleActor {
   }
 
   isAlive() { return this.isAliveFlag && this.hp > 0 && this.state !== 'dead' && this.state !== 'dying'; }
+  isKnockbacking() { return this.state === 'knockback'; }
+  isDyingOrDead() { return this.state === 'dying' || this.state === 'dead' || this.deathPending || this.deathAfterKnockback || this.hp <= 0; }
   isFinalKnockback() { return this.state === 'knockback' && (this.deathAfterKnockback || this.deathPending || this.hp <= 0); }
   needsLifecycleTick() { return this.isAlive() || this.state === 'knockback' || this.state === 'dead' || this.deathPending || this.deathAfterKnockback; }
-  isTargetable() { return this.isAlive(); }
-  isCombatAlive() { return this.isAlive(); }
+  isTargetable() { if (!this.isAlive()) return false; if (this.isKnockbacking() && this.kbTargetable === false) return false; return true; }
+  isTouchable() { if (!this.isAlive()) return false; if (this.isKnockbacking() && this.kbTouchable === false) return false; return true; }
+  isCombatAlive() { return this.isTargetable(); }
   isRenderable() {
     if (this.state === 'removed') return false;
     if (this.isAlive()) return true;
@@ -192,20 +208,32 @@ export class BattleActor {
     return true;
   }
 
+
+  getKnockbackConfig(tuning = {}, kind = 'hp') {
+    const kb = tuning.knockback || {};
+    if (kind === 'final') { const c = kb.finalKb || {}; return { type: 'final', durationMs: c.durationMs ?? tuning.hpKnockbackDurationMs ?? this.knockbackAnimDurationMs, distancePx: c.distancePx ?? tuning.hpKnockbackDistancePx ?? this.knockbackPositionDistance, combatEasing: c.combatEasing || 'linearRemaining', visualEasing: c.visualEasing || 'bcu-inspired-bounce', visualOffsetYMaxPx: c.visualOffsetYMaxPx ?? -36, visualBackSwingPx: c.visualBackSwingPx ?? 10, visualScalePeak: c.visualScalePeak ?? 1.03, targetableDuringKb: !!c.targetableDuringKb, touchableDuringKb: !!c.touchableDuringKb, enterDeadAfterKb: c.enterDeadAfterKb !== false }; }
+    const c = kb.hpKb || {};
+    return { type: 'hp', durationMs: c.durationMs ?? tuning.hpKnockbackDurationMs ?? this.knockbackAnimDurationMs, distancePx: c.distancePx ?? tuning.hpKnockbackDistancePx ?? this.knockbackPositionDistance, combatEasing: c.combatEasing || 'linearRemaining', visualEasing: c.visualEasing || 'bcu-inspired-bounce', visualOffsetYMaxPx: c.visualOffsetYMaxPx ?? -32, visualBackSwingPx: c.visualBackSwingPx ?? 8, visualScalePeak: c.visualScalePeak ?? 1.025, targetableDuringKb: !!c.targetableDuringKb, touchableDuringKb: !!c.touchableDuringKb, cancelAttackOnKb: c.cancelAttackOnKb !== false };
+  }
+
+  updateKnockbackVisual(progress) { const t = Math.max(0, Math.min(1, progress)); this.kbVisualProgress = t; const sin = Math.sin(Math.PI * t); const settle = 1 - t; const yMax = Number.isFinite(this.kbVisualOffsetYMaxPx) ? this.kbVisualOffsetYMaxPx : -32; const backSwing = Number.isFinite(this.kbVisualBackSwingPx) ? this.kbVisualBackSwingPx : 8; const peak = Number.isFinite(this.kbVisualScalePeak) ? this.kbVisualScalePeak : 1.025; this.kbVisualOffsetY = yMax * sin; this.kbVisualOffsetX = -this.direction * backSwing * sin * settle; this.kbVisualScale = 1 + (peak - 1) * sin; }
+  resetKnockbackVisual() { this.kbVisualOffsetX = 0; this.kbVisualOffsetY = 0; this.kbVisualScale = 1; this.kbVisualProgress = 0; }
+
   startKnockback(knockback = null) {
     const kb = knockback || {};
+    this.knockbackSerial += 1;
     this.setState('knockback');
     this.attackElapsedMs = 0; this.attackWaitElapsedMs = 0; this.hasHitInCurrentAttack = false;
-    this.resolvedAttackEventKeys = new Set();
-    this.knockbackType = kb.type || 'hp';
-    this.knockbackReason = kb.reason || 'hp-threshold';
-    this.deathAfterKnockback = !!kb.deathAfterKnockback;
-    this.knockbackPositionElapsedMs = 0;
-    this.knockbackPositionDurationMs = Number.isFinite(kb.durationMs) ? kb.durationMs : this.knockbackAnimDurationMs;
+    this.resolvedAttackEventKeys = new Set(); this.attackTarget = null; this.attackTargetType = null;
+    this.knockbackType = kb.type || 'hp'; this.knockbackReason = kb.reason || 'hp-threshold'; this.deathAfterKnockback = !!kb.deathAfterKnockback;
+    this.kbStartedAtMs = Number.isFinite(kb.nowMs) ? kb.nowMs : null; this.kbEndedAtMs = null; this.kbTargetable = !!kb.targetableDuringKb; this.kbTouchable = !!kb.touchableDuringKb;
+    this.knockbackPositionElapsedMs = 0; this.knockbackPositionDurationMs = Number.isFinite(kb.durationMs) ? kb.durationMs : this.knockbackAnimDurationMs;
     const distance = Number.isFinite(kb.distancePx) ? kb.distancePx : this.knockbackPositionDistance;
-    this.knockbackFromX = this.x;
-    this.knockbackToX = this.x - this.direction * distance;
-    if (this.deathAfterKnockback || kb.deathAfterKnockback) { this.attackTarget = null; this.attackTargetType = null; }
+    this.knockbackFromX = this.x; this.knockbackToX = this.x - this.direction * distance;
+    this.kbCombatEasing = kb.combatEasing || 'linearRemaining'; this.kbVisualEasing = kb.visualEasing || 'bcu-inspired-bounce';
+    this.kbVisualOffsetYMaxPx = Number.isFinite(kb.visualOffsetYMaxPx) ? kb.visualOffsetYMaxPx : -32; this.kbVisualBackSwingPx = Number.isFinite(kb.visualBackSwingPx) ? kb.visualBackSwingPx : 8; this.kbVisualScalePeak = Number.isFinite(kb.visualScalePeak) ? kb.visualScalePeak : 1.025;
+    this.resetKnockbackVisual(); this.kbVisualSource = this.kbVisualEasing;
+    this.lastKnockbackDebug = { serial: this.knockbackSerial, type: this.knockbackType, reason: this.knockbackReason, fromX: this.knockbackFromX, toX: this.knockbackToX, distancePx: distance, durationMs: this.knockbackPositionDurationMs, combatEasing: this.kbCombatEasing, visualEasing: this.kbVisualEasing, visualOffsetYMaxPx: this.kbVisualOffsetYMaxPx, visualBackSwingPx: this.kbVisualBackSwingPx, visualScalePeak: this.kbVisualScalePeak, deathAfterKnockback: this.deathAfterKnockback, targetableDuringKb: this.kbTargetable, touchableDuringKb: this.kbTouchable };
     this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame();
   }
 
@@ -224,35 +252,19 @@ export class BattleActor {
   resolvePostDamage({ nowMs = 0, tuning = {} } = {}) {
     if (this.pendingDamage <= 0) return { damaged: false, dead: false, knockedBack: false };
     if (!this.isAlive()) { this.clearPendingDamage(); return { damaged: false, dead: false, knockedBack: false }; }
-    const damage = Math.max(0, this.pendingDamage);
-    const hpBefore = this.hp;
-    const hpAfter = Math.max(0, hpBefore - damage);
-    let shouldKnockback = false;
-    const deathReached = hpAfter <= 0;
-    if (!deathReached && this.knockbacks > 1 && hpAfter <= this.nextKnockbackHp) shouldKnockback = true;
-    if (!deathReached && this.knockbacks > 1) {
-      const crossedCount = Math.min(this.knockbacks - 1, Math.max(0, Math.floor((this.maxHp - hpAfter) / this.knockbackHpStep)));
-      if (crossedCount > this.knockbackCount) {
-        shouldKnockback = true;
-        this.knockbackCount = crossedCount;
-        this.nextKnockbackHp = Math.max(0, this.maxHp - this.knockbackHpStep * (this.knockbackCount + 1));
-      }
-    }
-    const finalKb = !!tuning.finalKnockbackBeforeDeath;
-    if (deathReached && finalKb && this.state !== 'knockback') shouldKnockback = true;
+    const damage = Math.max(0, this.pendingDamage); const hpBefore = this.hp; const hpAfter = Math.max(0, hpBefore - damage); const deathReached = hpAfter <= 0;
+    const previousKbCount = this.knockbackCount; let crossedCount = previousKbCount;
+    if (this.knockbacks > 1) crossedCount = Math.min(this.knockbacks - 1, Math.max(0, Math.floor((this.maxHp - hpAfter) / this.knockbackHpStep)));
+    const crossedHpKb = !deathReached && crossedCount > previousKbCount;
+    let kbRequest = null;
+    if (deathReached && tuning.finalKnockbackBeforeDeath !== false) { const cfg = this.getKnockbackConfig(tuning, 'final'); kbRequest = { type: 'final', reason: 'final-hp-death', distancePx: cfg.distancePx, durationMs: cfg.durationMs, combatEasing: cfg.combatEasing, visualEasing: cfg.visualEasing, visualOffsetYMaxPx: cfg.visualOffsetYMaxPx, visualBackSwingPx: cfg.visualBackSwingPx, visualScalePeak: cfg.visualScalePeak, deathAfterKnockback: true, targetableDuringKb: cfg.targetableDuringKb, touchableDuringKb: cfg.touchableDuringKb, nowMs }; }
+    else if (crossedHpKb) { this.knockbackCount = crossedCount; this.nextKnockbackHp = Math.max(0, this.maxHp - this.knockbackHpStep * (this.knockbackCount + 1)); const cfg = this.getKnockbackConfig(tuning, 'hp'); kbRequest = { type: 'hp', reason: 'hp-threshold', distancePx: cfg.distancePx, durationMs: cfg.durationMs, combatEasing: cfg.combatEasing, visualEasing: cfg.visualEasing, visualOffsetYMaxPx: cfg.visualOffsetYMaxPx, visualBackSwingPx: cfg.visualBackSwingPx, visualScalePeak: cfg.visualScalePeak, deathAfterKnockback: false, targetableDuringKb: cfg.targetableDuringKb, touchableDuringKb: cfg.touchableDuringKb, nowMs }; }
     this.hp = hpAfter;
+    this.lastDamageResolveDebug = { serial: ++this.damageResolveSerial, hpBefore, hpAfter, damage, deathReached, previousKbCount, crossedCount, nextKnockbackHp: this.nextKnockbackHp, kbRequested: !!kbRequest, kbType: kbRequest?.type || null, kbReason: kbRequest?.reason || null, hitCount: this.pendingHits.length };
     const result = { damaged: true, hpBefore, hpAfter, damage, dead: false, deathPending: false, knockedBack: false };
-    if (shouldKnockback) {
-      this.pendingKnockback = {
-        type: 'hp', reason: deathReached ? 'final-hp-death' : 'hp-threshold',
-        distancePx: Number.isFinite(tuning.hpKnockbackDistancePx) ? tuning.hpKnockbackDistancePx : (this.knockbackPositionDistance || 60),
-        durationMs: Number.isFinite(tuning.hpKnockbackDurationMs) ? tuning.hpKnockbackDurationMs : this.knockbackAnimDurationMs,
-        deathAfterKnockback: deathReached
-      };
-    }
     if (deathReached) { this.deathPending = true; this.isAliveFlag = false; this.lastKilledBy = this.pendingHits.slice(); result.deathPending = true; }
     this.clearPendingDamage();
-    if (this.pendingKnockback) { this.startKnockback(this.pendingKnockback); result.knockedBack = true; this.pendingKnockback = null; }
+    if (kbRequest) { this.startKnockback(kbRequest); result.knockedBack = true; }
     else if (deathReached) { this.enterDeadState(nowMs); result.dead = true; }
     return result;
   }

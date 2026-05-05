@@ -90,8 +90,11 @@ export class BattleActor {
     this.kbVisualProgress = 0;
     this.kbVisualSource = 'none';
     this.kbBcuType = null;
+    this.kbBcuTimeFrames = 0;
     this.kbFramesTotal = 0;
     this.kbFramesRemaining = 0;
+    this.kbMoveFramesTotal = 0;
+    this.kbMoveFramesRemaining = 0;
     this.kbFrameIndex = 0;
     this.kbFrameAccumulatorMs = 0;
     this.kbDistanceTotalPx = 0;
@@ -99,6 +102,9 @@ export class BattleActor {
     this.kbStartX = this.x;
     this.kbLastFrameX = this.x;
     this.kbMoveMode = 'linearRemaining';
+    this.kbDistanceSource = 'none';
+    this.kbDistanceScale = null;
+    this.kbDisableSyntheticBounce = false;
     this.kbTouchState = 'normal';
     this.lastKnockbackFrameDebug = null;
 
@@ -255,12 +261,16 @@ export class BattleActor {
       bcuDistance: c.bcuDistance ?? d.bcuDistance,
       moveMode,
       durationMs: c.durationMs ?? tuning.hpKnockbackDurationMs ?? this.knockbackAnimDurationMs,
-      distancePx: c.distancePx ?? tuning.hpKnockbackDistancePx ?? this.knockbackPositionDistance,
+      distancePx: Number.isFinite(c.distancePx) ? c.distancePx : null,
+      knockbackDistanceToPx: kb.knockbackDistanceToPx ?? tuning.rangeToPx ?? 0.27,
+      tuning,
       combatEasing: c.combatEasing || (moveMode === 'easeOut' ? 'easeOutQuad' : 'linearRemaining'),
       visualEasing: c.visualEasing || 'bcu-inspired-bounce',
       visualOffsetYMaxPx: c.visualOffsetYMaxPx ?? d.visualOffsetYMaxPx,
       visualBackSwingPx: c.visualBackSwingPx ?? d.visualBackSwingPx,
       visualScalePeak: c.visualScalePeak ?? d.visualScalePeak,
+      disableSyntheticBounce: !!c.disableSyntheticBounce,
+      distanceSource: c.distanceSource || null,
       targetableDuringKb: !!c.targetableDuringKb,
       touchableDuringKb: !!c.touchableDuringKb,
       cancelAttackOnKb: c.cancelAttackOnKb !== false,
@@ -268,7 +278,14 @@ export class BattleActor {
     };
   }
 
-  updateKnockbackVisual(progress) { const t = Math.max(0, Math.min(1, progress)); this.kbVisualProgress = t; const sin = Math.sin(Math.PI * t); const settle = 1 - t; const yMax = Number.isFinite(this.kbVisualOffsetYMaxPx) ? this.kbVisualOffsetYMaxPx : -32; const backSwing = Number.isFinite(this.kbVisualBackSwingPx) ? this.kbVisualBackSwingPx : 8; const peak = Number.isFinite(this.kbVisualScalePeak) ? this.kbVisualScalePeak : 1.025; this.kbVisualOffsetY = yMax * sin; this.kbVisualOffsetX = -this.direction * backSwing * sin * settle; this.kbVisualScale = 1 + (peak - 1) * sin; }
+  resolveKnockbackDistancePx(kb = {}, tuning = {}) {
+    if (Number.isFinite(kb.distancePx)) return { distancePx: kb.distancePx, source: 'explicit-distancePx', scale: null };
+    const scale = tuning?.knockback?.knockbackDistanceToPx ?? tuning?.rangeToPx ?? 0.27;
+    if (Number.isFinite(kb.bcuDistance) && Number.isFinite(scale)) return { distancePx: kb.bcuDistance * scale, source: 'bcuDistance*knockbackDistanceToPx', scale };
+    return { distancePx: this.knockbackPositionDistance, source: 'fallback-knockbackPositionDistance', scale };
+  }
+
+  updateKnockbackVisual(progress) { const t = Math.max(0, Math.min(1, progress)); if (this.kbDisableSyntheticBounce) { this.kbVisualOffsetX = 0; this.kbVisualOffsetY = 0; this.kbVisualScale = 1; this.kbVisualProgress = t; return; } this.kbVisualProgress = t; const sin = Math.sin(Math.PI * t); const settle = 1 - t; const yMax = Number.isFinite(this.kbVisualOffsetYMaxPx) ? this.kbVisualOffsetYMaxPx : -32; const backSwing = Number.isFinite(this.kbVisualBackSwingPx) ? this.kbVisualBackSwingPx : 8; const peak = Number.isFinite(this.kbVisualScalePeak) ? this.kbVisualScalePeak : 1.025; this.kbVisualOffsetY = yMax * sin; this.kbVisualOffsetX = -this.direction * backSwing * sin * settle; this.kbVisualScale = 1 + (peak - 1) * sin; }
   resetKnockbackVisual() { this.kbVisualOffsetX = 0; this.kbVisualOffsetY = 0; this.kbVisualScale = 1; this.kbVisualProgress = 0; }
 
   startKnockback(knockback = null) {
@@ -280,25 +297,30 @@ export class BattleActor {
     this.knockbackType = kb.type || 'hp'; this.knockbackReason = kb.reason || 'hp-threshold'; this.deathAfterKnockback = !!kb.deathAfterKnockback;
     this.kbStartedAtMs = Number.isFinite(kb.nowMs) ? kb.nowMs : null; this.kbEndedAtMs = null; this.kbTargetable = !!kb.targetableDuringKb; this.kbTouchable = !!kb.touchableDuringKb;
     this.knockbackPositionElapsedMs = 0; this.knockbackPositionDurationMs = Number.isFinite(kb.durationMs) ? kb.durationMs : this.knockbackAnimDurationMs;
-    const frames = Math.max(1, Math.floor(kb.bcuTimeFrames || kb.frames || 1));
-    const distance = Number.isFinite(kb.distancePx) ? kb.distancePx : this.knockbackPositionDistance;
-    this.kbBcuType = kb.bcuType || 'INT_HB'; this.kbFramesTotal = frames; this.kbFramesRemaining = frames; this.kbFrameIndex = 0; this.kbFrameAccumulatorMs = 0; this.kbDistanceTotalPx = distance; this.kbRemainingDistancePx = distance; this.kbStartX = this.x; this.kbLastFrameX = this.x; this.kbMoveMode = kb.moveMode || (kb.combatEasing === 'easeOutQuad' ? 'easeOut' : 'linearRemaining'); this.kbTouchState = this.deathAfterKnockback ? 'finalKb' : 'kb';
+    const bcuFrames = Math.max(1, Math.floor(kb.bcuTimeFrames || kb.frames || 1));
+    const moveFrames = Math.max(1, bcuFrames - 1);
+    const resolvedDistance = this.resolveKnockbackDistancePx(kb, kb.tuning || {});
+    const distance = resolvedDistance.distancePx;
+    this.kbBcuType = kb.bcuType || 'INT_HB'; this.kbBcuTimeFrames = bcuFrames; this.kbFramesTotal = bcuFrames; this.kbFramesRemaining = moveFrames; this.kbMoveFramesTotal = moveFrames; this.kbMoveFramesRemaining = moveFrames; this.kbFrameIndex = 0; this.kbFrameAccumulatorMs = 0; this.kbDistanceTotalPx = distance; this.kbRemainingDistancePx = distance; this.kbStartX = this.x; this.kbLastFrameX = this.x; this.kbMoveMode = kb.moveMode || (kb.combatEasing === 'easeOutQuad' ? 'easeOut' : 'linearRemaining'); this.kbTouchState = this.deathAfterKnockback ? 'finalKb' : 'kb';
     this.knockbackFromX = this.x; this.knockbackToX = this.x - this.direction * distance;
     this.kbCombatEasing = kb.combatEasing || 'linearRemaining'; this.kbVisualEasing = kb.visualEasing || 'bcu-inspired-bounce';
+    this.kbDisableSyntheticBounce = !!kb.disableSyntheticBounce;
+    this.kbDistanceSource = resolvedDistance.source || kb.distanceSource || 'unknown';
+    this.kbDistanceScale = resolvedDistance.scale;
     this.kbVisualOffsetYMaxPx = Number.isFinite(kb.visualOffsetYMaxPx) ? kb.visualOffsetYMaxPx : -32; this.kbVisualBackSwingPx = Number.isFinite(kb.visualBackSwingPx) ? kb.visualBackSwingPx : 8; this.kbVisualScalePeak = Number.isFinite(kb.visualScalePeak) ? kb.visualScalePeak : 1.025;
-    this.resetKnockbackVisual(); this.kbVisualSource = this.kbVisualEasing;
-    this.lastKnockbackDebug = { serial: this.knockbackSerial, type: this.knockbackType, reason: this.knockbackReason, fromX: this.knockbackFromX, toX: this.knockbackToX, distancePx: distance, durationMs: this.knockbackPositionDurationMs, combatEasing: this.kbCombatEasing, visualEasing: this.kbVisualEasing, visualOffsetYMaxPx: this.kbVisualOffsetYMaxPx, visualBackSwingPx: this.kbVisualBackSwingPx, visualScalePeak: this.kbVisualScalePeak, deathAfterKnockback: this.deathAfterKnockback, targetableDuringKb: this.kbTargetable, touchableDuringKb: this.kbTouchable, bcuType: this.kbBcuType, bcuTimeFrames: kb.bcuTimeFrames || frames, bcuDistance: kb.bcuDistance ?? null, framesTotal: this.kbFramesTotal, moveMode: this.kbMoveMode };
+    this.resetKnockbackVisual(); this.kbVisualSource = this.kbDisableSyntheticBounce ? 'disabled-synthetic-bounce' : this.kbVisualEasing;
+    this.lastKnockbackDebug = { serial: this.knockbackSerial, type: this.knockbackType, reason: this.knockbackReason, fromX: this.knockbackFromX, toX: this.knockbackToX, distancePx: distance, durationMs: this.knockbackPositionDurationMs, combatEasing: this.kbCombatEasing, visualEasing: this.kbVisualEasing, visualOffsetYMaxPx: this.kbVisualOffsetYMaxPx, visualBackSwingPx: this.kbVisualBackSwingPx, visualScalePeak: this.kbVisualScalePeak, deathAfterKnockback: this.deathAfterKnockback, targetableDuringKb: this.kbTargetable, touchableDuringKb: this.kbTouchable, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames, bcuDistance: kb.bcuDistance ?? null, framesTotal: this.kbFramesTotal, moveFramesTotal: this.kbMoveFramesTotal, moveMode: this.kbMoveMode, distanceSource: this.kbDistanceSource, knockbackDistanceToPx: this.kbDistanceScale };
     this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame();
   }
 
   stepKnockbackFrame() {
-    if (this.state !== 'knockback' || this.kbFramesRemaining <= 0) return { active: false, done: true, moved: 0 };
+    if (this.state !== 'knockback' || this.kbMoveFramesRemaining <= 0) return { active: false, done: true, moved: 0 };
     let nextX = this.x; let moved = 0;
     if (this.kbMoveMode === 'easeOut') { const total = Math.max(1, this.kbFramesTotal); const frameNumber = this.kbFrameIndex + 1; const t = Math.max(0, Math.min(1, frameNumber / total)); const eased = t * (2 - t); nextX = this.kbStartX - this.direction * this.kbDistanceTotalPx * eased; moved = nextX - this.x; this.x = nextX; this.kbRemainingDistancePx = Math.max(0, Math.abs(this.knockbackToX - this.x)); }
-    else { const remaining = Math.max(1, this.kbFramesRemaining); const step = this.kbRemainingDistancePx / remaining; moved = -this.direction * step; this.x += moved; this.kbRemainingDistancePx = Math.max(0, this.kbRemainingDistancePx - step); }
-    this.kbFrameIndex += 1; this.kbFramesRemaining = Math.max(0, this.kbFramesRemaining - 1); this.kbLastFrameX = this.x; const progress = this.kbFramesTotal > 0 ? this.kbFrameIndex / this.kbFramesTotal : 1; this.updateKnockbackVisual?.(progress);
-    this.lastKnockbackFrameDebug = { frameIndex: this.kbFrameIndex, framesRemaining: this.kbFramesRemaining, moved, x: this.x, remainingDistancePx: this.kbRemainingDistancePx, progress, moveMode: this.kbMoveMode, bcuType: this.kbBcuType };
-    return { active: this.kbFramesRemaining > 0, done: this.kbFramesRemaining <= 0, moved, progress };
+    else { const remaining = Math.max(1, this.kbMoveFramesRemaining); const step = this.kbRemainingDistancePx / remaining; moved = -this.direction * step; this.x += moved; this.kbRemainingDistancePx = Math.max(0, this.kbRemainingDistancePx - step); }
+    this.kbFrameIndex += 1; this.kbMoveFramesRemaining = Math.max(0, this.kbMoveFramesRemaining - 1); this.kbFramesRemaining = this.kbMoveFramesRemaining; this.kbLastFrameX = this.x; const progress = this.kbMoveFramesTotal > 0 ? this.kbFrameIndex / this.kbMoveFramesTotal : 1; this.updateKnockbackVisual?.(progress);
+    this.lastKnockbackFrameDebug = { frameIndex: this.kbFrameIndex, moveFrameIndex: this.kbFrameIndex, framesRemaining: this.kbFramesRemaining, moveFramesRemaining: this.kbMoveFramesRemaining, moved, x: this.x, remainingDistancePx: this.kbRemainingDistancePx, progress, moveMode: this.kbMoveMode, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames };
+    return { active: this.kbMoveFramesRemaining > 0, done: this.kbMoveFramesRemaining <= 0, moved, progress };
   }
 
   clearPendingDamage() { this.pendingDamage = 0; this.pendingHits = []; }
@@ -321,8 +343,8 @@ export class BattleActor {
     if (this.knockbacks > 1) crossedCount = Math.min(this.knockbacks - 1, Math.max(0, Math.floor((this.maxHp - hpAfter) / this.knockbackHpStep)));
     const crossedHpKb = !deathReached && crossedCount > previousKbCount;
     let kbRequest = null;
-    if (deathReached && tuning.finalKnockbackBeforeDeath !== false) { const cfg = this.getKnockbackConfig(tuning, 'final'); kbRequest = { type: 'final', reason: 'final-hp-death', distancePx: cfg.distancePx, durationMs: cfg.durationMs, combatEasing: cfg.combatEasing, visualEasing: cfg.visualEasing, visualOffsetYMaxPx: cfg.visualOffsetYMaxPx, visualBackSwingPx: cfg.visualBackSwingPx, visualScalePeak: cfg.visualScalePeak, deathAfterKnockback: true, bcuType: cfg.bcuType, bcuTimeFrames: cfg.bcuTimeFrames, bcuDistance: cfg.bcuDistance, moveMode: cfg.moveMode, targetableDuringKb: cfg.targetableDuringKb, touchableDuringKb: cfg.touchableDuringKb, nowMs }; }
-    else if (crossedHpKb) { this.knockbackCount = crossedCount; this.nextKnockbackHp = Math.max(0, this.maxHp - this.knockbackHpStep * (this.knockbackCount + 1)); const cfg = this.getKnockbackConfig(tuning, 'hp'); kbRequest = { type: 'hp', reason: 'hp-threshold', distancePx: cfg.distancePx, durationMs: cfg.durationMs, combatEasing: cfg.combatEasing, visualEasing: cfg.visualEasing, visualOffsetYMaxPx: cfg.visualOffsetYMaxPx, visualBackSwingPx: cfg.visualBackSwingPx, visualScalePeak: cfg.visualScalePeak, deathAfterKnockback: false, bcuType: cfg.bcuType, bcuTimeFrames: cfg.bcuTimeFrames, bcuDistance: cfg.bcuDistance, moveMode: cfg.moveMode, targetableDuringKb: cfg.targetableDuringKb, touchableDuringKb: cfg.touchableDuringKb, nowMs }; }
+    if (deathReached && tuning.finalKnockbackBeforeDeath !== false) { const cfg = this.getKnockbackConfig(tuning, 'final'); kbRequest = { type: 'final', reason: 'final-hp-death', distancePx: cfg.distancePx, durationMs: cfg.durationMs, combatEasing: cfg.combatEasing, visualEasing: cfg.visualEasing, visualOffsetYMaxPx: cfg.visualOffsetYMaxPx, visualBackSwingPx: cfg.visualBackSwingPx, visualScalePeak: cfg.visualScalePeak, deathAfterKnockback: true, bcuType: cfg.bcuType, bcuTimeFrames: cfg.bcuTimeFrames, bcuDistance: cfg.bcuDistance, moveMode: cfg.moveMode, targetableDuringKb: cfg.targetableDuringKb, touchableDuringKb: cfg.touchableDuringKb, disableSyntheticBounce: cfg.disableSyntheticBounce, distanceSource: cfg.distanceSource, tuning: cfg.tuning, nowMs }; }
+    else if (crossedHpKb) { this.knockbackCount = crossedCount; this.nextKnockbackHp = Math.max(0, this.maxHp - this.knockbackHpStep * (this.knockbackCount + 1)); const cfg = this.getKnockbackConfig(tuning, 'hp'); kbRequest = { type: 'hp', reason: 'hp-threshold', distancePx: cfg.distancePx, durationMs: cfg.durationMs, combatEasing: cfg.combatEasing, visualEasing: cfg.visualEasing, visualOffsetYMaxPx: cfg.visualOffsetYMaxPx, visualBackSwingPx: cfg.visualBackSwingPx, visualScalePeak: cfg.visualScalePeak, deathAfterKnockback: false, bcuType: cfg.bcuType, bcuTimeFrames: cfg.bcuTimeFrames, bcuDistance: cfg.bcuDistance, moveMode: cfg.moveMode, targetableDuringKb: cfg.targetableDuringKb, touchableDuringKb: cfg.touchableDuringKb, disableSyntheticBounce: cfg.disableSyntheticBounce, distanceSource: cfg.distanceSource, tuning: cfg.tuning, nowMs }; }
     this.hp = hpAfter;
     this.lastDamageResolveDebug = { serial: ++this.damageResolveSerial, hpBefore, hpAfter, damage, deathReached, previousKbCount, crossedCount, nextKnockbackHp: this.nextKnockbackHp, kbRequested: !!kbRequest, kbType: kbRequest?.type || null, kbReason: kbRequest?.reason || null, hitCount: this.pendingHits.length };
     const result = { damaged: true, hpBefore, hpAfter, damage, dead: false, deathPending: false, knockedBack: false };

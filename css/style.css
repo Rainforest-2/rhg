@@ -22,3 +22,5 @@ button{cursor:pointer}button:hover{border-color:var(--accent)}
 .prod-ui .cards{display:flex;gap:4px;pointer-events:auto}
 .prod-ui .prod-card{width:min(30vw,160px);height:auto;aspect-ratio:110/85;touch-action:manipulation;border:0;background:transparent;transition:transform .08s}
 .prod-ui .prod-card.press{transform:scale(.95)}
+
+.prod-ui.is-hidden{display:none}

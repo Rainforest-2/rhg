@@ -80,21 +80,21 @@ export class PreviewApp {
 
   async setViewMode(mode) {
     this.viewMode = mode === 'battle' ? 'battle' : 'preview';
-    if (this.viewMode !== 'battle') return;
+    if (this.viewMode !== 'battle') { this.productionBar?.setVisible(false); return; }
     if (this.battleInitPromise) return await this.battleInitPromise;
     if (!this.battleScene) {
       this.battleLoading = true;
       this.battleInitPromise = (async()=>{ try { this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg)); await this.battleScene.init(); } catch (e) { console.error('[PreviewApp] battle init failed', e); this.ui?.log('error', `battle init failed: ${e instanceof Error ? e.message : String(e)}`); } finally { this.battleLoading = false; this.battleInitPromise = null; } })();
-      await this.battleInitPromise; if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:this.battleScene,mount:document.body});} else {this.productionBar.bindScene(this.battleScene);}
+      await this.battleInitPromise; if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:this.battleScene,mount:document.body});} else {this.productionBar.bindScene(this.battleScene);} this.productionBar?.setVisible(true);
     }
   }
 
 
   async resetBattle() {
-    if (this.viewMode !== 'battle') return;
+    if (this.viewMode !== 'battle') { this.productionBar?.setVisible(false); return; }
     this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
     await this.battleScene.init();
-    this.productionBar?.bindScene(this.battleScene);
+    this.productionBar?.bindScene(this.battleScene); this.productionBar?.setVisible(true);
     this.ui?.log('info', 'Battle reset completed');
   }
 

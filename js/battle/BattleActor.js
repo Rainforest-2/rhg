@@ -97,6 +97,14 @@ export class BattleActor {
     this.visualRenderOffsetSource = 'not-initialized';
     this.visualRenderOffsetDebug = null;
 
+    this.visualCrowdLaneIndex = 0;
+    this.visualCrowdLaneCount = 1;
+    this.visualCrowdYOffsetPx = 0;
+    this.visualCrowdScaleMultiplier = 1;
+    this.visualCrowdFanoutPx = 0;
+    this.visualCrowdClusterIndex = 0;
+    this.visualCrowdSource = 'none';
+
     this.lastCaptureDebug = null;
     this.lastHitQueueDebug = null;
     this.lastDamageDebug = null;

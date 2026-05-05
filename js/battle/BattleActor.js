@@ -224,9 +224,35 @@ export class BattleActor {
 
   getKnockbackConfig(tuning = {}, kind = 'hp') {
     const kb = tuning.knockback || {};
-    if (kind === 'final') { const c = kb.finalKb || {}; return { type: 'final', bcuType: c.bcuType || 'INT_HB', bcuTimeFrames: c.bcuTimeFrames ?? 23, bcuDistance: c.bcuDistance ?? 345, moveMode: c.combatEasing === 'easeOutQuad' ? 'easeOut' : 'linearRemaining', durationMs: c.durationMs ?? tuning.hpKnockbackDurationMs ?? this.knockbackAnimDurationMs, distancePx: c.distancePx ?? tuning.hpKnockbackDistancePx ?? this.knockbackPositionDistance, combatEasing: c.combatEasing || 'linearRemaining', visualEasing: c.visualEasing || 'bcu-inspired-bounce', visualOffsetYMaxPx: c.visualOffsetYMaxPx ?? -36, visualBackSwingPx: c.visualBackSwingPx ?? 10, visualScalePeak: c.visualScalePeak ?? 1.03, targetableDuringKb: !!c.targetableDuringKb, touchableDuringKb: !!c.touchableDuringKb, enterDeadAfterKb: c.enterDeadAfterKb !== false }; }
-    const c = kb.hpKb || {};
-    return { type: 'hp', bcuType: c.bcuType || 'INT_HB', bcuTimeFrames: c.bcuTimeFrames ?? 23, bcuDistance: c.bcuDistance ?? 345, moveMode: c.combatEasing === 'easeOutQuad' ? 'easeOut' : 'linearRemaining', durationMs: c.durationMs ?? tuning.hpKnockbackDurationMs ?? this.knockbackAnimDurationMs, distancePx: c.distancePx ?? tuning.hpKnockbackDistancePx ?? this.knockbackPositionDistance, combatEasing: c.combatEasing || 'linearRemaining', visualEasing: c.visualEasing || 'bcu-inspired-bounce', visualOffsetYMaxPx: c.visualOffsetYMaxPx ?? -32, visualBackSwingPx: c.visualBackSwingPx ?? 8, visualScalePeak: c.visualScalePeak ?? 1.025, targetableDuringKb: !!c.targetableDuringKb, touchableDuringKb: !!c.touchableDuringKb, cancelAttackOnKb: c.cancelAttackOnKb !== false };
+    const map = {
+      hp: { config: kb.hpKb || {}, defaults: { type: 'hp', bcuType: 'INT_HB', bcuTimeFrames: 23, bcuDistance: 345, moveMode: 'linearRemaining', visualOffsetYMaxPx: -32, visualBackSwingPx: 8, visualScalePeak: 1.025, reason: 'hp-threshold' } },
+      final: { config: kb.finalKb || {}, defaults: { type: 'final', bcuType: 'INT_HB', bcuTimeFrames: 23, bcuDistance: 345, moveMode: 'linearRemaining', visualOffsetYMaxPx: -36, visualBackSwingPx: 10, visualScalePeak: 1.03, reason: 'final-hp-death' } },
+      proc: { config: kb.procKb || {}, defaults: { type: 'proc', bcuType: 'INT_KB', bcuTimeFrames: 11, bcuDistance: 165, moveMode: 'easeOut', visualOffsetYMaxPx: -20, visualBackSwingPx: 6, visualScalePeak: 1.02, reason: 'proc-kb' } },
+      bossShockwave: { config: kb.bossShockwaveKb || {}, defaults: { type: 'bossShockwave', bcuType: 'INT_SW', bcuTimeFrames: 47, bcuDistance: 705, moveMode: 'linearRemaining', visualOffsetYMaxPx: -48, visualBackSwingPx: 16, visualScalePeak: 1.05, reason: 'boss-shockwave' } },
+      assist: { config: kb.assistKb || {}, defaults: { type: 'assist', bcuType: 'INT_ASS', bcuTimeFrames: 11, bcuDistance: 55, moveMode: 'linearRemaining', visualOffsetYMaxPx: -14, visualBackSwingPx: 4, visualScalePeak: 1.015, reason: 'assist-kb' } }
+    };
+    const entry = map[kind] || map.hp;
+    const c = entry.config || {};
+    const d = entry.defaults || map.hp.defaults;
+    const moveMode = c.combatEasing === 'easeOutQuad' ? 'easeOut' : (c.moveMode || d.moveMode);
+    return {
+      type: c.type || d.type,
+      bcuType: c.bcuType || d.bcuType,
+      bcuTimeFrames: c.bcuTimeFrames ?? d.bcuTimeFrames,
+      bcuDistance: c.bcuDistance ?? d.bcuDistance,
+      moveMode,
+      durationMs: c.durationMs ?? tuning.hpKnockbackDurationMs ?? this.knockbackAnimDurationMs,
+      distancePx: c.distancePx ?? tuning.hpKnockbackDistancePx ?? this.knockbackPositionDistance,
+      combatEasing: c.combatEasing || (moveMode === 'easeOut' ? 'easeOutQuad' : 'linearRemaining'),
+      visualEasing: c.visualEasing || 'bcu-inspired-bounce',
+      visualOffsetYMaxPx: c.visualOffsetYMaxPx ?? d.visualOffsetYMaxPx,
+      visualBackSwingPx: c.visualBackSwingPx ?? d.visualBackSwingPx,
+      visualScalePeak: c.visualScalePeak ?? d.visualScalePeak,
+      targetableDuringKb: !!c.targetableDuringKb,
+      touchableDuringKb: !!c.touchableDuringKb,
+      cancelAttackOnKb: c.cancelAttackOnKb !== false,
+      enterDeadAfterKb: kind === 'final' ? c.enterDeadAfterKb !== false : !!c.enterDeadAfterKb
+    };
   }
 
   updateKnockbackVisual(progress) { const t = Math.max(0, Math.min(1, progress)); this.kbVisualProgress = t; const sin = Math.sin(Math.PI * t); const settle = 1 - t; const yMax = Number.isFinite(this.kbVisualOffsetYMaxPx) ? this.kbVisualOffsetYMaxPx : -32; const backSwing = Number.isFinite(this.kbVisualBackSwingPx) ? this.kbVisualBackSwingPx : 8; const peak = Number.isFinite(this.kbVisualScalePeak) ? this.kbVisualScalePeak : 1.025; this.kbVisualOffsetY = yMax * sin; this.kbVisualOffsetX = -this.direction * backSwing * sin * settle; this.kbVisualScale = 1 + (peak - 1) * sin; }

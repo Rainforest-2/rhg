@@ -3,8 +3,8 @@ import { BattleBodyResolver } from './BattleBodyResolver.js';
 import { BattleAttackProfile } from './BattleAttackProfile.js';
 
 export class BattleActor {
-  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null, combatPositionOffsetPx = 0, combatPositionSource = 'visual-leading-edge', combatEdgeInsetPx = 0, combatPositionMode = 'visual-leading-edge', posBcu = null, battleCoordinate = null }) {
-    this.assetDef = assetDef; this.sprite = sprite; this.model = model; this.side = side; this.x = x; this.y = y; this.scale = scale; this.posBcu = Number.isFinite(posBcu) ? posBcu : null; this.lastPosBcu = this.posBcu; this.battleCoordinate = battleCoordinate;
+  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null, combatPositionOffsetPx = 0, combatPositionSource = 'visual-leading-edge', combatEdgeInsetPx = 0, combatPositionMode = 'visual-leading-edge' }) {
+    this.assetDef = assetDef; this.sprite = sprite; this.model = model; this.side = side; this.x = x; this.y = y; this.scale = scale;
     this.facing = facing; this.direction = direction; this.renderFlipX = renderFlipX;
     this.currentAnimId = currentAnimId; this.rawStats = stats; this.animations = new Map(Object.entries(animations));
     this.animator = new BcuAnimator(this.animations.get(currentAnimId) || { tracks: [], maxFrame: 1 });
@@ -12,7 +12,7 @@ export class BattleActor {
     this.logs = logs;
 
     this.maxHp = stats?.hp ?? 100; this.hp = this.maxHp; this.damage = stats?.damage ?? 0;
-    this.moveSpeed = 0; this.detectionRangePx = 0; this.detectionRangeBcu = 0; this.attackWidthBcu = 0; this.moveSpeedBcuPerSecond = 0; this.collisionRadius = collisionRadius;
+    this.moveSpeed = 0; this.detectionRangePx = 0; this.collisionRadius = collisionRadius;
     this.combatBodyWidthPx = Number.isFinite(combatBodyWidthPx) ? combatBodyWidthPx : 44;
     this.combatBodyHeightPx = Number.isFinite(combatBodyHeightPx) ? combatBodyHeightPx : 72;
     this.combatBodyYOffsetPx = Number.isFinite(combatBodyYOffsetPx) ? combatBodyYOffsetPx : 0;
@@ -76,8 +76,6 @@ export class BattleActor {
     this.knockbackPositionDistance = 60;
     this.knockbackFromX = this.x;
     this.knockbackToX = this.x;
-    this.knockbackFromPosBcu = this.posBcu;
-    this.knockbackToPosBcu = this.posBcu;
 
     this.pendingDamage = 0;
     this.pendingHits = [];
@@ -93,16 +91,15 @@ export class BattleActor {
     this.knockbackType = null;
     this.knockbackReason = null;
     this.deathAfterKnockback = false;
+    this.visualRenderOffsetLocalX = 0;
+    this.visualRenderOffsetWorldPx = 0;
+    this.visualRenderOffsetInitialized = false;
+    this.visualRenderOffsetSource = 'not-initialized';
+    this.visualRenderOffsetDebug = null;
 
     this.activeAnimId = currentAnimId;
     this.activeAnimRole = 'move';
   }
-
-
-  setPosBcu(posBcu, coordinate = this.battleCoordinate) { this.posBcu = Number.isFinite(posBcu) ? posBcu : 0; this.lastPosBcu = this.posBcu; this.syncScreenFromBcu(coordinate); }
-  syncScreenFromBcu(coordinate = this.battleCoordinate) { if (!coordinate || !Number.isFinite(this.posBcu)) return; this.x = coordinate.toScreenX(this.posBcu); }
-  moveBcu(deltaBcu, coordinate = this.battleCoordinate) { if (!Number.isFinite(this.posBcu)) this.posBcu = coordinate ? coordinate.toBcuX(this.x || 0) : 0; this.lastPosBcu = this.posBcu; this.posBcu += deltaBcu; this.syncScreenFromBcu(coordinate); }
-  getBattlePosBcu() { return Number.isFinite(this.posBcu) ? this.posBcu : null; }
 
   deriveAnimDurationMs(animId, fps, fallbackMs, warnMsg) {
     const anim = this.animations.get(animId);
@@ -194,11 +191,8 @@ export class BattleActor {
     this.knockbackPositionElapsedMs = 0;
     this.knockbackPositionDurationMs = Number.isFinite(kb.durationMs) ? kb.durationMs : this.knockbackAnimDurationMs;
     const distance = Number.isFinite(kb.distancePx) ? kb.distancePx : this.knockbackPositionDistance;
-    const distanceBcu = Number.isFinite(kb.distanceBcu) ? kb.distanceBcu : (this.battleCoordinate ? this.battleCoordinate.lengthToBcu(distance) : distance);
     this.knockbackFromX = this.x;
     this.knockbackToX = this.x - this.direction * distance;
-    this.knockbackFromPosBcu = Number.isFinite(this.posBcu) ? this.posBcu : (this.battleCoordinate ? this.battleCoordinate.toBcuX(this.x || 0) : 0);
-    this.knockbackToPosBcu = this.knockbackFromPosBcu - this.direction * distanceBcu;
     if (this.deathAfterKnockback || kb.deathAfterKnockback) { this.attackTarget = null; this.attackTargetType = null; }
     this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame();
   }
@@ -273,5 +267,9 @@ export class BattleActor {
     if (this.state === 'dead') { this.deathElapsedMs += dt; return; }
     if (!this.isAlive() && this.state !== 'knockback') return;
     this.animator.tick(dt); this.model.reset(); this.animator.apply(this.model);
+  }
+
+  getRenderOriginOffsetPx() {
+    return Number.isFinite(this.visualRenderOffsetWorldPx) ? this.visualRenderOffsetWorldPx : 0;
   }
 }

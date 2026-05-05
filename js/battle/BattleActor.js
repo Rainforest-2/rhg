@@ -285,6 +285,10 @@ export class BattleActor {
     };
   }
 
+
+  isKbeffParentKbType(type) { return ['INT_HB', 'INT_SW', 'INT_ASS'].includes(type); }
+  isUnitKnockbackAnimType(type) { return type === 'INT_KB'; }
+
   resolveKnockbackDistancePx(kb = {}, tuning = {}) {
     if (Number.isFinite(kb.distancePx)) return { distancePx: kb.distancePx, source: 'explicit-distancePx', scale: null };
     const scale = tuning?.knockback?.knockbackDistanceToPx ?? tuning?.rangeToPx ?? 0.27;
@@ -299,7 +303,7 @@ export class BattleActor {
     if (!this.kbeffEnabled || !this.kbeffRuntime) { this.kbeffParentTransform = null; return null; }
     const t = this.kbeffRuntime.getParentTransform(this.scale || 1);
     this.kbeffParentTransform = t; this.kbeffFrame = t.frame;
-    this.lastKbeffDebug = { bcuType: this.kbeffType, frame: t.frame, localX: t.localX, localY: t.localY, screenX: t.screenX, screenY: t.screenY, source: this.kbeffSource };
+    this.lastKbeffDebug = { bcuType: this.kbeffType, frame: t.frame, localX: t.localX, localY: t.localY, screenX: t.screenXDebug, screenY: t.screenYDebug, source: this.kbeffSource };
     return t;
   }
 
@@ -327,9 +331,11 @@ export class BattleActor {
     this.kbVisualOffsetYMaxPx = Number.isFinite(kb.visualOffsetYMaxPx) ? kb.visualOffsetYMaxPx : -32; this.kbVisualBackSwingPx = Number.isFinite(kb.visualBackSwingPx) ? kb.visualBackSwingPx : 8; this.kbVisualScalePeak = Number.isFinite(kb.visualScalePeak) ? kb.visualScalePeak : 1.025;
     this.resetKnockbackVisual(); this.kbVisualSource = this.kbDisableSyntheticBounce ? 'disabled-synthetic-bounce' : this.kbVisualEasing;
     this.detachKbeff();
-    if (kb.kbeffRuntime && ['INT_HB','INT_SW','INT_ASS'].includes(this.kbBcuType)) { this.kbeffRuntime = kb.kbeffRuntime; this.kbeffRuntime.reset(); this.kbeffEnabled = true; this.kbeffType = this.kbBcuType; this.kbeffSource = 'bcu-a-kb-kbeff-v0115'; this.updateKbeffTransform(); }
+    const useKbeffParent = this.isKbeffParentKbType(this.kbBcuType);
+    const useUnitKbAnim = this.isUnitKnockbackAnimType(this.kbBcuType);
+    if (kb.kbeffRuntime && useKbeffParent) { this.kbeffRuntime = kb.kbeffRuntime; this.kbeffRuntime.reset(); if (kb.kbeffInitialUpdate !== false) this.kbeffRuntime.stepFrame(); this.kbeffEnabled = true; this.kbeffType = this.kbBcuType; this.kbeffSource = 'bcu-a-kb-kbeff-visual-parity-v0116'; this.updateKbeffTransform(); }
     this.lastKnockbackDebug = { serial: this.knockbackSerial, type: this.knockbackType, reason: this.knockbackReason, fromX: this.knockbackFromX, toX: this.knockbackToX, distancePx: distance, durationMs: this.knockbackPositionDurationMs, combatEasing: this.kbCombatEasing, visualEasing: this.kbVisualEasing, visualOffsetYMaxPx: this.kbVisualOffsetYMaxPx, visualBackSwingPx: this.kbVisualBackSwingPx, visualScalePeak: this.kbVisualScalePeak, deathAfterKnockback: this.deathAfterKnockback, targetableDuringKb: this.kbTargetable, touchableDuringKb: this.kbTouchable, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames, bcuDistance: kb.bcuDistance ?? null, framesTotal: this.kbFramesTotal, moveFramesTotal: this.kbMoveFramesTotal, moveMode: this.kbMoveMode, distanceSource: this.kbDistanceSource, knockbackDistanceToPx: this.kbDistanceScale };
-    this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame();
+    if (useKbeffParent) { if (this.activeAnimRole === 'attack') { const fallbackAnim = this.idleAnimId || this.moveAnimId || this.currentAnimId; this.setAnimation(fallbackAnim, 'knockback-kbeff-base', true); } else { this.activeAnimRole = 'knockback-kbeff-base'; } this.applyCurrentAnimationFrame(); } else if (useUnitKbAnim) { this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame(); } else { this.applyCurrentAnimationFrame(); }
   }
 
   stepKnockbackFrame() {

@@ -26,7 +26,7 @@ export class BcuKbeffRuntime {
     const part = this.model.parts?.[1];
     const world = part?.world || { x: 0, y: 0, a: 0, sx: 1, sy: 1, o: 1 };
     const localY = -(world.y || 0);
-    const t = { frame: Math.floor(this.frame), localX: world.x || 0, localY, screenX: (world.x || 0) * actorScale, screenY: localY * actorScale, scaleX: world.sx || 1, scaleY: world.sy || 1, angleRad: ((world.a || 0) / (this.model.baseAngle || 3600)) * Math.PI * 2, opacity: world.o ?? 1, source: 'bcu-kbeff-parent-transform' };
+    const t = { frame: Math.floor(this.frame), localX: world.x || 0, localY, screenXDebug: (world.x || 0) * actorScale, screenYDebug: localY * actorScale, scaleX: world.sx || 1, scaleY: world.sy || 1, angleRad: ((world.a || 0) / (this.model.baseAngle || 3600)) * Math.PI * 2, opacity: world.o ?? 1, source: 'bcu-kbeff-parent-transform' };
     this.lastTransform = t;
     return t;
   }

@@ -26,7 +26,7 @@ export class PreviewApp {
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
-      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, mode: (mode) => this.setViewMode(mode), resetBattle: () => this.resetBattle(), lineup: (lineupId) => this.switchBattleLineup(lineupId) });
+      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, mode: (mode) => this.setViewMode(mode), resetBattle: () => this.resetBattle() });
       await this.load(this.assets[0].id, this.assets[0].animations[0]?.id);
       let last = performance.now();
       let firstRenderLogged = false;
@@ -37,7 +37,6 @@ export class PreviewApp {
           try {
             if (!this.battleLoading) this.battleScene?.tick(dt);
             this.productionBar?.update(this.battleScene);
-            this.ui?.setBattleLineupOptions?.(this.battleScene?.getProductionLineupOptions?.() || []);
             this.renderer.ensureCanvasSize();
             this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
             this.lastBattleFrameErrorMessage = '';
@@ -98,23 +97,11 @@ export class PreviewApp {
     await this.battleScene.init();
     const battleMount=document.querySelector('.canvas-panel')||document.body;
     if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:this.battleScene,mount:battleMount});} else {this.productionBar.bindScene(this.battleScene);} this.productionBar?.setVisible(true);
-    this.ui?.setBattleLineupOptions?.(this.battleScene?.getProductionLineupOptions?.() || []);
     this.ui?.log('info', 'Battle reset completed');
   }
 
 
-  async switchBattleLineup(lineupId) {
-    if (!this.battleScene) return;
-    const ok = await this.battleScene.setPlayerProductionLineup(lineupId);
-    if (ok) {
-      this.productionBar?.bindScene(this.battleScene);
-      this.productionBar?.setVisible(this.viewMode === 'battle');
-      this.ui?.setBattleLineupOptions?.(this.battleScene?.getProductionLineupOptions?.() || []);
-      this.ui?.log('info', `Production lineup switched: ${lineupId}`);
-    } else {
-      this.ui?.log('warn', `Production lineup switch failed: ${lineupId}`);
-    }
-  }
+
   findAsset(id) { return this.assets.find((a) => a.id === id) || this.assets[0]; }
 
   async probeAnimations(asset) {

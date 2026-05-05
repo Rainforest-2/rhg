@@ -1,6 +1,7 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleBodyResolver } from './BattleBodyResolver.js';
 import { BattleAttackProfile } from './BattleAttackProfile.js';
+import { getBcuKnockbackSpec, convertBcuDistanceToPx } from './BcuKnockbackSpec.js';
 
 export class BattleActor {
   constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null, combatPositionOffsetPx = 0, combatPositionSource = 'visual-leading-edge', combatEdgeInsetPx = 0, combatPositionMode = 'screen-combat-point' }) {
@@ -218,8 +219,9 @@ export class BattleActor {
   isFinalKnockback() { return this.state === 'knockback' && (this.deathAfterKnockback || this.deathPending || this.hp <= 0); }
   needsLifecycleTick() { return this.isAlive() || this.state === 'knockback' || this.state === 'dead' || this.deathPending || this.deathAfterKnockback; }
   getTouchState() { if (this.state === 'dead') return 'dead'; if (this.state === 'knockback' && (this.deathAfterKnockback || this.deathPending || this.hp <= 0)) return 'finalKb'; if (this.state === 'knockback') return 'kb'; return 'normal'; }
-  isTargetable() { if (!this.isAlive()) return false; const state = this.getTouchState(); if ((state === 'kb' || state === 'finalKb') && this.kbTargetable === false) return false; return true; }
-  isTouchable() { if (!this.isAlive()) return false; const state = this.getTouchState(); if ((state === 'kb' || state === 'finalKb') && this.kbTouchable === false) return false; return true; }
+  isKbTargetableNow() { if (this.state !== 'knockback') return true; const f = this.kbMotionFrameIndex || 0; if (this.kbFirstFrameTargetable && f === 0) return true; if (f >= (this.kbTargetableFromFrame || 0)) return true; return false; }
+  isTargetable() { if (!this.isAlive()) return false; if (this.state === 'knockback') return this.isKbTargetableNow(); return true; }
+  isTouchable() { if (!this.isAlive()) return false; if (this.state === 'knockback') return this.isKbTargetableNow(); return true; }
   isCombatAlive() { return this.isTargetable(); }
   isRenderable() {
     if (this.state === 'removed') return false;
@@ -273,7 +275,7 @@ export class BattleActor {
       knockbackDistanceToPx: kb.knockbackDistanceToPx ?? tuning.rangeToPx ?? 0.27,
       tuning,
       combatEasing: c.combatEasing || (moveMode === 'easeOut' ? 'easeOutQuad' : 'linearRemaining'),
-      visualEasing: c.visualEasing || 'bcu-inspired-bounce',
+      visualEasing: c.visualEasing || 'none',
       visualOffsetYMaxPx: c.visualOffsetYMaxPx ?? d.visualOffsetYMaxPx,
       visualBackSwingPx: c.visualBackSwingPx ?? d.visualBackSwingPx,
       visualScalePeak: c.visualScalePeak ?? d.visualScalePeak,
@@ -325,9 +327,10 @@ export class BattleActor {
     const moveFrames = Math.max(1, bcuFrames - 1);
     const resolvedDistance = this.resolveKnockbackDistancePx(kb, kb.tuning || {});
     const distance = resolvedDistance.distancePx;
-    this.kbBcuType = kb.bcuType || 'INT_HB'; this.kbBcuTimeFrames = bcuFrames; this.kbFramesTotal = bcuFrames; this.kbFramesRemaining = moveFrames; this.kbMoveFramesTotal = moveFrames; this.kbMoveFramesRemaining = moveFrames; this.kbFrameIndex = 0; this.kbFrameAccumulatorMs = 0; this.kbDistanceTotalPx = distance; this.kbRemainingDistancePx = distance; this.kbStartX = this.x; this.kbLastFrameX = this.x; this.kbMoveMode = kb.moveMode || (kb.combatEasing === 'easeOutQuad' ? 'easeOut' : 'linearRemaining'); this.kbTouchState = this.deathAfterKnockback ? 'finalKb' : 'kb';
+    this.kbBcuType = kb.bcuType || 'INT_HB'; this.kbBcuTimeFrames = bcuFrames; this.kbFramesTotal = bcuFrames; this.kbFramesRemaining = moveFrames; this.kbMoveFramesTotal = moveFrames; this.kbMoveFramesRemaining = moveFrames; this.kbFrameIndex = 0; this.kbFrameAccumulatorMs = 0;
+    this.kbSpecType = null; this.kbMotionFramesTotal = 0; this.kbMotionFrameIndex = 0; this.kbIntangibleFramesTotal = 0; this.kbRetreatFramesTotal = 0; this.kbRetreatFramesRemaining = 0; this.kbFirstFrameTargetable = true; this.kbTargetableFromFrame = 0; this.kbBcuDistance = 0; this.kbTimelineDebug = null; this.kbDistanceTotalPx = distance; this.kbRemainingDistancePx = distance; this.kbStartX = this.x; this.kbLastFrameX = this.x; this.kbMoveMode = kb.moveMode || (kb.combatEasing === 'easeOutQuad' ? 'easeOut' : 'linearRemaining'); this.kbTouchState = this.deathAfterKnockback ? 'finalKb' : 'kb';
     this.knockbackFromX = this.x; this.knockbackToX = this.x - this.direction * distance;
-    this.kbCombatEasing = kb.combatEasing || 'linearRemaining'; this.kbVisualEasing = kb.visualEasing || 'bcu-inspired-bounce';
+    this.kbCombatEasing = 'linearRemaining'; this.kbVisualEasing = kb.visualEasing || 'none';
     this.kbDisableSyntheticBounce = !!kb.disableSyntheticBounce;
     this.kbDistanceSource = resolvedDistance.source || kb.distanceSource || 'unknown';
     this.kbDistanceScale = resolvedDistance.scale;
@@ -342,14 +345,16 @@ export class BattleActor {
   }
 
   stepKnockbackFrame() {
-    if (this.state !== 'knockback' || this.kbMoveFramesRemaining <= 0) return { active: false, done: true, moved: 0 };
+    if (this.state !== 'knockback') return { active: false, done: true, moved: 0 };
+    if (this.kbMotionFrameIndex >= this.kbMotionFramesTotal) return { active: false, done: true, moved: 0 };
     let nextX = this.x; let moved = 0;
-    if (this.kbMoveMode === 'easeOut') { const total = Math.max(1, this.kbFramesTotal); const frameNumber = this.kbFrameIndex + 1; const t = Math.max(0, Math.min(1, frameNumber / total)); const eased = t * (2 - t); nextX = this.kbStartX - this.direction * this.kbDistanceTotalPx * eased; moved = nextX - this.x; this.x = nextX; this.kbRemainingDistancePx = Math.max(0, Math.abs(this.knockbackToX - this.x)); }
-    else { const remaining = Math.max(1, this.kbMoveFramesRemaining); const step = this.kbRemainingDistancePx / remaining; moved = -this.direction * step; this.x += moved; this.kbRemainingDistancePx = Math.max(0, this.kbRemainingDistancePx - step); }
-    this.kbFrameIndex += 1; this.kbMoveFramesRemaining = Math.max(0, this.kbMoveFramesRemaining - 1); this.kbFramesRemaining = this.kbMoveFramesRemaining; this.kbLastFrameX = this.x; const progress = this.kbMoveFramesTotal > 0 ? this.kbFrameIndex / this.kbMoveFramesTotal : 1; this.updateKnockbackVisual?.(progress);
+    this.kbMotionFrameIndex += 1;
+    if (this.kbMotionFrameIndex >= 1 && this.kbMotionFrameIndex <= this.kbRetreatFramesTotal) { const remaining = Math.max(1, this.kbRetreatFramesRemaining); const step = this.kbRemainingDistancePx / remaining; moved = -this.direction * step; this.x += moved; this.kbRemainingDistancePx = Math.max(0, this.kbRemainingDistancePx - step); this.kbRetreatFramesRemaining = Math.max(0, this.kbRetreatFramesRemaining - 1); }
+    this.kbFrameIndex = this.kbMotionFrameIndex; this.kbMoveFramesRemaining = this.kbRetreatFramesRemaining; this.kbFramesRemaining = this.kbRetreatFramesRemaining; this.kbLastFrameX = this.x; const progress = this.kbMoveFramesTotal > 0 ? this.kbFrameIndex / this.kbMoveFramesTotal : 1; this.updateKnockbackVisual?.(progress);
     if (this.kbeffEnabled && this.kbeffRuntime) { this.kbeffRuntime.stepFrame(); this.updateKbeffTransform(); }
     this.lastKnockbackFrameDebug = { frameIndex: this.kbFrameIndex, moveFrameIndex: this.kbFrameIndex, framesRemaining: this.kbFramesRemaining, moveFramesRemaining: this.kbMoveFramesRemaining, moved, x: this.x, remainingDistancePx: this.kbRemainingDistancePx, progress, moveMode: this.kbMoveMode, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames, kbeffFrame: this.kbeffFrame };
-    return { active: this.kbMoveFramesRemaining > 0, done: this.kbMoveFramesRemaining <= 0, moved, progress };
+    const done = this.kbMotionFrameIndex >= this.kbMotionFramesTotal;
+    return { active: !done, done, moved, progress };
   }
 
   clearPendingDamage() { this.pendingDamage = 0; this.pendingHits = []; }

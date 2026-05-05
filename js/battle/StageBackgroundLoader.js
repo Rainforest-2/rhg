@@ -54,10 +54,10 @@ export class StageBackgroundLoader {
     const upperPart = bgRow.showUpper ? parts.find((p) => p.name === '背景上部') : null;
     return {
       image,
-      crop: { x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || stage.cropName || 'part0' },
-      upperCrop: upperPart ? { x: upperPart.x, y: upperPart.y, w: upperPart.w, h: upperPart.h, name: upperPart.name } : null,
+      crop: { x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || stage.cropName || 'part0', cropRole: 'BCU Background.BG part' },
+      upperCrop: upperPart ? { x: upperPart.x, y: upperPart.y, w: upperPart.w, h: upperPart.h, name: upperPart.name, upperCropRole: 'BCU Background.TOP part if present' } : null,
       colors: { skyTop: bgRow.skyTop, skyBottom: bgRow.skyBottom, groundTop: bgRow.groundTop, groundBottom: bgRow.groundBottom },
-      source: { imagePath: stage.imagePath, imgcutPath: stage.imgcutPath, csvPath: stage.csvPath, stageId: stage.id || 0, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper }
+      source: { imagePath: stage.imagePath, imgcutPath: stage.imgcutPath, csvPath: stage.csvPath, stageId: stage.id || 0, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, backgroundCsvKind: 'bcu-bg-csv', notStageMetadata: true }
     };
   }
 }

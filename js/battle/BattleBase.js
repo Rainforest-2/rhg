@@ -14,8 +14,7 @@ export class BattleBase {
   }
   isAlive() { return this.attackable && !this.destroyed && this.hp > 0; }
   takeDamage(amount) { if (!this.isAlive()) return { destroyed: this.destroyed, hpBefore: this.hp, hpAfter: this.hp }; const hpBefore = this.hp; this.hp = Math.max(0, this.hp - Math.max(0, amount)); if (this.hp <= 0) this.destroyed = true; return { destroyed: this.destroyed, hpBefore, hpAfter: this.hp }; }
+  getBattlePosBcu(){ return Number.isFinite(this.posBcu) ? this.posBcu : null; }
+  applyCoordinate(coordinate){ if (!coordinate) return; this.battleCoordinate = coordinate; this.posBcu = coordinate.getBasePosBcu(this.side); this.x = coordinate.getBaseScreenX(this.side); }
 }
 
-
-BattleBase.prototype.getBattlePosBcu = function(){ return Number.isFinite(this.posBcu) ? this.posBcu : null; };
-BattleBase.prototype.applyCoordinate = function(coordinate){ if (!coordinate) return; this.battleCoordinate = coordinate; this.posBcu = coordinate.getBasePosBcu(this.side); this.x = coordinate.toScreenX(this.posBcu); };

@@ -5,9 +5,8 @@ import { BcuSpriteText } from './BcuSpriteText.js';
 const CARD = {
   w: 110, h: 85,
   innerX: 7, innerY: 6, innerW: 96, innerH: 74,
-  portraitX: 8, portraitY: 7, portraitW: 94, portraitH: 56,
-  costBoxX: 7, costBoxY: 63, costBoxW: 96, costBoxH: 19,
-  costPadRight: 2, costPadBottom: 1,
+  enemyPortraitX: 7, enemyPortraitY: 6, enemyPortraitW: 96, enemyPortraitH: 62,
+  costRightX: 106, costBottomY: 82, costScale: 0.9,
   cooldownX: 10, cooldownY: 69, cooldownW: 90, cooldownH: 8
 };
 
@@ -25,13 +24,21 @@ export class PlayerProductionBar {
   drawImageContain(ctx, image, x, y, w, h) { const iw = image?.naturalWidth || image?.width || 1; const ih = image?.naturalHeight || image?.height || 1; const s = Math.min(w / iw, h / ih); const dw = iw * s; const dh = ih * s; ctx.drawImage(image, x + (w - dw) * 0.5, y + (h - dh) * 0.5, dw, dh); }
   drawCardBase(ctx) { this.frameCut.draw(ctx, this.frameImage, this.framePart, 0, 0, CARD.w, CARD.h); ctx.fillStyle = '#fff'; ctx.fillRect(CARD.innerX, CARD.innerY, CARD.innerW, CARD.innerH); }
   drawEmptyCard(ctx) { this.drawCardBase(ctx); }
+  isFullDeployCard(unitDef) { return unitDef?.uiIcon?.kind === 'unit'; }
+  drawFullDeployCard(ctx, image) { ctx.drawImage(image, 0, 0, CARD.w, CARD.h); }
+  drawSyntheticEnemyCard(ctx, it) {
+    this.frameCut.draw(ctx, this.frameImage, this.framePart, 0, 0, CARD.w, CARD.h);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(CARD.innerX, CARD.innerY, CARD.innerW, CARD.innerH);
+    if (it.icon) this.drawImageContain(ctx, it.icon, CARD.enemyPortraitX, CARD.enemyPortraitY, CARD.enemyPortraitW, CARD.enemyPortraitH);
+  }
 
   getProductionRoster(scene = this.scene) { return scene?.getPlayerProductionRoster?.() || scene?.playerProductionRoster || BATTLE_CONFIG.rosters.dogPlayer || []; }
   getRosterSignature(roster = []) { return roster.slice(0, 5).map((u, i) => u ? `${i}:${u.slotId || ''}:${u.assetId || ''}:${u.statsType || ''}:${u.sourceRoster || ''}:${u.sourceSlotId || ''}:${u.cost ?? ''}:${u.cooldownMs ?? ''}:${u.uiIcon?.primary || ''}:${u.uiIcon?.fallback || ''}` : `${i}:empty`).join('|'); }
 
   async createCardSlot(unitDef) {
     const c = document.createElement('canvas'); c.width = CARD.w; c.height = CARD.h; c.className = 'prod-card'; this.cardsWrap.appendChild(c);
-    const entry = { d: unitDef || null, c, ctx: c.getContext('2d'), icon: null };
+    const entry = { d: unitDef || null, c, ctx: c.getContext('2d'), icon: null, iconMode: this.isFullDeployCard(unitDef) ? 'full-deploy-card' : 'portrait' };
     if (!unitDef) return entry;
     try { entry.icon = await loadImage(this.resolveAssetPath(unitDef.uiIcon?.primary)); } catch {}
     if (!entry.icon) { try { entry.icon = await loadImage(this.resolveAssetPath(unitDef.uiIcon?.fallback)); } catch {} }
@@ -79,23 +86,23 @@ export class PlayerProductionBar {
     this.moneyCtx.clearRect(0, 0, this.moneyCanvas.width, this.moneyCanvas.height); this.spriteText.drawMoneyRight(this.moneyCtx, money, max, this.moneyCanvas.width - 6, 4);
 
     for (const it of this.cards) {
-      const ctx = it.ctx; ctx.clearRect(0, 0, CARD.w, CARD.h); this.drawCardBase(ctx);
-      if (!it.d) continue;
+      const ctx = it.ctx; ctx.clearRect(0, 0, CARD.w, CARD.h);
+      if (!it.d) { this.drawEmptyCard(ctx); continue; }
+      if (it.iconMode === 'full-deploy-card' && it.icon) this.drawFullDeployCard(ctx, it.icon);
+      else this.drawSyntheticEnemyCard(ctx, it);
       const s = scene.economy?.getStatus(it.d) || {};
-      if (it.icon) this.drawImageContain(ctx, it.icon, CARD.portraitX, CARD.portraitY, CARD.portraitW, CARD.portraitH);
       const stopped = scene.battleState !== 'running'; const cooldown = (s.cooldownRemainingMs || 0) > 0; const notEnough = s.affordable === false; const disabled = stopped || cooldown || notEnough;
-      ctx.fillStyle = '#000'; ctx.fillRect(CARD.costBoxX, CARD.costBoxY, CARD.costBoxW, CARD.costBoxH);
       if (disabled) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, CARD.w, CARD.h); }
       if (cooldown) {
         const ratio = Math.max(0, Math.min(1, s.cooldownRatio ?? 0)); const rem = Math.round(ratio * CARD.cooldownW);
+        ctx.fillStyle = '#111'; ctx.fillRect(CARD.cooldownX, CARD.cooldownY, CARD.cooldownW, CARD.cooldownH);
         ctx.fillStyle = '#6fe6ff'; ctx.fillRect(CARD.cooldownX, CARD.cooldownY, CARD.cooldownW - rem, CARD.cooldownH);
-        ctx.fillStyle = '#111'; ctx.fillRect(CARD.cooldownX + (CARD.cooldownW - rem), CARD.cooldownY, rem, CARD.cooldownH);
       } else {
         const disabledCost = disabled && !cooldown;
-        const costScale = 0.9;
+        const costScale = CARD.costScale;
         const metrics = this.spriteText.measureCostBox(it.d.cost || 0, { disabled: disabledCost, scale: costScale });
-        const costX = CARD.costBoxX + CARD.costBoxW - metrics.width - CARD.costPadRight;
-        const costY = CARD.costBoxY + CARD.costBoxH - metrics.height - CARD.costPadBottom;
+        const costX = CARD.costRightX - metrics.width;
+        const costY = CARD.costBottomY - metrics.height;
         this.spriteText.drawCost(ctx, it.d.cost || 0, costX, costY, { disabled: disabledCost, scale: costScale });
       }
     }

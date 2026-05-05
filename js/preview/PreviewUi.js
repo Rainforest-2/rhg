@@ -7,7 +7,7 @@ export class PreviewUi {
     this.root.innerHTML = `<h2>BCU Preview Controls</h2>
 <div class='group'><label>Mode</label><select id='mode'><option value='preview' selected>Asset Preview</option><option value='battle'>Battle Scene</option></select><label>Asset set</label><select id='asset'></select><label>Animation</label><select id='anim'></select></div>
 <div class='group row'><button id='play'>Play/Pause</button><button id='restart'>Restart</button><button id='stepm'>Step -1</button><button id='stepp'>Step +1</button></div>
-<div class='group'><button id='reset-battle'>Reset Battle</button></div><div class='group' id='battle-prod' style='display:none'><label>Production lineup</label><select id='battle-lineup'></select><div id='battle-econ'></div><div id='battle-buttons'></div></div>
+<div class='group'><button id='reset-battle'>Reset Battle</button></div><div class='group' id='battle-prod' style='display:none'><div id='battle-econ'></div><div id='battle-buttons'></div></div>
 <div class='group'><label>Speed</label><select id='speed'><option value='0.25'>0.25x</option><option value='0.5'>0.5x</option><option value='1' selected>1x</option><option value='1.5'>1.5x</option><option value='2'>2x</option></select><label>Scale <span id='scalev'>1.00</span></label><input id='scale' type='range' min='0.2' max='3' step='0.05' value='1'></div>
 <div class='group checks'>${['raw', 'parts', 'pivots', 'bounds'].map((k) => `<label><input type='checkbox' id='${k}'> Show ${k === 'raw' ? 'raw imgcut frames' : k}</label>`).join('')}</div>
 <div class='group stat'><details id='asset-meta'><summary>Asset metadata</summary><pre id='asset-meta-pre' class='debug-box'></pre><div class='row'><button id='copy-asset-meta'>copy</button><button id='log-asset-meta'>console.log</button></div></details></div>
@@ -38,7 +38,6 @@ export class PreviewUi {
     this.root.querySelector('#copy-asset-meta').onclick = async () => { const text = this.root.querySelector('#asset-meta-pre').textContent || ''; await navigator.clipboard?.writeText(text); this.log('info', 'copied asset metadata'); };
     this.root.querySelector('#log-asset-meta').onclick = () => { const text = this.root.querySelector('#asset-meta-pre').textContent || ''; console.log(text); this.log('info', 'asset metadata logged'); };
     this.root.querySelector('#reset-battle').onclick = () => on.resetBattle?.();
-    this.root.querySelector('#battle-lineup').onchange = (e) => on.lineup?.(e.target.value);
   }
 
   setAssetMeta(meta) {
@@ -59,5 +58,3 @@ export class PreviewUi {
 
 
 PreviewUi.prototype.setBattleProduction=function(status){const econ=this.root.querySelector('#battle-econ');const btns=this.root.querySelector('#battle-buttons'); if(!econ||!btns)return; this.currentBattleSpawnHandler=status.onSpawn||null; const signature=JSON.stringify({money:Math.floor(status.money||0),maxMoney:status.maxMoney||0,roster:(status.roster||[]).map(r=>[r.slotId,!!r.canProduce,Math.ceil((r.cooldownMs||0)/100),r.cost||0])}); if(signature===this.lastBattleProductionSignature) return; this.lastBattleProductionSignature=signature; econ.textContent=`money:${Math.floor(status.money||0)}/${status.maxMoney||0} income:${status.incomePerSecond||0}/s`; btns.innerHTML=(status.roster||[]).map(r=>`<button data-slot='${r.slotId}' ${r.canProduce?'':'disabled'}>${r.label} cost:${r.cost} cd:${((r.cooldownMs||0)/1000).toFixed(1)}s</button>`).join(' '); if(!btns.dataset.bound){btns.dataset.bound='1';btns.onclick=(ev)=>{const b=ev.target.closest('button[data-slot]');if(!b)return; this.currentBattleSpawnHandler?.(b.dataset.slot);};}};
-
-PreviewUi.prototype.setBattleLineupOptions=function(options=[]){const sel=this.root.querySelector('#battle-lineup');if(!sel)return;const signature=JSON.stringify(options);if(signature===this.lastBattleLineupSignature)return;this.lastBattleLineupSignature=signature;sel.innerHTML='';for(const opt of options){const o=new Option(opt.lineupId,opt.lineupId);o.selected=!!opt.active;sel.add(o);}};

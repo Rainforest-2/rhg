@@ -26,7 +26,7 @@ export class BattleAttackProfile {
     }
     const startup = Math.max(actor?.attackStartupMs||0, BATTLE_CONFIG.tuning?.minAttackStartupMs ?? 0);
     const isRange = actor?.attackType === 1;
-    return { source:'actor-current-stats', isRange, events:[{ key:'hit-0', hitIndex:0, atMs:startup, damage:actor?.damage??0, targetMode:isRange?'range':'single', allowBaseHit:true, attackKind:'normal', rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu??0, attackBackBcu:actor?.attackWidthBcu??0, shortPointBcu:0, longPointBcu:0 }], animationMs:Math.max(actor?.attackAnimDurationMs||0,startup,BATTLE_CONFIG.tuning?.minAttackAnimMs??0), waitMs:actor?.attackWaitMs??0, maxEventAtMs:startup };
+    return { source:'actor-current-stats', isRange, events:[{ key:'hit-0', hitIndex:0, atMs:startup, damage:actor?.damage??0, targetMode:isRange?'range':'single', allowBaseHit:true, attackKind:'normal', rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu:actor?.attackWidthBcu ?? stats.width ?? 0, shortPointBcu:0, longPointBcu:0, rangeEndPxDebug: actor?.detectionRangePx ?? toPx(stats.detectionRange ?? 0), attackBackPxDebug: actor?.attackWidthPx ?? toPx(stats.width ?? 0), shortPointPxDebug:0, longPointPxDebug:0 }], animationMs:Math.max(actor?.attackAnimDurationMs||0,startup,BATTLE_CONFIG.tuning?.minAttackAnimMs??0), waitMs:actor?.attackWaitMs??0, maxEventAtMs:startup };
   }
   static ensure(actor){ if(!actor.attackProfile) actor.attackProfile = BattleAttackProfile.fromActor(actor); return actor.attackProfile; }
   static getEventKey(event, index){ return event?.key || `hit-${index}`; }

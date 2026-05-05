@@ -1,5 +1,5 @@
 export const BATTLE_CONFIG = {
-  version: '0.8.2',
+  version: '0.8.3',
   groundY: 560,
   visualLayout: {
     logicalW: 1280,

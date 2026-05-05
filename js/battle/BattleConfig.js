@@ -1,5 +1,5 @@
 export const BATTLE_CONFIG = {
-  version: '0.9.9',
+  version: '0.10.0',
   groundY: 560,
   visualLayout: {
     logicalW: 1280,
@@ -24,7 +24,7 @@ export const BATTLE_CONFIG = {
 
   production:{player:{side:'dog-player',maxSlots:5,activeLineupId:'dog-basic',initialSpawn:{enabled:true,source:'first-production-unit',fallbackSourceRoster:'dogPlayer',fallbackSourceSlotId:'dog-wanko'},catalog:[{catalogId:'dog-wanko',sourceRoster:'dogPlayer',sourceSlotId:'dog-wanko',defaultCost:50,defaultCooldownMs:2000},{catalogId:'dog-nyoro',sourceRoster:'dogPlayer',sourceSlotId:'dog-nyoro',defaultCost:75,defaultCooldownMs:2800},{catalogId:'dog-rei',sourceRoster:'dogPlayer',sourceSlotId:'dog-rei',defaultCost:100,defaultCooldownMs:3500},{catalogId:'cat-basic-ally-debug',sourceRoster:'catEnemy',sourceSlotId:'cat-basic',defaultCost:50,defaultCooldownMs:2000,overrides:{label:'ネコ',side:'dog-player',direction:-1,facing:-1,renderFlipX:false,uiIcon:{kind:'unit',bcuId:'000',primary:'./public/assets/bcu/000004/org/unit/000/f/uni000_f00.png',fallback:'./public/assets/bcu/000004/org/unit/000/f/000_f.png'}}}],lineups:{'dog-basic':[{slotId:'prod-dog-wanko',catalogId:'dog-wanko'},{slotId:'prod-dog-nyoro',catalogId:'dog-nyoro'},{slotId:'prod-dog-rei',catalogId:'dog-rei'},null,null],'debug-cat-ally':[{slotId:'prod-dog-wanko',catalogId:'dog-wanko'},{slotId:'prod-cat-basic',catalogId:'cat-basic-ally-debug'},{slotId:'prod-dog-nyoro',catalogId:'dog-nyoro'},null,null]},defaultLineup:[{slotId:'prod-dog-wanko',sourceRoster:'dogPlayer',sourceSlotId:'dog-wanko'},{slotId:'prod-dog-nyoro',sourceRoster:'dogPlayer',sourceSlotId:'dog-nyoro'},{slotId:'prod-dog-rei',sourceRoster:'dogPlayer',sourceSlotId:'dog-rei'},null,null]}},
 
-  ui:{playerProduction:{enabled:true,source:'production-catalog-presets-v099',inputMode:'touch',keyboardEnabled:false,cardBaseSize:{width:110,height:85},useBcuImgCut:true,useBcuSpriteText:true,useDogEnemyPortraits:true,showMoney:true,showCooldown:true,showCost:true,debugEvents:true}},
+  ui:{playerProduction:{enabled:true,source:'runtime-lineup-switch-preload-v0100',inputMode:'touch',keyboardEnabled:false,cardBaseSize:{width:110,height:85},useBcuImgCut:true,useBcuSpriteText:true,useDogEnemyPortraits:true,showMoney:true,showCooldown:true,showCost:true,debugEvents:true}},
   economy:{dogPlayer:{startMoney:150,maxMoney:6000,incomePerSecond:60}},
   enemySpawnSchedule:[{atMs:1000,slotId:'cat-basic'},{atMs:5000,slotId:'cat-basic',repeatMs:5500},{atMs:12000,slotId:'cat-tank',repeatMs:10000},{atMs:20000,slotId:'cat-battle',repeatMs:14000}]
 };

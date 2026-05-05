@@ -27,7 +27,7 @@ export class BattleScene {
   findEnemyActors(actor){return this.actors.filter(a=>a.side!==actor.side&&a.isAlive());}
   findEnemyBase(actor){return this.bases.find(b=>b.side!==actor.side&&b.isAlive());}
   findTargetForActor(actor){const es=this.findEnemyActors(actor); if(es.length){es.sort((a,b)=>{const d=BattleBodyResolver.getCombatBodyDistance(actor,a)-BattleBodyResolver.getCombatBodyDistance(actor,b);if(d!==0)return d;return actor.getCenterDistanceTo(a)-actor.getCenterDistanceTo(b);});return {target:es[0],targetType:'actor'};} const b=this.findEnemyBase(actor); return b?{target:b,targetType:'base'}:null;}
-  canAttack(a,t){const distance=BattleBodyResolver.getCombatBodyDistance(a,t);a.debugDistance={...(a.debugDistance||{}),combatBodyDistance:distance,detectionRangePx:a.detectionRangePx};return distance<=a.detectionRangePx;}
+  canAttack(a,t){const distance=BattleBodyResolver.getCombatBodyDistance(a,t);const touchable=BattleAttackResolver.isTargetTouchable(a,t);a.debugDistance={...(a.debugDistance||{}),combatBodyDistance:distance,detectionRangePx:a.detectionRangePx,canAttack:touchable,canAttackMode:BATTLE_CONFIG.tuning?.combatPositionMode||'screen-combat-point'};return touchable;}
   isTargetAliveForAttack(target,targetType){if(!target)return false;if(targetType==='actor')return typeof target.isAlive==='function'?target.isAlive():false;if(targetType==='base')return typeof target.isAlive==='function'?target.isAlive():(!target.destroyed&&target.hp>0);return false;}
   getEffectiveAttackStartupMs(actor){const minStartup=BATTLE_CONFIG.tuning.minAttackStartupMs??0;return Math.max(actor.attackStartupMs||0,minStartup);}
   getAttackProfile(actor){return actor.getAttackProfile?.()||BattleAttackProfile.ensure(actor);}

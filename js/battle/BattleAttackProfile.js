@@ -5,6 +5,7 @@ export class BattleAttackProfile {
     const stats = actor?.rawStats || {};
     const fps = actor?.fps || BATTLE_CONFIG.tuning?.fps || 30;
     const phaseMultiplier = actor?.attackPhaseTimeMultiplier ?? 1;
+    // screen-x mode uses these px projected fields; BCU mode fields remain reserved for later migration.
     const toPx = (v) => actor?.battleCoordinate?.lengthToPx?.(v) ?? (v * (BATTLE_CONFIG.tuning?.rangeToPx ?? 1));
     if (Array.isArray(stats.attackHits) && stats.attackHits.length) {
       const hits = stats.attackHits;

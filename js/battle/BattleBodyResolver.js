@@ -2,6 +2,8 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 
 export class BattleBodyResolver {
   static getActorCombatPositionX(actor) {
+    const mode = actor?.combatPositionMode || BATTLE_CONFIG.tuning?.combatPositionMode || 'screen-combat-point';
+    if (mode === 'screen-combat-point') return Number.isFinite(actor?.x) ? actor.x : 0;
     const baseX = Number.isFinite(actor?.x) ? actor.x : 0;
     const manual = Number.isFinite(actor?.combatPositionOffsetPx) ? actor.combatPositionOffsetPx : 0;
     const scale = Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1;
@@ -164,7 +166,7 @@ export class BattleBodyResolver {
     if (!actor || actor.combatBodyFrontInitialized) return;
     const cfg = BATTLE_CONFIG.tuning || {};
     const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'visual-leading-edge';
-    if (mode === 'visual-leading-edge' || mode === 'logical' || mode === 'bcu-pos') {
+    if (mode === 'screen-combat-point' || mode === 'visual-leading-edge' || mode === 'logical' || mode === 'bcu-pos') {
       BattleBodyResolver.initializeActorCombatPositionFromModel(actor);
       actor.combatBodyFrontInitialized = true;
       actor.combatBodyFrontOffsetLocalX = 0;
@@ -184,13 +186,13 @@ export class BattleBodyResolver {
   static getActorCombatBodyBox(actor) {
     const cfg = BATTLE_CONFIG.tuning || {};
     const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'visual-leading-edge';
-    if (mode === 'logical' || mode === 'visual-leading-edge' || mode === 'bcu-pos') {
+    if (mode === 'screen-combat-point' || mode === 'logical' || mode === 'visual-leading-edge' || mode === 'bcu-pos') {
       const centerX = BattleBodyResolver.getActorCombatPositionX(actor);
       const halfW = Number.isFinite(cfg.combatPointHalfWidthPx) ? cfg.combatPointHalfWidthPx : 6;
       const height = Number.isFinite(cfg.combatPointHeightPx) ? cfg.combatPointHeightPx : BattleBodyResolver.getActorCombatHeight(actor);
       const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx) ? actor.combatBodyYOffsetPx : 0;
       const bottom = (actor?.y ?? 0) + yOffset;
-      return { left: centerX - halfW, right: centerX + halfW, top: bottom - height, bottom, centerX, centerY: bottom - height * 0.5, width: halfW * 2, height, frontX: centerX, backX: centerX, combatPositionX: centerX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || 'visual-leading-edge', isCombatPoint: true };
+      return { left: centerX - halfW, right: centerX + halfW, top: bottom - height, bottom, centerX, centerY: bottom - height * 0.5, width: halfW * 2, height, frontX: centerX, backX: centerX, combatPositionX: centerX, source: mode === 'screen-combat-point' ? 'screen-combat-point' : (actor?.combatPositionSource || actor?.combatBodyFrontSource || 'visual-leading-edge'), isCombatPoint: true };
     }
     const width = BattleBodyResolver.getActorCombatWidth(actor); const height = BattleBodyResolver.getActorCombatHeight(actor); const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx)?actor.combatBodyYOffsetPx:0; const bottom=(actor?.y??0)+yOffset; const frontX=BattleBodyResolver.getActorFrontX(actor); const dir=Number.isFinite(actor?.direction)?actor.direction:1; const left=dir<0?frontX:frontX-width; const right=dir<0?frontX+width:frontX;
     return { left, right, top: bottom - height, bottom, centerX: (left + right) * 0.5, centerY: bottom - height * 0.5, width, height, frontX, backX: dir < 0 ? right : left, combatPositionX: frontX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || '-', isCombatPoint: false };
@@ -199,6 +201,6 @@ export class BattleBodyResolver {
   static getBaseCombatBodyBox(base){if(typeof base?.getCombatBodyBox==='function')return base.getCombatBodyBox(); const r=base?.collisionRadius||0,b=Number.isFinite(base?.y)?base.y:0,h=r*2; return {left:(base?.x??0)-r,right:(base?.x??0)+r,top:b-h,bottom:b,centerX:base?.x??0,centerY:b-h*0.5,width:r*2,height:h};}
   static getCombatBodyBox(entity){const isActorLike=typeof entity?.initializeCombatBodyFrontFromModel==='function'||!!entity?.animator; if(isActorLike)return BattleBodyResolver.getActorCombatBodyBox(entity); if(typeof entity?.getCombatBodyBox==='function')return BattleBodyResolver.getBaseCombatBodyBox(entity); const r=entity?.collisionRadius||0,b=Number.isFinite(entity?.y)?entity.y:0,h=r*2; return {left:(entity?.x??0)-r,right:(entity?.x??0)+r,top:b-h,bottom:b,centerX:entity?.x??0,centerY:b-h*0.5,width:r*2,height:h};}
   static getCombatBodyDistance(a,b){const A=BattleBodyResolver.getCombatBodyBox(a),B=BattleBodyResolver.getCombatBodyBox(b); if(A?.isCombatPoint&&B?.isCombatPoint)return Math.abs((A.combatPositionX??A.centerX??0)-(B.combatPositionX??B.centerX??0)); if(A.right<B.left)return B.left-A.right; if(B.right<A.left)return A.left-B.right; return 0;}
-  static getAttackRangeDebug(actor){const box=BattleBodyResolver.getActorCombatBodyBox(actor); const dir=Number.isFinite(actor?.direction)?actor.direction:1; const range=Number.isFinite(actor?.detectionRangePx)?actor.detectionRangePx:0; const posX=BattleBodyResolver.getActorCombatPositionX(actor); return {frontX:posX,attackLineX:posX+dir*range,centerY:box.centerY,top:box.top,bottom:box.bottom,combatPositionX:posX};}
+  static getAttackRangeDebug(actor){const box=BattleBodyResolver.getActorCombatBodyBox(actor); const dir=Number.isFinite(actor?.direction)?actor.direction:1; const range=Number.isFinite(actor?.detectionRangePx)?actor.detectionRangePx:0; const posX=BattleBodyResolver.getActorCombatPositionX(actor); return {frontX:posX,attackLineX:posX+dir*range,centerY:box.centerY,top:box.top,bottom:box.bottom,combatPositionX:posX,rangePx:range,mode:actor?.combatPositionMode||BATTLE_CONFIG.tuning?.combatPositionMode||'screen-combat-point'};}
   static getHitEffectPosition(attacker,target){const box=BattleBodyResolver.getCombatBodyBox(target); let x; if(target?.side==='dog-player')x=box.left; else if(target?.side==='cat-enemy')x=box.right; else if(Number.isFinite(attacker?.x)&&Number.isFinite(target?.x))x=attacker.x<=target.x?box.left:box.right; else x=box.centerX; const y=box.centerY+(BATTLE_CONFIG.tuning?.hitEffectYOffsetPx??0); return {x,y};}
 }

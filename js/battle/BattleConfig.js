@@ -1,5 +1,5 @@
 export const BATTLE_CONFIG = {
-  version: '0.9.7',
+  version: '0.9.8',
   groundY: 560,
   visualLayout: {
     logicalW: 1280,
@@ -22,7 +22,9 @@ export const BATTLE_CONFIG = {
     catEnemy:[{slotId:'cat-basic',label:'ネコ',assetId:'unit-000-f',statsType:'unit',statsId:0,formRow:0,side:'cat-enemy',direction:1,facing:1,renderFlipX:true,collisionRadius:42,scale:1.15,idleAnimId:'anim01',moveAnimId:'anim00',attackAnimId:'anim02',knockbackAnimId:'anim03'},{slotId:'cat-tank',label:'タンクネコ',assetId:'unit-001-f',statsType:'unit',statsId:1,formRow:0,side:'cat-enemy',direction:1,facing:1,renderFlipX:true,collisionRadius:50,scale:1.12,idleAnimId:'anim01',moveAnimId:'anim00',attackAnimId:'anim02',knockbackAnimId:'anim03'},{slotId:'cat-battle',label:'バトルネコ',assetId:'unit-002-f',statsType:'unit',statsId:2,formRow:0,side:'cat-enemy',direction:1,facing:1,renderFlipX:true,collisionRadius:44,scale:1.12,idleAnimId:'anim01',moveAnimId:'anim00',attackAnimId:'anim02',knockbackAnimId:'anim03'}]
   },
 
-  ui:{playerProduction:{enabled:true,source:'bcu-style-touch-production-ui-v097',inputMode:'touch',keyboardEnabled:false,cardBaseSize:{width:110,height:85},useBcuImgCut:true,useBcuSpriteText:true,useDogEnemyPortraits:true,showMoney:true,showCooldown:true,showCost:true,debugEvents:true}},
+  production:{player:{side:'dog-player',maxSlots:5,defaultLineup:[{slotId:'prod-dog-wanko',sourceRoster:'dogPlayer',sourceSlotId:'dog-wanko'},{slotId:'prod-dog-nyoro',sourceRoster:'dogPlayer',sourceSlotId:'dog-nyoro'},{slotId:'prod-dog-rei',sourceRoster:'dogPlayer',sourceSlotId:'dog-rei'},null,null]}},
+
+  ui:{playerProduction:{enabled:true,source:'production-roster-system-v098',inputMode:'touch',keyboardEnabled:false,cardBaseSize:{width:110,height:85},useBcuImgCut:true,useBcuSpriteText:true,useDogEnemyPortraits:true,showMoney:true,showCooldown:true,showCost:true,debugEvents:true}},
   economy:{dogPlayer:{startMoney:150,maxMoney:6000,incomePerSecond:60}},
   enemySpawnSchedule:[{atMs:1000,slotId:'cat-basic'},{atMs:5000,slotId:'cat-basic',repeatMs:5500},{atMs:12000,slotId:'cat-tank',repeatMs:10000},{atMs:20000,slotId:'cat-battle',repeatMs:14000}]
 };

@@ -222,6 +222,16 @@ export class BattleSceneRenderer {
     const s = Number.isFinite(actor.scale) ? actor.scale : 1;
     c.scale(s * crowdScale * kbScale, s * crowdScale * kbScale);
     c.translate(0, -anchorY);
+    const k = actor.kbeffParentTransform;
+    if (k && actor.kbeffEnabled) {
+      const tx = Number.isFinite(k.localX) ? k.localX : 0;
+      const ty = Number.isFinite(k.localY) ? k.localY : 0;
+      const sx = Number.isFinite(k.scaleX) ? k.scaleX : 1;
+      const sy = Number.isFinite(k.scaleY) ? k.scaleY : 1;
+      c.translate(tx, ty);
+      if (Number.isFinite(k.angleRad) && k.angleRad !== 0) c.rotate(k.angleRad);
+      if (sx !== 1 || sy !== 1) c.scale(sx, sy);
+    }
     for (const p of drawList) {
       const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
       const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;

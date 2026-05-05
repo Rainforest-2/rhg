@@ -107,6 +107,13 @@ export class BattleActor {
     this.kbDisableSyntheticBounce = false;
     this.kbTouchState = 'normal';
     this.lastKnockbackFrameDebug = null;
+    this.kbeffRuntime = null;
+    this.kbeffType = null;
+    this.kbeffEnabled = false;
+    this.kbeffParentTransform = null;
+    this.kbeffFrame = 0;
+    this.kbeffSource = 'none';
+    this.lastKbeffDebug = null;
 
     this.pendingDamage = 0;
     this.pendingHits = [];
@@ -288,6 +295,16 @@ export class BattleActor {
   updateKnockbackVisual(progress) { const t = Math.max(0, Math.min(1, progress)); if (this.kbDisableSyntheticBounce) { this.kbVisualOffsetX = 0; this.kbVisualOffsetY = 0; this.kbVisualScale = 1; this.kbVisualProgress = t; return; } this.kbVisualProgress = t; const sin = Math.sin(Math.PI * t); const settle = 1 - t; const yMax = Number.isFinite(this.kbVisualOffsetYMaxPx) ? this.kbVisualOffsetYMaxPx : -32; const backSwing = Number.isFinite(this.kbVisualBackSwingPx) ? this.kbVisualBackSwingPx : 8; const peak = Number.isFinite(this.kbVisualScalePeak) ? this.kbVisualScalePeak : 1.025; this.kbVisualOffsetY = yMax * sin; this.kbVisualOffsetX = -this.direction * backSwing * sin * settle; this.kbVisualScale = 1 + (peak - 1) * sin; }
   resetKnockbackVisual() { this.kbVisualOffsetX = 0; this.kbVisualOffsetY = 0; this.kbVisualScale = 1; this.kbVisualProgress = 0; }
 
+  updateKbeffTransform() {
+    if (!this.kbeffEnabled || !this.kbeffRuntime) { this.kbeffParentTransform = null; return null; }
+    const t = this.kbeffRuntime.getParentTransform(this.scale || 1);
+    this.kbeffParentTransform = t; this.kbeffFrame = t.frame;
+    this.lastKbeffDebug = { bcuType: this.kbeffType, frame: t.frame, localX: t.localX, localY: t.localY, screenX: t.screenX, screenY: t.screenY, source: this.kbeffSource };
+    return t;
+  }
+
+  detachKbeff() { this.kbeffRuntime = null; this.kbeffEnabled = false; this.kbeffType = null; this.kbeffParentTransform = null; this.kbeffFrame = 0; this.kbeffSource = 'none'; }
+
   startKnockback(knockback = null) {
     const kb = knockback || {};
     this.knockbackSerial += 1;
@@ -309,6 +326,8 @@ export class BattleActor {
     this.kbDistanceScale = resolvedDistance.scale;
     this.kbVisualOffsetYMaxPx = Number.isFinite(kb.visualOffsetYMaxPx) ? kb.visualOffsetYMaxPx : -32; this.kbVisualBackSwingPx = Number.isFinite(kb.visualBackSwingPx) ? kb.visualBackSwingPx : 8; this.kbVisualScalePeak = Number.isFinite(kb.visualScalePeak) ? kb.visualScalePeak : 1.025;
     this.resetKnockbackVisual(); this.kbVisualSource = this.kbDisableSyntheticBounce ? 'disabled-synthetic-bounce' : this.kbVisualEasing;
+    this.detachKbeff();
+    if (kb.kbeffRuntime && ['INT_HB','INT_SW','INT_ASS'].includes(this.kbBcuType)) { this.kbeffRuntime = kb.kbeffRuntime; this.kbeffRuntime.reset(); this.kbeffEnabled = true; this.kbeffType = this.kbBcuType; this.kbeffSource = 'bcu-a-kb-kbeff-v0115'; this.updateKbeffTransform(); }
     this.lastKnockbackDebug = { serial: this.knockbackSerial, type: this.knockbackType, reason: this.knockbackReason, fromX: this.knockbackFromX, toX: this.knockbackToX, distancePx: distance, durationMs: this.knockbackPositionDurationMs, combatEasing: this.kbCombatEasing, visualEasing: this.kbVisualEasing, visualOffsetYMaxPx: this.kbVisualOffsetYMaxPx, visualBackSwingPx: this.kbVisualBackSwingPx, visualScalePeak: this.kbVisualScalePeak, deathAfterKnockback: this.deathAfterKnockback, targetableDuringKb: this.kbTargetable, touchableDuringKb: this.kbTouchable, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames, bcuDistance: kb.bcuDistance ?? null, framesTotal: this.kbFramesTotal, moveFramesTotal: this.kbMoveFramesTotal, moveMode: this.kbMoveMode, distanceSource: this.kbDistanceSource, knockbackDistanceToPx: this.kbDistanceScale };
     this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame();
   }
@@ -319,7 +338,8 @@ export class BattleActor {
     if (this.kbMoveMode === 'easeOut') { const total = Math.max(1, this.kbFramesTotal); const frameNumber = this.kbFrameIndex + 1; const t = Math.max(0, Math.min(1, frameNumber / total)); const eased = t * (2 - t); nextX = this.kbStartX - this.direction * this.kbDistanceTotalPx * eased; moved = nextX - this.x; this.x = nextX; this.kbRemainingDistancePx = Math.max(0, Math.abs(this.knockbackToX - this.x)); }
     else { const remaining = Math.max(1, this.kbMoveFramesRemaining); const step = this.kbRemainingDistancePx / remaining; moved = -this.direction * step; this.x += moved; this.kbRemainingDistancePx = Math.max(0, this.kbRemainingDistancePx - step); }
     this.kbFrameIndex += 1; this.kbMoveFramesRemaining = Math.max(0, this.kbMoveFramesRemaining - 1); this.kbFramesRemaining = this.kbMoveFramesRemaining; this.kbLastFrameX = this.x; const progress = this.kbMoveFramesTotal > 0 ? this.kbFrameIndex / this.kbMoveFramesTotal : 1; this.updateKnockbackVisual?.(progress);
-    this.lastKnockbackFrameDebug = { frameIndex: this.kbFrameIndex, moveFrameIndex: this.kbFrameIndex, framesRemaining: this.kbFramesRemaining, moveFramesRemaining: this.kbMoveFramesRemaining, moved, x: this.x, remainingDistancePx: this.kbRemainingDistancePx, progress, moveMode: this.kbMoveMode, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames };
+    if (this.kbeffEnabled && this.kbeffRuntime) { this.kbeffRuntime.stepFrame(); this.updateKbeffTransform(); }
+    this.lastKnockbackFrameDebug = { frameIndex: this.kbFrameIndex, moveFrameIndex: this.kbFrameIndex, framesRemaining: this.kbFramesRemaining, moveFramesRemaining: this.kbMoveFramesRemaining, moved, x: this.x, remainingDistancePx: this.kbRemainingDistancePx, progress, moveMode: this.kbMoveMode, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames, kbeffFrame: this.kbeffFrame };
     return { active: this.kbMoveFramesRemaining > 0, done: this.kbMoveFramesRemaining <= 0, moved, progress };
   }
 

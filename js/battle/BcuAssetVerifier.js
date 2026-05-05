@@ -81,3 +81,10 @@ export async function getVerifiedExtraCatUnits() {
   }
   return out;
 }
+
+export async function verifyKbeffAssets() {
+  const p = './public/assets/bcu/000001/org/battle/a/';
+  const paths = ['000_a.png','000_a.imgcut','kb.mamodel','kb_hb.maanim','kb_sw.maanim','kb_ass.maanim'].map((f)=>`${p}${f}`);
+  const checks = await Promise.all(paths.map((path) => verifyAssetPath(path)));
+  return { kind: 'kbeff', ok: checks.every((x) => x.ok), checks };
+}

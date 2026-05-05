@@ -5,7 +5,7 @@ import { BcuKbeffRuntime } from './BcuKbeffRuntime.js';
 import { verifyAssetPath } from './BcuAssetVerifier.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
-export const BCU_KBEFF_LOADER_VERSION = '0.11.5';
+export const BCU_KBEFF_LOADER_VERSION = '0.11.8';
 export const BCU_KBEFF_TYPE_TO_FILE = { INT_HB: 'kb_hb.maanim', INT_SW: 'kb_sw.maanim', INT_ASS: 'kb_ass.maanim' };
 const TYPE_TO_ENUM = { INT_HB: 'KB', INT_SW: 'SW', INT_ASS: 'ASS' };
 
@@ -47,5 +47,14 @@ export class BcuKbeffLoader {
     return d;
   }
   getDefinition(bcuType) { return this.definitions.get(bcuType) || null; }
-  createRuntime(bcuType) { const d = this.getDefinition(bcuType); if (!d) throw new Error(`kbeff definition not loaded: ${bcuType}`); return new BcuKbeffRuntime(d); }
+
+  isRuntimeAllowed() {
+    if (this.config?.enabled === false) return false;
+    if (this.config?.failClosed === true && this.config?.allowRuntime !== true) return false;
+    if (this.config?.requireExactMaanim === true && this.config?.exactMaanimVerified !== true) return false;
+    if (this.config?.requireParentMatrix === true && this.config?.parentMatrixVerified !== true) return false;
+    return true;
+  }
+  createRuntime(bcuType) { if (!this.isRuntimeAllowed()) throw new Error('KBEff runtime is gated until exact verification passes'); const d = this.getDefinition(bcuType); if (!d) throw new Error(`kbeff definition not loaded: ${bcuType}`); return new BcuKbeffRuntime(d); }
+  createVerifiedRuntime(bcuType) { const d = this.getDefinition(bcuType); if (!d) throw new Error(`kbeff definition not loaded: ${bcuType}`); return new BcuKbeffRuntime(d); }
 }

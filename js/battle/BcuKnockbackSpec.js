@@ -1,4 +1,4 @@
-export const BCU_KNOCKBACK_SPEC_VERSION = '0.11.7';
+export const BCU_KNOCKBACK_SPEC_VERSION = '0.11.8';
 export const BCU_KNOCKBACK_SPECS = {
   HP_KB:{type:'HP_KB',bcuType:'INT_HB',distanceBcu:345,motionFrames:24,intangibleFrames:23,firstFrameTargetable:true,targetableFromFrame:24,retreatFrames:23,speedEquivalent:30,kbeffType:'INT_HB'},
   CANNON:{type:'CANNON',bcuType:'INT_ASS',distanceBcu:55,motionFrames:12,intangibleFrames:11,firstFrameTargetable:true,targetableFromFrame:12,retreatFrames:11,speedEquivalent:10,kbeffType:'INT_ASS'},

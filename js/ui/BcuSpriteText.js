@@ -49,8 +49,22 @@ export class BcuSpriteText {
       moneySignOnJp: this.signcut.getByLabel('money_jp_on')
     };
   }
-  measureParts(parts) { return (parts || []).reduce((sum, p) => sum + (p?.w || 0), 0); }
-  drawParts(ctx, image, parts, x, y) { let cx = x; for (const p of parts) { this.imgcut.draw(ctx, image, p, cx, y, p.w, p.h); cx += p.w; } return cx; }
+  measureParts(parts, scale = 1) { return (parts || []).reduce((sum, p) => sum + ((p?.w || 0) * scale), 0); }
+  measurePartBounds(parts, scale = 1) {
+    return {
+      width: this.measureParts(parts, scale),
+      height: (parts || []).reduce((m, p) => Math.max(m, (p?.h || 0) * scale), 0)
+    };
+  }
+  drawParts(ctx, image, parts, x, y, scale = 1) {
+    let cx = x;
+    for (const p of parts) {
+      if (!p) continue;
+      ctx.drawImage(image, p.x, p.y, p.w, p.h, cx, y, p.w * scale, p.h * scale);
+      cx += p.w * scale;
+    }
+    return cx;
+  }
 
   drawFallback(ctx, text, x, y, { disabled = false, small = false } = {}) {
     ctx.lineWidth = small ? 4 : 5;
@@ -69,13 +83,20 @@ export class BcuSpriteText {
     parts.push(this.map.bigYen || this.map.moneySignOnJp);
     return this.measureParts(parts);
   }
-  measureCost(cost, { disabled = false } = {}) {
+  measureCost(cost, { disabled = false, scale = 1 } = {}) {
     const value = `${Math.floor(cost)}`;
     if (!this.ready || !this.map) return (value.length + 1) * 12;
     const digits = disabled ? this.map.smallDigitsOff : this.map.smallDigitsOn;
     const parts = [...value].map((ch) => digits[Number(ch)]);
     parts.push(disabled ? this.map.smallYenOff : this.map.smallYenOn);
-    return this.measureParts(parts);
+    return this.measureParts(parts, scale);
+  }
+  measureCostBox(cost, { disabled = false, scale = 1 } = {}) {
+    const value = `${Math.floor(cost)}`;
+    const digits = disabled ? this.map?.smallDigitsOff : this.map?.smallDigitsOn;
+    const parts = (digits ? [...value].map((ch) => digits[Number(ch)]) : []).concat([disabled ? this.map?.smallYenOff : this.map?.smallYenOn]);
+    if (!this.ready || !this.map || parts.some((p) => !p)) return { width: (value.length + 1) * 12 * scale, height: 14 * scale };
+    return this.measurePartBounds(parts, scale);
   }
 
   drawMoney(ctx, money, maxMoney, x, y, options = {}) {
@@ -92,7 +113,7 @@ export class BcuSpriteText {
     else this.signcut.draw(ctx, this.sign, yen, endX + 2, y, yen.w, yen.h);
   }
 
-  drawCost(ctx, cost, x, y, { disabled = false } = {}) {
+  drawCost(ctx, cost, x, y, { disabled = false, scale = 1 } = {}) {
     const value = `${Math.floor(cost)}`;
     const text = `${value}円`;
     if (!this.ready || !this.map) return this.drawFallback(ctx, text, x, y, { disabled, small: true });
@@ -103,8 +124,8 @@ export class BcuSpriteText {
       this.log.warn?.('[BcuSpriteText] cost sprite missing', { hasYen: Boolean(yen), disabled, missingDigits: parts.map((p, i) => (!p ? i : -1)).filter((v) => v >= 0) });
       return this.drawFallback(ctx, text, x, y, { disabled, small: true });
     }
-    const endX = this.drawParts(ctx, this.img, parts, x, y);
-    this.imgcut.draw(ctx, this.img, yen, endX + 1, y, yen.w, yen.h);
+    const endX = this.drawParts(ctx, this.img, parts, x, y, scale);
+    this.drawParts(ctx, this.img, [yen], endX + scale, y, scale);
   }
 
   drawMoneyRight(ctx, money, maxMoney, rightX, y, options = {}) { const w = this.measureMoney(money, maxMoney, options); this.drawMoney(ctx, money, maxMoney, rightX - w, y, options); }

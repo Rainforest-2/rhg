@@ -4,10 +4,11 @@ import { BcuSpriteText } from './BcuSpriteText.js';
 
 const CARD = {
   w: 110, h: 85,
-  innerX: 7, innerY: 6, innerW: 96, innerH: 60,
-  costBoxX: 7, costBoxY: 63, costBoxW: 96, costBoxH: 20, costBoxBottomGap: 2,
-  costRightX: 108, costY: 61,
-  cooldownX: 10, cooldownY: 70, cooldownW: 90, cooldownH: 8
+  innerX: 7, innerY: 6, innerW: 96, innerH: 74,
+  portraitX: 8, portraitY: 7, portraitW: 94, portraitH: 56,
+  costBoxX: 7, costBoxY: 63, costBoxW: 96, costBoxH: 19,
+  costPadRight: 2, costPadBottom: 1,
+  cooldownX: 10, cooldownY: 69, cooldownW: 90, cooldownH: 8
 };
 
 const loadImage = (src) => new Promise((res, rej) => {
@@ -81,7 +82,7 @@ export class PlayerProductionBar {
       const ctx = it.ctx; ctx.clearRect(0, 0, CARD.w, CARD.h); this.drawCardBase(ctx);
       if (!it.d) continue;
       const s = scene.economy?.getStatus(it.d) || {};
-      if (it.icon) this.drawImageContain(ctx, it.icon, CARD.innerX, CARD.innerY, CARD.innerW, CARD.innerH);
+      if (it.icon) this.drawImageContain(ctx, it.icon, CARD.portraitX, CARD.portraitY, CARD.portraitW, CARD.portraitH);
       const stopped = scene.battleState !== 'running'; const cooldown = (s.cooldownRemainingMs || 0) > 0; const notEnough = s.affordable === false; const disabled = stopped || cooldown || notEnough;
       ctx.fillStyle = '#000'; ctx.fillRect(CARD.costBoxX, CARD.costBoxY, CARD.costBoxW, CARD.costBoxH);
       if (disabled) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, CARD.w, CARD.h); }
@@ -91,7 +92,11 @@ export class PlayerProductionBar {
         ctx.fillStyle = '#111'; ctx.fillRect(CARD.cooldownX + (CARD.cooldownW - rem), CARD.cooldownY, rem, CARD.cooldownH);
       } else {
         const disabledCost = disabled && !cooldown;
-        this.spriteText.drawCostRight(ctx, it.d.cost || 0, CARD.costRightX, CARD.costY, { disabled: disabledCost });
+        const costScale = 0.9;
+        const metrics = this.spriteText.measureCostBox(it.d.cost || 0, { disabled: disabledCost, scale: costScale });
+        const costX = CARD.costBoxX + CARD.costBoxW - metrics.width - CARD.costPadRight;
+        const costY = CARD.costBoxY + CARD.costBoxH - metrics.height - CARD.costPadBottom;
+        this.spriteText.drawCost(ctx, it.d.cost || 0, costX, costY, { disabled: disabledCost, scale: costScale });
       }
     }
   }

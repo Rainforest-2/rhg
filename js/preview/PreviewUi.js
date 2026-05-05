@@ -5,7 +5,7 @@ export class PreviewUi {
   formatAssetLabel(a) { return `[${ROLE_TAG[a.group] || a.group?.toUpperCase() || 'UNK'}] ${a.label}`; }
   init(assets, on) {
     this.root.innerHTML = `<h2>BCU Preview Controls</h2>
-<div class='group'><label>Mode</label><select id='mode'><option value='preview' selected>Asset Preview</option><option value='battle'>Battle Scene</option></select><label>Asset set</label><select id='asset'></select><label>Animation</label><select id='anim'></select></div>
+<div class='group'><label>Mode</label><select id='mode'><option value='preview' selected>Asset Preview</option><option value='battle'>Battle Scene</option><option value='formation'>Formation Mode</option></select><label>Asset set</label><select id='asset'></select><label>Animation</label><select id='anim'></select></div>
 <div class='group row'><button id='play'>Play/Pause</button><button id='restart'>Restart</button><button id='stepm'>Step -1</button><button id='stepp'>Step +1</button></div>
 <div class='group'><button id='reset-battle'>Reset Battle</button></div><div class='group' id='battle-prod' style='display:none'><div id='battle-econ'></div><div id='battle-buttons'></div></div>
 <div class='group'><label>Speed</label><select id='speed'><option value='0.25'>0.25x</option><option value='0.5'>0.5x</option><option value='1' selected>1x</option><option value='1.5'>1.5x</option><option value='2'>2x</option></select><label>Scale <span id='scalev'>1.00</span></label><input id='scale' type='range' min='0.2' max='3' step='0.05' value='1'></div>

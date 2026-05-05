@@ -8,6 +8,7 @@ import { PreviewUi } from './PreviewUi.js';
 import { BattleScene } from '../battle/BattleScene.js';
 import { BattleSceneRenderer } from '../battle/BattleSceneRenderer.js';
 import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
+import { FormationEditor } from '../ui/FormationEditor.js';
 
 async function loadImage(url) {
   return await new Promise((res, rej) => {
@@ -19,7 +20,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; }
 
 
   async start() {
@@ -79,7 +80,17 @@ export class PreviewApp {
   }
 
   async setViewMode(mode) {
-    this.viewMode = mode === 'battle' ? 'battle' : 'preview';
+    this.viewMode = ['preview','battle','formation'].includes(mode) ? mode : 'preview';
+    if (this.viewMode === 'formation') {
+      this.productionBar?.setVisible(false);
+      if (!this.formationEditor) {
+        const battleMount=document.querySelector('.canvas-panel')||document.body;
+        this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`); if(this.battleScene)this.ui?.log('info','Battle reset required to apply');}, onApplyBattle: async ()=>{ await this.setViewMode('battle'); await this.resetBattle(); } });
+      }
+      this.formationEditor.setVisible(true);
+      return;
+    }
+    this.formationEditor?.setVisible(false);
     if (this.viewMode !== 'battle') { this.productionBar?.setVisible(false); return; }
     if (this.battleInitPromise) return await this.battleInitPromise;
     if (!this.battleScene) {

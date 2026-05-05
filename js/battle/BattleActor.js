@@ -3,7 +3,7 @@ import { BattleBodyResolver } from './BattleBodyResolver.js';
 import { BattleAttackProfile } from './BattleAttackProfile.js';
 
 export class BattleActor {
-  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null, combatPositionOffsetPx = 0, combatPositionSource = 'visual-leading-edge', combatEdgeInsetPx = 0, combatPositionMode = 'visual-leading-edge' }) {
+  constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null, combatPositionOffsetPx = 0, combatPositionSource = 'visual-leading-edge', combatEdgeInsetPx = 0, combatPositionMode = 'screen-combat-point' }) {
     this.assetDef = assetDef; this.sprite = sprite; this.model = model; this.side = side; this.x = x; this.y = y; this.scale = scale;
     this.facing = facing; this.direction = direction; this.renderFlipX = renderFlipX;
     this.currentAnimId = currentAnimId; this.rawStats = stats; this.animations = new Map(Object.entries(animations));
@@ -22,7 +22,7 @@ export class BattleActor {
     this.combatPositionOffsetPx = Number.isFinite(combatPositionOffsetPx) ? combatPositionOffsetPx : 0;
     this.combatPositionSource = combatPositionSource || 'visual-leading-edge';
     this.combatEdgeInsetPx = Number.isFinite(combatEdgeInsetPx) ? combatEdgeInsetPx : 0;
-    this.combatPositionMode = combatPositionMode || 'visual-leading-edge';
+    this.combatPositionMode = combatPositionMode || 'screen-combat-point';
     this.autoCombatPositionOffsetLocalX = 0;
     this.autoCombatPositionOffsetWorldPx = 0;
     this.autoCombatPositionInitialized = false;
@@ -96,6 +96,10 @@ export class BattleActor {
     this.visualRenderOffsetInitialized = false;
     this.visualRenderOffsetSource = 'not-initialized';
     this.visualRenderOffsetDebug = null;
+
+    this.lastCaptureDebug = null;
+    this.lastHitQueueDebug = null;
+    this.lastDamageDebug = null;
 
     this.activeAnimId = currentAnimId;
     this.activeAnimRole = 'move';

@@ -192,7 +192,7 @@ export class BattleSceneRenderer {
     if (!actor?.sprite || !actor?.model) return;
     if (actor.isRenderable ? !actor.isRenderable() : !actor.isAlive?.()) return;
     const hasBattleDrawList = typeof actor.model.getBattleDrawList === 'function';
-    const drawList = hasBattleDrawList ? actor.model.getBattleDrawList() : actor.model.getDrawList();
+    const drawList = hasBattleDrawList ? actor.model.getBattleDrawList({ parentMatrix: actor.kbeffEnabled ? actor.kbeffParentMatrix : null }) : actor.model.getDrawList();
     if (!hasBattleDrawList) { this.drawActorLegacy(c, actor, drawList); return; }
     const anchorY = this.getActorGroundAnchorLocalY(actor, drawList);
     c.save();

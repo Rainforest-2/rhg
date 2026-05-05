@@ -1,71 +1,7 @@
-const MOD_MAP = {
-  2: 'partIndex',
-  4: 'posX',
-  5: 'posY',
-  6: 'pivotX',
-  7: 'pivotY',
-  8: 'scaleX',
-  9: 'scaleY',
-  11: 'angle',
-  12: 'opacity'
-};
-
-function valueAt(track, frame, prop) {
-  const kfs = track.keyframes || [];
-  if (!kfs.length) return 0;
-
-  if (prop === 'partIndex') {
-    let v = kfs[0].value;
-    for (const kf of kfs) {
-      if (frame >= kf.frame) v = kf.value;
-      else break;
-    }
-    return Math.round(v);
-  }
-
-  let a = kfs[0];
-  let b = kfs[kfs.length - 1];
-  for (let i = 0; i < kfs.length - 1; i += 1) {
-    if (frame >= kfs[i].frame && frame <= kfs[i + 1].frame) {
-      a = kfs[i];
-      b = kfs[i + 1];
-      break;
-    }
-  }
-  if (a === b || b.frame === a.frame || a.easing === 1) return a.value;
-  const p = Math.max(0, Math.min(1, (frame - a.frame) / (b.frame - a.frame)));
-  return a.value + (b.value - a.value) * p;
-}
-
+const MOD_MAP = { 0:'parent', 1:'imgcutIndex', 2:'partIndex', 3:'zOrder', 4:'posX', 5:'posY', 6:'pivotX', 7:'pivotY', 8:'scale', 9:'scaleX', 10:'scaleY', 11:'angle', 12:'opacity', 13:'hf', 14:'vf' };
 const BASE_FPS = 30;
-
-export class BcuAnimator {
-  constructor(anim) { this.anim = anim; this.frame = 0; this.playing = true; this.speed = 1; this.loop = true; }
-  restart() { this.frame = 0; }
-  step(v) { this.frame = Math.max(0, this.frame + v); }
-  setSpeed(s) { this.speed = s; }
-  setLoop(loop) { this.loop = loop !== false; }
-  tick(dt) {
-    if (!this.playing) return;
-    const max = Math.max(1, this.anim?.maxFrame || 1);
-    const next = this.frame + (dt * BASE_FPS * this.speed) / 1000;
-    if (this.loop) this.frame = next % max;
-    else this.frame = Math.min(max - 0.0001, next);
-  }
-
-  getValuesAtFrame(frame = this.frame) {
-    const values = [];
-    for (const t of this.anim?.tracks || []) {
-      const prop = MOD_MAP[t.modification];
-      if (!prop || !t.keyframes?.length) continue;
-      values.push({ partId: t.partId, modification: t.modification, prop, value: valueAt(t, frame, prop), track: t });
-    }
-    return values;
-  }
-
-  apply(model) {
-    if (!model) return [];
-    const values = this.getValuesAtFrame(this.frame);
-    return values.map((v) => model.applyTrack(v.partId, v.prop, v.value));
-  }
-}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const i=(v)=>Math.trunc(v);
+function easeVal(e,p,t){ if(e===1)return 0; if(e===2){ if(p>=0) return 1-Math.sqrt(Math.max(0,1-Math.pow(t,p||1))); return Math.sqrt(Math.max(0,1-Math.pow(1-t,-p))); } if(e===3){ return t*t*(3-2*t);} if(e===4){ if(p>0) return 1-Math.cos(t*Math.PI/2); if(p<0) return Math.sin(t*Math.PI/2); return (1-Math.cos(t*Math.PI))/2;} return t; }
+function valueAtBcu(track, frame){ const k=track.keyframes||[]; if(!k.length)return 0; if(frame<=k[0].frame)return i(k[0].value); for(let idx=0;idx<k.length-1;idx++){ const a=k[idx],b=k[idx+1]; if(frame===a.frame)return i(a.value); if(frame>a.frame&&frame<b.frame){ if(track.modification<=1||track.modification===2||track.modification===13||track.modification===14||a.easing===1) return i(a.value); const t=clamp((frame-a.frame)/(b.frame-a.frame),0,1); const ti=easeVal(a.easing,a.parameter||0,t); return i(a.value+(b.value-a.value)*ti); }} return i(k[k.length-1].value); }
+export class BcuAnimator { constructor(anim){this.anim=anim;this.frame=0;this.playing=true;this.speed=1;this.loop=true;} restart(){this.frame=0;} step(v){this.frame=Math.max(0,this.frame+v);} setSpeed(s){this.speed=s;} setLoop(loop){this.loop=loop!==false;} tick(dt){ if(!this.playing)return; const max=Math.max(1,this.anim?.maxFrame||1); const next=this.frame+(dt*BASE_FPS*this.speed)/1000; this.frame=this.loop?(next%max):Math.min(max-0.0001,next);} getValuesAtFrame(frame=this.frame){ const values=[]; for(const t of this.anim?.tracks||[]){ const prop=MOD_MAP[t.modification]; if(!prop||!t.keyframes?.length)continue; values.push({partId:t.partId,modification:t.modification,prop,value:valueAtBcu(t,frame),track:t,rawInterpolationDebug:{frame,easing:t.keyframes?.[0]?.easing}});} return values;} apply(model){ if(!model)return[]; const values=this.getValuesAtFrame(this.frame); return values.map((v)=>model.applyTrack(v.partId,v.prop,v.value,v.modification)); }}

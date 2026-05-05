@@ -21,13 +21,6 @@ export class BcuKbeffRuntime {
   reset() { this.frame = 0; this.active = true; this.animator.frame = 0; this.model.reset(); this.animator.apply(this.model); return this.getParentTransform(); }
   setFrame(frame = 0) { this.frame = Math.max(0, frame); this.animator.frame = this.frame; this.model.reset(); this.animator.apply(this.model); return this.getParentTransform(); }
   stepFrame() { return this.setFrame(this.frame + 1); }
-  getParentTransform(actorScale = 1) {
-    this.model.buildWorld();
-    const part = this.model.parts?.[1];
-    const world = part?.world || { x: 0, y: 0, a: 0, sx: 1, sy: 1, o: 1 };
-    const localY = -(world.y || 0);
-    const t = { frame: Math.floor(this.frame), localX: world.x || 0, localY, screenXDebug: (world.x || 0) * actorScale, screenYDebug: localY * actorScale, scaleX: world.sx || 1, scaleY: world.sy || 1, angleRad: ((world.a || 0) / (this.model.baseAngle || 3600)) * Math.PI * 2, opacity: world.o ?? 1, source: 'bcu-kbeff-parent-transform' };
-    this.lastTransform = t;
-    return t;
-  }
+  getParentTransform(actorScale = 1) { const list = this.model.getBattleDrawList(); const p = list.find((x)=>x.index===1)||list[1]||{matrix:[1,0,0,1,0,0],opacity:1}; const m=p.matrix||[1,0,0,1,0,0]; const localX=m[4]||0; const localY=m[5]||0; const t={frame:Math.floor(this.frame),matrix:m,localX,localY,scaleX:Math.hypot(m[0],m[1])||1,scaleY:Math.hypot(m[2],m[3])||1,angleRad:Math.atan2(m[1],m[0])||0,opacity:p.opacity??1,screenXDebug:localX*actorScale,screenYDebug:localY*actorScale,source:'bcu-kbeff-parent-matrix-v0117'}; this.lastTransform=t; return t; }
+  getParentMatrix(){ return this.getParentTransform().matrix; }
 }

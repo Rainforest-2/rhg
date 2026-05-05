@@ -111,6 +111,7 @@ export class BattleActor {
     this.kbeffType = null;
     this.kbeffEnabled = false;
     this.kbeffParentTransform = null;
+    this.kbeffParentMatrix = null;
     this.kbeffFrame = 0;
     this.kbeffSource = 'none';
     this.lastKbeffDebug = null;
@@ -300,14 +301,16 @@ export class BattleActor {
   resetKnockbackVisual() { this.kbVisualOffsetX = 0; this.kbVisualOffsetY = 0; this.kbVisualScale = 1; this.kbVisualProgress = 0; }
 
   updateKbeffTransform() {
-    if (!this.kbeffEnabled || !this.kbeffRuntime) { this.kbeffParentTransform = null; return null; }
+    if (!this.kbeffEnabled || !this.kbeffRuntime) { this.kbeffParentTransform = null;
+    this.kbeffParentMatrix = null; return null; }
     const t = this.kbeffRuntime.getParentTransform(this.scale || 1);
-    this.kbeffParentTransform = t; this.kbeffFrame = t.frame;
+    this.kbeffParentTransform = t; this.kbeffParentMatrix = t.matrix || null; this.kbeffFrame = t.frame;
     this.lastKbeffDebug = { bcuType: this.kbeffType, frame: t.frame, localX: t.localX, localY: t.localY, screenX: t.screenXDebug, screenY: t.screenYDebug, source: this.kbeffSource };
     return t;
   }
 
-  detachKbeff() { this.kbeffRuntime = null; this.kbeffEnabled = false; this.kbeffType = null; this.kbeffParentTransform = null; this.kbeffFrame = 0; this.kbeffSource = 'none'; }
+  detachKbeff() { this.kbeffRuntime = null; this.kbeffEnabled = false; this.kbeffType = null; this.kbeffParentTransform = null;
+    this.kbeffParentMatrix = null; this.kbeffFrame = 0; this.kbeffSource = 'none'; }
 
   startKnockback(knockback = null) {
     const kb = knockback || {};

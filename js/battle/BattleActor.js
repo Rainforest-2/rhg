@@ -1,7 +1,7 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleBodyResolver } from './BattleBodyResolver.js';
 import { BattleAttackProfile } from './BattleAttackProfile.js';
-import { getBcuKnockbackSpec, convertBcuDistanceToPx } from './BcuKnockbackSpec.js';
+import { getBcuKnockbackSpec, convertBcuDistanceToPx, getDefaultSpecTypeForKind } from './BcuKnockbackSpec.js';
 
 export class BattleActor {
   constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null, combatPositionOffsetPx = 0, combatPositionSource = 'visual-leading-edge', combatEdgeInsetPx = 0, combatPositionMode = 'screen-combat-point' }) {
@@ -254,11 +254,11 @@ export class BattleActor {
   getKnockbackConfig(tuning = {}, kind = 'hp') {
     const kb = tuning.knockback || {};
     const map = {
-      hp: { config: kb.hpKb || {}, defaults: { type: 'hp', bcuType: 'INT_HB', bcuTimeFrames: 23, bcuDistance: 345, moveMode: 'linearRemaining', visualOffsetYMaxPx: -32, visualBackSwingPx: 8, visualScalePeak: 1.025, reason: 'hp-threshold' } },
-      final: { config: kb.finalKb || {}, defaults: { type: 'final', bcuType: 'INT_HB', bcuTimeFrames: 23, bcuDistance: 345, moveMode: 'linearRemaining', visualOffsetYMaxPx: -36, visualBackSwingPx: 10, visualScalePeak: 1.03, reason: 'final-hp-death' } },
-      proc: { config: kb.procKb || {}, defaults: { type: 'proc', bcuType: 'INT_KB', bcuTimeFrames: 11, bcuDistance: 165, moveMode: 'easeOut', visualOffsetYMaxPx: -20, visualBackSwingPx: 6, visualScalePeak: 1.02, reason: 'proc-kb' } },
-      bossShockwave: { config: kb.bossShockwaveKb || {}, defaults: { type: 'bossShockwave', bcuType: 'INT_SW', bcuTimeFrames: 47, bcuDistance: 705, moveMode: 'linearRemaining', visualOffsetYMaxPx: -48, visualBackSwingPx: 16, visualScalePeak: 1.05, reason: 'boss-shockwave' } },
-      assist: { config: kb.assistKb || {}, defaults: { type: 'assist', bcuType: 'INT_ASS', bcuTimeFrames: 11, bcuDistance: 55, moveMode: 'linearRemaining', visualOffsetYMaxPx: -14, visualBackSwingPx: 4, visualScalePeak: 1.015, reason: 'assist-kb' } }
+      hp: { config: kb.hpKb || {}, defaults: { type: 'hp', specType:'HP_KB', bcuType: 'INT_HB', bcuTimeFrames: 24, bcuDistance: 345, moveMode: 'linearRemaining', visualOffsetYMaxPx: 0, visualBackSwingPx: 0, visualScalePeak: 1, reason: 'hp-threshold' } },
+      final: { config: kb.finalKb || {}, defaults: { type: 'final', specType:'HP_KB', bcuType: 'INT_HB', bcuTimeFrames: 24, bcuDistance: 345, moveMode: 'linearRemaining', visualOffsetYMaxPx: 0, visualBackSwingPx: 0, visualScalePeak: 1, reason: 'final-hp-death' } },
+      proc: { config: kb.procKb || {}, defaults: { type: 'proc', specType:'PROC_KB_WHITE', bcuType: 'INT_KB', bcuTimeFrames: 12, bcuDistance: 165, moveMode: 'linearRemaining', visualOffsetYMaxPx: 0, visualBackSwingPx: 0, visualScalePeak: 1, reason: 'proc-kb' } },
+      bossShockwave: { config: kb.bossShockwaveKb || {}, defaults: { type: 'bossShockwave', specType:'BOSS_SHOCKWAVE', bcuType: 'INT_SW', bcuTimeFrames: 47, bcuDistance: 704, moveMode: 'linearRemaining', visualOffsetYMaxPx: 0, visualBackSwingPx: 0, visualScalePeak: 1, reason: 'boss-shockwave' } },
+      assist: { config: kb.assistKb || {}, defaults: { type: 'assist', specType:'CANNON', bcuType: 'INT_ASS', bcuTimeFrames: 12, bcuDistance: 55, moveMode: 'linearRemaining', visualOffsetYMaxPx: 0, visualBackSwingPx: 0, visualScalePeak: 1, reason: 'assist-kb' } }
     };
     const entry = map[kind] || map.hp;
     const c = entry.config || {};
@@ -281,8 +281,8 @@ export class BattleActor {
       visualScalePeak: c.visualScalePeak ?? d.visualScalePeak,
       disableSyntheticBounce: !!c.disableSyntheticBounce,
       distanceSource: c.distanceSource || null,
-      targetableDuringKb: !!c.targetableDuringKb,
-      touchableDuringKb: !!c.touchableDuringKb,
+      targetableDuringKb: c.targetableDuringKb ?? null,
+      touchableDuringKb: c.touchableDuringKb ?? null,
       cancelAttackOnKb: c.cancelAttackOnKb !== false,
       enterDeadAfterKb: kind === 'final' ? c.enterDeadAfterKb !== false : !!c.enterDeadAfterKb
     };
@@ -291,6 +291,13 @@ export class BattleActor {
 
   isKbeffParentKbType(type) { return ['INT_HB', 'INT_SW', 'INT_ASS'].includes(type); }
   isUnitKnockbackAnimType(type) { return type === 'INT_KB'; }
+
+  resolveKnockbackSpec(kb = {}) {
+    const specType = kb.specType || kb.knockbackSpecType || getDefaultSpecTypeForKind(kb.type || this.knockbackType || 'hp');
+    const spec = getBcuKnockbackSpec(specType);
+    if (!spec) throw new Error(`Unknown BCU knockback spec: ${specType}`);
+    return spec;
+  }
 
   resolveKnockbackDistancePx(kb = {}, tuning = {}) {
     if (Number.isFinite(kb.distancePx)) return { distancePx: kb.distancePx, source: 'explicit-distancePx', scale: null };
@@ -321,21 +328,24 @@ export class BattleActor {
     this.attackElapsedMs = 0; this.attackWaitElapsedMs = 0; this.hasHitInCurrentAttack = false;
     this.resolvedAttackEventKeys = new Set(); this.attackTarget = null; this.attackTargetType = null;
     this.knockbackType = kb.type || 'hp'; this.knockbackReason = kb.reason || 'hp-threshold'; this.deathAfterKnockback = !!kb.deathAfterKnockback;
-    this.kbStartedAtMs = Number.isFinite(kb.nowMs) ? kb.nowMs : null; this.kbEndedAtMs = null; this.kbTargetable = !!kb.targetableDuringKb; this.kbTouchable = !!kb.touchableDuringKb;
+    this.kbStartedAtMs = Number.isFinite(kb.nowMs) ? kb.nowMs : null; this.kbEndedAtMs = null; this.kbTargetable = true; this.kbTouchable = true;
     this.knockbackPositionElapsedMs = 0; this.knockbackPositionDurationMs = Number.isFinite(kb.durationMs) ? kb.durationMs : this.knockbackAnimDurationMs;
-    const bcuFrames = Math.max(1, Math.floor(kb.bcuTimeFrames || kb.frames || 1));
-    const moveFrames = Math.max(1, bcuFrames - 1);
-    const resolvedDistance = this.resolveKnockbackDistancePx(kb, kb.tuning || {});
-    const distance = resolvedDistance.distancePx;
-    this.kbBcuType = kb.bcuType || 'INT_HB'; this.kbBcuTimeFrames = bcuFrames; this.kbFramesTotal = bcuFrames; this.kbFramesRemaining = moveFrames; this.kbMoveFramesTotal = moveFrames; this.kbMoveFramesRemaining = moveFrames; this.kbFrameIndex = 0; this.kbFrameAccumulatorMs = 0;
-    this.kbSpecType = null; this.kbMotionFramesTotal = 0; this.kbMotionFrameIndex = 0; this.kbIntangibleFramesTotal = 0; this.kbRetreatFramesTotal = 0; this.kbRetreatFramesRemaining = 0; this.kbFirstFrameTargetable = true; this.kbTargetableFromFrame = 0; this.kbBcuDistance = 0; this.kbTimelineDebug = null; this.kbDistanceTotalPx = distance; this.kbRemainingDistancePx = distance; this.kbStartX = this.x; this.kbLastFrameX = this.x; this.kbMoveMode = kb.moveMode || (kb.combatEasing === 'easeOutQuad' ? 'easeOut' : 'linearRemaining'); this.kbTouchState = this.deathAfterKnockback ? 'finalKb' : 'kb';
+    const spec = this.resolveKnockbackSpec(kb);
+    const tuning = kb.tuning || {};
+    const distance = convertBcuDistanceToPx(spec.distanceBcu, tuning);
+    this.kbSpecType = spec.type; this.kbBcuType = spec.bcuType; this.kbBcuDistance = spec.distanceBcu;
+    this.kbMotionFramesTotal = spec.motionFrames; this.kbMotionFrameIndex = 0;
+    this.kbIntangibleFramesTotal = spec.intangibleFrames; this.kbFirstFrameTargetable = !!spec.firstFrameTargetable; this.kbTargetableFromFrame = spec.targetableFromFrame;
+    this.kbRetreatFramesTotal = spec.retreatFrames; this.kbRetreatFramesRemaining = spec.retreatFrames; this.kbTimelineDebug = null;
+    this.kbBcuTimeFrames = spec.motionFrames; this.kbFramesTotal = spec.motionFrames; this.kbMoveFramesTotal = spec.retreatFrames; this.kbMoveFramesRemaining = spec.retreatFrames; this.kbFramesRemaining = spec.motionFrames; this.kbFrameIndex = 0; this.kbFrameAccumulatorMs = 0;
+    this.kbDistanceTotalPx = distance; this.kbRemainingDistancePx = distance; this.kbStartX = this.x; this.kbLastFrameX = this.x; this.kbMoveMode = 'linearRemaining'; this.kbTouchState = this.deathAfterKnockback ? 'finalKb' : 'kb';
     this.knockbackFromX = this.x; this.knockbackToX = this.x - this.direction * distance;
     this.kbCombatEasing = 'linearRemaining'; this.kbVisualEasing = kb.visualEasing || 'none';
     this.kbDisableSyntheticBounce = !!kb.disableSyntheticBounce;
-    this.kbDistanceSource = resolvedDistance.source || kb.distanceSource || 'unknown';
-    this.kbDistanceScale = resolvedDistance.scale;
-    this.kbVisualOffsetYMaxPx = Number.isFinite(kb.visualOffsetYMaxPx) ? kb.visualOffsetYMaxPx : -32; this.kbVisualBackSwingPx = Number.isFinite(kb.visualBackSwingPx) ? kb.visualBackSwingPx : 8; this.kbVisualScalePeak = Number.isFinite(kb.visualScalePeak) ? kb.visualScalePeak : 1.025;
-    this.resetKnockbackVisual(); this.kbVisualSource = this.kbDisableSyntheticBounce ? 'disabled-synthetic-bounce' : this.kbVisualEasing;
+    this.kbDistanceSource = kb.distanceSource || 'BcuKnockbackSpec.distanceBcu * knockbackDistanceToPx';
+    this.kbDistanceScale = tuning?.knockback?.knockbackDistanceToPx ?? tuning?.rangeToPx ?? 0.27;
+    this.kbVisualOffsetYMaxPx = 0; this.kbVisualBackSwingPx = 0; this.kbVisualScalePeak = 1;
+    this.kbDisableSyntheticBounce = true; this.resetKnockbackVisual(); this.kbVisualSource = 'disabled-synthetic-bounce-v0117';
     this.detachKbeff();
     const useKbeffParent = this.isKbeffParentKbType(this.kbBcuType);
     const useUnitKbAnim = this.isUnitKnockbackAnimType(this.kbBcuType);

@@ -1,14 +1,23 @@
-import { BCU_KNOCKBACK_SPECS } from './BcuKnockbackSpec.js';
+import { BattleScene } from './BattleScene.js';
+import { BATTLE_CONFIG } from './BattleConfig.js';
+import { BCU_KNOCKBACK_SPECS, getBcuKnockbackSpec } from './BcuKnockbackSpec.js';
 
-function simulate(spec){
-  let frame=0,moved=0;const rows=[];
-  rows.push({frame,targetable:spec.firstFrameTargetable,xBcu:0,movedBcu:0,state:'knockback'});
-  for(frame=1; frame<=spec.retreatFrames; frame++){ moved += spec.distanceBcu/spec.retreatFrames; rows.push({frame,targetable:false,xBcu:-moved,movedBcu:moved,state:'knockback'}); }
-  rows.push({frame:spec.motionFrames,targetable:true,xBcu:-spec.distanceBcu,movedBcu:spec.distanceBcu,state:'move'});
-  return rows;
+async function simulateActor(specType='HP_KB'){
+ const s=new BattleScene(); await s.init(); const a=s.actors.find(x=>x.side==='cat-enemy')||s.actors[0];
+ const cfg=a.getKnockbackConfig(BATTLE_CONFIG.tuning,'hp');
+ a.startKnockback({...cfg,specType,nowMs:0,kbeffRuntime:null});
+ const scale=BATTLE_CONFIG.tuning.knockback.knockbackDistanceToPx ?? BATTLE_CONFIG.tuning.rangeToPx;
+ const x0=a.x; const rows=[{frame:0,x:a.x,movedPx:0,movedBcu:0,targetable:a.isTargetable(),touchable:a.isTouchable(),kbMotionFrameIndex:a.kbMotionFrameIndex,kbRetreatFramesRemaining:a.kbRetreatFramesRemaining,state:a.state,visualY:a.kbVisualOffsetY,anim:a.currentAnimId,knockbackAnimId:a.knockbackAnimId}];
+ let f=0; while(a.state==='knockback'&&f<100){const st=a.stepKnockbackFrame(); f++; rows.push({frame:f,x:a.x,movedPx:Math.abs(a.x-x0),movedBcu:Math.abs(a.x-x0)/scale,targetable:a.isTargetable(),touchable:a.isTouchable(),kbMotionFrameIndex:a.kbMotionFrameIndex,kbRetreatFramesRemaining:a.kbRetreatFramesRemaining,state:a.state,visualY:a.kbVisualOffsetY,anim:a.currentAnimId,knockbackAnimId:a.knockbackAnimId,done:st.done}); if(st.done){s.finishKnockback(a,null);break;}}
+ return {rows,scale,a,s};
 }
-export async function printHpKbTimeline(){ console.table(simulate(BCU_KNOCKBACK_SPECS.HP_KB)); }
-export async function verifyHpKbTimeline(){ const s=BCU_KNOCKBACK_SPECS.HP_KB; const rows=simulate(s); return {ok:s.distanceBcu===345&&s.motionFrames===24&&s.intangibleFrames===23&&s.retreatFrames===23&&rows[0].targetable===true&&rows[1].targetable===false&&rows[23].targetable===false&&rows[24].targetable===true, spec:s}; }
-export async function verifyCannonTimeline(){ const s=BCU_KNOCKBACK_SPECS.CANNON; return {ok:s.distanceBcu===55&&s.motionFrames===12&&s.intangibleFrames===11&&s.retreatFrames===11&&s.speedEquivalent===10,spec:s}; }
-export async function verifyBossShockwaveTimeline(){ const s=BCU_KNOCKBACK_SPECS.BOSS_SHOCKWAVE; return {ok:s.distanceBcu===704&&s.motionFrames===47&&s.intangibleFrames===47&&s.retreatFrames===47&&Math.abs(s.speedEquivalent-30)<=0,spec:s}; }
-export async function verifyAllBcuKnockbackTimelines(){ const a=await verifyHpKbTimeline(); const b=await verifyCannonTimeline(); const c=await verifyBossShockwaveTimeline(); return {ok:a.ok&&b.ok&&c.ok,hp:a,cannon:b,boss:c}; }
+export async function printHpKbTimeline(){const r=await simulateActor('HP_KB'); console.table(r.rows);}
+export async function verifyHpKbTimeline(){ const spec=getBcuKnockbackSpec('HP_KB'); const {rows,scale,a}=await simulateActor('HP_KB');
+ const movedPx=Math.abs(a.x-rows[0].x); const movedBcu=movedPx/scale; const retreatSteps=rows.filter(x=>x.frame>=1&&x.frame<=23&&x.movedPx>0).length;
+ let ok=spec.distanceBcu===345&&spec.motionFrames===24&&spec.intangibleFrames===23&&spec.retreatFrames===23&&rows[0].targetable===true&&rows[24].targetable===true&&retreatSteps===23&&Math.abs(movedBcu-345)<0.01&&a.currentAnimId!==a.knockbackAnimId;
+ for(let i=1;i<=23;i++) if(rows[i]?.targetable!==false) ok=false;
+ if(rows.some(r=>r.visualY!==0)) ok=false;
+ return {ok,motionFrames:spec.motionFrames,intangibleFrames:spec.intangibleFrames,retreatFrames:spec.retreatFrames,retreatStepCount:retreatSteps,movedBcu,rows}; }
+export async function verifyCannonTimeline(){const s=BCU_KNOCKBACK_SPECS.CANNON;return {ok:s.distanceBcu===55&&s.motionFrames===12&&s.intangibleFrames===11&&s.retreatFrames===11&&s.speedEquivalent===10};}
+export async function verifyBossShockwaveTimeline(){const s=BCU_KNOCKBACK_SPECS.BOSS_SHOCKWAVE;return {ok:s.distanceBcu===704&&s.motionFrames===47&&s.intangibleFrames===47&&s.retreatFrames===47&&s.speedEquivalent===30};}
+export async function verifyAllBcuKnockbackTimelines(){const hp=await verifyHpKbTimeline(); const c=await verifyCannonTimeline(); const b=await verifyBossShockwaveTimeline(); return {ok:hp.ok&&c.ok&&b.ok,hp,cannon:c,boss:b};}

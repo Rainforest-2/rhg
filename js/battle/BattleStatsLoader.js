@@ -1,7 +1,19 @@
 const UNIT_VERSION = '000004';
 const ENEMY_VERSION = '000001';
 
-async function fetchText(path) { const r = await fetch(path); if (!r.ok) throw new Error(`Failed to fetch ${path}: ${r.status}`); return await r.text(); }
+async function fetchText(path) {
+  const isRelative = typeof path === 'string' && (path.startsWith('./') || path.startsWith('../'));
+  if (isRelative && typeof window === 'undefined') {
+    const { readFile } = await import('node:fs/promises');
+    const { fileURLToPath, pathToFileURL } = await import('node:url');
+    const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
+    const absPath = fileURLToPath(new URL(path, cwdBase));
+    return await readFile(absPath, 'utf8');
+  }
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`Failed to fetch ${path}: ${r.status}`);
+  return await r.text();
+}
 const parseCsvRows = (text) => text.split(/\r?\n/).map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean).map((line) => line.split(',').map((x) => x.trim()));
 const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number(v) : 0));
 const val = (v, i, fallback = 0) => Number.isFinite(v?.[i]) ? v[i] : fallback;

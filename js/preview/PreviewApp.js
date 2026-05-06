@@ -10,6 +10,11 @@ import { BattleSceneRenderer } from '../battle/BattleSceneRenderer.js';
 import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
 import { FormationEditor } from '../ui/FormationEditor.js';
 import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
+import { BattleSimulationClock } from './BattleSimulationClock.js';
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
 
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -25,10 +30,14 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock(); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.fixedStepMs=1000/30; this.maxSubStepsPerFrame=5; }
 
   async start() {
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
+    this.bindVisibilityHandlers();
+    this.simulationClock.maxFrameDtMs = this.maxFrameDtMs;
+    this.simulationClock.fixedStepMs = this.fixedStepMs;
+    this.simulationClock.maxSubStepsPerFrame = this.maxSubStepsPerFrame;
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
@@ -39,14 +48,13 @@ export class PreviewApp {
       this.productionBar?.setVisible(false);
       this.sceneReady = false;
       this.battleScene = null;
-      let last = performance.now();
-      const loop = (t) => {
-        const dt = t - last; last = t;
+      const loop = (t) => { /* legacy: tick(dt*this.battleSpeedMultiplier) now handled via BattleSimulationClock fixed-step */
         this.renderer.ensureCanvasSize();
         if (this.sceneTransitioning || !this.sceneReady || !this.battleScene) {
           this.renderPlaceholder();
         } else {
-          this.battleScene.tick(dt*this.battleSpeedMultiplier);
+          const r=this.simulationClock.step(t,this.battleSpeedMultiplier,(stepDt)=>this.battleScene.tick(stepDt));
+          if(r.dropped){this.battleScene?.pushEvent?.({type:'simulationDtDropped',rawDt:r.rawDt,clampedDt:r.clampedDt});}
           this.productionBar?.update(this.battleScene);
           this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
         }
@@ -54,6 +62,28 @@ export class PreviewApp {
       };
       requestAnimationFrame(loop);
     } catch (e) { console.error('[PreviewApp] start failed', e); this.loadingOverlay?.setError(e); this.loadingOverlay?.show(); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
+  }
+
+
+  bindVisibilityHandlers() {
+    if (this._visibilityBound) return;
+    this._visibilityBound = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.pauseSimulationByVisibility('hidden');
+      else this.resumeSimulationByVisibility('visible');
+    });
+    window.addEventListener('blur', () => this.pauseSimulationByVisibility('blur'));
+    window.addEventListener('focus', () => this.resumeSimulationByVisibility('focus'));
+  }
+  pauseSimulationByVisibility(reason='hidden') {
+    this.simulationPausedByVisibility = true;
+    this.simulationClock.pause(reason);
+    this.battleScene?.pushEvent?.({ type:'simulationPausedByVisibility', reason });
+  }
+  resumeSimulationByVisibility(reason='visible') {
+    this.simulationPausedByVisibility = false;
+    this.simulationClock.resume(performance.now());
+    this.battleScene?.pushEvent?.({ type:'simulationResumedByVisibility', reason });
   }
 
   renderPlaceholder() {

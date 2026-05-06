@@ -1,8 +1,8 @@
 function id3(v){ return String(Math.max(0, Number(v) || 0)).padStart(3, '0'); }
 
-function normalizeCastleId(castleId = 0) {
+function normalizeCastleId(castleId) {
   const n = Number(castleId);
-  if (!Number.isFinite(n) || n < 0) return 0;
+  if (!Number.isFinite(n) || n < 0) return null;
   return Math.floor(n);
 }
 
@@ -31,6 +31,7 @@ function parseImgcutPart(text) {
 
 export function resolveEnemyCastleAssetCandidates(castleId = 0) {
   const resolvedCastleId = normalizeCastleId(castleId);
+  if (resolvedCastleId === null) return { castleId, resolvedCastleId: null, baseDir: null, imageCandidates: [], imgcutCandidates: [] };
   const id = id3(resolvedCastleId);
   const baseDir = `./public/assets/bcu/000001/org/castle/${id}/`;
   const names = [`nyankoCastle_${id}_00`, `nyankoCastle_${id}_00_00`, `nyankoCastle_${id}`];
@@ -57,9 +58,10 @@ export class BcuCastleAssetLoader {
         if (part) { imgcut = { text: t, part }; imgcutPath = c; break; }
       }
       const crop = imgcut?.part || { x: 0, y: 0, w: image.width, h: image.height };
-      return { ok: true, castleId: candidates.castleId, resolvedCastleId: candidates.resolvedCastleId, image, imagePath, imgcut, imgcutPath, crop, visualBounds: { width: crop.w, height: crop.h }, source: 'bcu-castle-png' };
+      return { ok: true, requestedCastleId: castleId, resolvedCastleId: candidates.resolvedCastleId, image, imagePath, imgcut, imgcutPath, crop, visualBounds: { width: crop.w, height: crop.h }, usedFallback: false, reason: null, source: 'bcu-castle-png' };
     }
-    return { ok: false, castleId: candidates.castleId, resolvedCastleId: candidates.resolvedCastleId, reason: 'image-load-failed', placeholder: true, source: 'placeholder' };
+    if (candidates.resolvedCastleId === null) return { ok:false, requestedCastleId: castleId, resolvedCastleId:null, imagePath:null, imgcutPath:null, usedFallback:true, reason:'castleId-nullish', placeholder:true, source:'placeholder' };
+    return { ok: false, requestedCastleId: castleId, resolvedCastleId: candidates.resolvedCastleId, imagePath:null, imgcutPath:null, usedFallback:false, reason: 'image-load-failed', placeholder: true, source: 'placeholder' };
   }
 
   loadImage(src) { if (typeof this.imageLoader === 'function') return Promise.resolve(this.imageLoader(src));

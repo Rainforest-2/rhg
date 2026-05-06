@@ -5,8 +5,8 @@ export class BattleCameraInputController {
   onDown(e){ this.canvas.setPointerCapture?.(e.pointerId); this.active.set(e.pointerId,{x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY}); }
   onMove(e){ if(!this.active.has(e.pointerId)) return; const p=this.active.get(e.pointerId); p.px=p.x; p.py=p.y; p.x=e.clientX; p.y=e.clientY; const cam=this.getCamera?.(); if(!cam) return;
     const pts=[...this.active.values()]; if(pts.length===1){ cam.panByScreenDelta(p.x-p.px); return; }
-    if(pts.length>=2){ const [a,b]=pts; const prev=Math.hypot(a.px-b.px,a.py-b.py); const cur=Math.hypot(a.x-b.x,a.y-b.y); if(prev>0&&cur>0){ const center=(a.x+b.x)*0.5; cam.zoomAtScreenPoint(center, cam.zoom*(cur/prev)); } }
+    if(pts.length>=2){ const [a,b]=pts; const prev=Math.hypot(a.px-b.px,a.py-b.py); const cur=Math.hypot(a.x-b.x,a.y-b.y); if(prev>0&&cur>0){ const center=(a.x+b.x)*0.5; const stageLenBefore=cam.stageLen;cam.zoomAtScreenPoint(center, cam.zoom*(cur/prev));if(cam.stageLen!==stageLenBefore)console.warn('[BattleCameraInput] stageLen changed during pinch',stageLenBefore,cam.stageLen); } }
   }
   onUp(e){ this.active.delete(e.pointerId); }
-  onWheel(e){ const cam=this.getCamera?.(); if(!cam) return; e.preventDefault(); if(e.ctrlKey||e.metaKey){ cam.zoomAtScreenPoint(e.clientX, cam.zoom*(e.deltaY<0?1.08:0.92)); } else { cam.panByScreenDelta(-(e.deltaX||e.deltaY)); } }
+  onWheel(e){ const cam=this.getCamera?.(); if(!cam) return; e.preventDefault(); if(e.ctrlKey||e.metaKey){ const stageLenBefore=cam.stageLen;cam.zoomAtScreenPoint(e.clientX, cam.zoom*(e.deltaY<0?1.08:0.92));if(cam.stageLen!==stageLenBefore)console.warn('[BattleCameraInput] stageLen changed during wheel-zoom',stageLenBefore,cam.stageLen); } else { cam.panByScreenDelta(-(e.deltaX||e.deltaY)); } }
 }

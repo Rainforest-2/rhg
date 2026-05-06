@@ -38,7 +38,7 @@ jobs:
           mkdir -p game/public/assets/bcu/lang
 
           rsync -a --delete upstream/fonts/ game/public/assets/bcu/fonts/
-          rsync -a --delete upstream/BCU_lib/lang/ game/public/assets/bcu/lang/
+          rsync -a --delete upstream/lang/ game/public/assets/bcu/lang/
 
           cd game
 

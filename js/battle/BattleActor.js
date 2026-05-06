@@ -1,7 +1,7 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleBodyResolver } from './BattleBodyResolver.js';
 import { BattleAttackProfile } from './BattleAttackProfile.js';
-import { getBcuKnockbackSpec, convertBcuDistanceToPx, getDefaultSpecTypeForKind } from './BcuKnockbackSpec.js';
+import { getBcuKnockbackSpec, convertBcuDistanceToWorld, convertBcuDistanceToPx, getDefaultSpecTypeForKind } from './BcuKnockbackSpec.js';
 
 export class BattleActor {
   constructor({ assetDef, sprite, model, side, x, y, scale = 1, facing = 1, direction = 1, renderFlipX = false, currentAnimId = 'anim00', stats = null, animations = {}, attackAnimId = 'anim02', moveAnimId = 'anim00', idleAnimId = 'anim00', knockbackAnimId = 'anim03', fps = 30, logs = [], collisionRadius = 42, attackWaitMultiplier = 1, attackPhaseTimeMultiplier = 1, attackAnimationSpeedMultiplier = 1, postAttackIdleHoldMs = 0, minAttackWaitMs = 0, combatBodyHalfWidthPx = null, combatBodyHeightPx = null, combatBodyYOffsetPx = 0, combatBodyWidthPx = null, combatPositionOffsetPx = 0, combatPositionSource = 'visual-leading-edge', combatEdgeInsetPx = 0, combatPositionMode = 'screen-combat-point' }) {
@@ -101,6 +101,8 @@ export class BattleActor {
     this.kbFrameAccumulatorMs = 0;
     this.kbDistanceTotalPx = 0;
     this.kbRemainingDistancePx = 0;
+    this.kbDistanceTotalWorld = 0;
+    this.kbRemainingDistanceWorld = 0;
     this.kbStartX = this.x;
     this.kbLastFrameX = this.x;
     this.kbMoveMode = 'linearRemaining';
@@ -302,8 +304,7 @@ export class BattleActor {
 
   resolveKnockbackDistancePx(kb = {}, tuning = {}) {
     if (Number.isFinite(kb.distancePx)) return { distancePx: kb.distancePx, source: 'explicit-distancePx', scale: null };
-    const scale = tuning?.knockback?.knockbackDistanceToPx ?? tuning?.rangeToPx ?? 0.27;
-    if (Number.isFinite(kb.bcuDistance) && Number.isFinite(scale)) return { distancePx: kb.bcuDistance * scale, source: 'bcuDistance*knockbackDistanceToPx', scale };
+    if (Number.isFinite(kb.bcuDistance)) return { distancePx: convertBcuDistanceToWorld(kb.bcuDistance, tuning), source: 'bcuDistance(world)', scale: 1 };
     return { distancePx: this.knockbackPositionDistance, source: 'fallback-knockbackPositionDistance', scale };
   }
 
@@ -343,8 +344,8 @@ export class BattleActor {
     this.knockbackFromX = this.x; this.knockbackToX = this.x - this.direction * distance;
     this.kbCombatEasing = 'linearRemaining'; this.kbVisualEasing = kb.visualEasing || 'none';
     this.kbDisableSyntheticBounce = !!kb.disableSyntheticBounce;
-    this.kbDistanceSource = kb.distanceSource || 'BcuKnockbackSpec.distanceBcu * knockbackDistanceToPx';
-    this.kbDistanceScale = tuning?.knockback?.knockbackDistanceToPx ?? tuning?.rangeToPx ?? 0.27;
+    this.kbDistanceSource = kb.distanceSource || 'BcuKnockbackSpec.distanceBcu (world)';
+    this.kbDistanceScale = 1;
     this.kbVisualOffsetYMaxPx = 0; this.kbVisualBackSwingPx = 0; this.kbVisualScalePeak = 1;
     this.kbDisableSyntheticBounce = true; this.resetKnockbackVisual(); this.kbVisualSource = 'disabled-synthetic-bounce-v0117';
     this.detachKbeff();

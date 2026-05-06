@@ -10,7 +10,15 @@ const STEPS = [
 ];
 
 export class AppLoadingOverlay {
-  constructor({ mount = document.body } = {}) { this.mount = mount; this.root = null; }
+  constructor({ mount = document.body } = {}) {
+    this.mount = mount;
+    this.root = null;
+    this.startedAt = 0;
+    this.lastProgressValue = 0;
+    this.elapsedMsOverride = null;
+    this.timerHandle = null;
+    this.progressSource = null;
+  }
   ensureRoot() {
     if (this.root) return;
     const el = document.createElement('div');
@@ -19,13 +27,41 @@ export class AppLoadingOverlay {
     this.root = el;
     this.mount.appendChild(el);
   }
-  show() { this.ensureRoot(); this.root.classList.remove('is-hidden'); }
+  show() {
+    this.ensureRoot();
+    this.root.classList.remove('is-hidden');
+    this.startedAt = performance.now();
+    this.elapsedMsOverride = null;
+    this.renderElapsedTime();
+  }
+  startTimer() {
+    this.stopTimer();
+    const tick = () => {
+      this.renderElapsedTime();
+      if (!this.root?.classList.contains('is-hidden')) {
+        this.timerHandle = requestAnimationFrame(tick);
+      }
+    };
+    this.timerHandle = requestAnimationFrame(tick);
+  }
+  stopTimer() {
+    if (this.timerHandle) cancelAnimationFrame(this.timerHandle);
+    this.timerHandle = null;
+  }
+  renderElapsedTime() {
+    if (!this.root) return;
+    const elapsed = Math.max(0, Math.round(this.elapsedMsOverride ?? (performance.now() - this.startedAt)));
+    this.root.querySelector('.app-loading-phase-time').textContent = `${elapsed}ms`;
+  }
   setProgress({ phase, message, value, elapsedMs }) {
     this.ensureRoot();
     this.root.classList.remove('is-error');
     this.root.querySelector('.app-loading-message').textContent = message || 'Loading...';
-    this.root.querySelector('.app-loading-phase-time').textContent = `${Math.max(0,Math.round(Number(elapsedMs||0)))}ms`;
-    this.root.querySelector('.app-loading-progress-bar').style.width = `${Math.max(0, Math.min(1, Number(value ?? 0))) * 100}%`;
+    if (Number.isFinite(elapsedMs)) this.elapsedMsOverride = Number(elapsedMs);
+    const next = Math.max(this.lastProgressValue, Math.max(0, Math.min(1, Number(value ?? 0))));
+    this.lastProgressValue = next;
+    this.root.querySelector('.app-loading-progress-bar').style.width = `${next * 100}%`;
+    this.renderElapsedTime();
     this.root.querySelectorAll('.app-loading-step').forEach((step) => {
       const isActive = step.dataset.phase === phase;
       const isDone = STEPS.findIndex((x) => x.phase === step.dataset.phase) < STEPS.findIndex((x) => x.phase === phase);
@@ -33,11 +69,13 @@ export class AppLoadingOverlay {
       step.classList.toggle('is-done', isDone);
     });
   }
+  bindProgressSource(source) { this.progressSource = source || null; }
   setError(error) {
     this.ensureRoot();
     this.root.classList.add('is-error');
     this.root.querySelector('.app-loading-error').textContent = error instanceof Error ? error.message : String(error);
+    this.renderElapsedTime();
   }
-  hide() { if (this.root) this.root.classList.add('is-hidden'); }
-  dispose() { this.root?.remove(); this.root = null; }
+  hide() { if (this.root) { this.stopTimer(); this.root.classList.add('is-hidden'); } }
+  dispose() { this.stopTimer(); this.root?.remove(); this.root = null; }
 }

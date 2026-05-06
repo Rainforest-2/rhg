@@ -11,6 +11,10 @@ import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
 import { FormationEditor } from '../ui/FormationEditor.js';
 import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
 
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 async function loadImage(url) {
   return await new Promise((res, rej) => {
     const img = new Image();
@@ -71,7 +75,8 @@ export class PreviewApp {
 
   async applyFormationToBattle() {
     this.loadingOverlay?.show();
-    this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘を準備中...', value: 0.2 });
+    this.loadingOverlay?.startTimer();
+    this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘を準備中...', value: 0.05 });
     try {
       await this.resetBattle({ keepFormationVisible: false, showOverlay: true });
       this.formationEditor?.setVisible(false);
@@ -92,18 +97,25 @@ export class PreviewApp {
     this.sceneTransitioning = true; this.sceneReady = false; this.battleLoading = true;
     this.battleInitPromise = (async()=>{
       const t0=performance.now();
-      overlay?.setProgress({ phase: 'battle-scene', message: 'Preparing battle scene', value: 0.6, elapsedMs:0 });
+      overlay?.show();
+      overlay?.startTimer();
+      overlay?.setProgress({ phase: 'battle-scene', message: 'Preparing battle scene', value: 0.05 });
+      await nextFrame();
       const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
-      await nextScene.init();
+      await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       const elapsed=performance.now()-t0;
-      this.ui?.log('info',`Battle load timings: total=${Math.round(elapsed)}ms`);
+      const lt = nextScene.loadTimings || {};
+      const bgText = lt.backgroundDeferred ? 'timeout/pending' : `${Math.round(lt.backgroundMs || 0)}ms`;
+      this.ui?.log('info',`Battle load timings: total=${Math.round(lt.totalMs||elapsed)}ms stage=${Math.round(lt.stageDefinitionMs||0)}ms stats=${Math.round(lt.productionStatsMs||0)}ms criticalTemplates=${Math.round(lt.criticalTemplatesMs||0)}ms background=${bgText} bases=${Math.round(lt.basesMs||0)}ms warmup=async`);
       this.battleScene = nextScene;
-      overlay?.setProgress({ phase: 'production', message: 'Preparing production roster', value: 0.85, elapsedMs:elapsed });
+      overlay?.setProgress({ phase: 'production', message: 'Preparing production roster', value: 0.9, elapsedMs:elapsed });
       const battleMount=document.querySelector('.canvas-panel')||document.body;
       if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}      
       this.productionBar?.setVisible(true);
       this.sceneReady = true;
       this.formationEditor?.setVisible(keepFormationVisible);
+      overlay?.setProgress({ phase: 'ready', message: 'Battle ready', value: 1.0 });
+      await new Promise((resolve) => setTimeout(resolve, 180));
       this.ui?.log('info', 'Battle reset completed');
     })();
     try {

@@ -17,6 +17,13 @@ function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
+
+function formatFormationForLog(f) {
+  if (Array.isArray(f?.slots)) return f.slots.join(',');
+  if (Array.isArray(f?.pages)) return f.pages.flat().filter(Boolean).join(',');
+  return '(empty)';
+}
+
 async function loadImage(url) {
   return await new Promise((res, rej) => {
     const img = new Image();
@@ -47,7 +54,7 @@ export class PreviewApp {
       this.cameraInputController = new BattleCameraInputController(this.renderer.canvas, () => this.battleScene?.camera);
       this.cameraInputController.attach();
       const battleMount=document.querySelector('.canvas-panel')||document.body;
-      this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); } });
+      this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${formatFormationForLog(f)}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); } });
       this.formationEditor.setVisible(true);
       this.productionBar?.setVisible(false);
       this.sceneReady = false;
@@ -113,7 +120,9 @@ export class PreviewApp {
     this.loadingOverlay?.startTimer();
     this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘を準備中...', value: 0.05 });
     try {
+      console.info('applyFormationToBattle:before-resetBattle');
       await this.resetBattle({ keepFormationVisible: false, showOverlay: true });
+      console.info('applyFormationToBattle:after-resetBattle');
       this.formationEditor?.setVisible(false);
       this.productionBar?.setVisible(true);
       this.sceneReady = true;
@@ -122,7 +131,9 @@ export class PreviewApp {
     } catch (e) {
       this.formationEditor?.setVisible(true);
       this.productionBar?.setVisible(false);
+      this.sceneReady = false;
       this.loadingOverlay?.setError(e);
+      console.error('[PreviewApp] applyFormationToBattle failed', e);
       throw e;
     }
   }
@@ -138,7 +149,7 @@ export class PreviewApp {
       overlay?.startTimer();
       overlay?.setProgress({ phase: 'battle-scene', message: 'Preparing battle scene', value: 0.05 });
       await nextFrame();
-      const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
+      const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), { selectedStageId: this.selectedStageId || undefined });
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       console.info('battleScene:init:ok');
       const elapsed=performance.now()-t0;

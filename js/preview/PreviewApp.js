@@ -9,6 +9,7 @@ import { BattleScene } from '../battle/BattleScene.js';
 import { BattleSceneRenderer } from '../battle/BattleSceneRenderer.js';
 import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
 import { FormationEditor } from '../ui/FormationEditor.js';
+import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
 
 async function loadImage(url) {
   return await new Promise((res, rej) => {
@@ -20,18 +21,23 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; }
-
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; }
 
   async start() {
+    this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
+    this.loadingOverlay.show();
     try {
+      this.loadingOverlay.setProgress({ phase: 'boot-ui', message: 'Booting interface', value: 0.1 });
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
       this.ui.init(this.assets, { speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle() });
       const battleMount=document.querySelector('.canvas-panel')||document.body;
+      this.loadingOverlay.setProgress({ phase: 'formation', message: 'Loading formation editor', value: 0.35 });
       this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`);}, onApplyBattle: async ()=>{ await this.resetBattle(); } });
       this.formationEditor.setVisible(true);
-      await this.resetBattle();
+      await this.resetBattle({ loadingOverlay: this.loadingOverlay });
+      this.loadingOverlay.setProgress({ phase: 'ready', message: 'Ready', value: 1 });
+      this.loadingOverlay.hide();
       let last = performance.now();
       const loop = (t) => {
         const dt = t - last; last = t;
@@ -47,51 +53,29 @@ export class PreviewApp {
         requestAnimationFrame(loop);
       };
       requestAnimationFrame(loop);
-    } catch (e) { console.error('[PreviewApp] start failed', e); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
+    } catch (e) { console.error('[PreviewApp] start failed', e); this.loadingOverlay?.setError(e); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
   }
 
-  async setViewMode(_mode) { return 'formation'; }
-
-  async resetBattle(mode) {
-    this.viewMode = ['preview','battle','formation'].includes(mode) ? mode : 'preview';
-    if (this.viewMode === 'formation') {
-      this.productionBar?.setVisible(false);
-      if (!this.formationEditor) {
-        const battleMount=document.querySelector('.canvas-panel')||document.body;
-        this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`); if(this.battleScene)this.ui?.log('info','Battle reset required to apply');}, onApplyBattle: async ()=>{ await this.setViewMode('battle'); await this.resetBattle(); } });
-      }
-      this.formationEditor.setVisible(true);
-      return;
-    }
-    this.formationEditor?.setVisible(false);
-    if (this.viewMode !== 'battle') { this.productionBar?.setVisible(false); return; }
-    if (this.battleInitPromise) return await this.battleInitPromise;
-    if (!this.battleScene) {
-      this.battleLoading = true;
-      this.battleInitPromise = (async()=>{ try { this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg)); await this.battleScene.init(); } catch (e) { console.error('[PreviewApp] battle init failed', e); this.ui?.log('error', `battle init failed: ${e instanceof Error ? e.message : String(e)}`); } finally { this.battleLoading = false; this.battleInitPromise = null; } })();
-      await this.battleInitPromise; const battleMount=document.querySelector('.canvas-panel')||document.body; if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:this.battleScene,mount:battleMount});} else {this.productionBar.bindScene(this.battleScene);} this.productionBar?.setVisible(true);
-    }
-
-    if (this.battleScene) { const battleMount=document.querySelector('.canvas-panel')||document.body; if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:this.battleScene,mount:battleMount});} else {this.productionBar.bindScene(this.battleScene);} this.productionBar?.setVisible(true); }  }
-
-
-  async resetBattle() {
+  async resetBattle({ loadingOverlay } = {}) {
+    const overlay = loadingOverlay || this.loadingOverlay;
     if (this.sceneTransitioning && this.battleInitPromise) return await this.battleInitPromise;
     this.sceneTransitioning = true; this.sceneReady = false; this.battleLoading = true;
+    this.formationEditor?.setVisible(true);
     this.battleInitPromise = (async()=>{
+      overlay?.setProgress({ phase: 'battle-scene', message: 'Preparing battle scene', value: 0.6 });
       const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
       await nextScene.init();
       this.battleScene = nextScene;
+      overlay?.setProgress({ phase: 'production', message: 'Preparing production roster', value: 0.85 });
       const battleMount=document.querySelector('.canvas-panel')||document.body;
-      if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}
+      if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}      
       this.productionBar?.setVisible(true);
       this.sceneReady = true;
+      this.formationEditor?.setVisible(true);
       this.ui?.log('info', 'Battle reset completed');
     })();
     try { await this.battleInitPromise; } finally { this.sceneTransitioning = false; this.battleLoading=false; this.battleInitPromise=null; }
   }
-
-
 
   findAsset(id) { return this.assets.find((a) => a.id === id) || this.assets[0]; }
 

@@ -1,4 +1,4 @@
-:root{--text:#d8e2f0;--muted:#94a3b8;--panel:#0f172a;--panel-border:#334155}
+:root{--text:#d8e2f0;--muted:#94a3b8;--panel:#0f172a;--panel-border:#334155;--prod-card-w:116px;--prod-card-h:88px;--prod-card-gap:6px;--prod-card-back-offset-x:5px;--prod-card-back-offset-y:8px}
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden}
 body{margin:0;background:#05070d;color:var(--text);font-family:Inter,system-ui,sans-serif}
@@ -41,11 +41,11 @@ button:hover{border-color:#60a5fa}
 
 .prod-ui{position:absolute;inset:0;pointer-events:none;z-index:20}
 .prod-ui .battle-money{position:absolute;top:14px;right:18px;width:clamp(180px,24%,320px);height:auto;pointer-events:none}
-.prod-ui .cards{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:grid;grid-template-columns:repeat(5,var(--prod-card-w,112px));gap:var(--prod-card-gap,6px);pointer-events:auto}
-.prod-card-stack{position:relative;width:var(--prod-card-w,112px);height:calc(var(--prod-card-w,112px) + 12px)}
-.prod-ui .prod-card{position:absolute;left:0;top:0;width:var(--prod-card-w,112px);height:var(--prod-card-w,112px);aspect-ratio:1/1;touch-action:manipulation;border:0;background:transparent;transition:transform .08s}
+.prod-ui .cards{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:grid;grid-template-columns:repeat(5,var(--prod-card-w));gap:var(--prod-card-gap);pointer-events:auto}
+.prod-card-stack{position:relative;width:var(--prod-card-w);height:calc(var(--prod-card-h) + var(--prod-card-back-offset-y))}
+.prod-ui .prod-card{position:absolute;left:0;top:0;width:var(--prod-card-w);height:var(--prod-card-h);aspect-ratio:auto;touch-action:manipulation;border:0;background:transparent;transition:transform .08s}
 .prod-ui .prod-card.press{transform:scale(.95)}
-.prod-card.is-back{transform:translate(4px,10px) scale(.96);opacity:.82;z-index:1;pointer-events:none;filter:brightness(.82)}
+.prod-card.is-back{transform:translate(var(--prod-card-back-offset-x),var(--prod-card-back-offset-y)) scale(.96);opacity:.82;z-index:1;pointer-events:none;filter:brightness(.82)}
 .prod-card.is-front{transform:translate(0,0) scale(1);opacity:1;z-index:2;pointer-events:auto}
 .prod-card.is-front.is-disabled{pointer-events:none}
 .prod-ui.is-hidden{display:none}

@@ -1,0 +1,1017 @@
+0	Level up one Cat the Upgrade menu! (Tap the Upgrade! button below any Cat)
+1	Activate the Energy Drink in "Battle Cats Rising"! (Get bonus abilities by collecting the first 7 Treasures)
+2	Raise your User Rank by 0!
+3	Draw one Cat Capsule at the Cat Base! (Get a free Cat Ticket each day and use it once)
+4	Recruit a Gamatoto Assistant! (Discover Assistants as Gamatoto expedition rewards)
+5	Clear a stage while using a CatCombo! (Deploy a set grouping of Cats in your formation!)
+6	Challenge the Catclaw Dojo! (Play any stage at the Dojo once)
+7	Unlock the True Form of any Normal Cat! (Evolve a Normal Cat level 30)
+8	Clear Japan in "Battle Cats Rising"! (Complete the 7th stage in Empire of Cats Ch. 1)
+9	Clear India in "Battle Cats Rising"! (Complete the 11th stage in Empire of Cats Ch. 1)
+10	Clear Madagascar in "Battle Cats Rising"! (Complete the 16th stage in Empire of Cats Ch. 1)
+11	Clear Greece in "Battle Cats Rising"! (Complete the 23rd stage in Empire of Cats Ch. 1)
+12	Clear Greenland in "Battle Cats Rising"! (Complete the 32nd stage in Empire of Cats Ch. 1)
+13	Clear Argentina in "Battle Cats Rising"! (Complete the 39th stage in Empire of Cats Ch. 1)
+14	Clear Hollywood in "Battle Cats Rising"! (Complete the 45th stage in Empire of Cats Ch. 1)
+15	Clear the Moon in "Battle Cats Rising"! (Complete the final stage of Empire of Cats Ch. 1)
+16	Clear all stages in "The Emperor of Darkness"! (Complete the final stage of Empire of Cats Ch. 2)
+17	Clear all stages in "Revival of Bahamut Cat"! (Complete the final stage of Empire of Cats Ch. 3)
+18	Clear all stages in "Time Enough For Cats"! (Complete the final stage of Into the Future Ch. 1)
+19	Clear all stages in "Alien Intrigue"! (Complete the final stage of Into the Future Ch. 2)
+20	Clear all stages in "The Ancients Arise"! (Complete the final stage of Into the Future Ch. 3)
+22	Clear all stages in "Beyond the Exosphere"! (Complete the final stage of Cats of the Cosmos Ch. 1)
+23	Clear all stages in "The Passion of Catgod"! (Complete the final stage of Cats of the Cosmos Ch. 2)
+24	6th Anniversary Mission. Clear Empire of Cats Ch. 1 during this event!
+25	Clear all stages in "Even Stars Burn Out"! (Complete the final stage of Cats of the Cosmos Ch. 3)
+26	7th Anniversary Mission. Clear Empire of Cats Ch. 1 during this event!
+27	Clear all Level 2 Stories of Legend. to complete this mission
+28	Clear all Level 3 Stories of Legend. to complete this mission
+29	8th Anniversary Mission. Clear Empire of Cats Ch. 1 during this event!
+8000	Clear Cat Ticket reward stages 13 times!
+8001	Clear XP reward stages 13 times!
+8002	Clear 9 Stories of Legend stages!
+8003	Send Gamatoto on 17 successful expeditions!
+8004	Clear all weekly missions!
+8005	Clear Cat Ticket reward stages 13 times!
+8006	Clear XP reward stages 13 times!
+8007	Send Gamatoto on 17 successful expeditions!
+8008	Clear Catfruit reward stages 13 times!
+8009	Clear 9 Stories of Legend stages!
+8010	Clear all weekly missions!
+8011	Clear all weekly missions!
+9000	Defeat the 30th floor of the Heavenly Tower. (This reward can only be claimed once.)
+9001	Clear Summer Lesson stages 9 times!
+9002	Clear Summer Lesson stages 9 times!
+9003	Clear Summer Lesson stages 9 times!
+9004	Collect the Rare Unit: Awa Odori Cat! (Available from any Summer Diary stage.)
+9005	Clear all Special missions!
+9011	Clear Silver Week stages 9 times
+9012	Clear Silver Week stages 9 times
+9013	Clear Silver Week stages 9 times
+9014	Clear all Silver Week Missions
+9015	Score 5000 or more on "Immortal Allen O'Neill"! Receive your score upon stage clear
+9016	Score 5000 or more on "Attack On Huge Hermit"! Receive your score upon stage clear
+9017	Score 5000 or more on "Jupiter King Convoy"! Receive your score upon stage clear
+9018	Score 3000 or more on "Devils on the Doorstep"! Receive your score upon stage clear
+9019	Clear "Five Years of Fun!!" 9 times!
+9020	Score 5555 pts in "Five Year Plan"! Find this Ranking Stage at the Catclaw Dojo!
+9021	Evolve Coin Cat! (You must evolve the Cat before the event ends!)
+9022	Score 4000 or more on "Schoolyard Clash"! Receive your score upon stage clear
+9023	Score 3500 or more on "Midnight Interception"! Receive your score upon stage clear
+9024	Score 3000 or more on "Manor Ruins"! Receive your score upon stage clear
+9025	Score 2500 or more on "Inconspicuous Trap"! Receive your score upon stage clear
+9026	Score 1500 or more on "Beginning of the End"! Receive your score upon stage clear
+9027	Clear daily blitz collab stages 9 times!
+9028	Clear the Heavenly Tower's 40th floor! ※Rewards can only be received once
+9029	Score more than 2500 points when. clearing the "Coming to Town!" stage!
+9030	Score more than 2000 points on the. "Reindeer Games" stage!
+9031	Score more than 2000 points on the. "Whipped Cream" stage!
+9032	Score more than 2000 points on the. "Coup d'Workshop" stage!
+9033	Score more than 1500 points on the. "War on Xmas" stage!
+9034	Clear "Cats in the Snow" 9 times!
+9035	Clear "Cats in the Snow" 9 times!
+9036	Clear "Cats in the Snow" 9 times!
+9037	Score more than 3000 points on the. PowerPro collab stage "Round 1 (Easy)"!
+9038	Score more than 6000 points on the. PowerPro collab stage "Round 2 (Normal)"!
+9039	Score more than 6500 points on the. PowerPro collab stage "Final Round (Hard)"!
+9040	Score more than 2000 points on the. Limited Stage "Mallow March"!
+9041	Score more than 5000 points on the. Limited Stage "Marzi Pain"!
+9042	Score more than 6000 points on the. Limited Stage "Cavity Creeping"!
+9043	Clear "Go Go Graduates" 9 times!
+9044	Clear "Go Go Graduates" 9 times!
+9045	Clear "Go Go Graduates" 9 times!
+9046	Score more than 2000 points on the. Special Stage "Mallow March"!
+9047	Score more than 5000 points on the. Special Stage "Marzi Pain"!
+9048	Score more than 6000 points on the. Special Stage "Cavity Creeping"!
+9049	Upgrade Egg Cat to Level 10! (You must evolve the Cat before the event ends!)
+9050	Upgrade Shinji & Cat to Level 10! (You must evolve the Cat before the event ends!)
+9051	Clear any EVANGELION collab
+9052	Clear any EVANGELION collab
+9053	Clear any EVANGELION collab
+9054	Activate the EVA Angel Killer CatCombo and clear any stage. Clear Empire of Cats Ch. 1 and deploy Shinji & Cat and Kaworu & Cat..
+9055	Destroy the 4th Angel. Encounter this enemy at "State of Emergency"
+9056	Destroy the 6th Angel. Encounter this enemy at "Futagoyama Fortress"
+9057	Destroy the 9th Angel. Encounter this enemy at "Asuka On Board (Easy)"
+9058	Destroy the 10th Angel. Encounter this enemy at "Refusal Type (Hard)"
+9059	Destroy all Angels
+9060	Evolve Pokota at Level 10! This mission can only be completed during the LINE Pokopang! collab event!
+9061	Evolve Ovis at Level 10! This mission can only be completed during the LINE Pokopang! collab event!
+9062	Evolve Coco at Level 10! This mission can only be completed during the LINE Pokopang! collab event!
+9063	Clear "Trio from the Woods" 9 times!
+9064	Clear "Trio from the Woods" 9 times!
+9065	Clear "Trio from the Woods" 9 times!
+9072	Clear "The Midas Touch" 9 times!
+9073	Clear "The Midas Touch" 9 times!
+9074	Clear "The Midas Touch" 9 times!
+9075	Clear "City of Souls" 9 times!
+9076	Clear "City of Souls" 9 times!
+9077	Clear "City of Souls" 9 times!
+9078	Upgrade Yuki Cat to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9079	Upgrade Takuya ＆ Yuki to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9080	Upgrade Redhead Yuki Cat to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9085	Clear "Sliming to Victory" 9 times!
+9086	Clear "Sliming to Victory" 9 times!
+9087	Clear "Sliming to Victory" 9 times!
+9088	Evolve Slug Jockey Cat Level 10! This mission can only be completed during the Slimy Stallions event!
+9089	Clear "Forbidden Bride Pt II" 9 times!
+9090	Clear "Forbidden Bride Pt II" 9 times!
+9091	Clear "Forbidden Bride Pt II" 9 times!
+9092	Evolve Madam Bride at Level 10! This mission can only be completed during the June Monthly Event!
+9093	Clear "The Battle Cats POP!" 9 times!
+9094	Clear "The Battle Cats POP!" 9 times!
+9095	Clear "The Battle Cats POP!" 9 times!
+9096	Clear "The Battle Cats POP!" 9 times!
+9097	Evolve Betakkuma at Level 10! This mission can only be completed during the Betakkuma Collab Event!
+9098	Clear "Never Not Summer!" 9 times!
+9099	Clear "Never Not Summer!" 9 times!
+9100	Clear "Never Not Summer!" 9 times!
+9101	Evolve Vacation Queen at Level 10! This mission can only be completed during the July Monthly Event!
+9111	Clear "Ghostly Strangers" 9 times!
+9112	Clear "Ghostly Strangers" 9 times!
+9113	Clear "Ghostly Strangers" 9 times!
+9114	Evolve Vengeful Cat Level 10! This mission can only be completed while the Ghostly stages are available!
+9115	Clear "Old Guys in the City" 9 times!
+9116	Clear "Old Guys in the City" 9 times!
+9117	Clear "Old Guys in the City" 9 times!
+9118	Evolve Kung Fu Cat X at Level 10! This mission can only be completed while the Old Guys stages are available!
+9119	Clear "Summer Lesson" 9 times!
+9120	Clear "Summer Lesson" 9 times!
+9121	Clear "Summer Lesson" 9 times!
+9122	Evolve Awa Odori Cat Level 10! This mission can only be completed while Summer Diary stages are available!
+9123	Defeat the Rose Garden Witch. Find this enemy at the "The Rose Garden Witch (Easy)" stage
+9124	Defeat the Dessert Witch. Find this enemy at the "The Dessert Witch (Normal)" stage
+9125	Defeat the Box Witch. Find this enemy at the "The Box Witch (Hard)" stage
+9126	Defeat the Stagebuilding Witch. Find this enemy at the "The Stagebuilding Witch (Deadly)" stage
+9127	Defeat the Nutcracker Witch. Find this enemy at the "The Nutcracker Witch (Veteran)" stage
+9128	Destroy all Witches
+9129	Evolve Li'l Madoka at Level 10! This mission can only be completed while the Puella Magi Madoka Magica collab is available!
+9130	Evolve Kyubey Cat Level 10! This mission can only be completed while the Puella Magi Madoka Magica collab is available!
+9131	Clear "Queen Rampant" 9 times!
+9132	Clear "Queen Rampant" 9 times!
+9133	Clear "Queen Rampant" 9 times!
+9134	Clear "Sports Night" 9 times!
+9135	Clear "Sports Night" 9 times!
+9136	Clear "Sports Night" 9 times!
+9137	Evolve Sports Day Cat Level 10! This mission can only be completed while "Autumn = Sports Day" stages are available!
+9138	Clear "Worker's Revolution" 9 times!
+9139	Clear "Worker's Revolution" 9 times!
+9140	Clear "Worker's Revolution" 9 times!
+9141	Evolve Salaryman Cat Level 10! This mission can only be completed while "Loving Labor" stages are available!
+9142	Clear "Merc Storia: Attack" stages 9 times!
+9143	Clear "Merc Storia: Attack" stages 9 times!
+9144	Clear "Merc Storia: Attack" stages 9 times!
+9145	Challenge the Ranking Stage "Weak of Spirit"!  Select this stage at the Catclaw Dojo!
+9146	Evolve Healer at Level 10! This mission can only be completed during the Merc Storia Collab Event!
+9147	Clear "A Cultured Festival" 9 times!
+9148	Clear "A Cultured Festival" 9 times!
+9149	Clear "A Cultured Festival" 9 times!
+9150	Evolve Food Stall Cat Level 10! This mission can only be completed while "A Cultured Festival" stages are available!
+9151	Clear "Christmas in Space" 9 times!
+9152	Clear "Christmas in Space" 9 times!
+9153	Clear "Christmas in Space" 9 times!
+9154	Evolve Reindeer Cat Level 10! This mission can only be completed while December stages are available!
+9155	Evolve Pumpcat Level 10! This mission can only be completed while All Hallows Road stages are available!
+9156	Evolve A Gift of Cats at Level 10! This mission can only be completed while Jolly St. Nick stages are available!
+9157	Clear "Another New Year" stages 9 times!
+9158	Clear "Another New Year" stages 9 times!
+9159	Clear "Another New Year" stages 9 times!
+9160	Evolve Adult Cat Level 10! This mission can only be completed while January stages are available!
+9161	Limited Festival Invasion Missions. Clear the "Clionel Ascendant" stage!
+9162	Limited Festival Invasion Missions. Clear the "River Styx" stage!
+9163	Limited Festival Invasion Missions. Clear the "Queen's Coronation" stage!
+9164	Limited Festival Invasion Missions. Clear the "Dead on Debut" stage!
+9165	Limited Festival Invasion Missions. Clear the "King Wahwah's Revenge" stage!
+9166	Limited Festival Invasion Missions. Clear the "Deeply Dreaming" stage!
+9167	Clear all Limited Festival stages once each!
+9168	Clear "Six Years" stages 9 times!
+9169	Score 6666 pts in "Six Years Strong"! Find this Ranking Stage at the Catclaw Dojo!
+9170	Clear "Ritual Confusion" stages 9 times!
+9171	Clear "Ritual Confusion" stages 9 times!
+9172	Clear "Ritual Confusion" stages 9 times!
+9173	Evolve Evil Cat Level 10! This mission can only be completed while February stages are available!
+9174	Clear "Bears Be Back" stages 9 times!
+9175	Clear "Bears Be Back" stages 9 times!
+9176	Clear "Bears Be Back" stages 9 times!
+9177	Evolve Doll Cats at Level 10! This mission can only be completed while March stages are available!
+9178	Evolve Shirou the Cat Level 10! This mission can only be completed during the Fate/stay night [HF] event!
+9179	Clear "Spring for Sensei" stages 9 times!
+9180	Clear "Spring for Sensei" stages 9 times!
+9181	Clear "Spring for Sensei" stages 9 times!
+9182	Evolve Maiden Cat to Level 10! This mission can only be completed during the April monthly event!
+9183	Evolve Meowla Meowla at Level 10! This mission can only be completed during the Survive! Mola Mola event!
+9184	Clear "Lovesick Again" stages 9 times!
+9185	Clear "Lovesick Again" stages 9 times!
+9186	Clear "Lovesick Again" stages 9 times!
+9187	Evolve Koi Cat Level 10! This mission can only be completed during the May monthly event!
+9191	Upgrade Prince Yamato to Level 10! (You must evolve the Cat before the Bikkuriman collab ends!)
+9192	Upgrade Rosary Angel to Level 10! (You must evolve the Cat before the Bikkuriman collab ends!)
+9193	Clear the first "Devilish Illusion" stage! You must earn a victory on "A Tower Piercing the Sky (Hard)"
+9194	Clear the first "Yamato Awakens!" stage! You must earn a victory on "Inherited Ambition (Veteran)"
+9195	Clear "Bikkuriman Choco" stages 9 times!
+9196	Clear "Bikkuriman Choco" stages 9 times!
+9197	Clear "Bikkuriman Choco" stages 9 times!
+9198	Upgrade Kano ＆ Souma to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9199	Clear "Shakurel Planet" 9 times!
+9200	Clear "Shakurel Planet" 9 times!
+9201	Clear "Shakurel Planet" 9 times!
+9202	Upgrade Shakurel Cat to Level 10! (You must evolve the Cat before the event ends!)
+17001	Clear all Monthly Missions!
+17002	Clear all Monthly Missions!
+17003	Clear all Monthly Missions!
+17004	Clear all Monthly Missions!
+17005	Clear all Monthly Missions!
+17006	Clear all Monthly Missions!
+17007	Clear all Monthly Missions!
+17008	Clear all Monthly Missions!
+1000	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1001	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1002	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1003	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1004	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1005	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1006	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1007	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1008	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1009	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1010	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1011	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1012	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1013	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1014	Defeat Doge at Empire of Cats Ch. 2. (Once at any Empire of Cats Ch. 2 stage)
+1100	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1101	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1102	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1103	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1104	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1105	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1106	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1107	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1108	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1109	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1110	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1111	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1112	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1113	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1114	Defeat Doge at Empire of Cats Ch. 3. (Once at any Empire of Cats Ch. 3 stage)
+1200	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1201	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1202	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1203	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1204	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1205	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1206	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1207	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1208	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1209	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1210	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1211	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1212	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1213	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1214	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1215	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1216	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1217	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1218	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1219	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1220	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1221	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1222	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1223	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1224	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1225	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1226	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1227	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1228	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1229	Defeat Doge at Into the Future Ch. 1. (Once at any Into the Future Ch. 1 stage)
+1300	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1301	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1302	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1303	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1304	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1305	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1306	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1307	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1308	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1309	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1310	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1311	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1312	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1313	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1314	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1315	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1316	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1317	Defeat Doge at Into the Future Ch. 2. (Once at any Into the Future Ch. 2 stage)
+1318	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1319	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1320	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1321	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1322	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1323	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1324	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1325	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1326	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1327	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1328	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1329	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1330	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1331	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1332	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1333	Defeat "Doge" at. a Level 1 Stories of Legend Stage!
+1334	Defeat Doge at Crimson Catastrophe. (Once at any Crimson Catastrophe stage)
+1335	Defeat Doge at Heaven of Darkness. (Once at any Heaven of Darkness stage)
+1400	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1401	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1402	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1403	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1404	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1405	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1406	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1407	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1408	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1409	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1410	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1411	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1412	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1413	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1414	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1415	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1416	Defeat Doge at Into the Future Ch. 3. (Once at any Into the Future Ch. 3 stage)
+1417	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1418	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1419	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1420	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1421	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1422	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1423	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1424	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1425	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1426	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1427	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1428	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1429	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1430	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1431	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1432	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1433	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1434	Defeat Doge at Peerless. (Once at any Peerless stage)
+1435	Defeat Doge at Wrath of Heaven. (Once at any Wrath of Heaven stage)
+1500	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1501	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1502	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1503	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1504	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1505	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1506	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1507	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1508	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1509	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1510	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1511	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1512	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1513	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1514	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1515	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1516	Defeat Doge at Cats of the Cosmos Ch. 1. (Once at any Cats of the Cosmos Ch. 1 stage)
+1517	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1518	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1519	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1520	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1521	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1522	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1523	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1524	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1525	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1526	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1527	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1528	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1529	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1530	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1531	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1532	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1533	Defeat "Snache" at. a Level 2 Stories of Legend stage!
+1534	Defeat Doge at Sweet Irony. (Once at any Sweet Irony stage)
+1535	Defeat Doge at Dimension of Despair. (Once at any Dimension of Despair stage)
+1600	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1601	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1602	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1603	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1604	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1605	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1606	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1607	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1608	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1609	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1610	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1611	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1612	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1613	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1614	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1615	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1616	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1617	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1618	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1619	Defeat Doge at Cats of the Cosmos Ch. 2. (Once at any Cats of the Cosmos Ch. 2 stage)
+1620	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1621	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1622	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1623	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1624	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1625	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1626	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1627	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1628	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1629	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1630	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1631	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1632	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1633	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1634	Defeat Doge at Red Sky at Morning. (Once at any Red Sky at Morning stage)
+1635	Defeat Doge at The Rolling Dead. (Once at any The Rolling Dead stage)
+1700	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1701	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1702	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1703	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1704	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1705	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1706	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1707	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1708	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1709	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1710	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1711	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1712	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1713	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1714	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1715	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1716	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1717	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1718	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1719	Defeat Doge at Cats of the Cosmos Ch. 3. (Once at any Cats of the Cosmos Ch. 3 stage)
+1720	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1721	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1722	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1723	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1724	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1725	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1726	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1727	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1728	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1729	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1730	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1731	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1732	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1733	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1734	Defeat "Doge" at. a Level 1 Stories of Legend stage!
+1735	Defeat Doge at The 2nd Dimension. (Once at any The 2nd Dimension stage)
+1800	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1801	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1802	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1803	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1804	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1805	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1806	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1807	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1808	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1809	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1810	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1811	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1812	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1813	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1814	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1815	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1816	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1817	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1818	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1819	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1820	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1821	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1822	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1823	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1824	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1825	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1826	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1827	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1828	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1829	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1830	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1831	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1832	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1833	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1834	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1835	Defeat "Those Guys" at. a Level 3 Stories of Legend stage!
+1900	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1901	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1902	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1903	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1904	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1905	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1906	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1907	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1908	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1909	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1910	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1911	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1912	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1913	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1914	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1915	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1916	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1917	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1918	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1919	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1920	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1921	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1922	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1923	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1924	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1925	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1926	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1927	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1928	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1929	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1930	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1931	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1932	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1933	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1934	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+1935	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2000	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2001	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2002	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2003	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2004	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2005	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2006	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2007	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2008	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2009	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2010	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2011	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2012	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2013	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2014	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2015	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2016	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2017	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2018	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2019	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2020	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2021	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2022	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2023	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2024	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2025	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2026	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2027	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2028	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2029	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2030	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2031	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2032	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2033	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2034	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+2035	Defeat "Hippoe" at. a Level 4 Stories of Legend stage!
+9205	Upgrade Akuma Giraffe to Level 10! (You must evolve the Cat before the Street Fighter V collab ends!)
+9206	Upgrade Ryu Cat to Level 10! (You must evolve the Cat before the Street Fighter V collab ends!)
+9207	Upgrade Chun-Li Cat to Level 10! (You must evolve the Cat before the Street Fighter V collab ends!)
+9208	Clear "7 Years of Fun!!" stages 9 times!
+9209	Score 7777 pts in "Lucky Number 7"! Find this Ranking Stage at the Catclaw Dojo!
+9211	Limited Festival Invasion Missions. Clear the "Blue Impact" stage!
+9212	Clear all 0 Limited Festival Invasion Missions!
+9213	Upgrade Miku Cat to Level 10! (You must evolve the Cat before the Hatsune Miku collab ends!)
+9214	Clear "MIKU EXPO" 9 times!
+9215	Clear "MIKU EXPO" 9 times!
+9216	Clear "MIKU EXPO" 9 times!
+9221	Complete 17 Gamatoto Expeditions during
+9222	Clear the Heavenly Tower's 50th floor! ※Rewards can only be received once
+9223	Upgrade Heavenly Jack to Level 10! (You must evolve the Cat before the Bikkuriman collab ends!)
+9224	Clear "8 Years of Fun!" stages 9 times!
+9225	Score 8888 pts or more in "8 Ain't Enough"! Find this Ranking Stage at the Catclaw Dojo!
+9226	Upgrade Ranma Cat (M) to Level 10! (You must evolve the Cat before the "Ranma 1/2" collab ends!)
+9227	Upgrade Panda Cat to Level 10! (You must evolve the Cat before the "Ranma 1/2" collab ends!)
+9228	Clear "The Cursed Springs" 9 times!
+9229	Clear "The Cursed Springs" 9 times!
+9230	Clear "The Cursed Springs" 9 times!
+30	Get all Superior Treasure from Empire Ch. 1
+31	Get all Superior Treasure from Empire Ch. 2
+32	Get all Superior Treasure from Empire Ch. 3
+33	Get all Superior Treasure from Future Ch. 1
+34	Get all Superior Treasure from Future Ch. 2
+35	Get all Superior Treasure from Future Ch. 3
+36	Get all Superior Treasure from Cosmos Ch. 1
+37	Get all Superior Treasure from Cosmos Ch. 2
+38	Get all Superior Treasure from Cosmos Ch. 3
+9231	Limited Festival Invasion Missions. Clear "River Styx" 1 times using 8 or more Normal Cats
+9232	Limited Festival Invasion Missions. Clear "Dead on Debut" 1 times using 8 or more Special Cats
+9233	Limited Festival Invasion Missions. Clear "King Wahwah's Revenge" 1 times using any 9 Normal Cats
+9234	Limited Festival Invasion Missions. Clear "Blue Impact" 1 times using only 2nd Forms
+9235	Limited Festival Invasion Missions. Clear "Deeply Dreaming" 1 times using only unevolved 1st Forms
+9236	Clear all 0 Limited Festival Invasion Missions!
+9237	【Invasion】Clear the "The Angel & The Demon" stage! You must also clear the Continuation Stage
+9238	【Invasion】Clear the "The Queen & The Dead" stage! You must also clear the Continuation Stage
+9239	【Invasion】Clear the "The King & The Maiden" stage! You must also clear the Continuation Stage
+9240	Summer Homework ①: Choose a Journal Topic. Clear 9 Summer Break Cats stages
+9241	Summer Homework ②: Choose 2nd Journal Topic. Clear 9 Summer Break Cats stages
+9242	Summer Homework ③: Search for a good report topic.  Clear 9 Summer Break Cats stages
+9243	Summer Homework ④: Write your Journal. Clear Rundown Hideout 9 times
+9244	Summer Homework ⑤: Rewrite your journal stylishly. Clear Stylish Hideout 9 times
+9245	Summer Homework ⑥: Rewrite your journal to be perfect. Clear Perfect Hideout 9 times
+9246	Extra Credit ①: Capture Insect Specimens. Upgrade Kabuto Cat to Level 10
+9247	Extra Credit ②: Capture Insect Specimens. Upgrade Kuwagata Cat to Level 10
+9248	Extra Credit ③: Observe Insect Specimens. Upgrade Kabuto Cat to Level 20
+9249	Extra Credit ④: Observe Insect Specimens. Upgrade Kuwagata Cat to Level 20
+9364	Extra Extra Credit ①: Further Observation. Clear "Summer Diary" Stage 1 with Kabuto Cat
+9251	Extra Extra Credit ②: Further Observation. Clear "Summer Diary" Stage 2 with Kuwagata Cat
+9252	Extra Extra Credit ③: Further Observation. Clear "Summer Diary" Stage 4 with Kabuto Cat
+9253	Extra Extra Credit ④: Further Observation. Clear "Summer Diary" Stage 6 with Kuwagata Cat
+9254	Summer School ①: Literature. Clear 9 Summer Lesson stages
+9255	Summer School ②: Algebra. Clear 9 Summer Lesson stages
+9256	Summer School ③: Social Studies. Clear 9 Summer Lesson stages
+9257	Summer School ④: School Assembly. Clear 9 Summer Lesson stages
+9258	Mega-Extra Credit ①: Sea-Life Research. Clear "Survive! Mola Mola!" Stage 1 with Kabuto Cat
+9259	Mega-Extra Credit ②: Sea-Life Research. Clear "Survive! Mola Mola!" Stage 3 with Kuwagata Cat
+9260	Mega-Extra Credit ③: Further Sea Research. Clear "300 Million Dead Molas" 1 times with Kabuto Cat
+9261	Mega-Extra Credit ④: Further Sea Research. Clear "300 Million Dead Molas" 1 times with Kuwagata Cat
+39	Empress' Research 1: Heretical Spellbooks by. Clear "Arcane Confluence" and "Wicked Cat"!
+40	Empress' Research 2: Agents of Aku. Clear "Servant of Darkness" and "Wicked Tank"
+9262	Clear "River City Ball-Rolling" 9 times!
+9263	Clear "River City Ball-Rolling" 9 times!
+9264	Clear "River City Challenge Course" 9 times!
+9265	Clear stages from "River City Challenge Course"
+9266	Defeat Doge at River City Three-Leg Race. (Once at any River City Three-Leg Race stage)
+9267	Defeat Doge at River City Three-Leg Race. (Once at any River City Three-Leg Race stage)
+9268	Clear all 0 River City Cat Clash Limited  Missions!
+9269	Witch Culling Mission 1: Defeat Rose Garden Witch. Appears in the stage Witch's Labyrinth: The Rose Garden Witch
+9270	Witch Culling Mission 2: Defeat Dessert Witch. Appears in the stage Witch's Labyrinth: Dessert Witch
+9271	Witch Culling Mission 3: Defeat Box Witch. Appears in the stage Witch's Labyrinth - Box Witch
+9272	Witch Culling Mission 5: Defeat Nutcracker Witch. Appears in the stage Nutcracker Witch
+9273	Defeat all of the Witches. Clear Witch Culling Missions 1-5
+9274	Upgrade Li'l Madoka to Level 10! (You must evolve the hero before the Puella Magi Madoka Magica collab ends!)
+9275	Upgrade Kyubey Cat to Level 10! (You must evolve the hero before the Puella Magi Madoka Magica collab ends!)
+41	Empress' Research 3: Sorcery's Cost. Clear "Demon's Park" and "Wicked Axe"
+42	Complete all 0 Empress' Research 1~3 missions!
+43	Empress' Call to Arms: Liberate the corrupted Cats! Clear "Unleashing the Cats" (The gates open...)
+44	Clear "The Aku Realms". Complete by clearing all stages in The Aku Realms
+45	Clear "The Aku Realms". Complete by clearing all stages in The Aku Realms
+9283	【Q1. What's in the Box? Quiz】. Guess the event unit! : A medal bearing many thanks
+9284	【Q1. What's in the Box? Quiz】. Guess the event unit! : A Cat that brings slight fortune
+9285	【Q1. What's in the Box? Quiz】. Guess the event unit! : Ninja who dashes between planets
+9288	【Q2. Location Quiz】What country is famous for sushi?. Clear this stage in Empire of Cats to answer!
+9289	【Q2. Location Quiz】What is the most famous desert in Africa?. Clear this stage in Empire of Cats to answer!
+9290	【Q2. Location Quiz】. Clear this Empire stage: Salvador Dali is from here
+9291	【Q2. Location Quiz】. Clear this Empire stage: Spooky triangle where planes vanish
+9292	【Q2. Location Quiz】. Clear this Empire stage: Largest state in America
+9293	【Q2. Location Quiz】Go around the world
+9294	【Q3. Cat Base Quiz】. Answer all of the quiz questions that the Cat has!
+9295	【Q4. Culling Quiz】Defeat the enemy. trying to get into college each year in an Empire stage!
+9296	【Q4. Culling Quiz】Defeat the enemy. currently attending acting school in an Empire stage!
+9297	【Q4. Culling Quiz】What enemy collects magazines?. Defeat this enemy in Empire of Cats to answer!
+9298	【Q4. Culling Quiz】What enemy works at the fire station?. Defeat this enemy in Empire of Cats to answer!
+9299	【Q4. Culling Quiz】What enemy is only a giant head?. Defeat this enemy in Empire of Cats to answer!
+9300	【Q4. Culling Quiz】Go around the world
+9301	【Q5. Matter of Luck】Clear 9 Heaven stages
+9302	【Q5. Matter of Luck】Clear 9 Heaven stages
+9303	【Q5. Matter of Luck】Clear 9 Heaven stages
+46	9th Anniversary Mission. Clear Empire of Cats Ch. 1 during this event!
+9305	Clear Floor 30 of the Infernal Tower. ※ Reward can only be collected once
+47	Empress' Report: Aku Research. Clear each Empress' Report stage 9 times each
+9321	【Invasion】Clear "Clionel Ascendant". 1 times using 7 or more Special Cats
+9322	【Invasion】Clear "Queen's Coronation". 1 times using 7 or more Normal Cats
+9323	【Invasion】Clear "The Dead & The Bloated"! You must also clear the Continuation Stage
+9324	【Invasion】Clear "The Queen & The Maiden"! You must also clear the Continuation Stage
+9325	【Invasion】Clear "The King & The Angel"! You must also clear the Continuation Stage
+48	Clear 9 Behemoth Culling Stages for the first time
+49	Clear 9 Behemoth Culling Stages for the first time
+9326	Cyclone Festival Missions. Clear the "Crimson Catastrophe" stage!
+9327	Cyclone Festival Missions. Clear the "Heaven of Darkness" stage!
+9328	Cyclone Festival Missions. Clear the "Peerless" stage!
+9329	Cyclone Festival Missions. Clear the "Sweet Irony" stage!
+9330	Cyclone Festival Missions. Clear the "Wrath of Heaven" stage!
+9331	Cyclone Festival Missions. Clear the "Dimension of Despair" stage!
+9332	Cyclone Festival Missions. Clear the "Red Sky at Morning" stage!
+9333	Cyclone Festival Missions. Clear the "The Rolling Dead" stage!
+9334	Cyclone Festival Missions. Clear the "The 2nd Dimension" stage!
+9335	Cyclone Festival Missions. Clear the "Typhoon Nemo" stage!
+9336	Cyclone Festival Missions. Clear "Crimson Catastrophe" 1 times using 8+ Normal Cats
+9337	Cyclone Festival Missions. Clear "Heaven of Darkness" 1 times using 8+ Normal Cats
+9338	Cyclone Festival Missions. Clear "Peerless" 1 times using 8 or more Rare Cats
+9339	Cyclone Festival Missions. Clear "Sweet Irony" 1 times using 8 or more Rare Cats
+9340	Cyclone Festival Missions. Clear "Wrath of Heaven" 1 times using 8+ Rare Cats
+9341	Cyclone Festival Missions. Clear "Dimension of Despair" 1 times using 8+ Normal Cats
+9342	Cyclone Festival Missions. Clear "Red Sky at Morning" 1 times using only 1st Forms
+9343	Cyclone Festival Missions. Clear "The Rolling Dead" 1 times using only unevolved 1st Forms
+9344	Cyclone Festival Missions. Clear "The 2nd Dimension" 1 times using only 1st Forms
+9345	Clear 1  "Annihilated City"  stage(s) with "Yuki Cat" in your formation
+9346	Clear 1  "Annihilated City"  stage(s) with "Takuya & Yuki" in your formation
+9347	Clear 1  "Annihilated City"  stage(s) with "Redhead Yuki Cat" in your formation
+9348	Clear 1  "Annihilated City"  stage(s) with "Kano & Souma" in your formation
+9349	Clear 9  Shoumetsu Toshi collab stages
+9350	Clear 9  Shoumetsu Toshi collab stages
+9351	Clear 9  Shoumetsu Toshi collab stages
+9352	Complete 17 Gamatoto expeditions! Send Gamatoto to any
+50	Clear 9 Behemoth Culling stages for the first time
+51	Clear 9 of Behemoth Culling stages for the first time
+9353	Earn one Ancient Egg: N201 from . June Bride Capsules!
+9354	Clear any "#01 The Ghost Chapel"
+9355	Clear any "#01 The Ghost Chapel"
+9356	Clear any "#01 The Ghost Chapel"
+9357	Clear any "#01 The Ghost Chapel"
+9358	Clear any "#03 ??? the 13th"
+9359	Clear any "#03 ??? the 13th"
+9360	Clear the Continuation stage following
+9361	Clear any "#04 Yowling Village"
+9362	Clear any "#04 Yowling Village"
+9363	Clear any "#04 Yowling Village"
+9250	Summer Homework Part 1 ①: Study insect lifeforms.  Obtain 1 Kabuto Cat from the Event Capsules!
+9365	Summer Homework Part 1 ②: Study insect lifeforms.  Obtain 1 Kuwagata Cat from the Event Capsules!
+9366	Summer Homework Part 1 ③: Study insect lifeforms.  Obtain 1 Ancient Egg: N202 from the Event Capsules!
+9367	Summer Homework Part 1 ④: Study insect lifeforms.  Obtain 3 Kabuto Cats from the Event Capsules!
+9368	Summer Homework Part 1 ⑤: Study insect lifeforms.  Obtain 3 Kuwagata Cats from the Event Capsules!
+9369	Summer Homework Part 1 ⑥: Study insect lifeforms.  Obtain 3 Ancient Egg: N202s from the Event Capsules!
+9370	Summer Homework Part 1 ⑦: Study insect lifeforms.  Obtain 5 Kabuto Cats from the Event Capsules!
+9371	Summer Homework Part 1 ⑧: Study insect lifeforms.  Obtain 5 Kuwagata Cats from the Event Capsules!
+9372	Summer Homework Part 1 ⑨: Study insect lifeforms.  Obtain 5 Ancient Egg: N202s from the Event Capsules!
+9373	Clear 9  "Ranma 1/2" collab stages
+9374	Clear 9  "Ranma 1/2" collab stages
+9375	Clear 9  "Ranma 1/2" collab stages
+52	Clear 9 of Behemoth Culling stages for the first time
+53	Clear 9 of Behemoth Culling stages for the first time
+9376	Clear stages from "Merc Storia Collab"
+9377	Clear stages from "Merc Storia Collab"
+9378	Clear stages from "Merc Storia Collab"
+9379	Clear Floor 40 of the Infernal Tower. ※ Reward can only be collected once
+54	Clear "XP Bonanza!". Complete by clearing all stages in XP Bonanza!
+9380	Clear stages from "River City Cat Clash"
+9381	Clear stages from "River City Cat Clash"
+9382	Clear stages from "River City Cat Clash"
+9383	Clear stages from "River City Three-Leg Race"
+9384	Clear stages from "River City Three-Leg Race"
+9385	Clear stages from "Street Fighter V CE Collab"
+9386	Clear stages from "Street Fighter V CE Collab"
+9387	Clear stages from "Street Fighter V CE Collab"
+9388	【Pt. 1: A Decade of Memories】1. Collect an anniversary unit from the Event Capsules! Hint: Medal created for the 5th anniversary of The Battle Cats
+9389	【Pt. 1: A Decade of Memories】2. Get an ann. unit from Event. Capsules! Hint: Cat who welcomes fortune during live events
+9391	【Pt. 1: A Decade of Memories】2. Get an ann. unit from Event. Capsules! Hint: An expensive Cat awarded for the 9th anniv
+9392	【Pt. 1: A Decade of Memories】2. Get an ann. unit from Event. Capsules! Hint: A 10th anniv. Cat that ponders atop a rock
+9394	【Pt. 1: A Decade of Memories】Clear A Decade of Memories collab stages 9 times!
+9395	【Pt. 1: A Decade of Memories】Clear A Decade of Memories collab stages 9 times!
+9396	【Pt. 1: A Decade of Memories】Clear A Decade of Memories collab stages 9 times!
+9397	【Pt. 2: Enemy Maneuvers】Clear Enemy Maneuvers stages 9 times!
+9398	【Pt. 3: Cat Chats】Talk with Cat for 4 days at the Cat Base. to learn the history of The Battle Cats!
+9399	【Pt. 4: Cat Hunting】1. Find the hidden Cat in Empire of Cats. Hint: Country whose capital is the world's longest city name
+9400	【Pt. 4: Cat Hunting】2. Find the hidden Cat in Empire of Cats. Hint: A large desert with no cloud cover
+9401	【Pt. 4: Cat Hunting】3. Find the hidden Cat in Empire of Cats. Hint: Its symbol is a maple leaf
+9402	【Pt. 4: Cat Hunting】4. Find the hidden Cat in Empire of Cats. Hint: The moon landing mission was led from here
+9403	【Pt. 4: Cat Hunting】5. Find the hidden Cat in Empire of Cats. Hint: Longest life expectancy of any US state
+9404	【Pt. 4: Cat Hunting】Travel the world. and find all of the hidden Cats!
+9405	【Pt. 5 Musical Parade】Clear Musical Parade collab stages 9 times!
+55	10th Anniversary Mission. Clear Empire of Cats Ch.1 during the event
+9407	Clear "Lunar New Year's" stages 9 times!
+9408	Clear "Lunar New Year's" stages 9 times!
+9409	Clear "Lunar New Year's" stages 9 times!
+9410	Clear "Lunar New Year's" stages 9 times!
+9411	Clear "Lunar New Year's" stages 9 times!
+56	Clear 9 Behemoth Culling Stages for the first time
+9412	Clear 9 Fate/stay night [HF] collab stages
+9413	Clear 9 Fate/stay night [HF] collab stages
+9414	Clear 9 Fate/stay night [HF] collab stages
+9415	【80M DL】 Send Gamatoto on 17 successful expeditions!
+9416	【80M DL】 Send Gamatoto on 17 successful expeditions!
+9417	【80M DL】Clear 80 Million DL Celebration Happy Present 9 times!
+9418	【80M DL】Clear 80 Million DL Celebration Happy Present 9 times!
+9419	【80M DL】Clear 80 Million DL Celebration Happy Present 9 times!
+9420	【80M DL】Clear "Monthly Event All-Stars" stages 9 times!
+9421	【80M DL】Clear "Monthly Event All-Stars" stages 9 times!
+9422	【80M DL】Clear "Monthly Event All-Stars" stages 9 times!
+9423	【80M DL】Clear all event missions. to earn 1 Platinum Shard!
+57	Clear 9 Behemoth Culling Stages for the first time
+58	Clear 9 Behemoth Culling Stages for the first time
+59	Clear all Level 2 Uncanny Legend stages. to complete this mission
+9424	Cyclone Festival Missions. Clear the "The Great Diablo" stage!
+9425	Earn one Ancient Egg: N203 from . June Bride Capsules!
+9426	Score more than 8200 points on . stage 1 of #02 Banquet of Terror!
+9427	Score more than 7200 points on . stage 2 of #02 Banquet of Terror!
+9428	Score more than 7100 points on . stage 3 of #02 Banquet of Terror!
+9429	Score more than 6200 points on . stage 4 of #02 Banquet of Terror!
+9430	Score more than 4500 points on . stage 5 of #02 Banquet of Terror!
+9431	Earn one B. Stone by clearing all score targets. in stages 1~5 of  #02 Banquet of Terror!
+9432	【Q1. What's in the Box?】
+9433	【Ultra Quiz】Clear Missions Q1~5 and. claim your Million Dollar prize (according to Cat CPU)!
+60	Clear 9 Behemoth Culling stages for the first time!
+61	Clear 9 Behemoth Culling stages for the first time!
+9434	Clear Princess Punt Sweets collab stages 9 times!
+9435	Clear Princess Punt Sweets collab stages 9 times!
+9436	Clear Princess Punt Sweets collab stages 9 times!
+62	Clear all Level 3 Uncanny Legend stages. to complete this mission
+63	Clear all 9 Behemoth Culling stages!
+9440	Clear Hatsune Miku collab stages 9 times!
+9441	Clear Hatsune Miku collab stages 9 times!
+9442	Clear Hatsune Miku collab stages 9 times!
+9443	【Part 1: Adventurer Cats】① Collect an adventurer from the Event Capsules! Info: A special Cat that will be the first partner on your adventure
+9444	【Part 1: Adventurer Cats】② Collect an adventurer from the Event Capsules! Info: A 10th Anniv. Cat that thinks atop a rock
+9445	【Part 1: Adventurer Cats】③ Collect an adventurer from the Event Capsules! Info: 9th Anniv. unit that represents a large cash prize
+9446	【Part 1: Adventurer Cats】④ Collect an adventurer from the Event Capsules! Info: A Cat that represents good fortune
+9447	【Part 1: Adventurer Cats】⑤ Collect an adventurer from the Event Capsules! Info: 5th Anniv. Cat that doubles as a medal
+9449	【Part 1: Adventurer Cats】Clear any "Adventurer Cats"
+9450	【Part 1: Adventurer Cats】Clear any "Adventurer Cats"
+9451	【Part 1: Adventurer Cats】Clear any "Adventurer Cats"
+9452	【Part 2: Clash in Jar Caves】Clear any "Clash in Jar Caves"
+9455	【Part 3: Cat Wedding】Talk to Cat in. the Cat Base for 3 days
+9456	【Part 4: Villagers' Request】① Clear a certain Empire Ch.1 stage, and. bring back some Balut from Manila!
+9457	【Part 4: Villagers' Request】② Clear a certain Empire Ch.1 stage, and. be sure to take a photo of the Taj Mahal!
+9458	【Part 4: Villagers' Request】③ Clear the correct Empire of Cats Ch.1 stage! Can you outrun the bulls in Pamplona?
+9459	【Part 4: Villagers' Request】④ Clear a certain Empire Ch.1 stage where. you can enjoy reggae on the beach!
+9460	【Part 4: Villagers' Request】⑤ Clear a certain Empire Ch.1 stage where you. can see the sun rise over Aztec pyramids
+9461	【Part 4: Villagers' Request】Fulfill 0 villager's requests
+9462	【Part 5: Battle at Doge Castle】. Clear the stage King's Mimic Appears!
+9465	【11th Anniv.】Clear all Part 1 - Final Part missions. and earn a Platinum Ticket!
+64	11th Anniv. Mission. Clear Empire of Cats Ch. 1 during the 11th Anniv. event
+9466	【Final Battle: King Doge!】. Clear this stage and unveil the truth of the 11th anniv
+9467	Defeat the 50th floor of the Infernal Tower. (This reward can only be claimed once.)
+9468	Clear stages from "Metal Slug Collab"
+9469	Clear stages from "Metal Slug Collab"
+9470	Clear stages from "Metal Slug Collab"
+9471	【90M DL】Clear all event missions. to earn 1 Platinum Shard!
+9472	【90M DL】Send Gamatoto on 17 successful expedition!
+9473	【90M DL】Send Gamatoto on 17 successful expeditions!
+9474	【90M DL】Send Gamatoto on 17 successful expeditions!
+9475	【90M DL】Clear 90M DL Celebration Happy Present 9 time!
+9476	【90M DL】Clear 90M DL Celebration Happy Present 9 times!
+9477	【90M DL】Clear 90M DL Celebration Happy Present 9 times!
+9478	【90M DL】Clear 9 The Battle Cats stages
+9479	【90M DL】Clear 9 The Battle Cats stages
+9483	Clear Tower of Saviors collab stages 9 times!
+9484	Clear Tower of Saviors collab stages 9 times!
+9485	Clear Tower of Saviors collab stages 9 times!
+9486	【88.88M DL】. Clear the "Mystery Package" stage!
+9487	【88.88M DL】Upgrade Trash Cat to Level 10. Must be done during 88,880,000 DL event
+9488	【88.88M DL】Upgrade Trash Cat to Level 20. Complete during the 88,880,000 DL event
+9489	Clear 9 Rurouni Kenshin collab stages
+9490	Clear 9 Rurouni Kenshin collab stages
+9491	Clear 9 Rurouni Kenshin collab stages
+9492	Earn one Ancient Egg: N205 from . June Bride Capsules!
+9493	[Otherworld Colosseum] Limited event mission. Clear Otherworld Colosseum Level 1 Stage 3
+9494	[Otherworld Colosseum] Limited event mission. Clear Otherworld Colosseum Level 1 Stage 5
+9495	[Otherworld Colosseum] Limited event mission. Clear Otherworld Colosseum Level 2 Stage 3
+9496	[Otherworld Colosseum] Limited event mission. Clear Otherworld Colosseum Level 2 Stage 5
+9497	[Pt. 1: A Decade of Memories] Collect 0 anniversary units
+9498	[10-Year Memorial Parade] Clear all missions from. Pt.1 - Pt.5 to claim a Legend Ticket
+9499	[Invasion Stage] Limited event mission. Clear Courts of Torment
+9500	[Invasion Stage] Limited event mission. Clear First Errand
+9501	[Invasion Stage] Limited event mission. Clear Wanwan's Glory
+9502	[Invasion Stage] Limited event mission. Clear Z-Onel Rises!
+9503	[Invasion Stage] Limited event mission. Clear The Old Queen
+9504	[Invasion Stage] Limited event mission. Clear Papuu's Paradise
+9505	[Invasion Stage] Clear The Tortoise and the Baby. Clear all stages and EX stages to complete
+9506	[Invasion Stage] Clear The Prince and the Revenant. Clear all stages and EX stages to complete
+9507	[Invasion Stage] Clear The Queen and the Saint. Clear all stages and EX stages to complete
+9508	Summer Homework ④: Finish a perfect report.  Clear 9 Summer Break Cats stages
+9509	Summer Homework Part 2 ⑤: Observing the insects. Clear Summer Night, Homeward Bound stage 1 with Kabuto Cat
+9510	Summer Homework Part 2 ⑥: Observing the insects. Clear Summer Night, Homeward Bound stage 2 with Kuwagata Cat
+9511	Summer Homework Part 2 ⑦: Observing the insects. Win Summer Night, Homeward Bound stg3 with Ancient Egg: N202
+9518	[Castaway Escape Pt. 1] ①:  Wild Survival
+9519	[Castaway Escape Pt. 1] ②: Wild Survival
+9520	[Castaway Escape Pt. 1] ③: Wild Survival
+9521	Island Escape ①. Add Squid to your army and clear Survive! Mola Mola! stage 1
+9522	Island Escape ②. Add Sardine to your army and clear 300 Million Dead Molas stage 3
+9523	Island Escape ③ Add Ancient Egg: N206 to your
+9524	[Castaway Escape Pt. 2] ①: Battle Against Nature. Clear Jungle Survival Stage 1!
+9525	[Castaway Escape Pt. 2] ②: Battle Against Nature. Clear Jungle Survival Stage 4!
+65	[Account Link]. Go to Options→Change Account/Device to link your account
+9526	Clear stages from "Halloween Event"
+9527	Clear stages from "Halloween Event"
+9528	Clear stages from "Halloween Event"
+9529	Earn a Featured Item from. the Halloween Party Event Capsules!
+9530	Clear all Halloween Event Missions. to earn 1 Rare Ticket!
+9531	[Beginner Campaign] Clear 9 Empire of Cats stages
+9532	[Beginner Campaign] Clear 9 Empire of Cats stages
+9533	[Beginner Campaign] Clear 9 Empire of Cats stages
+9534	[Beginner Campaign] Clear Empire of Cats Japan stage. and earn a Rare Ticket for the Rare Capsules!
+9535	[Beginner Campaign] Clear Empire of Cats Japan stage. and earn Leadership to recover Cat Energy!
+66	Defeat the lifeform in Ancient Forest Labyrinth. Lv.1 Stage 6
+67	[Catclaw Championships] Clear 9 stages of Catclaw Championships Rank 1
+68	[Catclaw Championships] Get 4 Legend Cats. Progress in Legend
+69	[Catclaw Championships] Get 4 Legend Cats. Progress in Legend
+70	[Catclaw Championships] Get 4 Legend Cats. Progress in Legend
+71	[Catclaw Championships] Get 4 Legend Cats. Progress in Legend
+9536	Clear all Road to Unification Missions. and earn a Platinum Ticket!
+9537	Clear Road to Unification Missions ① - ④. and earn Lieutenant Cat!
+9538	Road to Unification ①:. Clear Road to Unification, Stage 5!
+9539	Road to Unification ②: Clear "Doge's Rebellion Pt. 1". 0 times! ※Appears shortly after clearing RtU Pt.1
+9540	Road to Unification ③:. Clear "Engage! Commander Nyandam" stage 1!
+9541	Road to Unification ④: Talk to Cat in the Cat Base. over 3 days and recruit new army members!
+9542	Road to Unification ⑤：. Clear "Road to Unification Pt. 2", stage 1!
+9543	Road to Unification ⑥：. Clear "Final Battle! The Rebellious King" stage 1!
+72	Road to Unification Mission. Clear Empire of Cats Ch. 1 during the event to complete
+73	Double-tap a Treasure in the Treasure List to jump to that stage. Open the Treasure List from the Cat Base
+74	Tap an enemy icon on the stage select screen to jump to the. Enemy Guide. Tap the name of a cleared stage to show enemies
+75	Use Catamin A to restore stage attempts. Use Catamin A on a Legend Stage
+76	Tap the Cat CPU 2 times and skip a stage. Cleared stages on the stage select screen can be skipped
+77	Long-tap the Equip button on the stage select screen. Long-tap to re-equip the formation that cleared the stage
+78	Jump to a stage from the evolution screen. Tap an evolution material after accessing from the Upgrade menu
+79	Check the Inquiry Code. Tap upper-left of the title screen or lower-left of the Options menu
+9550	Clear 9 Madoka Magica collab stages
+9551	Clear 9 Madoka Magica collab stages
+9552	Clear 9 Madoka Magica collab stages
+9553	Witch Culling Mission 4: Defeat Stagebuilder Witch. Appears in the stage Walpurgisnacht
+9554	Clear Floor 30 of the Golden Tower. (This reward can only be claimed once.)
+9555	Clear Floor 40 of the Golden Tower. (This reward can only be claimed once.)
+9556	Clear Floor 50 of the Golden Tower. (This reward can only be claimed once.)
+9557	【100M DL】Clear all of the event missions. and earn a Platinum Shard
+9558	【100M DL】Send Gamatoto on 17 successful expeditions!
+9559	【100M DL】Send Gamatoto on 17 successful expeditions!
+9560	【100M DL】Send Gamatoto on 17 successful expeditions!
+9561	【100M DL】Clear 100M Celebration Gifts
+9562	【100M DL】Clear 100M Celebration Gifts
+9563	【100M DL】Clear 100M Celebration Gifts
+9564	【100M DL】Clear 0 The Battle Cats stages
+9565	【100M DL】Clear 0 The Battle Cats stages
+9566	【Heartbeat Catcademy】Clear Season 1: School
+9567	【Heartbeat Catcademy】Clear Season 2: Heartbeat
+9568	【Heartbeat Catcademy】Clear Season 3: Field
+9569	【Heartbeat Catcademy】Clear Season 4: Graduation
+9570	【Heartbeat Catcademy】Clear Weekend: Confession
+80	Unlock Talents for Holy Valkyrie Cat. Clear Valkyrie Cat's Trial to unlock
+81	Unlock Talents for Awakened Bahamut Cat. Clear Bahamut Cat's Trial to unlock
+9571	Clear 9 Baki Hanma collab stages
+9572	Clear 9 Baki Hanma collab stages
+9573	Clear 9 Baki Hanma collab stages
+9574	Clear 9 Baki Hanma collab stages
+9575	Clear 9 Baki Hanma collab stages
+9582	[Premium Fair] Clear all Missions. to earn a Rare Ticket!
+9583	[Premium Fair] Draw Cat Capsules 0 times
+9584	[Premium Fair] Complete 17 Gamatoto Expeditions
+9585	[Premium Fair] Complete 17 Gamatoto Expeditions
+9586	[Premium Fair] Clear 9 Event stages
+9587	[Premium Fair] Earn a Featured Item from. the Premium Fair Event Capsules!
+9594	Clear any "Sonic the Hedgehog" collab
+9595	Clear any "Sonic the Hedgehog" collab
+9596	Clear any "Sonic the Hedgehog" collab
+9597	Clear any "Sonic the Hedgehog" collab
+9598	Complete 17 Gamatoto Expeditions during
+9599	Welcome Back Mission①:
+9600	Welcome Back Mission②:
+9601	Welcome Back Mission③:
+9602	Welcome Back Mission④:
+9603	Welcome Back Mission⑤:
+9604	Welcome Back Mission⑥:
+9605	Welcome Back Mission⑦:
+9606	Welcome Back Mission⑧:
+9607	[Castaway Escape Pt. 1] ④: Wild Survival
+9608	[Castaway Escape Pt. 1] ①: Search for Food
+9609	[Castaway Escape Pt. 1] ②: Search for Food
+9610	[Castaway Escape Pt. 1] ③: Search for Food
+9611	[Castaway Escape Pt. 1] ④: Search for Food. Collect 3 Sardines from the Event Capsules!
+9612	[Castaway Escape Pt. 1] ⑤: Search for Food. Collect 3 Squid from the Event Capsules!
+9613	[Castaway Escape Pt. 1] ⑥: Search for Food. Collect 3 Tasmanian Giant Crabs from the Event Capsules!
+9614	[Castaway Escape Pt. 1] ⑦: Search for Food. Obtain 3 Ancient Egg: N206s from the Event Capsules!
+9615	[Castaway Escape Pt. 1]①: Windstorm
+9616	[Castaway Escape Pt. 1]②: Windstorm
+9617	[Castaway Escape Pt. 1]③: Windstorm
+9618	[Castaway Escape Pt. 1]④: Windstorm
+9619	[Castaway Escape Pt. 3]: Shadowy Island. Clear Island Defenders! stage 1
+9620	Resort Dev. Part 1 - Paradise ①: Clear any
+9621	Resort Dev. Part 1 - Paradise ②: Clear any
+9622	Resort Dev. Part 1 - Paradise ③: Clear any
+9623	Resort Dev. Part 1 - Contracts ①:. Collect Consultant Cat from the Event Capsules!
+9624	Resort Dev. Part 1 - Contracts ②:. Collect 3 Consultant Cats from the Event Capsules!
+9626	Resort Dev. Part 2 - Celebrities:. Clear Extravagant Resort Land stage 1
+9627	Resort Dev. Part 3 - Restful Bliss:
+9628	【110M DL】Clear all of the event missions. and earn a Rare Ticket
+9629	【110M DL】Send Gamatoto on 17 successful expeditions!
+9630	【110M DL】Send Gamatoto on 17 successful expeditions!
+9631	【110M DL】Send Gamatoto on 17 successful expeditions!
+9632	【110M DL】Clear 110M Celebration Gifts Galore!
+9633	【110M DL】Clear 110M Celebration Gifts Galore!
+9634	【110M DL】Clear 110M Celebration Gifts Galore!
+9636	【110M DL】Clear 0 stages in The Battle Cats
+9637	Clear any Street Fighter 6 collab
+9638	Clear any Street Fighter 6 collab
+9639	Clear any Street Fighter 6 collab
+9640	Clear any Street Fighter 6 collab
+9657	Clear any Valentine's Event
+9658	Clear any Valentine's Event
+9659	Clear any Valentine's Event
+9660	Clear any Demon Slayer: Kimetsu no Yaiba
+9661	Clear any Demon Slayer: Kimetsu no Yaiba
+9662	Clear any Demon Slayer: Kimetsu no Yaiba
+9663	Clear Demon Slayer: Kimetsu no Yaiba. Special Missions ① - ④ and earn a Rare Ticket!
+9664	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ①: Slay the Demon Teacher Bear!
+9665	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ②: Slay Rui!
+9666	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ③: Slay Enmu!
+9667	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ④: Slay Akaza!
+9673	【Heartbeat Catcademy】Clear After School: Love Letters
+9674	【111M DL】Clear all event missions. to earn 1 Rare Ticket!
+9675	【111M DL】Send Gamatoto on 17 successful expeditions!
+9676	【111M DL】Send Gamatoto on 17 successful expeditions!
+9677	【111M DL】Send Gamatoto on 17 successful expeditions!
+9678	【111M DL】Clear 111M Celebration Gifts Galore!
+9679	【111M DL】Clear 111M Celebration Gifts Galore!
+9680	【111M DL】Clear 111M Celebration Gifts Galore!
+9681	【111M DL】
+9682	【111M DL】
+9668	Get a free Cat Ticket each day
+9669	【Progression】
+9670	【Progression】Send Gamatoto on 17 successful expeditions!
+9671	【Progression】
+9672	【Progression】Clear all event missions. to earn 3 Rare Tickets

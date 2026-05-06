@@ -1,0 +1,247 @@
+0	Armata felina
+1	A porte chiuse
+2	Capitano Achab
+3	Rock letale
+4	Giappone chic
+5	Bagnanti
+6	Rumore di ali
+7	Elicotteri
+8	Mele e arance
+9	Fai un inchino
+10	Suore in fuga
+11	Angeli del caos
+12	Speciale lingerie
+13	In fiore
+14	Amici d'infanzia
+15	Cuoio caldo
+16	Gilda dei burattinai
+17	Pyon Pyon per due
+18	Aiuto provvidenziale
+19	Innamorarsi
+20	Principe ranocchio
+21	Nipotino adorato
+22	Niente paura in scena
+23	Rischio biologico
+24	Sole di mezza estate
+25	Il dono della renna
+26	Grande schermo
+27	Gambe lunghe
+28	Anima della festa
+29	Bravissimo!
+30	Tredici
+31	Ricchezze urticanti
+1000	L'attacco dei Mini
+1001	X-Files
+1002	Gambe per giorni
+1003	Storia dell'arte
+1004	Moby Dick
+1005	Ritorno a scuola
+1006	Occhio del ciclone
+1007	Moicani
+1008	Dischi volanti
+1009	Mech
+1010	Macho Man
+1011	Quattro salti
+1012	Tirare i fili
+1013	Re e regina
+1014	Entra il ninja
+1015	Gioventù problematica
+1016	Duetto
+1017	Segnale antincendio
+1018	Riso e maiale
+1019	Sorrisi ai gatti
+1020	Re leone
+1021	Pesca e banana
+1022	Maledizione di Honnoji
+1023	Fresco nell'arsura
+1024	Missione Apollo
+1025	Osso ossuto
+1026	Cavalleria e dolciumi
+1027	Graduatoria competitiva
+1028	Gatti e panzer
+1029	Fascia per capelli
+1030	Guarda come frusto
+1031	Mascherata
+2000	Cuori matti
+2001	Potere delle tenebre
+2002	Che schifo!
+2003	Nyanko, Inc.
+2004	Stagioni d'amore
+2005	Fuoco di paglia
+2006	Fioritura
+2007	Speciale Bento
+2008	Parlando del diavolo
+2009	Arti classiche
+2010	Donna sportiva
+2011	Gentiluomini
+2012	Spinner
+2013	Colli lunghi
+2014	Senti che ritmo
+2015	Trattamento speciale
+2016	Film horror
+2017	Scuola di gatti
+2018	Lance incrociate
+2019	Battito cardiaco
+3000	Amanti dei lecca-lecca
+3001	Maestro e apprendista
+3002	Tre re
+3003	Innocenti ragazzate
+3004	Fusi di testa
+3005	Sbruffoni
+3006	Dolci
+3007	Sezioni acuminate
+3008	Nemico del passato
+3009	Pugnopugnopugno!
+3010	Sete di battaglia
+3011	Punisci le oscenità
+3012	Team di due
+3013	Doppio tifone
+3014	Inganno del vento
+3015	Quelli del seminterrato
+3016	Ricognizione aerea
+3017	In arresto
+3018	Circo felino
+3019	Camicia a scacchi
+9000	Doppio appuntamento
+9001	Oziando
+9002	Maledizione!
+9003	Modestia immodesta
+9004	Studio Jibbly
+9005	Pantaloni di zucca
+9006	Attività paranormale
+9007	Problemi di fegato
+9008	Era dei dinosauri
+32	Giocherellando
+33	Ricchi e poveri
+34	Koi e il drago
+35	Giochi mortali
+1032	Come sopra, anche sotto
+3020	Futuro di guerra
+3021	Bazooka Bros.
+3022	Rivalità
+3023	Re celestiali
+36	Tabula rasa
+37	Salvatori d'acciaio
+38	Viaggio intergalattico
+1033	Colpito dal fulmine
+1034	Chic senza collo
+1035	Laguna blu
+2020	Dei dei cani
+3024	Furia vulcanica
+39	Forza maledetta
+40	Agenzia segreta
+41	Vita d'amore
+1036	Donne della giungla
+1037	Sognando di volare
+1038	Offerte agli dei
+2021	Forza benedetta
+3025	Banda di assassini
+42	Copricapo classico
+1039	Un braccio al giorno
+2022	Come un disco, baby
+3026	Affari benedetti
+43	Il mio carissimo amico
+44	Caldo, genuino e veloce
+3027	Vita da pendolare
+3028	Portami fuori
+45	Pollice verde
+46	Cuore viola
+47	Turismo marittimo
+48	Motore a pedali
+1040	Nazionali
+1041	Treni che passione
+2023	Corsa al brunch
+49	Bianco e nero
+50	Sommergibilista reale
+2024	Avanguardia
+2025	Gara dei campioni
+3029	Metti sotto ghiaccio
+3030	Spadoni
+51	Grazie di tutto
+52	Troverai la felicità
+53	Prestazione miracolosa
+54	Marshmallow arrostito
+55	Miagolii sotto la pioggia
+1042	Possibilità di tornado
+2026	Alta tensione
+56	Due in uno
+57	Uovo sodo
+58	Cuore imbroglione?
+2027	Colleghi part-time
+59	Tribunale imperiale
+60	Morbido e flessibile
+61	Più siamo, meglio stiamo
+1043	Abiti audaci
+1044	Fan del cosplay
+62	Postapocalisse
+63	Campioni in kimono
+64	Scatto di crescita
+65	Dragoni vecchi e giovani
+66	Le ruote del destino
+67	Giorno dell'indipendenza
+68	Preda del giorno
+69	Scudi di tutti i tipi
+70	Modalità coop
+3031	Cattivoni
+3032	Orecchie di gatto
+72	Testacoda
+73	Conti offshore
+74	Ninjutsu carino
+3033	Cielo limpido
+3034	Età per bere
+75	Prova della strega
+76	Colazione in mutande
+77	Bazar urbano
+1045	Vacanza di lavoro
+78	Trivella del drago
+79	Battipalo mitica
+80	Tagliatutto coraggioso
+81	Scavatore orca
+82	Motosega sexy
+83	Mini-Sauro
+84	Guerrieri piccini
+85	Micro combattenti
+86	Miniciclone
+87	Caccia grossa
+88	Club misterioso
+89	Non scherzare con me!
+91	Balla un po', mangia un po'
+92	Piccola caccia antica
+93	Étoile minimo
+94	Sacrificio
+3035	Guerrieri della giustizia
+95	Sola andata per l'inferno
+1046	Diventare di pietra
+96	Trasporto felino
+1047	Scatola dei sogni
+3036	Assalto terra-aria
+97	Composto proibito
+3037	Berserker
+3038	Pigro angelico
+3039	Fine oscura per le feste
+3040	Elohim, Essaim
+3041	Fiamme malvagie
+3042	Acchiappando spiriti
+3043	Cavalleria violata
+3044	Gestione della rabbia
+98	Bring it On!
+3045	Vai all'inferno!
+2028	Club di caccia
+3046	Come il vento
+99	Inno della Miaoccademia
+3047	La pura verità
+3048	Acquario dei draghi
+3049	Raffica di vento
+3050	Tour a gravità zero
+3051	#TopSecret
+3052	Contratto oscuro
+3053	Davide batte Golia
+3054	Tallone tuonante
+3055	Sospiro di sollievo
+3056	Infrazione stradale
+3057	Tennis d'acciaio
+3058	Sepoltura di guerra
+3059	Appetito insaziabile
+3060	Guerrieri cosmici
+3061	Arma e spada
+3062	Devastazione reale

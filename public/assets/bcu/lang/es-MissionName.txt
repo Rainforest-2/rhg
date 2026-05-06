@@ -1,0 +1,1011 @@
+0	Sube de nivel a cualquier gato desde el menú «Mejorar». (Toca el botón «Mejorar» que verás debajo del gato)
+1	Activa la bebida energética en Levantamiento Felino. (Por recoger los 7 primeros tesoros)
+2	(Mejora gatos o habilidades de la base)
+3	Abre una gatobola en la base gatuna. (Cada día podrás utilizar un tique gratis)
+4	Recluta un ayudante de Gamatoto. (Los puedes conseguir como premios en excursiones)
+5	Supera cualquier fase usando un gatocombo. (Añade ciertos gatos a tu formación)
+6	Juega en el Dojo Afilagarras. (Juega cualquier fase una vez)
+7	Desbloquea la forma final de cualquier gato normal. (Los gatos normales mutan en el nivel 30)
+8	Supera la fase de Japón en Levantamiento Felino. (Es la fase 7 del cap. 1 de Imperio de los Gatos)
+9	Supera la fase de India en Levantamiento Felino. (Es la fase 11 del cap. 1 de Imperio de los Gatos)
+10	Supera la fase de Madagascar en Levantamiento Felino. (Es la fase 16 del cap. 1 de Imperio de los Gatos)
+11	Supera la fase de Grecia en Levantamiento Felino. (Es la fase 23 del cap. 1 de Imperio de los Gatos)
+12	Supera la fase de Groenlandia en Levantamiento Felino. (Es la fase 32 del cap. 1 de Imperio de los Gatos)
+13	Supera la fase de Argentina en Levantamiento Felino. (Es la fase 39 del cap. 1 de Imperio de los Gatos)
+14	Supera la fase de Hollywood en Levantamiento Felino. (Es la fase 45 del cap. 1 de Imperio de los Gatos)
+15	Supera la fase de la Luna en Levantamiento Felino. (Es la fase final del cap. 1 de Imperio de los Gatos)
+16	Supera todas las fases en Imperio de Oscuridad. (Incluida la fase final del cap. 2 de Imperio de los Gatos)
+17	Supera todas las fases en El Renacer del Gato Bégimo. (Incluida la fase final del cap. 3 de Imperio de los Gatos)
+18	Supera todas las fases en Tiempos de Gatos. (Incluida la fase final del cap. 1 de Hacia el Futuro)
+19	Supera todas las fases en Artimañas Alienígenas. (Incluida la fase final del cap. 2 de Hacia el Futuro)
+20	Supera todas las fases en El Retorno de los Ancianos. (Incluida la fase final del cap. 3 de Hacia el Futuro)
+22	Supera todas las fases en Más Allá de la Exosfera. (Incluida la fase final del cap. 1 de Gatos Galácticos)
+23	Supera todas las fases en La Pasión del Misidiós. (Incluida la fase final del cap. 2 de Gatos Galácticos)
+24	Misión del 6.º aniversario. ¡Supera el Imperio de los Gatos (cap. 1) durante el evento!
+25	Supera todas las fases en Las Estrellas También Mueren. (Incluida la fase final del cap. 3 de Gatos Galácticos)
+26	Misión del 7.º aniversario. ¡Supera el Imperio de los Gatos (cap. 1) durante el evento!
+27	Supera el nivel 2 de todas las fases legendarias. para completar esta misión
+28	Supera el nivel 3 de todas las fases legendarias. para completar esta misión
+29	Misión del 8.º aniversario. ¡Supera el Imperio de los Gatos (cap. 1) durante el evento!
+8000	(Verás las fases relevantes en los detalles de la misión)
+8001	(Verás las fases relevantes en los detalles de la misión)
+8002	(Completa 5 fases legendarias amarillas cualesquiera)
+8003	(Completa 7 expediciones a cualquier zona)
+8004	Supera todas las misiones semanales:
+8005	(Verás las fases relevantes en los detalles de la misión)
+8006	(Verás las fases relevantes en los detalles de la misión)
+8007	(Completa 10 expediciones a cualquier zona)
+8008	(Verás las fases relevantes en los detalles de la misión)
+8009	(Completa 10 fases legendarias amarillas cualesquiera)
+8010	Supera todas las misiones semanales:
+8011	Supera todas las misiones semanales:
+9000	Supera el piso 30 de la Torre Celestial. (Este premio solo se puede recoger una vez)
+9001	(Completa cualquier fase de Lección Veraniega)
+9002	(Completa cualquier fase de Lección Veraniega)
+9003	(Completa cualquier fase de Lección Veraniega)
+9004	Consigue al gato raro Bailarina de Awa. (Está disponible en las fases de Agenda Veraniega)
+9005	(Completa las 0 misiones del evento veraniego)
+9015	Score 5000 or more on "Immortal Allen O'Neill"! Receive your score upon stage clear
+9016	Score 5000 or more on "Attack On Huge Hermit"! Receive your score upon stage clear
+9017	Score 5000 or more on "Jupiter King Convoy"! Receive your score upon stage clear
+9018	Score 3000 or more on "Devils on the Doorstep"! Receive your score upon stage clear
+9019	(Las fases y los premios se reinician a diario)
+9020	Gana 5555 puntos en Plan Quinquenal. (Es una fase de clasificación en el Dojo Afilagarras)
+9021	Mejora al Gatomoneda al nivel 10. (Debes hacerlo antes de que acabe el evento)
+9022	Score 4000 or more on "Schoolyard Clash"! Receive your score upon stage clear
+9023	Score 3500 or more on "Midnight Interception"! Receive your score upon stage clear
+9024	Score 3000 or more on "Manor Ruins"! Receive your score upon stage clear
+9025	Score 2500 or more on "Inconspicuous Trap"! Receive your score upon stage clear
+9026	Score 1500 or more on "Beginning of the End"! Receive your score upon stage clear
+9027	(Completa cualquier fase de Guerra Sagrada)
+9028	Supera el piso 40 de la Torre Celestial. (Estos premios solo se pueden recoger una vez)
+9029	Gana más de 2500 puntos. en la fase ¡Ya Llega!
+9030	Gana más de 2000 puntos. en la fase Renos de Tiro
+9031	Gana más de 2000 puntos. en la fase Nata Montada
+9032	Gana más de 2000 puntos. en la fase Duendes Amotinados
+9033	Gana más de 1500 puntos. en la fase Guerra Navideña
+9034	(Completa cualquier fase de Gatos en la Nieve)
+9035	(Completa cualquier fase de Gatos en la Nieve)
+9036	(Completa cualquier fase de Gatos en la Nieve)
+9037	Score more than 3000 points on the. PowerPro collab stage "Round 1 (Easy)"!
+9038	Score more than 6000 points on the. PowerPro collab stage "Round 2 (Normal)"!
+9039	Score more than 6500 points on the. PowerPro collab stage "Final Round (Hard)"!
+9040	Gana más de 2000 puntos. en la fase exclusiva Marchavisco
+9041	Gana más de 5000 puntos. en la fase exclusiva Mazapena
+9042	Gana más de 6000 puntos. en la fase exclusiva Caries Incipiente
+9043	(Completa cualquier fase de Ánimo, Estudiantes)
+9044	(Completa cualquier fase de Ánimo, Estudiantes)
+9045	(Completa cualquier fase de Ánimo, Estudiantes)
+9046	Gana más de 2000 puntos. en la fase especial Marchavisco
+9047	Gana más de 5000 puntos. en la fase especial Mazapena
+9048	Gana más de 6000 puntos. en la fase especial Caries Incipiente
+9049	Mejora al Gatohuevo al nivel 10. (Debes hacerlo antes de que acabe el evento)
+9050	Upgrade Shinji & Cat to Level 10! (You must evolve the Cat before the event ends!)
+9051	Clear any EVANGELION collab
+9052	Clear any EVANGELION collab
+9053	Clear any EVANGELION collab
+9054	Activate the EVA Angel Killer CatCombo and clear any stage. Clear Empire of Cats Ch. 1 and deploy Shinji & Cat and Kaworu & Cat..
+9055	Destroy the 4th Angel. Encounter this enemy at "State of Emergency"
+9056	Destroy the 6th Angel. Encounter this enemy at "Futagoyama Fortress"
+9057	Destroy the 9th Angel. Encounter this enemy at "Asuka On Board (Easy)"
+9058	Destroy the 10th Angel. Encounter this enemy at "Refusal Type (Hard)"
+9059	Destroy all Angels
+9060	Evolve Pokota at Level 10! This mission can only be completed during the LINE Pokopang! collab event!
+9061	Evolve Ovis at Level 10! This mission can only be completed during the LINE Pokopang! collab event!
+9062	Evolve Coco at Level 10! This mission can only be completed during the LINE Pokopang! collab event!
+9063	Clear "Trio from the Woods" 9 times!
+9064	Clear "Trio from the Woods" 9 times!
+9065	Clear "Trio from the Woods" 9 times!
+9072	(Completa cualquier fase de El Toque de Midas)
+9073	(Completa cualquier fase de El Toque de Midas)
+9074	(Completa cualquier fase de El Toque de Midas)
+9075	Clear "City of Souls" 9 times!
+9076	Clear "City of Souls" 9 times!
+9077	Clear "City of Souls" 9 times!
+9078	Upgrade Yuki Cat to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9079	Upgrade Takuya ＆ Yuki to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9080	Upgrade Redhead Yuki Cat to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9085	(Completa cualquier fase de Babear a la Victoria)
+9086	(Completa cualquier fase de Babear a la Victoria)
+9087	(Completa cualquier fase de Babear a la Victoria)
+9088	Muta al Jinete de Babosas en el nivel 10. (Solo durante el evento colaborativo de Babear a la Victoria)
+9089	(Completa cualquier fase de La Novia Prohibida II)
+9090	(Completa cualquier fase de La Novia Prohibida II)
+9091	(Completa cualquier fase de La Novia Prohibida II)
+9092	Muta a la Novia Maruja en el nivel 10. (Solo en las fases exclusivas de junio)
+9093	(Completa cualquier fase de The Battle Cats POP)
+9094	(Completa cualquier fase de The Battle Cats POP)
+9095	(Completa cualquier fase de The Battle Cats POP)
+9096	(Completa cualquier fase de The Battle Cats POP)
+9097	Muta a Betakkuma en el nivel 10. (Solo durante el evento colaborativo de Betakkuma)
+9098	(Completa cualquier fase de Nunca No al Verano)
+9099	(Completa cualquier fase de Nunca No al Verano)
+9100	(Completa cualquier fase de Nunca No al Verano)
+9101	Muta a la Diva Vacacional en el nivel 10. (Solo en las fases exclusivas de julio)
+9111	(Completa cualquier fase de Forasteros Fantasmales)
+9112	(Completa cualquier fase de Forasteros Fantasmales)
+9113	(Completa cualquier fase de Forasteros Fantasmales)
+9114	Muta a la Gata Vengativa en el nivel 10. (Solo en las fases exclusivas de Forasteros Fantasmales)
+9115	(Completa cualquier fase de Yayos en la Ciudad)
+9116	(Completa cualquier fase de Yayos en la Ciudad)
+9117	(Completa cualquier fase de Yayos en la Ciudad)
+9118	Muta al Gato de Kungfú X en el nivel 10. (Solo en las fases exclusivas de Yayos en la Ciudad)
+9119	(Completa cualquier fase de Lección Veraniega)
+9120	(Completa cualquier fase de Lección Veraniega)
+9121	(Completa cualquier fase de Lección Veraniega)
+9122	Muta a la Bailarina de Awa en el nivel 10. (Solo en las fases exclusivas de Agenda Veraniega)
+9123	Defeat the Rose Garden Witch. Find this enemy at the "The Rose Garden Witch (Easy)" stage
+9124	Defeat the Dessert Witch. Find this enemy at the "The Dessert Witch (Normal)" stage
+9125	Defeat the Box Witch. Find this enemy at the "The Box Witch (Hard)" stage
+9126	Defeat the Stagebuilding Witch. Find this enemy at the "The Stagebuilding Witch (Deadly)" stage
+9127	Defeat the Nutcracker Witch. Find this enemy at the "The Nutcracker Witch (Veteran)" stage
+9128	Destroy all Witches
+9129	Evolve Li'l Madoka at Level 10! This mission can only be completed while the Puella Magi Madoka Magica collab is available!
+9130	Evolve Kyubey Cat Level 10! This mission can only be completed while the Puella Magi Madoka Magica collab is available!
+9131	Clear "Queen Rampant" 9 times!
+9132	Clear "Queen Rampant" 9 times!
+9133	Clear "Queen Rampant" 9 times!
+9134	(Completa cualquier fase de Noche Deportiva)
+9135	(Completa cualquier fase de Noche Deportiva)
+9136	(Completa cualquier fase de Noche Deportiva)
+9137	Muta al Gato Deportista en el nivel 10. (Solo en las fases exclusivas de Otoño = Día Deportivo)
+9138	(Completa cualquier fase de Revolución Laboral)
+9139	(Completa cualquier fase de Revolución Laboral)
+9140	(Completa cualquier fase de Revolución Laboral)
+9141	Muta al Gato Currito en el nivel 10. (Solo en las fases exclusivas de Amado Trabajo)
+9142	Clear "Merc Storia: Attack" stages 9 times!
+9143	Clear "Merc Storia: Attack" stages 9 times!
+9144	Clear "Merc Storia: Attack" stages 9 times!
+9145	Challenge the Ranking Stage "Weak of Spirit"!  Select this stage at the Catclaw Dojo!
+9146	Evolve Healer at Level 10! This mission can only be completed during the Merc Storia Collab Event!
+9147	(Completa cualquier fase de Feria Gastronómica)
+9148	(Completa cualquier fase de Feria Gastronómica)
+9149	(Completa cualquier fase de Feria Gastronómica)
+9150	Muta al Vendedor de Comida en el nivel 10. (Solo en las fases exclusivas de Feria Gastronómica)
+9151	(Completa cualquier fase de Navidad Espacial)
+9152	(Completa cualquier fase de Navidad Espacial)
+9153	(Completa cualquier fase de Navidad Espacial)
+9154	Muta al Piscigato Reno en el nivel 10. (Solo en las fases exclusivas de diciembre)
+9155	Muta al Calabagato en el nivel 10. (Solo en las fases exclusivas de Camino Sombrío)
+9156	Muta al Regalo Gatuno en el nivel 10. (Solo en las fases exclusivas de San Nicolás)
+9157	(Completa cualquier fase de Otro Año Nuevo)
+9158	(Completa cualquier fase de Otro Año Nuevo)
+9159	(Completa cualquier fase de Otro Año Nuevo)
+9160	Muta al Gato Adulto en el nivel 10. (Solo en las fases exclusivas de enero)
+9161	Misiones de Invasión del Festival Exclusivo. ¡Supera la fase Ascendente Clionel!
+9162	Misiones de Invasión del Festival Exclusivo. ¡Supera la fase Río Estigia!
+9163	Misiones de Invasión del Festival Exclusivo. ¡Supera la fase Coronación de Reina!
+9164	Misiones de Invasión del Festival Exclusivo. ¡Supera la fase Difunto Debutante!
+9165	Misiones de Invasión del Festival Exclusivo. ¡Supera la fase Venganza del Rey Guau!
+9166	Misiones de Invasión del Festival Exclusivo. ¡Supera la fase Sueño Profundo!
+9167	(Completa las 0 fases disponibles)
+9168	(Completa cualquier fase de Seis Años)
+9169	Gana 6666 puntos en 6 Años de Fuerza. (Es una fase de clasificación en el Dojo Afilagarras)
+9170	(Completa cualquier fase de Caos Ritual)
+9171	(Completa cualquier fase de Caos Ritual)
+9172	(Completa cualquier fase de Caos Ritual)
+9173	Muta al Gato Malvado en el nivel 10. (Solo en las fases exclusivas de febrero)
+9174	(Completa cualquier fase de Vuelven los Osos)
+9175	(Completa cualquier fase de Vuelven los Osos)
+9176	(Completa cualquier fase de Vuelven los Osos)
+9177	Muta a los Gatoñecos en el nivel 10. (Solo en las fases exclusivas de marzo)
+9178	Evolve Shirou the Cat Level 10! This mission can only be completed during the Fate/stay night [HF] event!
+9179	(Completa cualquier fase de Lección de Primavera)
+9180	(Completa cualquier fase de Lección de Primavera)
+9181	(Completa cualquier fase de Lección de Primavera)
+9182	Muta a la Gata Colegiala en el nivel 10. (Solo en las fases exclusivas de abril)
+9183	Evolve Meowla Meowla at Level 10! This mission can only be completed during the Survive! Mola Mola event!
+9184	(Completa cualquier fase de Recaída Amorosa)
+9185	(Completa cualquier fase de Recaída Amorosa)
+9186	(Completa cualquier fase de Recaída Amorosa)
+9187	Muta al Gato Koi en el nivel 10. (Solo en las fases exclusivas de mayo)
+9191	Upgrade Prince Yamato to Level 10! (You must evolve the Cat before the Bikkuriman collab ends!)
+9192	Upgrade Rosary Angel to Level 10! (You must evolve the Cat before the Bikkuriman collab ends!)
+9193	Clear the first "Devilish Illusion" stage! You must earn a victory on "A Tower Piercing the Sky (Hard)"
+9194	Clear the first "Yamato Awakens!" stage! You must earn a victory on "Inherited Ambition (Veteran)"
+9195	Clear "Bikkuriman Choco" stages 9 times!
+9196	Clear "Bikkuriman Choco" stages 9 times!
+9197	Clear "Bikkuriman Choco" stages 9 times!
+9198	Upgrade Kano ＆ Souma to Level 10! (You must evolve the Cat before the Shoumetsu Toshi collab ends!)
+9199	(Completa cualquier fase de Shakurel Planet)
+9200	(Completa cualquier fase de Shakurel Planet)
+9201	(Completa cualquier fase de Shakurel Planet)
+9202	Mejora a Shakurel al nivel 10. (Debes hacerlo antes de que acabe el evento)
+17001	Supera todas las misiones mensuales:
+17002	Supera todas las misiones mensuales:
+17003	Supera todas las misiones mensuales:
+17004	Supera todas las misiones mensuales:
+17005	Supera todas las misiones mensuales:
+17006	Supera todas las misiones mensuales:
+17007	Supera todas las misiones mensuales:
+17008	Supera todas las misiones mensuales:
+1000	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1001	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1002	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1003	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1004	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1005	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1006	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1007	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1008	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1009	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1010	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1011	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1012	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1013	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1014	Vence a Chucho en el cap. 2 de Imperio de los Gatos. (Una vez en cualquier fase)
+1100	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1101	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1102	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1103	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1104	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1105	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1106	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1107	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1108	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1109	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1110	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1111	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1112	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1113	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1114	Vence a Chucho en el cap. 3 de Imperio de los Gatos. (Una vez en cualquier fase)
+1200	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1201	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1202	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1203	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1204	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1205	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1206	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1207	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1208	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1209	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1210	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1211	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1212	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1213	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1214	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1215	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1216	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1217	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1218	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1219	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1220	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1221	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1222	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1223	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1224	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1225	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1226	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1227	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1228	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1229	Vence a Chucho en el cap. 1 de Hacia el Futuro. (Una vez en cualquier fase)
+1300	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1301	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1302	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1303	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1304	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1305	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1306	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1307	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1308	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1309	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1310	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1311	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1312	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1313	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1314	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1315	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1316	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1317	Vence a Chucho en el cap. 2 de Hacia el Futuro. (Una vez en cualquier fase)
+1318	Vence a Chucho en. el nivel 1 de una fase legendaria
+1319	Vence a Chucho en. el nivel 1 de una fase legendaria
+1320	Vence a Chucho en. el nivel 1 de una fase legendaria
+1321	Vence a Chucho en. el nivel 1 de una fase legendaria
+1322	Vence a Chucho en. el nivel 1 de una fase legendaria
+1323	Vence a Chucho en. el nivel 1 de una fase legendaria
+1324	Vence a Chucho en. el nivel 1 de una fase legendaria
+1325	Vence a Chucho en. el nivel 1 de una fase legendaria
+1326	Vence a Chucho en. el nivel 1 de una fase legendaria
+1327	Vence a Chucho en. el nivel 1 de una fase legendaria
+1328	Vence a Chucho en. el nivel 1 de una fase legendaria
+1329	Vence a Chucho en. el nivel 1 de una fase legendaria
+1330	Vence a Chucho en. el nivel 1 de una fase legendaria
+1331	Vence a Chucho en. el nivel 1 de una fase legendaria
+1332	Vence a Chucho en. el nivel 1 de una fase legendaria
+1333	Vence a Chucho en. el nivel 1 de una fase legendaria
+1334	Vence a Chucho en Catástrofe Carmesí. (Una vez en cualquier fase)
+1335	Vence a Chucho en Paraíso de Oscuridad. (Una vez en cualquier fase)
+1400	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1401	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1402	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1403	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1404	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1405	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1406	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1407	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1408	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1409	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1410	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1411	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1412	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1413	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1414	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1415	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1416	Vence a Chucho en el cap. 3 de Hacia el Futuro. (Una vez en cualquier fase)
+1417	Vence a Chucho en. el nivel 1 de una fase legendaria
+1418	Vence a Chucho en. el nivel 1 de una fase legendaria
+1419	Vence a Chucho en. el nivel 1 de una fase legendaria
+1420	Vence a Chucho en. el nivel 1 de una fase legendaria
+1421	Vence a Chucho en. el nivel 1 de una fase legendaria
+1422	Vence a Chucho en. el nivel 1 de una fase legendaria
+1423	Vence a Chucho en. el nivel 1 de una fase legendaria
+1424	Vence a Chucho en. el nivel 1 de una fase legendaria
+1425	Vence a Chucho en. el nivel 1 de una fase legendaria
+1426	Vence a Chucho en. el nivel 1 de una fase legendaria
+1427	Vence a Chucho en. el nivel 1 de una fase legendaria
+1428	Vence a Chucho en. el nivel 1 de una fase legendaria
+1429	Vence a Chucho en. el nivel 1 de una fase legendaria
+1430	Vence a Chucho en. el nivel 1 de una fase legendaria
+1431	Vence a Chucho en. el nivel 1 de una fase legendaria
+1432	Vence a Chucho en. el nivel 1 de una fase legendaria
+1433	Vence a Chucho en. el nivel 1 de una fase legendaria
+1434	Vence a Chucho en Inigualable. (Una vez en cualquier fase)
+1435	Vence a Chucho en Ira de los Cielos. (Una vez en cualquier fase)
+1500	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1501	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1502	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1503	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1504	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1505	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1506	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1507	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1508	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1509	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1510	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1511	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1512	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1513	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1514	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1515	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1516	Vence a Chucho en el cap. 1 de Gatos Galácticos. (Una vez en cualquier fase)
+1517	Vence a Serpi en. el nivel 2 de una fase legendaria
+1518	Vence a Serpi en. el nivel 2 de una fase legendaria
+1519	Vence a Serpi en. el nivel 2 de una fase legendaria
+1520	Vence a Serpi en. el nivel 2 de una fase legendaria
+1521	Vence a Serpi en. el nivel 2 de una fase legendaria
+1522	Vence a Serpi en. el nivel 2 de una fase legendaria
+1523	Vence a Serpi en. el nivel 2 de una fase legendaria
+1524	Vence a Serpi en. el nivel 2 de una fase legendaria
+1525	Vence a Serpi en. el nivel 2 de una fase legendaria
+1526	Vence a Serpi en. el nivel 2 de una fase legendaria
+1527	Vence a Serpi en. el nivel 2 de una fase legendaria
+1528	Vence a Serpi en. el nivel 2 de una fase legendaria
+1529	Vence a Serpi en. el nivel 2 de una fase legendaria
+1530	Vence a Serpi en. el nivel 2 de una fase legendaria
+1531	Vence a Serpi en. el nivel 2 de una fase legendaria
+1532	Vence a Serpi en. el nivel 2 de una fase legendaria
+1533	Vence a Serpi en. el nivel 2 de una fase legendaria
+1534	Vence a Chucho en Dulce Ironía. (Una vez en cualquier fase)
+1535	Vence a Chucho en Dimensión Desesperada. (Una vez en cualquier fase)
+1600	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1601	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1602	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1603	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1604	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1605	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1606	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1607	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1608	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1609	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1610	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1611	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1612	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1613	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1614	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1615	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1616	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1617	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1618	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1619	Vence a Chucho en el cap. 2 de Gatos Galácticos. (Una vez en cualquier fase)
+1620	Vence a Chucho en. el nivel 1 de una fase legendaria
+1621	Vence a Chucho en. el nivel 1 de una fase legendaria
+1622	Vence a Chucho en. el nivel 1 de una fase legendaria
+1623	Vence a Chucho en. el nivel 1 de una fase legendaria
+1624	Vence a Chucho en. el nivel 1 de una fase legendaria
+1625	Vence a Chucho en. el nivel 1 de una fase legendaria
+1626	Vence a Chucho en. el nivel 1 de una fase legendaria
+1627	Vence a Chucho en. el nivel 1 de una fase legendaria
+1628	Vence a Chucho en. el nivel 1 de una fase legendaria
+1629	Vence a Chucho en. el nivel 1 de una fase legendaria
+1630	Vence a Chucho en. el nivel 1 de una fase legendaria
+1631	Vence a Chucho en. el nivel 1 de una fase legendaria
+1632	Vence a Chucho en. el nivel 1 de una fase legendaria
+1633	Vence a Chucho en. el nivel 1 de una fase legendaria
+1634	Vence a Chucho en Cielo Rojo Matutino. (Una vez en cualquier fase)
+1635	Vence a Chucho en Muertos Rodantes. (Una vez en cualquier fase)
+1700	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1701	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1702	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1703	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1704	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1705	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1706	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1707	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1708	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1709	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1710	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1711	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1712	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1713	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1714	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1715	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1716	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1717	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1718	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1719	Vence a Chucho en el cap. 3 de Gatos Galácticos. (Una vez en cualquier fase)
+1720	Vence a Chucho en. el nivel 1 de una fase legendaria
+1721	Vence a Chucho en. el nivel 1 de una fase legendaria
+1722	Vence a Chucho en. el nivel 1 de una fase legendaria
+1723	Vence a Chucho en. el nivel 1 de una fase legendaria
+1724	Vence a Chucho en. el nivel 1 de una fase legendaria
+1725	Vence a Chucho en. el nivel 1 de una fase legendaria
+1726	Vence a Chucho en. el nivel 1 de una fase legendaria
+1727	Vence a Chucho en. el nivel 1 de una fase legendaria
+1728	Vence a Chucho en. el nivel 1 de una fase legendaria
+1729	Vence a Chucho en. el nivel 1 de una fase legendaria
+1730	Vence a Chucho en. el nivel 1 de una fase legendaria
+1731	Vence a Chucho en. el nivel 1 de una fase legendaria
+1732	Vence a Chucho en. el nivel 1 de una fase legendaria
+1733	Vence a Chucho en. el nivel 1 de una fase legendaria
+1734	Vence a Chucho en. el nivel 1 de una fase legendaria
+1735	Vence a Chucho en La Segunda Dimensión. (Una vez en cualquier fase)
+1800	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1801	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1802	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1803	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1804	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1805	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1806	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1807	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1808	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1809	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1810	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1811	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1812	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1813	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1814	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1815	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1816	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1817	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1818	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1819	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1820	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1821	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1822	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1823	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1824	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1825	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1826	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1827	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1828	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1829	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1830	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1831	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1832	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1833	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1834	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1835	Vence a Pandilla en. el nivel 3 de una fase legendaria
+1900	Vence a Hipo en. el nivel 4 de una fase legendaria
+1901	Vence a Hipo en. el nivel 4 de una fase legendaria
+1902	Vence a Hipo en. el nivel 4 de una fase legendaria
+1903	Vence a Hipo en. el nivel 4 de una fase legendaria
+1904	Vence a Hipo en. el nivel 4 de una fase legendaria
+1905	Vence a Hipo en. el nivel 4 de una fase legendaria
+1906	Vence a Hipo en. el nivel 4 de una fase legendaria
+1907	Vence a Hipo en. el nivel 4 de una fase legendaria
+1908	Vence a Hipo en. el nivel 4 de una fase legendaria
+1909	Vence a Hipo en. el nivel 4 de una fase legendaria
+1910	Vence a Hipo en. el nivel 4 de una fase legendaria
+1911	Vence a Hipo en. el nivel 4 de una fase legendaria
+1912	Vence a Hipo en. el nivel 4 de una fase legendaria
+1913	Vence a Hipo en. el nivel 4 de una fase legendaria
+1914	Vence a Hipo en. el nivel 4 de una fase legendaria
+1915	Vence a Hipo en. el nivel 4 de una fase legendaria
+1916	Vence a Hipo en. el nivel 4 de una fase legendaria
+1917	Vence a Hipo en. el nivel 4 de una fase legendaria
+1918	Vence a Hipo en. el nivel 4 de una fase legendaria
+1919	Vence a Hipo en. el nivel 4 de una fase legendaria
+1920	Vence a Hipo en. el nivel 4 de una fase legendaria
+1921	Vence a Hipo en. el nivel 4 de una fase legendaria
+1922	Vence a Hipo en. el nivel 4 de una fase legendaria
+1923	Vence a Hipo en. el nivel 4 de una fase legendaria
+1924	Vence a Hipo en. el nivel 4 de una fase legendaria
+1925	Vence a Hipo en. el nivel 4 de una fase legendaria
+1926	Vence a Hipo en. el nivel 4 de una fase legendaria
+1927	Vence a Hipo en. el nivel 4 de una fase legendaria
+1928	Vence a Hipo en. el nivel 4 de una fase legendaria
+1929	Vence a Hipo en. el nivel 4 de una fase legendaria
+1930	Vence a Hipo en. el nivel 4 de una fase legendaria
+1931	Vence a Hipo en. el nivel 4 de una fase legendaria
+1932	Vence a Hipo en. el nivel 4 de una fase legendaria
+1933	Vence a Hipo en. el nivel 4 de una fase legendaria
+1934	Vence a Hipo en. el nivel 4 de una fase legendaria
+1935	Vence a Hipo en. el nivel 4 de una fase legendaria
+2000	Vence a Hipo en. el nivel 4 de una fase legendaria
+2001	Vence a Hipo en. el nivel 4 de una fase legendaria
+2002	Vence a Hipo en. el nivel 4 de una fase legendaria
+2003	Vence a Hipo en. el nivel 4 de una fase legendaria
+2004	Vence a Hipo en. el nivel 4 de una fase legendaria
+2005	Vence a Hipo en. el nivel 4 de una fase legendaria
+2006	Vence a Hipo en. el nivel 4 de una fase legendaria
+2007	Vence a Hipo en. el nivel 4 de una fase legendaria
+2008	Vence a Hipo en. el nivel 4 de una fase legendaria
+2009	Vence a Hipo en. el nivel 4 de una fase legendaria
+2010	Vence a Hipo en. el nivel 4 de una fase legendaria
+2011	Vence a Hipo en. el nivel 4 de una fase legendaria
+2012	Vence a Hipo en. el nivel 4 de una fase legendaria
+2013	Vence a Hipo en. el nivel 4 de una fase legendaria
+2014	Vence a Hipo en. el nivel 4 de una fase legendaria
+2015	Vence a Hipo en. el nivel 4 de una fase legendaria
+2016	Vence a Hipo en. el nivel 4 de una fase legendaria
+2017	Vence a Hipo en. el nivel 4 de una fase legendaria
+2018	Vence a Hipo en. el nivel 4 de una fase legendaria
+2019	Vence a Hipo en. el nivel 4 de una fase legendaria
+2020	Vence a Hipo en. el nivel 4 de una fase legendaria
+2021	Vence a Hipo en. el nivel 4 de una fase legendaria
+2022	Vence a Hipo en. el nivel 4 de una fase legendaria
+2023	Vence a Hipo en. el nivel 4 de una fase legendaria
+2024	Vence a Hipo en. el nivel 4 de una fase legendaria
+2025	Vence a Hipo en. el nivel 4 de una fase legendaria
+2026	Vence a Hipo en. el nivel 4 de una fase legendaria
+2027	Vence a Hipo en. el nivel 4 de una fase legendaria
+2028	Vence a Hipo en. el nivel 4 de una fase legendaria
+2029	Vence a Hipo en. el nivel 4 de una fase legendaria
+2030	Vence a Hipo en. el nivel 4 de una fase legendaria
+2031	Vence a Hipo en. el nivel 4 de una fase legendaria
+2032	Vence a Hipo en. el nivel 4 de una fase legendaria
+2033	Vence a Hipo en. el nivel 4 de una fase legendaria
+2034	Vence a Hipo en. el nivel 4 de una fase legendaria
+2035	Vence a Hipo en. el nivel 4 de una fase legendaria
+9205	Upgrade Akuma Giraffe to Level 10! (You must evolve the Cat before the Street Fighter V collab ends!)
+9206	Upgrade Ryu Cat to Level 10! (You must evolve the Cat before the Street Fighter V collab ends!)
+9207	Upgrade Chun-Li Cat to Level 10! (You must evolve the Cat before the Street Fighter V collab ends!)
+9208	Clear "7 Years of Fun!!" stages 9 times!
+9209	Score 7777 pts in "Lucky Number 7"! Find this Ranking Stage at the Catclaw Dojo!
+9211	Misiones de Invasión del Festival Exclusivo. ¡Supera la fase Impacto Azul!
+9212	Supera las 0 Misiones de Invasión del Festival Exclusivo
+9213	Upgrade Miku Cat to Level 10! (You must evolve the Cat before the Hatsune Miku collab ends!)
+9214	Clear "MIKU EXPO" 9 times!
+9215	Clear "MIKU EXPO" 9 times!
+9216	Clear "MIKU EXPO" 9 times!
+9221	Complete 17 Gamatoto Expeditions during
+9222	Supera el piso 50 de la Torre Celestial. (Estos premios solo se pueden recoger una vez)
+9223	Upgrade Heavenly Jack to Level 10! (You must evolve the Cat before the Bikkuriman collab ends!)
+9225	Gana 8888 puntos en 8 No Son Suficientes. (Es una fase de clasificación en el Dojo Afilagarras)
+9226	Upgrade Ranma Cat (M) to Level 10! (You must evolve the Cat before the Ranma 1/2 collab ends!)
+9227	Upgrade Panda Cat to Level 10! (You must evolve the Cat before the Ranma 1/2 collab ends!)
+9228	Clear "The Cursed Springs" 9 times!
+9229	Clear "The Cursed Springs" 9 times!
+9230	Clear "The Cursed Springs" 9 times!
+30	Reúne los tesoros superiores en Imperio de los Gatos cap. 1
+31	Reúne los tesoros superiores en Imperio de los Gatos cap. 2
+32	Reúne los tesoros superiores en Imperio de los Gatos cap. 3
+33	Reúne los tesoros superiores en Hacia el Futuro cap. 1
+34	Reúne los tesoros superiores en Hacia el Futuro cap. 2
+35	Reúne los tesoros superiores en Hacia el Futuro cap. 3
+36	Reúne los tesoros superiores en Gatos Galácticos cap. 1
+37	Reúne los tesoros superiores en Gatos Galácticos cap. 2
+38	Reúne los tesoros superiores en Gatos Galácticos cap. 3
+9231	¡Misiones de Invasión del Festival Exclusivo! Supera la fase. Río Estigia 1 veces con 8 gatos normales o más
+9232	¡Misiones de Invasión del Festival Exclusivo! Supera la fase. Difunto Debutante 1 veces con 8 gatos especiales o más
+9233	¡Misiones de Invasión del Festival Exclusivo! Supera la fase. Venganza del Rey Guau 1 veces con 9 gatos normales
+9234	¡Misiones de Invasión del Festival Exclusivo! Supera la fase. Impacto Azul 1 veces solo con segundas formas
+9235	¡Misiones de Invasión del Festival Exclusivo! Supera la fase. Sueño Profundo 1 veces solo con formas sin evolucionar
+9236	Supera las 0 Misiones de Invasión del Festival Exclusivo
+9237	【Invasión】¡Supera la fase El Ángel y el Demonio! También debes superar la fase de continuación relacionada
+9238	【Invasión】¡Supera la fase La Reina y el Muerto! También debes superar la fase de continuación relacionada
+9239	【Invasión】¡Supera la fase El Rey y la Doncella! También debes superar la fase de continuación relacionada
+9240	Deberes de Verano ①: Elige un tema del diario. Supera 9 fases de Gatos Estivales
+9241	Deberes de Verano ②: Elige un segundo tema del diario. Supera 9 fases de Gatos Estivales
+9242	Deberes de Verano ①: Busca un buen tema para la redacción.  Supera 9 fases de Gatos Estivales
+9243	Deberes de Verano ④: Escribe tu diario. Supera Escondite Ruinoso 9 veces
+9244	Deberes de Verano ⑤: Reescribe tu diario con mejor estilo. Supera Escondite Estiloso 9 veces
+9245	Deberes de Verano ⑥: Reescribe tu diario y hazlo perfecto. Supera Escondite Perfecto 9 veces
+9246	Subir Nota ①: Captura especímenes de insectos. Mejora al Gato Kabuto al nivel 10
+9247	Subir Nota ②: Captura especímenes de insectos. Mejora al Gato Kuwagata al nivel 10
+9248	Subir Nota ③: Observa especímenes de insectos. Mejora al Gato Kabuto al nivel 20
+9249	Subir Nota ④: Observa especímenes de insectos. Mejora al Gato Kuwagata al nivel 20
+9364	Subir Más Nota ①: Realiza una observación exhaustiva. Supera la fase 1 de Agenda Veraniega con el Gato Kabuto
+9251	Subir Más Nota ②: Realiza una observación exhaustiva. Supera la fase 2 de Agenda Veraniega con el Gato Kuwagata
+9252	Subir Más Nota ③: Realiza una observación exhaustiva. Supera la fase 4 de Agenda Veraniega con el Gato Kabuto
+9253	Subir Más Nota ④: Realiza una observación exhaustiva. Supera la fase 6 de Agenda Veraniega con el Gato Kuwagata
+9254	Escuela de Verano ①: Estudia literatura. Supera 9 fases de Lección Veraniega
+9255	Escuela de Verano ②: Estudia álgebra. Supera 9 fases de Lección Veraniega
+9256	Escuela de Verano ③: Estudia conocimiento del medio. Supera 9 fases de Lección Veraniega
+9257	Escuela de Verano ④: Participa en las asambleas. Supera 9 fases de Lección Veraniega
+9258	Matrícula de Honor ①: Investiga la vida marina. Supera la fase 1 de Survive! Mola Mola! con Gato Kabuto
+9259	Matrícula de Honor ②: Investiga la vida marina. Supera la fase 3 de Survive! Mola Mola! con Gato Kuwagata
+9260	Matrícula de Honor ③: Investiga más el mar. Supera 300. Million Dead Molas 1 veces con Gato Kabuto
+9261	Matrícula de Honor ④: Investiga más el mar. Supera 300. Million Dead Molas 1 veces con Gato Kuwagata
+39	Investigación de la Emperatriz 1: Estudia los libros. heréticos. Supera Confluencia Arcana y Gato Maligno
+40	Investigación de la Emperatriz 2: Estudia a los agentes. akus. Supera Sirviente de la Oscuridad y Tanque Maligno
+9262	Clear "River City Ball-Rolling" 9 times!
+9263	Clear "River City Ball-Rolling" 9 times!
+9264	Clear "River City Challenge Course" 9 times!
+9265	Clear stages from "River City Challenge Course"
+9266	Defeat Chucho at River City Three-Leg Race. (Once at any River City Three-Leg Race stage)
+9267	Defeat Chucho at River City Three-Leg Race. (Once at any River City Three-Leg Race stage)
+9268	Clear all 0 River City Cat Clash Limited  Missions!
+9269	Witch Culling Mission 1: Defeat Rose Garden Witch. Appears in the stage Witch's Labyrinth: The Rose Garden Witch
+9270	Witch Culling Mission 2: Defeat Dessert Witch. Appears in the stage Witch's Labyrinth: Dessert Witch
+9271	Witch Culling Mission 3: Defeat Box Witch. Appears in the stage Witch's Labyrinth - Box Witch
+9272	Witch Culling Mission 5: Defeat Nutcracker Witch. Appears in the stage Nutcracker Witch
+9273	Defeat all of the Witches. Clear Witch Culling Missions 1-5
+9274	Upgrade Li'l Madoka to Level 10! (You must evolve the hero before the Puella Magi Madoka Magica collab ends!)
+9275	Upgrade Kyubey Cat to Level 10! (You must evolve the hero before the Puella Magi Madoka Magica collab ends!)
+41	Investigación de la Emperatriz 3: Coste de brujería. Supera Parque Demoníaco y Liberación de los Gatos
+42	Completa todas las 0 fases de Investigación de la Emperatriz. (Completadas)
+43	Llamada de la Emperatriz: ¡Libera a los gatos corruptos! Supera Liberación de los Gatos. (Las puertas se abren...)
+44	Supera Los reinos de akus. Completa todas las fases de Los reinos de akus
+45	Supera Los reinos de akus. Completa todas las fases de Los reinos de akus
+9283	【C1. ¡¿Qué hay en la caja?!】¡Adivina qué se oculta en la bola! Pista: una miaudalla llena de agradecimientos
+9284	【C1. ¡¿Qué hay en la caja?!】¡Adivina qué se oculta en la bola! Pista: es el gato de la buena suerte
+9285	【C1. ¡¿Qué hay en la caja?!】¡Adivina qué se oculta en la bola! Pista: un ninja que va por el espacio a toda leche
+9288	【C2. Geografía】¿Qué país es famoso por el sushi?. ¡Responde superando esta fase en Imperio de los Gatos!
+9289	【C2. Geografía】¿Cuál es el desierto más famoso de África?. ¡Responde superando esta fase en Imperio de los Gatos!
+9290	【C2. Geografía】¿En qué país nació el pintor Salvador Dalí?. ¡Responde superando esta fase en Imperio de los Gatos!
+9291	【C2. Geografía】¿Dónde está el triángulo que atrapa aviones?. ¡Responde superando esta fase en Imperio de los Gatos!
+9292	【C2. Geografía】¿Cuál es el estado más grande de EE. UU.?. ¡Responde superando esta fase en Imperio de los Gatos!
+9293	【C2. Geografía】¡Vete por el mundo
+9294	【C3. Base gatuna】. ¡Responde a todas las preguntas del gato!
+9295	【C4. Matanza】¿Qué enemigo va siempre a selectividad?. ¡Derrótale en Imperio de los Gatos para responder!
+9296	【C4. Matanza】¿Qué enemigo va al cole?. ¡Derrótale en Imperio de los Gatos para responder!
+9297	【C4. Matanza】¿Qué enemigo colecciona revistas?. ¡Derrótale en Imperio de los Gatos para responder!
+9298	【C4. Matanza】¿Qué enemigo trabaja de bombero?. ¡Derrótale en Imperio de los Gatos para responder!
+9299	【C4. Matanza】¿Qué enemigo encontró una cabeza gigante?. ¡Derrótale en Imperio de los Gatos para responder!
+9300	【C4. Matanza】¡Vete por el mundo
+9301	【C5. Tiempo y fortuna】¡Supera la fase, da suerte a un aliado
+9302	【C5. Tiempo y fortuna】¡Supera la fase, da suerte a un aliado
+9303	【C5. Tiempo y fortuna】¡Supera la fase, da suerte a un aliado
+46	Misión del 9.º aniversario. ¡Supera el Imperio de los Gatos (cap. 1) durante el evento!
+9305	Supera el piso 30 de la Torre Infernal. (Estos premios solo se pueden recoger una vez)
+47	Informe de Emperatriz: Investigación de Aku. Supera 9 veces. las fases 1-5 de cada Informe de Emperatriz
+9321	【Invasión】Supera la fase. Ascendente Clionel 1 veces con 7 gatos especiales o más
+9322	【Invasión】Supera la fase Coronación de Reina. 1 veces con 7 normales o más
+9323	【Invasión】Supera la fase ¡El Muerto y el Hinchado! Completa también la siguiente fase
+9324	【Invasión】Supera la fase ¡La Reina y la Doncella! Completa también la siguiente fase
+9325	【Invasión】Supera la fase ¡El Rey y el Ángel! Completa también la siguiente fase
+48	Supera 9 fases de Matanza de Mastodontes por primera vez:
+49	Supera 9 fases de Matanza de Mastodontes por primera vez:
+9326	Misiones del Festival de Ciclón. Supera la fase Catástrofe Carmesí
+9327	Misiones del Festival de Ciclón. Supera la fase Paraíso de Oscuridad
+9328	Misiones del Festival de Ciclón. Supera la fase Inigualable
+9329	Misiones del Festival de Ciclón. Supera la fase Dulce Ironía
+9330	Misiones del Festival de Ciclón. Supera la fase Ira de los Cielos
+9331	Misiones del Festival de Ciclón. Supera la fase Dimensión Desesperada
+9332	Misiones del Festival de Ciclón. Supera la fase Cielo Rojo Matutino
+9333	Misiones del Festival de Ciclón. Supera la fase Muertos Rodantes
+9334	Misiones del Festival de Ciclón. Supera la fase La Segunda Dimensión
+9335	Misiones del Festival de Ciclón. Supera la fase Tifón Nemo
+9336	Misiones del Festival de Ciclón. Supera Catástrofe Carmesí 1 veces con 8 normales o más
+9337	Misiones del Festival de Ciclón. Supera Paraíso de Oscuridad 1 veces con 8 normales o más
+9338	Misiones del Festival de Ciclón. Supera Inigualable 1 veces con 8 raro o más
+9339	Misiones del Festival de Ciclón. Supera Dulce Ironía 1 veces con 8 raro o más
+9340	Misiones del Festival de Ciclón. Supera Ira de los Cielos 1 veces con 8 raro o más
+9341	Misiones del Festival de Ciclón. Supera Dimensión Desesperada 1 veces con 8 normales o más
+9342	Misiones del Festival de Ciclón. Supera Cielo Rojo Matutino 1 veces con primeras formas
+9343	Misiones del Festival de Ciclón. Supera Muertos Rodantes 1 veces con primeras formas
+9344	Misiones del Festival de Ciclón. Supera La Segunda Dimensión 1 veces con primeras formas
+9345	Supera 1 fase/s de Ciudad Arrasada con Yuki en tu equipo
+9346	Supera 1 fase/s de Ciudad Arrasada con Takuya y Yuki
+9347	Supera 1 fase/s de Ciudad Arrasada con Yuki pelirroja
+9348	Supera 1 fase/s de Ciudad Arrasada con Kano y Souma
+9349	Clear 9  Shoumetsu Toshi collab stages
+9350	Clear 9  Shoumetsu Toshi collab stages
+9351	Clear 9  Shoumetsu Toshi collab stages
+9352	Complete 17 Gamatoto expeditions! Send Gamatoto to any
+50	Supera 9 fases de Matanza de Mastodontes por primera vez:
+51	Supera 9 fases de Matanza de Mastodontes por primera vez:
+9353	Gana un Huevo Antiguo N201. en las bolas de Novia del Diablo de Junio
+9354	Supera cualquier fase de #01 La Capilla Fantasma 9 veces:
+9355	Supera cualquier fase de #01 La Capilla Fantasma 9 veces:
+9356	Supera cualquier fase de #01 La Capilla Fantasma 9 veces:
+9357	Supera cualquier fase de #01 La Capilla Fantasma 9 veces:
+9358	Supera cualquier fase de #03 ¿En Qué Cae el 13? 9 veces:
+9359	Supera cualquier fase de #03 ¿En Qué Cae el 13? 9 veces:
+9360	Supera la fase de continuación
+9361	Supera cualquier fase de #04 Aldea de Alaridos 9 veces:
+9362	Supera cualquier fase de #04 Aldea de Alaridos 9 veces:
+9363	Supera cualquier fase de #04 Aldea de Alaridos 9 veces:
+9250	Deberes de Verano (Parte 1) ①: Estudia los insectos. ¡Consigue 1 Gato Kabuto en el evento!
+9365	Deberes de Verano (Parte 1) ②: Estudia los insectos. ¡Consigue 1 Gato Kuwagata en el evento!
+9366	Deberes de Verano (Parte 1) ③: Estudia los insectos. ¡Consigue 1 Huevo Antiguo: N202 en el evento!
+9367	Deberes de Verano (Parte 1) ④: Estudia los insectos. ¡Consigue 3 Gatos Kabuto en el evento!
+9368	Deberes de Verano (Parte 1) ⑤: Estudia los insectos. ¡Consigue 3 Gatos Kuwagata en el evento!
+9369	Deberes de Verano (Parte 1) ⑥: Estudia los insectos. ¡Consigue 3 Huevos Antiguos: N202 en el evento!
+9370	Deberes de Verano (Parte 1) ⑦: Estudia los insectos. ¡Consigue 5 Gatos Kabuto en el evento!
+9371	Deberes de Verano (Parte 1) ⑧: Estudia los insectos. ¡Consigue 5 Gatos Kuwagata en el evento!
+9372	Deberes de Verano (Parte 1) ⑨: Estudia los insectos. ¡Consigue 5 Huevos Antiguos: N202 en el evento!
+9373	Clear 9  "Ranma 1/2" collab stages
+9374	Clear 9  "Ranma 1/2" collab stages
+9375	Clear 9  "Ranma 1/2" collab stages
+52	Supera 9 fases de Matanza de Mastodontes por primera vez:
+53	Supera 9 fases de Matanza de Mastodontes por primera vez:
+9376	Clear stages from "Merc Storia Collab"
+9377	Clear stages from "Merc Storia Collab"
+9378	Clear stages from "Merc Storia Collab"
+9379	Supera el piso 40 de la Torre Infernal. (Estos premios solo se pueden recoger una vez)
+54	Supera «¡Bonanza de XP!». Completa todas las fases de ¡Bonanza de XP!
+9380	Clear stages from "River City Cat Clash"
+9381	Clear stages from "River City Cat Clash"
+9382	Clear stages from "River City Cat Clash"
+9383	Clear stages from "River City Three-Leg Race"
+9384	Clear stages from "River City Three-Leg Race"
+9385	Clear stages from "Street Fighter V CE Collab"
+9386	Clear stages from "Street Fighter V CE Collab"
+9387	Clear stages from "Street Fighter V CE Collab"
+9388	【Pt. 1: Recordando Diez Años】1. ¡Obtén una unidad de aniv. en bolas de evento! Pista: Miaudalla del 5.º aniversario
+9389	【Pt. 1: Recordando Diez Años】2. ¡Obtén una unidad de aniv. en bolas de evento! Pista: Gato que da suerte en eventos
+9391	【Pt. 1: Recordando Diez Años】4. ¡Obtén una unidad de aniv. en bolas de evento! Pista: Recompensa durante el 9.º aniv
+9392	【Pt. 1: Recordando Diez Años】5. ¡Obtén una unidad de aniv. en bolas de evento! Pista: Gato pensador del 10.º aniv
+9394	【Pt. 1: Recordando Diez Años】¡Supera las fases colab. de. Recordando Diez Años 9 veces! Supera cualq. fase
+9395	【Pt. 1: Recordando Diez Años】¡Supera las fases colab. de. Recordando Diez Años 9 veces! Supera cualq. fase
+9396	【Pt. 1: Recordando Diez Años】¡Supera las fases colab. de. Recordando Diez Años 9 veces! Supera cualq. fase
+9397	【Pt. 2: Maniobras enemigas】¡Supera las fases de. Maniobras Enemigas 9 veces! Supera cualq. fase
+9398	【Pt. 3: Charlas Gatunas】¡Habla con el gato de la base gatuna. durante 4 días y conoce la historia de The Battle Cats!
+9399	【Pt. 4: Caza gatuna】1. ¡Encuentra el gato escondido en el. Imperio! Pista: capital con el nombre más largo del mundo
+9400	【Pt. 4: Caza gatuna】2. ¡Encuentra el gato escondido en el. Imperio! Pista: gran desierto donde no hay nubes
+9401	【Pt. 4: Caza gatuna】3. ¡Encuentra el gato escondido en el. Imperio! Pista: su símbolo es una hoja de arce
+9402	【Pt. 4: Caza gatuna】4. ¡Encuentra el gato escondido en el. Imperio! Pista: aquí se dirigió el aterrizaje en la luna
+9403	【Pt. 4: Caza gatuna】5. ¡Encuentra el gato escondido en el. Imperio! Pista: esperanza de vida más alta en EE. UU
+9404	【Pt. 4: Caza gatuna】¡Viaja por el mundo y encuentra. todos los gatos escondidos!
+9405	【Pt. 5 Desfile Musical】¡Supera las fases colab. de . Desfile Musical 9 veces! Supera cualq. fase
+55	Misión del 10.º aniversario. Supera Imperio de los Gatos (cap. 1) durante el evento
+9407	¡Supera las fases de Año Nuevo Lunar 9 veces!
+9408	¡Supera las fases de Año Nuevo Lunar 9 veces!
+9409	¡Supera las fases de Año Nuevo Lunar 9 veces!
+9410	¡Supera las fases de Año Nuevo Lunar 9 veces!
+9411	¡Supera las fases de Año Nuevo Lunar 9 veces!
+56	Supera 9 fases de Matanza de Mastodontes por primera vez:
+9412	Clear 9 Fate/stay night [HF] collab stages
+9413	Clear 9 Fate/stay night [HF] collab stages
+9414	Clear 9 Fate/stay night [HF] collab stages
+9415	(Completa 1 expedición a cualquier zona)
+9416	(Completa 5 expediciones a cualquier zona)
+9417	【80 M DCS】Completa Regalo feliz de
+9418	【80 M DCS】Completa Regalo feliz de
+9419	【80 M DCS】Completa Regalo feliz de
+9420	【80 M DCS】Completa fases del «Evento de las Estrellas
+9421	【80 M DCS】Completa fases del «Evento de las Estrellas
+9422	【80 M DCS】Completa fases del «Evento de las Estrellas
+9423	【80 M DCS】¡Completa todas las misiones de evento. para ganar 1 fragmento de platino!
+57	Supera 9 fases de Matanza de Mastodontes por primera vez:
+58	Supera 9 fases de Matanza de Mastodontes por primera vez:
+59	Para completar esta misión, supera el nivel 2. de todas las Etapas de Leyenda Inquietante
+9424	Misiones del Festival de Ciclón. ¡Supera la fase El Gran Diablo!
+9425	¡Gana un Huevo Antiguo N203 en . las bolas de Novia del Diablo de Junio!
+9426	Consigue más de 8200 puntos en . la fase 1 de #02 Una boda de muerte
+9427	Consigue más de 7200 puntos en . la fase 2 de #02 Una boda de muerte
+9428	Consigue más de 7100 puntos en . la fase 3 de #02 Una boda de muerte
+9429	Consigue más de 6200 puntos en . la fase 4 de #02 Una boda de muerte
+9430	Consigue más de 4500 puntos en . la fase 5 de #02 Una boda de muerte
+9431	¡Consigue una Piedra M. tras superar la puntuación. indicada en #02 Una boda de muerte en las fases 1-5!
+9432	【C1. ¡¿Qué hay en la caja?!】¡Hazte con todas
+9433	【Ultraconcurso】Supera las misiones C1-5 y pide tu premio. con valor de 1 millón de dólares (o eso dice el gatomático)
+60	Supera 9 fases de Matanza de Mastodontes por primera vez
+61	Supera 9 fases de Matanza de Mastodontes por primera vez
+9434	Clear Princess Punt Sweets collab stages 9 times!
+9435	Clear Princess Punt Sweets collab stages 9 times!
+9436	Clear Princess Punt Sweets collab stages 9 times!
+62	Para completar esta misión, supera el nivel 3. de todas las Etapas de Leyenda Inquietante
+63	¡Supera las 9 fases de Matanza de Mastodontes! (Comprueba
+9440	Clear Hatsune Miku collab stages 9 times!
+9441	Clear Hatsune Miku collab stages 9 times!
+9442	Clear Hatsune Miku collab stages 9 times!
+9443	【P1: Gatos Aventureros】① ¡Bolas de evento con un aventurero! Pista: tu aventura arranca con este gato especial
+9444	【P1: Gatos Aventureros】② ¡Bolas de evento con un aventurero! Pista: gato del 10.º aniv. que medita en una roca
+9445	【P1: Gatos Aventureros】③ ¡Bolas de evento con un aventurero! Pista: gato del 9.º aniv. que simboliza un pastón
+9446	【P1: Gatos Aventureros】④ ¡Bolas de evento con un aventurero! Pista: gato que representa la buena suerte
+9447	【P1: Gatos Aventureros】⑤ ¡Bolas de evento con un aventurero! Pista: gato del 5.º aniv. que sirve como medalla
+9449	【Parte 1: Gatos Aventureros】Supera cualquier
+9450	【Parte 1: Gatos Aventureros】Supera cualquier
+9451	【Parte 1: Gatos Aventureros】Supera cualquier
+9452	【Parte 2: Duelo en las Cuevas】Supera cualquier
+9455	【Parte 3: Boda minina】Habla con el gato. de la base gatuna durante 3 días
+9456	【Parte 4: Pedido del pueblo】① ¡Supera cierta fase del Imp. de los Gatos (cap. 1) y trae algún Balut de Manila!
+9457	【Parte 4: Pedido del pueblo】② ¡Supera cierta fase del Imp. de los Gatos (cap. 1) y haz una foto del Taj Mahal!
+9458	【Parte 4: Pedido del pueblo】③ ¡Supera cierta fase del Imp. de los Gatos (cap. 1) y escapa de los toros en Pamplona!
+9459	【Parte 4: Pedido del pueblo】④ ¡Supera cierta fase del Imp. de los Gatos (cap. 1) y disfruta del reggae en la playa!
+9460	【Parte 4: Pedido del pueblo】⑤ ¡Supera cierta fase del Imp. de los Gatos (cap. 1) y admira las pirámides aztecas!
+9461	【Parte 4: Pedido del pueblo】
+9462	【Parte 5: Batalla en el Castillo del Chucho】. Supera la fase ¡Aparece el Rey Mímico!
+9465	【11.º aniversario】¡Supera todas las misiones Parte 1-. Última parte y llévate un tique de platino!
+64	Misión del 11.º aniversario. Supera Imperio de los Gatos (cap. 1) durante el evento
+9466	【¡Batalla final del Rey Chucho!】. Supera esta fase y revela el secreto del 11.º aniversario
+9467	Supera el piso 50 de la Torre Celestial. (Este premio solo se puede recoger una vez)
+9468	Clear stages from "Metal Slug Collab"
+9469	Clear stages from "Metal Slug Collab"
+9470	Clear stages from "Metal Slug Collab"
+9471	【90 M DCS】¡Completa todas las misiones de evento. para ganar 1 fragmento de platino!
+9472	【90 M DCS】 Envía a Gamatoto a 17 excursiones exitosas. (Completa 1 expedición a cualquier zona)
+9473	【90 M DCS】 Envía a Gamatoto a 17 excursiones exitosas. (Completa 3 expediciones a cualquier zona)
+9474	【90 M DCS】 Envía a Gamatoto a 17 excursiones exitosas. (Completa 5 expediciones a cualquier zona)
+9475	【90 M DCS】Completa Regalo feliz
+9476	【90 M DCS】Completa Regalo feliz
+9477	【90 M DCS】Completa Regalo feliz
+9478	【90 M DCS】Supera 9 fases de The Battle Cats:
+9479	【90 M DCS】Supera 9 fases de The Battle Cats:
+9483	Clear Tower of Saviors collab stages 9 times!
+9484	Clear Tower of Saviors collab stages 9 times!
+9485	Clear Tower of Saviors collab stages 9 times!
+9486	【88,88 M DCS】. ¡Supera la fase "Paquete Misterioso"!
+9487	【88,88 M DCS】Mejora al Gato Basura al nivel 10 . durante el evento de 88,88 M DCS
+9488	【88,88 M DCS】Mejora al Gato Basura al nivel 20 . durante el evento de 88,88 M DCS
+9489	Clear 9 Rurouni Kenshin collab stages
+9490	Clear 9 Rurouni Kenshin collab stages
+9491	Clear 9 Rurouni Kenshin collab stages
+9492	¡Gana 1 Huevo Antiguo: N205 en . las bolas de Novia del Diablo de Junio!
+9493	[Coliseo de Otro Mundo] Misión de evento exclusivo. Supera Coliseo De Otro Mundo Nivel 1 Fase 3
+9494	[Coliseo de Otro Mundo] Misión de evento exclusivo. Supera Coliseo De Otro Mundo Nivel 1 Fase 5
+9495	[Coliseo de Otro Mundo] Misión de evento exclusivo. Supera Coliseo De Otro Mundo Nivel 2 Fase 3
+9496	[Coliseo de Otro Mundo] Misión de evento exclusivo. Supera Coliseo De Otro Mundo Nivel 2 Fase 5
+9497	[Pt. 1: Recordando Diez Años] ¡Obtén 0 unidades. de aniversario en bolas de evento!
+9498	[Desfile en Honor a los Diez Años] Supera todas las misiones. de las partes 1 a 5 y recoge un tique legendario
+9499	[Fase de Invasión] Misión de evento exclusivo. Supera Tribunal de Tormento
+9500	[Fase de Invasión] Misión de evento exclusivo. Supera Primer Recado
+9501	[Fase de Invasión] Misión de evento exclusivo. Supera Gloria de Guauguau
+9502	[Fase de Invasión] Misión de evento exclusivo. Supera Clionel Zombi Ataca
+9503	[Fase de Invasión] Misión de evento exclusivo. Supera Vieja Reina
+9504	[Fase de Invasión] Misión de evento exclusivo. Supera Paraíso de Papuu
+9505	[Fase de Invasión] Supera La Tortuga y el Bebé. Para completarla, supera todas las fases y las fases EX
+9506	[Fase de Invasión] Supera El Príncipe y el Renacido. Para completarla, supera todas las fases y las fases EX
+9507	[Fase de Invasión] Supera La Reina y el Santo. Para completarla, supera todas las fases y las fases EX
+9508	Deberes de Verano ④: Acaba una redacción de diez. Supera 9 fases de Gatos Estivales
+9509	Deberes de Verano (Parte 2) ①: Observa los insectos. Supera NDV, de Rumbo a Casa (fase 1) con Gato Kabuto
+9510	Deberes de Verano (Parte 2) ①: Observa los insectos. Supera NDV, de Rumbo a Casa (fase 2) con Gato Kuwagata
+9511	Deberes de Verano (Parte 2) ①: Observa los insectos. Supera NDV, de Rumbo a Casa (fase 3) con Huevo Antiguo N202
+9518	[Huida del Náufrago Pt. 1] ①: Supervivencia Salvaje
+9519	[Huida del Náufrago Pt. 1] ②: Supervivencia Salvaje
+9520	[Huida del Náufrago Pt. 1] ③: Supervivencia Salvaje
+9521	Evasión en la isla ① Añade a Calamar a tu ejército. y supera la fase 1 de Survive! Mola Mola!
+9522	Evasión en la isla ② Añade a Sardina a tu ejército. y supera la fase 3 de 300 Million Dead Molas
+9523	Evasión en la isla ③ Añade Huevo Antiguo N206 a tu ejército
+9524	[Huida del Náufrago Pt. 2] ①: Batalla Contra la Naturaleza. ¡Supera la fase 1 de Supervivencia en la Jungla!
+9525	[Huida del Náufrago Pt. 2] ②: Batalla Contra la Naturaleza. ¡Supera la fase 4 de Supervivencia en la Jungla!
+65	[Vincular cuenta]. Ve a Ajustes→Cambiar cuenta/dispositivo para vincularla
+9526	¡Supera las fases del «Evento de Halloween». 9 veces! (Cualquier fase de evento)
+9527	¡Supera las fases del «Evento de Halloween». 9 veces! (Cualquier fase de evento)
+9528	¡Supera las fases del «Evento de Halloween». 9 veces! (Cualquier fase de evento)
+9529	Consigue un objeto destacado de las. cápsulas del Evento de la Fiesta Halloween
+9530	¡Supera todas las misiones del Evento de Halloween. y gana 1 tique raro!
+9531	[Campaña para principiantes] Supera 9 fases del Imperio. de los Gatos (cualquier fase)
+9532	[Campaña para principiantes] Supera 9 fases del Imperio. de los Gatos (cualquier fase)
+9533	[Campaña para principiantes] Supera 9 fases del Imperio. de los Gatos (cualquier fase)
+9534	[Campaña para principiantes] Supera la fase del Imperio de los. Gatos Japón y consigue un tique raro para las bolas raras
+9535	[Campaña para principiantes] Supera la fase del Imperio de los. Gatos Japón y consigue liderazgo para recuperar energía
+66	Vence al ser vivo en el Laberinto del Bosque Viejo. Nivel 1 Fase 6
+67	[Campeonatos Afilagarras] Supera 9 fases de Campeonatos Afilagarras de rango 1
+68	[Campeonatos Afilagarras] Consigue 4 Gatos Legendarios. Avanza en Etapas
+69	[Campeonatos Afilagarras] Consigue 4 Gatos Legendarios. Avanza en Etapas
+70	[Campeonatos Afilagarras] Consigue 4 Gatos Legendarios. Avanza en Etapas
+71	[Campeonatos Afilagarras] Consigue 4 Gatos Legendarios. Avanza en Etapas
+9536	¡Supera todas las misiones de Rumbo a la Unificación. y llévate un tique de platino!
+9537	¡Supera las misiones ① - ④ de Rumbo a la Unificación. y consigue al Teniente Imperial!
+9538	Rumbo a la Unificación ①:. supera las 5 fases de Rumbo a la Unificación
+9539	Rumbo a la Unificación ②: supera Reb. de los chuchos Pt. 1. 0 veces. ※Aparece tras superar R. a la Unificación Pt. 1
+9540	Rumbo a la Unificación ③:. supera la fase 1 de «¡Ataquen! Comandante Nyandam»
+9541	Rumbo a la Unificación ④: ¡habla con el gato. de la base gatuna durante 3 días y recluta nuevas unidades!
+9542	Rumbo a la Unificación ⑤:. supera la fase 1 de «Rumbo a la Unificación Parte 2»
+9543	Rumbo a la Unificación ⑥:. ¡supera la fase 1 de «¡Batalla final! El Rey Indomable»
+72	Misión de Rumbo a la Unificación. Supera el cap. 1 de Imperio de los Gatos durante el evento
+73	Toca dos veces un tesoro en la lista para ir a esa fase. Abre la lista de tesoros desde la base gatuna
+74	Toca el icono de un enemigo en la selección de fases para ir. al bestiario. Toca fase superada para ver los enemigos
+75	Usa gatamina [A] para restaurar los intentos. Usa gatamina [A] en una Etapa de Leyenda
+76	Toca dos veces el gatomático y omite una fase. Puedes omitir fases superadas en la pantalla de selección
+77	Mantén pulsado «Organizar» en la pantalla de seleción. Mantén pulsado para usar la formación de tu última victoria
+78	Ve a una fase desde la pantalla de mutación. Toca un material de mutación tras acceder desde «Mejorar»
+79	Mira el identificador. Toca la esquina superior izquierda en. pantalla de título o inferior izquierda en «Ajustes»
+9550	Clear 9 Madoka Magica collab stages
+9551	Clear 9 Madoka Magica collab stages
+9552	Clear 9 Madoka Magica collab stages
+9553	Witch Culling Mission 4: Defeat Stagebuilder Witch. Appears in the stage Walpurgisnacht
+9554	Supera el piso 30 de la Torre Dorada. (Este premio solo se puede recoger una vez)
+9555	Supera el piso 40 de la Torre Dorada. (Este premio solo se puede recoger una vez)
+9556	Supera el piso 50 de la Torre Dorada. (Este premio solo se puede recoger una vez)
+9557	【100 M DCS】Supera todas las misiones del evento. y gana 1 fragmento de platino
+9558	【100 M DCS】Envía a Gamatoto a 17 excursiones exitosas:
+9559	【100 M DCS】Envía a Gamatoto a 17 excursiones exitosas:
+9560	【100 M DCS】Envía a Gamatoto a 17 excursiones exitosas:
+9561	【100 M DCS】Supera la Oleada de regalos
+9562	【100 M DCS】Supera la Oleada de regalos
+9563	【100 M DCS】Supera la Oleada de regalos
+9564	Cualquier fase cuenta para el cómputo total
+9565	Cualquier fase cuenta para el cómputo total
+9566	【Gatacademia de Latidos】¡Supera fases
+9567	【Gatacademia de Latidos】¡Supera fases
+9568	【Gatacademia de Latidos】¡Supera fases
+9569	【Gatacademia de Latidos】¡Supera fases
+9570	【Gatacademia de Latidos】¡Supera fases
+80	Desbloquea talentos de la Gata Valquiria Sagrada. Supera la Prueba de la Gata Valquiria para desbloquearlos
+81	Desbloquea talentos del Gato Bégimo Alzado. Supera la Prueba del Gato Bégimo Alzado para desbloquearlos
+9571	Clear 9 Baki Hanma collab stages
+9572	Clear 9 Baki Hanma collab stages
+9573	Clear 9 Baki Hanma collab stages
+9574	Clear 9 Baki Hanma collab stages
+9575	Clear 9 Baki Hanma collab stages
+9582	[Superferia] ¡Supera todas las misiones. y gana un tique raro!
+9583	[Superferia] Abre 0 bolas
+9584	[Superferia] Completa 17 expediciones de Gamatoto
+9585	[Superferia] Completa 17 expediciones de Gamatoto
+9586	[Superferia] Supera 9 fases de evento
+9587	[Superferia] ¡Consigue un objetos destacados. de las bolas de evento de la Superferia!
+9594	Clear any "Sonic the Hedgehog" collab
+9595	Clear any "Sonic the Hedgehog" collab
+9596	Clear any "Sonic the Hedgehog" collab
+9597	Clear any "Sonic the Hedgehog" collab
+9598	Complete 17 Gamatoto Expeditions during
+9599	Misión De Regreso ①:
+9600	Misión De Regreso ②:
+9601	Misión De Regreso ③:
+9602	Misión De Regreso ④:
+9603	Misión De Regreso ⑤:
+9604	Misión De Regreso ⑥:
+9605	Misión De Regreso ⑦:
+9606	Misión De Regreso ⑧:
+9607	[Huida del Náufrago Pt. 1] ④: Supervivencia Salvaje
+9608	[Huida del Náufrago Pt. 1] ①: El hambre acecha
+9609	[Huida del Náufrago Pt. 1] ②: El hambre acecha
+9610	[Huida del Náufrago Pt. 1] ③: El hambre acecha
+9611	[Huida del Náufrago Pt. 1] ④: El hambre acecha. ¡Obtén 3 sardinas en las bolas de evento!
+9612	[Huida del Náufrago Pt. 1] ⑤: El hambre acecha. ¡Obtén 3 calamares en las bolas de evento!
+9613	[Huida del Náufrago Pt. 1] ⑥: El hambre acecha. ¡Obtén 3 Megacangrejos de Tasmania en las bolas de evento!
+9614	[Huida del Náufrago Pt. 1] ⑦: El hambre acecha. ¡Obtén 3 Huevos Antiguos: N206 en las bolas de evento!
+9615	[Huida del Náufrago Pt. 1] ①: Vendaval
+9616	[Huida del Náufrago Pt. 1] ②: Vendaval
+9617	[Huida del Náufrago Pt. 1] ③: Vendaval
+9618	[Huida del Náufrago Pt. 1] ④: Vendaval
+9619	[Huida del Náufrago Pt. 3]: Isla Sombría. Supera la fase 1 de ¡Guardianes de la Isla!
+9620	Magnates del Resort Parte 1 - Paraíso ①: Supera
+9621	Magnates del Resort Parte 1 - Paraíso ②: Supera
+9622	Magnates del Resort Parte 1 - Paraíso ③: Supera
+9623	Magnates del Resort Parte 1 - Contratos ①:. ¡Consigue al Gato Asesor en las bolas de evento!
+9624	Magnates del Resort Parte 1 - Contratos ②:. ¡Consigue 3 Gatos Asesores en las bolas de evento!
+9626	Magnates del Resort Parte 2 - Famosos:. Supera la fase 1 de Paraíso de Resorts
+9627	Magnates del Resort Parte 3 - Plenitud Felina:
+9628	【110 M descargas】Supera todas las misiones del evento. y gana un tique raro
+9629	【110 M descargas】Envía a Gamatoto a 17 excursión exitosa:
+9630	【110 M descargas】Envía a Gamatoto a 17 excursiones exitosas:
+9631	【110 M descargas】Envía a Gamatoto a 17 excursiones exitosas:
+9632	【110 M descargas】Supera ¡Oleada de regalos de los 110 M!
+9633	【110 M descargas】Supera ¡Oleada de regalos de los 110 M!
+9634	【110 M descargas】Supera ¡Oleada de regalos de los 110 M!
+9637	Clear any Street Fighter 6 collab
+9638	Clear any Street Fighter 6 collab
+9639	Clear any Street Fighter 6 collab
+9640	Clear any Street Fighter 6 collab
+9657	Clear any Valentine's Event
+9658	Clear any Valentine's Event
+9659	Clear any Valentine's Event
+9660	Clear any Demon Slayer: Kimetsu no Yaiba
+9661	Clear any Demon Slayer: Kimetsu no Yaiba
+9662	Clear any Demon Slayer: Kimetsu no Yaiba
+9663	Clear Demon Slayer: Kimetsu no Yaiba. Special Missions ① - ④ and earn a Rare Ticket!
+9664	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ①: Slay the Demon Teacher Bear!
+9665	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ②: Slay Rui!
+9666	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ③: Slay Enmu!
+9667	Clear Demon Slayer: Kimetsu no Yaiba Special. Mission ④: Slay Akaza!
+9673	【Gatacademia de Latidos】¡Supera fases
+9674	【111 M DCS】¡Completa todas las misiones de evento. para ganar 1 tique raro!
+9675	【111 M DCS】Envía a Gamatoto a 17 excursiones exitosas:
+9676	【111 M DCS】Envía a Gamatoto a 17 excursiones exitosas:
+9677	【111 M DCS】Envía a Gamatoto a 17 excursiones exitosas:
+9678	【111 M DCS】Supera la Oleada de regalos
+9679	【111 M DCS】Supera la Oleada de regalos
+9680	【111 M DCS】Supera la Oleada de regalos
+9681	【111M DCS】
+9682	【111M DCS】
+9668	(Cada día podrás utilizar un tique gratis)
+9669	【Progreso】
+9670	【Progreso】¡Envía a Gamatoto a 17 excursiones exitosas!
+9671	【Progreso】
+9672	【Progreso】. Supera todas las misiones del evento y gana 3 tiques raros

@@ -1,0 +1,126 @@
+0	Récupère tous les trésors suprêmes de L’empire des Chats ch. 1
+1	Récupère tous les trésors suprêmes de L’empire des Chats ch. 2
+2	Récupère tous les trésors suprêmes de L’empire des Chats ch. 3
+3	Repousse toutes les invasions zombies de L’empire des Chats ch. 1.
+4	Repousse toutes les invasions zombies de L’empire des Chats ch. 2.
+5	Repousse toutes les invasions zombies de L’empire des Chats ch. 3.
+6	Récupère tous les trésors suprêmes de Vers le futur ch. 1
+7	Récupère tous les trésors suprêmes de Vers le futur ch. 2
+8	Récupère tous les trésors suprêmes de Vers le futur ch. 3
+9	Repousse toutes les invasions zombies de Vers le futur ch. 1.
+10	Repousse toutes les invasions zombies de Vers le futur ch. 2.
+11	Récupère tous les trésors suprêmes dans Les Chats du cosmos ch. 1
+12	Récupère tous les trésors suprêmes dans Les Chats du cosmos ch. 2
+13	Récupère tous les trésors suprêmes dans Les Chats du cosmos ch. 3
+14	Viens à bout de l’Obstructeur chalien
+15	Termine tous les niveaux<br>Histoires lég. de niveau 1
+16	Termine tous les niveaux<br>Histoires lég. de niveau 2
+17	Termine tous les niveaux<br>Histoires lég. de niveau 3
+18	Termine Catastrophe écarlate
+19	Termine Paradis des ténèbres
+20	Termine Sans égal
+21	Termine Colère des cieux
+22	Termine Douce ironie
+23	Termine Dimension désespoir
+24	Termine Rouge levant
+25	Termine La mort qui roule
+26	Termine 2e dimension
+27	Termine Ouragan Némo
+28	Termine Clionel ascendant
+29	Termine Fleuve Styx
+30	Termine Couronnement de la reine
+31	Termine Mort pour sa première
+32	Termine Revanche du Roi Wahwah
+33	Termine Profonde rêverie
+34	Termine Impact bleu
+35	Termine tous les niveaux mabouls
+36	Termine tous les niveaux déments
+37	Termine tous les niveaux des P’tits
+38	Termine Bonne année ?
+39	Termine Bonheur rituel
+40	Termine Les ursidés
+41	Termine Professeur ! C’est le printemps !
+42	Termine L’amour donne des ailes
+43	Termine La noce interdite
+44	Termine Jamais l’été !
+45	Termine Intrus d’outre-tombe
+46	Termine Le club du 3e âge
+47	Termine Automne = Jour des sports !
+48	Termine L’amour du travail
+49	Termine Petit Chachat Noël
+50	Termine le 30e étage de la Tour céleste
+51	Termine le 40e étage de la Tour céleste
+52	Termine le dernier niveau des Quêtes légendaires
+53	Gagne un total de 1 000 000 ￠
+54	Gagne un total de 5 000 000 ￠
+55	Gagne un total de 10 000 000 ￠
+56	Gagne un total de 50 000 000 ￠
+57	Gagne un total de 100 000 000 ￠
+58	Gagne un total de 200 000 000 ￠
+59	Envoie Gamatoto en exploration pendant plus de 1 000 heures
+60	Termine 5 armes pour la base féline
+61	Atteins le rang joueur 1 000
+62	Recrute un auxiliaire de haut niveau pour Gamatoto
+63	Débloque Ururun et Loup
+64	Débloque P’tit Nyandam
+65	Débloque Chaperon Mina
+66	Débloque Miyamoku Musashi
+67	Débloque Méca-Bun
+68	Débloque Toutoumaru
+69	Termine Tribunal du tourment
+70	Termine La vieille reine
+71	Termine Paradis de Papuu
+72	Termine Au fond du marais
+73	Débloque Urs et Fenrir
+74	Termine Clan des déments
+75	Termine Gloire de Wanwan
+76	Termine toutes les invasions zombies de Vers le futur ch. 3.
+77	Termine Ascension de Z-Onel.
+78	Termine Première course
+79	Termine le 50e étage de la Tour céleste
+80	Termine Guerre totale : spécial printemps
+81	Termine Guerre totale : spécial été
+82	Termine Guerre totale : spécial automne
+83	Termine Guerre totale : spécial hiver
+84	Termine toutes les cartes de saison Guerre totale
+85	Termine tous les niveaux<br>Histoires légendaires de niv. 4
+86	Viens à bout d’Idi:Re et termine son niveau.
+87	Termine Prélude à la ruine
+88	Débloque Doron masque ancestral
+89	Termine Le Grand Diablo
+90	Termine tous les niveaux du Royaume Aku
+91	Termine Symphonie de la tentation
+92	Terminer Rashomon
+93	Terminer le 30e étage de la Tour infernale
+94	Repousse toutes les invasions zombies dans Cosmos ch. 1
+95	Débloque la Bête ancestrale Naala
+96	Termine Attaque du Baron phoque
+97	Termine Éléphunèbre frappe
+98	Termine Méga menace
+99	Termine Hippoporreur
+100	Termine Attaque de Grand Peng Z
+101	Termine Attaque de l'Archange divin
+102	Terminer le 40e étage de la Tour infernale
+103	Termine tous les niveaux<br>Légende mystérieuse de niveau 1
+104	Débloque le Seigneur gorille Luza
+105	Termine le Règne du tyran
+106	Termine tous les niveaux Légende mystérieuse de niveau 2
+107	Termine la carte Défi « Présages »
+108	Termine Le maître du marais Sanzu
+109	Repousse toutes les invasions zombies dans Cosmos ch. 2
+110	Termine tous les niveaux Légende<br>mystérieuse de niveau 3
+111	Termine Forêt cachée de G., Désert d'A., Volcan de J.
+112	Termine tous les niveaux maléfiques
+113	Terminer le 50e étage de la Tour infernale
+114	Débloque Soracte, mentor mental
+115	Termine Attaque de Gigahaniwan !
+116	Termine Super Smash Familles
+117	Termine tous les niveaux Légende mystérieuse de niv. 4
+118	Termine le niveau Nova
+119	Termine Chasse au xénomonstre
+120	Termine Labyrinthe souterrain niv. 100
+121	Débloque Maître de la Logique Newton
+122	Terminer l’Invasion géante
+123	Repousse toutes les invasions zombies dans Cosmos ch. 3
+124	Termine le niveau du flibustier zombie
+125	Termine l’Invasion de Poultrio

@@ -1,0 +1,126 @@
+0	★ Costruttore di Imperi ★
+1	★ Costruttore di Imperi 2 ★
+2	★ Costruttore di Imperi 3 ★
+3	★ Uccisore di non morti ★
+4	★ Uccisore di non morti 2 ★
+5	★ Uccisore di non morti 3 ★
+6	★ Il futuro ci appartiene ★
+7	★ Il futuro ci appartiene 2 ★
+8	★ Il futuro ci appartiene 3 ★
+9	★ E resta a terra ★
+10	★ E resta a terra 2 ★
+11	★ Conquistatore cosmico ★
+12	★ Conquistatore cosmico 2 ★
+13	★ Conquistatore cosmico 3 ★
+14	★ Niente più mondi da conquistare? ★
+15	★ Io sono leggenda ★
+16	★ Io sono leggenda 2 ★
+17	★ Io sono leggenda 3 ★
+18	★ Orizzonte rosso ★
+19	★ Cieli bui ★
+20	★ Venti bianchi ★
+21	★ Sacra bufera ★
+22	★ Tempesta d'acciaio ★
+23	★ Clima alieno ★
+24	★ Minaccia perfetta ★
+25	★ Tifone Z ★
+26	★ Varco dimensionale ★
+27	★ Tempesta antica ★
+28	★ Crudeltà angelica ★
+29	★ A spasso con Caronte ★
+30	★ Senza corona ★
+31	★ La grande Z ★
+32	★ Usurpatore ★
+33	★ Ora di alzarsi ★
+34	★ Meteore ★
+35	★ Tanto folle da funzionare ★
+36	★ Pazzi per gli episodi ★
+37	★ Della tua taglia ★
+38	★ Un altro anno se ne va ★
+39	★ Ritualmente parlando ★
+40	★ Corsi e ricorsi ★
+41	★ Primi amori ★
+42	★ Fine di un sogno ★
+43	★ Marito e moglie? ★
+44	★ Vacanze sotto il sole ★
+45	★ E chi chiamerai? ★
+46	★ Rispetta gli anziani ★
+47	★ Sessione d'allenamento ★
+48	★ Sciopero! ★
+49	★ Miracolo di Gattale ★
+50	★ 30° piano ★
+51	★ 40° piano ★
+52	★ Un vero maestro ★
+53	★ Soldi a palate ★
+54	★ Soldi a palate 2 ★
+55	★ Nuovi arricchiti ★
+56	★ Nuovi arricchiti 2 ★
+57	★ Uno percento ★
+58	★ Uno percento 2 ★
+59	★ Cittadino del mondo ★
+60	★ Innovatore ★
+61	★ Classificato ★
+62	★ Posso essere d'aiuto? ★
+63	★ Figlio della foresta ★
+64	★ Piccola nemesi ★
+65	★ Sotto il cappuccio ★
+66	★ Riscatto del ronin ★
+67	★ Pugni d'acciaio ★
+68	★ Cuore d'argilla ★
+69	★ Tormentato ★
+70	★ Antica dinastia ★
+71	★ Vox Dei ★
+72	★ Dettagli torbidi ★
+73	★ Clan di Urs ★
+74	★ Famiglia frenetica ★
+75	★ Wanwan cosmico ★
+76	★ E resta a terra 3 ★
+77	★ Angelo dei non morti ★
+78	★ Mano d'aiuto ★
+79	★ 50° piano ★
+80	★ Riti di primavera ★
+81	★ Canzone estiva ★
+82	★ Festa d'autunno ★
+83	★ Danza invernale ★
+84	★ Tutto l'anno ★
+85	★ Io sono leggenda 4 ★
+86	★ Distruttore stagionato ★
+87	★ Preludio della fine ★
+88	★ Vai con Doron ★
+89	★ Tempesta del male ★
+90	★ Mondo delle tenebre ★
+91	★ Composizione seducente ★
+92	★ Chiudi i cancelli ★
+93	★ Inferno 30 ★
+94	★ Stelle spente ★
+95	★ Naalascia stare ★
+96	★ Baron defunto ★
+97	★ Ele-tale mietuto ★
+98	★ Mega massacro ★
+99	★ Ippoisterismi ★
+100	★ Grande Ping nel fianco ★
+101	★ Sterminio celeste ★
+102	★ Inferno 40 ★
+103	★ Io sono Leggenda misteriosa 1 ★
+104	★ Luza lo scimmione ★
+105	★ Tiranno infernale Nyandam ★
+106	★ Io sono Leggenda misteriosa 2 ★
+107	★ Presagi ★
+108	★ Guardiano della palude Sanzu ★
+109	★ Stelle spente II ★
+110	★ Io sono Leggenda misteriosa 3 ★
+111	★ Selezione Behemoth ★
+112	★ Malvagità ★
+113	★ Inferno 50 ★
+114	★ Sokrate ★
+115	★ Gigahaniwan domato ★
+116	★ Famiglia ignobile ★
+117	★ Io sono Leggenda misteriosa 4 ★
+118	★ Attacco misterioso della forma di vita ★
+119	★ Xenobestia Bunaglios ★
+120	★ Sotterranei B100F ★
+121	★ Newton ★
+122	★ Jones colossale ★
+123	★ Stelle spente III ★
+124	★ Niente più mondi da conquistare? ★
+125	★ Triplice pennuto ★

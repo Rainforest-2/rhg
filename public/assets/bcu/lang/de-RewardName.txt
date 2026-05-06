@@ -1,0 +1,1063 @@
+0|S0|I0	Beschleuniger
+1|S1|I1	Schatzradar
+2|S2|I2	Reiche Katze
+3|S3|I3	Katzencomputer
+4|S4|I4	Katzeneffizienz
+5|S5|I5	Katzenschütze
+6|S6|I201	XP
+7|S7|I217	NP
+8	dummy
+9	dummy
+10	5.000 XP
+11	10.000 XP
+12	30.000 XP
+13	50.000 XP
+14	100.000 XP
+15	200.000 XP
+16	500.000 XP
+17	1.000.000 XP
+18	2.000.000 XP
+19	500.000 XP
+20|S11|I202	Katzenticket
+21|S12|I203	Seltenes Ticket
+22|S13|I200	Katzenbatzen
+23|S16|I400	Glücksticket
+26|S17|I403	Glücksticket
+27|S18|I404	Glücksticket
+28|S19|I405	Glücksticket
+29|S20|I204	Platinticket
+30|S30|I500	Lila Katzenfruchtkern
+31|S31|I501	Roter Katzenfruchtkern
+32|S32|I502	Blauer Katzenfruchtkern
+33|S33|I503	Grüner Katzenfruchtkern
+34|S34|I504	Gelber Katzenfruchtkern
+35|S35|I505	Lila Katzenfrucht
+36|S36|I506	Rote Katzenfrucht
+37|S37|I507	Blaue Katzenfrucht
+38|S38|I508	Grüne Katzenfrucht
+39|S39|I509	Gelbe Katzenfrucht
+40|S40|I510	Epische Katzenfrucht
+41|S41|I511	Gereifter Katzenfruchtkern
+42|S42|I512	Gereifte Katzenfrucht
+43|S43|I513	Epischer Katzenfruchtkern
+44|S44|I514	Goldene Katzenfrucht
+45|S21|I406	Glücksticket
+46|S22|I407	Glücksticket
+47|S23|I408	Glücksticket
+48|S24|I409	Glücksticket
+49|S25|I410	Glücksticket
+50|S50|I600	Katzenauge [Besonders]
+51|S51|I601	Katzenauge [Selten]
+52|S52|I602	Katzenauge [Superselten]
+53|S53|I603	Katzenauge [Megaselten]
+54|S54|I604	Katzenauge [Legendär]
+55|S55|I700	Katzamin [A]
+56|S56|I701	Katzamin [B]
+57|S57|I702	Katzamin [C]
+58|S58|I605	Katzenau. [Dunkel]
+60|S60	Katzenkanonenschlag
+61|S61	Katzenkanonenreichw.
+62|S62	Katzenkanonenaufl.
+63|S63	Arbeiterkatzentempo
+64|S64	Arbeiterkatzentresor
+65|S65	Basisverteidigung
+66|S66	Forschung
+67|S67	Buchhalter
+68|S68	Kampfstudie
+69|S69	Katzenenergie
+70|S70	Cat Ally: Dummy 1
+71|S71	Cat Ally: Dummy 2
+72|S72	Cat Ally: Dummy 3
+73|S73	Cat Ally: Dummy 4
+74|S74	Cat Ally: Dummy 5
+75|S26|I411	Glücksticket
+76|S76|I205	Glücksticket
+77|S77|I206	Glücksticket G
+78	100.000 XP
+80|S80|I6	XP
+81|S81|I7	XP
+82|S82|I8	XP
+83|S83|I9	XP
+84|S84|I10	XP
+85|S85|I610	Ziegel
+86|S86|I611	Federn
+87|S87|I612	Kohle
+88|S88|I613	Zahnräder
+89|S89|I614	Gold
+90|S90|I615	Meteorit
+91|S91|I616	Tierknochen
+92|S92	Ingenieure
+93|S93|I207	Glücksticket
+94|S94|I208	Glücksticket G
+95|S95|I209	Glücksticket G
+96|S96|I210	Glücksticket G
+97|S97|I211	Glücksticket G
+98|S98|I212	Glücksticket G
+99|S99|I213	Glücksticket
+100|S100|I214	Glücksticket G
+101|S101|I215	Glücksticket
+102|S102|I216	Glücksticket G
+103|S103|I218	Glücksticket G
+104|S104|I219	Glücksticket
+105|S105|I220	Führung
+106|S106|I221	Glücksticket G
+107|S107|I222	Glücksticket
+108|S108|I223	Glücksticket G
+109|S109|I224	Glücksticket G
+110|S110|I225	Glücksticket
+112|S112|I226	Glücksticket
+113|S113|I227	Glücksticket G
+114|S114|I228	Glücksticket G
+115|S115|I229	Glücksticket G
+116|S116|I230	Glücksticket
+117|S117|I231	Glücksticket
+118|S118|I232	Glücksticket G
+119|S119|I233	Glücksticket G
+120|S120|I234	Glücksticket G
+121|S121|I235	Glücksticket G
+122|S122|I236	Glücksticket
+123|S123	Rückkehrpaket
+124|S124|I237	Glücksticket G
+125|S125|I238	Glücksticket G
+126|S126|I239	Glücksticket
+127|S127|I240	Glücksticket
+128|S128|I241	Glücksticket G
+129|S129|I242	Glücksticket G
+130|S130|I243	Glücksticket G
+131|S131|I244	Glücksticket G
+132|S132|I245	Glücksticket
+133|S133|I246	Glücksticket G
+134|S134|I247	Glücksticket
+135|S135|I248	Glücksticket G
+136|S136|I249	Glücksticket
+137|S137|I413	Bikkuriman Choco
+138|S138|I250	Glücksticket G
+139|S139|I251	Glücksticket
+140|S140|I617	Muninit
+141|S141|I252	Glücksticket G
+142|S142|I253	Glücksticket G
+143|S143|I254	Glücksticket
+144|S144|I255	Glücksticket G
+145|S145|I256	Legenden-Ticket
+146|S146|I257	Glücksticket G
+147|S147|I258	Glücksticket
+148|S148|I259	Glücksticket
+149|S149|I260	Glücksticket G
+150|S150|I261	Glücksticket G
+151|S151	Unbeg. reiche Katzen/3 Std.
+152|S152	Unbeg. Katzencomputer/3 Std.
+153|S153	Unbeg. Katzenschützen/3 Std.
+154|S154|I262	Glücksticket G
+155|S155|I263	Glücksticket
+156|S156|I264	Glücksticket G
+157|S157|I270	Platinsplitter
+158|S158|I414	Legendennetz
+159	5.000 XP
+160|S160|I515	Aku-Katzenfruchtkern
+161|S161|I516	Aku-Katzenfrucht
+163|S163|I416	Überraschungsschachtel
+164|S164|I517	Goldener Katzenfruchtkern
+166|S166|I418	Liebesbrief
+167|S167|I518	Lila B.-Stein
+168|S168|I519	Roter B.-Stein
+169|S169|I520	Blauer B.-Stein
+170|S170|I521	Grüner B.-Stein
+171|S171|I522	Gelber B.-Stein
+172|S172|I419	Weihwasser
+173|S173|I420	Legendennetze
+174|S174|I710	Bronzemedaille
+175|S175|I711	Silbermedaille
+176|S176|I712	Goldmedaille
+177|S177|I713	Platinmedaille
+178|S178|I421	Legendenpass
+179|S179|I523	Lila Behem.-Juwel
+180|S180|I524	Rotes Behem.-Juwel
+181|S181|I525	Blaues Behem.-Juw.
+182|S182|I526	Grünes Behem.-Juw.
+183|S183|I527	Gelbes Behem.-Juw.
+184|S184|I528	Ep. Behem.-Stein
+185|S185|I422	Legend. Glücksb.
+186|S186|I423	Liebesbrief
+187|S187|I618	Ziegel Z
+188|S188|I619	Federn Z
+189|S189|I620	Kohle Z
+190|S190|I621	Zahnräder Z
+191|S191|I622	Gold Z
+192|S192|I623	Meteorit Z
+193|S193|I624	Tierknochen Z
+194|S194|I625	Ammonit Z
+195|S195|I424	Weihwasser
+196|S196|I425	Legendennetze
+197	1.000.000 XP
+198|S198|I426	Kleine Medaille
+199|S199|I427	Legend. Glücksb.
+200|S200|I428	Liebesbrief
+201|S201|I11	XP
+202|S202|I429	Weihwasser
+203|S203|I430	Legendennetz
+204|S204|I431	Legendenfalle
+206|S206|I433	Legendärer Geist
+207|S207|I720	Kriegskasse
+209|I435	Schatztruhe (Bronze)
+210|I436	Schatztruhe (Silber)
+211|I437	Schatztruhe (Gold)
+212|I265	100-Mio.-DL-Ticket
+213|S213|I438	Liebesbrief
+214|S214|I439	Legend. Körbchen
+215|S215|I440	Legendary Dumbbell
+216|S216|I441	Legendenfalle
+217|I442	Schatztruhe (Bronze)
+218|I443	Schatztruhe (Silber)
+219|I444	Schatztruhe (Gold)
+220|S220|I445	Legendäre Banknote
+221|S221|I446	Legendenstrahlen
+222	2.000 XP
+223	25.000 XP
+224|I447	Schatztruhe (Bronze)
+225|I448	Schatztruhe (Silber)
+226|I449	Schatztruhe (Gold)
+227|S227|I450	Legendärer Geist
+228|I451	Schatztruhe (Bronze)
+229|I452	Schatztruhe (Silber)
+230|I453	Schatztruhe (Gold)
+232|I455	Schatztruhe (Bronze)
+233|I456	Schatztruhe (Silber)
+234|I457	Schatztruhe (Gold)
+235|S235|I458	Legend. Glücksb.
+236|I459	Schatztruhe (Bronze)
+237|I460	Schatztruhe (Silber)
+238|I461	Schatztruhe (Gold)
+239|I462	Schatztruhe (Bronze)
+240|I463	Schatztruhe (Silber)
+241|I464	Schatztruhe (Gold)
+242|S242|I465	Liebesbrief
+243|S243|I466	Legendenstrahlen
+244|I467	Schatztruhe (Bronze)
+245|I468	Schatztruhe (Silber)
+246|I469	Schatztruhe (Gold)
+1001	Sporttagkatze
+1003	Angestellten-Katze
+1004	Rentierfisch-Katze
+1005	Bronzekatze
+1006	Droid-Katze
+1007	Erwachsene Katze
+1008	Böse Katze
+1009	Puppenkatzen
+1010	Mädchen-Katze
+1011	Kabarettkatze
+1012	Koi-Katze
+1013	Die Braut
+1014	Urlaubskönigin
+1015	Rache-Katze
+1016	Kung-Fu-Katze X
+1018	Marshmallow-Katze
+1019	Cat Kart R
+1020	Baozi-Katze
+1021	Catburger
+1022	Kürbiskatze
+1023	Katzengeschenk
+1024	Katzway
+1025	Awa-Odori-Katze
+1026	Expresskatze
+1027	Little-League-Katze
+1028	Essensstandkatze
+1029	Cheerleader-Katze
+1030	Killer-Katze
+1031	Curling-Katze
+1032	Eierkatze
+1033	Katzengeschwister
+1035	Squish Ball Cat
+1036	Volley-Katze
+1037	Glaskatze
+1038	Verrückte Moneko
+1039	Schneckenreiter-Katze
+1040	Einsame Katze und Kätzchen
+1041	Urkatze
+1042	Dogumaru
+1043	Cat Bros
+1044	Machtkatze
+1045	Medusa-Katze
+1046	Schleimkatze
+1047	Kosakenkatze
+1048	Lehrerbärkatze
+1049	Urs & Fenrir
+1050	Rugbykatze
+1051	Phantomkatze
+1052	Bäckereikatze
+1053	Steinkatze
+1054	Ältestenmaske Doron
+1055	Aku-Forscher
+1056	Rattenfänger-Katze
+1057	Kalligraphie-Katze
+1058	Ältestenbestie Naala
+1059	Uraltes Ei: N001
+1060	Uraltes Ei: N003
+1061	Uraltes Ei: N004
+1062	Uraltes Ei: N000
+1063	Killer-Panzer-Katze
+1064	Uraltes Ei: N005
+1065	Jetpack-Katze
+1066	Maiskatze
+1067	Uraltes Ei: N006
+1068	Meister der Gedanken Soraktes
+1069	Bowler-Katze
+1070	Killer-Stelzenkatze
+1071	Weiser des logischen Newton
+1072	Tischlerkatze
+1074	Zeitungsjungenkatze
+1075	Killer-Stärlingskatze
+1100	Bronzekatze
+1101	Weltraumkatze
+1102	Seilhüpfkatze
+1103	Verrückte Katze
+1104	Verrückte Panzer-Katze
+1105	Verrückte Axtkatze
+1106	Verrückte Stelzenkatze
+1107	Verrückte Kuhkatze
+1108	Verrückte Vogelkatze
+1109	Verrückte Fischkatze
+1110	Verrückte Echsenkatze
+1111	Verrückte Titanenkatze
+1112	Healer
+1113	Ururun-Wolf
+1114	Aufziehkatze
+1116	Hula-Katze
+1118	Kleiner Nyandam
+1119	Takuya ＆ Yuki
+1120	Trommlerkatze
+1121	HYAKUTARO
+1122	Sleeping Beauty Punt
+1130	Katzornado
+1131	Rotkäppchen-Mina
+1132	Funghi
+1134	Li'l Madoka
+1135	Kyubey Cat
+1137	PIKOTARO
+1139	Miyamoku Musashi
+1140	Redhead Yuki Cat
+1142	Li'l Shirou
+1143	Akio Yabe
+1144	Karin Nekozuka
+1145	Misaki Konno
+1146	Sairi Nijitani
+1147	Ren Katagiri
+1148	Mentori
+1149	Shinji & Cat
+1150	Giraffe Unit-01
+1151	Pokota
+1152	Ovis
+1153	Coco
+1157	Mecha-Bun
+1158	Betakkuma
+1160	Meowla Meowla
+1162	Prince Yamato
+1164	Kano ＆ Souma
+1167	Ryu Cat
+1168	Akuma Giraffe
+1170	Miku Cat
+1172	Idi:N
+1173	Ranma Cat (M)
+1174	Godzilla Cat
+1177	Osamu Mikumo & Cat
+1178	Yuma Kuga & Cat
+1183	Madhead
+1184	Kenshin Cat
+1185	Meister des Lebens Dr. Nova
+1186	Sonic Cat
+1187	Tanjiro Cat
+10010	Muskelprotz-Katze
+10011	Tänzerkatze
+10012	Hyper-Mr.
+10013	Ultimative Fessel-Katze
+10014	Darth Laser
+10015	Offensiver C.A.T.
+10016	Lolli-Katze
+10018	Einradkatze
+10019	Fliegende Ninja-Katze
+10020	Skelett-Katze
+10021	Bäcker-Katze
+10022	Reisbällchen-Katze
+10023	Gato Amigo
+10024	Lendenschurz-Katze
+10027	Bridal Princess Punt
+10061	Rätselmeisterkatze
+10064	Amokkatzen
+10070	Oversleeping Beauty Punt
+10071	Ritualkatze
+10075	Weihnachtsdessert-Katze
+10079	Space-Marine-Katze
+10080	Gefangenenkatze
+10081	Gentleman-Brüder
+10082	Nyaladdin
+10089	Nudelkatze
+10092	Irre Irokatze
+10093	Irre Radierkatze
+10094	Irre dunkle Katze
+10095	Irre Muskelbein-Katze
+10096	Irre Löwenkatze
+10097	Irre Flugkatze
+10098	Irre Inselkatze
+10099	Irrer Königsdrache
+10100	Irre Jamierakatze
+10101	Ringer-Katze
+10104	Megakatze EX
+10105	Koikuss
+10110	Die Savannah-Königin
+10120	Healer Cat CC
+10122	Merc & Cat CC
+10123	Callcenter-Katze
+10127	Puppenspieler und Charlie
+10128	Bomberkatze
+10129	Fesseldrachenkatze
+10133	Eisenklaue X
+10155	Hula-Meister-Katze
+10180	Takuya＆ Lovely Yuki
+10184	Cat Kart P
+10192	Titi Cat CC
+10202	Mochi-Katze
+10210	Kleine Irokatze
+10211	Kleine Radierkatze
+10212	Kleine dunkle Katze
+10246	Kleiner Beinmuskelkater
+10247	Kleine Löwenkatze
+10248	Kleine Flugkatze
+10261	Zeitreisende Katze
+10268	Katzentaifun
+10274	Soba-Katze
+10285	ICE-Katze
+10288	Golfkatze
+10300	Li'l Ultimate Madoka
+10301	Li'l Devil Homura
+10304	Kantinenkatze
+10312	Kleine Inselkatze
+10313	Kleine Königsdrachenkatze
+10314	Kleine Jamierakatze
+10325	Grüner-Panzer-Katze
+10330	Ostereikatze
+10341	Redhead Muscled Yuki Cat
+10353	Maskierte Großmeisterkatze
+10370	Saber Alter Cat
+10380	Curry-Katze
+10383	Macho-Kristallkatze
+10384	Spiritueller Yulala
+10386	Akio & Gunder CC
+10403	Plug Suit Shinji Black
+10406	Moon Kaworu
+10443	Touristenkatze
+10453	Zukunftskatze
+10474	Rampaging Yamato
+10475	Strike Angel
+10522	Nagakatze
+10528	Puddingklößchen-Katze
+10529	Königswachenkatze
+10532	Totengräbärkatze
+10540	Gridiron-Katze
+10546	Blasenkatze
+10554	Pfannenhühnchen-Katze
+10555	Esoterischer Uril
+10622	Katzenforscher
+10624	Blechbläserkatze
+10630	Gehirngewaschene Irokatze
+10637	Gehirngewaschene Radierkatze
+10646	Gehirngewaschene dunkle Katze
+10655	Gehirng. Macho-Katze
+10663	Gehirngewaschene Löwenkatze
+10668	Gehirngewaschene Flugkatze
+10685	Gehirngewaschene Inselkatze
+10689	Gehirngew. Königsdrachenkatze
+10695	Gehirngewaschene Jamierakatze
+15017	Superstar MONEKO
+15031	Tathagata-Katze
+15032	Ultra-Verbrecher-Katze
+15033	Cancan-Katze
+15034	Tintenfischkatze
+15035	Ultralan Pasalan
+15036	Cyberpunk-Katze
+15037	Nöck-Katze
+15038	Jiangshi-Katze
+15039	Relaxte Katze
+15040	iCat
+15041	Luxus-Badekatze
+15042	Cyborg-Katze
+15043	Eiskristall-Katze
+15044	Katzenmaschine, 3. Auflage
+15045	Oberbalrogkatze
+15047	Katzasaurus
+15048	Maximum der Kämpfer
+15049	Schreckenspirat Katzley
+15050	Goemon-Katze
+15051	Sanzo-Katze
+15052	Arztkatze
+15053	Nekrotänzerkatze
+15056	Verzauberinkatze
+15057	Katzaur
+15058	Paladinkatze
+15059	Elementduellant-Katze
+15060	Katzen in der Wiege
+15062	Rogenkatze
+15067	PPT46
+15068	Crystal Li'l Gau Gau
+15069	Judgment
+15072	Unsterblicher Yukimura
+15073	Unsterblicher Keiji
+15074	Unsterblicher Nobunaga
+15076	Himmlische Windie
+15077	Himmlische Donneria
+15084	Sodom der Gottkaiser
+15085	Megidora der Gottkaiser
+15086	Vars der Gottkaiser
+15087	Kamukura der Gottkaiser
+15088	Raiden der Gottkaiser
+15106	Himmlische Kuu
+15107	Himmlische Kai
+15108	Himmlische Cupruma
+15112	Frolicking Nono CC
+15120	Wyvern and Alec
+15124	Val-Val-Katzen
+15125	Unsterblicher Masamune
+15126	Unsterblicher Shingen
+15130	Glitzernde Machokatze
+15135	König Gamereon
+15136	Ultimativer Galaxis-Kosmo
+15137	Die Pfirsichteufel
+15138	Jizos Mega-Schloss
+15139	Der Chaosmond
+15144	Fröhliche Schwesternkatze
+15145	Katzenbasis Ultra
+15146	Rodeo-Katze
+15147	Akrobatenkatzen
+15148	Roboter-Katze
+15149	Ramen-Katze
+15150	Fotografen-Katze
+15151	Julia die Maiko
+15152	Pizza-Katze
+15153	Slapstick-Katzen
+15154	Katzophon
+15159	Unsterbliche Kenshin
+15160	Himmlische Kalisa
+15161	Gekirinchi
+15162	Manic Princess Punt
+15169	Assassinlan Pasalan
+15170	E. Kubilan Pasalan
+15172	Piccolan Pasalan
+15174	Citizen Mola
+15175	Master of the Pacific
+15178	Dioramos der Gottkaiser
+15181	Mystery Catgirl Yuki
+15186	Revolutionary Hearscht CC
+15188	Holiday Juvens CC
+15189	Savior Mystica CC
+15195	Inferno-Akira
+15196	Raketen-Mekako
+15197	Ultimativer Catman
+15198	Korrumpierte Psychokatze
+15199	Thaumaturgen-Katze
+15200	Seefahrer-Katze
+15204	Kachiyama-Sturmabteilung
+15213	Grauer Fuchs
+15214	Menü-Katze
+15223	GOLDEN HUGE HERMIT CC
+15224	GOLDEN JUPITER CC
+15225	GOLDEN MORDEN CC
+15226	HI-DO MK III
+15227	Irrer Doktor Klay
+15228	Vorbotenkatze
+15229	Kostümierte Hexe Neneko
+15238	Rektor Dr. Katze
+15239	Reichste Katze
+15240	Katzenscharfschütze
+15241	Shishilan Pasalan
+15242	Eisgeist Kai, Typ μ
+15249	Extraleben-Katze
+15258	Allmächtiger Zeus
+15259	Allmächtiger Anubis
+15260	Allmächtige Aphrodite
+15262	Akuma-Hayabusa
+15271	Crazed Catgirl Yuki
+15272	Allmächtige Amaterasu
+15273	Allmächtiger Ganesha
+15276	Hochsommerkatze
+15277	Frühsommer-Neneko
+15283	Gala-Groove-Katze
+15284	Pai-Pai DX
+15287	Flugeinheit R.E.I.
+15289	Ultimate Madoka
+15290	Devil Homura
+15303	Königin Succubus-Katze
+15305	KATZ-8-Behemoth
+15306	K.K.S. Tigerklaue
+15307	NEK-02-Luftzitadelle
+15308	Hausfrauenkatze
+15309	Unkrautjäter-Katze
+15311	Julstimmungsschwester
+15315	Festliche Neujahr-Neneko
+15317	Allmächtiger Poseidon
+15320	Radikale Katze
+15323	Die One-Hit-Wonders
+15326	Ektogewicht-Katze
+15331	Frühlingsbrisen-Kenshin
+15332	Delinquente
+15333	Aufblühende Neneko
+15335	Fuchskönigin Himeyuri
+15336	Meerkönigin Ruri
+15337	Ewige Reika
+15338	HMS Princess II CC
+15339	Unsterblicher Yoshimoto
+15342	Lost World Catgirl Yuki
+15345	Artist Orthos CC
+15346	Naptime Michelia CC
+15352	Himmlische Zwillinge
+15356	Orbitalzerstörer „Ragnarök“
+15358	Narrenkönigin Deale
+15359	Opulente Verbena
+15360	Bazibastra
+15361	Mizuririn
+15362	Aervanta
+15363	Saber Alter CC
+15371	Dreaming Sakura Cat
+15377	Katzellit
+15378	Die Freiheitskatze
+15391	Baseball Mask α
+15392	Baseball Mask β
+15393	Baseball Mask γ
+15394	Samba Saki CC
+15395	Dark Subaru CC
+15396	Baseball Mask δ
+15397	Ganglion der Entfesselte
+15398	Heilige-Klinge-Sakura
+15402	Gigavolta
+15410	Reunion Li'l Rei
+15411	Eyepatch Li'l Asuka
+15414	Determined Unit-01 & Cat
+15415	Unit-02, Code 777
+15418	Subterra-Späher
+15428	Katzenquesthelden
+15432	Bereichsleiter Gravicci
+15437	Mystican Pasalan
+15438	Katzengott der Goldene
+15440	Allmächtige Chronos
+15441	Law of Cycles Nagisa
+15444	Neo-Bohrerkatze
+15445	Neo-Ramme-Katze
+15446	Neo-Schneidekatze
+15447	Neo-Tiefbagger-Katze
+15448	Neo-Sägenkatze
+15449	Unsterblicher Miyamoto
+15450	Diktatorin Jeanne ψ
+15451	Babel der Gottkaiser
+15457	Dark Sakura CC
+15468	Super S-Zeus
+15469	Head Rococo
+15470	Super D-Devil
+15483	Cat-Eared Souma
+15489	Vanished NNN Wunder
+15496	Bauchtanzkatze
+15497	Unsterbliche Kaihime
+15503	Himmlische Myrcia
+15506	Gladios der Gottkaiser
+15507	Nameless Eyewaltz CC
+15512	Kage
+15518	Crimson King of Battle Ken
+15520	Wiedergeborener Lasvoss
+15523	Unholdkatze
+15524	Shigong-Katze
+15526	Kinrangers-Gigakämpfer
+15534	Riesenblaster-Saki
+15535	Allmächtiger Hades
+15547	Sukelan Kakulan
+15557	Ghost Alibaba
+15560	Höllenkommissarin Emma
+15564	Wasserblaster-Saki
+15565	Grandiose Pasalan
+15566	Lockige gebräunte Katze
+15567	Gelato-Brüderkatzen
+15570	Kiesolodon
+15571	Halloweenritter Vars
+15585	Weihnachts-Maeda DX
+15590	Wahre-Liebe-Neneko
+15595	Ultra Atlantis Logistix
+15596	Ewigblühender Lord Kamukura
+15608	Legendäre Abenteurerin Kanna
+15611	König Nekokhamen
+15615	Die Sonnenglut des Südens
+15618	Teufelsjäger Satoru
+15619	Unsterblicher Amakusa
+15620	Himmlische Lilin π
+15621	Hevijak der Gottkaiser
+15626	Ragelan Pasalan
+15632	Yaminora
+15633	Auslöscher Diabolosa
+15634	Große Chunchun-Spuker
+15635	Dämonenritter-Zyklop
+15643	Allmächtiger Luzifer
+15645	Minzliebe Mekako
+15648	Göttliche Jägerin Terun ζ
+15650	Unsterblicher Hanzo
+15656	Blizarena
+15657	Haniwa-Katze
+15659	Kurierkatze
+15660	Katzan
+15661	Gottkaiser Daliasan
+15664	Gasmaskenkatze
+15665	Chirurgen-Katze
+15666	Exorzistenkatze
+15669	Unsterblicher Meister Tengu
+15670	Katzenkaktus
+15671	Gepanzerte Glühwürmchenkatze
+15675	Extradimensionaler Envanz
+15676	Racquetkatze
+15677	Pilzkatze
+15683	Herrin der Täuschung Vega
+15684	Vampirischer Yukimura
+15686	Supersportwagen-Katze
+15692	Affenlord Uza
+15693	Oni-Kampfmaschine Kozuchimaru
+15698	Häuptlingskatze
+15699	Blitz-Jack
+15701	Auftragskiller-Katze
+15707	Seifenkatze
+15708	Fass-Katze
+15713	Kaolan Tatalan
+15714	Clownkatze
+15716	Hyper-Angriffsbataillon-Konvois
+15717	Polizistenkatze
+15718	Bauernjungenkatze
+15721	Gefallene Bärenkatze
+15724	Allmächtige Aset
+15725	Katzeneierkapsel
+15731	Löwentänzer-Katze
+15758	Brautkatze
+15766	Muschelkatze
+16131	Erwachte Ururun
+16173	Schulbus-Nyandam
+16269	Erwachte Mina
+16324	Erwachter Musashi
+16427	Ultimativer Mecha-Bun
+16463	Metafilibuster
+16465	Wiedergeb. Krieger Doguemon
+16533	Erwachter Urs
+16569	Idi:NX
+16614	Erwachter Doron
+16654	Erwachte Naala
+18025	Heilige Walkürenkatze
+18026	Erwachte Bahamut-Katze
+19001	Irokatze
+19002	Radierkatze
+19003	Dunkle Katze
+19004	Beinmuskelkater
+19005	Löwenkatze
+19006	Die Flugkatze
+19007	Inselkatze
+19008	Königsdrachenkatze
+19009	Jamierakatze
+19010	Wahre Superkatze
+30000	Angriff + D: Rot
+30001	Angriff + C: Rot
+30002	Angriff + B: Rot
+30003	Angriff + A: Rot
+30004	Angriff + S: Rot
+30005	Verteidigung + D: Rot
+30006	Verteidigung + C: Rot
+30007	Verteidigung + B: Rot
+30008	Verteidigung + A: Rot
+30009	Verteidigung + S: Rot
+30010	Angriff + D: Fliegend
+30011	Angriff + C: Fliegend
+30012	Angriff + B: Fliegend
+30013	Angriff + A: Fliegend
+30014	Angriff + S: Fliegend
+30015	Verteidigung + D: Fliegend
+30016	Verteidigung + C: Fliegend
+30017	Verteidigung + B: Fliegend
+30018	Verteidigung + A: Fliegend
+30019	Verteidigung + S: Fliegend
+30020	Angriff + D: Schwarz
+30021	Angriff + C: Schwarz
+30022	Angriff + B: Schwarz
+30023	Angriff + A: Schwarz
+30024	Angriff + S: Schwarz
+30025	Verteidigung + D: Schwarz
+30026	Verteidigung + C: Schwarz
+30027	Verteidigung + B: Schwarz
+30028	Verteidigung + A: Schwarz
+30029	Verteidigung + S: Schwarz
+30030	Verteidigung + D: Eisern
+30031	Verteidigung + C: Eisern
+30032	Verteidigung + B: Eisern
+30033	Verteidigung + A: Eisern
+30034	Verteidigung + S: Eisern
+30035	Angriff + D: Engel
+30036	Angriff + C: Engel
+30037	Angriff + B: Engel
+30038	Angriff + A: Engel
+30039	Angriff + S: Engel
+30040	Verteidigung + D: Engel
+30041	Verteidigung + C: Engel
+30042	Verteidigung + B: Engel
+30043	Verteidigung + A: Engel
+30044	Verteidigung + S: Engel
+30045	Angriff + D: Alien
+30046	Angriff + C: Alien
+30047	Angriff + B: Alien
+30048	Angriff + A: Alien
+30049	Angriff + S: Alien
+30050	Verteidigung + D: Alien
+30051	Verteidigung + C: Alien
+30052	Verteidigung + B: Alien
+30053	Verteidigung + A: Alien
+30054	Verteidigung + S: Alien
+30055	Angriff + D: Zombie
+30056	Angriff + C: Zombie
+30057	Angriff + B: Zombie
+30058	Angriff + A: Zombie
+30059	Angriff + S: Zombie
+30060	Verteidigung + D: Zombie
+30061	Verteidigung + C: Zombie
+30062	Verteidigung + B: Zombie
+30063	Verteidigung + A: Zombie
+30064	Verteidigung + S: Zombie
+30065	"Stark"-Effekt + D: Rot
+30066	"Stark"-Effekt + C: Rot
+30067	"Stark"-Effekt + B: Rot
+30068	"Stark"-Effekt + A: Rot
+30069	"Stark"-Effekt + S: Rot
+30070	Heftiger Schaden + D: Rot
+30071	Heftiger Schaden + C: Rot
+30072	Heftiger Schaden + B: Rot
+30073	Heftiger Schaden + A: Rot
+30074	Heftiger Schaden + S: Rot
+30075	„Stark“-Effekt + D: Rot
+30076	„Stark“-Effekt + C: Rot
+30077	„Stark“-Effekt + B: Rot
+30078	„Stark“-Effekt + A: Rot
+30079	„Stark“-Effekt + S: Rot
+30080	"Stark"-Effekt + D: Fliegend
+30081	"Stark"-Effekt + C: Fliegend
+30082	"Stark"-Effekt + B: Fliegend
+30083	"Stark"-Effekt + A: Fliegend
+30084	"Stark"-Effekt + S: Fliegend
+30085	Heftiger Schaden + D: Fliegend
+30086	Heftiger Schaden + C: Fliegend
+30087	Heftiger Schaden + B: Fliegend
+30088	Heftiger Schaden + A: Fliegend
+30089	Heftiger Schaden + S: Fliegend
+30090	„Stark“-Effekt + D: Fliegend
+30091	„Stark“-Effekt + C: Fliegend
+30092	„Stark“-Effekt + B: Fliegend
+30093	„Stark“-Effekt + A: Fliegend
+30094	„Stark“-Effekt + S: Fliegend
+30095	"Stark"-Effekt + D: Schwarz
+30096	"Stark"-Effekt + C: Schwarz
+30097	"Stark"-Effekt + B: Schwarz
+30098	"Stark"-Effekt + A: Schwarz
+30099	"Stark"-Effekt + S: Schwarz
+30100	Heftiger Schaden + D: Schwarz
+30101	Heftiger Schaden + C: Schwarz
+30102	Heftiger Schaden + B: Schwarz
+30103	Heftiger Schaden + A: Schwarz
+30104	Heftiger Schaden + S: Schwarz
+30105	„Stark“-Effekt + D: Schwarz
+30106	„Stark“-Effekt + C: Schwarz
+30107	„Stark“-Effekt + B: Schwarz
+30108	„Stark“-Effekt + A: Schwarz
+30109	„Stark“-Effekt + S: Schwarz
+30110	"Stark"-Effekt + D: Engel
+30111	"Stark"-Effekt + C: Engel
+30112	"Stark"-Effekt + B: Engel
+30113	"Stark"-Effekt + A: Engel
+30114	"Stark"-Effekt + S: Engel
+30115	Heftiger Schaden + D: Engel
+30116	Heftiger Schaden + C: Engel
+30117	Heftiger Schaden + B: Engel
+30118	Heftiger Schaden + A: Engel
+30119	Heftiger Schaden + S: Engel
+30120	„Stark“-Effekt + D: Engel
+30121	„Stark“-Effekt + C: Engel
+30122	„Stark“-Effekt + B: Engel
+30123	„Stark“-Effekt + A: Engel
+30124	„Stark“-Effekt + S: Engel
+30125	"Stark"-Effekt + D: Alien
+30126	"Stark"-Effekt + C: Alien
+30127	"Stark"-Effekt + B: Alien
+30128	"Stark"-Effekt + A: Alien
+30129	"Stark"-Effekt + S: Alien
+30130	Heftiger Schaden + D: Alien
+30131	Heftiger Schaden + C: Alien
+30132	Heftiger Schaden + B: Alien
+30133	Heftiger Schaden + A: Alien
+30134	Heftiger Schaden + S: Alien
+30135	„Stark“-Effekt + D: Alien
+30136	„Stark“-Effekt + C: Alien
+30137	„Stark“-Effekt + B: Alien
+30138	„Stark“-Effekt + A: Alien
+30139	„Stark“-Effekt + S: Alien
+30140	"Stark"-Effekt + D: Zombie
+30141	"Stark"-Effekt + C: Zombie
+30142	"Stark"-Effekt + B: Zombie
+30143	"Stark"-Effekt + A: Zombie
+30144	"Stark"-Effekt + S: Zombie
+30145	Heftiger Schaden + D: Zombie
+30146	Heftiger Schaden + C: Zombie
+30147	Heftiger Schaden + B: Zombie
+30148	Heftiger Schaden + A: Zombie
+30149	Heftiger Schaden + S: Zombie
+30150	„Stark“-Effekt + D: Zombie
+30151	„Stark“-Effekt + C: Zombie
+30152	„Stark“-Effekt + B: Zombie
+30153	„Stark“-Effekt + A: Zombie
+30154	„Stark“-Effekt + S: Zombie
+30155	Angriff + D: Aku
+30156	Angriff + C: Aku
+30157	Angriff + B: Aku
+30158	Angriff + A: Aku
+30159	Angriff + S: Aku
+30160	Verteidigung + D: Aku
+30161	Verteidigung + C: Aku
+30162	Verteidigung + B: Aku
+30163	Verteidigung + A: Aku
+30164	Verteidigung + S: Aku
+30165	"Stark"-Effekt + D: Aku
+30166	"Stark"-Effekt + C: Aku
+30167	"Stark"-Effekt + B: Aku
+30168	"Stark"-Effekt + A: Aku
+30169	"Stark"-Effekt + S: Aku
+30170	Heftiger Schaden + D: Aku
+30171	Heftiger Schaden + C: Aku
+30172	Heftiger Schaden + B: Aku
+30173	Heftiger Schaden + A: Aku
+30174	Heftiger Schaden + S: Aku
+30175	„Stark“-Effekt + D: Aku
+30176	„Stark“-Effekt + C: Aku
+30177	„Stark“-Effekt + B: Aku
+30178	„Stark“-Effekt + A: Aku
+30179	„Stark“-Effekt + S: Aku
+30180	Angriff + D: 
+30181	Angriff + C: 
+30182	Angriff + B: 
+30183	Angriff + A: 
+30184	Angriff + S: 
+30185	Verteidigung + D: 
+30186	Verteidigung + C: 
+30187	Verteidigung + B: 
+30188	Verteidigung + A: 
+30189	Verteidigung + S: 
+30190	"Stark"-Effekt + D: 
+30191	"Stark"-Effekt + C: 
+30192	"Stark"-Effekt + B: 
+30193	"Stark"-Effekt + A: 
+30194	"Stark"-Effekt + S: 
+30195	Heftiger Schaden + D: 
+30196	Heftiger Schaden + C: 
+30197	Heftiger Schaden + B: 
+30198	Heftiger Schaden + A: 
+30199	Heftiger Schaden + S: 
+30200	„Stark“-Effekt + D: 
+30201	„Stark“-Effekt + C: 
+30202	„Stark“-Effekt + B: 
+30203	„Stark“-Effekt + A: 
+30204	„Stark“-Effekt + S: 
+30205	Mini-Todes-Zufallsangriff D
+30206	Mini-Todes-Zufallsangriff C
+30207	Mini-Todes-Zufallsangriff B
+30208	Mini-Todes-Zufallsangriff A
+30209	Mini-Todes-Zufallsangriff S
+30210	Wellenschaden-Resistenz D
+30211	Wellenschaden-Resistenz C
+30212	Wellenschaden-Resistenz B
+30213	Wellenschaden-Resistenz A
+30214	Wellenschaden-Resistenz S
+30215	Skonto D
+30216	Skonto C
+30217	Skonto B
+30218	Skonto A
+30219	Skonto S
+30220	Rückstoß-Resistenz D
+30221	Rückstoß-Resistenz C
+30222	Rückstoß-Resistenz B
+30223	Rückstoß-Resistenz A
+30224	Rückstoß-Resistenz S
+30225	Legenden-Level stärken D
+30226	Legenden-Level stärken C
+30227	Legenden-Level stärken B
+30228	Legenden-Level stärken A
+30229	Legenden-Level stärken S
+30230	Kolosstöter D
+30231	Kolosstöter C
+30232	Kolosstöter B
+30233	Kolosstöter A
+30234	Kolosstöter S
+30235	Katzenkanonenaufl. D
+30236	Katzenkanonenaufl. C
+30237	Katzenkanonenaufl. B
+30238	Katzenkanonenaufl. A
+30239	Katzenkanonenaufl. S
+30240	Gift-Resistenz D
+30241	Gift-Resistenz C
+30242	Gift-Resistenz B
+30243	Gift-Resistenz A
+30244	Gift-Resistenz S
+30245	Angriff ausweichen (alle) D
+30246	Angriff ausweichen (alle) C
+30247	Angriff ausweichen (alle) B
+30248	Angriff ausweichen (alle) A
+30249	Angriff ausweichen (alle) S
+30250	Lähmung-Resistenz D
+30251	Lähmung-Resistenz C
+30252	Lähmung-Resistenz B
+30253	Lähmung-Resistenz A
+30254	Lähmung-Resistenz S
+30255	Fluch-Resistenz D
+30256	Fluch-Resistenz C
+30257	Fluch-Resistenz B
+30258	Fluch-Resistenz A
+30259	Fluch-Resistenz S
+30260	Unheimliche Legenden verstärken D
+30261	Unheimliche Legenden verstärken C
+30262	Unheimliche Legenden verstärken B
+30263	Unheimliche Legenden verstärken A
+30264	Unheimliche Legenden verstärken S
+30265	Konter: 1x Zufallsangriff D
+30266	Konter: 1x Zufallsangriff C
+30267	Konter: 1x Zufallsangriff B
+30268	Konter: 1x Zufallsangriff A
+30269	Konter: 1x Zufallsangriff S
+30270	Berserker D
+30271	Berserker C
+30272	Berserker B
+30273	Berserker A
+30274	Berserker S
+30275	Verkürzte Abklingzeit D
+30276	Verkürzte Abklingzeit C
+30277	Verkürzte Abklingzeit B
+30278	Verkürzte Abklingzeit A
+30279	Verkürzte Abklingzeit S
+30280	Einfrieren-Resistenz D
+30281	Einfrieren-Resistenz C
+30282	Einfrieren-Resistenz B
+30283	Einfrieren-Resistenz A
+30284	Einfrieren-Resistenz S
+30285	Schwächen-Resistenz D
+30286	Schwächen-Resistenz C
+30287	Schwächen-Resistenz B
+30288	Schwächen-Resistenz A
+30289	Schwächen-Resistenz S
+30290	Kosten D
+30291	Kosten C
+30292	Kosten B
+30293	Kosten A
+30294	Kosten S
+30295	Zufalls-Resistenzen D
+30296	Zufalls-Resistenzen C
+30297	Zufalls-Resistenzen B
+30298	Zufalls-Resistenzen A
+30299	Zufalls-Resistenzen S
+30300	Erste Belohnung erhöht D
+30301	Erste Belohnung erhöht C
+30302	Erste Belohnung erhöht B
+30303	Erste Belohnung erhöht A
+30304	Erste Belohnung erhöht S
+30305	Explosion-Resistenzen D
+30306	Explosion-Resistenzen C
+30307	Explosion-Resistenzen B
+30308	Explosion-Resistenzen A
+30309	Explosion-Resistenzen S

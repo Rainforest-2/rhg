@@ -5,7 +5,7 @@ import { ProductionCardSkin, PRODUCTION_CARD_CANVAS } from './ProductionCardSkin
 
 const loadImage = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(`image load failed:${src}`)); i.src = src; });
 
-export function getCardStackRenderModel(scene, col) { const rows = scene?.getPlayerLineupRows?.() || [[], []]; const front = scene?.frontLineup ?? 0; const back = front === 0 ? 1 : 0; const frontUnit = rows[front]?.[col] || null; const backUnit = rows[back]?.[col] || null; const econ = scene?.economy; const frontStatus = frontUnit && econ ? econ.getStatus(frontUnit) : null; const backStatus = backUnit && econ ? econ.getStatus(backUnit) : null; return { col, back: { unitDef: backUnit, interactive: false, row: back, affordable: backStatus?.affordable ?? true, cooldownReady: backStatus?.cooldownReady ?? true, cooldownRatio: backStatus?.cooldownRatio ?? 0 }, front: { unitDef: frontUnit, interactive: !!frontUnit && !scene?.lineupChanging, row: front, affordable: frontStatus?.affordable ?? true, cooldownReady: frontStatus?.cooldownReady ?? true, cooldownRatio: frontStatus?.cooldownRatio ?? 0 } }; }
+export function getCardStackRenderModel(scene, col) { const rows = scene?.getPlayerLineupRows?.() || [[], []]; const front = scene?.frontLineup ?? 0; const back = front === 0 ? 1 : 0; const frontUnit = rows[front]?.[col] || null; const backUnit = rows[back]?.[col] || null; const econ = scene?.economy; const frontStatus = frontUnit && econ ? econ.getStatus(frontUnit) : null; const backStatus = backUnit && econ ? econ.getStatus(backUnit) : null; return { col, back: { unitDef: backUnit, interactive: false, row: back, affordable: backStatus?.affordable ?? true, cooldownReady: backStatus?.cooldownReady ?? true, cooldownProgressRatio: backStatus?.cooldownProgressRatio ?? 1 }, front: { unitDef: frontUnit, interactive: !!frontUnit && !scene?.lineupChanging, row: front, affordable: frontStatus?.affordable ?? true, cooldownReady: frontStatus?.cooldownReady ?? true, cooldownProgressRatio: frontStatus?.cooldownProgressRatio ?? 1 } }; }
 export function getLineupRenderModel(scene) { return Array.from({ length: LINEUP_COLS }, (_, col) => getCardStackRenderModel(scene, col)); }
 
 export class PlayerProductionBar {
@@ -21,7 +21,7 @@ export class PlayerProductionBar {
       icon: entry.icon,
       iconLoadFailed: entry.iconLoadFailed === true,
       cost: entry.unitDef?.cost ?? 0,
-      cooldownRatio: entry.cooldownRatio ?? 0,
+      cooldownProgressRatio: entry.cooldownProgressRatio ?? 1,
       affordable: entry.affordable !== false,
       cooldownReady: entry.cooldownReady !== false,
       interactive: entry.interactive !== false,
@@ -29,5 +29,5 @@ export class PlayerProductionBar {
       isEmpty: !entry.unitDef
     });
   }
-  async update(scene = this.scene) { this.scene = scene; if (!scene) return; const model = getLineupRenderModel(scene); for (const stack of this.cardStacks) { const m = model[stack.col]; const backAsset = await this.ensureCardAssets(m.back.unitDef); const frontAsset = await this.ensureCardAssets(m.front.unitDef); const backEntry = { ...m.back, icon: backAsset?.icon || null, iconLoadFailed: backAsset?.failed === true, interactive: false, affordable: m.back?.affordable !== false, cooldownReady: m.back?.cooldownReady !== false, cooldownRatio: m.back?.cooldownRatio ?? 0 }; const frontEntry = { ...m.front, icon: frontAsset?.icon || null, iconLoadFailed: frontAsset?.failed === true, affordable: m.front?.affordable !== false, cooldownReady: m.front?.cooldownReady !== false, cooldownRatio: m.front?.cooldownRatio ?? 0 }; this.drawCard(stack.backCtx, backEntry, true); this.drawCard(stack.frontCtx, frontEntry, false); stack.frontCanvas.classList.toggle('is-disabled', !frontEntry.interactive); } }
+  async update(scene = this.scene) { this.scene = scene; if (!scene) return; const model = getLineupRenderModel(scene); for (const stack of this.cardStacks) { const m = model[stack.col]; const backAsset = await this.ensureCardAssets(m.back.unitDef); const frontAsset = await this.ensureCardAssets(m.front.unitDef); const backEntry = { ...m.back, icon: backAsset?.icon || null, iconLoadFailed: backAsset?.failed === true, interactive: false, affordable: m.back?.affordable !== false, cooldownReady: m.back?.cooldownReady !== false, cooldownProgressRatio: m.back?.cooldownProgressRatio ?? 1 }; const frontEntry = { ...m.front, icon: frontAsset?.icon || null, iconLoadFailed: frontAsset?.failed === true, affordable: m.front?.affordable !== false, cooldownReady: m.front?.cooldownReady !== false, cooldownProgressRatio: m.front?.cooldownProgressRatio ?? 1 }; this.drawCard(stack.backCtx, backEntry, true); this.drawCard(stack.frontCtx, frontEntry, false); stack.frontCanvas.classList.toggle('is-disabled', !frontEntry.interactive); } }
 }

@@ -11,6 +11,7 @@ import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
 import { FormationEditor } from '../ui/FormationEditor.js';
 import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
 import { BattleSimulationClock } from './BattleSimulationClock.js';
+import { BattleCameraInputController } from './BattleCameraInputController.js';
 
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -26,7 +27,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock(); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.fixedStepMs=1000/30; this.maxSubStepsPerFrame=5; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock(); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.fixedStepMs=1000/30; this.maxSubStepsPerFrame=5; this.cameraInputController=null; }
 
   async start() {
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
@@ -38,6 +39,8 @@ export class PreviewApp {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
       this.ui.init(this.assets, { speed: (s) => { const v=Number(s); this.battleSpeedMultiplier=Number.isFinite(v)&&v>0?v:1; this.animator?.setSpeed?.(this.battleSpeedMultiplier); this.ui?.setStatus?.(`battle speed ${this.battleSpeedMultiplier}x`); }, scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle({ keepFormationVisible: false, showOverlay: true }) });
+      this.cameraInputController = new BattleCameraInputController(this.renderer.canvas, () => this.battleScene?.camera);
+      this.cameraInputController.attach();
       const battleMount=document.querySelector('.canvas-panel')||document.body;
       this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); } });
       this.formationEditor.setVisible(true);

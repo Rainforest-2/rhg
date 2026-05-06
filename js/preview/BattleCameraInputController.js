@@ -1,0 +1,12 @@
+export class BattleCameraInputController {
+  constructor(canvas, getCamera, options = {}) { this.canvas = canvas; this.getCamera = getCamera; this.options = options; this.active = new Map(); this._onDown=this.onDown.bind(this); this._onMove=this.onMove.bind(this); this._onUp=this.onUp.bind(this); this._onWheel=this.onWheel.bind(this); }
+  attach(){ if(!this.canvas) return; this.canvas.style.touchAction='none'; this.canvas.style.overscrollBehavior='none'; this.canvas.addEventListener('pointerdown',this._onDown); this.canvas.addEventListener('pointermove',this._onMove); this.canvas.addEventListener('pointerup',this._onUp); this.canvas.addEventListener('pointercancel',this._onUp); this.canvas.addEventListener('lostpointercapture',this._onUp); this.canvas.addEventListener('wheel',this._onWheel,{passive:false}); }
+  detach(){ if(!this.canvas) return; this.canvas.removeEventListener('pointerdown',this._onDown); this.canvas.removeEventListener('pointermove',this._onMove); this.canvas.removeEventListener('pointerup',this._onUp); this.canvas.removeEventListener('pointercancel',this._onUp); this.canvas.removeEventListener('lostpointercapture',this._onUp); this.canvas.removeEventListener('wheel',this._onWheel); this.active.clear(); }
+  onDown(e){ this.canvas.setPointerCapture?.(e.pointerId); this.active.set(e.pointerId,{x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY}); }
+  onMove(e){ if(!this.active.has(e.pointerId)) return; const p=this.active.get(e.pointerId); p.px=p.x; p.py=p.y; p.x=e.clientX; p.y=e.clientY; const cam=this.getCamera?.(); if(!cam) return;
+    const pts=[...this.active.values()]; if(pts.length===1){ cam.panByScreenDelta(p.x-p.px); return; }
+    if(pts.length>=2){ const [a,b]=pts; const prev=Math.hypot(a.px-b.px,a.py-b.py); const cur=Math.hypot(a.x-b.x,a.y-b.y); if(prev>0&&cur>0){ const center=(a.x+b.x)*0.5; cam.zoomAtScreenPoint(center, cam.zoom*(cur/prev)); } }
+  }
+  onUp(e){ this.active.delete(e.pointerId); }
+  onWheel(e){ const cam=this.getCamera?.(); if(!cam) return; e.preventDefault(); if(e.ctrlKey||e.metaKey){ cam.zoomAtScreenPoint(e.clientX, cam.zoom*(e.deltaY<0?1.08:0.92)); } else { cam.panByScreenDelta(-(e.deltaX||e.deltaY)); } }
+}

@@ -1,3 +1,4 @@
+import { hasBcuEnemyAsset } from '../data/bcuAvailableEnemyAssets.js';
 export function formatBcuId(id) {
   const n = Number(id);
   if (!Number.isFinite(n)) return '000';
@@ -26,6 +27,7 @@ export function buildBcuEnemyAssetDef(enemyId) {
 
 export function buildStageEnemyUnitDef(row) {
   const bcuId = formatBcuId(row?.enemyId);
+  const available = hasBcuEnemyAsset(row?.enemyId);
   return {
     slotId: `stage-enemy-${bcuId}`,
     label: `敵${bcuId}`,
@@ -45,11 +47,11 @@ export function buildStageEnemyUnitDef(row) {
     moveAnimId: 'anim00',
     attackAnimId: 'anim02',
     knockbackAnimId: 'anim03',
-    stageSpawn: { ...row }
+    unavailable: !available, stageSpawn: { ...row }
   };
 }
 
 export function buildStageEnemyUnitDefs(stageRuntime) {
   const rows = Array.isArray(stageRuntime?.enemyRows) ? stageRuntime.enemyRows : [];
-  return rows.filter((r) => Number.isFinite(r?.enemyId) && r.enemyId >= 0).map((r) => buildStageEnemyUnitDef(r));
+  return rows.filter((r) => Number.isFinite(r?.enemyId) && r.enemyId >= 0).map((r) => buildStageEnemyUnitDef(r)).filter((u)=>!u.unavailable);
 }

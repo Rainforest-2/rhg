@@ -1,8 +1,11 @@
-export const PLAYABLE_REGISTRY_VERSION = '0.12.0';
+export const PLAYABLE_REGISTRY_VERSION = '0.12.1';
 export const DOG_DEFAULT_COST = 100;
 
 export function formatBcuId(id) {
-  return String(Number(id) || 0).padStart(3, '0');
+  if (!Number.isInteger(id) || id < 0 || id > 999) {
+    throw new Error(`Invalid BCU id: ${id}`);
+  }
+  return String(id).padStart(3, '0');
 }
 
 export const DOG_PLAYABLE_SPECS = Object.freeze([
@@ -14,7 +17,11 @@ export const DOG_PLAYABLE_SPECS = Object.freeze([
   { id: 5, characterId: 'dog-enemy-005', label: '敵005', cooldownMs: 3500 },
   { id: 6, characterId: 'dog-enemy-006', label: '敵006', cooldownMs: 3500 },
   { id: 7, characterId: 'dog-enemy-007', label: '敵007', cooldownMs: 3500 },
-  { id: 8, characterId: 'dog-enemy-008', label: '敵008', cooldownMs: 3500 }
+  { id: 8, characterId: 'dog-enemy-008', label: '敵008', cooldownMs: 3500 },
+  { id: 9, characterId: 'dog-enemy-009', label: '敵009', cooldownMs: 3500 },
+  { id: 10, characterId: 'dog-enemy-010', label: '敵010', cooldownMs: 3500 },
+  { id: 11, characterId: 'dog-enemy-011', label: '敵011', cooldownMs: 3500 },
+  { id: 12, characterId: 'dog-enemy-012', label: '敵012', cooldownMs: 3500 }
 ]);
 
 export const CAT_PLAYABLE_SPECS = Object.freeze([
@@ -26,7 +33,11 @@ export const CAT_PLAYABLE_SPECS = Object.freeze([
   { unitId: 5, characterId: 'cat-bird', label: 'ネコノトリ', baseCharacterId: 'cat-bird', defaultCost: 975, defaultCooldownMs: 3500, collisionRadius: 44, scale: 1.12 },
   { unitId: 6, characterId: 'cat-fish', label: 'ネコフィッシュ', baseCharacterId: 'cat-fish', defaultCost: 1200, defaultCooldownMs: 4500, collisionRadius: 44, scale: 1.12 },
   { unitId: 7, characterId: 'cat-lizard', label: 'ネコトカゲ', baseCharacterId: 'cat-lizard', defaultCost: 1500, defaultCooldownMs: 5500, collisionRadius: 44, scale: 1.12 },
-  { unitId: 8, characterId: 'cat-titan', label: '巨神ネコ', baseCharacterId: 'cat-titan', defaultCost: 1950, defaultCooldownMs: 7000, collisionRadius: 50, scale: 1.12 }
+  { unitId: 8, characterId: 'cat-titan', label: '巨神ネコ', baseCharacterId: 'cat-titan', defaultCost: 1950, defaultCooldownMs: 7000, collisionRadius: 50, scale: 1.12 },
+  { unitId: 9, characterId: 'cat-unit-009-f', label: 'ユニット009', baseCharacterId: 'cat-unit-009', form: 'f', defaultCost: 2000, defaultCooldownMs: 7000, collisionRadius: 44, scale: 1.12 },
+  { unitId: 10, characterId: 'cat-unit-010-f', label: 'ユニット010', baseCharacterId: 'cat-unit-010', form: 'f', defaultCost: 2000, defaultCooldownMs: 7000, collisionRadius: 44, scale: 1.12 },
+  { unitId: 11, characterId: 'cat-unit-011-f', label: 'ユニット011', baseCharacterId: 'cat-unit-011', form: 'f', defaultCost: 2000, defaultCooldownMs: 7000, collisionRadius: 44, scale: 1.12 },
+  { unitId: 12, characterId: 'cat-unit-012-f', label: 'ユニット012', baseCharacterId: 'cat-unit-012', form: 'f', defaultCost: 2000, defaultCooldownMs: 7000, collisionRadius: 44, scale: 1.12 }
 ]);
 
 export function buildDogRosterEntry(spec) { const bcuId = formatBcuId(spec.id); const cooldownMs = spec.cooldownMs ?? 3500; return { slotId: spec.characterId, baseCharacterId: spec.characterId, label: spec.label, assetId: `enemy-${bcuId}`, statsType: 'enemy', statsId: spec.id, faction: 'dog', factionLabel: 'ワンコ軍', sourceKind: 'enemy', sourceRoster: 'dogPlayer', sourceSlotId: spec.characterId, cost: DOG_DEFAULT_COST, defaultCost: DOG_DEFAULT_COST, cooldownMs, defaultCooldownMs: cooldownMs, productionCostSource: 'catalog', productionCooldownSource: 'catalog', side: 'dog-player', direction: -1, facing: -1, renderFlipX: true, collisionRadius: 46, scale: 1.12, idleAnimId: 'anim01', moveAnimId: 'anim00', attackAnimId: 'anim02', knockbackAnimId: 'anim03', economySource: 'provisional-design', ...(spec.combatPositionOffsetPx !== undefined ? { combatPositionOffsetPx: spec.combatPositionOffsetPx } : {}), ...(spec.combatEdgeInsetPx !== undefined ? { combatEdgeInsetPx: spec.combatEdgeInsetPx } : {}), ...(spec.combatPositionSource ? { combatPositionSource: spec.combatPositionSource } : {}), uiIcon: { kind: 'enemy', bcuId, primary: `./public/assets/bcu/000010/org/enemy/${bcuId}/enemy_icon_${bcuId}.png`, fallback: `./public/assets/bcu/000002/org/enemy/${bcuId}/edi_${bcuId}.png` } }; }

@@ -1,0 +1,1063 @@
+0|S0|I0	Accélération
+1|S1|I1	Détecteur de trésor
+2|S2|I2	Chat fortuné
+3|S3|I3	Chat numérique
+4|S4|I4	Chat diplômé
+5|S5|I5	Chat tireur
+6|S6|I201	XP
+7|S7|I217	NP
+8	dummy
+9	dummy
+10	5 000 XP
+11	10 000 XP
+12	30 000 XP
+13	50 000 XP
+14	100 000 XP
+15	200 000 XP
+16	500 000 XP
+17	1 000 000 XP
+18	2 000 000 XP
+19	500 000 XP
+20|S11|I202	Ticket Chapsule
+21|S12|I203	Ticket rare
+22|S13|I200	Miam
+23|S16|I400	Ticket chance
+26|S17|I403	Ticket chance
+27|S18|I404	Ticket chance
+28|S19|I405	Ticket chance
+29|S20|I204	Ticket platine
+30|S30|I500	Graine de Chagrume violet
+31|S31|I501	Graine de Chagrume rouge
+32|S32|I502	Graine de Chagrume bleu
+33|S33|I503	Graine de Chagrume vert
+34|S34|I504	Graine de Chagrume jaune
+35|S35|I505	Chagrume violet
+36|S36|I506	Chagrume rouge
+37|S37|I507	Chagrume bleu
+38|S38|I508	Chagrume vert
+39|S39|I509	Chagrume jaune
+40|S40|I510	Chagrume épique
+41|S41|I511	Graine Chagrume ancestral
+42|S42|I512	Chagrume ancestral
+43|S43|I513	Graine Chagrume épique
+44|S44|I514	Chagrume doré
+45|S21|I406	Ticket chance
+46|S22|I407	Ticket chance
+47|S23|I408	Ticket chance
+48|S24|I409	Ticket chance
+49|S25|I410	Ticket chance
+50|S50|I600	Œil-de-chat [spécial]
+51|S51|I601	Œil-de-chat [rare]
+52|S52|I602	Œil-de-chat [super rare]
+53|S53|I603	Œil-de-chat [ultra rare]
+54|S54|I604	Œil-de-chat [légendaire]
+55|S55|I700	Vichamine [A]
+56|S56|I701	Vichamine [B]
+57|S57|I702	Vichamine [C]
+58|S58|I605	Œil-de-chat [ombre]
+60|S60	Attaque du Chanon
+61|S61	Portée du Chanon
+62|S62	Charge du Chanon
+63|S63	Efficacité Chadjoint
+64|S64	Portefeuille Chadjoint
+65|S65	Défense de la base
+66|S66	Recherche
+67|S67	Rentabilité
+68|S68	Expertise
+69|S69	Charburant
+70|S70	Cat Ally: Dummy 1
+71|S71	Cat Ally: Dummy 2
+72|S72	Cat Ally: Dummy 3
+73|S73	Cat Ally: Dummy 4
+74|S74	Cat Ally: Dummy 5
+75|S26|I411	Ticket chance
+76|S76|I205	Ticket chance
+77|S77|I206	Ticket chance G
+78	100 000 XP
+80|S80|I6	XP
+81|S81|I7	XP
+82|S82|I8	XP
+83|S83|I9	XP
+84|S84|I10	XP
+85|S85|I610	Briques
+86|S86|I611	Plumes
+87|S87|I612	Charbon
+88|S88|I613	Rouages
+89|S89|I614	Or
+90|S90|I615	Météorites
+91|S91|I616	Os de bête
+92|S92	Ingénieurs
+93|S93|I207	Ticket chance
+94|S94|I208	Ticket chance G
+95|S95|I209	Ticket chance G
+96|S96|I210	Ticket chance G
+97|S97|I211	Ticket chance G
+98|S98|I212	Ticket chance G
+99|S99|I213	Ticket chance
+100|S100|I214	Ticket chance G
+101|S101|I215	Ticket chance
+102|S102|I216	Ticket chance G
+103|S103|I218	Ticket chance G
+104|S104|I219	Ticket chance
+105|S105|I220	Autorité
+106|S106|I221	Ticket chance G
+107|S107|I222	Ticket chance
+108|S108|I223	Ticket chance G
+109|S109|I224	Ticket chance G
+110|S110|I225	Ticket chance
+112|S112|I226	Ticket chance
+113|S113|I227	Ticket chance G
+114|S114|I228	Ticket chance G
+115|S115|I229	Ticket chance G
+116|S116|I230	Ticket chance
+117|S117|I231	Ticket chance
+118|S118|I232	Ticket chance G
+119|S119|I233	Ticket chance G
+120|S120|I234	Ticket chance G
+121|S121|I235	Ticket chance G
+122|S122|I236	Ticket chance
+123|S123	Pack de redémarrage
+124|S124|I237	Ticket chance G
+125|S125|I238	Ticket chance G
+126|S126|I239	Ticket chance
+127|S127|I240	Ticket chance
+128|S128|I241	Ticket chance G
+129|S129|I242	Ticket chance G
+130|S130|I243	Ticket chance G
+131|S131|I244	Ticket chance G
+132|S132|I245	Ticket chance
+133|S133|I246	Ticket chance G
+134|S134|I247	Ticket chance
+135|S135|I248	Ticket chance G
+136|S136|I249	Ticket chance
+137|S137|I413	Bikkuriman Choco
+138|S138|I250	Ticket chance G
+139|S139|I251	Ticket chance
+140|S140|I617	Ammonite
+141|S141|I252	Ticket chance G
+142|S142|I253	Ticket chance G
+143|S143|I254	Ticket chance
+144|S144|I255	Ticket chance G
+145|S145|I256	Ticket légendaire
+146|S146|I257	Ticket chance G
+147|S147|I258	Ticket chance
+148|S148|I259	Ticket chance
+149|S149|I260	Ticket chance G
+150|S150|I261	Ticket chance G
+151|S151	3 h de Chats fortunés illimités
+152|S152	3 h de Chats numériques illimités
+153|S153	3 h de Chats tireurs illimités
+154|S154|I262	Ticket chance G
+155|S155|I263	Ticket chance
+156|S156|I264	Ticket chance G
+157|S157|I270	Éclat platine
+158|S158|I414	Filet légendaire
+159	5 000 XP
+160|S160|I515	Graine de Chagrume Aku
+161|S161|I516	Chagrume Aku
+163|S163|I416	boîte mystère
+164|S164|I517	Graine de Chagrume doré
+166|S166|I418	Lettre d’amour
+167|S167|I518	Pierre B. violette
+168|S168|I519	Pierre B. rouge
+169|S169|I520	Pierre B. bleue
+170|S170|I521	Pierre B. verte
+171|S171|I522	Pierre B. jaune
+172|S172|I419	Eau bénite
+173|S173|I420	Filets légendaires
+174|S174|I710	Médaille de bronze
+175|S175|I711	Médaille d’argent
+176|S176|I712	Médaille d’or
+177|S177|I713	Médaille platine
+178|S178|I421	Pass Légende
+179|S179|I523	G. Béhém. violette
+180|S180|I524	Gemme Béhém. rouge
+181|S181|I525	Gemme Béhém. bleue
+182|S182|I526	Gemme Béhém. verte
+183|S183|I527	Gemme Béhém. jaune
+184|S184|I528	P. Béhémoth épique
+185|S185|I422	Charme légendaire
+186|S186|I423	Lettre d’amour
+187|S187|I618	Brique Z
+188|S188|I619	Plumes Z
+189|S189|I620	Charbon Z
+190|S190|I621	Rouages Z
+191|S191|I622	Or Z
+192|S192|I623	Météorite Z
+193|S193|I624	Os de bête Z
+194|S194|I625	Ammonite Z
+195|S195|I424	Eau bénite
+196|S196|I425	filets légendaires
+197	1 000 000 XP
+198|S198|I426	Petite médaille
+199|S199|I427	Charme légendaire
+200|S200|I428	Lettre d’amour
+201|S201|I11	XP
+202|S202|I429	Eau bénite
+203|S203|I430	Filet légendaire
+204|S204|I431	Piège légendaire
+206|S206|I433	Esprit légendaire
+207|S207|I720	Fonds de guerre
+209|I435	Coffre au trésor (bronze)
+210|I436	Coffre au trésor (argent)
+211|I437	Coffre au trésor (or)
+212|I265	Ticket des 100M
+213|S213|I438	Lettre d’amour
+214|S214|I439	Panier légendaire
+215|S215|I440	Legendary Dumbbell
+216|S216|I441	Piège légendaire
+217|I442	Coffre au trésor (bronze)
+218|I443	Coffre au trésor (argent)
+219|I444	Coffre au trésor (or)
+220|S220|I445	Billets de banque légendaires
+221|S221|I446	Star légendaire
+222	2 000 XP
+223	25 000 XP
+224|I447	Coffre au trésor (bronze)
+225|I448	Coffre au trésor (argent)
+226|I449	Coffre au trésor (or)
+227|S227|I450	Esprit légendaire
+228|I451	Coffre au trésor (bronze)
+229|I452	Coffre au trésor (argent)
+230|I453	Coffre au trésor (or)
+232|I455	Coffre au trésor (bronze)
+233|I456	Coffre au trésor (argent)
+234|I457	Coffre au trésor (or)
+235|S235|I458	Charme légendaire
+236|I459	Coffre au trésor (bronze)
+237|I460	Coffre au trésor (argent)
+238|I461	Coffre au trésor (or)
+239|I462	Coffre au trésor (bronze)
+240|I463	Coffre au trésor (argent)
+241|I464	Coffre au trésor (or)
+242|S242|I465	Lettre d’amour
+243|S243|I466	Star légendaire
+244|I467	Coffre au trésor (bronze)
+245|I468	Coffre au trésor (argent)
+246|I469	Coffre au trésor (or)
+1001	Chat Jour des sports
+1003	Chat salarié
+1004	Chat poisson renne
+1005	Chat en bronze
+1006	Chat droïde
+1007	Chat adulte
+1008	Chat diabolique
+1009	Chats poupées
+1010	Minette
+1011	Chabaret
+1012	Chat koï
+1013	Madame mariée
+1014	Reine des vacances
+1015	Chat vengeur
+1016	Chat kung-fu X
+1018	Chat mallow
+1019	Cat Kart R
+1020	Chat Baozi
+1021	Chat burger
+1022	Chatrouille
+1023	Chadeau
+1024	Chat gyropode
+1025	Chat Awa-Odori
+1026	Félin Express
+1027	Chat de ligue mineure
+1028	Chat stand
+1029	Pom-pom Chatte
+1030	Chat tueur
+1031	Chat curling
+1032	Chat œuf
+1033	Frères Chats
+1035	Squish Ball Cat
+1036	Chat volley
+1037	Chat en verre
+1038	Moneko maboule
+1039	Chat jockey
+1040	Chat et son chaton
+1041	Chat primitif
+1042	Toutoumaru
+1043	Cat Bros
+1044	Forfélin
+1045	Chatte Médusa
+1046	Chat gluant
+1047	Chat cosaque
+1048	Professeur Ours-Chat
+1049	Urs et Fenrir
+1050	Chat rugby
+1051	Chat fantôme
+1052	Chat boulanger
+1053	Chat de pierre
+1054	Doron masque ancestral
+1055	Chercheur d'ennemis Akus
+1056	Chat joueur de flûte
+1057	Challigraphe
+1058	Bête ancestrale Naala
+1059	Œuf ancien N001
+1060	Œuf ancien N003
+1061	Œuf ancien N004
+1062	Œuf ancien N000
+1063	Chat tank tueur
+1064	Œuf ancien N005
+1065	Chat à propulsion
+1066	Chat mélasse
+1067	Œuf ancien : N006
+1068	Soracte, mentor mental
+1069	Chat joueur de bowling
+1070	Grand Chat tueur
+1071	Maître de la Logique Newton
+1072	Chat charpentier
+1074	Chat livreur de journaux
+1075	Chat vachoiseau tueur
+1100	Chat en bronze
+1101	Chastronaute
+1102	Chat corde à sauter
+1103	Chat maboul
+1104	Chat tank maboul
+1105	Chat borgne maboul
+1106	Grand Chat maboul
+1107	Chat vache maboul
+1108	Chat oiseau maboul
+1109	Chat poisson maboul
+1110	Chat lézard maboul
+1111	Chat titan maboul
+1112	Healer
+1113	Ururun et Loup
+1114	Chat mécanique
+1116	Huchat hoop
+1118	P’tit Nyandam
+1119	Takuya ＆ Yuki
+1120	Chat fanfare
+1121	HYAKUTARO
+1122	Sleeping Beauty Punt
+1130	Chat tornade
+1131	Chaperon Mina
+1132	Funghi
+1134	Li'l Madoka
+1135	Kyubey Cat
+1137	PIKOTARO
+1139	Miyamoku Musashi
+1140	Redhead Yuki Cat
+1142	Li'l Shirou
+1143	Akio Yabe
+1144	Karin Nekozuka
+1145	Misaki Konno
+1146	Sairi Nijitani
+1147	Ren Katagiri
+1148	Mentori
+1149	Shinji & Cat
+1150	Giraffe Unit-01
+1151	Pokota
+1152	Ovis
+1153	Coco
+1157	Méca-Bun
+1158	Betakkuma
+1160	Meowla Meowla
+1162	Prince Yamato
+1164	Kano ＆ Souma
+1167	Ryu Cat
+1168	Akuma Giraffe
+1170	Miku Cat
+1172	Idi:N
+1173	Ranma Cat (M)
+1174	Godzilla Cat
+1177	Osamu Mikumo & Cat
+1178	Yuma Kuga & Cat
+1183	Madhead
+1184	Kenshin Cat
+1185	Maître de la vie Dr Nova
+1186	Sonic Cat
+1187	Tanjiro Cat
+10010	Chat malabar
+10011	Chat danseur
+10012	Hyper Mr.
+10013	Chat bondage ultime
+10014	Dark Lasor
+10015	Chartillerie lourde
+10016	Chat sucette
+10018	Chat monocycle
+10019	Chat ninja volant
+10020	Chat squelette
+10021	Chat pâtissier
+10022	Chat bol de riz
+10023	Chamigo
+10024	Chat pagne
+10027	Bridal Princess Punt
+10061	Chanimateur
+10064	Chats déchaînés
+10070	Oversleeping Beauty Punt
+10071	Chat ritualiste
+10075	Chat bûche de Noël
+10079	Chastronaute de la Marine
+10080	Chat prisonnier
+10081	Frères gentlemen
+10082	Chaladdin
+10089	Chats nouilles à sauter
+10092	Chat punk dément
+10093	Chat gomme dément
+10094	Chat de l’ombre dément
+10095	Chat jambes d’acier dément
+10096	Chat lion dément
+10097	Chat volant dément
+10098	Chat île dément
+10099	Roi dragon dément
+10100	Chat Jamilar dément
+10101	Chatcheuse
+10104	Méga Chat EX
+10105	Bécot et koï
+10110	Madame savane
+10120	Healer Cat CC
+10122	Merc & Cat CC
+10123	Chatte réceptionniste
+10127	Marionnettiste et Charly
+10128	Chat bombe à retardement
+10129	Chat cerf-volant
+10133	Griffe de fer X
+10155	Roi du cerceau
+10180	Takuya＆ Lovely Yuki
+10184	Cat Kart P
+10192	Titi Cat CC
+10202	Chat mochi
+10210	P’tit Chat punk
+10211	P’tit Chat gomme
+10212	P’tit Chat de l’ombre
+10246	P’tit Chat jambes d’acier
+10247	P’tit Chat lion
+10248	P’tit Chat volant
+10261	Chat voyageur temporel
+10268	Chat typhon
+10274	Soba féline
+10285	Chat TGV
+10288	Chat golfeur
+10300	Li'l Ultimate Madoka
+10301	Li'l Devil Homura
+10304	Chat de la cantine
+10312	P’tit Chat île
+10313	P’tit Chat roi dragon
+10314	P’tit Chat Jamilar
+10325	Charapace verte
+10330	Chat œuf de Pâques
+10341	Redhead Muscled Yuki Cat
+10353	Grand maître Chat masqué
+10370	Saber Alter Cat
+10380	Chat curry
+10383	Chat en cristal macho
+10384	Yulala spirituel
+10386	Akio & Gunder CC
+10403	Plug Suit Shinji Black
+10406	Moon Kaworu
+10443	Chats touristes
+10453	Chat du futur
+10474	Rampaging Yamato
+10475	Strike Angel
+10522	Chat Naga
+10528	Chat boulette de gelée
+10529	Chat garde royal
+10532	Ours-Chat cadavre
+10540	Chaterback
+10546	Chat-bulle
+10554	Chat poulet frit
+10555	Uril ésotérique
+10622	Chercheur félin
+10624	Chat de laiton
+10630	Chat punk sous contrôle
+10637	Chat gomme sous contrôle
+10646	Chat de l'ombre sous contrôle
+10655	Chat jambes d'acier sous contrôle
+10663	Chat lion sous contrôle
+10668	Chat volant sous contrôle
+10685	Chat île sous contrôle
+10689	Chat roi dragon sous contrôle
+10695	Chat Jamilar sous contrôle
+15017	Moneko Superstar
+15031	Chat Tathagata
+15032	Chat ultra délinquant
+15033	Chatte cancan
+15034	Chat poulpe
+15035	Ultralan Pasalan
+15036	Chat cyberpunk
+15037	Chat à écailles
+15038	Chat jiangshi
+15039	Chat flocon
+15040	iChat
+15041	Chat au bain de luxe
+15042	Cyborg féline
+15043	Chat cristal de glace
+15044	Chat mecha 3.0
+15045	Chat Balrog supérieur
+15047	Chatosaure
+15048	Combattant Chaximum
+15049	Pirate de l’effroi
+15050	Chat Ishikawa Goemon
+15051	Chat sanzo
+15052	Chat médecin
+15053	Chat nécrodanseur
+15056	Enchanteresse féline
+15057	Chagittaire
+15058	Chat paladin
+15059	Chat épéiste élémentaire
+15060	Chats au berceau
+15062	Chats œufs de poisson
+15067	PPT46
+15068	Crystal Li'l Gau Gau
+15069	Judgment
+15072	Yukimura immortel
+15073	Keiji immortel
+15074	Nobunaga immortel
+15076	Venteuse divine
+15077	Tonnia divine
+15084	Dieu empereur Sodom
+15085	Dieu empereur Megidora
+15086	Dieu empereur Vars
+15087	Dieu empereur Kamukura
+15088	Dieu empereur Raiden
+15106	Kuu divine
+15107	Kai divine
+15108	Mine divine
+15112	Frolicking Nono CC
+15120	Wyvern and Alec
+15124	Chats Val Val
+15125	Masamune immortel
+15126	Shingen immortel
+15130	Chat macho scintillant
+15135	Roi Gamereon
+15136	Ultima Galaxie Cosmo
+15137	Les diablotins adorables
+15138	Méga-château de Jizo
+15139	La lune du chaos
+15144	Félinfirmière joyeuse
+15145	Ultra base féline
+15146	Chat rodéo
+15147	Chacrobates
+15148	Robochat
+15149	Chat ramen
+15150	Chatographe
+15151	Juliette maiko
+15152	Chat pizza
+15153	Chats burlesques
+15154	Chamophone
+15159	Kenshin immortelle
+15160	Kalisa divine
+15161	Gekirinchi
+15162	Manic Princess Punt
+15169	Assassinlan Pasalan
+15170	E. Kubilan Pasalan
+15172	Piccolan Pasalan
+15174	Citizen Mola
+15175	Master of the Pacific
+15178	Dieu empereur Dioramos
+15181	Mystery Catgirl Yuki
+15186	Revolutionary Hearscht CC
+15188	Holiday Juvens CC
+15189	Savior Mystica CC
+15195	Akira inferno
+15196	Mekako centre de contrôle
+15197	Homme-Chat ultime
+15198	Psychochat corrompu
+15199	Thauchaturge
+15200	Chat navigateur
+15204	Brigade d’assaut Kachiyama
+15213	Le renard gris
+15214	Chappy meal
+15223	GOLDEN HUGE HERMIT CC
+15224	GOLDEN JUPITER CC
+15225	GOLDEN MORDEN CC
+15226	HI-DO MK III
+15227	Klay le savant fou
+15228	Chat funeste
+15229	Neneko sorcière costumée
+15238	Chat diplômé proviseur
+15239	Chat richissime
+15240	Tireur d’élite
+15241	Shishilan Pasalan
+15242	Kai esprit du givre, type μ
+15249	Chat vie bonus
+15258	Zeus Tout-puissant
+15259	Anubis Tout-puissant
+15260	Aphrodite Toute-puissante
+15262	Akuma Hayabusa
+15271	Crazed Catgirl Yuki
+15272	Amaterasu Toute-puissante
+15273	Ganesh Tout-puissant
+15276	Chatte de l’été ardent
+15277	Neneko début d'été
+15283	Chat tchatcha
+15284	Pai-Pai DX
+15287	Unité volante R.E.I.
+15289	Ultimate Madoka
+15290	Devil Homura
+15303	Reine succube
+15305	Béhémoth CHAT-8
+15306	Navire Griffe de tigre
+15307	Citadelle aérienne NEK-02
+15308	Chatte au foyer
+15309	Charticulteur
+15311	Félinfirmière de Noël
+15315	Neneko nouvel an festif
+15317	Poséidon Tout-puissant
+15320	Chat radical
+15323	Les machines à tubes
+15326	Chat poids lourd
+15331	Kenshin brise printanière
+15332	Canard fou et malfaisant
+15333	Neneko du rituel de passage
+15335	Himeyuri reine renard
+15336	Ruri reine des mers
+15337	Reika éternelle
+15338	HMS Princess II CC
+15339	Yoshimoto immortel
+15342	Lost World Catgirl Yuki
+15345	Artist Orthos CC
+15346	Naptime Michelia CC
+15352	Jumelles divines
+15356	Destructeur orbital Ragnarök
+15358	Louve comique
+15359	Verveine opulente
+15360	Bazibastra
+15361	Mizuririn
+15362	Aervanta
+15363	Saber Alter CC
+15371	Dreaming Sakura Cat
+15377	Chatellite
+15378	Le chaton de la liberté
+15391	Baseball Mask α
+15392	Baseball Mask β
+15393	Baseball Mask γ
+15394	Samba Saki CC
+15395	Dark Subaru CC
+15396	Baseball Mask δ
+15397	Ganglion en liberté
+15398	Sakura lame sacrée
+15402	Gigavolta
+15410	Reunion Li'l Rei
+15411	Eyepatch Li'l Asuka
+15414	Determined Unit-01 & Cat
+15415	Unit-02, Code 777
+15418	Sentinelles souterraines
+15428	Héros de la quête des Chats
+15432	Commissaire Gravicci
+15437	Mystican Pasalan
+15438	Le doré Dieu des Chats
+15440	Chronos Toute-puissante
+15441	Law of Cycles Nagisa
+15444	Néo Chat perceuse
+15445	Néo Chat foreuse
+15446	Néo Chat découpeuse
+15447	Néo Chat tractopelle
+15448	Néo Chat scie
+15449	Miyamoto immortel
+15450	Jeanne la dictatrice ψ
+15451	Dieu empereur Babel
+15457	Dark Sakura CC
+15468	Super S-Zeus
+15469	Head Rococo
+15470	Super D-Devil
+15483	Cat-Eared Souma
+15489	Vanished NNN Wunder
+15496	Chatte danseuse du ventre
+15497	Kaihime immortelle
+15503	Myrcia divine
+15506	Dieu empereur Gladios
+15507	Nameless Eyewaltz CC
+15512	Kage
+15518	Crimson King of Battle Ken
+15520	Lasvoss ressuscité
+15523	Chat démoniaque
+15524	Chat Shigong
+15526	Kinrangers GigaForce
+15534	Vil bourreau Saki
+15535	Hadès Tout-puissant
+15547	Sukelan Kakulan
+15557	Ghost Alibaba
+15560	Emma commissaire de l’enfer
+15564	Méga pistol’eau Saki
+15565	Fabuleuse Pasalan
+15566	Chat bronzé à la permanente
+15567	Chats frangins gelato
+15570	Gravolodon
+15571	Chavalier d’Halloween Vars
+15585	Maeda Noël de luxe
+15590	Neneko grand amour
+15595	Ultra Atlantis Logistix
+15596	Mr Kamukura fleur éternelle
+15608	Kanna le mythe vivant
+15611	Roi Nekokhamen
+15615	L'éclat du soleil méridional
+15618	Satoru démoniste
+15619	Amakusa immortel
+15620	Lilin π divine
+15621	Dieu empereur Hevijak
+15626	Ragelan Pasalan
+15632	Yaminora
+15633	Diabolosa oblitératrice
+15634	Grands chasseurs d’esprits
+15635	Démon chevalier noir
+15643	Lucifer Tout-puissant
+15645	Mekako amour mentholé
+15648	Terun chasseresse divine ζ
+15650	Hanzo immortel
+15656	Blizarène
+15657	Chat haniwa
+15659	Chat coursier
+15660	Charzan
+15661	Dieu empereur Daliasan
+15664	Chat masque à gaz
+15665	Chat chirurgien
+15666	Chat exorciste
+15669	Maître Tengu immortel
+15670	Chat cactus
+15671	Chat luciole blindé
+15675	Soucoupe extradimensionnelle
+15676	Chat raquette
+15677	Chapignon
+15683	Vega, dame de la tromperie
+15684	Yukimura vampirique
+15686	Chat supercar
+15692	Seigneur gorille Luza
+15693	Oni Bathyscaphe Kozuchimaru
+15698	Chef Chat
+15699	Jack la foudre
+15701	Chat tueur à gages
+15707	Chat savonneur
+15708	Chat baril
+15713	Kaolan Tatalan
+15714	Chat clown
+15716	Super convois offensifs
+15717	Chagent de police
+15718	Chagriculteur
+15721	Chat-Ours déchu
+15724	Aset Toute-puissante
+15725	Nacelle-œuf féline
+15731	Chat lion danseur
+15758	Chat mariée
+15766	Chapalourde
+16131	Ururun et Tama éveillés
+16173	Bus scolaire Nyandam
+16269	Mina éveillée
+16324	Musashi éveillé
+16427	Méca-Bun ultime
+16463	Métaflibustier
+16465	Guer. Toutoumon ressuscité
+16533	Urs éveillé
+16569	Idi:NX
+16614	Doron éveillé
+16654	Naala éveillée
+18025	Chalkyrie sacrée
+18026	Chat Bahamut éveillé
+19001	Chat punk
+19002	Chat gomme
+19003	Chat de l’ombre
+19004	Chat jambes d’acier
+19005	Chat lion
+19006	Chat volant
+19007	Chat île
+19008	Chat roi dragon
+19009	Chat Jamilar
+19010	Super félin ultime
+30000	Attaque aug. D: Rouge
+30001	Attaque aug. C: Rouge
+30002	Attaque aug. B: Rouge
+30003	Attaque aug. A: Rouge
+30004	Attaque aug. S: Rouge
+30005	Défense aug. D: Rouge
+30006	Défense aug. C: Rouge
+30007	Défense aug. B: Rouge
+30008	Défense aug. A: Rouge
+30009	Défense aug. S: Rouge
+30010	Attaque aug. D: Flottant
+30011	Attaque aug. C: Flottant
+30012	Attaque aug. B: Flottant
+30013	Attaque aug. A: Flottant
+30014	Attaque aug. S: Flottant
+30015	Défense aug. D: Flottant
+30016	Défense aug. C: Flottant
+30017	Défense aug. B: Flottant
+30018	Défense aug. A: Flottant
+30019	Défense aug. S: Flottant
+30020	Attaque aug. D: Noir
+30021	Attaque aug. C: Noir
+30022	Attaque aug. B: Noir
+30023	Attaque aug. A: Noir
+30024	Attaque aug. S: Noir
+30025	Défense aug. D: Noir
+30026	Défense aug. C: Noir
+30027	Défense aug. B: Noir
+30028	Défense aug. A: Noir
+30029	Défense aug. S: Noir
+30030	Défense aug. D: Métall
+30031	Défense aug. C: Métall
+30032	Défense aug. B: Métall
+30033	Défense aug. A: Métall
+30034	Défense aug. S: Métall
+30035	Attaque aug. D: Ange
+30036	Attaque aug. C: Ange
+30037	Attaque aug. B: Ange
+30038	Attaque aug. A: Ange
+30039	Attaque aug. S: Ange
+30040	Défense aug. D: Ange
+30041	Défense aug. C: Ange
+30042	Défense aug. B: Ange
+30043	Défense aug. A: Ange
+30044	Défense aug. S: Ange
+30045	Attaque aug. D: Alien
+30046	Attaque aug. C: Alien
+30047	Attaque aug. B: Alien
+30048	Attaque aug. A: Alien
+30049	Attaque aug. S: Alien
+30050	Défense aug. D: Alien
+30051	Défense aug. C: Alien
+30052	Défense aug. B: Alien
+30053	Défense aug. A: Alien
+30054	Défense aug. S: Alien
+30055	Attaque aug. D: Zombie
+30056	Attaque aug. C: Zombie
+30057	Attaque aug. B: Zombie
+30058	Attaque aug. A: Zombie
+30059	Attaque aug. S: Zombie
+30060	Défense aug. D: Zombie
+30061	Défense aug. C: Zombie
+30062	Défense aug. B: Zombie
+30063	Défense aug. A: Zombie
+30064	Défense aug. S: Zombie
+30065	Effet Assure ↑ D: Rouge
+30066	Effet Assure ↑ C: Rouge
+30067	Effet Assure ↑ B: Rouge
+30068	Effet Assure ↑ A: Rouge
+30069	Effet Assure ↑ S: Rouge
+30070	Dégâts massifs ↑ D: Rouge
+30071	Dégâts massifs ↑ C: Rouge
+30072	Dégâts massifs ↑ B: Rouge
+30073	Dégâts massifs ↑ A: Rouge
+30074	Dégâts massifs ↑ S: Rouge
+30075	Effet Résistance ↑ D: Rouge
+30076	Effet Résistance ↑ C: Rouge
+30077	Effet Résistance ↑ B: Rouge
+30078	Effet Résistance ↑ A: Rouge
+30079	Effet Résistance ↑ S: Rouge
+30080	Effet Assure ↑ D: Flottant
+30081	Effet Assure ↑ C: Flottant
+30082	Effet Assure ↑ B: Flottant
+30083	Effet Assure ↑ A: Flottant
+30084	Effet Assure ↑ S: Flottant
+30085	Dégâts massifs ↑ D: Flottant
+30086	Dégâts massifs ↑ C: Flottant
+30087	Dégâts massifs ↑ B: Flottant
+30088	Dégâts massifs ↑ A: Flottant
+30089	Dégâts massifs ↑ S: Flottant
+30090	Effet Résistance ↑ D: Flottant
+30091	Effet Résistance ↑ C: Flottant
+30092	Effet Résistance ↑ B: Flottant
+30093	Effet Résistance ↑ A: Flottant
+30094	Effet Résistance ↑ S: Flottant
+30095	Effet Assure ↑ D: Noir
+30096	Effet Assure ↑ C: Noir
+30097	Effet Assure ↑ B: Noir
+30098	Effet Assure ↑ A: Noir
+30099	Effet Assure ↑ S: Noir
+30100	Dégâts massifs ↑ D: Noir
+30101	Dégâts massifs ↑ C: Noir
+30102	Dégâts massifs ↑ B: Noir
+30103	Dégâts massifs ↑ A: Noir
+30104	Dégâts massifs ↑ S: Noir
+30105	Effet Résistance ↑ D: Noir
+30106	Effet Résistance ↑ C: Noir
+30107	Effet Résistance ↑ B: Noir
+30108	Effet Résistance ↑ A: Noir
+30109	Effet Résistance ↑ S: Noir
+30110	Effet Assure ↑ D: Ange
+30111	Effet Assure ↑ C: Ange
+30112	Effet Assure ↑ B: Ange
+30113	Effet Assure ↑ A: Ange
+30114	Effet Assure ↑ S: Ange
+30115	Dégâts massifs ↑ D: Ange
+30116	Dégâts massifs ↑ C: Ange
+30117	Dégâts massifs ↑ B: Ange
+30118	Dégâts massifs ↑ A: Ange
+30119	Dégâts massifs ↑ S: Ange
+30120	Effet Résistance ↑ D: Ange
+30121	Effet Résistance ↑ C: Ange
+30122	Effet Résistance ↑ B: Ange
+30123	Effet Résistance ↑ A: Ange
+30124	Effet Résistance ↑ S: Ange
+30125	Effet Assure ↑ D: Alien
+30126	Effet Assure ↑ C: Alien
+30127	Effet Assure ↑ B: Alien
+30128	Effet Assure ↑ A: Alien
+30129	Effet Assure ↑ S: Alien
+30130	Dégâts massifs ↑ D: Alien
+30131	Dégâts massifs ↑ C: Alien
+30132	Dégâts massifs ↑ B: Alien
+30133	Dégâts massifs ↑ A: Alien
+30134	Dégâts massifs ↑ S: Alien
+30135	Effet Résistance ↑ D: Alien
+30136	Effet Résistance ↑ C: Alien
+30137	Effet Résistance ↑ B: Alien
+30138	Effet Résistance ↑ A: Alien
+30139	Effet Résistance ↑ S: Alien
+30140	Effet Assure ↑ D: Zombie
+30141	Effet Assure ↑ C: Zombie
+30142	Effet Assure ↑ B: Zombie
+30143	Effet Assure ↑ A: Zombie
+30144	Effet Assure ↑ S: Zombie
+30145	Dégâts massifs ↑ D: Zombie
+30146	Dégâts massifs ↑ C: Zombie
+30147	Dégâts massifs ↑ B: Zombie
+30148	Dégâts massifs ↑ A: Zombie
+30149	Dégâts massifs ↑ S: Zombie
+30150	Effet Résistance ↑ D: Zombie
+30151	Effet Résistance ↑ C: Zombie
+30152	Effet Résistance ↑ B: Zombie
+30153	Effet Résistance ↑ A: Zombie
+30154	Effet Résistance ↑ S: Zombie
+30155	Attaque aug. D: Aku
+30156	Attaque aug. C: Aku
+30157	Attaque aug. B: Aku
+30158	Attaque aug. A: Aku
+30159	Attaque aug. S: Aku
+30160	Défense aug. D: Aku
+30161	Défense aug. C: Aku
+30162	Défense aug. B: Aku
+30163	Défense aug. A: Aku
+30164	Défense aug. S: Aku
+30165	Effet Assure ↑ D: Aku
+30166	Effet Assure ↑ C: Aku
+30167	Effet Assure ↑ B: Aku
+30168	Effet Assure ↑ A: Aku
+30169	Effet Assure ↑ S: Aku
+30170	Dégâts massifs ↑ D: Aku
+30171	Dégâts massifs ↑ C: Aku
+30172	Dégâts massifs ↑ B: Aku
+30173	Dégâts massifs ↑ A: Aku
+30174	Dégâts massifs ↑ S: Aku
+30175	Effet Résistance ↑ D: Aku
+30176	Effet Résistance ↑ C: Aku
+30177	Effet Résistance ↑ B: Aku
+30178	Effet Résistance ↑ A: Aku
+30179	Effet Résistance ↑ S: Aku
+30180	Attaque aug. D: 
+30181	Attaque aug. C: 
+30182	Attaque aug. B: 
+30183	Attaque aug. A: 
+30184	Attaque aug. S: 
+30185	Défense aug. D: 
+30186	Défense aug. C: 
+30187	Défense aug. B: 
+30188	Défense aug. A: 
+30189	Défense aug. S: 
+30190	Effet Assure ↑ D: 
+30191	Effet Assure ↑ C: 
+30192	Effet Assure ↑ B: 
+30193	Effet Assure ↑ A: 
+30194	Effet Assure ↑ S: 
+30195	Dégâts massifs ↑ D: 
+30196	Dégâts massifs ↑ C: 
+30197	Dégâts massifs ↑ B: 
+30198	Dégâts massifs ↑ A: 
+30199	Dégâts massifs ↑ S: 
+30200	Effet Résistance ↑ D: 
+30201	Effet Résistance ↑ C: 
+30202	Effet Résistance ↑ B: 
+30203	Effet Résistance ↑ A: 
+30204	Effet Résistance ↑ S: 
+30205	Mini-réplique ultime D
+30206	Mini-réplique ultime C
+30207	Mini-réplique ultime B
+30208	Mini-réplique ultime A
+30209	Mini-réplique ultime S
+30210	Résist. dégâts de vagues D
+30211	Résist. dégâts de vagues C
+30212	Résist. dégâts de vagues B
+30213	Résist. dégâts de vagues A
+30214	Résist. dégâts de vagues S
+30215	Remise en argent D
+30216	Remise en argent C
+30217	Remise en argent B
+30218	Remise en argent A
+30219	Remise en argent S
+30220	Résist. Recul D
+30221	Résist. Recul C
+30222	Résist. Recul B
+30223	Résist. Recul A
+30224	Résist. Recul S
+30225	Améliorer histoires légendaires D
+30226	Améliorer histoires légendaires C
+30227	Améliorer histoires légendaires B
+30228	Améliorer histoires légendaires A
+30229	Améliorer histoires légendaires S
+30230	Fléau des colosses D
+30231	Fléau des colosses C
+30232	Fléau des colosses B
+30233	Fléau des colosses A
+30234	Fléau des colosses S
+30235	Charge du Chanon D
+30236	Charge du Chanon C
+30237	Charge du Chanon B
+30238	Charge du Chanon A
+30239	Charge du Chanon S
+30240	Résist. toxique D
+30241	Résist. toxique C
+30242	Résist. toxique B
+30243	Résist. toxique A
+30244	Résist. toxique S
+30245	Esquive (Tout) D
+30246	Esquive (Tout) C
+30247	Esquive (Tout) B
+30248	Esquive (Tout) A
+30249	Esquive (Tout) S
+30250	Résist. Ralentissement D
+30251	Résist. Ralentissement C
+30252	Résist. Ralentissement B
+30253	Résist. Ralentissement A
+30254	Résist. Ralentissement S
+30255	Résist. Malédictions D
+30256	Résist. Malédictions C
+30257	Résist. Malédictions B
+30258	Résist. Malédictions A
+30259	Résist. Malédictions S
+30260	Améliore les Légendes mystérieuses D
+30261	Améliore les Légendes mystérieuses C
+30262	Améliore les Légendes mystérieuses B
+30263	Améliore les Légendes mystérieuses A
+30264	Améliore les Légendes mystérieuses S
+30265	Compteur de réplique offensive unique D
+30266	Compteur de réplique offensive unique C
+30267	Compteur de réplique offensive unique B
+30268	Compteur de réplique offensive unique A
+30269	Compteur de réplique offensive unique S
+30270	Berserker D
+30271	Berserker C
+30272	Berserker B
+30273	Berserker A
+30274	Berserker S
+30275	Rechargement raccourci D
+30276	Rechargement raccourci C
+30277	Rechargement raccourci B
+30278	Rechargement raccourci A
+30279	Rechargement raccourci S
+30280	Résist. Immobilisation D
+30281	Résist. Immobilisation C
+30282	Résist. Immobilisation B
+30283	Résist. Immobilisation A
+30284	Résist. Immobilisation S
+30285	Résist. Affaiblissement D
+30286	Résist. Affaiblissement C
+30287	Résist. Affaiblissement B
+30288	Résist. Affaiblissement A
+30289	Résist. Affaiblissement S
+30290	Coût réduit D
+30291	Coût réduit C
+30292	Coût réduit B
+30293	Coût réduit A
+30294	Coût réduit S
+30295	Résist. répliques D
+30296	Résist. répliques C
+30297	Résist. répliques B
+30298	Résist. répliques A
+30299	Résist. répliques S
+30300	Première prime améliorée D
+30301	Première prime améliorée C
+30302	Première prime améliorée B
+30303	Première prime améliorée A
+30304	Première prime améliorée S
+30305	Résist. Explosion D
+30306	Résist. Explosion C
+30307	Résist. Explosion B
+30308	Résist. Explosion A
+30309	Résist. Explosion S

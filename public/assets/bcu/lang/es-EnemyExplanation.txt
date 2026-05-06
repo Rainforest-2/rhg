@@ -1,0 +1,772 @@
+000	Un perrete adorable y rival eterno de The Battle Cats.<br>Este año quiere entrar en la universidad.<br>Es un bichillo educado y todos los años<br>manda regalos de cumpleaños a los gatos.
+001	Utiliza acuarelas como pintura corporal.<br>Y claro, por eso le da tanto repelús el agua.<br>Cualquier información relacionada con<br>el contenido del juego es puramente casual.
+002	Un puñado de enclenques que se juntan de vez en cuando.<br>Se conocieron por internet.<br>Sorprendentemente,<br>todos son bastante ricos.
+003	Este peligroso hipopótamo confía<br>plenamente en su resistencia y su poder.<br>Tiene un multiataque espectacular.<br>No tenemos claro su sexo...
+004	Le gusta ir al salón de belleza a broncearse,<br>por eso tiene color gamba.<br>Nació en una granja ecológica.<br>¿Sabías que a los cerdos les encanta limpiar?
+005	Le flipan las pelis de kungfú. Su sueño es que<br>lo cojan para una peli de Hollywood. Es autodidacta<br>y todo el kungfú que sabe lo ha aprendido en internet.<br>
+006	Lo echaron del zoológico<br>«por su belleza picassiana».<br>No tiene trabajo ni estudios,<br>así que se dio al juego y la bebida.
+007	Nombre normalucho y aspecto normalucho.<br>Le acompleja ser del montón.<br>Intenta arreglarlo dando clases de comedia<br>en la escuela de arte dramático.
+008	Llegó a la gran ciudad<br>desde las costas tranquilas.<br>Quería llamar aún más la atención,<br>así que se pintó de rojo.
+009	Tiene muchísimo alcance.<br>Le gustan las mujeres con curvas. Con muchas curvas.<br>Colecciona revistas de...<br>En fin, no preguntes de qué clase.
+010	Siempre soñó con ser una estrella del boxeo,<br>pero no lo ha conseguido porque es...<br>Bueno, porque es un canguro, claro.<br>Esa es la cruda verdad.
+011	Le encanta ayudar.<br>Trabaja a tiempo parcial en un parque de bomberos.<br>El problema es que, como es tan lento, para cuando<br>ha llegado ya se ha quemado todo.
+012	Es maestro de guardería porque le flipan los niños,<br>pero el tema de las garras afiladas suele ser un problema.<br>No conoce a ningún otro oso, no sé por qué preguntas...<br>Nadie conoce su nombre verdadero.
+013	Lo salvó un tal Dundee.<br>Flipa con los cursos por internet.<br>Así se ha sacado varios títulos,<br>como el de Procesamiento de textos 2.
+014	Dimitió de su trabajo en una gran empresa<br>y ahora dirige cuatro empresas.<br>Aspira a ser alcalde pronto.<br>
+015	Habla un dialecto antiguo...<br>Se le entiende alguna palabra suelta,<br>pero es difícil comunicarse con ella.<br>Trabaja en un colegio cerca de la estación.
+016	Con licencia para matar.<br>La crisis financiera mundial no le ayuda<br>a levantar el negocio. Tiene folletos, míralos.<br>Ahora ofrece un millón por muerte.
+017	Es la timidez hecha enemigo.<br>Lo que más le gusta es cantar, pero no se atreve<br>a hacerlo delante de nadie. ¿El espejo cuenta como<br>alguien? Le gustan los karaokes vacíos.
+018	Tanta dieta, tanta dieta, y se quedó sin cuerpo.<br>Nadie sabe por qué flota.<br>En serio, ¿nadie puede resolver el misterio?<br>(Niños, no intentéis esto en casa).
+019	
+020	
+021	Su estructura familiar consiste en<br>padre, madre, hermano y «papito».<br>Está frita por casarse.<br>Aparece cuando cansineas demasiado en una fase.
+022	Soñaba con convertirse<br>en una bella mariposa.<br>Cuando se enteró de su verdadera naturaleza,<br>se rebeló contra el mundo.
+023	Le cabrea mucho no poder<br>tomar alcohol.<br>Por eso finge que bebe y le da todo igual,<br>pero el vaso solo contiene zumito de piña.
+024	Fue maestro del Profeoso.<br>Su castigo físico es el amor a espuertas.<br>No pienses. ¡SIENTE!<br>
+025	
+026	
+027	
+028	
+029	
+030	
+031	Se sabe todos los cotilleos jugosos.<br>Sus colegas del insti lo admiran<br>y lo llaman jefe.<br>Experiencia en relaciones: cero patatero.
+032	Le estresa su incipiente alopecia.<br>Sí, sí, su apellido es Vestruz.<br>Y su nombre, Angelita.<br>A veces inflige daño crítico.
+033	Suelen llamarlo para hablarle de dietas o porque<br>lo confunden con el nutricionista del gimnasio.<br>Lleva el amuleto de sus ancestros.<br>En realidad es un pedrusco normal y corriente.
+034	Un koala bastante excéntrico.<br>Lo echaron del zoo porque pedía comida demasiado<br>cara, así que ahora duerme en el sofá de Gori.<br>Pero Gori tampoco tardará en echarlo.
+035	Nació en Arabia y le encantan las saunas.<br>Su habilidad especial es cerrar las aletas de la nariz.<br>No sabe que eso lo hacen todos los camellos<br>porque no tiene amigos.
+036	Le encantan los estudios etimológicos.<br>Está escribiendo una disertación sobre<br>por qué su nombre suena así.<br>Espera a que publique los resultados.
+037	No aparenta su edad: tiene 78 años.<br>Los médicos le han dicho que tiene que caminar.<br>Se queja mucho porque lo tratan como un<br>enemigo volador, pero él camina.
+038	Siempre ha pensado que «Javi» no es<br>nombre para un jabalí aterrador como él.<br>Se pone colorado cuando se presenta:<br>«Hola, me llamo Li. Javi Li».
+039	El animal más aterrador de todos<br>ha logrado bajar del árbol.<br>Lo que pasa es que moverse es demasiado lío,<br>así que dice que ya quiere irse a casa.
+040	Se deprime mucho cuando se acerca<br>la Navidad. También odia el rojo.<br>No preguntes por qué.<br>Dejadlo en paz, pobrecito.
+041	Intenta muy fuerte ser humano.<br>Ahora solo necesita que le crezcan brazos,<br>girar en círculos y hablar.<br>Alimentadlo cuando esto suceda.
+042	Estudia en la universidad y le encanta<br>quedar a charlar con sus amiguis<br>todas las tardes en alguna cafetería cuqui.<br>Sus amigas le tienen un odio secreto y profundo.
+043	Su nombre es Hien. Dicen que es de origen chino.<br>Siempre dice que no. Trabaja en el basurero y<br>su destino es la soledad. Y si alguien pregunta,<br>la respuesta es «no». Nadie se le acerca.
+044	Puede atacar con oleadas.<br>Se jubiló hace poco del departamento de policía.<br>En realidad, le dieron su trabajo a los pastores alemanes.<br>Se le ve a menudo con Celebriche. Muy a menudo.
+045	No se lo digas a nadie, pero me han contado que<br>vive en las afueras. Fue al refugio a intentar adoptar<br>un perrito, ¡y se encontró una raza inesperada!<br>
+046	Un día, Chucho vio un folleto de publicidad<br>y encontró trabajo como sicario a media jornada.<br>Se esfuerza mucho para ahorrar dinero para<br>entrar en la universidad.
+047	Una organización de cuyo nombre no quiero acordarme<br>decidió experimentar y convertir su cuerpo en metálico.<br>Parece que su debilidad son los golpes críticos.<br>
+048	Es familia de Cerdi.<br>Es la segunda reina del imperio cerdil.<br>En unos días, la venderán en paquetitos<br>de beicon ecológico (pero ella aún no lo sabe).
+049	Es un autor famoso y una figura de referencia<br>para Profe Bun Bun. Sus trabajos más importantes<br>son «Castigo y prejuicio» (1868)<br>y «Los penitentes» (1875).
+050	EL AMOR NOS LLEVA AL CIELO. #AMAMUCHO<br>Eso es lo que dice justo antes de dar un sopapo.<br>Algunos dicen que se ven otros mundos cuando te pega.<br>Esto... Ahora mismo no encontramos la fuente de esa cita.
+051	¡Por fin Gori ha encontrado curro!<br>Ha dejado atrás su antigua vida<br>y está deseando ver a su familia<br>otra vez cuando vuelvan.
+052	«Ya has muerto». (KGS).<br>Cree que siempre dice frases célebres.<br>Me da un poco de pena su cría, que tiene<br>que aguantarlo todo el rato.
+053	Un director venido a menos al que solo<br>se le conoce por haber plagiado pelis famosas.<br>Sus trabajos son auténticos fracasos y solo han<br>alcanzado cierta notoriedad sus escenas obscenas.
+054	Hipo Metálico se vino arriba compartiendo<br>software y pilló un virus troyano, así que ahora<br>está totalmente fuera de control.<br>Parece que su debilidad son los golpes críticos.
+055	
+056	Ceronte se empeñó en que lo modificaran<br>cibernéticamente, así que ahora intercepta<br>ondas de radio y comunicaciones al instante.<br>Sigue sin llegar a tiempo a los sitios.
+057	El Profeoso se instaló unos implantes cibernéticos<br>experimentales para ofrecer una educación eficiente.<br>Ahora se pasa de intensito con los críos y les da yuyu,<br>así que tuvo que buscar trabajo en la universidad.
+058	Este cíborg es una reliquia de la última guerra de la<br>humanidad y lo destroza todo con sus mandíbulas<br>reforzadas. Parece que flota, pero en realidad corre<br>con un montón de piernas de plasma invisibles para el ojo.
+059	Una foca que viajó a la ciudad<br>soñando con alcanzar la fama.<br>Quería llamar más la atención,<br>así que se hizo cíborg total.
+060	
+061	
+062	<br><br><br>
+063	<br><br><br>
+064	El asalto del implacable viento<br>mantiene a los mirones a raya.<br>Si por lo menos hubiera alguna forma<br>de detenerlo... O de contraatacar...
+065	<br><br><br>
+066	<br><br><br>
+067	<br><br><br>
+068	
+069	Ataca sin dejar de moverse,<br>por lo que su fuerza ciclónica es imparable.<br>Parece que últimamente recibe mucha atención,<br>seguramente gracias a un nuevo modelo de aspiradoras.
+070	Ataca sin dejar de moverse,<br>por lo que su fuerza ciclónica es imparable.<br>Tiene mucha más fuerza de empuje.<br>¿O es de succión?...
+071	Ataca sin dejar de moverse,<br>por lo que su fuerza ciclónica es imparable.<br>Es una vorágine de fragmentos de metal voladores.<br>Su cuerpo es tan pesado que impide que salga volando.
+072	
+073	
+074	
+075	<br><br><br>
+076	<br><br><br>
+077	<br><br><br>
+078	<br><br><br>
+079	<br><br><br>
+080	<br><br><br>
+081	<br><br><br>
+082	<br><br><br>
+083	<br><br><br>
+084	<br><br><br>
+085	<br><br><br>
+086	<br><br><br>
+087	<br><br><br>
+088	<br><br><br>
+089	<br><br><br>
+090	<br><br><br>
+091	<br><br><br>
+092	<br><br><br>
+093	<br><br><br>
+094	<br><br><br>
+095	<br><br><br>
+096	<br><br><br>
+097	<br><br><br>
+098	<br><br><br>
+099	<br><br><br>
+100	<br><br><br>
+101	<br><br><br>
+102	<br><br><br>
+103	<br><br><br>
+104	<br><br><br>
+105	<br><br><br>
+106	<br><br><br>
+107	<br><br><br>
+108	<br><br><br>
+109	<br><br><br>
+110	<br><br><br>
+111	<br><br><br>
+112	Un ser irascible que se deshace de todo mal<br>con la fuerza de un tifón.<br>Ojo, los ángeles no sufren daño<br>con los ataques antiaéreos.
+113	Un hipopótamo que deseaba una aureola<br>con todas sus fuerzas. Se hizo alas<br>con su pelaje y ahora tiene aspecto<br>de Pegaso. ¿Es o no es?
+114	Es el tataratatarabuelo del clan Chucho.<br>Siempre está pendiente de que sus descendientes<br>no descuiden sus estudios: si se duermen<br>en clase, ¡mordisco al canto!
+115	Lo echaron del cielo por intentar robarle<br>las llaves a San Pedro. Es un ángel<br>caído muy tradicional que sobrevive<br>a base de jugar a las tragaperras.
+116	Se gastó todos sus ahorros en merchandising de<br>ángeles, y descubrió que estos no son enemigos<br>voladores tras pasarse horas abriendo<br>gatobolas raras compulsivamente.
+117	Un chucho que le copió el truquito<br>al Gato Muro y se hizo rectangular.<br>No se esperaba que otros chuchos<br>lo utilizaran como ficha de dominó.
+118	Sus maravillosos rizos rojos inspiraron una tesis<br>de máster sobre el cuidado capilar reptiliano.<br>La pintura que utiliza sigue siendo de acuarelas<br>y esta información sigue siendo totalmente irrelevante.
+119	Se llama Luna, pero es macho... ¿Pasa algo?<br>Tiene el aspecto de un bombardero furtivo<br>y por eso ningún sistema de radar lo detecta.<br>Así fue como se coló en el cielo, de hecho.
+120	
+121	
+122	
+123	No teme liderar al ejército<br>para defender sus ideales pacifistas.<br>Revienta a los invasores felinos con mucho amor<br>gracias a su afilado y, sobre todo, diplomático piquito.
+124	Porta el arma definitiva de su familia:<br>el pedrusco normalucho, el flagelo de las almejas.<br>En realidad se trata de un hueso de ciruela,<br>pero no se lo digas o se pondrá como loco.
+125	El caballo divino de ocho patas de la mitología nórdica.<br>Casi todo el sueldo se le va en zapatos,<br>así que suele pasar los fines de semana<br>en casa y cuidando del jardín.
+126	<br><br><br>
+127	<br><br><br>
+128	<br><br><br>
+129	<br><br><br>
+130	<br><br><br>
+131	<br><br><br>
+132	<br><br><br>
+133	<br><br><br>
+134	<br><br><br>
+135	<br><br><br>
+136	<br><br><br>
+137	<br><br><br>
+138	<br><br><br>
+139	<br><br><br>
+140	<br><br><br>
+141	
+142	
+143	
+144	
+145	
+146	Criticó mucho a sus colegas en su blog<br>«Las verdades duelen». Por eso se hizo<br>superfamoso, pero ahora nadie lo llama.<br>¡Internet no olvida!
+147	Un día que volvía a casa de la universidad,<br>apareció en el cielo un disco plateado gigante.<br>No recuerda qué pasó después, pero ahora<br>solo viste monos de plata.
+148	Un fallo cuántico lo transformó en un chavalín.<br>La gente no sabe qué pensar cuando esa<br>cara arrugada se llena de lágrimas por una chuche.<br>No le aplican el descuento infantil en el cine.
+149	Este paquidermo negro como el tizón es un<br>coleccionista empedernido de vídeos para hombretones.<br>Teme que alguien pueda descubrir su oscura afición,<br>así que se carga a quien se acerque a sus cosas.
+150	<br><br><br>
+151	<br><br><br>
+152	<br><br><br>
+153	<br><br><br>
+154	<br><br><br>
+155	<br><br><br>
+156	<br><br><br>
+157	
+158	<br><br><br>
+159	<br><br><br>
+160	Una novata de ojos vivos en su segundo día<br>de trabajo divino. Su amigui Pati está hasta la<br>cola de escucharla hablar sobre lo megachachi<br>que es su nuevo piso en el paraíso.
+161	
+162	
+163	<br><br><br>
+164	<br><br><br>
+165	<br><br><br>
+166	<br><br><br>
+167	Un chucho adorable modificado genéticamente por<br>los invasores para ser el soldado perfecto. Siempre<br>habla en plural, pero en realidad solo piensa<br>en él. Por eso se pelea tanto con sus colegas.
+168	Se operó de la vista para poder sacarse un título en diseño<br>de interiores. Según su filosofía, «cuanto más sencillo,<br>más mejor». Resulta que se dedica a pintarlo todo de<br>azul y luego se toma el resto de la semana libre.
+169	Esta hipopótama tiene un cupón para ser abducida<br>todos los meses. La traumatizaba eso que le crecía<br>de la cabeza, y la piel se le puso tan azul como<br>el corazón, así que tuvo que cambiarse el nombre.
+170	Un dios morsa que vino del espacio para<br>luchar contra las focas terrestres rojas. No tiene<br>manos, pero siempre se las lava antes de comer.<br>Es un caballero con mucha clase, eso no se puede negar.
+171	Una estrella del pop del planeta Bicho conocida por su<br>afición por los atuendos sexis y provocadores. Vinieron<br>muchos fans a seguir su gira terrestre, pero no<br>sobrevivió ni un humano. Puede paralizar a los gatos.
+172	Sus ojos son tan grandes que puede ver a dos años luz.<br>Como de día hay demasiada luminosidad, no puede salir hasta<br>el ocaso. Lleva unas lentillas especiales que desgastan<br>el ataque de las unidades felinas.
+173	Pidió un préstamo a 45 años para comprarse una casa<br>resistente que tapara ESO que le crece del trasero.<br>Sigue pasando los fines de semana viendo pisos.<br>Sobrevive a un golpe mortal.
+174	Es demasiado fan de «Alien, el octavo pasajero».<br>Llegó a la Tierra para protegerla, pero se le fue de las<br>manos cuando se cabreó con unos milenials que lo<br>ignoraron durante la cena. Puede paralizar a los gatos.
+175	Visitó la Tierra durante una excursión, pero se despistó<br>y se fueron sin él. Ahora trabaja en la NASA<br>y espera poder colarse en algún cohete.<br>Se fortalece a medida que sufre daño.
+176	Su misión era prender la mecha del apocalipsis y destruir<br>a toda la humanidad. Por un fallo de cálculo, aterrizó<br>en la Luna, así que ahora se dedica a hacer cráteres<br>porque se aburre mucho. Desgasta los ataques de los gatos.
+177	El peinado ayuda a contener la fuerza de su poder<br>de raciocinio. Busca un capitán de cohete guapetón<br>que le enseñe cosas sobre sentimientos. Se abre<br>paso con lógica y colmillos. Sobre todo con lo segundo.
+178	Vástago de la ciberpocilga, Liz casi acaba con su<br>linaje tras atragantarse con una bellota. A día de hoy<br>todavía no se le ha quitado esa tonalidad azul «asfixia».<br>Ataca con potentes oleadas.
+179	Una tormenta nebulosa que nació de un agujero<br>negro y destroza cualquier cosa que se le acerque.<br>Busca cobertura y atácalo desde detrás de algo resistente.<br>Su ataque mejora tras sufrir daño.
+180	Tiene el terrible poder de redirigir todos tus correos<br>electrónicos a una dirección aleatoria. Nunca sabrás<br>por qué tus amigos se han olvidado de ti.<br>Sus ataques pueden ralentizar.
+181	Recibió la lanza perruna Guaunir como regalo<br>de broma en una fiesta. Ahora tiene la mente nublada<br>por la rabia contra todo lo felino.<br>Se fortalece tras sufrir daño.
+182	Campeón de peso superligero en el último campeonato.<br>Le quitaron el título cuando los jueces se percataron<br>de los guantes personalizados que llevaba en la ronda 4.<br>La verdad es que funcionan para repeler a los rivales.
+183	Una máquina de matar que solo tiene un propósito:<br>impedir que se sigan publicando en internet imágenes<br>de gatitos. Se iba a incorporar en el capítulo 1,<br>pero perdió el bus.
+184	Hija única de la dinastía política más importante de<br>Centauri, año 1192. Tiene belleza, bondad, inteligencia...,<br>y aun así está casada con un chihuahua estrella de<br>un reality. Se fortalece tras sufrir daño.
+185	Aunque sigue siendo universitario, está realizando<br>una investigación tan profunda y exhaustiva sobre<br>todo lo obsceno que sus colegas lo llaman «profesor».<br>De todas formas, sigue sin comerse un rosco.
+186	
+187	
+188	
+189	<br><br><br>
+190	<br><br><br>
+191	<br><br><br>
+192	<br><br><br>
+193	<br><br><br>
+194	<br><br><br>
+195	<br><br><br>
+196	<br><br><br>
+197	<br><br><br>
+198	<br><br><br>
+199	<br><br><br>
+200	
+201	
+202	
+203	
+204	
+205	Un brasileño de pelo en cuerpo y un friki de los gimnasios.<br>Entrena dos veces al día y mastica bien la comida. Es todo<br>músculo y por eso es un poco más lento de lo que le<br>gustaría, pero que no te arree uno de sus golpes críticos...
+206	Un día me desperté de la siesta y me encontré a Kory<br>preparando un guiso en mi cocina. Lo eché a patadas<br>por asaltarme el frigo, claro, y parece que<br>desperté en él los poderes oscuros que llevaba dentro.
+207	Ya está aquí el listo que todo lo sabe... Consume alimentos<br>sin gluten, pero siempre aprovecha para impresionar a las<br>chicas con migas de la panadería ecológica.<br>Tiene cerebro de chorlito, pero es una golondrina.
+208	Su nave aterrizó cerca de una lonja de pescado local.<br>Implantó la moda del estilo traslúcido y ahora<br>todo el mundo en el puerto piensa que es superchic.<br>Desgasta mucho el ataque del rival.
+209	Camelle se pegó unas bolas de algodón para convertirse<br>en una alpaca. Es alérgica al tejido, así que ahora<br>no puede dejar de toser y de escupir, pero es demasiado<br>orgullosa para admitir sus errores.
+210	El patriarca de la familia Pérez y abuelo de Pérez Oso<br>se compró un pase de por vida para un balneario. Los<br>minerales del agua en la que se baña le han dado<br>supervelocidad y habilidades de repulsión muy potentes.
+211	El ADN de Bun Bun se unió a una criatura alien.<br>También infectó a sus estudiantes, así que ahora la<br>escuela es una gran mente colectiva. (Fuente: Hipo).<br>A veces lanza una potente ola de energía.
+212	Por fin ha conseguido desatascar la cremallera de su<br>traje, y ahora es libre e imparable. No puede controlar<br>los impulsos destructivos que lo incitan a liarla parda<br>y cargarse todo lo que tenga alrededor.
+213	<br><br><br>
+214	<br><br><br>
+215	<br><br><br>
+216	<br><br><br>
+217	<br><br><br>
+218	<br><br><br>
+219	<br><br><br>
+220	<br><br><br>
+221	<br><br><br>
+222	<br><br><br>
+223	<br><br><br>
+224	<br><br><br>
+225	<br><br><br>
+226	<br><br><br>
+227	<br><br><br>
+228	<br><br><br>
+229	<br><br><br>
+230	<br><br><br>
+231	<br><br><br>
+232	Este ser místico es la salvación de la especie humana.<br>O su destrucción... Pero por ahora tiene mucho lío<br>siendo padre soltero sobreprotector, ya que tiene que cuidar<br>a su churumbel de los ataques a distancia.
+233	<br><br><br>
+234	<br><br><br>
+235	Veo aquí un rival a la altura. #PeleaTopil es la única<br>etiqueta en el perfil de Twitter de este luchador. Su<br>técnica secreta, llamada «superpuñetazo topil»,<br>repele a los enemigos desde muy lejos.
+236	Una tormenta de categoría 5 se hizo inmensa a base<br>de consumir ciclones más pequeños. Repele los<br>ataques desde muy lejos. Los meteorólogos dicen<br>que la clave para vencerlo está en acercarse a su ojo.
+237	
+238	
+239	
+240	
+241	
+242	<br><br><br>
+243	<br><br><br>
+244	<br><br><br>
+245	<br><br><br>
+246	<br><br><br>
+247	<br><br><br>
+248	<br><br><br>
+249	<br><br><br>
+250	<br><br><br>
+251	<br><br><br>
+252	<br><br><br>
+253	<br><br><br>
+254	Vuelve loco a todo el que lo rodea con sus consejos<br>moralmente superiores. Es mejor que finjas que lo<br>estás escuchando o te zurrará una buena.<br>¡Ya me agradecerás el consejo otro día!
+255	Solía presentar un concurso de la tele muy famoso.<br>Ahora este tipo migrador viaja por el mundo jugando<br>al golf y vuelve para hacer algún bolo televisivo si<br>se queda sin dinero. Lanza oleadas de avaricia.
+256	Un lanzador semiprofesional sin escrúpulos que<br>utiliza cualquier medio a su alcance para ganar.<br>Lanza pelotas contra las normas desde muy lejos<br>para intimidar a los bateadores rivales.
+257	Nació en el año 1196 del calendario cósmico<br>y ganó una corona por su servicio militar y sus avances<br>científicos. Por eso le molesta tanto que su hermano<br>pequeño sea más famoso por salir en un reality.
+258	Esta chica que vaga por el bosque es en realidad una<br>asesina a sueldo contratada por el ejército perruno.<br>El ejército felino la teme por su crueldad sin límites.<br>¡Incluso es capaz de utilizar un bazuca de largo alcance!
+259	<br><br><br>
+260	<br><br><br>
+261	Asistente del productor de discos más famoso<br>del cielo. También ha sido escritor fantasma de<br>dos pelotazos editoriales: «Los gatos no son pecado»<br>y «CPU, inteligencias del futuro: Parte 2».
+262	<br><br><br>
+263	<br><br><br>
+264	
+265	<br><br><br>
+266	Se tomó nueve años sabáticos antes de decidir<br>matricularse en la universidad. Espera poder diplomarse<br>en física nuclear para controlar mejor sus rayos de<br>partículas, aunque su papá quiere que estudie económicas.
+267	Se puso una máscara inquietante para hacer la gracia,<br>pero acabó convertido en demonio. Cosas que pasan.<br>Exhala corrupción pura nacida del odio más vengativo.<br>¿A que el Careto normal ya no da tanto yuyu?
+268	
+269	
+270	<br><br><br>
+271	Una princesa exiliada que ahora pertenece a la realeza<br>de los tugurios de la ciudad. Su triste infancia le dio<br>un temperamento poco agradable, así que no te acerques<br>mucho o serás víctima de sus palabras más crueles.
+272	Ganó con una amplia ventaja el concurso de niños<br>problemáticos y es el terror de cualquier guardería.<br>¿Será porque papá le lee los clásicos rusos<br>antes de dormir? Su palabra favorita es «AMOR».
+273	
+274	
+275	
+276	
+277	
+278	
+279	<br><br><br>
+280	Tras años vagando por páramos desiertos,<br>su pelaje y su alma se han ennegrecido por<br>culpa de la corrupción que asola el mundo.<br>En el trabajo le dan premios por no faltar nunca.
+281	<br><br><br>
+282	<br><br><br>
+283	
+284	El padre de Chucho, fallecido y enterrado hace años.<br>Ni la tumba ha conseguido que deje de preocuparse<br>por las notas de sus hijos. Solo podrá descansar<br>en paz si ve que todo son sobresalientes.
+285	Una criatura siseante que utiliza acuarelas para<br>maquillarse de muerta (aunque ya está muerta...).<br>El único dato que necesitas saber es que<br>tiene un aterrador ataque de área.
+286	Atravesó una ciénaga envenenada una noche<br>y se despertó con una pata en el otro barrio.<br>Parece que le da bastante igual, la verdad...<br>Ya nunca saldremos de dudas sobre su sexo.
+287	Ni la muerte puede hacer que este gorrino real<br>abdique del trono. Lleva una calavera muy chula<br>mientras intenta recuperar la corona que le mangaron.<br>Dice que no se pudre, que envejece como el buen vino.
+288	Cuando su primera peli fracasó estrepitosamente,<br>solo quedó un gran agujero en el lugar donde antes<br>estaba su corazón. Ni la muerte por las malas críticas<br>detendrá su venganza contra el público desagradecido.
+289	Cuando lo rechazaron en el cielo por feo, Gori<br>decidió quedarse vagando por la Tierra.<br>Le arrancaron la parte superior de la cabeza<br>pensando que era un tupé. ¡Auchi!
+290	A través de la niebla matinal contemplé la figura<br>de una foca, que me habló con una voz ni de este<br>mundo ni del otro y me instó a unirme a ella y<br>viajar hasta las costas lejanas de un insólito mundo.
+291	Tras 50 años en el mundo del boxeo, su cuerpo<br>ya no pudo aguantar más dopaje. No obstante,<br>esas sustancias sirvieron para que su cuerpo siguiera<br>dando puñetazos incluso tras la muerte.
+292	Un pobre cocodrilo que se murió de hambre.<br>Era demasiado débil para atravesar el Río Estigia,<br>así que regresó a este mundo como un fantasma<br>a medio cocinar. A veces lo confunden con una mancuerna.
+293	Unos okupas han tomado su tumba y se han<br>montado allí su pisito. ¡Qué maleducados! Sea<br>quien sea este misterioso cadáver, parece<br>que su voluntad de piedra sigue intacta.
+294	Los espíritus de los vencidos por<br>el ejército felino se han unido en una<br>tormenta vengativa. ¿Cómo se vence<br>a un remolino que ya está muerto?
+295	<br><br><br>
+296	<br><br><br>
+297	
+298	
+299	
+300	
+301	
+302	
+303	La esposa de Chucho Z. tendría que<br>estar enterrada aquí, pero sigue viva con<br>158 años y parece que otro «no-ser»<br>se ha instalado en esta parcelita.
+304	Mejor no molestar a este saco de huesitos<br>o devorará a cualquiera que ose interrumpir<br>su siesta. O peor aún: te contará historias<br>interminables sobre su efímera carrera como deportista.
+305	
+306	<br><br><br>
+307	<br><br><br>
+308	<br><br><br>
+309	Un antiguo héroe del ejército perruno.<br>El año pasado entró en la lista de especies<br>en peligro de extinción. Vive una vida solitaria.<br>Su nombre en latín es «Canis mortus requetemortus».
+310	Murió cuando le hicieron una chapuza de<br>cirugía plástica al intentar arreglarle la joroba.<br>Es un cadáver precioso y fue la primera zombi de portada.<br>Eso sí, mejor no le hables de su color de piel...
+311	<br><br><br>
+312	
+313	
+314	
+315	
+316	Un espíritu guerrero perruno poseyó a un joven<br>actor que interpretaba su papel en una adaptación<br>teatral de la leyenda sobre su vida. No te acerques mucho,<br>no sea que su castillo maldito reaccione...
+317	«Los mejores zombis son los estudiosos», eso es lo que<br>siempre decía papi. Los que desprestigian nuestra<br>imagen son los de los cómics de terror malos.<br>Inmune a todos los efectos negativos.
+318	Se la ve a menudo en el último tren de vuelta a casa<br>tras una noche de juerga. Ahora echa la vista atrás y ve<br>su juventud malgastada, así que ahora quiere ser mejor.<br>La semana pasada solo llegó tarde al curro tres veces.
+319	
+320	
+321	
+322	<br><br><br>
+323	<br><br><br>
+324	<br><br><br>
+325	<br><br><br>
+326	<br><br><br>
+327	<br><br><br>
+328	<br><br><br>
+329	<br><br><br>
+330	<br><br><br>
+331	<br><br><br>
+332	<br><br><br>
+333	
+334	
+335	
+336	<br><br><br>
+337	<br><br><br>
+338	<br><br><br>
+339	<br><br><br>
+340	Un bocadito divino del mar enviado por el Misidiós<br>a modo de visión religiosa para aquellos<br>de corazón puro. El paraíso culinario aguarda<br>a quienes superen esta prueba de fe.
+341	<br><br><br>
+342	<br><br><br>
+343	<br><br><br>
+344	<br><br><br>
+345	
+346	<br><br><br>
+347	<br><br><br>
+348	<br><br><br>
+349	<br><br><br>
+350	<br><br><br>
+351	
+352	
+353	
+354	En la cima de la Torre Celestial espera esta leyenda<br>de las artes marciales a aquellos que son dignos.<br>Le gusta humillar a los niños ricos que creen que pueden<br>comprarlo todo. También le gusta la limonada de fresa.
+355	Profesional de los e-sports famoso por abandonar furioso<br>los torneos pulsando con su lengua el botón<br>de apagado. Supongo que es una buena forma de mantener<br>el equilibrio perfecto entre las victorias y las derrotas.
+356	<br><br><br>
+357	<br><br><br>
+358	<br><br><br>
+359	<br><br><br>
+360	Chucho oficinista del Cuerpo de Marines Alien.<br>Sacó las mejores notas en la academia<br>y se especializó en abducciones.<br>Pero últimamente el mercado laboral está chungo...
+361	El creador de la técnica de campo de la abducción.<br>Los Ping son una raza guerrera muy orgullosa<br>con un profundo conocimiento científico gracias<br>al estupendo hábito del sudoku diario.
+362	Un poderoso estratega que todavía está soltero<br>por feo. En realidad es un cocinero excelente<br>y tiene un rango vocal de seis octavas, pero<br>es demasiado tímido como para mostrar sus talentos.
+363	La madre de todos los Fantes, que protege<br>a sus hijos con colmillos y pezuñas.<br>Invade como tres planetas nuevos a la semana<br>para conservar sus estupendas curvas.
+364	Es capaz de escuchar tus pensamientos más sucios,<br>así que mantén la mente pura cuando estés cerca<br>o las energías marranas lo harán más fuerte.<br>En la vida real no tiene experiencia en nada, el pobre...
+365	Un valiente soldado del ejército topillo que<br>salvaguarda la paz y el amor por la galaxia.<br>Su gancho de antimateria catapulta a los<br>gatos hasta otra dimensión.
+366	Un arma biológica criada por los chuchos del espacio<br>para lanzar ataques sorpresa sobre los puestos de<br>avanzada felinos. Es invisible de frente, pero como<br>el juego es en 2D, su sigilo no le sirve para nada.
+367	Hola. Soy yo, el Misidiós.<br>Me alegro de que te diviertas<br>leyendo mi descripción, pero tengo<br>que ir a ducharme, así que...
+368	
+369	
+370	
+371	
+372	
+373	
+374	
+375	Un pájaro seguro de sí mismo cuyos padres<br>le infundieron mazo de confianza...<br>Ahora su arrogancia es tan extrema que ha consumido<br>su propia dimensión y se ha venido a esta.
+376	
+377	Una brecha en el espacio-tiempo que se abrió<br>dentro de una nebulosa. Manipula el cosmos<br>para abducir gatos y mandarlos a freír espárragos.<br>Puedes ganarle si atacas desde lejos.
+378	
+379	Un cerdi muy mono con naricilla de corazón.<br>Sus saltitos de alegría no pretenden hacer daño<br>a nadie, pero te quitarán las ganas de luchar.<br>Solo quiere volver a casa con su familia divina.
+380	Guardián sagrado de la Torre Celestial. Solo los<br>que superen su prueba serán considerados dignos.<br>Cada vez hay menos visitantes, así que también<br>trabaja enseñando danza moderna en la guardería.
+381	
+382	
+383	
+384	
+385	
+386	
+387	Un deportista que sueña con ser una estrella,<br>aunque suele ver los partidos desde el banquillo...<br>Espera poder demostrar la potencia de sus<br>ataques un día de estos.
+388	Una oveja estelar con una poderosa defensa de barrera.<br>Tiene esos pinchos porque no se peina al levantarse<br>por las mañanas. Como todo el mundo mantiene las<br>distancias con ella, piensa que es por su mal aliento.
+389	<br><br><br>
+390	<br><br><br>
+391	
+392	
+393	
+394	
+395	
+396	<br><br><br>
+397	<br><br><br>
+398	<br><br><br>
+399	
+400	
+401	
+402	
+403	
+404	
+405	Artefacto de un imperio antiguo que gobernó la Tierra<br>hace tiempo. Un clan oscuro de chuchos ha<br>hecho revivir esta terrible fuerza, pero por suerte solo<br>tienen una copia del manual de instrucciones.
+406	Un artefacto imparable que destroza sin piedad<br>a cualquier intruso que ose invadir el reino de los antiguos.<br>Las profecías hablan de ciertos seres capaces<br>de aguantar las maldiciones oscuras de este guardián.
+407	Némesis ancestral del imperio gatuno.<br>Es serio y trabajador, como todos los chuchos,<br>pero a veces se le escapa alguna maldición<br>cuando está muy ofuscado. Eso sí, totalmente sin querer.
+408	<br><br><br>
+409	
+410	
+411	<br><br><br>
+412	Habla un dialecto moderno porque esta<br>criatura reliquia es muy jovenzuela.<br>Si los gatos lo tomaran más en serio,<br>aprenderían muchas cosas de este tipo.
+413	Un antiguo profeta que se entera de la destrucción<br>inminente mientras viaja por el tiempo. Sus viajes<br>son un pelín imprecisos, así que para cuando llega<br>a casa, todo lo chungo ya ha pasado.
+414	El alcalde del antiguo ducado Lepidóptera.<br>A sus ciudadanos les aburren sus historias interminables<br>y tediosas que hacen que las reuniones matinales<br>del consejo se alarguen hasta bien entrada la noche.
+415	
+416	<br><br><br>
+417	¡Entregas exprés a través de la galaxia!<br>Su novia cree que debería buscarse<br>un curro de verdad, así que se ha unido<br>a la división de élite de los álienes.
+418	Un talentoso pero menospreciado chef que trabaja<br>en un restaurante con estrella. Abduce cualquier<br>cosa que no tenga buena pinta y la devuelve a<br>la cocina. ¿Qué vino le va bien a un gato?
+419	¡Hola! ¡Soy yo, el Misidiós favorito de todo el mundo!<br>Espero que disfrutases del cap. 2 de Gatos Galácticos.<br>La vida en el mundo real es dura, ¿eh? De hecho,<br>yo mismo tuve que volver a casa de mis padres la semana pasada.
+420	La celebridad del año pasado, famoso por<br>sus llamativas gafas. Aunque en realidad son<br>sus ojos. Es rarísimo que pueda lanzarlos<br>así, ¿verdad? Reliquias... Siempre tan fascinantes.
+421	<br><br><br>
+422	<br><br><br>
+423	Una forma de vida cuya existencia se basa en destruir<br>a los gatos. Creían que se había extinguido hace milenios<br>durante una batalla contra el ejército felino original.<br>Es el «rostroide» más pequeño y bonito.
+424	Esta avestruz es un comediante con muchas tablas<br>que inspira a las jóvenes promesas. Sin embargo,<br>cada vez le preocupa más la brecha generacional<br>cuando está encima del escenario.
+425	<br><br><br>
+426	<br><br><br>
+427	Está hecho con las partes más fuertes de varios<br>Profeosos caducados. La cabeza no se quedaba bien<br>pegada, así que tuvieron que atornillarla.<br>Parece que su ansia de matar va creciendo...
+428	A causa de un trágico accidente con un secador<br>de permanentes, este cerdi acabó con un estrafalario<br>peinado... a base de rastas. ¡Ahora su nombre le viene al pelo!<br>Vaya cambio de imagen, ¿verdad?
+429	
+430	<br><br><br>
+431	Una monada devorasueños que vaga por ahí<br>medio dormida. Lleva pañal a pesar de que ya<br>es adolescente. No molestes a esta dulce<br>sonámbula por mucho que ronque.
+432	
+433	
+434	<br><br><br>
+435	
+436	
+437	<br><br><br>
+438	El ciclón más viejo, nacido durante el propio<br>Big Bang. No se ha debilitado ni un ápice<br>tras devorar a los dinosaurios. Lanza maldiciones y<br>se fortalece tras sufrir daño.
+439	<br><br><br>
+440	<br><br><br>
+441	
+442	<br><br><br>
+443	Se rumorea que es el hijo legítimo secreto<br>de una famosa tormenta, pero no se sabe de cuál.<br>Abduce a cualquiera que se le acerque un poco.<br>No tiene mucha resistencia, ¡así que dale duro!
+444	Esta pandilla de malotes ya se ha cansado<br>de que los gatos se la líen en su propio territorio.<br>Han salido del barro y están listos para luchar.<br>No los llames serpientes, que no les gusta.
+445	Una salamandra espacial con alergia a los gatos.<br>Cualquier gato pequeño debería tener cuidado con<br>los poderosos vientos de sus terribles estornudos,<br>porque podrían mandarlos a otra dimensión.
+446	¡Ajá, volvemos a encontrarnos! Al Misidiós no se le<br>vence tan fácilmente. Sí, en el último capítulo<br>de Gatos Galácticos no estuviste mal... Puede que<br>te hayas ganado el derecho a ser mi secuaz.
+447	Tras milenios vagando entre las estrellas,<br>una extraña fuerza vuelve a liarla parda<br>en el imperio gatuno galáctico. El caos que<br>genera puede reescribir las leyes de la realidad...
+448	
+449	<br><br><br>
+450	Un guerrero ancestral rescatado por los chuchos.<br>Su cuerpo es de arcilla reforzada con el poder<br>de las reliquias. Su torso humano se unió por<br>error al cuerpo de un caballo, pero aún funciona.
+451	
+452	
+453	
+454	
+455	
+456	
+457	<br><br><br>
+458	
+459	
+460	
+461	<br><br><br>
+462	
+463	
+464	
+465	
+466	
+467	
+468	Un científico loco le prendió fuego a su cola<br>para probar los límites del poder de las aves.<br>El pánico le dio la fuerza que necesitaba<br>para salir volando hacia la estratosfera.
+469	Estos tipos nunca están solos, ni vivos ni muertos.<br>Por suerte, hay un bus que pasa por las<br>paradas del cementerio y del campo de batalla.<br>La no muerte no cura la codependencia...
+470	
+471	
+472	
+473	
+474	
+475	
+476	
+477	Director de la filial de una empresa de comercio<br>submarino. Antes era conocido por su personalidad<br>tóxica, pero desde que se casó, se ha vuelto<br>más cercano a pesar de su aspecto espinoso.
+478	<br><br><br>
+479	Aspira a ser el ídolo de alguien y aparece una vez<br>cada cien años, por lo que siempre lo confunden con<br>un asteroide. Su séquito de fieles seguidores forman una fila<br>brillante que se puede ver a años luz de distancia.
+480	
+481	
+482	
+483	
+484	
+485	
+486	
+487	
+488	
+489	
+490	
+491	Una expresión maliciosa se esconde tras esa imagen<br>de damisela inocente y tradicional. Busca vengarse<br>de cualquiera que se haya atrevido a aprovecharse<br>de la inocencia de la juventud.
+492	Los exámenes de ascenso a arcángel se acercan, así que<br>lleva los libros a todas partes. Cualquier gato<br>que se atreva a interrumpir sus tardes de estudio<br>será castigado con su magia tóxica. ¡Chis!
+493	Reina de los escenarios que comenzó como una<br>bailarina del montón hace 888 años. Toda la colmena<br>la adora, incluso ahora en la vejez. Algunos zánganos<br>dicen incluso que ella es la única soberana verdadera.
+494	
+495	Este monstruito siempre parece estar tranquilo<br>mordisqueando pepinos en el lago. Pero llega<br>un momento en el que le salta una chispa y te puede<br>freír con una terrible réplica.
+496	Guardianes de la naturaleza primigenia.<br>Ningún intruso ha salido vivo de su bosque<br>sagrado. Y solo quienes sean capaces de<br>vencerlos verán qué se esconde tras la máscara.
+497	Kodri se presentó voluntario para un experimento de<br>ciborgización para ser el miembro más poderoso de su clan.<br>El problema fue que se acabó el presupuesto a medio proyecto,<br>pero aun así, su nuevo aspecto ha hecho que merezca la pena.
+498	Este pavo también es un vendedor de categoría.<br>En octubre fue a visitar a un quiromante y recibió<br>muy malas noticias sobre su futuro. Por eso ahora<br>se está entrenando las alas para salir huyendo.
+499	Un laboratorio secreto se dedicó a modificar genoma<br>de forma poco ética para crear un Señor Foca supremo. <br>Sus ataques desgastan y paralizan, así que cuidadín.<br>Su letalidad aumenta con cada batalla.
+500	
+501	
+502	
+503	
+504	
+505	
+506	El mayor playboy del universo, amado por<br>las señoras solitarias de toda la galaxia.<br>Unas palabras de sus labios y cualquiera<br>acaba viendo estrellas y constelaciones.
+507	<br><br><br>
+508	
+509	
+510	Un laboratorio secreto se dedicó a modificar genoma<br>de forma poco ética para crear un L. Fante Negro<br>enorme, muy agresivo y con ataques que ralentizan.<br>Su letalidad aumenta con cada batalla.
+511	Un ser de tipo Clionel que sobrevivió a la extinción masiva<br>de los océanos contaminados de su mundo.<br>Yo no me acercaría a él ni a sus hijos, por si acaso.<br>Los gatos se quedan paralizados de miedo al verlo.
+512	Es el sobrino favorito de Ziclón.<br>Tiene la rudeza de su madre y el carácter tímido<br>de su padre combinados en una tormentilla<br>que se esconde a la primera señal de peligro.
+513	Este can fiel hasta el final espera en las puertas<br>del cielo a que llegue su amo. Su famosa estatua<br>en la que está lanzando una réplica es el punto<br>de reunión por excelencia para los adolescentes.
+514	Un bebé veterano con más de 7 años de experiencia en temas<br>de infancia. Ha perfeccionado el arte de la rabieta y ya<br>es capaz de dejar inconscientes a los enemigos. Lo han<br>rechazado en dos guarderías de élite por su talento.
+515	Un laboratorio secreto se dedicó a modificar genoma<br>de forma poco ética para crear un Pol Illa supremo.<br>Bate sus enormes alas para repeler a su presa.<br>Su letalidad aumenta con cada batalla.
+516	El jefe de un poderoso clan que en teoría está jubilado,<br>pero en realidad sigue trabajando. Construyó un escondite<br>en lo alto de una torre para estar a solas con su novia,<br>pero los gatos los interrumpieron de la forma más grosera.
+517	Entrenador y mascota del equipo favorito de la liga, los<br>Koalas Kampeones. Tiene tendencia a liarla cuando su equipo<br>va perdiendo, lo que ha resultado en la repetición de varios<br>partidos. Sus técnicas de entrenamiento son aterradoras.
+518	
+519	
+520	
+521	Un artista callejero que cambia de aspecto cuando se<br>concentra en una imagen distinta. Tocaba en un grupo<br>bastante famoso, pero decidió emprender una carrera<br>solista justo antes de que cayeran en desgracia.
+522	
+523	
+524	
+525	Un laboratorio secreto se dedicó a modificar genoma<br>de forma poco ética para crear un Hipo Alien enorme.<br>Ralentiza a aquellos que se resisten.<br>Su letalidad aumenta con cada batalla.
+526	Sujeto 002 (organismo paleobacterial)<br>Potencial de combate: incalculable.<br>Pese a su aspecto, carece del rasgo volador.<br>Su potencia es inversamente proporcional a su capacidad.
+527	Un ave tan mazada que puede cruzar<br>el río Estigia a nado cuando le viene en gana.<br>Le da rabia no poder evitar que se le pudra la masa<br>muscular que consiguió con tanto esfuerzo y sudor.
+528	
+529	
+530	
+531	
+532	
+533	
+534	
+535	El señor de los gatos, consumido de orgullo por<br>su dominio de las brujerías del bosque. Ahora es<br>el rey de la desgracia y se desquita con este mundo<br>cruel a base de furiosas réplicas y maldiciones.
+536	
+537	
+538	«A ver quién le enseña los colmillos a este jabalí»,<br>dice este joven rebelde antes de salir quemando rueda<br>con su moto. Le dan igual las normas de los adultos;<br>él lo que quiere es echarse a la carretera y viajar.
+539	<br><br><br>
+540	
+541	Se apuntó a un curso por internet para aprender a lanzar<br>réplicas y golpeó a Cerdi sin querer un día que estaba<br>practicando sin permiso en el parque. Ahora va disfrazado<br>para que no lo pille la policía.
+542	
+543	
+544	
+545	
+546	
+547	Se ha dejado crecer la melena,<br>aunque nadie sabe muy bien por qué.<br>Puedes preguntárselo a él, pero siempre<br>se enfada y empieza a lanzar minioleadas.
+548	<br><br><br>
+549	Este soldado tiene un contrato con una multinacional<br>malvada. Tiene los ojos inyectados en sangre<br>y se vuelve loco porque él echa más horas que un reloj,<br>pero el novato se tira la mañana en su «pausa del café».
+550	
+551	En las profundidades del Bosque Viejo,<br>la tribu Doron vive escondida tras máscaras<br>bendecidas por los dioses. Si se rompen,<br>se libera una explosión de poder divino.
+552	Cansado de la vida de estudiante, el hermano<br>del Chucho huyó para unirse a las filas de los akus.<br>El clan lo considera un traidor, pero todavía<br>sigue pagando en secreto la matrícula del Chucho.
+553	Serpi ha sido marcada con la llama azul del poder aku.<br>Libera una réplica al morir.<br>Su debilidad es el agua, pero este dato<br>no resulta nada útil en este juego.
+554	Un trío de habitantes de las redes que sacrificaron su alma<br>al abrir un correo basura de reclutamiento de los akus.<br>Antes eran enemigos rojos de nivel bajo, pero ahora<br>son empresarios de éxito que invierten en el mal.
+555	Se hizo famoso al protagonizar «El insomnio de Ping».<br>Para asegurarse la secuela, hizo un pacto con los akus<br>y pidió un cuerpo que no necesitara descanso.<br>Ahora, además, puede lanzar un rayo con la frente.
+556	Lo despidieron del cielo debido a sus fallos<br>constantes y los akus lo reclutaron enseguida<br>por su rostro aterrador. Ahora hace directos<br>de su vida diaria en el vórtice de akus.
+557	Hizo un pacto con los akus: su alma<br>a cambio de un carrete de fotos secreto...<br>Mejor no preguntar. Porta un escudo<br>para proteger esa valiosa colección de fotografías.
+558	Un embajador de élite del reino de los akus.<br>Da un buen apretón de manos y tiene una sonrisa radiante.<br>Además, su presencia física impone a cualquiera.<br>Si nada de eso funciona, una bomba atómica también le sirve.
+559	Nadie se atreve a acercarse a este aku todopoderoso.<br>Eso es lo que él piensa, pero en realidad es porque<br>tiene muy mal carácter y, además, es portador de todo tipo<br>de bacterias... (Fuente: Investigador Aku).
+560	Una enorme y malvada tempestad que todo lo consume.<br>Las almas a las que atrapa son enviadas a los reinos akus<br>para que se unan a sus terribles ejércitos.<br>Si atraviesas su escudo, quizá tengas alguna posibilidad.
+561	<br><br><br>
+562	<br><br><br>
+563	<br><br><br>
+564	
+565	
+566	
+567	
+568	
+569	
+570	Este sacerdote malvado sueña con dominar<br>todos los reinos de akus. Ha construido altares para sellar<br>el poder de sus enemigos y drenar su fuerza vital<br>con el objetivo de cumplir sus ambiciones más oscuras.
+571	Un poderoso mago que roba energía vital para usarla<br>en el ritual de resurrección del Señor de la Ruina.<br>¿Se hará realidad ese mundo perfecto con el que tanto sueña<br>o habrá consecuencias inesperadas?...
+572	El malvado dios de la destrucción que antaño fuera encerrado<br>por grandes héroes y que ahora ha resucitado con los rituales<br>del sacerdote oscuro. Una nueva era de devastación<br>comienza a erguirse sobre todos nosotros...
+573	En su obsesiva investigación, la Emperatriz ha abierto<br>un grimorio maldito y ha sido poseída por un mal supremo.<br>Ahora, con su alma manchada de perfidia,<br>lleva al imperio por el camino de la destrucción.
+574	
+575	
+576	<br><br><br>
+577	<br><br><br>
+578	<br><br><br>
+579	
+580	<br><br><br>
+581	<br><br><br>
+582	<br><br><br>
+583	Una aku que sufre una crisis de identidad.<br>A los viajeros les pregunta si es serpiente, león o pez,<br>y a quien no contesta correctamente lo convierte en piedra.<br>Extremadamente peligrosa y ataca con réplicas.
+584	Arpía «experta» en romances que aprovecha<br>cualquier oportunidad para dar malos consejos amorosos<br>y provocar desamores. Suele estar por el centro de la ciudad,<br>arruinando cualquier primera cita que vaya mínimamente bien.
+585	Este aku fue creado por una máscara maldita<br>para luchar por la resurrección del gran aku.<br>Los miasmas malvados que emite la máscara<br>absorben la vida a cualquiera que se acerque.
+586	Es primo de Reno, pero con la cornamenta negra.<br>Todos se reían de él por eso, así que ahora<br>ha jurado venganza y no parará hasta que<br>se le ponga la nariz roja como un tomate.
+587	Era la estrella del béisbol en el instituto, pero tiene<br>el corazón tan frío que vendió el alma de su hermano<br>a los akus a cambio de una victoria en un partido.<br>Ahora lo quieren reclutar para la primera división.
+588	Este Kory anárquico es el líder de una banda de metal.<br>No tiene miedo a saltar al público y, de hecho,<br>le han prohibido la entrada a varias salas por lanzar<br>ataques de oleada a los asistentes de sus conciertos.
+589	<br><br><br>
+590	
+591	
+592	H. Nah se enganchó a la gatamina [C]<br>de contrabando y perdió el sentido de la realidad.<br>Afirma ser un berserker nacido para luchar.<br>Sus réplicas mantienen a sus enemigos a distancia.
+593	Un laboratorio secreto se dedicó a modificar genoma<br>de forma poco ética para crear un Sr. Ángel superior.<br>Guía a los pecadores desgastándolos y abduciéndolos.<br>Su letalidad aumenta con cada batalla.
+594	Un laboratorio secreto se dedicó a editar genoma<br>de forma poco ética para crear un Ping enorme.<br>Lanza toxinas hacia todas partes.<br>Su letalidad aumenta con cada batalla.
+595	
+596	
+597	
+598	<br><br><br>
+599	Un ser primordial sagrado y la criatura<br>del bosque más anciana que se conoce.<br>Invoca rayos para poner a prueba a los intrusos.<br>Quienes superen su prueba serán considerados dignos.
+600	Capi B. Ara estaba disfrutando de sus vacaciones<br>hasta que murió inesperadamente. Es una pesada<br>que protege su rinconcito abduciendo a otros<br>visitantes y mandándolos a una zona lejana.
+601	
+602	
+603	Mientras caminaba por los trópicos,<br>este Chucho oyó la llamada de la naturaleza,<br>así que dejó su trabajo y a su hermano gemelo<br>y se lanzó a buscar la ola perfecta.
+604	Un pato que regresó a la naturaleza y por poco<br>se convierte en fuagrás. Bate su cresta<br>con violencia y ataca con su enorme pico.<br>Es la más feroz de todas las bestias.
+605	Un Lechuzo que vio despertar su lado salvaje<br>a la edad de 79 años. Este viejuno visita volcanes<br>y libera años de rabia contenida en forma de<br>una bola de luz. Puede generar réplicas.
+606	Un Ermitaño Tacaño que ha obtenido el poder irracional<br>del amor, así como un sitio bonito en el que vivir.<br>Con sus garras gigantes puede ralentizar a enemigos<br>e infligirles daño con su multiataque de largo alcance.
+607	Este conejito huyó de un laboratorio secreto que se dedicaba<br>a modificar genoma de forma poco ética. Durante su ausencia,<br>sus negocios se fueron a pique. No obstante, la joya de su<br>trasero predice un futuro lleno de buena fortuna.
+608	El nieto del Chucho, que viene del futuro para cambiar<br>el pasado en el que su abuelo suspendía un examen.<br>Las preguntas del examen de acceso son tan diferentes<br>que le está costando bastante lograr su objetivo.
+609	Un arma de destrucción construida por los antiguos.<br>El rayo que dispara es capaz de traer la ruina al mundo.<br>Un sabio lo tiró al fondo del océano, pero ahora parece<br>que ha flotado hasta la superficie.
+610	Un mastodonte muy poderoso que se volvió<br>demoníaco después de perder su hogar. No le <br>gustan los árboles de la jungla en la que vive.<br>Puede disparar lanzas paralizantes con la cola.
+611	El tercero de los hermanos pájaros. Su hogar<br>es la oscuridad, donde cultiva peligrosas plantas,<br>o eso dicen por ahí. Puede atacar repetidamente<br>con potentes picotazos e infligir toxicidad.
+612	Un perro creado a partir de barro para proteger hogares.<br>Tiene varios mecanismos de interferencia y bloqueo<br>para que nadie se acerque a la casa.<br>Lo mejor es que se parece muchísimo a su dueño.
+613	Es el rey de la naturaleza, pero tiene un rostro aterrador<br>que contrasta con su gran corazón y su deseo de proteger<br>el medio ambiente. Provoca oleadas y réplicas y, con su puño<br>sagrado, atiza a los malvados cazadores furtivos.
+614	Hormiga que trabajó mucho para reunir comida<br>para el invierno y que comió de más y ahora<br>deambula por la zona entre la vida y la muerte.<br>Si se pone nerviosa, explota.
+615	Hijo de un empresario que consiguió trabajo<br>por sus conexiones. Se operó el genoma para evitar<br>que lo comparasen con su exitoso padre.<br>Piensa presentarse pronto a las elecciones.
+616	<br><br><br>
+617	
+618	
+619	
+620	
+621	
+622	
+623	
+624	Pájaro ancestral encubierto en truenos que vive en<br>una torre en el cielo. Las leyendas dicen que es una<br>vista para contemplar, pero esconde una personalidad violenta<br>que se vuelve más feroz cuando está acorralado.
+625	<br><br><br>
+626	<br><br><br>
+627	Pata vieja acompañada de sus patitos.<br>Tiende a perder los estribos. Madre estricta<br>que cría a sus patitos para que algún día se vayan<br>del nido. Envía dinero al patito más pequeño.
+628	Simio grande que protege los Bosques Sagrados<br>desde tiempos inmemoriales. Considerado el padre<br>de los humanos. Resistente a mastodontes<br>con la maldición antigua.
+629	Absorbe la energía que lo compone todo.<br>Si despierta todo su poder, arrincona sin piedad<br>a todo lo que se mueve con sus enormes puños<br>y acaba con su presa de manera implacable.
+630	Deambula por los mundos dejando tras de sí <br>destrucción y creación.<br>Su composición es tan misteriosa como su poder.<br>Es inmune a todas las penalizaciones.
+631	
+632	
+633	<br><br><br>
+634	Un alabado escultor que vive en la naturaleza. <br>Hizo un contrato aku para ganar visión de Rayos X y<br>esculpir mejor estatuas desnudas, pero ahora<br>solo ve los huesos a través de la ropa y la piel...
+635	<br><br><br>
+636	Una influencer superfamosa que atrae<br>todo tipo de atención. Vive en el lujo absoluto.<br>Es famosa porque tiene un estilazo que causa sensación.<br>Dona todo lo que gana a la beneficencia.
+637	Un laboratorio secreto se dedicó a modificar genoma<br>para mejorar a los Niños Cerbero, de tamaño inigualable,<br>con ataques de réplica e inmovilizadores.<br>Su letalidad aumenta con cada batalla.
+638	Hermano pequeño de Ciclón Blanco. Estudia succión<br>y durabilidad en la universidad. Como ha habido un<br>apogeo en las ventas de robots aspiradoras, tiene<br>problemas para encontrar trabajo.
+639	Un pegaso gigante con el poder de encender<br>los cielos y arrasar con la tierra. Cualquiera que ponga<br>los ojos en él es devorado por minioleadas y condenado<br>a morir entre llamas.
+640	Cerdo mascota de la 56.ª reina del Reino Porcino.<br>Huyó tras soportar demasiados días paseando <br>con ropa. Mientras disfrutaba de la vida silvestre,<br>descubrió que la ropa era, en realidad, su propio pelaje.
+641	Al haberse criado en un mundo tan cruel, no tiene tacto <br>al tratar con las mujeres. Tras lamerse miles de heridas <br>producidas por el rechazo femenino, consiguió la fortaleza<br>necesaria para superar cualquier estado de penalización.
+642	Después de 560 000 años regresó a nuestro mundo bajo<br>la forma de un tirano infernal solo para hacerse una foto <br>para una cita a ciegas. Quiere impresionar a su cita usando<br>su altura, expediente académico y nivel de azúcar en sangre.
+643	Una hechicera espantosa que vive en lo más profundo<br>de un laberinto. Las víctimas que caen en su trampa acaban<br>escuchando historias larguísimas sin un final satisfactorio<br>que van sobre su hermano mayor en los reinos de akus.
+644	
+645	
+646	<br><br><br>
+647	
+648	
+649	Nutria guardiana del Cielo.<br>Manda a los indignos al inframundo con<br>su orbe dorado. Invoca monstruos con el<br>poder de la réplica.
+650	El ancestro de toda especie invasora.<br>Debía eliminar plagas, pero su apetito<br>voraz hizo que fuera imposible de controlar y<br>se ha convertido en un peligro para todo lo que lo rodea.
+651	
+652	Tras suspender 10 veces la selectividad,<br>va a pasar de la universidad porque resulta<br>que los no muertos no necesitan una carrera.<br>Siempre pensará en qué podría haber sido...
+653	Un gran yokai doméstico que vive en los pantanos.<br>Una fuerza aumentada por su dieta a base de melón<br>amargo, lo que hace que los enemigos le teman,<br>pero su mujer lo mantenga a raya.
+654	Un laboratorio secreto se dedicó a modificar genoma<br>de forma poco ética para crear una oveja suprema. De primeras<br>les agradó su peculiar cuerpo, pero se arrepintieron de que<br>la transformación no hubiera sido algo más ambiciosa.
+655	Un cocodrilo que se enamoró de la naturaleza <br>cuando probó la caza camuflada. Se cubrió<br>todo el musculoso cuerpo con salsa barbacoa <br>para acechar mejor a sus presas por el bosque.
+656	
+657	
+658	Una chica criada para no dejarse influenciar<br>por la corrupción del mundo exterior.<br>Cuando sus padres se van a la cama, ella sale<br>y destruye el mal con sus minirréplicas.
+659	Fue asesinada por su potente alter ego del pasado<br>para encerrarla eternamente. Ahora que<br>un creciente miasma crea más mastodontes,<br>el sello del primer Emperador se ha roto.
+660	<br><br><br>
+661	<br><br><br>
+662	<br><br><br>
+663	<br><br><br>
+664	<br><br><br>
+665	<br><br><br>
+666	<br><br><br>
+667	<br><br><br>
+668	<br><br><br>
+669	
+670	<br><br><br>
+671	<br><br><br>
+672	<br><br><br>
+673	
+674	<br><br><br>
+675	<br><br><br>
+676	
+677	Un sabio de alto rango que estudia el mundo<br>desde otro plano. Llegó a un acuerdo con la humanidad,<br>concediéndoles sabiduría. Su sed insaciable de<br>conocimiento le garantizó un encuentro con los gatos.
+678	
+679	Tras caer en depresión por suspender los finales,<br>encontró un amuleto de sabiduría entre las páginas de un cómic.<br>Ahora da demasiadas vueltas a todo y sufre la condena<br>de suspender exámenes por falta de tiempo.
+680	Le graduaron mal las gafas, así que tropezó<br>y se cayó sobre la roca que ahora es parte<br>de su cabeza. Para pasar las puertas del Cielo,<br>se le ha de derrotar en un duelo de ingenio.
+681	
+682	Este extraño collar le dio a este noble perro<br>un amor por la música. No puede tocar música,<br>pero se le da tan bien la teoría que puede componer<br>piezas para que sean tocadas en su nombre.
+683	Un haniwa gigantesco que fue excavado de un<br>antiguo laboratorio para usarse como arma de guerra.<br>Es inmune a las maldiciones por un genoma revuelto y<br>puede hacer oleadas con efectos que debilitan.
+684	
+685	
+686	
+687	
+688	
+689	
+690	
+691	
+692	Gato científico que se dedica al boxeo para demostrarle<br>su valía a su hijo delincuente. Posee una<br>inteligencia superior gracias a la piedra de poder<br>Un Golpe, una forma de dopaje indetectable.
+693	
+694	Una hiena mayor considerada la mejor astrónoma<br>de la historia... según un trofeo de participación en<br>una cumbre local de astronomía. Manda a<br>otra dimensión a quienes critican sus teorías.
+695	
+696	
+697	Pájaro avaricioso obsesionado con los objetos valiosos.<br>Montó un negocio de venta de tesoros después<br>de coger una piedra brillante. Si el comprador promete<br>pagar sus deudas, se completará la transacción.
+698	Ser inmortal que se dedica a la comedia. Intercambió<br>sus sentimientos por el chiste definitivo.<br>Tiene amnesia crónica y se olvida de los chistes<br>en las actuaciones, pero no parece preocuparle mucho.
+699	Un científico quiso crear un superser que<br>superara a la humanidad y este es el resultado.<br>Tras guiar a los gatos hasta otra dimensión,<br>un extraño cristal se alimentó de su ego.
+700	Espécimen n.º ???. Estado: se han detectado<br>microbios inestables. Energía de batalla: incalculable.<br>Se reproduce guardando y plantando semillas.<br>El ser vivo definitivo ya casi está aquí.
+701	
+702	
+703	
+704	
+705	
+706	
+707	
+708	
+709	
+710	
+711	
+712	
+713	El extraño sombrero de este erudito inunda su mente<br>con conocimientos prohibidos del inframundo.<br>Imparte clases sobre la profunda y apasionante sabiduría del<br>abismo, llevando a los ingenuos estudiantes a la perdición.
+714	Profesor desterrado a tierras salvajes tras un escándalo<br>de castigos físicos. Toda criatura que visite sus<br>tierras descubrirá lo duro que puede ser el amor bajo<br>su puño de hierro. Temido rey de todas las bestias salvajes.
+715	Bestia acuática primitiva con un apetito feroz.<br>Se transformó en un maestro de la pesca<br>tras devorar una piedra misteriosa.<br>Ahora muchas especies están al borde de la extinción.
+716	
+717	
+718	
+719	
+720	<br><br><br>
+721	
+722	Una furia incontrolable se apoderó de ellos tras presenciar<br>cómo los globeros eran víctimas de la sobrepesca.<br>Para acabar con los salvajes pescadores, se arrojan<br>sin piedad y hunden cualquier barco que encuentren a su paso.
+723	Este avestruzador de un planeta remoto fue abandonado<br>en la Tierra tras sobrevivir a un motín de su tripulación.<br>Transmite una señal de socorro en bucle con la esperanza<br>de que algún día una nave acuda en su rescate.
+724	
+725	
+726	
+727	
+728	
+729	Observó nuestro mundo desde otra dimensión.<br>Bendice a los cerebritos dormidos con sabiduría científica.<br>Objetivo: desentrañar los sinsentidos del ejército felino<br>a través del combate.
+730	
+731	
+732	
+733	
+734	
+735	Una piedra mágica dotó a este legendario jugador<br>de béisbol del poder de triunfar en cualquier posición<br>en el campo... Pero ahora es un equipo<br>de un solo caballito de mar casi al borde del colapso.
+736	
+737	
+738	
+739	
+740	
+741	
+742	
+743	Un laboratorio clandestino alteró el genoma de un Lunángel<br>y ahora su monstruoso tamaño ya no pasa desapercibido.<br>Ahora arrasa con todo lo que encuentra a su paso<br>con oleadas que ralentizan.
+744	Camina arrastrando los pies en busca de huesos que roer.<br>No alcanza a sacarse el hueso<br>que le atraviesa la barriga, y cada vez que busca<br>a alguien que lo ayude, todos huyen asustados.
+745	Hace de balón en muchos partidos deportivos<br>para cambiar sigilosamente el resultado<br>de dichos partidos en un intento de ser<br>el protagonista... Pero el fútbol es muy duro.
+746	
+747	<br><br><br>
+748	
+749	
+750	
+751	
+752	
+753	
+754	
+755	
+756	
+757	
+758	
+759	
+760	
+761	
+762	
+763	
+764	
+765	
+766	
+767	
+768	Miembro del Comité de la Moral que se pone rojo cada vez<br>que ve algo indecente. Confisca sin excepción<br>todos los objetos "indecorosos", pero solo para ampliar<br>la enorme colección secreta que alberga en su propia casa.
+769	Crearon un grupo cómico tan solo porque los pájaros vuelan<br>en bandada. Prefieren la cantidad a la calidad,<br>así que sueltan chistes malos sin parar<br>hasta que al público no le queda otra que reírse.
+770	
+771	

@@ -1,0 +1,1062 @@
+0|S0|I0	Acelerador
+1|S1|I1	Radar de tesoros
+2|S2|I2	Gato ricachón
+3|S3|I3	Gatomático
+4|S4|I4	Sabelotodo
+5|S5|I5	Gatotirador
+6|S6|I201	XP
+7|S7|I217	NP
+8	dummy
+9	dummy
+10	5 000 XP
+11	10 000 XP
+12	30 000 XP
+13	50 000 XP
+14	100 000 XP
+15	200 000 XP
+16	500 000 XP
+17	1 000 000 XP
+18	2 000 000 XP
+19	500 000 XP
+20|S11|I202	Tique gatuno
+21|S12|I203	Tique raro
+22|S13|I200	Friskas
+23|S16|I400	Tique de la suerte
+26|S17|I403	Tique de la suerte
+27|S18|I404	Tique de la suerte
+28|S19|I405	Tique de la suerte
+29|S20|I204	Tique de platino
+30|S30|I500	Semilla morada
+31|S31|I501	Semilla roja
+32|S32|I502	Semilla azul
+33|S33|I503	Semilla verde
+34|S34|I504	Semilla amarilla
+35|S35|I505	Fruta morada
+36|S36|I506	Fruta roja
+37|S37|I507	Fruta azul
+38|S38|I508	Fruta verde
+39|S39|I509	Fruta amarilla
+40|S40|I510	Fruta épica
+41|S41|I511	Semilla arcaica
+42|S42|I512	Fruta arcaica
+43|S43|I513	Semilla épica
+44|S44|I514	Fruta dorada
+45|S21|I406	Tique de la suerte
+46|S22|I407	Tique de la suerte
+47|S23|I408	Tique de la suerte
+48|S24|I409	Tique de la suerte
+49|S25|I410	Tique de la suerte
+50|S50|I600	Gatojo [Especial]
+51|S51|I601	Gatojo [Raro]
+52|S52|I602	Gatojo [Superraro]
+53|S53|I603	Gatojo [Megarraro]
+54|S54|I604	Gatojo [Legendario]
+55|S55|I700	Gatamina [A]
+56|S56|I701	Gatamina [B]
+57|S57|I702	Gatamina [C]
+58|S58|I605	Gatojo [Oscuro]
+60|S60	Ataque
+61|S61	Alcance
+62|S62	Recarga
+63|S63	Eficiencia
+64|S64	Monedero
+65|S65	Defensa de la base
+66|S66	Investigación
+67|S67	Rentabilidad
+68|S68	Formación
+69|S69	Energía
+70|S70	Cat Ally: Dummy 1
+71|S71	Cat Ally: Dummy 2
+72|S72	Cat Ally: Dummy 3
+73|S73	Cat Ally: Dummy 4
+74|S74	Cat Ally: Dummy 5
+75|S26|I411	Tique de la suerte
+76|S76|I205	Tique de la suerte
+77|S77|I206	Tique de la suerte G
+78	100 000 XP
+80|S80|I6	XP
+81|S81|I7	XP
+82|S82|I8	XP
+83|S83|I9	XP
+84|S84|I10	XP
+85|S85|I610	Ladrillos
+86|S86|I611	Plumas
+87|S87|I612	Carbón
+88|S88|I613	Engranajes
+89|S89|I614	Oro
+90|S90|I615	Meteoritos
+91|S91|I616	Huesos
+92|S92	Ingenieros
+93|S93|I207	Tique de la suerte
+94|S94|I208	Tique de la suerte G
+95|S95|I209	Tique de la suerte G
+96|S96|I210	Tique de la suerte G
+97|S97|I211	Tique de la suerte G
+98|S98|I212	Tique de la suerte G
+99|S99|I213	Tique de la suerte
+100|S100|I214	Tique de la suerte G
+101|S101|I215	Tique de la suerte
+102|S102|I216	Tique de la suerte G
+103|S103|I218	Tique de la suerte G
+104|S104|I219	Tique de la suerte
+105|S105|I220	Liderazgo
+106|S106|I221	Tique de la suerte G
+107|S107|I222	Tique de la suerte
+108|S108|I223	Tique de la suerte G
+109|S109|I224	Tique de la suerte G
+110|S110|I225	Tique de la suerte
+112|S112|I226	Tique de la suerte
+113|S113|I227	Tique de la suerte G
+114|S114|I228	Tique de la suerte G
+115|S115|I229	Tique de la suerte G
+116|S116|I230	Tique de la suerte
+117|S117|I231	Tique de la suerte
+118|S118|I232	Tique de la suerte G
+119|S119|I233	Tique de la suerte G
+120|S120|I234	Tique de la suerte G
+121|S121|I235	Tique de la suerte G
+122|S122|I236	Tique de la suerte
+123|S123	Lote de regreso
+124|S124|I237	Tique de la suerte G
+125|S125|I238	Tique de la suerte G
+126|S126|I239	Tique de la suerte
+127|S127|I240	Tique de la suerte
+128|S128|I241	Tique de la suerte G
+129|S129|I242	Tique de la suerte G
+130|S130|I243	Tique de la suerte G
+131|S131|I244	Tique de la suerte G
+132|S132|I245	Tique de la suerte
+133|S133|I246	Tique de la suerte G
+134|S134|I247	Tique de la suerte
+135|S135|I248	Tique de la suerte G
+136|S136|I249	Tique de la suerte
+137|S137|I413	Bikkuriman Choco
+138|S138|I250	Tique de la suerte G
+139|S139|I251	Tique de la suerte
+140|S140|I617	Amonites
+141|S141|I252	Tique de la suerte G
+142|S142|I253	Tique de la suerte G
+143|S143|I254	Tique de la suerte
+144|S144|I255	Tique de la suerte G
+145|S145|I256	Tique legendario
+146|S146|I257	Tique de la suerte G
+147|S147|I258	Tique de la suerte
+148|S148|I259	Tique de la suerte
+149|S149|I260	Tique de la suerte G
+150|S150|I261	Tique de la suerte G
+151|S151	¡3 h de gatos ricachones infinitos!
+152|S152	¡3 h de gatomáticos infinitos!
+153|S153	¡3 h de gatotiradores infinitos!
+154|S154|I262	Tique de la suerte G
+155|S155|I263	Tique de la suerte
+156|S156|I264	Tique de la suerte G
+157|S157|I270	Fragmento de platino
+158|S158|I414	Red legendaria
+159	5 000 XP
+160|S160|I515	Semilla felina de Aku
+161|S161|I516	Fruta felina de Aku
+163|S163|I416	caja misteriosa
+164|S164|I517	Semilla Felina Dorada
+166|S166|I418	Carta de amor
+167|S167|I518	Piedra M. morada
+168|S168|I519	Piedra M. roja
+169|S169|I520	Piedra M. azul
+170|S170|I521	Piedra M. verde
+171|S171|I522	Piedra M. amarilla
+172|S172|I419	Agua bendita
+173|S173|I420	Redes legendarias
+174|S174|I710	Medalla de bronce
+175|S175|I711	Medalla de plata
+176|S176|I712	Medalla de oro
+177|S177|I713	Medalla de platino
+178|S178|I421	Pase legendario
+179|S179|I523	Gema de mast. mor.
+180|S180|I524	Gema de mast. roja
+181|S181|I525	Gema de mast. azul
+182|S182|I526	Gema de mast. ver.
+183|S183|I527	Gema mast. amar.
+184|S184|I528	Piedra mast. épica
+185|S185|I422	Amuleto legendario
+186|S186|I423	Carta de amor
+187|S187|I618	Ladrillo Z
+188|S188|I619	Plumas Z
+189|S189|I620	Carbón Z
+190|S190|I621	Engranajes Z
+191|S191|I622	Oro Z
+192|S192|I623	Meteoritos Z
+193|S193|I624	Huesos Z
+194|S194|I625	Amonites Z
+195|S195|I424	Agua bendita
+196|S196|I425	redes legendarias
+197	1 000 000 XP
+198|S198|I426	Minimedalla
+199|S199|I427	Amuleto legendario
+200|S200|I428	Carta de amor
+201|S201|I11	XP
+202|S202|I429	Agua bendita
+203|S203|I430	Red legendaria
+204|S204|I431	Trampa legendaria
+206|S206|I433	Alma Legendaria
+207|S207|I720	Fondos de guerra
+209|I435	C. tesoro bronce
+210|I436	Cofre tesoro plata
+211|I437	Cofre tesoro oro
+212|I265	Tique de los 100 M
+213|S213|I438	Carta de amor
+214|S214|I439	Cesta legendaria
+215|S215|I440	Legendary Dumbbell
+216|S216|I441	Trampa legendaria
+217|I442	C. tesoro bronce
+218|I443	Cofre tesoro plata
+219|I444	Cofre tesoro oro
+220|S220|I445	Billete legendario
+221|S221|I446	Brillo estelar
+222	2 000 XP
+223	25 000 XP
+224|I447	C. tesoro bronce
+225|I448	Cofre tesoro plata
+226|I449	Cofre tesoro oro
+227|S227|I450	Espíritu Legendario.
+228|I451	C. tesoro bronce
+229|I452	Cofre tesoro plata
+230|I453	Cofre tesoro oro
+232|I455	C. tesoro bronce
+233|I456	Cofre tesoro plata
+234|I457	Cofre tesoro oro
+235|S235|I458	Amuleto legendario
+236|I459	C. tesoro bronce
+237|I460	Cofre tesoro plata
+238|I461	Cofre tesoro oro
+239|I462	C. tesoro bronce
+240|I463	Cofre tesoro plata
+241|I464	Cofre tesoro oro
+242|S242|I465	Carta de amor
+243|S243|I466	Brillo estelar
+244|I467	C. tesoro bronce
+245|I468	Cofre tesoro plata
+246|I469	Cofre tesoro oro
+1001	Gato Deportista
+1003	Gato Currito
+1004	Piscigato Reno
+1005	Gato de Bronce
+1006	Felidroide
+1007	Gato Adulto
+1008	Gato Malvado
+1009	Gatoñecos
+1010	Gata Colegiala
+1011	Gato Cantante
+1012	Gato Koi
+1013	Novia Maruja
+1014	Diva Vacacional
+1015	Gata Vengativa
+1016	Gato de Kungfú X
+1018	Gato Esponjita
+1019	Cat Kart R
+1020	Gato Bao
+1021	Gatomburguesa
+1022	Calabagato
+1023	Regalo Gatuno
+1024	Gatway
+1025	Bailarina de Awa
+1026	Gato Expreso
+1027	Gato de Ligas Inferiores
+1028	Vendedor de Comida
+1029	Gata Animadora
+1030	Gato Asesino
+1031	Gato Curling
+1032	Gato Huevo
+1033	Bola de Gatos
+1035	Squish Ball Cat
+1036	Gata de Voleibol
+1037	Gato de Cristal
+1038	Moneko Demente
+1039	Jinete de Babosas
+1040	Gato Solitario y Gatito
+1041	Gato Primordial
+1042	Chuchomaru
+1043	Cat Bros
+1044	Gatman
+1045	Gato Medusa
+1046	Gatobaba
+1047	Gato Cosaco
+1048	Gato Profeoso
+1049	Urs y Fenrir
+1050	Gato Rugby
+1051	Gato Fantasma
+1052	Gato Repostero
+1053	Gato Piedra
+1054	Máscara Doron Viejuna
+1055	Investigador Aku
+1056	Gato de Hamelín
+1057	Gato Calígrafo
+1058	Bestia Naala Viejuna
+1059	Huevo Antiguo N001
+1060	Huevo antiguo N003
+1061	Huevo antiguo N004
+1062	Huevo Antiguo N000
+1063	Gato Defensor Asesino
+1064	Huevo Antiguo N005
+1065	Gato Propulsor
+1066	Gato Maicero
+1067	Huevo Antiguo N006
+1068	Sórcates Mente Brillante
+1069	Gato Jugador de Bolos
+1070	Gatilargo Asesino
+1071	Sabio de la lógica Newton
+1072	Gato Carpintero
+1074	Gato del Periódico
+1075	Gatordo Asesino
+1100	Gato de Bronce
+1101	Gato Espacial
+1102	Gato con Comba
+1103	Gato Demente
+1104	Gato Defensor Demente
+1105	Gato Hachero Demente
+1106	Gatilargo Demente
+1107	Gato Lechero Demente
+1108	Gato Pájaro Demente
+1109	Piscigato Demente
+1110	Gato Lagarto Demente
+1111	Gato Titán Demente
+1112	Healer
+1113	Lobo Ururun
+1114	Gato Relojero
+1116	Gato con Aro
+1118	Mininyandam
+1119	Takuya ＆ Yuki
+1120	Gato de Banda
+1121	HYAKUTARO
+1122	Sleeping Beauty Punt
+1130	Gatornado
+1131	Mina Caperucita
+1132	Funghi
+1134	Li'l Madoka
+1135	Kyubey Cat
+1137	PIKOTARO
+1139	Miyamoku Musashi
+1140	Redhead Yuki Cat
+1142	Li'l Shirou
+1143	Akio Yabe
+1144	Karin Nekozuka
+1145	Misaki Konno
+1146	Sairi Nijitani
+1147	Ren Katagiri
+1148	Mentori
+1149	Shinji & Cat
+1150	Giraffe Unit-01
+1151	Pokota
+1152	Ovis
+1153	Coco
+1157	Bun Bun Mecánico
+1158	Betakkuma
+1160	Meowla Meowla
+1162	Prince Yamato
+1164	Kano ＆ Souma
+1167	Ryu Cat
+1168	Akuma Giraffe
+1170	Miku Cat
+1172	Idi:N
+1173	Ranma Cat (M)
+1174	Godzilla Cat
+1177	Osamu Mikumo & Cat
+1178	Yuma Kuga & Cat
+1183	Madhead
+1184	Kenshin Cat
+1185	Maestro de la Vida Dr. Nova
+1186	Sonic Cat
+1187	Tanjiro Cat
+10010	Gato Cachas
+10011	Gato Bailarín
+10012	Hiper Sr.
+10013	Bondage Definitivo
+10014	Eladio Oscuro
+10015	Gato de Asalto
+10016	Gatopiruleta
+10018	Gato Monociclo
+10019	Gato Ninja Volador
+10020	Esquelegato
+10021	Gato Compotas
+10022	Gato Bola de Arroz
+10023	Gato Mariachi
+10024	Gata con Taparrabos
+10027	Bridal Princess Punt
+10061	Gato Concursante
+10064	Gatos Violentos
+10070	Oversleeping Beauty Punt
+10071	Gato Ritual
+10075	Gato Pastel Navideño
+10079	Gato Espacial Marine
+10080	Gato Prisionero
+10081	Caballeros Compañeros
+10082	Miauladín
+10089	Gatos Fideos
+10092	Gato Crestado Maníaco
+10093	Gato Borrador Maníaco
+10094	Gato Oscuro Maníaco
+10095	Gato Piernacas Maníaco
+10096	Gato León Maníaco
+10097	Gato Volador Maníaco
+10098	Gato Isleño Maníaco
+10099	Gato Dragón Rey Maníaco
+10100	Miautante Maníaco
+10101	Gata Luchadora
+10104	Megagato Especial
+10105	Gato Koi Estandarte
+10110	Maruja la Sabana
+10120	Healer Cat CC
+10122	Merc & Cat CC
+10123	Gata de Atención al Cliente
+10127	Titiritero y Charley
+10128	Gato con Bombas
+10129	Gato Cometa
+10133	Garra de Hierro X
+10155	Gato As del Aro
+10180	Takuya＆ Lovely Yuki
+10184	Cat Kart P
+10192	Titi Cat CC
+10202	Gato de Mochi
+10210	Minigato Crestado
+10211	Minigato Borrador
+10212	Minigato Oscuro
+10246	Minigato Piernacas
+10247	Minigatoleón
+10248	Minigato Volador
+10261	Gato Viajero del Tiempo
+10268	Gatifón
+10274	Gata Restauradora
+10285	Gato Tren Bala
+10288	Gato Golfista
+10300	Li'l Ultimate Madoka
+10301	Li'l Devil Homura
+10304	Gato de Cafetería
+10312	Minigato Isleño
+10313	Minigato Dragón Rey
+10314	Minimiautante
+10325	Gato con Caparazón Verde
+10330	Gato Huevo de Pascua
+10341	Redhead Muscled Yuki Cat
+10353	Gato Gran Maestro Disfrazado
+10370	Saber Alter Cat
+10380	Gato Curry
+10383	Gata de Cristal Mazada
+10384	Yulala Espiritual
+10386	Akio & Gunder CC
+10403	Plug Suit Shinji Black
+10406	Moon Kaworu
+10443	Gato Turista
+10453	Gato Futurista
+10474	Rampaging Yamato
+10475	Strike Angel
+10522	Gato Naga
+10528	Gato Gelatinoso
+10529	Guardia Real Gatuna
+10532	Gato Cadaveroso
+10540	Quartercat
+10546	Gato Burbuja
+10554	Gato Pollo Frito
+10555	Uril Esotérico
+10622	Investigator
+10624	Gato de banda de bronce
+10630	Gato Crestado adoctrinado
+10637	Gato Borrador adoctrinado
+10646	Gato Oscuro adoctrinado
+10655	Gato Muslamen adoctrinado
+10663	Gato León adoctrinado
+10668	Gato Volador adoctrinado
+10685	Gato Isleño adoctrinado
+10689	Gato Dragón Rey adoctrinado
+10695	Miautante adoctrinado
+15017	Moneko Superestrella
+15031	Gato Tathagata
+15032	Gato Vándalo Ultra
+15033	Gato Cancán
+15034	Gato Pulpo
+15035	Ultralan Pasalan
+15036	Gato Ciberpunk
+15037	Gato Pez
+15038	Gato Jiangshi
+15039	Gato Relajado
+15040	iGato
+15041	Gato Bañera Lujoso
+15042	Gata Cíborg
+15043	Gata de Cristal Gélida
+15044	Máquina Felina MK III
+15045	Gato Balrog Superior
+15047	Gatosaurio
+15048	Maximum Luchador
+15049	Gato Corsario
+15050	Gatoladrón Folclórico
+15051	Gato Divino
+15052	Gato Médico
+15053	Gato Nigrodanzante
+15056	Gata Maga
+15057	Gatauro
+15058	Gato Paladín
+15059	Gato Duelista
+15060	Cuna de Gatos
+15062	Gato Huevas
+15067	PPT46
+15068	Crystal Li'l Gau Gau
+15069	Judgment
+15072	Yukimura Inmortal
+15073	Keiji Inmortal
+15074	Nobunaga Inmortal
+15076	Brisabel Divina
+15077	Trónica Divina
+15084	Sodoma, Dios Emperador
+15085	Megidora, Dios Emperador
+15086	Vars, Dios Emperador
+15087	Kamukura, Dios Emperador
+15088	Raiden, Dios Emperador
+15106	Kuu Divina
+15107	Kai Divina
+15108	Cobrina Divina
+15112	Frolicking Nono CC
+15120	Wyvern and Alec
+15124	Gatos Val Val
+15125	Masamune Inmortal
+15126	Shingen Inmortal
+15130	Gato Mazado Brillante
+15135	Rey Gamereon
+15136	Cosmo Extragaláctico
+15137	Los Demonios del Melocotón
+15138	Megacastillo de Jizo
+15139	La Luna del Caos
+15144	Gata Enfermera Divertida
+15145	Ultrabase Gatuna
+15146	Gato Rodeo
+15147	Gatos Acróbatas
+15148	Robogato
+15149	Gato Ramen
+15150	Gato Camarógrafo
+15151	Julieta Maiko
+15152	Gato Pizza
+15153	Gatos Bufones
+15154	Gatófono
+15159	Kenshin Inmortal
+15160	Kalisa Divina
+15161	Gekirinchi
+15162	Manic Princess Punt
+15169	Asesino Pasalan
+15170	E. Kubilan Pasalan
+15172	Piccolan Pasalan
+15174	Citizen Mola
+15175	Master of the Pacific
+15178	Dioramos, Dios Emperador
+15181	Mystery Catgirl Yuki
+15186	Revolutionary Hearscht CC
+15188	Holiday Juvens CC
+15189	Savior Mystica CC
+15195	Akira Infierno
+15196	Mekako Control de Misión
+15197	Catman Definitivo
+15198	Psicogato Corrupto
+15199	Gato Taumaturgo
+15200	Gato Marinero
+15204	Brigada de Asalto Kachiyama
+15213	Zorro Gris
+15214	Gato Comida para Llevar
+15223	GOLDEN HUGE HERMIT CC
+15224	GOLDEN JUPITER CC
+15225	GOLDEN MORDEN CC
+15226	HI-DO MK III
+15227	Doctor Klay Loco
+15228	Gato Presagio
+15229	Disfraz de Neneko Bruja
+15238	Sabelotodo Director
+15239	Gato Forrado
+15240	Gatotirador infalible
+15241	Shishilan Pasalan
+15242	Kai Espíritu Helado (μ)
+15249	Gato Vida Extra
+15258	Zeus Todopoderoso
+15259	Anubis Todopoderoso
+15260	Afrodita Todopoderosa
+15262	Akuma Hayabusa
+15271	Crazed Catgirl Yuki
+15272	Amaterasu Todopoderosa
+15273	Ganesha Todopoderoso
+15276	Miss Miau Estival
+15277	Neneko Veraniega
+15283	Gato Bailongo Precioso
+15284	Pai-Pai DX
+15287	Unidad Voladora R. E. I.
+15289	Ultimate Madoka
+15290	Devil Homura
+15303	Gata Reina Súcubo
+15305	Mastodonte de Asalto
+15306	BCS Garra de Tigre
+15307	MIAU-02 Ciudadela Aérea
+15308	Gata Ama de Casa
+15309	Gato Desbrozador
+15311	Enfermera Navideña
+15317	Poseidón Todopoderoso
+15320	Gato Radical
+15323	Estrellas de Un Día
+15326	Gato Peso Superpesado
+15331	Kenshin Brisa Primaveral
+15332	Pato Loco Malévolo
+15333	Neneko Floreciente
+15335	Himeyuri Reina
+15336	Sirerreina Ruri
+15337	Reika Eterna
+15338	HMS Princess II CC
+15339	Yoshimoto Inmortal
+15342	Lost World Catgirl Yuki
+15345	Artist Orthos CC
+15346	Naptime Michelia CC
+15352	Astrogemelas Divinas
+15356	Plataforma Orbital Asoladora
+15358	Deale Reina Bufona
+15359	Verbena Opulenta
+15360	Bazibastra
+15361	Mizuririn
+15362	Aervanta
+15363	Saber Alter CC
+15371	Dreaming Sakura Cat
+15377	Gatélite
+15378	El Gato de la Libertad
+15391	Baseball Mask α
+15392	Baseball Mask β
+15393	Baseball Mask γ
+15394	Samba Saki CC
+15395	Dark Subaru CC
+15396	Baseball Mask δ
+15397	Ganglión Liberado
+15398	Sakura Hoja Sagrada
+15402	Gigavolta
+15410	Reunion Li'l Rei
+15411	Eyepatch Li'l Asuka
+15414	Determined Unit-01 & Cat
+15415	Unit-02, Code 777
+15418	Centinelas Subterráneos
+15428	Equipo Heroico Gatuno
+15432	Gravicci Jefe de Sección
+15437	Pasalan Místico
+15438	Misidiós el Dorado
+15440	Chronos Todopoderosa
+15441	Law of Cycles Nagisa
+15444	Neogato Taladrador
+15445	Neogato Martinete
+15446	Neogato Cortador
+15447	Neogato Retroexcavadora
+15448	Neogato Aserrador
+15449	Miyamoto Inmortal
+15450	Dictadora Jeanne (ψ)
+15451	Babel, Dios Emperador
+15457	Dark Sakura CC
+15468	Super S-Zeus
+15469	Head Rococo
+15470	Super D-Devil
+15483	Cat-Eared Souma
+15489	Vanished NNN Wunder
+15496	Gata Danza del Vientre
+15497	Kaihime Inmortal
+15503	Myrcia Divina
+15506	Gladios, Dios Emperador
+15507	Nameless Eyewaltz CC
+15512	Kage
+15518	Crimson King of Battle Ken
+15520	Lasvoss Renacido
+15523	Gata Endemoniada
+15524	Gato Shigong
+15526	Supertropa de Kinrangers
+15534	Saki Dinamitera
+15535	Hades Todopoderoso
+15547	Sukelan Kakulan
+15557	Ghost Alibaba
+15560	Emma Inspectora del Infierno
+15564	Saki con Cañón de Agua
+15565	Fabulosa Pasalan
+15566	Gato Bronceado con Permanente
+15567	Gatos Gelatos
+15570	Petrolodón
+15571	Caballero de Halloween Vars
+15585	Maeda Navideño DX
+15590	Neneko de Amor Verdadero
+15595	Ultratlantis Logistix
+15596	Lord Kamukura Perenne
+15608	Kanna Aventurera de Fábula
+15611	Rey Nekokhamen
+15615	Sol Sureño Destellante
+15618	Cazador de demonios Satoru
+15619	Amakusa Inmortal
+15620	Lilin Divina
+15621	Hevijak, Dios Emperador
+15626	Ragelan Pasalan
+15632	Yaminora
+15633	Diabolosa Destructora
+15634	Grandes Cazadores Chunchun
+15635	Cíclope Caballero Demoníaco
+15643	Lucifer Todopoderoso
+15645	Mekako Amante Menta
+15648	Terun Cazadora Divina ζ
+15650	Hanzo Inmortal
+15656	Ventirena
+15657	Gato Haniwa
+15659	Gato Mensajero
+15660	Gatarzán
+15661	Daliasan, Dios Emperador
+15664	Gato con Máscara de Gas
+15665	Gato Cirujano
+15666	Gato Exorcista
+15669	Maestro Inmortal Tengu
+15670	Gactus
+15671	Gato Luciérnaga Blindado
+15675	Gataque extradimensional
+15676	Gata Raqueta
+15677	Gato Hongo
+15683	Alquimista del engaño Vega
+15684	Yukimura Vampírico
+15686	Gato Supercoche
+15692	Lord Luza Simio
+15693	Acorazado Oni Kozuchimaru
+15698	Gato Jefe
+15699	Jack, el rayo
+15701	Gato Sicario
+15707	Jabogato
+15708	Gato Barril
+15713	Kaolan Tatalan
+15714	Gato Payaso
+15716	Convoyes Batallón de Ataque Letal
+15717	Gato Policía
+15718	Gato Granjero
+15721	Oso Caído Gatuno
+15724	Aset Todopoderosa
+15725	Vaina de huevo gatuno
+15731	Gato León Bailarín
+15758	Gata Prometida
+15766	Gato Almeja
+16131	Ururun Alzado
+16173	Nyandam Bus Escolar
+16269	Mina Alzada
+16324	Musashi Alzado
+16427	Bun Bun Mecánico Definitivo
+16463	Metafiliembustero
+16465	Perromón Guerrero Renacido
+16533	Urs Alzado
+16569	Idi:NX
+16614	Doron Alzado
+16654	Naala Alzada
+18025	Gata Valquiria Sagrada
+18026	Gato Bégimo Alzado
+19001	Gato Crestado
+19002	Gato Borrador
+19003	Gato Oscuro
+19004	Gato Piernacas
+19005	Gato León
+19006	Gato Volador
+19007	Gato Isleño
+19008	Gato Dragón Rey
+19009	Miautante
+19010	Superfelino Final
+30000	Aumento de ataque D: Rojos
+30001	Aumento de ataque C: Rojos
+30002	Aumento de ataque B: Rojos
+30003	Aumento de ataque A: Rojos
+30004	Aumento de ataque S: Rojos
+30005	Mejora de defensa D: Rojos
+30006	Mejora de defensa C: Rojos
+30007	Mejora de defensa B: Rojos
+30008	Mejora de defensa A: Rojos
+30009	Mejora de defensa S: Rojos
+30010	Aumento de ataque D: Voladores
+30011	Aumento de ataque C: Voladores
+30012	Aumento de ataque B: Voladores
+30013	Aumento de ataque A: Voladores
+30014	Aumento de ataque S: Voladores
+30015	Mejora de defensa D: Voladores
+30016	Mejora de defensa C: Voladores
+30017	Mejora de defensa B: Voladores
+30018	Mejora de defensa A: Voladores
+30019	Mejora de defensa S: Voladores
+30020	Aumento de ataque D: Negros
+30021	Aumento de ataque C: Negros
+30022	Aumento de ataque B: Negros
+30023	Aumento de ataque A: Negros
+30024	Aumento de ataque S: Negros
+30025	Mejora de defensa D: Negros
+30026	Mejora de defensa C: Negros
+30027	Mejora de defensa B: Negros
+30028	Mejora de defensa A: Negros
+30029	Mejora de defensa S: Negros
+30030	Mejora de defensa D: Metálicos
+30031	Mejora de defensa C: Metálicos
+30032	Mejora de defensa B: Metálicos
+30033	Mejora de defensa A: Metálicos
+30034	Mejora de defensa S: Metálicos
+30035	Aumento de ataque D: Ángeles
+30036	Aumento de ataque C: Ángeles
+30037	Aumento de ataque B: Ángeles
+30038	Aumento de ataque A: Ángeles
+30039	Aumento de ataque S: Ángeles
+30040	Mejora de defensa D: Ángeles
+30041	Mejora de defensa C: Ángeles
+30042	Mejora de defensa B: Ángeles
+30043	Mejora de defensa A: Ángeles
+30044	Mejora de defensa S: Ángeles
+30045	Aumento de ataque D: Álienes
+30046	Aumento de ataque C: Álienes
+30047	Aumento de ataque B: Álienes
+30048	Aumento de ataque A: Álienes
+30049	Aumento de ataque S: Álienes
+30050	Mejora de defensa D: Álienes
+30051	Mejora de defensa C: Álienes
+30052	Mejora de defensa B: Álienes
+30053	Mejora de defensa A: Álienes
+30054	Mejora de defensa S: Álienes
+30055	Aumento de ataque D: Zombis
+30056	Aumento de ataque C: Zombis
+30057	Aumento de ataque B: Zombis
+30058	Aumento de ataque A: Zombis
+30059	Aumento de ataque S: Zombis
+30060	Mejora de defensa D: Zombis
+30061	Mejora de defensa C: Zombis
+30062	Mejora de defensa B: Zombis
+30063	Mejora de defensa A: Zombis
+30064	Mejora de defensa S: Zombis
+30065	Mayor efecto «Eficacia» D: Rojos
+30066	Mayor efecto «Eficacia» C: Rojos
+30067	Mayor efecto «Eficacia» B: Rojos
+30068	Mayor efecto «Eficacia» A: Rojos
+30069	Mayor efecto «Eficacia» S: Rojos
+30070	Mayor efecto «Superfuerza» D: Rojos
+30071	Mayor efecto «Superfuerza» C: Rojos
+30072	Mayor efecto «Superfuerza» B: Rojos
+30073	Mayor efecto «Superfuerza» A: Rojos
+30074	Mayor efecto «Superfuerza» S: Rojos
+30075	Mayor efecto «Dureza» D: Rojos
+30076	Mayor efecto «Dureza» C: Rojos
+30077	Mayor efecto «Dureza» B: Rojos
+30078	Mayor efecto «Dureza» A: Rojos
+30079	Mayor efecto «Dureza» S: Rojos
+30080	Mayor efecto «Eficacia» D: Voladores
+30081	Mayor efecto «Eficacia» C: Voladores
+30082	Mayor efecto «Eficacia» B: Voladores
+30083	Mayor efecto «Eficacia» A: Voladores
+30084	Mayor efecto «Eficacia» S: Voladores
+30085	Mayor efecto «Superfuerza» D: Voladores
+30086	Mayor efecto «Superfuerza» C: Voladores
+30087	Mayor efecto «Superfuerza» B: Voladores
+30088	Mayor efecto «Superfuerza» A: Voladores
+30089	Mayor efecto «Superfuerza» S: Voladores
+30090	Mayor efecto «Dureza» D: Voladores
+30091	Mayor efecto «Dureza» C: Voladores
+30092	Mayor efecto «Dureza» B: Voladores
+30093	Mayor efecto «Dureza» A: Voladores
+30094	Mayor efecto «Dureza» S: Voladores
+30095	Mayor efecto «Eficacia» D: Negros
+30096	Mayor efecto «Eficacia» C: Negros
+30097	Mayor efecto «Eficacia» B: Negros
+30098	Mayor efecto «Eficacia» A: Negros
+30099	Mayor efecto «Eficacia» S: Negros
+30100	Mayor efecto «Superfuerza» D: Negros
+30101	Mayor efecto «Superfuerza» C: Negros
+30102	Mayor efecto «Superfuerza» B: Negros
+30103	Mayor efecto «Superfuerza» A: Negros
+30104	Mayor efecto «Superfuerza» S: Negros
+30105	Mayor efecto «Dureza» D: Negros
+30106	Mayor efecto «Dureza» C: Negros
+30107	Mayor efecto «Dureza» B: Negros
+30108	Mayor efecto «Dureza» A: Negros
+30109	Mayor efecto «Dureza» S: Negros
+30110	Mayor efecto «Eficacia» D: Ángeles
+30111	Mayor efecto «Eficacia» C: Ángeles
+30112	Mayor efecto «Eficacia» B: Ángeles
+30113	Mayor efecto «Eficacia» A: Ángeles
+30114	Mayor efecto «Eficacia» S: Ángeles
+30115	Mayor efecto «Superfuerza» D: Ángeles
+30116	Mayor efecto «Superfuerza» C: Ángeles
+30117	Mayor efecto «Superfuerza» B: Ángeles
+30118	Mayor efecto «Superfuerza» A: Ángeles
+30119	Mayor efecto «Superfuerza» S: Ángeles
+30120	Mayor efecto «Dureza» D: Ángeles
+30121	Mayor efecto «Dureza» C: Ángeles
+30122	Mayor efecto «Dureza» B: Ángeles
+30123	Mayor efecto «Dureza» A: Ángeles
+30124	Mayor efecto «Dureza» S: Ángeles
+30125	Mayor efecto «Eficacia» D: Álienes
+30126	Mayor efecto «Eficacia» C: Álienes
+30127	Mayor efecto «Eficacia» B: Álienes
+30128	Mayor efecto «Eficacia» A: Álienes
+30129	Mayor efecto «Eficacia» S: Álienes
+30130	Mayor efecto «Superfuerza» D: Álienes
+30131	Mayor efecto «Superfuerza» C: Álienes
+30132	Mayor efecto «Superfuerza» B: Álienes
+30133	Mayor efecto «Superfuerza» A: Álienes
+30134	Mayor efecto «Superfuerza» S: Álienes
+30135	Mayor efecto «Dureza» D: Álienes
+30136	Mayor efecto «Dureza» C: Álienes
+30137	Mayor efecto «Dureza» B: Álienes
+30138	Mayor efecto «Dureza» A: Álienes
+30139	Mayor efecto «Dureza» S: Álienes
+30140	Mayor efecto «Eficacia» D: Zombis
+30141	Mayor efecto «Eficacia» C: Zombis
+30142	Mayor efecto «Eficacia» B: Zombis
+30143	Mayor efecto «Eficacia» A: Zombis
+30144	Mayor efecto «Eficacia» S: Zombis
+30145	Mayor efecto «Superfuerza» D: Zombis
+30146	Mayor efecto «Superfuerza» C: Zombis
+30147	Mayor efecto «Superfuerza» B: Zombis
+30148	Mayor efecto «Superfuerza» A: Zombis
+30149	Mayor efecto «Superfuerza» S: Zombis
+30150	Mayor efecto «Dureza» D: Zombis
+30151	Mayor efecto «Dureza» C: Zombis
+30152	Mayor efecto «Dureza» B: Zombis
+30153	Mayor efecto «Dureza» A: Zombis
+30154	Mayor efecto «Dureza» S: Zombis
+30155	Aumento de ataque D: Aku
+30156	Aumento de ataque C: Aku
+30157	Aumento de ataque B: Aku
+30158	Aumento de ataque A: Aku
+30159	Aumento de ataque S: Aku
+30160	Mejora de defensa D: Aku
+30161	Mejora de defensa C: Aku
+30162	Mejora de defensa B: Aku
+30163	Mejora de defensa A: Aku
+30164	Mejora de defensa S: Aku
+30165	Mayor efecto «Eficacia» D: Aku
+30166	Mayor efecto «Eficacia» C: Aku
+30167	Mayor efecto «Eficacia» B: Aku
+30168	Mayor efecto «Eficacia» A: Aku
+30169	Mayor efecto «Eficacia» S: Aku
+30170	Mayor efecto «Superfuerza» D: Aku
+30171	Mayor efecto «Superfuerza» C: Aku
+30172	Mayor efecto «Superfuerza» B: Aku
+30173	Mayor efecto «Superfuerza» A: Aku
+30174	Mayor efecto «Superfuerza» S: Aku
+30175	Mayor efecto «Dureza» D: Aku
+30176	Mayor efecto «Dureza» C: Aku
+30177	Mayor efecto «Dureza» B: Aku
+30178	Mayor efecto «Dureza» A: Aku
+30179	Mayor efecto «Dureza» S: Aku
+30180	Aumento de ataque D: 
+30181	Aumento de ataque C: 
+30182	Aumento de ataque B: 
+30183	Aumento de ataque A: 
+30184	Aumento de ataque S: 
+30185	Mejora de defensa D: 
+30186	Mejora de defensa C: 
+30187	Mejora de defensa B: 
+30188	Mejora de defensa A: 
+30189	Mejora de defensa S: 
+30190	Mayor efecto «Eficacia» D: 
+30191	Mayor efecto «Eficacia» C: 
+30192	Mayor efecto «Eficacia» B: 
+30193	Mayor efecto «Eficacia» A: 
+30194	Mayor efecto «Eficacia» S: 
+30195	Mayor efecto «Superfuerza» D: 
+30196	Mayor efecto «Superfuerza» C: 
+30197	Mayor efecto «Superfuerza» B: 
+30198	Mayor efecto «Superfuerza» A: 
+30199	Mayor efecto «Superfuerza» S: 
+30200	Mayor efecto «Dureza» D: 
+30201	Mayor efecto «Dureza» C: 
+30202	Mayor efecto «Dureza» B: 
+30203	Mayor efecto «Dureza» A: 
+30204	Mayor efecto «Dureza» S: 
+30205	Minirréplica mortal D
+30206	Minirréplica mortal C
+30207	Minirréplica mortal B
+30208	Minirréplica mortal A
+30209	Minirréplica mortal S
+30210	Resistencia a oleadas D
+30211	Resistencia a oleadas C
+30212	Resistencia a oleadas B
+30213	Resistencia a oleadas A
+30214	Resistencia a oleadas S
+30215	Pasta turbo D
+30216	Pasta turbo C
+30217	Pasta turbo B
+30218	Pasta turbo A
+30219	Pasta turbo S
+30220	Resistencia a repulsión D
+30221	Resistencia a repulsión C
+30222	Resistencia a repulsión B
+30223	Resistencia a repulsión A
+30224	Resistencia a repulsión S
+30225	Impulso en historias de leyenda D
+30226	Impulso en historias de leyenda C
+30227	Impulso en historias de leyenda B
+30228	Impulso en historias de leyenda A
+30229	Impulso en historias de leyenda S
+30230	Matacolosos D
+30231	Matacolosos C
+30232	Matacolosos B
+30233	Matacolosos A
+30234	Matacolosos S
+30235	Recarga de la gatorreta D
+30236	Recarga de la gatorreta C
+30237	Recarga de la gatorreta B
+30238	Recarga de la gatorreta A
+30239	Recarga de la gatorreta S
+30240	Resistencia a toxicidad D
+30241	Resistencia a toxicidad C
+30242	Resistencia a toxicidad B
+30243	Resistencia a toxicidad A
+30244	Resistencia a toxicidad S
+30245	Evasión (Todo) D
+30246	Evasión (Todo) C
+30247	Evasión (Todo) B
+30248	Evasión (Todo) A
+30249	Evasión (Todo) S
+30250	Resistencia a ralentización D
+30251	Resistencia a ralentización C
+30252	Resistencia a ralentización B
+30253	Resistencia a ralentización A
+30254	Resistencia a ralentización S
+30255	Resistencia a maldición D
+30256	Resistencia a maldición C
+30257	Resistencia a maldición B
+30258	Resistencia a maldición A
+30259	Resistencia a maldición S
+30260	Impulso en Leyendas Inquietantes D
+30261	Impulso en Leyendas Inquietantes C
+30262	Impulso en Leyendas Inquietantes B
+30263	Impulso en Leyendas Inquietantes A
+30264	Impulso en Leyendas Inquietantes S
+30265	Contador de única réplica D
+30266	Contador de única réplica C
+30267	Contador de única réplica B
+30268	Contador de única réplica A
+30269	Contador de única réplica S
+30270	Berserker D
+30271	Berserker C
+30272	Berserker B
+30273	Berserker A
+30274	Berserker S
+30275	Reducción del tiempo de espera D
+30276	Reducción del tiempo de espera C
+30277	Reducción del tiempo de espera B
+30278	Reducción del tiempo de espera A
+30279	Reducción del tiempo de espera S
+30280	Resistencia a paralización D
+30281	Resistencia a paralización C
+30282	Resistencia a paralización B
+30283	Resistencia a paralización A
+30284	Resistencia a paralización S
+30285	Resistencia a desgaste D
+30286	Resistencia a desgaste C
+30287	Resistencia a desgaste B
+30288	Resistencia a desgaste A
+30289	Resistencia a desgaste S
+30290	Coste reducido D
+30291	Coste reducido C
+30292	Coste reducido B
+30293	Coste reducido A
+30294	Coste reducido S
+30295	Resistencia a réplicas D
+30296	Resistencia a réplicas C
+30297	Resistencia a réplicas B
+30298	Resistencia a réplicas A
+30299	Resistencia a réplicas S
+30300	Primera recompensa disponible D
+30301	Primera recompensa disponible C
+30302	Primera recompensa disponible B
+30303	Primera recompensa disponible A
+30304	Primera recompensa disponible S
+30305	Resistencia a explosión D
+30306	Resistencia a explosión C
+30307	Resistencia a explosión B
+30308	Resistencia a explosión A
+30309	Resistencia a explosión S

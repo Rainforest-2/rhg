@@ -1,0 +1,775 @@
+000	Hund
+001	Schlänge
+002	Die Anderen
+003	Nilpferd
+004	Schwein
+005	Jackie Peng
+006	Gorilla
+007	Mäh-Mäh
+008	Sir Robbe
+009	Le'boin
+010	Käng Ru
+011	Einhorn
+012	Lehrerbär
+013	Kroko
+014	B.B.Bunny
+015	Eich Horn
+016	Meuchlerbär
+017	Schüchtermann
+018	Das Gesicht
+019	
+020	
+021	Frl. Schild
+022	Mootte
+023	Finsterer Herrscher Nyandam
+024	Lehrer Bun Bun
+025	
+026	
+027	
+028	
+029	
+030	
+031	Meister A.
+032	V. Strauß
+033	Klopper-Otter
+034	Kory
+035	Camelle
+036	Ente
+037	Eulheul
+038	Ebär
+039	DAS FAULTIER
+040	Ren T.
+041	Dachshund
+042	Promi-Pudel
+043	H. Nee
+044	Dober P.D
+045	Ururun-Wolf
+046	Finsterhund
+047	Eisernes Nilpferd
+048	St. Schwein II.
+049	J.K. Bun Bun
+050	Bun Bun Schwarz
+051	Schwarzer Gorilla
+052	Schattenboxer K
+053	Regisseur Kurosawah
+054	Supereisernes Nilpferd
+055	
+056	Eisernes Einhorn
+057	Lehrer-Cybär
+058	Cyber-Gesicht
+059	Sir Eisenrobbe
+060	
+061	
+062	Chef Peng
+063	Dunkler Kaiser Santa
+064	Roter Zyklon
+065	Nilpferd-Leonie
+066	Glücksfaultier
+067	Bärenstarke Bären
+068	
+069	Weißer Zyklon
+070	Schwarzer Zyklon
+071	Eiserner Zyklon
+072	
+073	
+074	
+075	Verrückte Katze
+076	Verrückte Panzer-Katze
+077	Verrückte Axtkatze
+078	Verrückte Stelzenkatze
+079	Verrückte Kuhkatze
+080	Verrückte Vogelkatze
+081	Verrückte Fischkatze
+082	Verrückte Echsenkatze
+083	Verrückte Titanenkatze
+084	Professor A
+085	Samurai-Hund
+086	Megakatze
+087	Gorilla-Bräutigam
+088	Celesse
+089	Nono
+090	Olga
+091	Norn
+092	Yoichi
+093	Serum
+094	Fuu
+095	Aura
+096	Rei
+097	Wyvern
+098	Healer
+099	Sommer-Promi-Pudel
+100	Bärkini
+101	Lord Enma
+102	Flottes Gesicht
+103	Geisterhund
+104	Geisterschlänge
+105	Geister-Mäh-Mäh
+106	Feuerwerkstypen (hoher Ertrag)
+107	Feuerwerkstypen (niedriger Ertrag)
+108	Gewaltige Grizzly
+109	Eremit Peng
+110	Meister Da Xun
+111	Wettkampfsau
+112	Göttlicher Zyklon
+113	Himmlisches Nilpferd
+114	Gabriel
+115	Engelhafter Gorilla
+116	Engelsfan
+117	Wallhund
+118	Rote Schlänge
+119	Mondfisch Jones
+120	
+121	
+122	
+123	Taubitze
+124	Dunkler Otter
+125	Engelhafter Sleipnir
+126	Sonnenaufgangshund
+127	Muskelprotz-Katze
+128	Tänzerkatze
+129	Hyper-Mr.
+130	Ultimative Fessel-Katze
+131	Darth Laser
+132	Offensiver C.A.T.
+133	Lolli-Katze
+134	Einradkatze
+135	Fliegende Ninja-Katze
+136	Skelett-Katze
+137	Bäcker-Katze
+138	Reisbällchen-Katze
+139	Gato Amigo
+140	Lendenschurz-Katze
+141	
+142	
+143	
+144	
+145	
+146	Trolly Blogger
+147	Eisenhund
+148	Kleiner Nyandam
+149	Le’noir
+150	Young Man Mola
+151	Mola King
+152	Ayumi Manbosaki
+153	Tasmanische Riesenkrabbe
+154	Sardine
+155	Squid
+156	Marching Kory
+157	
+158	Takuya
+159	Yuki
+160	Küken E
+161	
+162	
+163	Hearscht
+164	Cornelia
+165	Alois
+166	Healer Cat
+167	Shibalien
+168	Kroxo
+169	Nüllpferd
+170	Imperator Rohb
+171	Moohthe
+172	LeMurr
+173	Helmut Krabbe
+174	Binge Sicht
+175	Ursamajor
+176	Cli-One
+177	Nimoy-Ebär
+178	Elizabeth LVI.
+179	Kosmischer Zyklon
+180	Galaktischer Oberaufseher Nyandam
+181	Verdorbene Walküre
+182	Scheruru
+183	Cyberhorn
+184	Prinzessin Promi-Pudel
+185	Professor A.
+186	111-Mio.-DL-Hundekuchen zum Jubiläum
+187	
+188	
+189	MARS PEOPLE
+190	DONALD MORDEN
+191	ALLEN O'NEIL
+192	MARCO
+193	SV-001
+194	HUGE HERMIT
+195	JUPITER KING
+196	HI-DO
+197	Kürbishund
+198	Graf Eulheul
+199	Vlad die Taubitze
+200	
+201	
+202	
+203	
+204	
+205	Capy
+206	Berserkory
+207	Brolbe
+208	Calamary
+209	Alpacky
+210	Altes Faultier
+211	Bun Bun Symbiont
+212	Rasende Bahamut-Katze
+213	Weihnachts-D.
+214	Castle Guard
+215	Castle Horseman
+216	Ashura
+217	Battle Balloon
+218	Dragon Rider
+219	Pretty Cat
+220	Cyclops
+221	Golem
+222	Wise Swordsman
+223	Black Thunder Rider
+224	Kabuki Ashura
+225	Battle UFO
+226	Flame Dragon Rider
+227	Cyber Pretty Cat
+228	4D Cyclops
+229	Volcano Golem
+230	Gefangenenkatze
+231	Gentleman-Brüder
+232	Grausamer Engel Clionel
+233	Nyaladdin
+234	Ringer-Katze
+235	Mr. Maulwurf
+236	Der perfekte Zyklon
+237	
+238	
+239	
+240	
+241	
+242	Irre Irokatze
+243	Irre Radierkatze
+244	Irre dunkle Katze
+245	Irre Muskelbein-Katze
+246	Irre Löwenkatze
+247	Irre Flugkatze
+248	Irre Inselkatze
+249	Irrer Königsdrache
+250	Irre Jamierakatze
+251	Koikuss
+252	Die Savannah-Königin
+253	Callcenter-Katze
+254	Mr. Engel
+255	Tu Kahn
+256	Tacki
+257	König Wahwah
+258	Codename Rotkäppchen
+259	Takuya & Lovely Yuki
+260	Fesseldrachenkatze
+261	Ebärphim
+262	Ritualtrommelhund
+263	Festlicher Otter
+264	
+265	Eisenklaue X
+266	Henry
+267	Hannya
+268	
+269	
+270	Amokkatzen
+271	Königin B
+272	Kleiner Bun Bun
+273	The Rose Garden Witch
+274	Dessert Witch - Obsession
+275	Dessert Witch
+276	Box Witch and Minions
+277	Walpurgisnacht
+278	Kyuubei
+279	Ritualkatze
+280	Klingenrücken
+281	Festzeichenmädchen
+282	Händler El
+283	
+284	Zund
+285	Zlänge
+286	Zomboe
+287	Zwein
+288	Zackie Peng
+289	Zory
+290	Zir Robbe
+291	Zäng Ru
+292	Zroco
+293	Lord Grabi
+294	Zyklombie
+295	Weihnachtsdessert-Katze
+296	Megakatze EX
+297	
+298	
+299	
+300	
+301	
+302	
+303	Fräulein Haka
+304	Zalamander
+305	
+306	Le'Mammut
+307	Eishund
+308	Schneeball
+309	Sarg-Zund
+310	Zamelle
+311	Killer-Katze
+312	
+313	
+314	
+315	
+316	Inumusha
+317	Daboo von den Toten
+318	Delfina
+319	
+320	
+321	
+322	Kleine Irokatze
+323	Kleine Radierkatze
+324	Kleine dunkle Katze
+325	Kleiner Beinmuskelkater
+326	Kleine Löwenkatze
+327	Kleine Flugkatze
+328	Kleine Inselkatze
+329	Kleine Königsdrachenkatze
+330	Kleine Jamierakatze
+331	Osterente
+332	Oster-B.B.Bunny
+333	
+334	
+335	
+336	Goldener Hund
+337	Goldenes Nilpferd
+338	Reingold-V. Strauß
+339	Lost World Yuki
+340	Cala Maria
+341	Rote Schnecke
+342	Schwarze Schnecke
+343	Engelhafte Schnecke
+344	Cat Kart P
+345	Katzkwondo SP
+346	Merc & Cat
+347	Titi Cat
+348	Orthos
+349	Michelia
+350	Todomeki
+351	
+352	
+353	
+354	Eremiten-Katze
+355	Quakley
+356	Gary Gorilla
+357	Menü-Katze
+358	Eiserne Schlänge
+359	DAS EISERNE FAULTIER
+360	Shibalien-Elite
+361	Sternenpeng
+362	General GreGorilla
+363	Le'Solar
+364	Projekt A
+365	Korporal Weyland
+366	Raumfisch Jones
+367	Der Katzengott
+368	
+369	
+370	
+371	
+372	
+373	
+374	
+375	Dukann
+376	
+377	Superkosmischer Zyklon
+378	
+379	Flügelschwein
+380	Mystische Maske Yulala
+381	
+382	
+383	
+384	
+385	
+386	
+387	Hacki
+388	UltraMähMäh
+389	Schwein cum laude
+390	Bang-Bang
+391	
+392	The 4th Angel
+393	The 6th Angel
+394	The 9th Angel
+395	The 10th Angel
+396	Verrückte Moneko
+397	Verdorbene Moneko
+398	Leuchtsticktypen
+399	
+400	
+401	
+402	
+403	
+404	
+405	Mecha Bun
+406	Relikt Bun Bun
+407	Relikt-Hund
+408	Crazed Yuki
+409	
+410	
+411	Gorilla in spe
+412	Streich Horn
+413	Althorn
+414	Ettomo
+415	
+416	Selena
+417	Kid Tappa
+418	Unko
+419	Katzengott
+420	Loris
+421	himmlischen Sanctus
+422	Roter Fiesling
+423	Low-Key
+424	M. Strauß
+425	Toter Toni Turner
+426	Vorstandsrobbe
+427	Totengräbär
+428	Schreckensebär
+429	Nutcracker Witch
+430	Satan Claus
+431	Baku
+432	
+433	
+434	Schwester Leonie
+435	
+436	
+437	Dackelwickel
+438	Ur-Zyklon
+439	Kleiner Ebär
+440	Zugabe der Bären
+441	
+442	Fr. Madonna
+443	Mesokosmozyklon
+444	Gebrüder Röhrenaal
+445	Axoloty
+446	Endgegner Giga-Gott
+447	Filibuster Obstructa
+448	
+449	Meckerziege 2.0
+450	Dogumaru
+451	
+452	
+453	
+454	
+455	
+456	
+457	Gummikatze
+458	
+459	
+460	
+461	Kano ＆ Souma
+462	
+463	
+464	Unit-13's False Evolution
+465	
+466	
+467	
+468	Zente
+469	The Thrillerz
+470	
+471	
+472	
+473	
+474	
+475	
+476	
+477	Herr Kugelisch
+478	Kleiner Kuchenhund
+479	Kuglis Komet
+480	Ryu
+481	Chun-Li
+482	Guile
+483	Zangief
+484	Blanka
+485	Dhalsim
+486	Ken
+487	
+488	Akuma
+489	
+490	
+491	Schwarz-Okame
+492	Himmelsbotin Papuu
+493	Königinmutter V
+494	
+495	Kappy Jr.
+496	Urs & Fenrir
+497	Krokonator
+498	Gubbel
+499	Baron Robbe
+500	
+501	
+502	
+503	
+504	
+505	
+506	Immerfürst Wanwan
+507	Messier
+508	
+509	
+510	Grummelfant
+511	Todesengel Z-Clionel
+512	Kleiner Zyklombie
+513	St. Dober
+514	Doremi
+515	Mega-Mootte
+516	Meister Uril
+517	Koronium
+518	
+519	
+520	
+521	Johnnyleon
+522	
+523	
+524	
+525	Supernüllpferd
+526	Idi:Re
+527	Zolbe
+528	E. Honda
+529	Balrog
+530	Vega
+531	Sagat
+532	M. Bison
+533	
+534	
+535	Böse Kaiserkatze
+536	
+537	
+538	Ebär Jr.
+539	Schokoladenhund
+540	
+541	Raynard
+542	
+543	
+544	
+545	
+546	
+547	Mr. Meer
+548	Waffelkatze XL
+549	Tobender Gorilla
+550	
+551	Ältestenflamme Doron
+552	Aku-Hund
+553	Sünder-Schlänge
+554	Cerberus-Kids
+555	Verdammter Peng
+556	Aku-Gorilla
+557	Le’Behemoth
+558	Gefallener Bär
+559	Böse Fratze
+560	Aku-Zyklon
+561	Gemeine Katze
+562	Gemeine Panzer-Katze
+563	Gemeine Axtkatze
+564	
+565	
+566	
+567	
+568	
+569	
+570	Dunkler Priester Mamon
+571	Hohepriester Mamon
+572	Jagando, Herr der Zerstörung
+573	Besessene Prinzessin
+574	
+575	
+576	Großer weißer Ball
+577	Großer roter Ball
+578	Großer Eisenball
+579	Incubator
+580	Weißer Wind
+581	Roter Wind
+582	Schwarzer Wind
+583	Medu-san
+584	Miz Teufel
+585	Sathankhamun VIII
+586	Nachtschwarz T.
+587	Akaiin
+588	Deathkory
+589	Maskierte Großmeisterkatze
+590	
+591	
+592	Rote EnerG
+593	Erzengel Exiel
+594	Großer Peng Z
+595	
+596	
+597	
+598	Böller
+599	Ultimativbestie Naala
+600	Zapy
+601	
+602	
+603	Wilder Hund
+604	Kasuar-Ahirujo
+605	Ptereulen-Hazuku
+606	Krustentierischer Scherex
+607	H.H. Hase
+608	Kleiner Hund
+609	Golem-Mondfisch
+610	DER FOLIVOR
+611	Kasuar-Darkjo
+612	Haniwanwan
+613	Engelsbestie Rajakong
+614	Formicidaea-Ariant
+615	Großer Engel Chibinel
+616	Spiritueller Yulala
+617	
+618	
+619	
+620	
+621	
+622	Sakura
+623	Luke
+624	Kumulus Gallus
+625	
+626	
+627	Uralter Behemoth Magamojoe
+628	Großer Affenbehemoth Luza
+629	Zero Luza
+630	Metafilibuster
+631	
+632	
+633	Killer-Panzer-Katze
+634	Vermilingua Rangmeister
+635	Ostereikatze
+636	Teufelsfrau
+637	Omen
+638	Weißer Minizyklon
+639	Höllischer Pegasus Deonil
+640	Suidae Schweinicus
+641	Elephantidae Papaou
+642	Höllischer Tyrann Nyandam
+643	Großmagier Mimon
+644	
+645	
+646	Redhead Yuki Cat
+647	EVA Unit-13
+648	
+649	Lutrinae Gokurakko
+650	Iguanidae Ibilujon
+651	
+652	Lophiiformes Angaburu
+653	Kappy Kawano
+654	Mega-Mäh-Mäh
+655	Crocodylidae Kurocroc
+656	
+657	
+658	Mini-Engelszyklon
+659	Ensanglion das Elend
+660	Bösartige Irokatze
+661	Bösartige Radierkatze
+662	Bösartige dunkle Katze
+663	Bösartiger Beinmuskelkater
+664	Bösartige Löwenkatze
+665	Bösartige Flugkatze
+666	Bösartige Inselkatze
+667	Bösartige Königsdrachenkatze
+668	Bösartige Jamierakatze
+669	Glasbasis
+670	Mimik des Königs
+671	Hundekönig
+672	Hundekuchen zum 11. Jubiläum
+673	
+674	Esoterischer Uril
+675	SOL DAE ROKKER
+676	Drachenhund
+677	Meister der Gedanken Soraktes
+678	
+679	Hundenstein
+680	Tarsiriel
+681	
+682	Dunkler Dober
+683	Gigahaniwan
+684	Geheimnisvolle Katastrophe
+685	Besessener Hundekönig
+686	Voluptuous Peony - Daji
+687	Madhead
+688	Kenshin Himura
+689	Sanosuke Sagara
+690	Aoshi Shinomori
+691	Hajime Saito
+692	Doktor K. O.
+693	
+694	Techn-Alte Hyäne
+695	Baumstamm
+696	Felsbrocken
+697	Diabrolbe
+698	Altstrauß
+699	Meister des Lebens Dr. Nova
+700	Idi:Ne
+701	Kantinenkatze
+702	Bannerman-Hund
+703	Kommandant Face
+704	Kommandant Nyandam
+705	Kommandant Hannya
+706	Kommandant Bun Bun
+707	Revolutionärer Nobunaga
+708	
+709	
+710	
+711	Schlänge-Hund
+712	Überraschungsschneehaufen
+713	Prof. Eulheul
+714	Xenobestie Bunaglios
+715	Shachiko
+716	Heilige Walkürenkatze
+717	Erwachte Bahamut-Katze
+718	Choco Capsule
+719	Killer-Stelzenkatze
+720	
+721	Perry die Ente
+722	Kugelserker
+723	Kommandant Ostromeda
+724	Baki Hanma
+725	Retsu Kaioh
+726	Kaoru Hanayama
+727	Katsumi Orochi
+728	Jack Hammer
+729	Weiser des logischen Newton
+730	Sonic
+731	Tails
+732	Knuckles
+733	Shadow
+734	
+735	Engelslakai
+736	Südsee-Hund
+737	Südsee-Otter
+738	
+739	
+740	Mass Production EVA
+741	Umrührmeister
+742	Feuerwerk-Gang
+743	Jumbo Jones
+744	Todesdackel
+745	Finstermadillo
+746	
+747	
+748	Cammy
+749	Juri
+750	
+751	
+752	
+753	
+754	
+755	
+756	
+757	
+758	
+759	
+760	Pferdehund
+761	Rui
+762	Enmu
+763	Akaza
+764	Demon Doge
+765	Demon Gory
+766	Demon Teacher Bear
+767	
+768	Le’Prüde
+769	Hühner-Haudegen
+770	Killer-Stärlingskatze
+771	Das goldene Gesicht
+772	
+773	
+774	

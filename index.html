@@ -7,14 +7,14 @@
   <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <main class="main-area">
+  <div class="app-shell game-shell">
+    <main class="game-stage">
       <section class="canvas-panel">
-        <canvas id="preview-canvas" aria-label="BCU preview canvas"></canvas>
+        <canvas id="preview-canvas" aria-label="Wanko battle canvas"></canvas>
       </section>
-      <aside id="control-panel" class="control-panel"></aside>
     </main>
-    <section class="log-panel">
+    <aside id="control-panel" class="control-panel dev-panel is-hidden" hidden></aside>
+    <section id="log-panel" class="log-panel dev-log is-hidden" hidden>
       <header>Logs</header>
       <div id="log-list" class="log-list"></div>
     </section>

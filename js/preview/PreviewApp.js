@@ -37,7 +37,12 @@ export class PreviewApp {
     this.simulationClock.maxSubStepsPerFrame = this.maxSubStepsPerFrame;
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
-      this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
+      const devUiEnabled = new URLSearchParams(location.search).get('debugUi') === '1' || localStorage.getItem('debugUi') === '1';
+      const controlPanel = document.getElementById('control-panel');
+      const logPanel = document.getElementById('log-panel');
+      if (!devUiEnabled) { controlPanel?.setAttribute('hidden', ''); logPanel?.setAttribute('hidden', ''); }
+      else { controlPanel?.removeAttribute('hidden'); logPanel?.removeAttribute('hidden'); }
+      this.ui = new PreviewUi(controlPanel, document.getElementById('log-list'));
       this.ui.init(this.assets, { speed: (s) => { const v=Number(s); this.battleSpeedMultiplier=Number.isFinite(v)&&v>0?v:1; this.animator?.setSpeed?.(this.battleSpeedMultiplier); this.ui?.setStatus?.(`battle speed ${this.battleSpeedMultiplier}x`); }, scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle({ keepFormationVisible: false, showOverlay: true }) });
       this.cameraInputController = new BattleCameraInputController(this.renderer.canvas, () => this.battleScene?.camera);
       this.cameraInputController.attach();

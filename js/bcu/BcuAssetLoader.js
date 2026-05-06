@@ -4,6 +4,7 @@ import { parseModel } from './BcuModelParser.js';
 import { parseAnim } from './BcuAnimParser.js';
 
 const cache = new Map();
+const counters={assetSetRequested:0,assetSetCacheHit:0,imageRequested:0,imageCacheHit:0,animationRequested:0,animationCacheHit:0};
 const animationCache=new Map();
 const imageCache=new Map();
 
@@ -13,10 +14,11 @@ function join(base, file) { return `${base}${file}`; }
 function isNotFoundError(e) { return String(e.message || '').includes('HTTP 404'); }
 
 function loadImage(url) {
-  if(imageCache.has(url)) return imageCache.get(url);
+  counters.imageRequested++;
+  if(imageCache.has(url)){ counters.imageCacheHit++; return imageCache.get(url); }
   const p=new Promise((res, rej) => {
     const img = new Image();
-    img.onload = () => res(img);
+    img.onload = async () => { try { if (typeof img.decode === "function") await img.decode(); } catch(_e) {} res(img); };
     img.onerror = () => rej(new Error(`Image load failed: ${url}`));
     img.src = url;
   });
@@ -50,39 +52,55 @@ async function tryLoadImage(baseDir, candidates) {
 
 export class BcuAssetLoader {
   async loadAssetSet(def) {
-    if (cache.has(def.id)) return cache.get(def.id);
+    counters.assetSetRequested++;
+    if (cache.has(def.id)) { counters.assetSetCacheHit++; return await cache.get(def.id); }
+    const p=this.loadAssetSetUncached(def);
+    cache.set(def.id,p);
+    try{return await p;}catch(e){cache.delete(def.id); throw e;}
+  }
+
+  async loadAssetSetUncached(def) {
     const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0 };
 
-    const img = await tryLoadImage(def.baseDir, def.image);
-    if (img.ok) { r.image = img.image; r.imageFile = img.file; r.loaded.push(img.file); r.status.image = 'loaded'; }
-    else { r.missing.push(...img.tried); r.status.image = 'missing'; }
+    const [img,ic,md] = await Promise.allSettled([
+      tryLoadImage(def.baseDir, def.image),
+      tryLoadText(def.baseDir, def.imgcut, parseImgcut, "imgcut"),
+      def.model == null ? Promise.resolve({skip:true}) : tryLoadText(def.baseDir, def.model, parseModel, "model")
+    ]);
+    const imgv=img.status==='fulfilled'?img.value:{ok:false,tried:[]};
+    const icv=ic.status==='fulfilled'?ic.value:{ok:false,error:String(ic.reason),tried:[]};
+    const mdv=md.status==='fulfilled'?md.value:{ok:false,error:String(md.reason),tried:[]};
 
-    const ic = await tryLoadText(def.baseDir, def.imgcut, parseImgcut, 'imgcut');
-    if (ic.ok) { r.imgcut = ic.parsed; r.imgcutFile = ic.file; r.loaded.push(ic.file); r.status.imgcut = 'loaded'; }
-    else if (ic.error) { r.errors.push(ic.error); r.status.imgcut = 'error'; } else { r.missing.push(...ic.tried); r.status.imgcut = 'missing'; }
+    const imgRes = imgv;
+    if (imgRes.ok) { r.image = imgRes.image; r.imageFile = imgRes.file; r.loaded.push(imgRes.file); r.status.image = 'loaded'; }
+    else { r.missing.push(...imgRes.tried); r.status.image = 'missing'; }
+
+    const icRes = icv;
+    if (icRes.ok) { r.imgcut = icRes.parsed; r.imgcutFile = icRes.file; r.loaded.push(icRes.file); r.status.imgcut = 'loaded'; }
+    else if (icRes.error) { r.errors.push(icRes.error); r.status.imgcut = 'error'; } else { r.missing.push(...icRes.tried); r.status.imgcut = 'missing'; }
 
     if (def.model == null) {
       r.status.model = 'skipped';
     } else {
-      const md = await tryLoadText(def.baseDir, def.model, parseModel, 'model');
-      if (md.ok) { r.model = md.parsed; r.modelFile = md.file; r.loaded.push(md.file); r.status.model = 'loaded'; }
-      else if (md.error) { r.errors.push(md.error); r.status.model = 'error'; }
+      const mdRes = mdv;
+      if (mdRes.ok) { r.model = mdRes.parsed; r.modelFile = mdRes.file; r.loaded.push(mdRes.file); r.status.model = 'loaded'; }
+      else if (mdRes.error) { r.errors.push(mdRes.error); r.status.model = 'error'; }
       else {
         r.status.model = 'missing';
-        if (r.modelRequired) r.missing.push(...md.tried);
+        if (r.modelRequired) r.missing.push(...mdRes.tried);
       }
     }
 
-    cache.set(def.id, r);
     return r;
   }
 
   async loadAnimation(def, animDef) {
     if (!animDef) return { loaded: [], missing: [], errors: [], file: null, anim: null, status: 'skipped' };
+    counters.animationRequested++;
     const files = asArray(animDef.file);
     for (const file of files) {
       const key=`${def.id}:${file}`;
-      if(animationCache.has(key)) return animationCache.get(key);
+      if(animationCache.has(key)){ counters.animationCacheHit++; return await animationCache.get(key); }
       const p=(async()=>{
         try {
           const anim = parseAnim(await fetchBcuText(`${def.baseDir}${file}`));
@@ -98,4 +116,4 @@ export class BcuAssetLoader {
     return { loaded: [], missing: files, errors: [], file: files[0], anim: null, status: 'missing' };
   }
 }
-export function __getBcuAssetCaches(){return {cache,animationCache,imageCache};}
+export function __getBcuAssetCaches(){return {assetSetCacheSize:cache.size,animationCacheSize:animationCache.size,imageCacheSize:imageCache.size,counters,cache,animationCache,imageCache};}

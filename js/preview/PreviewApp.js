@@ -28,7 +28,7 @@ export class PreviewApp {
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
-      this.ui.init(this.assets, { speed: (s) => { const v=Number(s); this.battleSpeedMultiplier=Number.isFinite(v)&&v>0?v:1; this.animator?.setSpeed?.(this.battleSpeedMultiplier); }, scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle({ keepFormationVisible: false, showOverlay: true }) });
+      this.ui.init(this.assets, { speed: (s) => { const v=Number(s); this.battleSpeedMultiplier=Number.isFinite(v)&&v>0?v:1; this.animator?.setSpeed?.(this.battleSpeedMultiplier); this.ui?.setStatus?.(`battle speed ${this.battleSpeedMultiplier}x`); }, scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle({ keepFormationVisible: false, showOverlay: true }) });
       const battleMount=document.querySelector('.canvas-panel')||document.body;
       this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); } });
       this.formationEditor.setVisible(true);

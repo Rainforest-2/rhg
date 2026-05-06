@@ -1,3 +1,4 @@
+/* BCU Java loading memo: VFile tree source; AnimUD.DefImgLoader spath; getIC=spath+.imgcut getMM=spath+.mamodel getMA single .maanim or 4/5/7 variants; AnimU.load image+imgcut, partial loads imgcut+mamodel+anims; browser uses staged critical-path + background warmup, not full prefetch. */
 import { BattleBase } from './BattleBase.js';
 import { BattleActorFactory } from './BattleActorFactory.js';
 import { BattleStatsLoader } from './BattleStatsLoader.js';

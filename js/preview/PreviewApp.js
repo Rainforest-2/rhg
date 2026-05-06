@@ -16,10 +16,6 @@ function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
-function nextFrame() {
-  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
-}
-
 async function loadImage(url) {
   return await new Promise((res, rej) => {
     const img = new Image();

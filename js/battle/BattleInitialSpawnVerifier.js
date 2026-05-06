@@ -42,10 +42,10 @@ export async function verifyEnemySpawnComesOnlyFromSchedule(){
   const errors=[];
   if(initialEnemyActors.length!==0)errors.push('enemy actor spawned during init');
   scene.tick(1000);
-  const enemySpawnedEvents=scene.debugEvents.filter((e)=>e.type==='enemySpawned');
+  const enemySpawnedEvents=scene.debugEvents.filter((e)=>e.type==='enemySpawned'||e.type==='stageEnemySpawned');
   const seen=new Set();
   for(const ev of enemySpawnedEvents){
-    if(!scheduleIds.has(ev.slotId))errors.push(`enemySpawned slotId not in schedule: ${ev.slotId}`);
+    if(ev.type==='enemySpawned' && !scheduleIds.has(ev.slotId))errors.push(`enemySpawned slotId not in schedule: ${ev.slotId}`);
     const key=`${ev.timeMs}:${ev.slotId}`;
     if(seen.has(key))errors.push(`duplicate enemy spawn event at ${key}`);
     seen.add(key);

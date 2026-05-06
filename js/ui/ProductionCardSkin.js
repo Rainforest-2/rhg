@@ -1,82 +1,187 @@
-const loadImage = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(`image load failed:${src}`)); i.src = src; });
+import { BcuImgCut } from './BcuImgCut.js';
 
-const REPRESENTATIVE_CAT = './public/assets/bcu/000004/org/unit/000/f/uni000_f00.png';
-const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
-const DEFAULT_GEOMETRY = Object.freeze({
-  cardSourceRect: { x: 0, y: 0, w: 128, h: 128 },
-  cardCanvasSize: { w: 128, h: 128 },
-  contentRect: { x: 9, y: 21, w: 110, h: 85 },
-  costRightX: 120,
-  costBaselineY: 122,
-  cooldownBarRect: { x: 9, y: 112, w: 110, h: 10 }
+const loadImage = (src) => new Promise((res, rej) => {
+  const i = new Image();
+  i.onload = () => res(i);
+  i.onerror = () => rej(new Error(`image load failed:${src}`));
+  i.src = src;
 });
 
-export const PRODUCTION_CARD_CANVAS = { ...DEFAULT_GEOMETRY.cardCanvasSize };
-export const PRODUCTION_CARD_VIEW = { ...DEFAULT_GEOMETRY.cardCanvasSize };
-export const PRODUCTION_CARD_SKIN = { ...DEFAULT_GEOMETRY };
+const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const imageWidth = (img) => img?.naturalWidth || img?.width || 0;
+const imageHeight = (img) => img?.naturalHeight || img?.height || 0;
+
+export const BCU_UNI_IMGCUT_PATH = './public/assets/bcu/000001/org/data/uni.imgcut';
+export const BCU_SLOT_FRAME_PATH = './public/assets/bcu/000001/org/page/uni.png';
+export const BCU_UNI_CARD_PART = Object.freeze({ x: 9, y: 21, w: 110, h: 85, label: 'ユニットアイコン', index: 0 });
+
+export const PRODUCTION_CARD_CANVAS = Object.freeze({ w: BCU_UNI_CARD_PART.w, h: BCU_UNI_CARD_PART.h });
+export const PRODUCTION_CARD_VIEW = Object.freeze({ w: 116, h: 116 * BCU_UNI_CARD_PART.h / BCU_UNI_CARD_PART.w });
+export const PRODUCTION_CARD_SKIN = Object.freeze({
+  cardPart: BCU_UNI_CARD_PART,
+  cardCanvasSize: PRODUCTION_CARD_CANVAS,
+  contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
+  costRightX: 108,
+  costY: 68,
+  cooldownTrackRect: Object.freeze({ x: 10, y: 61, w: 90, h: 12 }),
+  cooldownFillRect: Object.freeze({ x: 12, y: 63, w: 86, h: 8 }),
+  cooldownTrackColor: '#050505',
+  cooldownFillColor: '#35d8ff'
+});
+
+const samePart = (a, b) => a && b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 
 export class ProductionCardSkin {
-  constructor({ spriteText, log = console } = {}) { this.spriteText = spriteText; this.log = log; this.geometry = { ...DEFAULT_GEOMETRY }; }
-  async preload() {
-    try {
-      const icon = await loadImage(REPRESENTATIVE_CAT);
-      const src = { x: 0, y: 0, w: icon.naturalWidth, h: icon.naturalHeight };
-      const content = { x: 9, y: 21, w: 110, h: 85 };
-      const bar = { x: content.x, y: src.h - 16, w: content.w, h: 10 };
-      this.geometry = { cardSourceRect: src, cardCanvasSize: { w: src.w, h: src.h }, contentRect: content, costRightX: src.w - 8, costBaselineY: src.h - 6, cooldownBarRect: bar };
-      Object.assign(PRODUCTION_CARD_CANVAS, this.geometry.cardCanvasSize);
-      Object.assign(PRODUCTION_CARD_VIEW, this.geometry.cardCanvasSize);
-      Object.assign(PRODUCTION_CARD_SKIN, this.geometry);
-    } catch (e) { this.log.warn?.('[ProductionCardSkin] representative cat load failed', e); }
+  constructor({ spriteText, log = console } = {}) {
+    this.spriteText = spriteText;
+    this.log = log;
+    this.slotFrame = null;
+    this.imgcut = null;
+    this.cardPart = BCU_UNI_CARD_PART;
   }
 
-  drawCard(ctx, { unitDef, icon, cost, cooldownProgressRatio = 1, affordable = true, cooldownReady = true, interactive = true, isBack = false, isEmpty = false, iconLoadFailed = false }) {
+  async preload() {
+    const tasks = [
+      BcuImgCut.load(BCU_UNI_IMGCUT_PATH).then((cut) => {
+        this.imgcut = cut;
+        const part = cut.getByIndex(0);
+        if (!samePart(part, BCU_UNI_CARD_PART)) {
+          this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
+        } else {
+          this.cardPart = part;
+        }
+      }).catch((e) => this.log.warn?.('[ProductionCardSkin] uni.imgcut load failed', e)),
+      loadImage(BCU_SLOT_FRAME_PATH).then((img) => {
+        this.slotFrame = img;
+      }).catch((e) => this.log.warn?.('[ProductionCardSkin] slot frame load failed', BCU_SLOT_FRAME_PATH, e))
+    ];
+    await Promise.all(tasks);
+  }
+
+  drawCard(ctx, {
+    unitDef,
+    icon,
+    cost,
+    cooldownProgressRatio = 1,
+    affordable = true,
+    cooldownReady = true,
+    interactive = true,
+    isBack = false,
+    isEmpty = false,
+    iconLoadFailed = false
+  }) {
     const state = { unitDef, affordable, cooldownReady, interactive, isBack, isEmpty, iconLoadFailed };
-    const canvas = this.geometry.cardCanvasSize;
-    ctx.clearRect(0, 0, canvas.w, canvas.h);
-    if (isEmpty || !unitDef) this.drawEmptyCard(ctx);
-    else if (unitDef.faction === 'cat') this.drawCatCard(ctx, icon, state);
+    ctx.clearRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+
+    if (isEmpty || !unitDef) {
+      this.drawEmptyCard(ctx);
+      return;
+    }
+
+    if (unitDef.faction === 'cat') this.drawCatCard(ctx, icon, state);
     else this.drawDogCard(ctx, icon);
+
+    if (!cooldownReady) {
+      this.drawCooldown(ctx, cooldownProgressRatio, state);
+      if (isBack) this.drawBackOverlay(ctx);
+      return;
+    }
+
+    this.drawAvailabilityOverlay(ctx, state);
     this.drawCost(ctx, cost, state);
-    this.drawCooldown(ctx, cooldownProgressRatio, state);
+  }
+
+  drawBcuCardPart(ctx, image) {
+    const part = this.cardPart || BCU_UNI_CARD_PART;
+    if (!image || imageWidth(image) < part.x + part.w || imageHeight(image) < part.y + part.h) return false;
+    ctx.drawImage(image, part.x, part.y, part.w, part.h, 0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+    return true;
   }
 
   drawCatCard(ctx, icon, state) {
-    if (state.iconLoadFailed || !icon) { this.drawDogCard(ctx, null); return; }
-    const s = this.geometry.cardSourceRect;
-    ctx.drawImage(icon, s.x, s.y, s.w, s.h, 0, 0, s.w, s.h);
+    if (state.iconLoadFailed || !this.drawBcuCardPart(ctx, icon)) {
+      this.log.warn?.('[ProductionCardSkin] cat card image missing or incompatible; drawing slot frame fallback', state.unitDef?.slotId);
+      this.drawSlotFrame(ctx);
+    }
   }
+
   drawDogCard(ctx, icon) {
-    const g = this.geometry;
-    const c = g.cardCanvasSize;
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.w, c.h);
-    if (icon && icon.naturalWidth > 0 && icon.naturalHeight > 0) {
-      const r = g.contentRect;
-      const fit = Math.min(r.w / icon.naturalWidth, r.h / icon.naturalHeight);
-      const dw = Math.max(1, Math.floor(icon.naturalWidth * fit));
-      const dh = Math.max(1, Math.floor(icon.naturalHeight * fit));
-      const dx = r.x + Math.floor((r.w - dw) / 2);
-      const dy = r.y + Math.floor((r.h - dh) / 2);
-      ctx.drawImage(icon, 0, 0, icon.naturalWidth, icon.naturalHeight, dx, dy, dw, dh);
+    this.drawSlotFrame(ctx);
+    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect);
+  }
+
+  drawEmptyCard(ctx) {
+    this.drawSlotFrame(ctx);
+  }
+
+  drawSlotFrame(ctx) {
+    if (this.drawBcuCardPart(ctx, this.slotFrame)) return;
+    this.drawManualFrameFallback(ctx);
+  }
+
+  drawManualFrameFallback(ctx) {
+    const { w, h } = PRODUCTION_CARD_CANVAS;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(3, 3, w - 6, h - 6);
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 61, w, h - 61);
+  }
+
+  drawContainedIcon(ctx, icon, rect) {
+    const sw = imageWidth(icon);
+    const sh = imageHeight(icon);
+    if (!icon || sw <= 0 || sh <= 0) return;
+    const fit = Math.min(rect.w / sw, rect.h / sh);
+    const dw = Math.max(1, Math.floor(sw * fit));
+    const dh = Math.max(1, Math.floor(sh * fit));
+    const dx = rect.x + Math.floor((rect.w - dw) / 2);
+    const dy = rect.y + Math.floor((rect.h - dh) / 2);
+    ctx.drawImage(icon, 0, 0, sw, sh, dx, dy, dw, dh);
+  }
+
+  drawAvailabilityOverlay(ctx, state) {
+    if (state.isBack) return this.drawBackOverlay(ctx);
+    if (!state.interactive || !state.affordable) {
+      ctx.fillStyle = 'rgba(0,0,0,.12)';
+      ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
     }
   }
-  drawEmptyCard(ctx) { this.drawDogCard(ctx, null); }
+
+  drawBackOverlay(ctx) {
+    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+  }
+
   drawCost(ctx, cost, state) {
-    const g = this.geometry;
-    const disabled = !state.interactive || !state.affordable || !state.cooldownReady || state.isBack;
-    if (this.spriteText?.drawCostRight) return this.spriteText.drawCostRight(ctx, Number(cost || 0), g.costRightX, g.costBaselineY - 14, { disabled, scale: 0.9 });
-    ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.fillStyle = '#ffd400'; ctx.font = 'bold 17px sans-serif'; ctx.textAlign = 'right';
-    ctx.strokeText(String(Math.floor(cost || 0)), g.costRightX, g.costBaselineY); ctx.fillText(String(Math.floor(cost || 0)), g.costRightX, g.costBaselineY);
-  }
-  drawCooldown(ctx, cooldownProgressRatio, state) {
-    const g = this.geometry; const bar = g.cooldownBarRect; const progress = clamp01(cooldownProgressRatio);
-    const isCooling = !state.cooldownReady;
-    if (isCooling) {
-      ctx.fillStyle = 'rgba(100,100,100,.22)'; ctx.fillRect(0, 0, g.cardCanvasSize.w, g.cardCanvasSize.h);
-      ctx.fillStyle = '#050505'; ctx.fillRect(bar.x, bar.y, bar.w, bar.h);
-      const fillW = Math.floor(bar.w * progress);
-      if (fillW > 0) { ctx.fillStyle = '#35d8ff'; ctx.fillRect(bar.x, bar.y, fillW, bar.h); }
+    const disabled = !state.interactive || !state.affordable || state.isBack;
+    const value = Number(cost || 0);
+    if (this.spriteText?.drawCostRight) {
+      return this.spriteText.drawCostRight(ctx, value, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY, { disabled, scale: 0.9 });
     }
-    if (!state.interactive || !state.affordable || state.isBack) { ctx.fillStyle = state.isBack ? 'rgba(0,0,0,.22)' : 'rgba(0,0,0,.1)'; ctx.fillRect(0, 0, g.cardCanvasSize.w, g.cardCanvasSize.h); }
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#000';
+    ctx.fillStyle = disabled ? '#999' : '#ffd400';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'right';
+    const text = `${Math.floor(value)}円`;
+    ctx.strokeText(text, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY + 12);
+    ctx.fillText(text, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY + 12);
+  }
+
+  drawCooldown(ctx, cooldownProgressRatio) {
+    const track = PRODUCTION_CARD_SKIN.cooldownTrackRect;
+    const fill = PRODUCTION_CARD_SKIN.cooldownFillRect;
+    const progress = clamp01(cooldownProgressRatio);
+    ctx.fillStyle = 'rgba(0,0,0,.32)';
+    ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+    ctx.fillStyle = PRODUCTION_CARD_SKIN.cooldownTrackColor;
+    ctx.fillRect(track.x, track.y, track.w, track.h);
+    const fillW = Math.floor(fill.w * progress);
+    if (fillW > 0) {
+      ctx.fillStyle = PRODUCTION_CARD_SKIN.cooldownFillColor;
+      ctx.fillRect(fill.x, fill.y, fillW, fill.h);
+    }
   }
 }

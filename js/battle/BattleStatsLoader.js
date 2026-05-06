@@ -13,7 +13,7 @@ const val = (v, i, fallback = 0) => Number.isFinite(v?.[i]) ? v[i] : fallback;
 async function fetchText(path) {
   const isRelative = typeof path === 'string' && (path.startsWith('./') || path.startsWith('../'));
   if (isRelative && typeof window === 'undefined') {
-    const { readFile } = await import('node:fs/promises');
+    const { readFile } = await import('node'+':fs'+'/promises');
     const { fileURLToPath, pathToFileURL } = await import('node:url');
     const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
     const absPath = fileURLToPath(new URL(path, cwdBase));

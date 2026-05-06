@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises';
 import { formatBcuId } from './BcuStageEnemyResolver.js';
 
 async function fetchText(path) { const response = await fetch(path); if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`); return response.text(); }
@@ -18,5 +17,5 @@ export class StageDefinitionLoader {
     const activeEnemies = enemies.filter((e) => e.enemyId > 0);
     return { ok:true, source:{path,kind:'bcu-stage-csv',parser:'StageDefinitionLoader'}, castle:{mainCastleId:castleRow[0]??null,cannonId:castleRow[1]??null,raw:castleRow}, meta:{stageLen:metaRow[0]??null,enemyBaseHp:metaRow[1]??null,minSpawnFrame:metaRow[2]??null,maxSpawnFrame:metaRow[3]??null,bgId:metaRow[4]??null,maxEnemyCount:metaRow[5]??null,raw:metaRow}, enemies, activeEnemies, runtime, warnings, summary:{stageLen:metaRow[0]??null,enemyBaseHp:metaRow[1]??null,bgId:metaRow[4]??null,maxEnemyCount:metaRow[5]??null,enemyRowCount:enemies.length,activeEnemyRowCount:activeEnemies.length} };
   }
-  async load(stageConfig = {}) { const path = stageConfig.stageCsvPath; if (!path) return this.createFallback('missing-stageCsvPath'); try { return this.parse(await fetchText(path), path); } catch (err) { try { const t = await readFile(path.replace(/^\.\//,''),'utf8'); return this.parse(t,path); } catch { this.log('warn', `stage definition load failed: ${err?.message || err}`); return this.createFallback('load-failed', path); } } }
+  async load(stageConfig = {}) { const path = stageConfig.stageCsvPath; if (!path) return this.createFallback('missing-stageCsvPath'); try { return this.parse(await fetchText(path), path); } catch (err) { this.log('warn', `stage definition load failed: ${err?.message || err}`); return this.createFallback('load-failed', path); } }
 }

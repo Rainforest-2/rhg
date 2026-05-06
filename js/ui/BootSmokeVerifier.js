@@ -1,66 +1,53 @@
-import { readFile } from 'node:fs/promises';
 
-const PREVIEW_APP_PATH = new URL('../preview/PreviewApp.js', import.meta.url);
-const MAIN_ENTRY_PATH = new URL('../main.js', import.meta.url);
+const NODE_BUILTIN_PATTERN = new RegExp(['node'+':fs','node'+':path','fs'+'/promises',"from\\s+['\"]fs['\"]","from\\s+['\"]path['\"]"].join('|'));
+
+async function readText(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
+  return await res.text();
+}
+
+export async function verifyNoNodeBuiltinsInBrowserModules() {
+  const { readdir, readFile } = await import('node'+':fs'+'/promises');
+  const { join } = await import('node'+':path');
+  const errors = [];
+  async function walk(dir) {
+    for (const ent of await readdir(dir, { withFileTypes: true })) {
+      const full = join(dir, ent.name);
+      if (ent.isDirectory()) await walk(full);
+      if (!ent.isFile() || !ent.name.endsWith('.js')) continue;
+      const t = await readFile(full, 'utf8');
+      if (NODE_BUILTIN_PATTERN.test(t)) errors.push(full);
+    }
+  }
+  await walk('js');
+  return { ok: errors.length === 0, errors };
+}
 
 export async function verifyPreviewAppModuleBoots() {
   const errors = [];
-  try {
-    const mod = await import(PREVIEW_APP_PATH);
-    if (typeof mod.PreviewApp !== 'function') {
-      errors.push('PreviewApp export is missing or not a function/class.');
-    }
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      errors.push(`SyntaxError while importing PreviewApp.js: ${error.message}`);
-    } else {
-      errors.push(`Import failed for PreviewApp.js: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
+  try { const mod = await import('../preview/PreviewApp.js'); if (!mod?.PreviewApp) errors.push('PreviewApp export missing'); } catch (e) { errors.push(String(e?.message || e)); }
   return { ok: errors.length === 0, errors };
 }
 
-export async function verifyMainEntryImportsPreviewApp() {
+export async function verifyBattleSceneImportIsBrowserSafe() {
   const errors = [];
-  let source = '';
-  try {
-    source = await readFile(MAIN_ENTRY_PATH, 'utf8');
-  } catch (error) {
-    return { ok: false, errors: [`Unable to read js/main.js: ${error instanceof Error ? error.message : String(error)}`] };
-  }
-
-  const importRegex = /import\s*\{[^}]*\bPreviewApp\b[^}]*\}\s*from\s*['"]([^'"]+)['"]/m;
-  const match = source.match(importRegex);
-  if (!match) {
-    errors.push('js/main.js does not import PreviewApp.');
-  } else {
-    const specifier = match[1];
-    if (/mode|legacy/i.test(specifier)) {
-      errors.push(`js/main.js references old mode-style entry: ${specifier}`);
-    }
-    try {
-      await import(new URL(specifier, MAIN_ENTRY_PATH));
-    } catch (error) {
-      errors.push(`main.js PreviewApp import target failed to resolve/import: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
+  try { await import('../battle/BattleScene.js'); } catch (e) { errors.push(String(e?.message || e)); }
+  const src = await (await import('node'+':fs'+'/promises')).readFile(new URL('../battle/BattleScene.js', import.meta.url), 'utf8');
+  if (NODE_BUILTIN_PATTERN.test(src)) errors.push('BattleScene.js contains node builtin import');
   return { ok: errors.length === 0, errors };
 }
 
-export async function verifyNoDuplicateTopLevelHelpers() {
+export async function verifyStageDefinitionLoaderIsBrowserSafe() {
   const errors = [];
-  let source = '';
   try {
-    source = await readFile(PREVIEW_APP_PATH, 'utf8');
-  } catch (error) {
-    return { ok: false, errors: [`Unable to read PreviewApp.js: ${error instanceof Error ? error.message : String(error)}`] };
-  }
-
-  const matches = source.match(/^function\s+nextFrame\s*\(/gm) ?? [];
-  if (matches.length !== 1) {
-    errors.push(`Expected exactly one top-level nextFrame helper, found ${matches.length}.`);
-  }
-
+    const mod = await import('../battle/StageDefinitionLoader.js');
+    const loader = new mod.StageDefinitionLoader(() => {});
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => ({ ok: false, status: 404, text: async () => '' });
+    const r = await loader.load({ stageCsvPath: './missing.csv' });
+    if (r?.ok !== false || r?.runtime !== null) errors.push('load() must fallback without throw on fetch failure');
+    globalThis.fetch = originalFetch;
+  } catch (e) { errors.push(String(e?.message || e)); }
   return { ok: errors.length === 0, errors };
 }

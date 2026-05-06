@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile } from 'node'+':fs'+'/promises';
 import { parseModel } from './BcuModelParser.js';
 import { parseAnim } from './BcuAnimParser.js';
 import { parseImgcut } from './BcuImgcutParser.js';

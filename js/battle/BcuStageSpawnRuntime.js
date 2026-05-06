@@ -10,16 +10,28 @@ export class BcuStageSpawnRuntime {
       countRemaining: r.count === 0 ? Infinity : Math.max(0, r.count || 0),
       spawnedCount: 0,
       done: false,
+      disabled: false,
+      disabledReason: null,
       loadingDeferred: false
     }));
   }
+
+  markRowDisabled(rowIndex, reason = 'disabled') {
+    const row = this.rows.find((r) => r.rowIndex === rowIndex);
+    if (!row) return false;
+    row.disabled = true;
+    row.disabledReason = reason;
+    row.done = true;
+    return true;
+  }
+
   tick(timeMs, context = {}) {
     const alive = context.aliveEnemyCount || 0;
     const max = context.maxEnemyCount || this.stageRuntime.maxEnemyCount || 20;
     const rand = context.random || Math.random;
     const out = [];
     for (const s of this.rows) {
-      if (s.done || !s.unitDef) continue;
+      if (s.done || s.disabled || !s.unitDef) continue;
       if (timeMs < s.nextAtMs) continue;
       if (alive + out.length >= max) continue;
       const trigger = s.row.baseHpTriggerPercent;

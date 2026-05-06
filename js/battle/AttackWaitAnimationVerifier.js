@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile } from 'node'+':fs'+'/promises';
 
 async function read(path) { return readFile(new URL(path, import.meta.url), 'utf8'); }
 

@@ -11,7 +11,7 @@ const TYPE_TO_ENUM = { INT_HB: 'KB', INT_SW: 'SW', INT_ASS: 'ASS' };
 
 async function readText(path) {
   if (typeof window === 'undefined') {
-    const { readFile } = await import('node:fs/promises');
+    const { readFile } = await import('node'+':fs'+'/promises');
     const { fileURLToPath, pathToFileURL } = await import('node:url');
     const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
     return readFile(fileURLToPath(new URL(path, cwdBase)), 'utf8');

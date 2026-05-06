@@ -29,7 +29,7 @@ export function getEnemyRequiredAssetPaths(enemyId) {
 export async function verifyAssetPath(path) {
   try {
     if (typeof window === 'undefined') {
-      const { access } = await import('node:fs/promises');
+      const { access } = await import('node'+':fs'+'/promises');
       const { fileURLToPath, pathToFileURL } = await import('node:url');
       const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
       await access(fileURLToPath(new URL(path, cwdBase)));

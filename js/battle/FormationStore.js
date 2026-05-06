@@ -1,4 +1,4 @@
-import { getCharacterById } from './CharacterCatalog.js';
+import { getCharacterById, getCharacterBaseId } from './CharacterCatalog.js';
 
 export const FORMATION_STORAGE_KEY = 'wanko-battle.formation.v1';
 export const DEFAULT_FORMATION = Object.freeze({
@@ -17,8 +17,8 @@ export function sanitizeFormation(rawFormation) {
   for (let i = 0; i < 5; i += 1) {
     const raw = i < srcSlots.length ? srcSlots[i] : null;
     const id = typeof raw === 'string' ? raw : null;
-    if (!id || !getCharacterById(id) || seen.has(id)) { out.push(null); continue; }
-    seen.add(id); out.push(id);
+    if (!id || !getCharacterById(id) || seen.has(getCharacterBaseId(id))) { out.push(null); continue; }
+    seen.add(getCharacterBaseId(id)); out.push(id);
   }
   return { version: 1, slots: out };
 }
@@ -50,7 +50,8 @@ export const FormationStore = {
     if (safeIndex < 0 || safeIndex > 4) return current;
     const slots = [...current.slots];
     if (!characterId || !getCharacterById(characterId)) { slots[safeIndex] = null; return this.save({ version: 1, slots }); }
-    const existingIndex = slots.findIndex((id, i) => id === characterId && i !== safeIndex);
+    const targetBaseId = getCharacterBaseId(characterId);
+    const existingIndex = slots.findIndex((id, i) => getCharacterBaseId(id) === targetBaseId && i !== safeIndex);
     if (existingIndex >= 0) {
       const prev = slots[safeIndex];
       slots[safeIndex] = characterId;

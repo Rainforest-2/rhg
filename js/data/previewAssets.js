@@ -1,3 +1,5 @@
+import { buildPlayablePreviewAssets } from '../battle/PlayableCharacterRegistry.js';
+
 const ANIM4_E = (p) => [
   { id: 'anim00', label: '00', file: `${p}00.maanim` },
   { id: 'anim01', label: '01', file: `${p}01.maanim` },
@@ -6,13 +8,7 @@ const ANIM4_E = (p) => [
 ];
 
 export const PREVIEW_ASSETS = [
-  { id:'enemy-000', label:'ワンコ', role:'player-dog-candidate', group:'dogs', renderMode:'animated-unit', baseDir:'./public/assets/bcu/000002/org/enemy/000/', image:'000_e.png', imgcut:'000_e.imgcut', model:'000_e.mamodel', animations:ANIM4_E('000_e') },
-  { id:'enemy-001', label:'ニョロ', role:'player-dog-candidate', group:'dogs', renderMode:'animated-unit', baseDir:'./public/assets/bcu/000002/org/enemy/001/', image:'001_e.png', imgcut:'001_e.imgcut', model:'001_e.mamodel', animations:ANIM4_E('001_e') },
-  { id:'enemy-002', label:'例のヤツ', role:'player-dog-candidate', group:'dogs', renderMode:'animated-unit', baseDir:'./public/assets/bcu/000002/org/enemy/002/', image:'002_e.png', imgcut:'002_e.imgcut', model:'002_e.mamodel', animations:ANIM4_E('002_e') },
-  { id:'unit-000-f', label:'ネコ', role:'enemy-cat-candidate', group:'cats', renderMode:'animated-unit', baseDir:'./public/assets/bcu/000004/org/unit/000/f/', image:'000_f.png', imgcut:'000_f.imgcut', model:'000_f.mamodel', animations:ANIM4_E('000_f') },
-  { id:'unit-001-f', label:'タンクネコ', role:'enemy-cat-candidate', group:'cats', renderMode:'animated-unit', baseDir:'./public/assets/bcu/000004/org/unit/001/f/', image:'001_f.png', imgcut:'001_f.imgcut', model:'001_f.mamodel', animations:ANIM4_E('001_f') },
-  { id:'unit-002-f', label:'バトルネコ', role:'enemy-cat-candidate', group:'cats', renderMode:'animated-unit', baseDir:'./public/assets/bcu/000004/org/unit/002/f/', image:'002_f.png', imgcut:'002_f.imgcut', model:'002_f.mamodel', animations:ANIM4_E('002_f') },
-  { id:'unit-003-f', label:'キモネコ', role:'enemy-cat-candidate', group:'cats', renderMode:'animated-unit', baseDir:'./public/assets/bcu/000004/org/unit/003/f/', image:'003_f.png', imgcut:'003_f.imgcut', model:'003_f.mamodel', animations:ANIM4_E('003_f') },
+  ...buildPlayablePreviewAssets(ANIM4_E),
   { id:'battle-critical', label:'Battle common / critical', role:'battle-effect', group:'effects', renderMode:'battle-effect', baseDir:'./public/assets/bcu/000001/org/battle/a/', image:'000_a.png', imgcut:'000_a.imgcut', model:'critical.mamodel', animations:[{id:'critical',label:'critical',file:'critical.maanim'}] },
   { id:'battle-boss-welcome', label:'Battle common / boss welcome', role:'battle-effect', group:'effects', renderMode:'battle-effect', baseDir:'./public/assets/bcu/000001/org/battle/a/', image:'000_a.png', imgcut:'000_a.imgcut', model:'boss_welcome.mamodel', animations:[{id:'boss_welcome',label:'boss welcome',file:'boss_welcome.maanim'}] },
   { id:'castle-composite-000', label:'にゃんこ城 / 合成', role:'castle', group:'castles', renderMode:'castle-composite', layers:[{id:'top',baseDir:'./public/assets/bcu/000001/org/castle/000/',image:'nyankoCastle_000_00.png',imgcut:'nyankoCastle_000_00.imgcut',offsetX:0,offsetY:0,anchor:'bottom-center',name:'top'},{id:'middle',baseDir:'./public/assets/bcu/000001/org/castle/002/',image:'nyankoCastle_002_00.png',imgcut:'nyankoCastle_002_00.imgcut',offsetX:0,offsetY:0,anchor:'bottom-center',name:'middle'},{id:'bottom',baseDir:'./public/assets/bcu/000001/org/castle/003/',image:'nyankoCastle_003_00.png',imgcut:'nyankoCastle_003_00.imgcut',offsetX:0,offsetY:0,anchor:'bottom-center',name:'bottom'}], model:null, animations:[] },

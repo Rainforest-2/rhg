@@ -1,56 +1,26 @@
 import { BATTLE_CONFIG } from '../battle/BattleConfig.js';
-import { LINEUP_COLS, LINEUP_ROWS, toFlatIndex } from '../battle/FormationStore.js';
+import { LINEUP_COLS } from '../battle/FormationStore.js';
+import { BcuImgCut } from './BcuImgCut.js';
+import { BcuSpriteText } from './BcuSpriteText.js';
 
 const CARD = { w: 128, h: 128 };
-const baseTf = { front: { y: 0, scale: 1, opacity: 1, z: 2 }, back: { y: 10, scale: 0.96, opacity: 0.82, z: 1 } };
+const UNI_PNG = './public/assets/bcu/000001/org/page/uni.png';
+const UNI_IMGCUT = './public/assets/bcu/000001/org/data/uni.imgcut';
 
-export function computeLineupCardTransforms(scene, progress = null) {
-  const st = scene?.getLineupChangeVisualState?.() || { changing: false, progress: 0, direction: 'up' };
-  const p = Math.max(0, Math.min(1, progress ?? st.progress ?? 0));
-  if (!st.changing) return { front: baseTf.front, back: baseTf.back };
-  const dir = st.direction === 'down' ? 1 : -1;
-  return {
-    front: { y: dir * (10 * (1 - p)), scale: 0.96 + 0.04 * p, opacity: 0.82 + 0.18 * p, z: 2 },
-    back: { y: dir * (-12 * p), scale: 1 - 0.04 * p, opacity: 1 - 0.18 * p, z: 1 }
-  };
-}
+const loadImage = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(`image load failed:${src}`)); i.src = src; });
 
-export function getCardStackRenderModel(scene, col) {
-  const rows = scene?.getPlayerLineupRows?.() || [[], []];
-  const st = scene?.getLineupChangeVisualState?.() || { changing: false, oldFront: scene?.frontLineup ?? 0, newFront: scene?.frontLineup ?? 0 };
-  const frontRow = st.changing ? st.newFront : (scene?.frontLineup ?? 0);
-  const backRow = st.changing ? st.oldFront : (frontRow === 0 ? 1 : 0);
-  return {
-    col,
-    back: { unitDef: rows[backRow]?.[col] || null, interactive: false, row: backRow },
-    front: { unitDef: rows[frontRow]?.[col] || null, interactive: !!rows[frontRow]?.[col] && !scene?.lineupChanging, row: frontRow }
-  };
-}
-
+export function getCardStackRenderModel(scene, col) { const rows = scene?.getPlayerLineupRows?.() || [[], []]; const front = scene?.frontLineup ?? 0; const back = front === 0 ? 1 : 0; return { col, back: { unitDef: rows[back]?.[col] || null, interactive: false, row: back }, front: { unitDef: rows[front]?.[col] || null, interactive: !!rows[front]?.[col] && !scene?.lineupChanging, row: front } }; }
 export function getLineupRenderModel(scene) { return Array.from({ length: LINEUP_COLS }, (_, col) => getCardStackRenderModel(scene, col)); }
 
 export class PlayerProductionBar {
-  constructor({ scene, mount = document.body }) { this.scene = scene; this.mount = mount; this.cards = []; this.setup(); }
+  constructor({ scene, mount = document.body }) { this.scene = scene; this.mount = mount; this.cardStacks = []; this.iconCache = new Map(); this.spriteText = new BcuSpriteText(); this.setup(); this.initAssets(); }
+  async initAssets() { this.spriteText.init?.(); try { this.uniImg = await loadImage(UNI_PNG); this.uniCut = await BcuImgCut.load(UNI_IMGCUT); } catch (_e) {} }
   setVisible(v) { this.root?.classList.toggle('is-hidden', !v); }
-  getProductionRoster(scene = this.scene) { return scene?.getPlayerProductionRoster?.() || scene?.playerProductionRoster || BATTLE_CONFIG.rosters.dogPlayer || []; }
-  setup() {
-    this.root = document.createElement('div'); this.root.className = 'prod-ui is-hidden';
-    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='cards lineup-cards'></div>";
-    this.mount.appendChild(this.root); this.moneyCanvas = this.root.querySelector('.battle-money'); this.moneyCtx = this.moneyCanvas.getContext('2d'); this.cardsWrap = this.root.querySelector('.cards');
-    this.cardsWrap.addEventListener('pointerup', (e) => { const t = e.target.closest('.prod-card.is-front[data-col]'); if (!t || this.scene?.lineupChanging) return; const col = Number(t.dataset.col); const model = getCardStackRenderModel(this.scene, col); if (!model.front.interactive) return; this.scene?.requestPlayerSpawn?.(null, model.front.row, col); });
-    this.root.addEventListener('pointerdown',(e)=>{ this.swipeStart = { x: e.clientX, y: e.clientY }; });
-    this.root.addEventListener('pointerup',(e)=>{ if (!this.swipeStart) return; const dx = e.clientX - this.swipeStart.x; const dy = e.clientY - this.swipeStart.y; this.swipeStart = null; if (Math.abs(dy) >= 28 && Math.abs(dy) > Math.abs(dx) * 1.2) this.scene?.requestLineupChange?.(dy < 0 ? 'up' : 'down'); });
-    this.rebuildStacks();
-  }
-  rebuildStacks() { this.cardsWrap.innerHTML = ''; this.cards = []; for (let col = 0; col < LINEUP_COLS; col += 1) { const stack = document.createElement('div'); stack.className = 'prod-card-stack'; stack.dataset.col = String(col); const back = document.createElement('canvas'); back.width = CARD.w; back.height = CARD.h; back.className = 'prod-card is-back'; const front = document.createElement('canvas'); front.width = CARD.w; front.height = CARD.h; front.className = 'prod-card is-front'; front.dataset.col = String(col); stack.append(back, front); this.cardsWrap.appendChild(stack); this.cards.push({ col, back, front, backCtx: back.getContext('2d'), frontCtx: front.getContext('2d') }); } }
-  drawEmptyCard(ctx, isBack = false) { ctx.clearRect(0,0,CARD.w,CARD.h); ctx.fillStyle = isBack ? 'rgba(50,50,50,0.25)' : 'rgba(40,40,40,0.45)'; ctx.fillRect(6,6,CARD.w-12,CARD.h-12); ctx.strokeStyle = isBack ? 'rgba(180,180,180,0.18)' : 'rgba(180,180,180,0.3)'; ctx.strokeRect(8,8,CARD.w-16,CARD.h-16); }
-  drawUnitCard(ctx, unitDef, disabled = false) { ctx.clearRect(0,0,CARD.w,CARD.h); ctx.fillStyle = '#ddd'; ctx.fillRect(0,0,CARD.w,CARD.h); ctx.fillStyle = '#333'; ctx.fillRect(4,4,CARD.w-8,CARD.h-8); if (disabled) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(4,4,CARD.w-8,CARD.h-8); } }
-  applyTransforms() { const tf = computeLineupCardTransforms(this.scene); for (const it of this.cards) { it.front.style.transform = `translate(0px, ${tf.front.y}px) scale(${tf.front.scale})`; it.front.style.opacity = `${tf.front.opacity}`; it.front.style.zIndex = `${tf.front.z}`; it.back.style.transform = `translate(4px, ${tf.back.y}px) scale(${tf.back.scale})`; it.back.style.opacity = `${tf.back.opacity}`; it.back.style.zIndex = `${tf.back.z}`; } }
-  update(scene = this.scene) {
-    this.scene = scene; if (!scene) return;
-    const model = getLineupRenderModel(scene);
-    for (const it of this.cards) { const m = model[it.col]; if (m.back.unitDef) this.drawUnitCard(it.backCtx, m.back.unitDef, true); else this.drawEmptyCard(it.backCtx, true); if (m.front.unitDef) this.drawUnitCard(it.frontCtx, m.front.unitDef, scene.lineupChanging); else this.drawEmptyCard(it.frontCtx, false); it.front.classList.toggle('is-disabled', !m.front.interactive); }
-    this.applyTransforms();
-  }
-  dispose() { this.root?.remove(); }
+  setup() { this.root = document.createElement('div'); this.root.className = 'prod-ui is-hidden'; this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='cards lineup-cards'></div>"; this.mount.appendChild(this.root); this.cardsWrap = this.root.querySelector('.cards'); this.moneyCanvas = this.root.querySelector('.battle-money'); this.moneyCtx = this.moneyCanvas.getContext('2d'); this.rebuildStacks(); this.cardsWrap.addEventListener('pointerup', (e) => { const t = e.target.closest('.prod-card.is-front[data-col]'); if (!t || this.scene?.lineupChanging) return; const col = Number(t.dataset.col); const model = getCardStackRenderModel(this.scene, col); if (!model.front.interactive) return; this.scene?.requestPlayerSpawn?.(null, model.front.row, col); }); }
+  rebuildStacks() { this.cardsWrap.innerHTML = ''; this.cardStacks = []; for (let col = 0; col < LINEUP_COLS; col += 1) { const stackEl = document.createElement('div'); stackEl.className = 'prod-card-stack'; stackEl.dataset.col = String(col); const backCanvas = document.createElement('canvas'); backCanvas.className = 'prod-card is-back'; backCanvas.width = CARD.w; backCanvas.height = CARD.h; const frontCanvas = document.createElement('canvas'); frontCanvas.className = 'prod-card is-front'; frontCanvas.dataset.col = String(col); frontCanvas.width = CARD.w; frontCanvas.height = CARD.h; stackEl.append(backCanvas, frontCanvas); this.cardsWrap.appendChild(stackEl); this.cardStacks.push({ col, stackEl, backCanvas, frontCanvas, backCtx: backCanvas.getContext('2d'), frontCtx: frontCanvas.getContext('2d') }); } }
+  async ensureCardAssets(unitDef) { if (!unitDef?.uiIcon) return null; const key = unitDef.characterId || unitDef.slotId || unitDef.assetId; if (this.iconCache.has(key)) return this.iconCache.get(key); const p = (async () => { try { return await loadImage(unitDef.uiIcon.primary); } catch (_e) { if (unitDef.uiIcon.fallback) return loadImage(unitDef.uiIcon.fallback).catch(() => null); return null; } })(); this.iconCache.set(key, p); return p; }
+  drawEmptyCard(ctx) { ctx.clearRect(0, 0, CARD.w, CARD.h); ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.strokeRect(8, 8, CARD.w - 16, CARD.h - 16); }
+  drawCooldownBar(ctx, ratio) { if (!(ratio > 0)) return; ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(6, CARD.h - 12, (CARD.w - 12) * Math.max(0, Math.min(1, ratio)), 6); }
+  drawCard(ctx, entry, isBack = false) { ctx.clearRect(0, 0, CARD.w, CARD.h); if (!entry?.unitDef) return this.drawEmptyCard(ctx); if (this.uniImg && this.uniCut?.parts?.[0]) this.uniCut.draw(ctx, this.uniImg, this.uniCut.parts[0], 0, 0, CARD.w, CARD.h); const icon = entry.icon; if (icon) ctx.drawImage(icon, 20, 20, 88, 72); const cost = Number(entry.unitDef.cost || 0); this.spriteText.drawCostRight(ctx, cost, CARD.w - 8, CARD.h - 18, { disabled: !entry.interactive, scale: 0.8 }); if (isBack) { ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(0, 0, CARD.w, CARD.h); } this.drawCooldownBar(ctx, entry.cooldownRatio || 0); if (!entry.interactive) { ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(0, 0, CARD.w, CARD.h); } }
+  async update(scene = this.scene) { this.scene = scene; if (!scene) return; const model = getLineupRenderModel(scene); for (const stack of this.cardStacks) { const m = model[stack.col]; const backEntry = { ...m.back, icon: await this.ensureCardAssets(m.back.unitDef), interactive: false }; const frontEntry = { ...m.front, icon: await this.ensureCardAssets(m.front.unitDef) }; this.drawCard(stack.backCtx, backEntry, true); this.drawCard(stack.frontCtx, frontEntry, false); stack.frontCanvas.classList.toggle('is-disabled', !frontEntry.interactive); } }
 }

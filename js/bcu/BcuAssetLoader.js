@@ -4,6 +4,8 @@ import { parseModel } from './BcuModelParser.js';
 import { parseAnim } from './BcuAnimParser.js';
 
 const cache = new Map();
+const animationCache=new Map();
+const imageCache=new Map();
 
 function asArray(v) { return v == null ? [] : (Array.isArray(v) ? v : [v]); }
 function join(base, file) { return `${base}${file}`; }
@@ -11,12 +13,15 @@ function join(base, file) { return `${base}${file}`; }
 function isNotFoundError(e) { return String(e.message || '').includes('HTTP 404'); }
 
 function loadImage(url) {
-  return new Promise((res, rej) => {
+  if(imageCache.has(url)) return imageCache.get(url);
+  const p=new Promise((res, rej) => {
     const img = new Image();
     img.onload = () => res(img);
     img.onerror = () => rej(new Error(`Image load failed: ${url}`));
     img.src = url;
   });
+  imageCache.set(url,p);
+  return p;
 }
 
 async function tryLoadText(baseDir, candidates, parser, field) {
@@ -76,14 +81,21 @@ export class BcuAssetLoader {
     if (!animDef) return { loaded: [], missing: [], errors: [], file: null, anim: null, status: 'skipped' };
     const files = asArray(animDef.file);
     for (const file of files) {
-      try {
-        const anim = parseAnim(await fetchBcuText(`${def.baseDir}${file}`));
-        return { loaded: [file], missing: [], errors: [], file, anim, status: 'loaded' };
-      } catch (e) {
-        if (isNotFoundError(e)) continue;
-        return { loaded: [], missing: [], errors: [`${file}: ${e.message}`], file, anim: null, status: 'error' };
-      }
+      const key=`${def.id}:${file}`;
+      if(animationCache.has(key)) return animationCache.get(key);
+      const p=(async()=>{
+        try {
+          const anim = parseAnim(await fetchBcuText(`${def.baseDir}${file}`));
+          return { loaded: [file], missing: [], errors: [], file, anim, status: 'loaded' };
+        } catch (e) {
+          if (isNotFoundError(e)) return null;
+          throw e;
+        }
+      })();
+      animationCache.set(key,p);
+      try{ const r=await p; if(r) return r; animationCache.delete(key);}catch(e){animationCache.delete(key); return { loaded: [], missing: [], errors: [`${file}: ${e.message}`], file, anim: null, status: 'error' }; }
     }
     return { loaded: [], missing: files, errors: [], file: files[0], anim: null, status: 'missing' };
   }
 }
+export function __getBcuAssetCaches(){return {cache,animationCache,imageCache};}

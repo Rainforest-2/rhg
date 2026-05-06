@@ -15,15 +15,16 @@ export class AppLoadingOverlay {
     if (this.root) return;
     const el = document.createElement('div');
     el.className = 'app-loading-overlay is-hidden';
-    el.innerHTML = `<div class='app-loading-card'><div class='app-loading-title'>ワンコ大戦争 Loading</div><div class='app-loading-version'>v${GAME_VERSION}</div><div class='app-loading-message'>Initializing…</div><div class='app-loading-progress'><div class='app-loading-progress-bar'></div></div><div class='app-loading-steps'>${STEPS.map((s)=>`<div class='app-loading-step' data-phase='${s.phase}'>${s.label}</div>`).join('')}</div><div class='app-loading-error'></div></div>`;
+    el.innerHTML = `<div class='app-loading-card'><div class='app-loading-title'>ワンコ大戦争 Loading</div><div class='app-loading-version'>v${GAME_VERSION}</div><div class='app-loading-message'>Initializing…</div><div class='app-loading-phase-time'>0ms</div><div class='app-loading-progress'><div class='app-loading-progress-bar'></div></div><div class='app-loading-steps'>${STEPS.map((s)=>`<div class='app-loading-step' data-phase='${s.phase}'>${s.label}</div>`).join('')}</div><div class='app-loading-error'></div></div>`;
     this.root = el;
     this.mount.appendChild(el);
   }
   show() { this.ensureRoot(); this.root.classList.remove('is-hidden'); }
-  setProgress({ phase, message, value }) {
+  setProgress({ phase, message, value, elapsedMs }) {
     this.ensureRoot();
     this.root.classList.remove('is-error');
     this.root.querySelector('.app-loading-message').textContent = message || 'Loading...';
+    this.root.querySelector('.app-loading-phase-time').textContent = `${Math.max(0,Math.round(Number(elapsedMs||0)))}ms`;
     this.root.querySelector('.app-loading-progress-bar').style.width = `${Math.max(0, Math.min(1, Number(value ?? 0))) * 100}%`;
     this.root.querySelectorAll('.app-loading-step').forEach((step) => {
       const isActive = step.dataset.phase === phase;

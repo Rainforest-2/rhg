@@ -1,4 +1,5 @@
 import { BATTLE_CONFIG } from '../battle/BattleConfig.js';
+import { LINEUP_COLS, LINEUP_ROWS, toFlatIndex } from '../battle/FormationStore.js';
 import { BcuImgCut } from './BcuImgCut.js';
 import { BcuSpriteText } from './BcuSpriteText.js';
 
@@ -127,10 +128,10 @@ export class PlayerProductionBar {
   }
 
   getProductionRoster(scene = this.scene) { return scene?.getPlayerProductionRoster?.() || scene?.playerProductionRoster || BATTLE_CONFIG.rosters.dogPlayer || []; }
-  getRosterSignature(roster = []) { return roster.slice(0, 5).map((u, i) => u ? `${i}:${u.slotId || ''}:${u.assetId || ''}:${u.statsType || ''}:${u.sourceRoster || ''}:${u.sourceSlotId || ''}:${u.cost ?? ''}:${u.cooldownMs ?? ''}:${u.uiIcon?.primary || ''}:${u.uiIcon?.fallback || ''}` : `${i}:empty`).join('|'); }
+  getRosterSignature(roster = []) { return roster.slice(0, LINEUP_COLS * LINEUP_ROWS).map((u, i) => u ? `${i}:${u.slotId || ''}:${u.assetId || ''}:${u.statsType || ''}:${u.sourceRoster || ''}:${u.sourceSlotId || ''}:${u.cost ?? ''}:${u.cooldownMs ?? ''}:${u.uiIcon?.primary || ''}:${u.uiIcon?.fallback || ''}` : `${i}:empty`).join('|'); }
 
-  async createCardSlot(unitDef) {
-    const c = document.createElement('canvas'); c.width = CARD.w; c.height = CARD.h; c.className = 'prod-card'; this.cardsWrap.appendChild(c);
+  async createCardSlot(unitDef, col, isBack = false) {
+    const c = document.createElement('canvas'); c.width = CARD.w; c.height = CARD.h; c.className = `prod-card ${isBack ? 'is-back' : 'is-front'}`; this.cardsWrap.appendChild(c);
     const entry = { d: unitDef || null, c, ctx: c.getContext('2d'), icon: null, iconMode: this.isFullDeployCard(unitDef) ? 'full-deploy-card' : 'portrait' };
     if (!unitDef) return entry;
     try { entry.icon = await loadImage(this.resolveAssetPath(unitDef.uiIcon?.primary)); } catch {}
@@ -139,32 +140,35 @@ export class PlayerProductionBar {
       this.didLogDeployMetrics.add(unitDef.slotId);
       console.info('[PlayerProductionBar] deploy icon metrics', { slotId: unitDef.slotId, width: entry.icon.naturalWidth || entry.icon.width || 0, height: entry.icon.naturalHeight || entry.icon.height || 0 });
     }
-    const fire = (ev) => { ev.preventDefault(); const now = performance.now(); if (now - (this.lastTap.get(unitDef.slotId) || 0) < 200) return; this.lastTap.set(unitDef.slotId, now); c.classList.add('press'); setTimeout(() => c.classList.remove('press'), 80); this.scene?.requestPlayerSpawn?.(unitDef.slotId); };
-    c.addEventListener('pointerdown', fire, { passive: false }); c.addEventListener('click', fire, { passive: false }); entry.fire = fire;
+    const fire = (ev) => { if (isBack || this.scene?.lineupChanging) return; ev.preventDefault(); const now = performance.now(); if (now - (this.lastTap.get(unitDef.slotId) || 0) < 200) return; this.lastTap.set(unitDef.slotId, now); c.classList.add('press'); setTimeout(() => c.classList.remove('press'), 80); this.scene?.requestPlayerSpawn?.(unitDef.slotId, this.scene?.frontLineup ?? 0, col); };
+    if (!isBack) { c.addEventListener('pointerdown', fire, { passive: false }); c.addEventListener('click', fire, { passive: false }); entry.fire = fire; }
     return entry;
   }
 
   async rebuildCards(roster = []) {
     for (const it of this.cards) { if (it.fire) { it.c.removeEventListener('pointerdown', it.fire); it.c.removeEventListener('click', it.fire); } it.c.remove(); }
     this.cards = [];
-    const usable = roster.slice(0, 5);
-    if (roster.length > 5 && !this.didWarnRosterOverflow) { this.didWarnRosterOverflow = true; console.warn('[PlayerProductionBar] roster overflow >5, truncating', roster.length); }
-    const slots = Array.from({ length: 5 }, (_, index) => usable[index] || null);
-    this.cards = await Promise.all(slots.map((unitDef) => this.createCardSlot(unitDef)));
+    const usable = roster.slice(0, LINEUP_COLS * LINEUP_ROWS);
+    if (roster.length > LINEUP_COLS * LINEUP_ROWS && !this.didWarnRosterOverflow) { this.didWarnRosterOverflow = true; console.warn('[PlayerProductionBar] roster overflow >5, truncating', roster.length); }
+    const front = this.scene?.frontLineup ?? 0; const back = front === 0 ? 1 : 0;
+    const cards = [];
+    for (let col = 0; col < LINEUP_COLS; col += 1) cards.push(await this.createCardSlot(usable[toFlatIndex(back, col)] || null, col, true));
+    for (let col = 0; col < LINEUP_COLS; col += 1) cards.push(await this.createCardSlot(usable[toFlatIndex(front, col)] || null, col, false));
+    this.cards = cards;
     this.deriveVisibleCardRect();
   }
 
   async ensureCardsForScene(scene = this.scene) {
     const roster = this.getProductionRoster(scene);
     const sig = this.getRosterSignature(roster);
-    if (sig === this.lastRosterSignature && this.cards.length === 5) return;
+    if (sig === this.lastRosterSignature && this.cards.length === LINEUP_COLS * LINEUP_ROWS) return;
     this.lastRosterSignature = sig;
     await this.rebuildCards(roster);
   }
 
   async setup() {
     this.root = document.createElement('div'); this.root.className = 'prod-ui is-hidden'; this.root.innerHTML = `<canvas class='battle-money' width='360' height='48'></canvas><div class='cards'></div>`;
-    this.mount.appendChild(this.root); this.moneyCanvas = this.root.querySelector('.battle-money'); this.moneyCtx = this.moneyCanvas.getContext('2d'); this.cardsWrap = this.root.querySelector('.cards');
+    this.mount.appendChild(this.root); this.root.addEventListener('pointerdown',(e)=>{ this.swipeStart = { x: e.clientX, y: e.clientY }; }); this.root.addEventListener('pointerup',(e)=>{ if (!this.swipeStart) return; const dx = e.clientX - this.swipeStart.x; const dy = e.clientY - this.swipeStart.y; this.swipeStart = null; if (Math.abs(dy) >= 28 && Math.abs(dy) > Math.abs(dx) * 1.2) { this.scene?.requestLineupChange?.(dy < 0 ? 'up' : 'down'); this.lastRosterSignature = ''; void this.ensureCardsForScene(this.scene); } }); this.moneyCanvas = this.root.querySelector('.battle-money'); this.moneyCtx = this.moneyCanvas.getContext('2d'); this.cardsWrap = this.root.querySelector('.cards');
     try {
       this.frameImage = await loadImage(this.resolveAssetPath('./public/assets/bcu/000001/org/page/uni.png'));
       this.frameCut = await BcuImgCut.load(this.resolveAssetPath('./public/assets/bcu/000001/org/data/uni.imgcut'));
@@ -186,6 +190,7 @@ export class PlayerProductionBar {
     for (const it of this.cards) {
       const ctx = it.ctx; ctx.clearRect(0, 0, CARD.w, CARD.h);
       if (!it.d) { this.drawEmptyCard(ctx); continue; }
+      if (it.c.classList.contains('is-back')) ctx.globalAlpha = 0.85;
       if (it.iconMode === 'full-deploy-card' && it.icon) this.drawFullDeployCard(ctx, it.icon);
       else this.drawSyntheticEnemyCard(ctx, it);
       const s = scene.economy?.getStatus(it.d) || {};
@@ -202,7 +207,9 @@ export class PlayerProductionBar {
       } else {
         this.drawCostForCard(ctx, it.d.cost || 0, false);
       }
+      ctx.globalAlpha = 1;
     }
+    if (scene?.lineupChanging) { this.lastRosterSignature = ''; }
   }
   dispose() { for (const it of this.cards) { if (it.fire) { it.c.removeEventListener('pointerdown', it.fire); it.c.removeEventListener('click', it.fire); } } this.root?.remove(); this.ready = false; }
 }

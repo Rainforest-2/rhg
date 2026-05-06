@@ -43,7 +43,7 @@ export class PreviewApp {
       if (!devUiEnabled) { controlPanel?.setAttribute('hidden', ''); logPanel?.setAttribute('hidden', ''); }
       else { controlPanel?.removeAttribute('hidden'); logPanel?.removeAttribute('hidden'); }
       this.ui = new PreviewUi(controlPanel, document.getElementById('log-list'));
-      this.ui.init(this.assets, { speed: (s) => { const v=Number(s); this.battleSpeedMultiplier=Number.isFinite(v)&&v>0?v:1; this.animator?.setSpeed?.(this.battleSpeedMultiplier); this.ui?.setStatus?.(`battle speed ${this.battleSpeedMultiplier}x`); }, scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle({ keepFormationVisible: false, showOverlay: true }) });
+      this.ui.init(this.assets, {});
       this.cameraInputController = new BattleCameraInputController(this.renderer.canvas, () => this.battleScene?.camera);
       this.cameraInputController.attach();
       const battleMount=document.querySelector('.canvas-panel')||document.body;
@@ -108,6 +108,7 @@ export class PreviewApp {
   }
 
   async applyFormationToBattle() {
+    console.info('applyFormationToBattle:start');
     this.loadingOverlay?.show();
     this.loadingOverlay?.startTimer();
     this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘を準備中...', value: 0.05 });
@@ -116,6 +117,7 @@ export class PreviewApp {
       this.formationEditor?.setVisible(false);
       this.productionBar?.setVisible(true);
       this.sceneReady = true;
+      console.info('applyFormationToBattle:ready');
       this.loadingOverlay?.hide();
     } catch (e) {
       this.formationEditor?.setVisible(true);
@@ -130,6 +132,7 @@ export class PreviewApp {
     if (this.sceneTransitioning && this.battleInitPromise) return await this.battleInitPromise;
     this.sceneTransitioning = true; this.sceneReady = false; this.battleLoading = true;
     this.battleInitPromise = (async()=>{
+      console.info('resetBattle:start');
       const t0=performance.now();
       overlay?.show();
       overlay?.startTimer();
@@ -137,6 +140,7 @@ export class PreviewApp {
       await nextFrame();
       const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
+      console.info('battleScene:init:ok');
       const elapsed=performance.now()-t0;
       const lt = nextScene.loadTimings || {};
       const bgText = lt.backgroundDeferred ? 'timeout/pending' : `${Math.round(lt.backgroundMs || 0)}ms`;

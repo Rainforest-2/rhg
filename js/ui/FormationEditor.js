@@ -12,18 +12,38 @@ export class FormationEditor {
     this.activeSlot = this.findInitialActiveSlot();
     this.statsLoader = new BattleStatsLoader();
     this.characterStats = new Map();
+    this.pendingStatLoads = new Map();
     this.root = document.createElement('div');
     this.root.className = 'formation-ui';
     this.mount.appendChild(this.root);
     this.refresh();
-    this.loadCharacterStats();
+    this.scheduleVisibleStatsLoad();
   }
   findInitialActiveSlot() { const i = (this.formation?.slots || []).findIndex((x) => !x); return i >= 0 ? i : 0; }
   setVisible(v) { this.root.style.display = v ? 'block' : 'none'; }
 
-  async loadCharacterStats() {
-    const chars = getAvailableCharacters();
-    await Promise.all(chars.map(async (c) => {
+  scheduleVisibleStatsLoad() {
+    const runner = () => {
+      const chars = this.filter === CHARACTER_FACTIONS.all ? getAvailableCharacters() : getCharactersByFaction(this.filter);
+      this.loadStatsForCharacters(chars, { batchSize: 4 });
+    };
+    if (typeof globalThis.requestIdleCallback === 'function') globalThis.requestIdleCallback(runner, { timeout: 250 });
+    else setTimeout(runner, 0);
+  }
+
+  async loadStatsForCharacters(chars, { batchSize = 4 } = {}) {
+    for (let i = 0; i < chars.length; i += batchSize) {
+      const batch = chars.slice(i, i + batchSize);
+      await Promise.all(batch.map((c) => this.ensureStatsForCharacter(c)));
+      this.refresh();
+      await new Promise((r) => setTimeout(r, 0));
+    }
+  }
+
+  async ensureStatsForCharacter(c) {
+    if (this.characterStats.has(c.characterId)) return this.characterStats.get(c.characterId);
+    if (this.pendingStatLoads.has(c.characterId)) return this.pendingStatLoads.get(c.characterId);
+    const p = (async () => {
       try {
         if (c.uiIcon?.kind === 'unit') {
           const id = Number(c.uiIcon?.bcuId || 0);
@@ -34,14 +54,19 @@ export class FormationEditor {
           const s = await this.statsLoader.loadEnemyStats(id);
           this.characterStats.set(c.characterId, { hp: s.hp, atk: s.damage, range: s.range, cost: c.defaultCost ?? 0 });
         }
-      } catch { this.characterStats.set(c.characterId, null); }
-    }));
-    this.refresh();
+      } catch {
+        this.characterStats.set(c.characterId, null);
+      } finally {
+        this.pendingStatLoads.delete(c.characterId);
+      }
+    })();
+    this.pendingStatLoads.set(c.characterId, p);
+    return p;
   }
 
   renderCharacterStats(c) {
     const s = this.characterStats.get(c.characterId);
-    if (s === undefined) return `<small>HP ... / ATK ... / 射程 ... / コスト ...</small>`;
+    if (s === undefined) return `<small>stats loading...</small>`;
     if (!s) return `<small>stats unavailable</small>`;
     return `<small>HP ${s.hp} / ATK ${s.atk} / 射程 ${s.range} / コスト ${s.cost}</small>`;
   }
@@ -58,11 +83,11 @@ export class FormationEditor {
     this.bindEvents();
   }
   bindEvents() {
-    this.root.querySelectorAll('[data-slot]').forEach((el) => el.onclick = () => { this.activeSlot = Number(el.dataset.slot); this.refresh(); });
-    this.root.querySelectorAll('[data-filter]').forEach((el) => el.onclick = () => { this.filter = el.dataset.filter; this.refresh(); });
-    this.root.querySelectorAll('[data-character]').forEach((el) => el.onclick = () => { const formation = FormationStore.setSlot(this.activeSlot, el.dataset.character); this.onFormationChanged(formation); this.refresh(); });
-    this.root.querySelector('[data-action="clear"]').onclick = () => { const f = FormationStore.clearSlot(this.activeSlot); this.onFormationChanged(f); this.refresh(); };
-    this.root.querySelector('[data-action="reset"]').onclick = () => { const f = FormationStore.reset(); this.activeSlot = this.findInitialActiveSlot(); this.onFormationChanged(f); this.refresh(); };
+    this.root.querySelectorAll('[data-slot]').forEach((el) => el.onclick = () => { this.activeSlot = Number(el.dataset.slot); this.refresh(); this.scheduleVisibleStatsLoad(); });
+    this.root.querySelectorAll('[data-filter]').forEach((el) => el.onclick = () => { this.filter = el.dataset.filter; this.refresh(); this.scheduleVisibleStatsLoad(); });
+    this.root.querySelectorAll('[data-character]').forEach((el) => el.onclick = () => { const formation = FormationStore.setSlot(this.activeSlot, el.dataset.character); this.onFormationChanged(formation); this.refresh(); this.scheduleVisibleStatsLoad(); });
+    this.root.querySelector('[data-action="clear"]').onclick = () => { const f = FormationStore.clearSlot(this.activeSlot); this.onFormationChanged(f); this.refresh(); this.scheduleVisibleStatsLoad(); };
+    this.root.querySelector('[data-action="reset"]').onclick = () => { const f = FormationStore.reset(); this.activeSlot = this.findInitialActiveSlot(); this.onFormationChanged(f); this.refresh(); this.scheduleVisibleStatsLoad(); };
     this.root.querySelector('[data-action="apply"]').onclick = () => this.onApplyBattle();
   }
   dispose() { this.root?.remove(); }

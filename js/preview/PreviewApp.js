@@ -25,26 +25,22 @@ export class PreviewApp {
 
   async start() {
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
-    this.loadingOverlay.show();
     try {
-      this.loadingOverlay.setProgress({ phase: 'boot-ui', message: 'Booting interface', value: 0.1 });
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
-      this.ui.init(this.assets, { speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle() });
+      this.ui.init(this.assets, { speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle({ keepFormationVisible: false, showOverlay: true }) });
       const battleMount=document.querySelector('.canvas-panel')||document.body;
-      this.loadingOverlay.setProgress({ phase: 'formation', message: 'Loading formation editor', value: 0.35 });
-      this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`);}, onApplyBattle: async ()=>{ await this.resetBattle(); } });
+      this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); } });
       this.formationEditor.setVisible(true);
-      await this.resetBattle({ loadingOverlay: this.loadingOverlay });
-      this.loadingOverlay.setProgress({ phase: 'ready', message: 'Ready', value: 1 });
-      this.loadingOverlay.hide();
+      this.productionBar?.setVisible(false);
+      this.sceneReady = false;
+      this.battleScene = null;
       let last = performance.now();
       const loop = (t) => {
         const dt = t - last; last = t;
         this.renderer.ensureCanvasSize();
         if (this.sceneTransitioning || !this.sceneReady || !this.battleScene) {
-          const c=this.renderer?.ctx,w=this.renderer?.logicalW||0,h=this.renderer?.logicalH||0;
-          if(c&&w>0&&h>0){c.clearRect(0,0,w,h);c.fillStyle='#0f172a';c.fillRect(0,0,w,h);c.fillStyle='#cbd5e1';c.font='20px ui-sans-serif';c.fillText('Battle loading...',24,40);} 
+          this.renderPlaceholder();
         } else {
           this.battleScene.tick(dt);
           this.productionBar?.update(this.battleScene);
@@ -53,14 +49,47 @@ export class PreviewApp {
         requestAnimationFrame(loop);
       };
       requestAnimationFrame(loop);
-    } catch (e) { console.error('[PreviewApp] start failed', e); this.loadingOverlay?.setError(e); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
+    } catch (e) { console.error('[PreviewApp] start failed', e); this.loadingOverlay?.setError(e); this.loadingOverlay?.show(); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
   }
 
-  async resetBattle({ loadingOverlay } = {}) {
-    const overlay = loadingOverlay || this.loadingOverlay;
+  renderPlaceholder() {
+    const c=this.renderer?.ctx,w=this.renderer?.logicalW||0,h=this.renderer?.logicalH||0;
+    if(!c||w<=0||h<=0) return;
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#0b1220');
+    g.addColorStop(1, '#111827');
+    c.clearRect(0,0,w,h);
+    c.fillStyle=g;
+    c.fillRect(0,0,w,h);
+    c.fillStyle='#e2e8f0';
+    c.font='bold 22px ui-sans-serif';
+    c.fillText(this.sceneTransitioning ? 'Battle loading...' : '編成を選んで Apply を押してください',24,48);
+    c.fillStyle='#94a3b8';
+    c.font='16px ui-sans-serif';
+    c.fillText('Battle assets are loaded after Apply.',24,76);
+  }
+
+  async applyFormationToBattle() {
+    this.loadingOverlay?.show();
+    this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘を準備中...', value: 0.2 });
+    try {
+      await this.resetBattle({ keepFormationVisible: false, showOverlay: true });
+      this.formationEditor?.setVisible(false);
+      this.productionBar?.setVisible(true);
+      this.sceneReady = true;
+      this.loadingOverlay?.hide();
+    } catch (e) {
+      this.formationEditor?.setVisible(true);
+      this.productionBar?.setVisible(false);
+      this.loadingOverlay?.setError(e);
+      throw e;
+    }
+  }
+
+  async resetBattle({ keepFormationVisible = false, showOverlay = true } = {}) {
+    const overlay = showOverlay ? this.loadingOverlay : null;
     if (this.sceneTransitioning && this.battleInitPromise) return await this.battleInitPromise;
     this.sceneTransitioning = true; this.sceneReady = false; this.battleLoading = true;
-    this.formationEditor?.setVisible(true);
     this.battleInitPromise = (async()=>{
       overlay?.setProgress({ phase: 'battle-scene', message: 'Preparing battle scene', value: 0.6 });
       const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
@@ -71,113 +100,23 @@ export class PreviewApp {
       if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}      
       this.productionBar?.setVisible(true);
       this.sceneReady = true;
-      this.formationEditor?.setVisible(true);
+      this.formationEditor?.setVisible(keepFormationVisible);
       this.ui?.log('info', 'Battle reset completed');
     })();
-    try { await this.battleInitPromise; } finally { this.sceneTransitioning = false; this.battleLoading=false; this.battleInitPromise=null; }
+    try {
+      await this.battleInitPromise;
+      if (!keepFormationVisible) this.formationEditor?.setVisible(false);
+    } catch (e) {
+      this.formationEditor?.setVisible(true);
+      throw e;
+    } finally { this.sceneTransitioning = false; this.battleLoading=false; this.battleInitPromise=null; if(showOverlay) overlay?.hide(); }
   }
 
   findAsset(id) { return this.assets.find((a) => a.id === id) || this.assets[0]; }
-
-  async probeAnimations(asset) {
-    const available = new Set();
-    for (const a of asset.animations) {
-      const r = await this.loader.loadAnimation(asset, a);
-      if (r.status === 'loaded') available.add(a.id);
-      else this.ui.log('warn', `missing animation: ${a.id} (${(r.missing || []).join(', ') || r.file})`);
-    }
-    this.ui.setAnimationAvailability(asset, available);
-    return available;
-  }
-
-  async loadCompositeLayers(asset) {
-    const loaded = [];
-    const missing = [];
-    for (const layer of (asset.layers || [])) {
-      try { loaded.push({ id: layer.id, name: layer.name || layer.id, anchor: layer.anchor || 'bottom-center', offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); }
-      catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); }
-    }
-    const missingIds = ['bottom', 'middle', 'top'].filter((id) => !loaded.find((l) => l.id === id));
-    if (missingIds.length) this.ui?.log('warn', `castle-composite missing layer ids: ${missingIds.join(', ')}`);
-    return { loaded, missing };
-  }
-
-  async load(id, animId) {
-    this.current = this.findAsset(id);
-    this.state.assetMeta = { id: this.current.id, label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir || '-', renderMode: this.current.renderMode || 'animated-unit', layers: this.current.layers?.length || 0 };
-    this.ui.setAssetMeta(this.state.assetMeta);
-    this.ui.log('info', `load asset ${this.current.label}`);
-    if ((this.current.renderMode || 'model') === 'castle-composite') {
-      const cr = await this.loadCompositeLayers(this.current);
-      this.state.loadedFiles = cr.loaded.map((x) => `${x.id}:${x.image.src.split('/').pop()}`);
-      this.state.missingFiles = cr.missing;
-      this.state.renderMode = 'castle-composite';
-      this.state.modelRequired = false;
-      this.state.animationRequired = false;
-      this.state.compositeLayers = cr.loaded;
-      this.state.sprite = null; this.state.model = null;
-      this.ui.setAnimationAvailability(this.current, new Set());
-      this.state.availableAnimations = new Set();
-      this.ui.log('info', `loaded files: ${this.state.loadedFiles.join(', ') || 'none'}`);
-      await this.loadAnim(null);
-      return;
-    }
-
-    const r = await this.loader.loadAssetSet(this.current);
-    r.errors.forEach((e) => this.ui.log('error', e));
-    r.missing.forEach((m) => this.ui.log('warn', `missing file: ${m}`));
-    this.state.loadedFiles = r.loaded;
-    this.state.missingFiles = r.missing;
-    this.state.renderMode = r.renderMode;
-    this.state.modelRequired = r.modelRequired;
-    this.state.animationRequired = r.animationRequired;
-    this.state.compositeLayers = null;
-    this.state.sprite = r.image && r.imgcut ? new BcuSpriteSheet(r.image, r.imgcut) : null;
-    this.state.model = r.model ? new BcuModelInstance(r.model) : null;
-    let available = new Set();
-    if (this.current.animations?.length) available = await this.probeAnimations(this.current);
-    else this.ui.setAnimationAvailability(this.current, available);
-    this.state.availableAnimations = available;
-    this.ui.log('info', `loaded files: ${r.loaded.join(', ') || 'none'}`);
-    await this.loadAnim(animId || this.current.animations[0]?.id || null);
-  }
-
-  async loadAnim(animId) {
-    const ad = this.current.animations.find((a) => a.id === animId) || this.current.animations[0];
-    if (!ad) {
-      this.state.currentAnimLabel = 'none';
-      this.state.anim = null;
-      this.animator = new BcuAnimator({ tracks: [], maxFrame: 1 });
-      this.applyAnim();
-      return;
-    }
-    this.state.currentAnimLabel = ad.file;
-    const result = await this.loader.loadAnimation(this.current, ad);
-    if (result.status === 'missing') this.ui.log('warn', `missing animation: ${ad.id} (${result.missing.join(', ')})`);
-    result.errors.forEach((e) => this.ui.log('error', e));
-    this.state.anim = result.anim;
-    this.animator = new BcuAnimator(result.anim || { tracks: [], maxFrame: 1 });
-    if (result.anim) {
-      this.ui.log('info', `animation file: ${result.file}`);
-      this.ui.log('info', `tracks: ${result.anim.tracks.length}, maxFrame: ${result.anim.maxFrame}`);
-      this.ui.log('info', `mod histogram: ${Object.entries(result.anim.modificationHistogram || {}).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`);
-    }
-    this.applyAnim();
-  }
-
-  applyAnim() {
-    if (!this.state.model) { this.state.debugApplied = []; this.state.lastAppliedByPart = new Map(); this.ui.setDebug(this.state); return; }
-    this.state.model.reset();
-    this.state.debugApplied = this.animator?.apply(this.state.model) || [];
-    this.state.lastAppliedByPart = new Map(this.state.debugApplied.filter((x) => x.applied).map((x) => [x.partId, x]));
-    this.ui.setDebug(this.state);
-  }
-
-  updateStatus() {
-    const frame = (this.animator?.frame || 0).toFixed(2), parts = this.state.sprite?.imgcut?.parts?.length || 0, m = this.state.model?.parts?.length || 0, t = this.state.anim?.tracks?.length || 0;
-    const applied = (this.state.debugApplied || []).filter((x) => x.applied).length;
-    this.state.debugStats = { frame, parts, modelParts: m, maxFrame: this.state.anim?.maxFrame || 0, tracks: t, appliedCount: applied, currentAnimLabel: Array.isArray(this.state.currentAnimLabel) ? this.state.currentAnimLabel.join('|') : this.state.currentAnimLabel };
-    this.ui.setStatus(`frame:${frame} | parts:${parts} | model parts:${m} | tracks:${t} | applied:${applied} | ${this.animator?.playing ? 'playing' : 'paused'}`);
-    this.ui.setDebug(this.state);
-  }
+  async probeAnimations(asset) { const available = new Set(); for (const a of asset.animations) { const r = await this.loader.loadAnimation(asset, a); if (r.status === 'loaded') available.add(a.id); else this.ui.log('warn', `missing animation: ${a.id} (${(r.missing || []).join(', ') || r.file})`);} this.ui.setAnimationAvailability(asset, available); return available; }
+  async loadCompositeLayers(asset) { const loaded = []; const missing = []; for (const layer of (asset.layers || [])) { try { loaded.push({ id: layer.id, name: layer.name || layer.id, anchor: layer.anchor || 'bottom-center', offsetX: layer.offsetX || 0, offsetY: layer.offsetY || 0, image: await loadImage(`${layer.baseDir}${layer.image}`) }); } catch (_e) { missing.push(`${layer.baseDir}${layer.image}`); } } const missingIds = ['bottom', 'middle', 'top'].filter((id) => !loaded.find((l) => l.id === id)); if (missingIds.length) this.ui?.log('warn', `castle-composite missing layer ids: ${missingIds.join(', ')}`); return { loaded, missing }; }
+  async load(id, animId) { this.current = this.findAsset(id); this.state.assetMeta = { id: this.current.id, label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir || '-', renderMode: this.current.renderMode || 'animated-unit', layers: this.current.layers?.length || 0 }; this.ui.setAssetMeta(this.state.assetMeta); this.ui.log('info', `load asset ${this.current.label}`); if ((this.current.renderMode || 'model') === 'castle-composite') { const cr = await this.loadCompositeLayers(this.current); this.state.loadedFiles = cr.loaded.map((x) => `${x.id}:${x.image.src.split('/').pop()}`); this.state.missingFiles = cr.missing; this.state.renderMode = 'castle-composite'; this.state.modelRequired = false; this.state.animationRequired = false; this.state.compositeLayers = cr.loaded; this.state.sprite = null; this.state.model = null; this.ui.setAnimationAvailability(this.current, new Set()); this.state.availableAnimations = new Set(); this.ui.log('info', `loaded files: ${this.state.loadedFiles.join(', ') || 'none'}`); await this.loadAnim(null); return; } const r = await this.loader.loadAssetSet(this.current); r.errors.forEach((e) => this.ui.log('error', e)); r.missing.forEach((m) => this.ui.log('warn', `missing file: ${m}`)); this.state.loadedFiles = r.loaded; this.state.missingFiles = r.missing; this.state.renderMode = r.renderMode; this.state.modelRequired = r.modelRequired; this.state.animationRequired = r.animationRequired; this.state.compositeLayers = null; this.state.sprite = r.image && r.imgcut ? new BcuSpriteSheet(r.image, r.imgcut) : null; this.state.model = r.model ? new BcuModelInstance(r.model) : null; let available = new Set(); if (this.current.animations?.length) available = await this.probeAnimations(this.current); else this.ui.setAnimationAvailability(this.current, available); this.state.availableAnimations = available; this.ui.log('info', `loaded files: ${r.loaded.join(', ') || 'none'}`); await this.loadAnim(animId || this.current.animations[0]?.id || null); }
+  async loadAnim(animId) { const ad = this.current.animations.find((a) => a.id === animId) || this.current.animations[0]; if (!ad) { this.state.currentAnimLabel = 'none'; this.state.anim = null; this.animator = new BcuAnimator({ tracks: [], maxFrame: 1 }); this.applyAnim(); return; } this.state.currentAnimLabel = ad.file; const result = await this.loader.loadAnimation(this.current, ad); if (result.status === 'missing') this.ui.log('warn', `missing animation: ${ad.id} (${result.missing.join(', ')})`); result.errors.forEach((e) => this.ui.log('error', e)); this.state.anim = result.anim; this.animator = new BcuAnimator(result.anim || { tracks: [], maxFrame: 1 }); if (result.anim) { this.ui.log('info', `animation file: ${result.file}`); this.ui.log('info', `tracks: ${result.anim.tracks.length}, maxFrame: ${result.anim.maxFrame}`); this.ui.log('info', `mod histogram: ${Object.entries(result.anim.modificationHistogram || {}).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`);} this.applyAnim(); }
+  applyAnim() { if (!this.state.model) { this.state.debugApplied = []; this.state.lastAppliedByPart = new Map(); this.ui.setDebug(this.state); return; } this.state.model.reset(); this.state.debugApplied = this.animator?.apply(this.state.model) || []; this.state.lastAppliedByPart = new Map(this.state.debugApplied.filter((x) => x.applied).map((x) => [x.partId, x])); this.ui.setDebug(this.state); }
+  updateStatus() { const frame = (this.animator?.frame || 0).toFixed(2), parts = this.state.sprite?.imgcut?.parts?.length || 0, m = this.state.model?.parts?.length || 0, t = this.state.anim?.tracks?.length || 0; const applied = (this.state.debugApplied || []).filter((x) => x.applied).length; this.state.debugStats = { frame, parts, modelParts: m, maxFrame: this.state.anim?.maxFrame || 0, tracks: t, appliedCount: applied, currentAnimLabel: Array.isArray(this.state.currentAnimLabel) ? this.state.currentAnimLabel.join('|') : this.state.currentAnimLabel }; this.ui.setStatus(`frame:${frame} | parts:${parts} | model parts:${m} | tracks:${t} | applied:${applied} | ${this.animator?.playing ? 'playing' : 'paused'}`); this.ui.setDebug(this.state); }
 }

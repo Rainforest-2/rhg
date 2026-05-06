@@ -6,6 +6,32 @@ export class BattleBase {
     this.visualAssetId = visualAssetId; this.visualKind = visualKind; this.layers = layers; this.scale = scale; this.visualBottomToCurrentCenter = visualBottomToCurrentCenter; this.visualYOffsetPx = Number.isFinite(visualYOffsetPx) ? visualYOffsetPx : 0; this.combatBodyHalfWidthPx = Number.isFinite(combatBodyHalfWidthPx) ? combatBodyHalfWidthPx : this.collisionRadius; this.combatBodyHeightPx = Number.isFinite(combatBodyHeightPx) ? combatBodyHeightPx : this.combatBodyHalfWidthPx * 2; this.combatBodyYOffsetPx = Number.isFinite(combatBodyYOffsetPx) ? combatBodyYOffsetPx : 0; this.debug = debug;
   }
 
+
+  updateCombatBodyFromVisualBounds(bounds, scale = 1, side = this.side, options = {}) {
+    const w = Math.max(1, (bounds?.width || 0) * (Number.isFinite(scale) ? scale : 1));
+    const h = Math.max(1, (bounds?.height || 0) * (Number.isFinite(scale) ? scale : 1));
+    const ratioW = Number.isFinite(options.widthRatio) ? options.widthRatio : 0.42;
+    const ratioH = Number.isFinite(options.heightRatio) ? options.heightRatio : 0.9;
+    const half = Math.max(45, Math.min(w * 0.5, w * ratioW));
+    const height = Math.max(120, h * ratioH);
+    this.combatBodyHalfWidthPx = half;
+    this.combatBodyHeightPx = height;
+    this.combatBodyYOffsetPx = 0;
+    this.visualBoundsPx = { width: w, height: h };
+    this.visualBottomToGround = true;
+    return { halfWidth: half, height, side };
+  }
+
+  getVisualWorldBounds() {
+    const scale = Number.isFinite(this.scale) ? this.scale : 1;
+    const width = (this.castleAsset?.visualBounds?.width || this.visualBoundsPx?.width || this.combatBodyHalfWidthPx * 2) * (this.castleAsset?.visualBounds ? scale : 1);
+    const height = (this.castleAsset?.visualBounds?.height || this.visualBoundsPx?.height || this.combatBodyHeightPx) * (this.castleAsset?.visualBounds ? scale : 1);
+    const left = this.x - width * 0.5;
+    const bottom = this.y + (Number.isFinite(this.visualYOffsetPx) ? this.visualYOffsetPx : 0);
+    const top = bottom - height;
+    return { left, right: left + width, top, bottom, width, height, centerX: this.x, centerY: top + height * 0.5 };
+  }
+
   getCombatBodyBox() {
     const halfW = Number.isFinite(this.combatBodyHalfWidthPx) ? this.combatBodyHalfWidthPx : this.collisionRadius;
     const height = Number.isFinite(this.combatBodyHeightPx) ? this.combatBodyHeightPx : halfW * 2;

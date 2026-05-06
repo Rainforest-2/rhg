@@ -1,215 +1,56 @@
 import { BATTLE_CONFIG } from '../battle/BattleConfig.js';
 import { LINEUP_COLS, LINEUP_ROWS, toFlatIndex } from '../battle/FormationStore.js';
-import { BcuImgCut } from './BcuImgCut.js';
-import { BcuSpriteText } from './BcuSpriteText.js';
 
-const CARD = {
-  w: 128,
-  h: 128,
-  costScale: 0.9,
-  fallbackVisibleRect: { x: 14, y: 14, w: 100, h: 100 },
-  syntheticPad: 5,
-  enemyPortraitPadX: 7,
-  enemyPortraitPadTop: 6,
-  enemyPortraitPadBottom: 24,
-  costPadRight: 2,
-  costPadBottom: 2,
-  cooldownPadX: 8,
-  cooldownPadBottom: 9,
-  cooldownH: 9
-};
+const CARD = { w: 128, h: 128 };
+const baseTf = { front: { y: 0, scale: 1, opacity: 1, z: 2 }, back: { y: 10, scale: 0.96, opacity: 0.82, z: 1 } };
 
-const loadImage = (src) => new Promise((res, rej) => {
-  const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(`image load failed:${src}`)); i.src = src;
-});
+export function computeLineupCardTransforms(scene, progress = null) {
+  const st = scene?.getLineupChangeVisualState?.() || { changing: false, progress: 0, direction: 'up' };
+  const p = Math.max(0, Math.min(1, progress ?? st.progress ?? 0));
+  if (!st.changing) return { front: baseTf.front, back: baseTf.back };
+  const dir = st.direction === 'down' ? 1 : -1;
+  return {
+    front: { y: dir * (10 * (1 - p)), scale: 0.96 + 0.04 * p, opacity: 0.82 + 0.18 * p, z: 2 },
+    back: { y: dir * (-12 * p), scale: 1 - 0.04 * p, opacity: 1 - 0.18 * p, z: 1 }
+  };
+}
+
+export function getCardStackRenderModel(scene, col) {
+  const rows = scene?.getPlayerLineupRows?.() || [[], []];
+  const st = scene?.getLineupChangeVisualState?.() || { changing: false, oldFront: scene?.frontLineup ?? 0, newFront: scene?.frontLineup ?? 0 };
+  const frontRow = st.changing ? st.newFront : (scene?.frontLineup ?? 0);
+  const backRow = st.changing ? st.oldFront : (frontRow === 0 ? 1 : 0);
+  return {
+    col,
+    back: { unitDef: rows[backRow]?.[col] || null, interactive: false, row: backRow },
+    front: { unitDef: rows[frontRow]?.[col] || null, interactive: !!rows[frontRow]?.[col] && !scene?.lineupChanging, row: frontRow }
+  };
+}
+
+export function getLineupRenderModel(scene) { return Array.from({ length: LINEUP_COLS }, (_, col) => getCardStackRenderModel(scene, col)); }
 
 export class PlayerProductionBar {
-  constructor({ scene, mount = document.body }) {
-    this.scene = scene; this.mount = mount; this.lastTap = new Map(); this.ready = false; this.cards = []; this.lastRosterSignature = ''; this.didWarnRosterOverflow = false; this.didLogDeployMetrics = new Set(); this.visibleCardRect = null; this.setup();
-  }
-  resolveAssetPath(path) { if (!path) return ''; if (path.startsWith('./public/')) return path; if (path.startsWith('public/')) return `./${path}`; if (path.startsWith('assets/')) return `./public/${path}`; if (path.startsWith('/assets/')) return `./public${path}`; return path; }
+  constructor({ scene, mount = document.body }) { this.scene = scene; this.mount = mount; this.cards = []; this.setup(); }
   setVisible(v) { this.root?.classList.toggle('is-hidden', !v); }
-  updateLayout() { const panelW = this.mount?.getBoundingClientRect?.().width || 1280; const cardW = Math.round(Math.min(132, Math.max(82, panelW * 0.085))); const gap = Math.round(Math.min(10, Math.max(4, cardW * 0.055))); this.root?.style.setProperty('--prod-card-w', `${cardW}px`); this.root?.style.setProperty('--prod-card-gap', `${gap}px`); }
-  drawImageContain(ctx, image, x, y, w, h) { const iw = image?.naturalWidth || image?.width || 1; const ih = image?.naturalHeight || image?.height || 1; const s = Math.min(w / iw, h / ih); const dw = iw * s; const dh = ih * s; ctx.drawImage(image, x + (w - dw) * 0.5, y + (h - dh) * 0.5, dw, dh); }
-  drawCardBase(ctx) { this.frameCut.draw(ctx, this.frameImage, this.framePart, 0, 0, CARD.w, CARD.h); }
-  drawEmptyCard(ctx) { this.drawCardBase(ctx); }
-  isFullDeployCard(unitDef) { return unitDef?.uiIcon?.kind === 'unit'; }
-  drawFullDeployCard(ctx, image) {
-    ctx.clearRect(0, 0, CARD.w, CARD.h);
-    const iw = image?.naturalWidth || image?.width || CARD.w;
-    const ih = image?.naturalHeight || image?.height || CARD.h;
-    const scale = Math.min(CARD.w / iw, CARD.h / ih);
-    const dw = Math.round(iw * scale);
-    const dh = Math.round(ih * scale);
-    const dx = Math.round((CARD.w - dw) * 0.5);
-    const dy = Math.round((CARD.h - dh) * 0.5);
-    ctx.drawImage(image, dx, dy, dw, dh);
-  }
-  drawSyntheticEnemyCard(ctx, it) {
-    ctx.clearRect(0, 0, CARD.w, CARD.h);
-    const r = this.getVisibleCardRect();
-    const bodyW = Math.max(0, r.w - CARD.syntheticPad * 2);
-    const bodyH = Math.max(0, r.h - CARD.syntheticPad * 2);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(r.x, r.y, r.w, r.h);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(r.x + CARD.syntheticPad, r.y + CARD.syntheticPad, bodyW, bodyH);
-    if (it.icon) {
-      this.drawImageContain(
-        ctx,
-        it.icon,
-        r.x + CARD.enemyPortraitPadX,
-        r.y + CARD.enemyPortraitPadTop,
-        Math.max(0, r.w - CARD.enemyPortraitPadX * 2),
-        Math.max(0, r.h - CARD.enemyPortraitPadTop - CARD.enemyPortraitPadBottom)
-      );
-    }
-  }
-  computeImageAlphaBounds(image) {
-    const iw = image?.naturalWidth || image?.width || 0; const ih = image?.naturalHeight || image?.height || 0;
-    if (!iw || !ih) return null;
-    const canvas = document.createElement('canvas'); canvas.width = iw; canvas.height = ih;
-    const ctx = canvas.getContext('2d'); if (!ctx) return null;
-    ctx.clearRect(0, 0, iw, ih); ctx.drawImage(image, 0, 0, iw, ih);
-    const data = ctx.getImageData(0, 0, iw, ih).data;
-    let minX = iw; let minY = ih; let maxX = -1; let maxY = -1;
-    for (let y = 0; y < ih; y += 1) for (let x = 0; x < iw; x += 1) {
-      const i = (y * iw + x) * 4;
-      if (data[i + 3] > 8) { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
-    }
-    if (maxX < minX || maxY < minY) return null;
-    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
-  }
-  computeImageDarkBounds(image) {
-    const iw = image?.naturalWidth || image?.width || 0; const ih = image?.naturalHeight || image?.height || 0;
-    if (!iw || !ih) return null;
-    const canvas = document.createElement('canvas'); canvas.width = iw; canvas.height = ih;
-    const ctx = canvas.getContext('2d'); if (!ctx) return null;
-    ctx.clearRect(0, 0, iw, ih); ctx.drawImage(image, 0, 0, iw, ih);
-    const data = ctx.getImageData(0, 0, iw, ih).data;
-    let minX = iw; let minY = ih; let maxX = -1; let maxY = -1;
-    for (let y = 0; y < ih; y += 1) for (let x = 0; x < iw; x += 1) {
-      const i = (y * iw + x) * 4;
-      if (data[i + 3] > 8 && data[i] < 40 && data[i + 1] < 40 && data[i + 2] < 40) { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
-    }
-    if (maxX < minX || maxY < minY) return null;
-    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
-  }
-  deriveVisibleCardRect() {
-    const unitCard = this.cards.find((it) => it.d?.slotId === 'prod-cat-basic' && it.icon) || this.cards.find((it) => it.d?.uiIcon?.kind === 'unit' && it.icon);
-    if (!unitCard) { this.visibleCardRect = { ...CARD.fallbackVisibleRect }; return; }
-    let rect = this.computeImageAlphaBounds(unitCard.icon);
-    if (!rect || rect.w >= CARD.w - 2 || rect.h >= CARD.h - 2) rect = this.computeImageDarkBounds(unitCard.icon) || rect;
-    if (!rect || rect.w <= 0 || rect.h <= 0) rect = { ...CARD.fallbackVisibleRect };
-    this.visibleCardRect = rect;
-    console.info('[PlayerProductionBar] visible card rect', { slotId: unitCard.d.slotId, rect, image: { w: unitCard.icon.naturalWidth, h: unitCard.icon.naturalHeight } });
-  }
-  getVisibleCardRect() { return this.visibleCardRect || CARD.fallbackVisibleRect; }
-  drawCostForCard(ctx, cost, disabledCost) {
-    const r = this.getVisibleCardRect();
-    const metrics = this.spriteText.measureCostBox(cost || 0, { disabled: disabledCost, scale: CARD.costScale });
-    const costRightX = r.x + r.w - CARD.costPadRight;
-    const costBottomY = r.y + r.h - CARD.costPadBottom;
-    this.spriteText.drawCost(ctx, cost || 0, costRightX - metrics.width, costBottomY - metrics.height, { disabled: disabledCost, scale: CARD.costScale });
-  }
-  drawDisabledOverlay(ctx, reason) {
-    const r = this.getVisibleCardRect();
-    ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
-    ctx.fillStyle = reason === 'cooldown' ? 'rgba(0,0,0,0.38)' : 'rgba(0,0,0,0.32)';
-    ctx.fillRect(r.x, r.y, r.w, r.h); ctx.restore();
-  }
-  drawCooldownBar(ctx, status) {
-    const r = this.getVisibleCardRect();
-    const ratio = Math.max(0, Math.min(1, status.cooldownRatio ?? 0));
-    const barX = r.x + CARD.cooldownPadX; const barW = Math.max(0, r.w - CARD.cooldownPadX * 2); const barH = CARD.cooldownH; const barY = r.y + r.h - CARD.cooldownPadBottom - barH;
-    const remainingW = Math.round(barW * ratio); const completedW = Math.max(0, barW - remainingW);
-    ctx.fillStyle = '#111'; ctx.fillRect(barX, barY, barW, barH);
-    ctx.fillStyle = '#6fe6ff'; ctx.fillRect(barX, barY, completedW, barH);
-  }
-
   getProductionRoster(scene = this.scene) { return scene?.getPlayerProductionRoster?.() || scene?.playerProductionRoster || BATTLE_CONFIG.rosters.dogPlayer || []; }
-  getRosterSignature(roster = []) { return roster.slice(0, LINEUP_COLS * LINEUP_ROWS).map((u, i) => u ? `${i}:${u.slotId || ''}:${u.assetId || ''}:${u.statsType || ''}:${u.sourceRoster || ''}:${u.sourceSlotId || ''}:${u.cost ?? ''}:${u.cooldownMs ?? ''}:${u.uiIcon?.primary || ''}:${u.uiIcon?.fallback || ''}` : `${i}:empty`).join('|'); }
-
-  async createCardSlot(unitDef, col, isBack = false) {
-    const c = document.createElement('canvas'); c.width = CARD.w; c.height = CARD.h; c.className = `prod-card ${isBack ? 'is-back' : 'is-front'}`; this.cardsWrap.appendChild(c);
-    const entry = { d: unitDef || null, c, ctx: c.getContext('2d'), icon: null, iconMode: this.isFullDeployCard(unitDef) ? 'full-deploy-card' : 'portrait' };
-    if (!unitDef) return entry;
-    try { entry.icon = await loadImage(this.resolveAssetPath(unitDef.uiIcon?.primary)); } catch {}
-    if (!entry.icon) { try { entry.icon = await loadImage(this.resolveAssetPath(unitDef.uiIcon?.fallback)); } catch {} }
-    if (entry.icon && entry.iconMode === 'full-deploy-card' && !this.didLogDeployMetrics.has(unitDef.slotId)) {
-      this.didLogDeployMetrics.add(unitDef.slotId);
-      console.info('[PlayerProductionBar] deploy icon metrics', { slotId: unitDef.slotId, width: entry.icon.naturalWidth || entry.icon.width || 0, height: entry.icon.naturalHeight || entry.icon.height || 0 });
-    }
-    const fire = (ev) => { if (isBack || this.scene?.lineupChanging) return; ev.preventDefault(); const now = performance.now(); if (now - (this.lastTap.get(unitDef.slotId) || 0) < 200) return; this.lastTap.set(unitDef.slotId, now); c.classList.add('press'); setTimeout(() => c.classList.remove('press'), 80); this.scene?.requestPlayerSpawn?.(unitDef.slotId, this.scene?.frontLineup ?? 0, col); };
-    if (!isBack) { c.addEventListener('pointerdown', fire, { passive: false }); c.addEventListener('click', fire, { passive: false }); entry.fire = fire; }
-    return entry;
+  setup() {
+    this.root = document.createElement('div'); this.root.className = 'prod-ui is-hidden';
+    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='cards lineup-cards'></div>";
+    this.mount.appendChild(this.root); this.moneyCanvas = this.root.querySelector('.battle-money'); this.moneyCtx = this.moneyCanvas.getContext('2d'); this.cardsWrap = this.root.querySelector('.cards');
+    this.cardsWrap.addEventListener('pointerup', (e) => { const t = e.target.closest('.prod-card.is-front[data-col]'); if (!t || this.scene?.lineupChanging) return; const col = Number(t.dataset.col); const model = getCardStackRenderModel(this.scene, col); if (!model.front.interactive) return; this.scene?.requestPlayerSpawn?.(null, model.front.row, col); });
+    this.root.addEventListener('pointerdown',(e)=>{ this.swipeStart = { x: e.clientX, y: e.clientY }; });
+    this.root.addEventListener('pointerup',(e)=>{ if (!this.swipeStart) return; const dx = e.clientX - this.swipeStart.x; const dy = e.clientY - this.swipeStart.y; this.swipeStart = null; if (Math.abs(dy) >= 28 && Math.abs(dy) > Math.abs(dx) * 1.2) this.scene?.requestLineupChange?.(dy < 0 ? 'up' : 'down'); });
+    this.rebuildStacks();
   }
-
-  async rebuildCards(roster = []) {
-    for (const it of this.cards) { if (it.fire) { it.c.removeEventListener('pointerdown', it.fire); it.c.removeEventListener('click', it.fire); } it.c.remove(); }
-    this.cards = [];
-    const usable = roster.slice(0, LINEUP_COLS * LINEUP_ROWS);
-    if (roster.length > LINEUP_COLS * LINEUP_ROWS && !this.didWarnRosterOverflow) { this.didWarnRosterOverflow = true; console.warn('[PlayerProductionBar] roster overflow >5, truncating', roster.length); }
-    const front = this.scene?.frontLineup ?? 0; const back = front === 0 ? 1 : 0;
-    const cards = [];
-    for (let col = 0; col < LINEUP_COLS; col += 1) cards.push(await this.createCardSlot(usable[toFlatIndex(back, col)] || null, col, true));
-    for (let col = 0; col < LINEUP_COLS; col += 1) cards.push(await this.createCardSlot(usable[toFlatIndex(front, col)] || null, col, false));
-    this.cards = cards;
-    this.deriveVisibleCardRect();
-  }
-
-  async ensureCardsForScene(scene = this.scene) {
-    const roster = this.getProductionRoster(scene);
-    const sig = this.getRosterSignature(roster);
-    if (sig === this.lastRosterSignature && this.cards.length === LINEUP_COLS * LINEUP_ROWS) return;
-    this.lastRosterSignature = sig;
-    await this.rebuildCards(roster);
-  }
-
-  async setup() {
-    this.root = document.createElement('div'); this.root.className = 'prod-ui is-hidden'; this.root.innerHTML = `<canvas class='battle-money' width='360' height='48'></canvas><div class='cards'></div>`;
-    this.mount.appendChild(this.root); this.root.addEventListener('pointerdown',(e)=>{ this.swipeStart = { x: e.clientX, y: e.clientY }; }); this.root.addEventListener('pointerup',(e)=>{ if (!this.swipeStart) return; const dx = e.clientX - this.swipeStart.x; const dy = e.clientY - this.swipeStart.y; this.swipeStart = null; if (Math.abs(dy) >= 28 && Math.abs(dy) > Math.abs(dx) * 1.2) { this.scene?.requestLineupChange?.(dy < 0 ? 'up' : 'down'); this.lastRosterSignature = ''; void this.ensureCardsForScene(this.scene); } }); this.moneyCanvas = this.root.querySelector('.battle-money'); this.moneyCtx = this.moneyCanvas.getContext('2d'); this.cardsWrap = this.root.querySelector('.cards');
-    try {
-      this.frameImage = await loadImage(this.resolveAssetPath('./public/assets/bcu/000001/org/page/uni.png'));
-      this.frameCut = await BcuImgCut.load(this.resolveAssetPath('./public/assets/bcu/000001/org/data/uni.imgcut'));
-      this.framePart = this.frameCut.getByIndex(0);
-      this.spriteText = new BcuSpriteText(console, (p) => this.resolveAssetPath(p));
-      await this.spriteText.init();
-      await this.ensureCardsForScene(this.scene);
-      this.updateLayout(); this.ready = true;
-    } catch (e) { console.error('[PlayerProductionBar] setup failed', e); this.ready = false; }
-  }
-
-  bindScene(scene) { this.scene = scene; void this.ensureCardsForScene(scene); }
-
+  rebuildStacks() { this.cardsWrap.innerHTML = ''; this.cards = []; for (let col = 0; col < LINEUP_COLS; col += 1) { const stack = document.createElement('div'); stack.className = 'prod-card-stack'; stack.dataset.col = String(col); const back = document.createElement('canvas'); back.width = CARD.w; back.height = CARD.h; back.className = 'prod-card is-back'; const front = document.createElement('canvas'); front.width = CARD.w; front.height = CARD.h; front.className = 'prod-card is-front'; front.dataset.col = String(col); stack.append(back, front); this.cardsWrap.appendChild(stack); this.cards.push({ col, back, front, backCtx: back.getContext('2d'), frontCtx: front.getContext('2d') }); } }
+  drawEmptyCard(ctx, isBack = false) { ctx.clearRect(0,0,CARD.w,CARD.h); ctx.fillStyle = isBack ? 'rgba(50,50,50,0.25)' : 'rgba(40,40,40,0.45)'; ctx.fillRect(6,6,CARD.w-12,CARD.h-12); ctx.strokeStyle = isBack ? 'rgba(180,180,180,0.18)' : 'rgba(180,180,180,0.3)'; ctx.strokeRect(8,8,CARD.w-16,CARD.h-16); }
+  drawUnitCard(ctx, unitDef, disabled = false) { ctx.clearRect(0,0,CARD.w,CARD.h); ctx.fillStyle = '#ddd'; ctx.fillRect(0,0,CARD.w,CARD.h); ctx.fillStyle = '#333'; ctx.fillRect(4,4,CARD.w-8,CARD.h-8); if (disabled) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(4,4,CARD.w-8,CARD.h-8); } }
+  applyTransforms() { const tf = computeLineupCardTransforms(this.scene); for (const it of this.cards) { it.front.style.transform = `translate(0px, ${tf.front.y}px) scale(${tf.front.scale})`; it.front.style.opacity = `${tf.front.opacity}`; it.front.style.zIndex = `${tf.front.z}`; it.back.style.transform = `translate(4px, ${tf.back.y}px) scale(${tf.back.scale})`; it.back.style.opacity = `${tf.back.opacity}`; it.back.style.zIndex = `${tf.back.z}`; } }
   update(scene = this.scene) {
-    if (!this.ready) return; this.scene = scene; if (!scene) return; this.updateLayout(); void this.ensureCardsForScene(scene);
-    const money = Math.floor(scene.economy?.money ?? 0); const max = Math.floor(scene.economy?.maxMoney ?? BATTLE_CONFIG.economy.dogPlayer.maxMoney ?? 0);
-    this.moneyCtx.clearRect(0, 0, this.moneyCanvas.width, this.moneyCanvas.height); this.spriteText.drawMoneyRight(this.moneyCtx, money, max, this.moneyCanvas.width - 6, 4);
-
-    for (const it of this.cards) {
-      const ctx = it.ctx; ctx.clearRect(0, 0, CARD.w, CARD.h);
-      if (!it.d) { this.drawEmptyCard(ctx); continue; }
-      if (it.c.classList.contains('is-back')) ctx.globalAlpha = 0.85;
-      if (it.iconMode === 'full-deploy-card' && it.icon) this.drawFullDeployCard(ctx, it.icon);
-      else this.drawSyntheticEnemyCard(ctx, it);
-      const s = scene.economy?.getStatus(it.d) || {};
-      const stopped = scene.battleState !== 'running'; const cooldown = (s.cooldownRemainingMs || 0) > 0; const notEnough = s.affordable === false;
-      if (cooldown) {
-        this.drawDisabledOverlay(ctx, 'cooldown');
-        this.drawCooldownBar(ctx, s);
-      } else if (notEnough) {
-        this.drawDisabledOverlay(ctx, 'money');
-        this.drawCostForCard(ctx, it.d.cost || 0, true);
-      } else if (stopped) {
-        this.drawDisabledOverlay(ctx, 'stopped');
-        this.drawCostForCard(ctx, it.d.cost || 0, true);
-      } else {
-        this.drawCostForCard(ctx, it.d.cost || 0, false);
-      }
-      ctx.globalAlpha = 1;
-    }
-    if (scene?.lineupChanging) { this.lastRosterSignature = ''; }
+    this.scene = scene; if (!scene) return;
+    const model = getLineupRenderModel(scene);
+    for (const it of this.cards) { const m = model[it.col]; if (m.back.unitDef) this.drawUnitCard(it.backCtx, m.back.unitDef, true); else this.drawEmptyCard(it.backCtx, true); if (m.front.unitDef) this.drawUnitCard(it.frontCtx, m.front.unitDef, scene.lineupChanging); else this.drawEmptyCard(it.frontCtx, false); it.front.classList.toggle('is-disabled', !m.front.interactive); }
+    this.applyTransforms();
   }
-  dispose() { for (const it of this.cards) { if (it.fire) { it.c.removeEventListener('pointerdown', it.fire); it.c.removeEventListener('click', it.fire); } } this.root?.remove(); this.ready = false; }
+  dispose() { this.root?.remove(); }
 }

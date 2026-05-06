@@ -6,26 +6,27 @@ export const LINEUP_TOTAL = LINEUP_ROWS * LINEUP_COLS;
 export const FORMATION_VERSION = 2;
 export const FORMATION_STORAGE_KEY = 'wanko-battle.formation.v2';
 
-const DEFAULT_FLAT_SLOTS = Object.freeze([
+export const DEFAULT_FLAT_SLOTS = Object.freeze([
   'dog-wanko', 'dog-nyoro', 'dog-rei', 'cat-basic', 'cat-tank',
   null, null, null, null, null
 ]);
 
-const DEFAULT_FORMATION = Object.freeze({
+export const DEFAULT_FORMATION = Object.freeze({
   version: FORMATION_VERSION,
   rows: LINEUP_ROWS,
   cols: LINEUP_COLS,
   pages: Object.freeze([
     Object.freeze(DEFAULT_FLAT_SLOTS.slice(0, LINEUP_COLS)),
     Object.freeze(DEFAULT_FLAT_SLOTS.slice(LINEUP_COLS, LINEUP_TOTAL))
-  ])
+  ]),
+  slots: Object.freeze(DEFAULT_FLAT_SLOTS.slice(0, LINEUP_COLS))
 });
 
 export const toFlatIndex = (row, col) => row * LINEUP_COLS + col;
 export const toRowCol = (flatIndex) => ({ row: Math.floor(flatIndex / LINEUP_COLS), col: flatIndex % LINEUP_COLS });
 
 const clonePages = (pages) => Array.from({ length: LINEUP_ROWS }, (_, row) => Array.from({ length: LINEUP_COLS }, (_, col) => pages?.[row]?.[col] ?? null));
-function cloneFormation(formation) { return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages: clonePages(formation?.pages) }; }
+function cloneFormation(formation) { const pages=clonePages(formation?.pages); return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages, slots: pages[0].slice() }; }
 export function getDefaultFormation() { return cloneFormation(DEFAULT_FORMATION); }
 
 export function getFormationPages(formation) { return clonePages(sanitizeFormation(formation).pages); }
@@ -54,7 +55,7 @@ export function migrateLegacyFiveSlotFormation(rawFormation) {
   const slots = Array.isArray(rawFormation?.slots) ? rawFormation.slots : [];
   if (Array.isArray(rawFormation?.pages) && rawFormation?.version >= FORMATION_VERSION) return rawFormation;
   const front = Array.from({ length: LINEUP_COLS }, (_, i) => (typeof slots[i] === 'string' ? slots[i] : null));
-  return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages: [front, Array(LINEUP_COLS).fill(null)] };
+  return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages: [front, Array(LINEUP_COLS).fill(null)], slots: front.slice() };
 }
 
 export function removeDuplicateBaseCharacterIds(formation) {
@@ -70,7 +71,7 @@ export function removeDuplicateBaseCharacterIds(formation) {
       else seen.add(base);
     }
   }
-  return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages };
+  return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages, slots: pages[0].slice() };
 }
 
 export function sanitizeFormation(rawFormation) {

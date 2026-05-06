@@ -20,66 +20,39 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.viewMode = 'preview'; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; }
+  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; }
 
 
   async start() {
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       this.ui = new PreviewUi(document.getElementById('control-panel'), document.getElementById('log-list'));
-      this.ui.init(this.assets, { asset: (id, anim) => this.load(id, anim), anim: (id) => this.loadAnim(id), play: () => this.animator && (this.animator.playing = !this.animator.playing), restart: () => this.animator?.restart(), step: (v) => { this.animator?.step(v); this.applyAnim(); }, speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, mode: (mode) => this.setViewMode(mode), resetBattle: () => this.resetBattle() });
-      await this.load(this.assets[0].id, this.assets[0].animations[0]?.id);
+      this.ui.init(this.assets, { speed: (s) => this.animator?.setSpeed(s), scale: (s) => (this.state.scale = s), toggle: (k, v) => { this.state[k === 'raw' ? 'rawMode' : `show${k[0].toUpperCase() + k.slice(1)}`] = v; }, resetBattle: () => this.resetBattle() });
+      const battleMount=document.querySelector('.canvas-panel')||document.body;
+      this.formationEditor = new FormationEditor({ mount:battleMount, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${f.slots.join(',')}`);}, onApplyBattle: async ()=>{ await this.resetBattle(); } });
+      this.formationEditor.setVisible(true);
+      await this.resetBattle();
       let last = performance.now();
-      let firstRenderLogged = false;
       const loop = (t) => {
-        const dt = t - last;
-        last = t;
-        if (this.viewMode === 'battle') {
-          try {
-            if (!this.battleLoading) this.battleScene?.tick(dt);
-            this.productionBar?.update(this.battleScene);
-            this.renderer.ensureCanvasSize();
-            this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
-            this.lastBattleFrameErrorMessage = '';
-          } catch (e) {
-            const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-            if (this.lastBattleFrameErrorMessage !== message) {
-              this.lastBattleFrameErrorMessage = message;
-              console.error('[PreviewApp] battle frame failed', e);
-            }
-            const c = this.renderer?.ctx;
-            const w = this.renderer?.logicalW || 0;
-            const h = this.renderer?.logicalH || 0;
-            if (c && w > 0 && h > 0) {
-              c.clearRect(0, 0, w, h);
-              c.fillStyle = '#111827';
-              c.fillRect(0, 0, w, h);
-              c.fillStyle = '#fecaca';
-              c.font = '20px ui-sans-serif';
-              c.fillText('Battle render error', 24, 40);
-            }
-          }
+        const dt = t - last; last = t;
+        this.renderer.ensureCanvasSize();
+        if (this.sceneTransitioning || !this.sceneReady || !this.battleScene) {
+          const c=this.renderer?.ctx,w=this.renderer?.logicalW||0,h=this.renderer?.logicalH||0;
+          if(c&&w>0&&h>0){c.clearRect(0,0,w,h);c.fillStyle='#0f172a';c.fillRect(0,0,w,h);c.fillStyle='#cbd5e1';c.font='20px ui-sans-serif';c.fillText('Battle loading...',24,40);} 
         } else {
-          if (this.animator) { this.animator.tick(dt); this.applyAnim(); }
-          this.renderer.render(this.state);
+          this.battleScene.tick(dt);
+          this.productionBar?.update(this.battleScene);
+          this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
         }
-        if (!firstRenderLogged) {
-          firstRenderLogged = true;
-          console.log('[PreviewApp] first render');
-        }
-        if (this.viewMode !== 'battle') this.updateStatus();
         requestAnimationFrame(loop);
       };
-      console.log('[PreviewApp] render loop started');
       requestAnimationFrame(loop);
-    } catch (e) {
-      const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-      console.error('[PreviewApp] start failed', e);
-      this.ui?.log('error', `[PreviewApp] start failed: ${message}`);
-    }
+    } catch (e) { console.error('[PreviewApp] start failed', e); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
   }
 
-  async setViewMode(mode) {
+  async setViewMode(_mode) { return 'formation'; }
+
+  async resetBattle(mode) {
     this.viewMode = ['preview','battle','formation'].includes(mode) ? mode : 'preview';
     if (this.viewMode === 'formation') {
       this.productionBar?.setVisible(false);
@@ -103,12 +76,19 @@ export class PreviewApp {
 
 
   async resetBattle() {
-    if (this.viewMode !== 'battle') { this.productionBar?.setVisible(false); return; }
-    this.battleScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
-    await this.battleScene.init();
-    const battleMount=document.querySelector('.canvas-panel')||document.body;
-    if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:this.battleScene,mount:battleMount});} else {this.productionBar.bindScene(this.battleScene);} this.productionBar?.setVisible(true);
-    this.ui?.log('info', 'Battle reset completed');
+    if (this.sceneTransitioning && this.battleInitPromise) return await this.battleInitPromise;
+    this.sceneTransitioning = true; this.sceneReady = false; this.battleLoading = true;
+    this.battleInitPromise = (async()=>{
+      const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg));
+      await nextScene.init();
+      this.battleScene = nextScene;
+      const battleMount=document.querySelector('.canvas-panel')||document.body;
+      if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}
+      this.productionBar?.setVisible(true);
+      this.sceneReady = true;
+      this.ui?.log('info', 'Battle reset completed');
+    })();
+    try { await this.battleInitPromise; } finally { this.sceneTransitioning = false; this.battleLoading=false; this.battleInitPromise=null; }
   }
 
 

@@ -55,6 +55,7 @@ export class BattleActor {
     this.attackWaitMs = Math.max(scaledAttackWaitMs, scaledMinAttackWaitMs, this.postAttackIdleHoldMs);
     this.attackPostHitWaitMs = this.attackWaitMs;
     this.nextAttackReadyMs = this.attackWaitMs;
+    this.attackCooldownUntilMs = 0;
     this.attackStartupMs = Math.max(0, (this.attackStartupFrames / fps) * 1000) * this.attackPhaseTimeMultiplier;
     this.attackElapsedMs = 0; this.attackWaitElapsedMs = 0; this.hasHitInCurrentAttack = false; this.attackCycleId = 0;
     this.attackProfile = null;

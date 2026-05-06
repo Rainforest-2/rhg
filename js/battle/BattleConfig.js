@@ -1,9 +1,10 @@
 import { buildPlayableRosters, DOG_DEFAULT_COST } from './PlayableCharacterRegistry.js';
+import { GAME_VERSION } from '../AppVersion.js';
 
 const PLAYABLE_ROSTERS = buildPlayableRosters();
 
 export const BATTLE_CONFIG = {
-  version: '0.12.0',
+  version: GAME_VERSION,
   groundY: 560,
   visualLayout: {
     logicalW: 1280,

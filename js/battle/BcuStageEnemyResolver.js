@@ -53,5 +53,5 @@ export function buildStageEnemyUnitDef(row) {
 
 export function buildStageEnemyUnitDefs(stageRuntime) {
   const rows = Array.isArray(stageRuntime?.enemyRows) ? stageRuntime.enemyRows : [];
-  return rows.filter((r) => Number.isFinite(r?.enemyId) && r.enemyId >= 0).map((r) => buildStageEnemyUnitDef(r)).filter((u)=>!u.unavailable);
+  return rows.filter((r) => Number.isFinite(r?.enemyId) && r.enemyId >= 0).map((r) => buildStageEnemyUnitDef(r));
 }

@@ -1,22 +1,43 @@
 import { formatBcuId } from './BcuStageEnemyResolver.js';
-
-async function fetchText(path) { const response = await fetch(path); if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`); return response.text(); }
+const FPS = 30;
+const FRAME_MUL = 2;
+const ENEMY_BASE_WORLD_X = 800;
+const ENEMY_SPAWN_WORLD_X = 700;
 const stripComment = (line) => String(line || '').split('//')[0].trim();
 const parseNumberRow = (line) => { const clean = stripComment(line); if (!clean) return []; return clean.split(',').map((x) => x.trim()).filter(Boolean).map(Number).filter(Number.isFinite); };
-
+async function fetchText(path) { const response = await fetch(path); if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`); return response.text(); }
 export class StageDefinitionLoader {
   constructor(log) { this.log = log || (() => {}); }
-  createFallback(reason, path = '') { return { ok: false, source: { path, kind: 'bcu-stage-csv', parser: 'StageDefinitionLoader', reason }, castle: { mainCastleId: null, cannonId: null, raw: [] }, meta: { stageLen: null, enemyBaseHp: null, minSpawnFrame: null, maxSpawnFrame: null, bgId: null, maxEnemyCount: null, raw: [] }, enemies: [], activeEnemies: [], runtime: null, warnings: [reason], summary: { stageLen: null, enemyBaseHp: null, bgId: null, maxEnemyCount: null, enemyRowCount: 0, activeEnemyRowCount: 0 } }; }
+  createFallback(reason, path = '') { return { ok:false, source:{path,kind:'bcu-stage-csv',reason}, runtime:null, warnings:[reason], enemies:[], activeEnemies:[] }; }
   parse(text, path = '') {
-    const rows = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).map(parseNumberRow).filter((row) => row.length);
-    const castleRow = rows[0] || []; const metaRow = rows[1] || []; const warnings=[];
+    const rows = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).map(parseNumberRow).filter((r) => r.length);
+    const castleRow = rows[0] || []; const metaRow = rows[1] || []; const warnings = [];
     const stageLen = Number.isFinite(metaRow[0]) ? metaRow[0] : 4000;
-    const enemies = rows.slice(2).filter((row) => row.length >= 10).map((row, index) => ({ rowIndex:index+2, enemyId:row[0], count:row[1], firstFrame:row[2], respawnMinFrame:row[3], respawnMaxFrame:row[4], baseHpTriggerPercent:row[5], frontLayer:row[6], backLayer:row[7], bossFlag:row[8], magnification:row[9], raw:row.slice(0,10) })).filter((e) => Number.isFinite(e.enemyId));
-    const runtimeRows = enemies.map((e)=>{ const enemyId=e.enemyId-2; const firstFrame=(e.firstFrame||0)*2; const respawnMinFrame=(e.respawnMinFrame||0)*2; const respawnMaxFrame=(e.respawnMaxFrame||0)*2; return { rowIndex:e.rowIndex, rawEnemyId:e.enemyId, enemyId, bcuId:formatBcuId(enemyId), count:e.count, countMode:e.count===0?'unlimited':'limited', rawFirstFrame:e.firstFrame, firstFrame, firstMs:Math.round(firstFrame/30*1000), rawRespawnMinFrame:e.respawnMinFrame, respawnMinFrame, respawnMinMs:Math.round(respawnMinFrame/30*1000), rawRespawnMaxFrame:e.respawnMaxFrame, respawnMaxFrame, respawnMaxMs:Math.round(respawnMaxFrame/30*1000), baseHpTriggerPercent:e.baseHpTriggerPercent, frontLayer:e.frontLayer, backLayer:e.backLayer, bossFlag:e.bossFlag, magnification:e.magnification, spawnWorldX:null, spawnWorldXSource:'stage-csv-none', immediate:e.firstFrame<=1||Math.round(firstFrame/30*1000)<=0, raw:e.raw }; });
-    const parsedCastleId = Number.isFinite(castleRow[0]) ? castleRow[0] : null; const parsedCannonId = Number.isFinite(castleRow[1]) ? castleRow[1] : null;
-    const runtime = { coordinateMode:'bcu-stage-world', source:'bcu-stage-csv', stageLen, enemyBaseHp:metaRow[1] ?? null, minSpawnFrame:metaRow[2] ?? null, maxSpawnFrame:metaRow[3] ?? null, bgId:metaRow[4] ?? null, maxEnemyCount:metaRow[5] ?? null, castleId:parsedCastleId, cannonId:parsedCannonId, castleIdSource: parsedCastleId === null ? 'missing' : 'stage-csv-row0-col0', cannonIdSource: parsedCannonId === null ? 'missing' : 'stage-csv-row0-col1', castleRawRow: castleRow.slice(), enemyBaseWorldX:800, playerBaseWorldX:stageLen-800, enemySpawnWorldX:700, enemySpawnWorldXSource:'bcu-stage-basis-default', playerSpawnWorldX:stageLen-700, playerSpawnWorldXSource:'bcu-stage-basis-default', bossSpawnWorldX:700, bossSpawnWorldXSource:'bcu-stage-basis-default', fps:30, frameMultiplier:2, enemyRows:runtimeRows };
-    const activeEnemies = enemies.filter((e) => e.enemyId > 0);
-    return { ok:true, source:{path,kind:'bcu-stage-csv',parser:'StageDefinitionLoader'}, castle:{mainCastleId:parsedCastleId,cannonId:parsedCannonId,raw:castleRow}, meta:{stageLen:metaRow[0]??null,enemyBaseHp:metaRow[1]??null,minSpawnFrame:metaRow[2]??null,maxSpawnFrame:metaRow[3]??null,bgId:metaRow[4]??null,maxEnemyCount:metaRow[5]??null,raw:metaRow}, enemies, activeEnemies, runtime, warnings, summary:{stageLen:metaRow[0]??null,enemyBaseHp:metaRow[1]??null,bgId:metaRow[4]??null,maxEnemyCount:metaRow[5]??null,enemyRowCount:enemies.length,activeEnemyRowCount:activeEnemies.length} };
+    const isBaseEnemyId = Number.isFinite(metaRow[6]) ? metaRow[6] - 2 : null;
+    const bossSpawnWorldX = 700;
+    const sourceEnemyRows = rows.slice(2).map((raw, i) => ({ raw, csvRowIndex: i + 2, originalCsvOrderIndex: i }));
+    const mapped = sourceEnemyRows.filter((r) => r.raw.length >= 9).map((src) => {
+      const raw = src.raw; const rawEnemyId = raw[0];
+      let firstFrame = (raw[2] || 0) * FRAME_MUL;
+      if (raw[12] === 1) firstFrame *= -1;
+      let baseHpTriggerPercent = raw[5] ?? 100;
+      let magnification = raw[9] ?? 100;
+      if (baseHpTriggerPercent > 100 && magnification === 100) { magnification = baseHpTriggerPercent; baseHpTriggerPercent = 100; }
+      const enemyId = rawEnemyId - 2;
+      if (enemyId === isBaseEnemyId) baseHpTriggerPercent = 0;
+      const bossFlag = raw[8] || 0;
+      return {
+        csvRowIndex: src.csvRowIndex, originalCsvOrderIndex: src.originalCsvOrderIndex, rawEnemyId, enemyId, bcuId: formatBcuId(enemyId),
+        count: raw[1] || 0, countMode: (raw[1] || 0) === 0 ? 'unlimited' : 'limited', firstFrame,
+        firstMs: Math.round((firstFrame / FPS) * 1000), respawnMinFrame: (raw[3] || 0) * FRAME_MUL, respawnMaxFrame: (raw[4] || 0) * FRAME_MUL,
+        respawnMinMs: Math.round((((raw[3] || 0) * FRAME_MUL) / FPS) * 1000), respawnMaxMs: Math.round((((raw[4] || 0) * FRAME_MUL) / FPS) * 1000),
+        baseHpTriggerPercent, frontLayer: raw[6] ?? 0, backLayer: raw[7] ?? 0, bossFlag, magnification, mult_atk: raw[11] ?? magnification,
+        score: raw[10] ?? null, killCount: raw[13] ?? null, spawnWorldX: bossFlag ? bossSpawnWorldX : ENEMY_SPAWN_WORLD_X
+      };
+    });
+    const enemyRows = mapped.slice().reverse().map((r, idx) => ({ ...r, runtimeOrderIndex: idx }));
+    const runtime = { coordinateMode:'bcu-stage-world', source:'bcu-stage-csv', stageId:path.split('/').pop()?.replace('.csv','') || null, stageCsvPath:path, stageLen, enemyBaseHp:metaRow[1] ?? null, minSpawnFrame:metaRow[2] ?? null, maxSpawnFrame:metaRow[3] ?? null, bgId:metaRow[4] ?? null, maxEnemyCount:metaRow[5] ?? null, effectiveMaxEnemyCount:Math.min(50, metaRow[5] ?? 0), castleId:castleRow[0] ?? null, cannonId:castleRow[1] ?? null, isBaseEnemyId, bossGuard:castleRow[8] ?? null, enemyBaseWorldX:ENEMY_BASE_WORLD_X, playerBaseWorldX:stageLen-800, enemySpawnWorldX:ENEMY_SPAWN_WORLD_X, playerSpawnWorldX:stageLen-700, bossSpawnWorldX, bossSpawnWorldXSource:'fallback-700', fps:FPS, frameMultiplier:FRAME_MUL, sourceEnemyRows:mapped, enemyRows, warnings };
+    return { ok:true, runtime, meta:{ stageLen, enemyBaseHp: metaRow[1] ?? null, bgId: metaRow[4] ?? null, maxEnemyCount: Math.min(50, metaRow[5] ?? 0) }, castle:{ mainCastleId: castleRow[0] ?? null, cannonId: castleRow[1] ?? null, raw: castleRow }, enemies:mapped, activeEnemies:mapped };
   }
   async load(stageConfig = {}) { const path = stageConfig.stageCsvPath; if (!path) return this.createFallback('missing-stageCsvPath'); try { return this.parse(await fetchText(path), path); } catch (err) { this.log('warn', `stage definition load failed: ${err?.message || err}`); return this.createFallback('load-failed', path); } }
 }

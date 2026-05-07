@@ -114,7 +114,7 @@ export class BcuStageSpawnRuntime {
       s.lastBlockedReason = null;
 
       const baseFrontX = this.stageRuntime.enemyBaseFrontX ?? this.stageRuntime.enemyBaseWorldX ?? 800;
-      const spawnX = Number.isFinite(s.row?.spawnWorldX) ? s.row.spawnWorldX : (baseFrontX - 100);
+      const spawnX = Number.isFinite(s.row?.spawnWorldX) ? s.row.spawnWorldX : (baseFrontX + 8);
       const spawnEvent = {
         type: 'spawnEnemy',
         rowIndex: s.rowIndex,
@@ -125,6 +125,8 @@ export class BcuStageSpawnRuntime {
         sourceEnemyId: s.row?.sourceEnemyId,
         rawEnemyId: s.row?.rawEnemyId,
         worldX: spawnX,
+        spawnWorldX: spawnX,
+        spawnWorldXSource: Number.isFinite(s.row?.spawnWorldX) ? 'stage-row-spawnWorldX' : 'stage-runtime-enemy-base-front',
         bossFlag: s.row?.bossFlag,
         magnification: s.row?.magnification,
         hpMagnification: s.row?.hpMagnification,

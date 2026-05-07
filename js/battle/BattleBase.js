@@ -36,6 +36,12 @@ export class BattleBase {
     return { left, right: left + width, top, bottom, width, height, centerX: this.x, centerY: top + height * 0.5 };
   }
 
+  getFrontX() {
+    const box = this.getCombatBodyBox();
+    if (this.side === 'cat-enemy') return box.right;
+    return box.left;
+  }
+
   getCombatBodyBox() {
     const halfW = Number.isFinite(this.combatBodyHalfWidthPx) ? this.combatBodyHalfWidthPx : this.collisionRadius;
     const height = Number.isFinite(this.combatBodyHeightPx) ? this.combatBodyHeightPx : halfW * 2;

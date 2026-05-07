@@ -1,3 +1,4 @@
+import { BattleSpawnResolver } from './BattleSpawnResolver.js';
 export class DebugBattleInspector {
   static enabled(scene) {
     if (scene?.debugBattleEnabled) return true;
@@ -52,11 +53,14 @@ export class DebugBattleInspector {
       },
       runtime: {
         playerBaseWorldX: stageRt.playerBaseWorldX ?? playerBase?.x ?? null,
-        playerBaseFrontX: playerBase?.getCombatBody?.()?.frontX ?? null,
+        playerBaseFrontX: BattleSpawnResolver.getBaseFrontX(playerBase, 'dog-player') ?? null,
         playerBaseHp: playerBase?.hp ?? null,
         enemyBaseWorldX: stageRt.enemyBaseWorldX ?? enemyBase?.x ?? null,
-        enemyBaseFrontX: enemyBase?.getCombatBody?.()?.frontX ?? null,
+        enemyBaseFrontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null,
         enemyBaseHp: enemyBase?.hp ?? null,
+        playerBaseCombatBox: BattleSpawnResolver.getBaseCombatBox(playerBase) ?? null,
+        enemyBaseCombatBox: BattleSpawnResolver.getBaseCombatBox(enemyBase) ?? null,
+        lastSpawnResolveDebug: scene?.lastSpawnResolveDebug ?? null,
         groundY: scene?.groundY ?? null,
         scrollMinX: 0,
         scrollMaxX: Number.isFinite(stageRt.stageLen) ? stageRt.stageLen : null

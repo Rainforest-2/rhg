@@ -32,10 +32,14 @@ assert(renderer.getCameraWorldLeft(scene) === 10, 'getCameraWorldLeft should pri
 assert(renderer.getBackgroundCameraOffsetX(scene) === -30, 'background camera offset should be -pos * pixelsPerWorldUnit');
 
 const baseScreenX = renderer.projectX(scene, 12);
-const scale = (1.2) * renderer.getCameraScale(scene);
-const layerOffsetX = (5) * scale;
-const compositeX = baseScreenX + layerOffsetX - 100 * 0.5 * scale;
+const scale = 1.2 * renderer.getCameraScale(scene);
+const compositeX = renderer.addScreenOffsetX(baseScreenX, 5 * 1.2, scene) - 100 * 0.5 * scale;
 assert(Number.isFinite(compositeX), 'composite projection calculation should apply offset after projectX');
+assert(
+  src.includes('const baseScreenX=this.projectX(this._scene,base.x);') &&
+    (src.includes('this.addScreenOffsetX(baseScreenX') || src.includes('baseScreenX+layerOffsetX')),
+  'composite base rendering must apply layer offset in screen space after projectX',
+);
 
 assert(!src.includes('projectX(this._scene,base.x+(layer.offsetX'), 'world/screen mixed base projection pattern must not remain');
 assert(!/fillText\([^\)]*box\.left\s*,/.test(src), 'unprojected debug fillText(box.left) must not remain');

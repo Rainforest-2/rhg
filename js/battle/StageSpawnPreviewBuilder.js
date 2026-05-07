@@ -9,7 +9,12 @@ export class StageSpawnPreviewBuilder {
     }
     const fps = Number.isFinite(this.config.fps) ? this.config.fps : 30;
     const toMs = (frames) => (Number.isFinite(frames) ? Math.round((frames / fps) * 1000) : null);
-    const rows = (definition.activeEnemies || []).map((row, index) => {
+    const sourceRows =
+      Array.isArray(definition?.activeEnemies) ? definition.activeEnemies :
+      Array.isArray(definition?.enemyRows) ? definition.enemyRows :
+      Array.isArray(definition?.runtime?.enemyRows) ? definition.runtime.enemyRows :
+      [];
+    const rows = sourceRows.map((row, index) => {
       const mapping = this.resolveMapping(row, rosters);
       return {
         index,

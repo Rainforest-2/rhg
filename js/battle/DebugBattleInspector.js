@@ -17,6 +17,10 @@ export class DebugBattleInspector {
     const activeRows = rows.filter((r) => !r.done && !r.disabled).length;
     const doneRows = rows.filter((r) => r.done).length;
     const deferredCount = rows.filter((r) => r.waitingForMaxEnemySlot || r.loadingDeferred).length;
+    const waitingForSpawnCommitCount = rows.filter((r) => r.waitingForSpawnCommit).length;
+    const pendingSpawnCount = rows.filter((r) => !!r.pendingSpawnEvent).length;
+    const baseHpBlockedCount = rows.filter((r) => r.lastBlockedReason === 'base-hp-trigger').length;
+    const maxSlotBlockedCount = rows.filter((r) => r.lastBlockedReason === 'max-enemy-count').length;
     const nextFrameMin = rows.reduce((m, r) => Math.min(m, Number.isFinite(r.nextAtFrame) ? r.nextAtFrame : Infinity), Infinity);
     const playerBase = (scene?.bases || []).find((b) => b.side === 'dog-player');
     const enemyBase = (scene?.bases || []).find((b) => b.side === 'cat-enemy');
@@ -56,7 +60,11 @@ export class DebugBattleInspector {
         activeRows,
         doneRows,
         nextFrameMin: Number.isFinite(nextFrameMin) ? nextFrameMin : null,
-        deferredCount
+        deferredCount,
+        waitingForSpawnCommitCount,
+        pendingSpawnCount,
+        baseHpBlockedCount,
+        maxSlotBlockedCount
       },
       actors: {
         playerAlive: (scene?.actors || []).filter((a) => a?.isAlive?.() && a.side === 'dog-player').length,

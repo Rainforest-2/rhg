@@ -24,6 +24,7 @@ export class DebugBattleInspector {
     const nextFrameMin = rows.reduce((m, r) => Math.min(m, Number.isFinite(r.nextAtFrame) ? r.nextAtFrame : Infinity), Infinity);
     const playerBase = (scene?.bases || []).find((b) => b.side === 'dog-player');
     const enemyBase = (scene?.bases || []).find((b) => b.side === 'cat-enemy');
+    const bgSource = scene?.stage?.background?.source || {};
     const templates = [...(scene?.actorFactory?.templates?.values?.() || [])];
     const stageScaledTemplates = templates.filter((tpl) => tpl?.stats?.source?.stageMagnificationApplied).length;
     const actorsAll = scene?.actors || [];
@@ -82,6 +83,30 @@ export class DebugBattleInspector {
         enemyAlive: actorsAll.filter((a) => a?.isAlive?.() && a.side === 'cat-enemy').length,
         dead: actorsAll.filter((a) => !a?.isAlive?.()).length,
         knockback: actorsAll.filter((a) => a?.state === 'knockback').length
+      },
+      assets: {
+        castle: {
+          requestedCastleId: enemyBase?.debug?.requestedCastleId ?? enemyBase?.requestedCastleId ?? null,
+          resolvedCastleId: enemyBase?.debug?.resolvedCastleId ?? enemyBase?.castleId ?? null,
+          requestedAnimBaseId: enemyBase?.debug?.requestedAnimBaseId ?? enemyBase?.requestedAnimBaseId ?? null,
+          resolvedAnimBaseId: enemyBase?.debug?.resolvedAnimBaseId ?? enemyBase?.animBaseId ?? null,
+          requestedCannonId: enemyBase?.debug?.requestedCannonId ?? null,
+          imagePath: enemyBase?.debug?.castleImagePath ?? enemyBase?.castleAsset?.imagePath ?? null,
+          imgcutPath: enemyBase?.debug?.castleImgcutPath ?? enemyBase?.castleAsset?.imgcutPath ?? null,
+          usedFallback: enemyBase?.debug?.enemyCastleUsedFallback ?? false,
+          fallbackReason: enemyBase?.debug?.enemyCastleFallbackReason ?? enemyBase?.castleFallbackReason ?? null
+        },
+        background: {
+          requestedBgId: bgSource.requestedBgId ?? null,
+          resolvedBgId: bgSource.resolvedBgId ?? null,
+          imagePath: bgSource.imagePath ?? null,
+          imgcutPath: bgSource.imgcutPath ?? null,
+          csvPath: bgSource.csvPath ?? null,
+          usedFallback: bgSource.bgUsedFallback ?? false,
+          fallbackReason: bgSource.bgFallbackReason ?? null,
+          imgcutId: bgSource.imgcutId ?? null,
+          showUpper: bgSource.showUpper ?? null
+        }
       },
       statsScaling: { stageScaledActors, stageScaledTemplates, examples },
       warnings: [...(scene?.debugWarnings || [])]

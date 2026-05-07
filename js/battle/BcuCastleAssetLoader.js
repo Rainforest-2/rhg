@@ -46,8 +46,14 @@ export function resolveEnemyCastleAssetCandidates(castleId = 0) {
 
 export class BcuCastleAssetLoader {
   constructor(options = {}) { this.imageLoader = options.imageLoader || null; this.fetchText = options.fetchText || fetchTextSafe; }
-  async load(castleId = 0) {
+  async load(castleId = 0, options = {}) {
+    const requestedAnimBaseId = options?.animBaseId ?? null;
+    const requestedCannonId = options?.cannonId ?? null;
+    const source = options?.source || 'stage-runtime';
     const candidates = resolveEnemyCastleAssetCandidates(castleId);
+    const fallbackReason = candidates.resolvedCastleId === null ? 'castleId-invalid-fallback-0' : null;
+    const resolvedCastleId = candidates.resolvedCastleId === null ? 0 : candidates.resolvedCastleId;
+    const resolvedAnimBaseId = Number.isFinite(Number(requestedAnimBaseId)) ? Math.floor(Number(requestedAnimBaseId)) : resolvedCastleId;
     for (const imagePath of candidates.imageCandidates) {
       const image = await this.loadImage(imagePath);
       if (!image) continue;
@@ -58,10 +64,10 @@ export class BcuCastleAssetLoader {
         if (part) { imgcut = { text: t, part }; imgcutPath = c; break; }
       }
       const crop = imgcut?.part || { x: 0, y: 0, w: image.width, h: image.height };
-      return { ok: true, requestedCastleId: castleId, resolvedCastleId: candidates.resolvedCastleId, image, imagePath, imgcut, imgcutPath, crop, visualBounds: { width: crop.w, height: crop.h }, usedFallback: false, reason: null, source: 'bcu-castle-png' };
+      return { ok: true, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, image, imagePath, imgcut, imgcutPath, crop, visualBounds: { width: crop.w, height: crop.h }, usedFallback: !!fallbackReason, fallbackReason, reason: null, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
     }
-    if (candidates.resolvedCastleId === null) return { ok:false, requestedCastleId: castleId, resolvedCastleId:null, imagePath:null, imgcutPath:null, usedFallback:true, reason:'castleId-nullish', placeholder:true, source:'placeholder' };
-    return { ok: false, requestedCastleId: castleId, resolvedCastleId: candidates.resolvedCastleId, imagePath:null, imgcutPath:null, usedFallback:false, reason: 'image-load-failed', placeholder: true, source: 'placeholder' };
+    if (candidates.resolvedCastleId === null) return { ok:false, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, imagePath:null, imgcutPath:null, usedFallback:true, fallbackReason, reason:'castleId-invalid-fallback-0', placeholder:true, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
+    return { ok: false, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, imagePath:null, imgcutPath:null, usedFallback:false, fallbackReason:null, reason: 'image-load-failed', placeholder: true, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
   }
 
   loadImage(src) { if (typeof this.imageLoader === 'function') return Promise.resolve(this.imageLoader(src));

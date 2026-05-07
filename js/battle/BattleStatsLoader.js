@@ -9,6 +9,15 @@ import {
 const UNIT_VERSION = '000004';
 const ENEMY_VERSION = '000001';
 const val = (v, i, fallback = 0) => Number.isFinite(v?.[i]) ? v[i] : fallback;
+const normalizePercent = (value, fallback = 100) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+const scalePositive = (value, percent, min = 0) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  return Math.max(min, Math.round((n * percent) / 100));
+};
 
 async function fetchText(path) {
   const isRelative = typeof path === 'string' && (path.startsWith('./') || path.startsWith('../'));
@@ -77,6 +86,13 @@ export class BattleStatsLoader {
   }
 
   describeStats(stats) { const source = stats?.source || {}; return { type: source.type || '-', bcuAssetKind: source.bcuAssetKind || source.type || '-', bcuRole: source.bcuRole || '-', mapping: source.mapping || '-', schemaVersion: source.schemaVersion || '-', file: source.file || '-', row: Number.isFinite(source.row) ? source.row : null, unitId: source.unitId ?? null, enemyId: source.enemyId ?? null, form: source.form || null, formRow: Number.isFinite(source.formRow) ? source.formRow : null, hp: stats?.hp ?? null, knockbacks: stats?.knockbacks ?? null, damage: stats?.damage ?? null, speed: stats?.speed ?? null, range: stats?.range ?? stats?.detectionRange ?? null, width: stats?.width ?? null, isRange: !!stats?.isRange, rawTbaFrames: stats?.rawTbaFrames ?? null, tbaFrames: stats?.tbaFrames ?? null, attackStartupFrames: stats?.attackStartupFrames ?? null, longPreFrames: stats?.longPreFrames ?? null, price: stats?.price ?? null, respawnFrames: stats?.respawnFrames ?? null, respawnSeconds: stats?.respawnSeconds ?? null, reward: stats?.reward ?? null, dropAmount: stats?.dropAmount ?? null, attackCount: stats?.attackCount ?? null, attackHits: Array.isArray(stats?.attackHits) ? stats.attackHits.map((h) => ({ hitIndex: h.hitIndex, damage: h.damage, preFrames: h.preFrames, preFramesAbsolute: h.preFramesAbsolute, deltaFramesFromPrevious: h.deltaFramesFromPrevious, abi: h.abi, shortPointRaw: h.shortPointRaw, longPointRaw: h.longPointRaw, ldStartRaw: h.ldStartRaw, ldRangeRaw: h.ldRangeRaw, isLd: !!h.isLd, isOmni: !!h.isOmni })) : [] }; }
+  applyStageEnemyMagnification(baseStats, modifiers = {}) {
+    if (!baseStats) return baseStats;
+    const hpMag = normalizePercent(modifiers.hpMagnification ?? modifiers.magnification, 100);
+    const atkMag = normalizePercent(modifiers.attackMagnification ?? modifiers.magnification, 100);
+    const attackHits = Array.isArray(baseStats.attackHits) ? baseStats.attackHits.map((hit) => ({ ...hit, baseDamage: Number.isFinite(hit?.damage) ? hit.damage : null, damage: scalePositive(hit?.damage, atkMag, 0), stageAttackMagnification: atkMag })) : baseStats.attackHits;
+    return { ...baseStats, baseHp: baseStats.hp, baseDamage: baseStats.damage, hp: scalePositive(baseStats.hp, hpMag, 1), damage: scalePositive(baseStats.damage, atkMag, 0), attackHits, stageMagnification: { source: modifiers.source || 'bcu-stage-csv-row', rowIndex: modifiers.rowIndex ?? null, rawEnemyId: modifiers.rawEnemyId ?? null, sourceEnemyId: modifiers.sourceEnemyId ?? null, enemyId: modifiers.enemyId ?? baseStats.source?.enemyId ?? null, magnification: normalizePercent(modifiers.magnification, 100), hpMagnification: hpMag, attackMagnification: atkMag }, source: { ...(baseStats.source || {}), stageMagnificationApplied: true, stageMagnification: { rowIndex: modifiers.rowIndex ?? null, magnification: normalizePercent(modifiers.magnification, 100), hpMagnification: hpMag, attackMagnification: atkMag }, baseHp: baseStats.hp, baseDamage: baseStats.damage } };
+  }
 
   async loadUnitStats(unitId, form = 'f', formRow = 0) { const unit = String(unitId).padStart(3, '0'); const file = `./public/assets/bcu/${UNIT_VERSION}/org/unit/${unit}/unit${unit}.csv`; const rows = this.parseUnitCsv(await fetchText(file)); const row = rows[formRow] || rows[0]; if (!row) throw new Error(`No unit stat rows in ${file}`); return this.normalizeUnitStats(row, { file, row: rows[formRow] ? formRow : 0, type: 'unit', unitId, form, formRow, mappingStatus: 'valid', assetSource: 'org/unit/{unit}/unit{unit}.csv', csvKind: 'unit-form-row' }); }
   async loadEnemyStats(enemyId) { const file = `./public/assets/bcu/${ENEMY_VERSION}/org/data/t_unit.csv`; const rows = this.parseEnemyTUnitCsv(await fetchText(file)); const rowIndex = Number(enemyId) + 2; const row = rows[rowIndex]; if (!row) throw new Error(`No enemy stat row found for enemyId=${enemyId} in ${file}`); return this.normalizeEnemyStats(row, { file, row: rowIndex, type: 'enemy', enemyId, mappingStatus: 'valid', assetSource: 'org/data/t_unit.csv', csvKind: 'enemy-table-row' }); }

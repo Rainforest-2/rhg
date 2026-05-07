@@ -24,6 +24,17 @@ export class DebugBattleInspector {
     const nextFrameMin = rows.reduce((m, r) => Math.min(m, Number.isFinite(r.nextAtFrame) ? r.nextAtFrame : Infinity), Infinity);
     const playerBase = (scene?.bases || []).find((b) => b.side === 'dog-player');
     const enemyBase = (scene?.bases || []).find((b) => b.side === 'cat-enemy');
+    const templates = [...(scene?.actorFactory?.templates?.values?.() || [])];
+    const stageScaledTemplates = templates.filter((tpl) => tpl?.stats?.source?.stageMagnificationApplied).length;
+    const actorsAll = scene?.actors || [];
+    const stageScaledActors = actorsAll.filter((a) => a?.stageMagnification || a?.statScalingDebug?.stageMagnification).length;
+    const examples = [];
+    for (const tpl of templates) {
+      if (examples.length >= 5) break;
+      const mag = tpl?.stats?.stageMagnification;
+      if (!mag) continue;
+      examples.push({ slotId: tpl?.unitDef?.slotId ?? null, rowIndex: mag?.rowIndex ?? null, enemyId: mag?.enemyId ?? tpl?.unitDef?.statsId ?? null, baseHp: tpl?.baseStats?.hp ?? null, scaledHp: tpl?.stats?.hp ?? null, baseDamage: tpl?.baseStats?.damage ?? null, scaledDamage: tpl?.stats?.damage ?? null, hpMagnification: mag?.hpMagnification ?? null, attackMagnification: mag?.attackMagnification ?? null });
+    }
     return {
       frame: scene?.logicFrame ?? Math.floor((scene?.timeMs || 0) / (1000 / 30)),
       timeMs: scene?.timeMs || 0,
@@ -67,11 +78,12 @@ export class DebugBattleInspector {
         maxSlotBlockedCount
       },
       actors: {
-        playerAlive: (scene?.actors || []).filter((a) => a?.isAlive?.() && a.side === 'dog-player').length,
-        enemyAlive: (scene?.actors || []).filter((a) => a?.isAlive?.() && a.side === 'cat-enemy').length,
-        dead: (scene?.actors || []).filter((a) => !a?.isAlive?.()).length,
-        knockback: (scene?.actors || []).filter((a) => a?.state === 'knockback').length
+        playerAlive: actorsAll.filter((a) => a?.isAlive?.() && a.side === 'dog-player').length,
+        enemyAlive: actorsAll.filter((a) => a?.isAlive?.() && a.side === 'cat-enemy').length,
+        dead: actorsAll.filter((a) => !a?.isAlive?.()).length,
+        knockback: actorsAll.filter((a) => a?.state === 'knockback').length
       },
+      statsScaling: { stageScaledActors, stageScaledTemplates, examples },
       warnings: [...(scene?.debugWarnings || [])]
     };
   }

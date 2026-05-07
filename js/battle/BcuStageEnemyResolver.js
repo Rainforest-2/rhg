@@ -5,8 +5,14 @@ export function formatBcuId(id) {
   return String(Math.max(0, Math.floor(n))).padStart(3, '0');
 }
 
-export function getStageEnemySlotId(enemyId) {
-  return `stage-enemy-${formatBcuId(enemyId)}`;
+function normalizePercent(value, fallback = 100) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export function getStageEnemySlotId(enemyId, rowIndex = null) {
+  const bcuId = formatBcuId(enemyId);
+  return Number.isFinite(rowIndex) ? `stage-enemy-${bcuId}-row-${rowIndex}` : `stage-enemy-${bcuId}`;
 }
 
 export function buildBcuEnemyAssetDef(enemyId) {
@@ -28,8 +34,12 @@ export function buildBcuEnemyAssetDef(enemyId) {
 export function buildStageEnemyUnitDef(row) {
   const bcuId = formatBcuId(row?.enemyId);
   const available = hasBcuEnemyAsset(row?.enemyId);
+  const rowIndex = Number.isFinite(row?.rowIndex) ? row.rowIndex : null;
+  const magnification = normalizePercent(row?.magnification, 100);
+  const hpMagnification = normalizePercent(row?.hpMagnification ?? row?.magnification, 100);
+  const attackMagnification = normalizePercent(row?.attackMagnification ?? row?.magnification, 100);
   return {
-    slotId: `stage-enemy-${bcuId}`,
+    slotId: getStageEnemySlotId(row?.enemyId, rowIndex),
     label: `敵${bcuId}`,
     assetId: `enemy-${bcuId}`,
     assetDef: buildBcuEnemyAssetDef(row.enemyId),
@@ -47,7 +57,21 @@ export function buildStageEnemyUnitDef(row) {
     moveAnimId: 'anim00',
     attackAnimId: 'anim02',
     knockbackAnimId: 'anim03',
-    unavailable: !available, stageSpawn: { ...row }
+    unavailable: !available,
+    stageSpawn: { ...row },
+    stageStatModifiers: {
+      source: 'bcu-stage-csv-row',
+      rowIndex,
+      rawEnemyId: row?.rawEnemyId ?? null,
+      sourceEnemyId: row?.sourceEnemyId ?? null,
+      enemyId: row?.enemyId ?? null,
+      magnification,
+      hpMagnification,
+      attackMagnification
+    },
+    magnification,
+    hpMagnification,
+    attackMagnification
   };
 }
 

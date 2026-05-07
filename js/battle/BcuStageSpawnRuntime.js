@@ -4,49 +4,43 @@ export class BcuStageSpawnRuntime {
     const map = new Map(stageEnemyUnitDefs.map((u) => [u.stageSpawn?.rowIndex, u]));
     this.rows = (this.stageRuntime.enemyRows || []).map((r) => ({
       rowIndex: r.rowIndex,
+      def: r,
       row: r,
       unitDef: map.get(r.rowIndex) || null,
-      nextAtMs: Number.isFinite(r.firstMs) ? r.firstMs : 0,
-      countRemaining: r.count === 0 ? Infinity : Math.max(0, r.count || 0),
       spawnedCount: 0,
+      nextAtFrame: Number.isFinite(r.firstFrame) ? r.firstFrame : 0,
+      armed: true,
       done: false,
       disabled: false,
       disabledReason: null,
-      loadingDeferred: false
+      waitingForMaxEnemySlot: false
     }));
   }
 
-  markRowDisabled(rowIndex, reason = 'disabled') {
-    const row = this.rows.find((r) => r.rowIndex === rowIndex);
-    if (!row) return false;
-    row.disabled = true;
-    row.disabledReason = reason;
-    row.done = true;
-    return true;
-  }
-
-  tick(timeMs, context = {}) {
+  tick(frameOrMs, context = {}) {
+    const frame = frameOrMs > 100000 ? Math.floor((frameOrMs / 1000) * 30) : frameOrMs;
     const alive = context.aliveEnemyCount || 0;
     const max = context.maxEnemyCount || this.stageRuntime.maxEnemyCount || 20;
+    const hp = Number.isFinite(context.enemyBaseHpPercent) ? context.enemyBaseHpPercent : 100;
     const rand = context.random || Math.random;
     const out = [];
     for (const s of this.rows) {
       if (s.done || s.disabled) continue;
       if (!s.unitDef || s.unitDef.unavailable) { s.disabled = true; s.disabledReason = 'enemy-asset-missing'; s.done = true; continue; }
-      if (timeMs < s.nextAtMs) continue;
-      if (alive + out.length >= max) continue;
+      if (frame < s.nextAtFrame) continue;
+      if (alive + out.length >= max) { s.waitingForMaxEnemySlot = true; continue; }
       const trigger = Number.isFinite(s.row.baseHpTriggerPercent) ? s.row.baseHpTriggerPercent : 100;
-      const hp = Number.isFinite(context.enemyBaseHpPercent) ? context.enemyBaseHpPercent : 100;
-      if (trigger >= 100 && !(hp <= 100)) continue;
-      if (trigger < 100 && !(hp <= trigger)) continue;
-      out.push({ rowIndex: s.rowIndex, unitDef: s.unitDef, atMs: timeMs, spawnWorldX: Number.isFinite(s.row.spawnWorldX) ? s.row.spawnWorldX : (s.row.bossFlag ? (this.stageRuntime.bossSpawnWorldX ?? 700) : (this.stageRuntime.enemySpawnWorldX ?? 700)), bossFlag: s.row.bossFlag, magnification: s.row.magnification, row: s.row });
+      if (!(hp <= trigger)) continue;
+      s.waitingForMaxEnemySlot = false;
+      const baseFrontX = this.stageRuntime.enemyBaseFrontX ?? this.stageRuntime.enemyBaseWorldX ?? 800;
+      const spawnX = Number.isFinite(s.row.spawnWorldX) ? s.row.spawnWorldX : (baseFrontX - 100);
+      out.push({ type: 'spawnEnemy', rowIndex: s.rowIndex, unitDef: s.unitDef, enemyId: s.row.enemyId, worldX: spawnX, bossFlag: s.row.bossFlag, magnification: s.row.magnification, hpMagnification: s.row.hpMagnification, attackMagnification: s.row.attackMagnification, layerMin: s.row.layerMin, layerMax: s.row.layerMax, row: s.row });
       s.spawnedCount += 1;
-      if (s.countRemaining !== Infinity) s.countRemaining -= 1;
-      if (s.countRemaining === 0) { s.done = true; continue; }
-      const min = Math.max(0, s.row.respawnMinMs || 0);
-      const maxMs = Math.max(0, s.row.respawnMaxMs || min);
-      const next = min >= maxMs ? min : Math.round(min + rand() * (maxMs - min));
-      s.nextAtMs = timeMs + next;
+      if (!s.row.isInfinite && s.spawnedCount >= (s.row.count || 0)) { s.done = true; continue; }
+      const min = Math.max(0, s.row.respawnMinFrame || 0);
+      const maxF = Math.max(0, s.row.respawnMaxFrame || min);
+      const next = min >= maxF ? min : Math.round(min + rand() * (maxF - min));
+      s.nextAtFrame = frame + next;
     }
     return out;
   }

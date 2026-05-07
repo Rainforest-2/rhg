@@ -65,12 +65,29 @@ export class DebugBattleInspector {
         scrollMinX: 0,
         scrollMaxX: Number.isFinite(stageRt.stageLen) ? stageRt.stageLen : null
       },
-      camera: {
-        x: scene?.camera?.pos ?? null,
-        offsetX: scene?.camera?.originX ?? 0,
-        zoom: scene?.camera?.zoom ?? scene?.camera?.siz ?? 1,
-        viewportWidth: scene?.camera?.logicalW ?? null
-      },
+      camera: (() => {
+        const cam = scene?.camera;
+        const camState = cam?.getState?.() || null;
+        const clamp = camState?.clamp || cam?.getClampRange?.() || null;
+        return {
+          x: cam?.pos ?? null,
+          pos: cam?.pos ?? null,
+          offsetX: cam?.originX ?? 0,
+          zoom: cam?.zoom ?? cam?.siz ?? 1,
+          siz: cam?.siz ?? cam?.zoom ?? 1,
+          logicalW: cam?.logicalW ?? null,
+          stageLen: camState?.stageLen ?? cam?.stageLen ?? null,
+          visibleWorldWidth: camState?.visibleWorldWidth ?? cam?.visibleWorldWidth ?? null,
+          stagePixelWidth: camState?.stagePixelWidth ?? cam?.stagePixelWidth ?? null,
+          pixelsPerWorldUnit: camState?.pixelsPerWorldUnit ?? cam?.pixelsPerWorldUnit ?? null,
+          clamp,
+          visibleWorldRange: cam?.getVisibleWorldRange?.() || null,
+          contract: 'world-x-to-logical-screen-x'
+        };
+      })(),
+      cameraStageLenMatchesRuntime: Number.isFinite(scene?.camera?.stageLen) && Number.isFinite(stageRt?.stageLen)
+        ? Math.abs(scene.camera.stageLen - stageRt.stageLen) <= 1e-6
+        : null,
       spawn: {
         rowCount: rows.length,
         activeRows,

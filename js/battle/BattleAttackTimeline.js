@@ -14,6 +14,11 @@ export class BattleAttackTimeline {
     return Number.isFinite(wait) && wait > 0 ? wait : 0;
   }
 
+  static isAttackCompleteReason(reason) {
+    const r = String(reason || 'attack-complete');
+    return r === 'attack-complete' || r === 'attack-ended' || r === 'timeline-complete' || r === 'attack-finished';
+  }
+
   static getAttackWaitState(actor, nowMs = 0) {
     const readyAt = Number.isFinite(actor?.attackWaitReadyAtMs)
       ? actor.attackWaitReadyAtMs
@@ -102,19 +107,29 @@ export class BattleAttackTimeline {
     const previous = this.getAttackWaitState(actor, nowMs);
     const waitMs = this.getWaitDurationMs(actor);
     const preserveExistingWait = actor.attackWaitActive === true && previous.remainingMs > 0;
+    const canSetNewTba = this.isAttackCompleteReason(reason);
 
     actor.setState?.('attack-wait');
     actor.setAnimation?.(actor.idleAnimId || actor.moveAnimId, 'attack-wait', false);
     actor.attackWaitReason = preserveExistingWait ? (actor.attackWaitReason || reason) : reason;
 
-    if (!preserveExistingWait) {
+    if (preserveExistingWait) {
+      actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
+    } else if (canSetNewTba) {
       actor.attackWaitStartedAtMs = nowMs;
       actor.attackWaitReadyAtMs = nowMs + waitMs;
       actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
       actor.attackWaitActive = waitMs > 0;
       actor.attackWaitSetCount = (actor.attackWaitSetCount || 0) + 1;
     } else {
+      const readyAt = Number.isFinite(actor.attackWaitReadyAtMs)
+        ? actor.attackWaitReadyAtMs
+        : Number.isFinite(actor.attackCooldownUntilMs)
+          ? actor.attackCooldownUntilMs
+          : nowMs;
+      actor.attackWaitReadyAtMs = Math.min(readyAt, nowMs);
       actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
+      actor.attackWaitActive = false;
     }
 
     const next = this.getAttackWaitState(actor, nowMs);
@@ -124,12 +139,13 @@ export class BattleAttackTimeline {
       reason,
       waitMs,
       preserveExistingWait,
+      canSetNewTba,
       readyAtMs: next.readyAtMs,
       remainingMs: next.remainingMs,
       active: next.active,
       ready: next.ready,
       setCount: actor.attackWaitSetCount || 0,
-      source: preserveExistingWait ? 'preserved-existing-tba' : 'set-new-tba-on-attack-complete'
+      source: preserveExistingWait ? 'preserved-existing-tba' : (canSetNewTba ? 'set-new-tba-on-attack-complete' : 'no-new-tba-non-complete-reason')
     };
     actor.applyCurrentAnimationFrame?.();
   }

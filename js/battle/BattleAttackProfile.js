@@ -2,6 +2,38 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { AbilityModel } from './AbilityModel.js';
 
 export class BattleAttackProfile {
+  static getFrameMs(fps = 30) {
+    const f = Number.isFinite(fps) && fps > 0 ? fps : 30;
+    return 1000 / f;
+  }
+
+  static buildBcuTiming({ fps = 30, animationMs = 0, waitMs = 0, maxEventAtMs = 0, rawLongPreFrames = null, rawTbaFrames = null } = {}) {
+    const frameMs = this.getFrameMs(fps);
+    const animMs = Math.max(0, Number(animationMs) || 0);
+    const longPreMs = Math.max(0, Number(maxEventAtMs) || 0);
+    const tbaMs = Math.max(0, Number(waitMs) || 0);
+    const postMs = Math.max(0, animMs - longPreMs);
+    const tbaMinusOneMs = Math.max(0, tbaMs - frameMs);
+    const bcuAttackIntervalMs = Math.max(animMs, longPreMs + Math.max(tbaMinusOneMs, postMs));
+    const intervalFrames = frameMs > 0 ? bcuAttackIntervalMs / frameMs : 0;
+    return {
+      source: 'bcu-getItv',
+      formula: 'max(animLen, longPre + TBA - 1)',
+      fps,
+      frameMs,
+      animationMs: animMs,
+      longPreMs,
+      postMs,
+      waitMs: tbaMs,
+      tbaMinusOneMs,
+      bcuAttackIntervalMs,
+      bcuAttackIntervalFrames: intervalFrames,
+      rawLongPreFrames: Number.isFinite(rawLongPreFrames) ? rawLongPreFrames : Math.round(longPreMs / frameMs),
+      rawTbaFrames: Number.isFinite(rawTbaFrames) ? rawTbaFrames : Math.round(tbaMs / frameMs),
+      animationFrames: frameMs > 0 ? animMs / frameMs : null
+    };
+  }
+
   static fromActor(actor) {
     const stats = actor?.rawStats || {};
     const fps = actor?.fps || BATTLE_CONFIG.tuning?.fps || 30;
@@ -25,13 +57,23 @@ export class BattleAttackProfile {
       });
       const maxEventAtMs = Math.max(...events.map(e=>e.atMs));
       const minAnim = BATTLE_CONFIG.tuning?.minAttackAnimMs ?? 0;
-      return { source:'bcu-stats-attackHits', isRange:!!stats.isRange, events, animationMs:Math.max(actor?.attackAnimDurationMs||0,maxEventAtMs,minAnim), waitMs:actor?.attackWaitMs??0, maxEventAtMs };
+      const animationMs = Math.max(actor?.attackAnimDurationMs||0,maxEventAtMs,minAnim);
+      const waitMs = actor?.attackWaitMs??0;
+      const rawLongPreFrames = Math.max(...hits.map((h) => Math.max(0, Number(h?.preFramesAbsolute ?? h?.preFrames ?? 0) || 0)));
+      const rawTbaFrames = Number.isFinite(stats.tbaFrames) ? stats.tbaFrames : (Number.isFinite(actor?.attackWaitFrames) ? actor.attackWaitFrames : null);
+      const bcuTiming = this.buildBcuTiming({ fps, animationMs, waitMs, maxEventAtMs, rawLongPreFrames, rawTbaFrames });
+      return { source:'bcu-stats-attackHits', isRange:!!stats.isRange, events, animationMs, waitMs, maxEventAtMs, bcuTiming, bcuAttackIntervalMs:bcuTiming.bcuAttackIntervalMs, bcuAttackIntervalFrames:bcuTiming.bcuAttackIntervalFrames };
     }
     const startup = Math.max(actor?.attackStartupMs||0, BATTLE_CONFIG.tuning?.minAttackStartupMs ?? 0);
     const isRange = actor?.attackType === 1;
-    return { source:'actor-current-stats', isRange, events:[{ key:'hit-0', hitIndex:0, atMs:startup, damage:actor?.damage??0, targetMode:isRange?'range':'single', allowBaseHit:true, attackKind:'normal', rawAbi:0, ability:null, abilities:{}, abilityFlags:{}, abilityMappingStatus:'none', abilityEnabledBits:[], rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu:actor?.attackWidthBcu ?? stats.width ?? 0, shortPointBcu:0, longPointBcu:0, rangeEndPxDebug: actor?.detectionRangePx ?? toPx(stats.detectionRange ?? 0), attackBackPxDebug: actor?.attackWidthPx ?? toPx(stats.width ?? 0), shortPointPxDebug:0, longPointPxDebug:0 }], animationMs:Math.max(actor?.attackAnimDurationMs||0,startup,BATTLE_CONFIG.tuning?.minAttackAnimMs??0), waitMs:actor?.attackWaitMs??0, maxEventAtMs:startup };
+    const animationMs = Math.max(actor?.attackAnimDurationMs||0,startup,BATTLE_CONFIG.tuning?.minAttackAnimMs??0);
+    const waitMs = actor?.attackWaitMs??0;
+    const rawTbaFrames = Number.isFinite(actor?.attackWaitFrames) ? actor.attackWaitFrames : null;
+    const bcuTiming = this.buildBcuTiming({ fps, animationMs, waitMs, maxEventAtMs: startup, rawLongPreFrames: Number.isFinite(actor?.attackStartupFrames) ? actor.attackStartupFrames : null, rawTbaFrames });
+    return { source:'actor-current-stats', isRange, events:[{ key:'hit-0', hitIndex:0, atMs:startup, damage:actor?.damage??0, targetMode:isRange?'range':'single', allowBaseHit:true, attackKind:'normal', rawAbi:0, ability:null, abilities:{}, abilityFlags:{}, abilityMappingStatus:'none', abilityEnabledBits:[], rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu:actor?.attackWidthBcu ?? stats.width ?? 0, shortPointBcu:0, longPointBcu:0, rangeEndPxDebug: actor?.detectionRangePx ?? toPx(stats.detectionRange ?? 0), attackBackPxDebug: actor?.attackWidthPx ?? toPx(stats.width ?? 0), shortPointPxDebug:0, longPointPxDebug:0 }], animationMs, waitMs, maxEventAtMs:startup, bcuTiming, bcuAttackIntervalMs:bcuTiming.bcuAttackIntervalMs, bcuAttackIntervalFrames:bcuTiming.bcuAttackIntervalFrames };
   }
   static ensure(actor){ if(!actor.attackProfile) actor.attackProfile = BattleAttackProfile.fromActor(actor); return actor.attackProfile; }
   static getEventKey(event, index){ return event?.key || `hit-${index}`; }
   static getAttackEndMs(actor){ const p=BattleAttackProfile.ensure(actor); return Math.max(p.animationMs||0,p.maxEventAtMs||0,BATTLE_CONFIG.tuning?.minAttackAnimMs??0); }
+  static getBcuAttackIntervalMs(actor){ const p=BattleAttackProfile.ensure(actor); return Math.max(0, p.bcuAttackIntervalMs ?? p.bcuTiming?.bcuAttackIntervalMs ?? this.getAttackEndMs(actor)); }
 }

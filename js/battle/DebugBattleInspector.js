@@ -1,4 +1,5 @@
 import { BATTLE_CONFIG } from './BattleConfig.js';
+import { BattleAttackResolver } from './BattleAttackResolver.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
 
@@ -39,6 +40,15 @@ export class DebugBattleInspector {
     return `${label} ${side} ${id} x:${this.fmt(actor.x)} posBcu:${this.fmt(actor.posBcu)} rBcu:${this.fmt(actor.detectionRangeBcu)} wBcu:${this.fmt(actor.attackWidthBcu)} rPx:${this.fmt(actor.detectionRangePx)} wPx:${this.fmt(actor.attackWidthPx)}`;
   }
 
+  static intervalLine(diag, label = 'atk') {
+    if (!diag) return `${label}: -`;
+    const b = diag.bcu || {};
+    const bi = b.interval || {};
+    const p = diag.px || {};
+    const pi = p.interval || {};
+    return `${label} bcu:${this.fmt(bi.leftBcu)}..${this.fmt(bi.rightBcu)} target:${this.fmt(b.targetPosBcu)} in:${b.inRange === true ? 'true' : 'false'} px:${this.fmt(pi.left)}..${this.fmt(pi.right)} target:${this.fmt(p.targetX)} in:${p.inRange === true ? 'true' : 'false'}`;
+  }
+
   static shouldShowDomPanel() {
     if (typeof window === 'undefined') return false;
     try {
@@ -67,7 +77,7 @@ export class DebugBattleInspector {
         right: '12px',
         top: '88px',
         zIndex: '2147483647',
-        maxWidth: '560px',
+        maxWidth: '620px',
         maxHeight: '52vh',
         overflow: 'auto',
         margin: '0',
@@ -99,6 +109,7 @@ export class DebugBattleInspector {
     const player = actors.find((a) => a?.side === 'dog-player') || actors[0] || null;
     const enemy = actors.find((a) => a?.side === 'cat-enemy') || actors.find((a) => a && a !== player) || actors[1] || null;
     const waitActors = info?.attackWait?.actors || {};
+    const intervals = info?.attackIntervals || {};
     const stage = info?.stage || {};
     const spawn = info?.spawn || {};
     const camera = info?.camera || {};
@@ -113,8 +124,10 @@ export class DebugBattleInspector {
       `first distanceBcu:${this.fmt(dist.distanceBcu)} attacker:${this.fmt(dist.attackerPosBcu)} target:${this.fmt(dist.targetPosBcu)}`,
       this.actorLine(player, 'dog'),
       this.actorLine(enemy, 'cat'),
-      `dog wait state:${waitActors.player?.state || '-'} remain:${this.fmt(waitActors.player?.remainingMs)}ms ready:${waitActors.player?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.player?.setCount)}`,
-      `cat wait state:${waitActors.enemy?.state || '-'} remain:${this.fmt(waitActors.enemy?.remainingMs)}ms ready:${waitActors.enemy?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.enemy?.setCount)}`,
+      this.intervalLine(intervals.playerVsEnemy, 'dog atk'),
+      this.intervalLine(intervals.enemyVsPlayer, 'cat atk'),
+      `dog wait state:${waitActors.player?.state || '-'} remain:${this.fmt(waitActors.player?.remainingMs)}ms ready:${waitActors.player?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.player?.setCount)} src:${waitActors.player?.source || '-'}`,
+      `cat wait state:${waitActors.enemy?.state || '-'} remain:${this.fmt(waitActors.enemy?.remainingMs)}ms ready:${waitActors.enemy?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.enemy?.setCount)} src:${waitActors.enemy?.source || '-'}`,
       `bases dog posBcu:${this.fmt(cc.bases?.player?.posBcu)} front:${this.fmt(cc.bases?.player?.frontX)} enemy posBcu:${this.fmt(cc.bases?.enemy?.posBcu)} front:${this.fmt(cc.bases?.enemy?.frontX)}`,
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
       `castle resolved:${castle.resolvedCastleId ?? '-'} fallback:${castle.fallbackReason ?? '-'}`,
@@ -152,6 +165,13 @@ export class DebugBattleInspector {
       player: actorsAll.find((a) => a?.isAlive?.() && a.side === 'dog-player') || null,
       enemy: actorsAll.find((a) => a?.isAlive?.() && a.side === 'cat-enemy') || null
     };
+    const getFirstAttackEvent = (actor) => actor?.attackProfile?.events?.[0] || actor?.getAttackProfile?.()?.events?.[0] || null;
+    const playerVsEnemy = firstAliveBySide.player && firstAliveBySide.enemy
+      ? BattleAttackResolver.getCaptureCoordinateDiagnostics(firstAliveBySide.player, firstAliveBySide.enemy, getFirstAttackEvent(firstAliveBySide.player))
+      : null;
+    const enemyVsPlayer = firstAliveBySide.enemy && firstAliveBySide.player
+      ? BattleAttackResolver.getCaptureCoordinateDiagnostics(firstAliveBySide.enemy, firstAliveBySide.player, getFirstAttackEvent(firstAliveBySide.enemy))
+      : null;
     const describeWait = (actor) => {
       if (!actor) return null;
       const readyAt = Number.isFinite(actor.attackWaitReadyAtMs)
@@ -222,6 +242,7 @@ export class DebugBattleInspector {
           enemy: enemyBase ? { x: enemyBase.x ?? null, posBcu: BattleCombatCoordinateRuntime.getEntityPosBcu(enemyBase), frontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null } : null
         }
       },
+      attackIntervals: { playerVsEnemy, enemyVsPlayer },
       attackWait: {
         actors: {
           player: describeWait(firstAliveBySide.player),

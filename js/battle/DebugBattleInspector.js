@@ -1,3 +1,4 @@
+import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
 
@@ -18,6 +19,19 @@ export class DebugBattleInspector {
     return digits > 0 ? n.toFixed(digits) : String(Math.round(n));
   }
 
+  static waitLine(actor, label = 'actor') {
+    if (!actor) return `${label} wait: -`;
+    const now = Number.isFinite(actor.debugNowMs) ? actor.debugNowMs : 0;
+    const readyAt = Number.isFinite(actor.attackWaitReadyAtMs)
+      ? actor.attackWaitReadyAtMs
+      : Number.isFinite(actor.attackCooldownUntilMs)
+        ? actor.attackCooldownUntilMs
+        : 0;
+    const remaining = Math.max(0, readyAt - now);
+    const ready = remaining <= 0;
+    return `${label} wait state:${actor.state || '-'} remain:${this.fmt(remaining)}ms ready:${ready ? 'true' : 'false'} readyAt:${this.fmt(readyAt)} setCount:${this.fmt(actor.attackWaitSetCount || 0)} src:${actor.lastAttackWaitDebug?.source || '-'}`;
+  }
+
   static actorLine(actor, label = 'actor') {
     if (!actor) return `${label}: -`;
     const side = actor.side || '-';
@@ -29,10 +43,17 @@ export class DebugBattleInspector {
     if (typeof window === 'undefined') return false;
     try {
       const params = new URLSearchParams(window.location.search);
-      return params.get('debugBattle') === '1' && params.get('debugBattleDom') !== '0';
+      return params.get('debugBattle') === '1' && params.get('debugBattleDom') === '1';
     } catch {
       return false;
     }
+  }
+
+  static removeDomPanelIfDisabled() {
+    if (typeof document === 'undefined') return;
+    if (this.shouldShowDomPanel()) return;
+    const el = document.getElementById('debug-battle-dom-panel');
+    if (el) el.remove();
   }
 
   static getDomPanel() {
@@ -66,7 +87,10 @@ export class DebugBattleInspector {
   }
 
   static updateDomOverlay(scene, info) {
-    if (!this.shouldShowDomPanel()) return;
+    if (!this.shouldShowDomPanel()) {
+      this.removeDomPanelIfDisabled();
+      return;
+    }
     const el = this.getDomPanel();
     if (!el) return;
     const cc = info?.combatCoordinates || {};
@@ -74,6 +98,7 @@ export class DebugBattleInspector {
     const actors = Array.isArray(cc.actors) ? cc.actors : [];
     const player = actors.find((a) => a?.side === 'dog-player') || actors[0] || null;
     const enemy = actors.find((a) => a?.side === 'cat-enemy') || actors.find((a) => a && a !== player) || actors[1] || null;
+    const waitActors = info?.attackWait?.actors || {};
     const stage = info?.stage || {};
     const spawn = info?.spawn || {};
     const camera = info?.camera || {};
@@ -88,16 +113,19 @@ export class DebugBattleInspector {
       `first distanceBcu:${this.fmt(dist.distanceBcu)} attacker:${this.fmt(dist.attackerPosBcu)} target:${this.fmt(dist.targetPosBcu)}`,
       this.actorLine(player, 'dog'),
       this.actorLine(enemy, 'cat'),
+      `dog wait state:${waitActors.player?.state || '-'} remain:${this.fmt(waitActors.player?.remainingMs)}ms ready:${waitActors.player?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.player?.setCount)}`,
+      `cat wait state:${waitActors.enemy?.state || '-'} remain:${this.fmt(waitActors.enemy?.remainingMs)}ms ready:${waitActors.enemy?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.enemy?.setCount)}`,
       `bases dog posBcu:${this.fmt(cc.bases?.player?.posBcu)} front:${this.fmt(cc.bases?.player?.frontX)} enemy posBcu:${this.fmt(cc.bases?.enemy?.posBcu)} front:${this.fmt(cc.bases?.enemy?.frontX)}`,
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
       `castle resolved:${castle.resolvedCastleId ?? '-'} fallback:${castle.fallbackReason ?? '-'}`,
       `bg resolved:${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
-      `note: combat is still screen-combat-point; BCU coordinates are diagnostic until bcu-pos is explicitly enabled.`
+      `note: DOM debug is opt-in via debugBattleDom=1. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
     ];
     el.textContent = lines.join('\n');
   }
 
   static collect(scene) {
+    const tuning = scene?.tuning || BATTLE_CONFIG.tuning || {};
     const stageDef = scene?.stage?.definition?.runtime || scene?.stage?.definition || {};
     const stageRt = scene?.stage?.runtime || {};
     const spawnRuntime = scene?.stageSpawnRuntime;
@@ -117,10 +145,33 @@ export class DebugBattleInspector {
     const stageScaledTemplates = templates.filter((tpl) => tpl?.stats?.source?.stageMagnificationApplied).length;
     const actorsAll = scene?.actors || [];
     const stageScaledActors = actorsAll.filter((a) => a?.stageMagnification || a?.statScalingDebug?.stageMagnification).length;
+    const nowMs = scene?.timeMs || 0;
+    for (const actor of actorsAll) actor.debugNowMs = nowMs;
     const coordinateActors = actorsAll.slice(0, 8).map((actor) => BattleCombatCoordinateRuntime.describeActor(actor)).filter(Boolean);
     const firstAliveBySide = {
       player: actorsAll.find((a) => a?.isAlive?.() && a.side === 'dog-player') || null,
       enemy: actorsAll.find((a) => a?.isAlive?.() && a.side === 'cat-enemy') || null
+    };
+    const describeWait = (actor) => {
+      if (!actor) return null;
+      const readyAt = Number.isFinite(actor.attackWaitReadyAtMs)
+        ? actor.attackWaitReadyAtMs
+        : Number.isFinite(actor.attackCooldownUntilMs)
+          ? actor.attackCooldownUntilMs
+          : 0;
+      const remainingMs = Math.max(0, readyAt - nowMs);
+      return {
+        id: actor.instanceId || actor.slotId || actor.label || null,
+        side: actor.side || null,
+        state: actor.state || null,
+        readyAtMs: readyAt,
+        remainingMs,
+        ready: remainingMs <= 0,
+        active: actor.attackWaitActive === true && remainingMs > 0,
+        setCount: actor.attackWaitSetCount || 0,
+        source: actor.lastAttackWaitDebug?.source || null,
+        reason: actor.attackWaitReason || null
+      };
     };
     const examples = [];
     for (const tpl of templates) {
@@ -158,9 +209,9 @@ export class DebugBattleInspector {
         scrollMaxX: Number.isFinite(stageRt.stageLen) ? stageRt.stageLen : null
       },
       combatCoordinates: {
-        activeMode: scene?.tuning?.combatPositionMode || null,
-        contractMode: scene?.tuning?.coordinateContract?.mode || null,
-        bcuPosEnabled: scene?.tuning?.coordinateContract?.bcuPosEnabled === true,
+        activeMode: tuning?.combatPositionMode || null,
+        contractMode: tuning?.coordinateContract?.mode || null,
+        bcuPosEnabled: tuning?.coordinateContract?.bcuPosEnabled === true,
         note: 'debug-only: actor.x remains current combat coordinate unless combatPositionMode is later switched to bcu-pos',
         actors: coordinateActors,
         firstOpposingDistance: firstAliveBySide.player && firstAliveBySide.enemy
@@ -169,6 +220,12 @@ export class DebugBattleInspector {
         bases: {
           player: playerBase ? { x: playerBase.x ?? null, posBcu: BattleCombatCoordinateRuntime.getEntityPosBcu(playerBase), frontX: BattleSpawnResolver.getBaseFrontX(playerBase, 'dog-player') ?? null } : null,
           enemy: enemyBase ? { x: enemyBase.x ?? null, posBcu: BattleCombatCoordinateRuntime.getEntityPosBcu(enemyBase), frontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null } : null
+        }
+      },
+      attackWait: {
+        actors: {
+          player: describeWait(firstAliveBySide.player),
+          enemy: describeWait(firstAliveBySide.enemy)
         }
       },
       camera: (() => {

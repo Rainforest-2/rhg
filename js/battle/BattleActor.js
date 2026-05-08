@@ -376,7 +376,7 @@ export class BattleActor {
     const damage = Math.max(0, Number.isFinite(amount) ? amount : 0);
     if (damage <= 0) return { accepted: false, dead: false, knockedBack: false, pending: false };
     this.pendingDamage += damage;
-    this.pendingHits.push({ amount: damage, attacker: meta.attacker || null, hitIndex: meta.hitIndex ?? null, attackEventKey: meta.attackEventKey || null, timeMs: meta.timeMs ?? null });
+    this.pendingHits.push({ amount: damage, attacker: meta.attacker || null, hitIndex: meta.hitIndex ?? null, attackEventKey: meta.attackEventKey || null, timeMs: meta.timeMs ?? null, damageCalculation: meta.damageCalculation || null, baseDamage: meta.baseDamage ?? null, finalDamage: meta.finalDamage ?? damage, damageMultiplier: meta.damageMultiplier ?? 1 });
     this.lastHitBy = meta.attacker || this.lastHitBy;
     return { accepted: true, pending: true, damage, dead: false, knockedBack: false };
   }

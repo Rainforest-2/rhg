@@ -9,8 +9,40 @@ export class BattleAttackTimeline {
     return BattleAttackProfile.getEventKey(event, index);
   }
 
+  static getWaitDurationMs(actor) {
+    const wait = actor?.attackPostHitWaitMs || actor?.attackWaitMs || 0;
+    return Number.isFinite(wait) && wait > 0 ? wait : 0;
+  }
+
+  static getAttackWaitState(actor, nowMs = 0) {
+    const readyAt = Number.isFinite(actor?.attackWaitReadyAtMs)
+      ? actor.attackWaitReadyAtMs
+      : Number.isFinite(actor?.attackCooldownUntilMs)
+        ? actor.attackCooldownUntilMs
+        : 0;
+    const remainingMs = Math.max(0, readyAt - nowMs);
+    return {
+      active: actor?.attackWaitActive === true && remainingMs > 0,
+      ready: remainingMs <= 0,
+      readyAtMs: readyAt,
+      remainingMs,
+      startedAtMs: Number.isFinite(actor?.attackWaitStartedAtMs) ? actor.attackWaitStartedAtMs : null,
+      reason: actor?.attackWaitReason || null
+    };
+  }
+
+  static clearAttackWait(actor, nowMs = 0) {
+    if (!actor) return;
+    actor.attackWaitActive = false;
+    actor.attackWaitReadyAtMs = nowMs;
+    actor.attackCooldownUntilMs = nowMs;
+    actor.attackWaitRemainingMs = 0;
+    actor.attackWaitReason = null;
+  }
+
   static beginAttack(actor, { target = null, targetType = null, nowMs = 0 } = {}) {
     const profile = this.getProfile(actor);
+    this.clearAttackWait(actor, nowMs);
     actor.setState?.('attack');
     actor.setAnimation?.(actor.attackAnimId, 'attack', true);
     actor.attackTarget = target;
@@ -65,11 +97,40 @@ export class BattleAttackTimeline {
   }
 
   static enterAttackWait(actor, { nowMs = 0, reason = 'attack-complete' } = {}) {
+    if (!actor) return;
+
+    const previous = this.getAttackWaitState(actor, nowMs);
+    const waitMs = this.getWaitDurationMs(actor);
+    const preserveExistingWait = actor.attackWaitActive === true && previous.remainingMs > 0;
+
     actor.setState?.('attack-wait');
     actor.setAnimation?.(actor.idleAnimId || actor.moveAnimId, 'attack-wait', false);
-    actor.attackWaitReason = reason;
-    actor.attackCooldownUntilMs = nowMs + (actor.attackPostHitWaitMs || actor.attackWaitMs || 0);
-    actor.attackWaitElapsedMs = 0;
+    actor.attackWaitReason = preserveExistingWait ? (actor.attackWaitReason || reason) : reason;
+
+    if (!preserveExistingWait) {
+      actor.attackWaitStartedAtMs = nowMs;
+      actor.attackWaitReadyAtMs = nowMs + waitMs;
+      actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
+      actor.attackWaitActive = waitMs > 0;
+      actor.attackWaitSetCount = (actor.attackWaitSetCount || 0) + 1;
+    } else {
+      actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
+    }
+
+    const next = this.getAttackWaitState(actor, nowMs);
+    actor.attackWaitRemainingMs = next.remainingMs;
+    actor.lastAttackWaitDebug = {
+      nowMs,
+      reason,
+      waitMs,
+      preserveExistingWait,
+      readyAtMs: next.readyAtMs,
+      remainingMs: next.remainingMs,
+      active: next.active,
+      ready: next.ready,
+      setCount: actor.attackWaitSetCount || 0,
+      source: preserveExistingWait ? 'preserved-existing-tba' : 'set-new-tba-on-attack-complete'
+    };
     actor.applyCurrentAnimationFrame?.();
   }
 }

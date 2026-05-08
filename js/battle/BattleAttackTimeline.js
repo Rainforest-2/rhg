@@ -14,6 +14,10 @@ export class BattleAttackTimeline {
     return Number.isFinite(wait) && wait > 0 ? wait : 0;
   }
 
+  static getBcuAttackIntervalMs(actor) {
+    return BattleAttackProfile.getBcuAttackIntervalMs(actor);
+  }
+
   static isAttackCompleteReason(reason) {
     const r = String(reason || 'attack-complete');
     return r === 'attack-complete' || r === 'attack-ended' || r === 'timeline-complete' || r === 'attack-finished';
@@ -47,6 +51,8 @@ export class BattleAttackTimeline {
 
   static beginAttack(actor, { target = null, targetType = null, nowMs = 0 } = {}) {
     const profile = this.getProfile(actor);
+    const intervalMs = this.getBcuAttackIntervalMs(actor);
+    const readyAtMs = nowMs + intervalMs;
     this.clearAttackWait(actor, nowMs);
     actor.setState?.('attack');
     actor.setAnimation?.(actor.attackAnimId, 'attack', true);
@@ -56,12 +62,37 @@ export class BattleAttackTimeline {
     actor.attackElapsedMs = 0;
     actor.hasHitInCurrentAttack = false;
     actor.resolvedAttackEventKeys = new Set();
+    actor.attackWaitStartedAtMs = nowMs;
+    actor.attackWaitReadyAtMs = readyAtMs;
+    actor.attackCooldownUntilMs = readyAtMs;
+    actor.attackWaitActive = intervalMs > 0;
+    actor.attackWaitReason = 'bcu-attack-interval-from-attack-start';
+    actor.attackIntervalSetCount = (actor.attackIntervalSetCount || 0) + 1;
     actor.lastAttackTimelineDebug = {
       startedAtMs: nowMs,
       target: target?.instanceId || target?.label || null,
       targetType,
       events: Array.isArray(profile?.events) ? profile.events.length : 0,
-      source: profile?.source || null
+      source: profile?.source || null,
+      bcuTiming: profile?.bcuTiming || null,
+      bcuAttackIntervalMs: intervalMs,
+      readyAtMs,
+      cooldownSource: 'attack-start+bcu-getItv'
+    };
+    actor.lastAttackWaitDebug = {
+      nowMs,
+      reason: 'attack-start',
+      waitMs: profile?.waitMs ?? this.getWaitDurationMs(actor),
+      preserveExistingWait: false,
+      canSetNewTba: true,
+      readyAtMs,
+      remainingMs: intervalMs,
+      active: actor.attackWaitActive,
+      ready: intervalMs <= 0,
+      setCount: actor.attackWaitSetCount || 0,
+      intervalSetCount: actor.attackIntervalSetCount || 0,
+      source: 'set-bcu-attack-interval-on-attack-start',
+      bcuTiming: profile?.bcuTiming || null
     };
     actor.applyCurrentAnimationFrame?.();
     return profile;
@@ -108,6 +139,10 @@ export class BattleAttackTimeline {
     const waitMs = this.getWaitDurationMs(actor);
     const preserveExistingWait = actor.attackWaitActive === true && previous.remainingMs > 0;
     const canSetNewTba = this.isAttackCompleteReason(reason);
+    const profile = this.getProfile(actor);
+    const attackStartReadyAt = Number.isFinite(actor.attackStartedAtMs)
+      ? actor.attackStartedAtMs + this.getBcuAttackIntervalMs(actor)
+      : null;
 
     actor.setState?.('attack-wait');
     actor.setAnimation?.(actor.idleAnimId || actor.moveAnimId, 'attack-wait', false);
@@ -115,6 +150,11 @@ export class BattleAttackTimeline {
 
     if (preserveExistingWait) {
       actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
+    } else if (Number.isFinite(attackStartReadyAt)) {
+      actor.attackWaitStartedAtMs = actor.attackStartedAtMs;
+      actor.attackWaitReadyAtMs = attackStartReadyAt;
+      actor.attackCooldownUntilMs = attackStartReadyAt;
+      actor.attackWaitActive = attackStartReadyAt > nowMs;
     } else if (canSetNewTba) {
       actor.attackWaitStartedAtMs = nowMs;
       actor.attackWaitReadyAtMs = nowMs + waitMs;
@@ -145,7 +185,9 @@ export class BattleAttackTimeline {
       active: next.active,
       ready: next.ready,
       setCount: actor.attackWaitSetCount || 0,
-      source: preserveExistingWait ? 'preserved-existing-tba' : (canSetNewTba ? 'set-new-tba-on-attack-complete' : 'no-new-tba-non-complete-reason')
+      intervalSetCount: actor.attackIntervalSetCount || 0,
+      source: preserveExistingWait ? 'preserved-existing-bcu-interval' : (Number.isFinite(attackStartReadyAt) ? 'reuse-attack-start-bcu-interval' : (canSetNewTba ? 'fallback-set-new-tba-on-attack-complete' : 'no-new-tba-non-complete-reason')),
+      bcuTiming: profile?.bcuTiming || null
     };
     actor.applyCurrentAnimationFrame?.();
   }

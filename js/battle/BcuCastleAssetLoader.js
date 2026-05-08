@@ -1,3 +1,5 @@
+import { parseImgcut } from '../bcu/BcuImgcutParser.js';
+
 function id3(v){ return String(Math.max(0, Number(v) || 0)).padStart(3, '0'); }
 
 function normalizeCastleId(castleId) {
@@ -14,7 +16,23 @@ async function fetchTextSafe(path) {
   } catch { return null; }
 }
 
-function parseImgcutPart(text) {
+function chooseLargestPart(parts = []) {
+  const valid = (parts || [])
+    .map((p, index) => ({
+      index: Number.isFinite(p?.index) ? p.index : index,
+      x: Number(p?.x) || 0,
+      y: Number(p?.y) || 0,
+      w: Number(p?.w) || 0,
+      h: Number(p?.h) || 0,
+      name: p?.name || `part_${index}`
+    }))
+    .filter((p) => p.w > 0 && p.h > 0)
+    .map((p) => ({ ...p, area: p.w * p.h }));
+  if (!valid.length) return null;
+  return valid.sort((a, b) => b.area - a.area)[0];
+}
+
+function parseLegacyNumericImgcutPart(text) {
   if (typeof text !== 'string' || !text.trim()) return null;
   const rows = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const parts = [];
@@ -23,10 +41,22 @@ function parseImgcutPart(text) {
     if (nums.length < 4 || nums.some((n) => !Number.isFinite(n))) continue;
     const [x, y, w, h] = nums;
     if (w <= 0 || h <= 0) continue;
-    parts.push({ x, y, w, h, area: w * h });
+    parts.push({ x, y, w, h, area: w * h, name: 'legacy-numeric-row' });
   }
-  if (!parts.length) return null;
-  return parts.sort((a, b) => b.area - a.area)[0];
+  return chooseLargestPart(parts);
+}
+
+function parseImgcutPart(text) {
+  if (typeof text !== 'string' || !text.trim()) return null;
+  try {
+    const parsed = parseImgcut(text);
+    const part = chooseLargestPart(parsed?.parts || []);
+    if (part) return { ...part, parser: 'bcu-imgcut' };
+  } catch (_) {
+    // Fall back to the pre-existing numeric-row parser for older local test fixtures.
+  }
+  const legacy = parseLegacyNumericImgcutPart(text);
+  return legacy ? { ...legacy, parser: 'legacy-numeric' } : null;
 }
 
 export function resolveEnemyCastleAssetCandidates(castleId = 0) {
@@ -63,8 +93,8 @@ export class BcuCastleAssetLoader {
         const part = parseImgcutPart(t);
         if (part) { imgcut = { text: t, part }; imgcutPath = c; break; }
       }
-      const crop = imgcut?.part || { x: 0, y: 0, w: image.width, h: image.height };
-      return { ok: true, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, image, imagePath, imgcut, imgcutPath, crop, visualBounds: { width: crop.w, height: crop.h }, usedFallback: !!fallbackReason, fallbackReason, reason: null, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
+      const crop = imgcut?.part || { x: 0, y: 0, w: image.width, h: image.height, parser: 'image-size' };
+      return { ok: true, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, image, imagePath, imgcut, imgcutPath, crop, visualBounds: { width: crop.w, height: crop.h, cropX: crop.x, cropY: crop.y, parser: crop.parser || null, partName: crop.name || null, partIndex: crop.index ?? null }, usedFallback: !!fallbackReason, fallbackReason, reason: null, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
     }
     if (candidates.resolvedCastleId === null) return { ok:false, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, imagePath:null, imgcutPath:null, usedFallback:true, fallbackReason, reason:'castleId-invalid-fallback-0', placeholder:true, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
     return { ok: false, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, imagePath:null, imgcutPath:null, usedFallback:false, fallbackReason:null, reason: 'image-load-failed', placeholder: true, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };

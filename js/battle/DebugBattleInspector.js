@@ -54,6 +54,11 @@ export class DebugBattleInspector {
     return `${label} interval:${this.fmt(timing.bcuAttackIntervalMs)}ms/${this.fmt(timing.bcuAttackIntervalFrames, 1)}f anim:${this.fmt(timing.animationMs)}ms longPre:${this.fmt(timing.longPreMs)}ms tba:${this.fmt(timing.waitMs)}ms readyAt:${this.fmt(timing.readyAtMs)} remain:${this.fmt(timing.remainingMs)}ms src:${timing.source || '-'}`;
   }
 
+  static castleLine(castle = {}) {
+    const g = castle.geometry || {};
+    return `castle geom visual:${this.fmt(g.visualWidth)}x${this.fmt(g.visualHeight)} body:${this.fmt(g.bodyLeft)}..${this.fmt(g.bodyRight)} front:${this.fmt(g.frontX)} src:${g.bodySource || '-'}`;
+  }
+
   static shouldShowDomPanel() {
     if (typeof window === 'undefined') return false;
     try {
@@ -82,7 +87,7 @@ export class DebugBattleInspector {
         right: '12px',
         top: '88px',
         zIndex: '2147483647',
-        maxWidth: '720px',
+        maxWidth: '760px',
         maxHeight: '52vh',
         overflow: 'auto',
         margin: '0',
@@ -137,10 +142,11 @@ export class DebugBattleInspector {
       `dog wait state:${waitActors.player?.state || '-'} remain:${this.fmt(waitActors.player?.remainingMs)}ms ready:${waitActors.player?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.player?.setCount)} src:${waitActors.player?.source || '-'}`,
       `cat wait state:${waitActors.enemy?.state || '-'} remain:${this.fmt(waitActors.enemy?.remainingMs)}ms ready:${waitActors.enemy?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.enemy?.setCount)} src:${waitActors.enemy?.source || '-'}`,
       `bases dog posBcu:${this.fmt(cc.bases?.player?.posBcu)} front:${this.fmt(cc.bases?.player?.frontX)} enemy posBcu:${this.fmt(cc.bases?.enemy?.posBcu)} front:${this.fmt(cc.bases?.enemy?.frontX)}`,
+      `castle resolved:${castle.resolvedCastleId ?? '-'} imgcut:${castle.imgcutParser || '-'} path:${castle.imagePath || '-'}`,
+      this.castleLine(castle),
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
-      `castle resolved:${castle.resolvedCastleId ?? '-'} fallback:${castle.fallbackReason ?? '-'}`,
       `bg resolved:${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
-      `note: attack cycle uses BCU getItv formula max(animLen, longPre + TBA - 1). combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
+      `note: castle body uses resolved castle crop as base combat body. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
     ];
     el.textContent = lines.join('\n');
   }
@@ -161,6 +167,7 @@ export class DebugBattleInspector {
     const nextFrameMin = rows.reduce((m, r) => Math.min(m, Number.isFinite(r.nextAtFrame) ? r.nextAtFrame : Infinity), Infinity);
     const playerBase = (scene?.bases || []).find((b) => b.side === 'dog-player');
     const enemyBase = (scene?.bases || []).find((b) => b.side === 'cat-enemy');
+    const enemyBaseBox = BattleSpawnResolver.getBaseCombatBox(enemyBase);
     const bgSource = scene?.stage?.background?.source || {};
     const templates = [...(scene?.actorFactory?.templates?.values?.() || [])];
     const stageScaledTemplates = templates.filter((tpl) => tpl?.stats?.source?.stageMagnificationApplied).length;
@@ -250,7 +257,7 @@ export class DebugBattleInspector {
         enemyBaseFrontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null,
         enemyBaseHp: enemyBase?.hp ?? null,
         playerBaseCombatBox: BattleSpawnResolver.getBaseCombatBox(playerBase) ?? null,
-        enemyBaseCombatBox: BattleSpawnResolver.getBaseCombatBox(enemyBase) ?? null,
+        enemyBaseCombatBox: enemyBaseBox ?? null,
         lastSpawnResolveDebug: scene?.lastSpawnResolveDebug ?? null,
         groundY: scene?.groundY ?? null,
         scrollMinX: 0,
@@ -332,8 +339,20 @@ export class DebugBattleInspector {
           requestedCannonId: enemyBase?.debug?.requestedCannonId ?? null,
           imagePath: enemyBase?.debug?.castleImagePath ?? enemyBase?.castleAsset?.imagePath ?? null,
           imgcutPath: enemyBase?.debug?.castleImgcutPath ?? enemyBase?.castleAsset?.imgcutPath ?? null,
+          imgcutParser: enemyBase?.castleAsset?.crop?.parser ?? enemyBase?.castleAsset?.visualBounds?.parser ?? null,
           usedFallback: enemyBase?.debug?.enemyCastleUsedFallback ?? false,
-          fallbackReason: enemyBase?.debug?.enemyCastleFallbackReason ?? enemyBase?.castleFallbackReason ?? null
+          fallbackReason: enemyBase?.debug?.enemyCastleFallbackReason ?? enemyBase?.castleFallbackReason ?? null,
+          geometry: {
+            visualWidth: enemyBase?.castleGeometry?.visualBounds?.width ?? null,
+            visualHeight: enemyBase?.castleGeometry?.visualBounds?.height ?? null,
+            bodyLeft: enemyBaseBox?.left ?? null,
+            bodyRight: enemyBaseBox?.right ?? null,
+            bodyTop: enemyBaseBox?.top ?? null,
+            bodyBottom: enemyBaseBox?.bottom ?? null,
+            bodyWidth: enemyBaseBox?.width ?? null,
+            frontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null,
+            bodySource: enemyBase?.combatBodySource ?? enemyBaseBox?.source ?? null
+          }
         },
         background: {
           requestedBgId: bgSource.requestedBgId ?? null,

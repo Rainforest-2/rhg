@@ -49,6 +49,11 @@ export class DebugBattleInspector {
     return `${label} bcu:${this.fmt(bi.leftBcu)}..${this.fmt(bi.rightBcu)} target:${this.fmt(b.targetPosBcu)} in:${b.inRange === true ? 'true' : 'false'} px:${this.fmt(pi.left)}..${this.fmt(pi.right)} target:${this.fmt(p.targetX)} in:${p.inRange === true ? 'true' : 'false'}`;
   }
 
+  static timingLine(timing, label = 'cycle') {
+    if (!timing) return `${label}: -`;
+    return `${label} interval:${this.fmt(timing.bcuAttackIntervalMs)}ms/${this.fmt(timing.bcuAttackIntervalFrames, 1)}f anim:${this.fmt(timing.animationMs)}ms longPre:${this.fmt(timing.longPreMs)}ms tba:${this.fmt(timing.waitMs)}ms readyAt:${this.fmt(timing.readyAtMs)} remain:${this.fmt(timing.remainingMs)}ms src:${timing.source || '-'}`;
+  }
+
   static shouldShowDomPanel() {
     if (typeof window === 'undefined') return false;
     try {
@@ -77,7 +82,7 @@ export class DebugBattleInspector {
         right: '12px',
         top: '88px',
         zIndex: '2147483647',
-        maxWidth: '620px',
+        maxWidth: '720px',
         maxHeight: '52vh',
         overflow: 'auto',
         margin: '0',
@@ -109,6 +114,7 @@ export class DebugBattleInspector {
     const player = actors.find((a) => a?.side === 'dog-player') || actors[0] || null;
     const enemy = actors.find((a) => a?.side === 'cat-enemy') || actors.find((a) => a && a !== player) || actors[1] || null;
     const waitActors = info?.attackWait?.actors || {};
+    const timings = info?.attackTiming?.actors || {};
     const intervals = info?.attackIntervals || {};
     const stage = info?.stage || {};
     const spawn = info?.spawn || {};
@@ -126,13 +132,15 @@ export class DebugBattleInspector {
       this.actorLine(enemy, 'cat'),
       this.intervalLine(intervals.playerVsEnemy, 'dog atk'),
       this.intervalLine(intervals.enemyVsPlayer, 'cat atk'),
+      this.timingLine(timings.player, 'dog cycle'),
+      this.timingLine(timings.enemy, 'cat cycle'),
       `dog wait state:${waitActors.player?.state || '-'} remain:${this.fmt(waitActors.player?.remainingMs)}ms ready:${waitActors.player?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.player?.setCount)} src:${waitActors.player?.source || '-'}`,
       `cat wait state:${waitActors.enemy?.state || '-'} remain:${this.fmt(waitActors.enemy?.remainingMs)}ms ready:${waitActors.enemy?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.enemy?.setCount)} src:${waitActors.enemy?.source || '-'}`,
       `bases dog posBcu:${this.fmt(cc.bases?.player?.posBcu)} front:${this.fmt(cc.bases?.player?.frontX)} enemy posBcu:${this.fmt(cc.bases?.enemy?.posBcu)} front:${this.fmt(cc.bases?.enemy?.frontX)}`,
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
       `castle resolved:${castle.resolvedCastleId ?? '-'} fallback:${castle.fallbackReason ?? '-'}`,
       `bg resolved:${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
-      `note: DOM debug is opt-in via debugBattleDom=1. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
+      `note: attack cycle uses BCU getItv formula max(animLen, longPre + TBA - 1). combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
     ];
     el.textContent = lines.join('\n');
   }
@@ -189,8 +197,28 @@ export class DebugBattleInspector {
         ready: remainingMs <= 0,
         active: actor.attackWaitActive === true && remainingMs > 0,
         setCount: actor.attackWaitSetCount || 0,
+        intervalSetCount: actor.attackIntervalSetCount || 0,
         source: actor.lastAttackWaitDebug?.source || null,
         reason: actor.attackWaitReason || null
+      };
+    };
+    const describeTiming = (actor) => {
+      if (!actor) return null;
+      const profile = actor.getAttackProfile?.() || actor.attackProfile || null;
+      const timing = profile?.bcuTiming || actor.lastAttackTimelineDebug?.bcuTiming || actor.lastAttackWaitDebug?.bcuTiming || null;
+      const readyAt = Number.isFinite(actor.attackWaitReadyAtMs)
+        ? actor.attackWaitReadyAtMs
+        : Number.isFinite(actor.attackCooldownUntilMs)
+          ? actor.attackCooldownUntilMs
+          : null;
+      const remainingMs = Number.isFinite(readyAt) ? Math.max(0, readyAt - nowMs) : null;
+      return {
+        ...(timing || {}),
+        source: timing?.source || actor.lastAttackTimelineDebug?.cooldownSource || actor.lastAttackWaitDebug?.source || null,
+        readyAtMs: readyAt,
+        remainingMs,
+        attackStartedAtMs: Number.isFinite(actor.attackStartedAtMs) ? actor.attackStartedAtMs : null,
+        state: actor.state || null
       };
     };
     const examples = [];
@@ -243,6 +271,12 @@ export class DebugBattleInspector {
         }
       },
       attackIntervals: { playerVsEnemy, enemyVsPlayer },
+      attackTiming: {
+        actors: {
+          player: describeTiming(firstAliveBySide.player),
+          enemy: describeTiming(firstAliveBySide.enemy)
+        }
+      },
       attackWait: {
         actors: {
           player: describeWait(firstAliveBySide.player),

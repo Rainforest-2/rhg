@@ -1,4 +1,5 @@
 import { BATTLE_CONFIG } from './BattleConfig.js';
+import { AbilityModel } from './AbilityModel.js';
 
 export class BattleAttackProfile {
   static fromActor(actor) {
@@ -19,7 +20,8 @@ export class BattleAttackProfile {
         const ldRangeRaw = Number.isFinite(hit?.ldRangeRaw) ? hit.ldRangeRaw : 0;
         const longPointBcu = ldStartRaw + ldRangeRaw;
         const attackKind = hit?.isOmni ? 'omni' : (hit?.isLd ? 'ld' : 'normal');
-        return { key:`hit-${hit?.hitIndex ?? index}`, hitIndex:hit?.hitIndex ?? index, atMs:Math.max(0, (Math.max(0, hit?.preFrames || 0) / fps) * 1000 * phaseMultiplier + shiftMs), damage:Number.isFinite(hit?.damage)?hit.damage:(actor?.damage??0), targetMode, allowBaseHit:true, attackKind, rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu, shortPointBcu:ldStartRaw, longPointBcu, rangeEndPxDebug:toPx(actor?.detectionRangeBcu ?? stats.detectionRange ?? 0), attackBackPxDebug:toPx(attackBackBcu), shortPointPxDebug:toPx(ldStartRaw), longPointPxDebug:toPx(longPointBcu), raw:{ldStartRaw,ldRangeRaw,attackKind,isRange:!!stats.isRange} };
+        const ability = stats?.abilityModel ? AbilityModel.getHitAbility(stats.abilityModel, hit?.hitIndex ?? index) : null;
+        return { key:`hit-${hit?.hitIndex ?? index}`, hitIndex:hit?.hitIndex ?? index, atMs:Math.max(0, (Math.max(0, hit?.preFrames || 0) / fps) * 1000 * phaseMultiplier + shiftMs), damage:Number.isFinite(hit?.damage)?hit.damage:(actor?.damage??0), targetMode, allowBaseHit:true, attackKind, rawAbi:Number.isFinite(hit?.abi)?hit.abi:0, ability, abilities:ability?.semantic||{}, abilityFlags:ability?.flags||{}, abilityMappingStatus:ability?.mappingStatus||'none', abilityEnabledBits:Array.isArray(ability?.enabledBits)?ability.enabledBits:[], rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu, shortPointBcu:ldStartRaw, longPointBcu, rangeEndPxDebug:toPx(actor?.detectionRangeBcu ?? stats.detectionRange ?? 0), attackBackPxDebug:toPx(attackBackBcu), shortPointPxDebug:toPx(ldStartRaw), longPointPxDebug:toPx(longPointBcu), raw:{ldStartRaw,ldRangeRaw,attackKind,isRange:!!stats.isRange} };
       });
       const maxEventAtMs = Math.max(...events.map(e=>e.atMs));
       const minAnim = BATTLE_CONFIG.tuning?.minAttackAnimMs ?? 0;
@@ -27,7 +29,7 @@ export class BattleAttackProfile {
     }
     const startup = Math.max(actor?.attackStartupMs||0, BATTLE_CONFIG.tuning?.minAttackStartupMs ?? 0);
     const isRange = actor?.attackType === 1;
-    return { source:'actor-current-stats', isRange, events:[{ key:'hit-0', hitIndex:0, atMs:startup, damage:actor?.damage??0, targetMode:isRange?'range':'single', allowBaseHit:true, attackKind:'normal', rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu:actor?.attackWidthBcu ?? stats.width ?? 0, shortPointBcu:0, longPointBcu:0, rangeEndPxDebug: actor?.detectionRangePx ?? toPx(stats.detectionRange ?? 0), attackBackPxDebug: actor?.attackWidthPx ?? toPx(stats.width ?? 0), shortPointPxDebug:0, longPointPxDebug:0 }], animationMs:Math.max(actor?.attackAnimDurationMs||0,startup,BATTLE_CONFIG.tuning?.minAttackAnimMs??0), waitMs:actor?.attackWaitMs??0, maxEventAtMs:startup };
+    return { source:'actor-current-stats', isRange, events:[{ key:'hit-0', hitIndex:0, atMs:startup, damage:actor?.damage??0, targetMode:isRange?'range':'single', allowBaseHit:true, attackKind:'normal', rawAbi:0, ability:null, abilities:{}, abilityFlags:{}, abilityMappingStatus:'none', abilityEnabledBits:[], rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu:actor?.attackWidthBcu ?? stats.width ?? 0, shortPointBcu:0, longPointBcu:0, rangeEndPxDebug: actor?.detectionRangePx ?? toPx(stats.detectionRange ?? 0), attackBackPxDebug: actor?.attackWidthPx ?? toPx(stats.width ?? 0), shortPointPxDebug:0, longPointPxDebug:0 }], animationMs:Math.max(actor?.attackAnimDurationMs||0,startup,BATTLE_CONFIG.tuning?.minAttackAnimMs??0), waitMs:actor?.attackWaitMs??0, maxEventAtMs:startup };
   }
   static ensure(actor){ if(!actor.attackProfile) actor.attackProfile = BattleAttackProfile.fromActor(actor); return actor.attackProfile; }
   static getEventKey(event, index){ return event?.key || `hit-${index}`; }

@@ -13,9 +13,10 @@ export class DamageCalculator {
 
   static getTargetTraits(target) {
     const traits =
+      target?.abilityModel?.traits?.list ||
       target?.traits ||
+      target?.rawStats?.abilityModel?.traits?.list ||
       target?.rawStats?.traits ||
-      target?.stats?.traits ||
       target?.traitFlags ||
       [];
     if (Array.isArray(traits)) return traits;
@@ -26,10 +27,11 @@ export class DamageCalculator {
   static getAttackerAbilities(attacker, event = null) {
     const abilities =
       event?.abilities ||
+      event?.ability?.semantic ||
       event?.abilityFlags ||
       attacker?.abilities ||
+      attacker?.abilityModel ||
       attacker?.rawStats?.abilities ||
-      attacker?.abilityFlags ||
       {};
     return abilities && typeof abilities === 'object' ? abilities : {};
   }
@@ -93,6 +95,13 @@ export class DamageCalculator {
       hitIndex: event?.hitIndex ?? null,
       attackEventKey: context?.attackEventKey ?? null,
       source: 'DamageCalculator.v1-default-preserve-existing',
+      abilityDebug: {
+        eventRawAbi: event?.rawAbi ?? null,
+        eventAbilityMappingStatus: event?.abilityMappingStatus || null,
+        eventAbilityEnabledBits: Array.isArray(event?.abilityEnabledBits) ? event.abilityEnabledBits : [],
+        attackerAbilityMappingStatus: attacker?.abilityModel?.mappingStatus || attacker?.abilities?.mappingStatus || null,
+        targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null
+      },
       applied: {
         stageMagnification: false,
         baseDestroyer: baseDestroyerEnabled && modifiers.baseDestroyer !== 1,

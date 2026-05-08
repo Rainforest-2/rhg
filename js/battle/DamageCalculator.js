@@ -1,3 +1,5 @@
+import { DamageAbilityResolver } from './DamageAbilityResolver.js';
+
 export class DamageCalculator {
   static normalizeDamage(value, fallback = 0) {
     const n = Number(value);
@@ -66,11 +68,11 @@ export class DamageCalculator {
       modifiers.notes.push('stage-magnification-already-applied-to-stats');
     }
 
-    const baseDestroyerEnabled = false;
-    if (targetType === 'base' && baseDestroyerEnabled) {
-      modifiers.baseDestroyer = 4;
-      modifiers.notes.push('base-destroyer-applied');
-    }
+    const abilityResult = DamageAbilityResolver.resolve({ attacker, target, targetType, event, baseDamage, context });
+    modifiers.critical = abilityResult.modifiers?.critical ?? 1;
+    modifiers.baseDestroyer = abilityResult.modifiers?.baseDestroyer ?? 1;
+    modifiers.metal = abilityResult.modifiers?.metal ?? 1;
+    modifiers.notes.push(...(abilityResult.notes || []));
 
     const multiplier =
       modifiers.base *
@@ -102,12 +104,13 @@ export class DamageCalculator {
         attackerAbilityMappingStatus: attacker?.abilityModel?.mappingStatus || attacker?.abilities?.mappingStatus || null,
         targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null
       },
+      abilityResolver: abilityResult,
       applied: {
         stageMagnification: false,
-        baseDestroyer: baseDestroyerEnabled && modifiers.baseDestroyer !== 1,
+        baseDestroyer: !!abilityResult.applied?.baseDestroyer,
         trait: false,
-        critical: false,
-        metal: false,
+        critical: !!abilityResult.applied?.critical,
+        metal: !!abilityResult.applied?.metal,
         resistant: false,
         massiveDamage: false,
         tough: false

@@ -1,0 +1,16 @@
+import { readFileSync } from 'node:fs';
+const fail = (m) => { throw new Error(m); };
+const scene = readFileSync('js/battle/BattleScene.js', 'utf8');
+const renderer = readFileSync('js/battle/BattleSceneRenderer.js', 'utf8');
+const inspector = readFileSync('js/battle/DebugBattleInspector.js', 'utf8');
+const preview = readFileSync('js/preview/PreviewApp.js', 'utf8');
+if (!scene.includes('DebugBattleInspector.enabled(this)')) fail('BattleScene missing DebugBattleInspector.enabled(this)');
+if (!scene.includes('debugBattleEnabled')) fail('BattleScene missing debugBattleEnabled');
+if (!scene.includes('debugBattleSource')) fail('BattleScene missing debugBattleSource');
+if (!renderer.includes('drawDebugBattleOverlay(')) fail('Renderer missing drawDebugBattleOverlay');
+if (!renderer.includes('DebugBattleInspector.collect(scene)')) fail('Renderer missing inspector collect');
+if (!renderer.includes('if (scene?.debugBattleEnabled) this.drawDebugBattleOverlay(c, scene);')) fail('Renderer missing render hook');
+if (!inspector.includes("URLSearchParams(window.location.search).get('debugBattle') === '1'")) fail('Inspector missing debugBattle URL param');
+if (!preview.includes("get('debugUi') === '1'")) fail('PreviewApp missing debugUi');
+if (!scene.includes('debugBattleSource') || !preview.includes('debugUi')) fail('Missing separate debugBattle/debugUi markers');
+console.log('ok: debug-battle-overlay checks passed');

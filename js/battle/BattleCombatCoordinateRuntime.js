@@ -1,18 +1,20 @@
 export class BattleCombatCoordinateRuntime {
   static numberOrNull(value) {
+    if (value === null || value === undefined || value === '') return null;
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
   }
 
   static numberOrDefault(value, fallback = 0) {
-    const n = Number(value);
+    const n = this.numberOrNull(value);
     return Number.isFinite(n) ? n : fallback;
   }
 
   static getEntityPosBcu(entity) {
     if (!entity) return null;
     if (typeof entity.getBattlePosBcu === 'function') {
-      const v = Number(entity.getBattlePosBcu());
+      const raw = entity.getBattlePosBcu();
+      const v = this.numberOrNull(raw);
       if (Number.isFinite(v)) return v;
     }
     if (Number.isFinite(entity.posBcu)) return entity.posBcu;

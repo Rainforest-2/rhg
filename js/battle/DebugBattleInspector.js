@@ -1,5 +1,6 @@
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
+
 export class DebugBattleInspector {
   static enabled(scene) {
     if (scene?.debugBattleEnabled) return true;
@@ -9,6 +10,91 @@ export class DebugBattleInspector {
     } catch {
       return false;
     }
+  }
+
+  static fmt(value, digits = 0) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '-';
+    return digits > 0 ? n.toFixed(digits) : String(Math.round(n));
+  }
+
+  static actorLine(actor, label = 'actor') {
+    if (!actor) return `${label}: -`;
+    const side = actor.side || '-';
+    const id = actor.id || actor.slotId || actor.label || '-';
+    return `${label} ${side} ${id} x:${this.fmt(actor.x)} posBcu:${this.fmt(actor.posBcu)} rBcu:${this.fmt(actor.detectionRangeBcu)} wBcu:${this.fmt(actor.attackWidthBcu)} rPx:${this.fmt(actor.detectionRangePx)} wPx:${this.fmt(actor.attackWidthPx)}`;
+  }
+
+  static shouldShowDomPanel() {
+    if (typeof window === 'undefined') return false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('debugBattle') === '1' && params.get('debugBattleDom') !== '0';
+    } catch {
+      return false;
+    }
+  }
+
+  static getDomPanel() {
+    if (typeof document === 'undefined') return null;
+    let el = document.getElementById('debug-battle-dom-panel');
+    if (!el) {
+      el = document.createElement('pre');
+      el.id = 'debug-battle-dom-panel';
+      Object.assign(el.style, {
+        position: 'fixed',
+        right: '12px',
+        top: '88px',
+        zIndex: '2147483647',
+        maxWidth: '560px',
+        maxHeight: '52vh',
+        overflow: 'auto',
+        margin: '0',
+        padding: '10px 12px',
+        border: '1px solid #38bdf8',
+        borderRadius: '6px',
+        background: 'rgba(2, 6, 23, 0.86)',
+        color: '#e0f2fe',
+        font: '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+        lineHeight: '1.35',
+        whiteSpace: 'pre-wrap',
+        pointerEvents: 'none'
+      });
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  static updateDomOverlay(scene, info) {
+    if (!this.shouldShowDomPanel()) return;
+    const el = this.getDomPanel();
+    if (!el) return;
+    const cc = info?.combatCoordinates || {};
+    const dist = cc.firstOpposingDistance || {};
+    const actors = Array.isArray(cc.actors) ? cc.actors : [];
+    const player = actors.find((a) => a?.side === 'dog-player') || actors[0] || null;
+    const enemy = actors.find((a) => a?.side === 'cat-enemy') || actors.find((a) => a && a !== player) || actors[1] || null;
+    const stage = info?.stage || {};
+    const spawn = info?.spawn || {};
+    const camera = info?.camera || {};
+    const bg = info?.assets?.background || {};
+    const castle = info?.assets?.castle || {};
+    const lines = [
+      `debugBattle DOM panel source:${scene?.debugBattleSource || '-'}`,
+      `frame:${this.fmt(info?.frame)} time:${this.fmt(info?.timeMs)}ms`,
+      `stage runtime len:${this.fmt(stage.stageLen)} bg:${stage.bgId ?? '-'} castle:${stage.castleId ?? '-'} enemyBaseHp:${this.fmt(stage.enemyBaseHp)} maxEnemy:${this.fmt(stage.maxEnemyCount)}`,
+      `spawn rows:${this.fmt(spawn.rowCount)} active:${this.fmt(spawn.activeRows)} pending:${this.fmt(spawn.pendingSpawnCount)} previewUnmapped is HUD-only mapping, not runtime spawn failure`,
+      `coord active:${cc.activeMode || '-'} contract:${cc.contractMode || '-'} bcuPosEnabled:${cc.bcuPosEnabled === true ? 'true' : 'false'}`,
+      `first distanceBcu:${this.fmt(dist.distanceBcu)} attacker:${this.fmt(dist.attackerPosBcu)} target:${this.fmt(dist.targetPosBcu)}`,
+      this.actorLine(player, 'dog'),
+      this.actorLine(enemy, 'cat'),
+      `bases dog posBcu:${this.fmt(cc.bases?.player?.posBcu)} front:${this.fmt(cc.bases?.player?.frontX)} enemy posBcu:${this.fmt(cc.bases?.enemy?.posBcu)} front:${this.fmt(cc.bases?.enemy?.frontX)}`,
+      `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
+      `castle resolved:${castle.resolvedCastleId ?? '-'} fallback:${castle.fallbackReason ?? '-'}`,
+      `bg resolved:${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
+      `note: combat is still screen-combat-point; BCU coordinates are diagnostic until bcu-pos is explicitly enabled.`
+    ];
+    el.textContent = lines.join('\n');
   }
 
   static collect(scene) {
@@ -43,7 +129,7 @@ export class DebugBattleInspector {
       if (!mag) continue;
       examples.push({ slotId: tpl?.unitDef?.slotId ?? null, rowIndex: mag?.rowIndex ?? null, enemyId: mag?.enemyId ?? tpl?.unitDef?.statsId ?? null, baseHp: tpl?.baseStats?.hp ?? null, scaledHp: tpl?.stats?.hp ?? null, baseDamage: tpl?.baseStats?.damage ?? null, scaledDamage: tpl?.stats?.damage ?? null, hpMagnification: mag?.hpMagnification ?? null, attackMagnification: mag?.attackMagnification ?? null });
     }
-    return {
+    const info = {
       frame: scene?.logicFrame ?? Math.floor((scene?.timeMs || 0) / (1000 / 30)),
       timeMs: scene?.timeMs || 0,
       stage: {
@@ -152,5 +238,7 @@ export class DebugBattleInspector {
       statsScaling: { stageScaledActors, stageScaledTemplates, examples },
       warnings: [...(scene?.debugWarnings || [])]
     };
+    this.updateDomOverlay(scene, info);
+    return info;
   }
 }

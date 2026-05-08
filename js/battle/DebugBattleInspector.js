@@ -1,3 +1,4 @@
+import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
 export class DebugBattleInspector {
   static enabled(scene) {
@@ -30,6 +31,11 @@ export class DebugBattleInspector {
     const stageScaledTemplates = templates.filter((tpl) => tpl?.stats?.source?.stageMagnificationApplied).length;
     const actorsAll = scene?.actors || [];
     const stageScaledActors = actorsAll.filter((a) => a?.stageMagnification || a?.statScalingDebug?.stageMagnification).length;
+    const coordinateActors = actorsAll.slice(0, 8).map((actor) => BattleCombatCoordinateRuntime.describeActor(actor)).filter(Boolean);
+    const firstAliveBySide = {
+      player: actorsAll.find((a) => a?.isAlive?.() && a.side === 'dog-player') || null,
+      enemy: actorsAll.find((a) => a?.isAlive?.() && a.side === 'cat-enemy') || null
+    };
     const examples = [];
     for (const tpl of templates) {
       if (examples.length >= 5) break;
@@ -64,6 +70,20 @@ export class DebugBattleInspector {
         groundY: scene?.groundY ?? null,
         scrollMinX: 0,
         scrollMaxX: Number.isFinite(stageRt.stageLen) ? stageRt.stageLen : null
+      },
+      combatCoordinates: {
+        activeMode: scene?.tuning?.combatPositionMode || null,
+        contractMode: scene?.tuning?.coordinateContract?.mode || null,
+        bcuPosEnabled: scene?.tuning?.coordinateContract?.bcuPosEnabled === true,
+        note: 'debug-only: actor.x remains current combat coordinate unless combatPositionMode is later switched to bcu-pos',
+        actors: coordinateActors,
+        firstOpposingDistance: firstAliveBySide.player && firstAliveBySide.enemy
+          ? BattleCombatCoordinateRuntime.describeDistance(firstAliveBySide.player, firstAliveBySide.enemy)
+          : null,
+        bases: {
+          player: playerBase ? { x: playerBase.x ?? null, posBcu: BattleCombatCoordinateRuntime.getEntityPosBcu(playerBase), frontX: BattleSpawnResolver.getBaseFrontX(playerBase, 'dog-player') ?? null } : null,
+          enemy: enemyBase ? { x: enemyBase.x ?? null, posBcu: BattleCombatCoordinateRuntime.getEntityPosBcu(enemyBase), frontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null } : null
+        }
       },
       camera: (() => {
         const cam = scene?.camera;

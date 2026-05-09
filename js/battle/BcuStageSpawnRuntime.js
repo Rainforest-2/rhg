@@ -32,11 +32,15 @@ function findRowState(rows, eventOrRowIndex) {
 }
 
 function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
-  const contextSpawnX = Number.isFinite(context.enemySpawnWorldX) ? context.enemySpawnWorldX : null;
-  const runtimeSpawnX = Number.isFinite(stageRuntime?.enemySpawnWorldX) ? stageRuntime.enemySpawnWorldX : null;
+  const contextSpawnX = Number.isFinite(context.enemySpawnWorldX) && context.enemySpawnWorldX !== DEFAULT_BCU_ENEMY_SPAWN_X
+    ? context.enemySpawnWorldX
+    : null;
+  const runtimeSpawnX = Number.isFinite(stageRuntime?.enemySpawnWorldX) && stageRuntime.enemySpawnWorldX !== DEFAULT_BCU_ENEMY_SPAWN_X
+    ? stageRuntime.enemySpawnWorldX
+    : null;
   const explicit = Number.isFinite(contextSpawnX)
     ? contextSpawnX
-    : (Number.isFinite(runtimeSpawnX) && runtimeSpawnX !== DEFAULT_BCU_ENEMY_SPAWN_X ? runtimeSpawnX : null);
+    : (Number.isFinite(runtimeSpawnX) ? runtimeSpawnX : null);
   const bossSpawnX = Number.isFinite(context.bossSpawnWorldX)
     ? context.bossSpawnWorldX
     : (Number.isFinite(stageRuntime?.bossSpawnWorldX) ? stageRuntime.bossSpawnWorldX : null);

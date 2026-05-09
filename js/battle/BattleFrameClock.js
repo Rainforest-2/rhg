@@ -4,11 +4,15 @@ export class BattleFrameClock {
     this.fixedStepMs = 1000 / this.fps;
     this.logicFrame = 0;
     this.timeMs = 0;
+    this.stepCount = 0;
+    this.lastStep = null;
   }
 
   reset() {
     this.logicFrame = 0;
     this.timeMs = 0;
+    this.stepCount = 0;
+    this.lastStep = null;
   }
 
   step(frameDeltaMs = this.fixedStepMs) {
@@ -18,13 +22,17 @@ export class BattleFrameClock {
 
     this.logicFrame += 1;
     this.timeMs += dt;
+    this.stepCount += 1;
 
-    return {
+    this.lastStep = {
       logicFrame: this.logicFrame,
       timeMs: this.timeMs,
       dtMs: dt,
       fps: this.fps,
-      fixedStepMs: this.fixedStepMs
+      fixedStepMs: this.fixedStepMs,
+      stepCount: this.stepCount
     };
+
+    return this.lastStep;
   }
 }

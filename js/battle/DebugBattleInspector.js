@@ -147,6 +147,7 @@ export class DebugBattleInspector {
       this.castleLine(castle),
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
       `cam invariant stageLenMatch:${info?.cameraInvariants?.stageLenMatchesRuntime === true ? 'true' : (info?.cameraInvariants?.stageLenMatchesRuntime === false ? 'false' : '-')} roundTrip:${info?.cameraInvariants?.projectionRoundTripOk === true ? 'true' : (info?.cameraInvariants?.projectionRoundTripOk === false ? 'false' : '-')} vis:${this.fmt(info?.cameraInvariants?.visibleWorldRange?.left)}..${this.fmt(info?.cameraInvariants?.visibleWorldRange?.right)}`,
+      `tick phases enemyBeforeActor:${info?.tickOrder?.enemySpawnBeforeActorUpdate === true ? 'true' : (info?.tickOrder?.enemySpawnBeforeActorUpdate === false ? 'false' : '-')} current:${info?.tickOrder?.currentTickPhase || '-'} trace:${this.fmt(info?.tickOrder?.traceLength)}`,
       `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
       `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
       `note: castle body uses resolved castle crop as base combat body. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
@@ -177,6 +178,10 @@ export class DebugBattleInspector {
     const actorsAll = scene?.actors || [];
     const stageScaledActors = actorsAll.filter((a) => a?.stageMagnification || a?.statScalingDebug?.stageMagnification).length;
     const nowMs = scene?.timeMs || 0;
+    const expectedPhaseOrder = ['advance-clock','player-production-requests','enemy-spawn','economy','lineup-change','actor-state-update','movement','target-search','attack-start','attack-timeline','hit-target-capture','damage-resolve','proc-resolve','knockback-death','base-post-update','effect-spawn','effect-tick','cleanup','camera-update'];
+    const lastFramePhaseOrder = scene?.getLastTickPhaseOrder?.() || (Array.isArray(scene?.tickPhaseTrace) ? scene.tickPhaseTrace.filter((p) => p?.frame === scene?.logicFrame).map((p) => p.phase) : []);
+    const enemyIdx = lastFramePhaseOrder.indexOf('enemy-spawn');
+    const actorIdx = lastFramePhaseOrder.indexOf('actor-state-update');
     for (const actor of actorsAll) actor.debugNowMs = nowMs;
     const coordinateActors = actorsAll.slice(0, 8).map((actor) => BattleCombatCoordinateRuntime.describeActor(actor)).filter(Boolean);
     const firstAliveBySide = {
@@ -429,6 +434,15 @@ export class DebugBattleInspector {
           }
         };
       })(),
+      tickOrder: {
+        currentTickPhase: scene?.currentTickPhase ?? null,
+        lastTickPhase: scene?.lastTickPhase ?? null,
+        lastFramePhaseOrder,
+        expectedPhaseOrder,
+        enemySpawnBeforeActorUpdate: enemyIdx !== -1 && actorIdx !== -1 ? enemyIdx < actorIdx : null,
+        renderOutsideSimulation: true,
+        traceLength: Array.isArray(scene?.tickPhaseTrace) ? scene.tickPhaseTrace.length : 0
+      },
       statsScaling: { stageScaledActors, stageScaledTemplates, examples },
       warnings: [...(scene?.debugWarnings || [])]
     };

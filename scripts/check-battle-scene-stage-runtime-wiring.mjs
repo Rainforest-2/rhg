@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { BattleCamera } from '../js/battle/BattleCamera.js';
+import { BattleFrameClock } from '../js/battle/BattleFrameClock.js';
 
 const files = {
   main: 'js/main.js',
@@ -50,6 +51,8 @@ const inspector = fs.readFileSync('js/battle/DebugBattleInspector.js', 'utf8');
 const battleCamera = fs.readFileSync('js/battle/BattleCamera.js', 'utf8');
 const inputController = fs.readFileSync('js/preview/BattleCameraInputController.js', 'utf8');
 const renderer = fs.readFileSync('js/battle/BattleSceneRenderer.js', 'utf8');
+const frameClockSrc = fs.readFileSync('js/battle/BattleFrameClock.js', 'utf8');
+const sceneSrc = fs.readFileSync('js/battle/BattleScene.js', 'utf8');
 assert.ok(battleCamera.includes('worldToScreenX(worldX)'), 'BattleCamera must expose worldToScreenX');
 assert.ok(battleCamera.includes('screenToWorldX(screenX)'), 'BattleCamera must expose screenToWorldX');
 assert.ok(battleCamera.includes('zoomAtScreenPoint(screenX, nextSiz)'), 'BattleCamera must expose zoomAtScreenPoint');
@@ -68,6 +71,21 @@ assert.ok(renderer.includes('Renderer must not mutate camera position, zoom, siz
 assert.ok(inspector.includes('cameraInvariants'), 'inspector must expose cameraInvariants');
 assert.ok(inspector.includes('projectionRoundTripOk'), 'inspector must expose projectionRoundTripOk');
 assert.ok(inspector.includes('cameraStageLenMatchesRuntime'), 'inspector must expose cameraStageLenMatchesRuntime');
+assert.ok(frameClockSrc.includes('this.stepCount = 0'), 'BattleFrameClock must initialize stepCount');
+assert.ok(frameClockSrc.includes('this.lastStep = null'), 'BattleFrameClock must initialize lastStep');
+assert.ok(frameClockSrc.includes('return this.lastStep;'), 'BattleFrameClock.step must return lastStep');
+assert.ok(sceneSrc.includes('beginTickPhase(') && sceneSrc.includes('endTickPhase(') && sceneSrc.includes('runTickPhase('), 'BattleScene must expose tick phase helpers');
+assert.ok(sceneSrc.includes('BATTLE_TICK_PHASES'), 'BattleScene must define BATTLE_TICK_PHASES');
+for (const phase of ['advance-clock', 'enemy-spawn', 'actor-state-update', 'damage-resolve', 'cleanup', 'camera-update']) {
+  assert.ok(sceneSrc.includes(`'${phase}'`), `BattleScene must include ${phase} phase`);
+}
+const enemyPhaseIdx = sceneSrc.indexOf("'enemy-spawn'");
+const actorPhaseIdx = sceneSrc.indexOf("'actor-state-update'");
+assert.ok(enemyPhaseIdx !== -1 && actorPhaseIdx !== -1 && enemyPhaseIdx < actorPhaseIdx, 'enemy-spawn must appear before actor-state-update');
+assert.ok(inspector.includes('tickOrder'), 'inspector must expose tickOrder');
+assert.ok(inspector.includes('enemySpawnBeforeActorUpdate'), 'inspector must expose enemySpawnBeforeActorUpdate');
+assert.ok(inspector.includes('lastFramePhaseOrder'), 'inspector must expose lastFramePhaseOrder');
+assert.ok(!renderer.includes('.tick('), 'renderer must not call tick');
 
 const cam = new BattleCamera({ stageLen: 4000, logicalW: 1280 });
 const sx = cam.worldToScreenX(700);
@@ -80,5 +98,15 @@ cam.zoomAtScreenPoint(640, 1.5);
 assert.equal(cam.stageLen, oldStageLen, 'zoomAtScreenPoint must not change stageLen');
 assert.ok(inspector.includes('killCounters'), 'inspector must expose spawn kill counters');
 assert.ok(inspector.includes('rowsWithWarnings'), 'inspector must expose spawn row warnings');
+const clock = new BattleFrameClock({ fps: 30 });
+const s1 = clock.step();
+assert.equal(s1.logicFrame, 1);
+assert.equal(clock.stepCount, 1);
+assert.equal(clock.lastStep, s1);
+const s2 = clock.step(1000 / 30);
+assert.equal(s2.logicFrame, 2);
+clock.reset();
+assert.equal(clock.logicFrame, 0);
+assert.equal(clock.stepCount, 0);
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');

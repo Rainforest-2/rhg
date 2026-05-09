@@ -15,6 +15,72 @@ function normalizeTickFrame(frameOrMs, context = {}, fps = DEFAULT_FPS) {
   return Number.isFinite(frameOrMs) ? Math.floor(frameOrMs) : 0;
 }
 
+function pushUniqueWarning(rowState, warning) {
+  if (!rowState?.warnings) return;
+  if (!rowState.warnings.includes(warning)) rowState.warnings.push(warning);
+}
+
+function resolveKillCounter(rowState, context) {
+  const rowIndex = rowState?.rowIndex;
+  if (context?.killCounterByRowIndex && Number.isFinite(Number(context.killCounterByRowIndex[rowIndex]))) {
+    return Number(context.killCounterByRowIndex[rowIndex]);
+  }
+  if (context?.killCounters && Number.isFinite(Number(context.killCounters[rowIndex]))) {
+    return Number(context.killCounters[rowIndex]);
+  }
+  return null;
+}
+
+function isKillCountBlocked(rowState, context) {
+  const trigger = Number(rowState?.row?.killCountTrigger ?? 0);
+  if (!Number.isFinite(trigger) || trigger <= 0) return false;
+
+  const counter = resolveKillCounter(rowState, context);
+  if (Number.isFinite(counter)) {
+    if (counter > 0) {
+      rowState.lastBlockedReason = 'kill-count-trigger';
+      return true;
+    }
+    return false;
+  }
+
+  pushUniqueWarning(rowState, 'kill-count-trigger-not-enforced');
+  return false;
+}
+
+function hasMeaningfulGroup(group) {
+  const n = Number(group);
+  return Number.isFinite(n) && n !== 0;
+}
+
+function isGroupBlocked(rowState, context) {
+  const row = rowState?.row || {};
+  const group = row.group;
+
+  if (typeof context?.isGroupAllowed === 'function') {
+    const allowed = context.isGroupAllowed({
+      row,
+      rowIndex: rowState.rowIndex,
+      group,
+      enemyId: row.enemyId,
+      unitDef: rowState.unitDef
+    });
+
+    if (allowed === false) {
+      rowState.lastBlockedReason = 'group-gating';
+      return true;
+    }
+
+    return false;
+  }
+
+  if (hasMeaningfulGroup(group)) {
+    pushUniqueWarning(rowState, 'group-gating-not-enforced');
+  }
+
+  return false;
+}
+
 function findRowState(rows, eventOrRowIndex) {
   if (!Array.isArray(rows)) return null;
   if (eventOrRowIndex && typeof eventOrRowIndex === 'object') {
@@ -137,12 +203,22 @@ export class BcuStageSpawnRuntime {
         : (Number.isFinite(s.row?.baseHpTrigger) ? s.row.baseHpTrigger : 100);
 
       if (!Number.isFinite(context.enemyBaseHpPercent)) {
-        s.warnings.push('enemyBaseHpPercent-missing-default-100');
+        pushUniqueWarning(s, 'enemyBaseHpPercent-missing-default-100');
       }
 
       if (!(hp <= trigger)) {
         s.waitingForMaxEnemySlot = false;
         s.lastBlockedReason = 'base-hp-trigger';
+        continue;
+      }
+
+      if (isKillCountBlocked(s, context)) {
+        s.waitingForMaxEnemySlot = false;
+        continue;
+      }
+
+      if (isGroupBlocked(s, context)) {
+        s.waitingForMaxEnemySlot = false;
         continue;
       }
 
@@ -224,7 +300,9 @@ export class BcuStageSpawnRuntime {
     const min = Math.max(0, toFiniteNumber(rowState.row?.respawnMinFrame, 0));
     const max = Math.max(min, toFiniteNumber(rowState.row?.respawnMaxFrame, min));
     const interval = min >= max ? min : Math.round(min + random() * (max - min));
-    rowState.nextFrame = spawnFrame + interval;
+    const addOne = rowState.row?.respawnAddsOneFrame === true
+      || this.stageRuntime?.respawnAddsOneFrame === true;
+    rowState.nextFrame = spawnFrame + interval + (addOne ? 1 : 0);
     rowState.nextAtFrame = rowState.nextFrame;
     rowState.exhausted = false;
     rowState.done = false;

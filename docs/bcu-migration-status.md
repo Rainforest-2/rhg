@@ -3,7 +3,7 @@
 ## Last updated
 - date: 2026-05-09 (UTC)
 - commit: (working tree)
-- task: Task 0 + Task 2 (spawn runtime route hardening)
+- task: Task 2-B (kill/group hook + respawn +1 parity option)
 
 ## Completed
 | Area | Files | What changed | Evidence |
@@ -13,11 +13,18 @@
 | Spawn debug retention | `js/battle/BattleSceneStageRuntimeWiring.js` | `spawnStageEnemy` wrapper debug event now keeps `spawnId`, `spawnFrame`, `spawnWorldX`, `spawnWorldXSource`, `bossFlag`, `fallbackReason`, and context (`enemyBaseHpPercent`, `maxEnemyCount`, `aliveEnemyCount`, `templateMissing`). | `stageEnemySpawnRuntimeDebug` payload expanded in wiring wrapper. |
 | Node checks strengthened | `scripts/check-bcu-stage-spawn-runtime.mjs`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Updated assertion for explicit spawn source (`event-spawnWorldX`) and added wiring assertions for `spawnWorldXSource`, `templateMissing`, and `enemyBaseHpPercent`. | Updated assertions in both check scripts. |
 
+| Spawn runtime kill hook | `js/battle/BcuStageSpawnRuntime.js` | Added `killCountTrigger` gating hook with optional context counters (`killCounterByRowIndex` / `killCounters`), non-blocking fallback, and one-time warning `kill-count-trigger-not-enforced`. | `isKillCountBlocked()`, `resolveKillCounter()`, and tick flow update. |
+| Spawn runtime group hook | `js/battle/BcuStageSpawnRuntime.js` | Added optional `isGroupAllowed` hook gating and one-time warning `group-gating-not-enforced` when group semantics are not enforced. | `isGroupBlocked()` and tick flow update. |
+| Respawn parity option | `js/battle/BcuStageSpawnRuntime.js` | Added opt-in `respawnAddsOneFrame` parity (`row` or `stageRuntime`) while preserving default behavior. | `commitSpawn()` sets `nextFrame = spawnFrame + interval + (addOne ? 1 : 0)`. |
+| Node assertions (Task 2-B) | `scripts/check-bcu-stage-spawn-runtime.mjs` | Added assertions for kill/group hooks, one-time warning behavior, and respawn +1 option/default parity. | New assertions 17A-17H in script. |
+
 ## Partial
 | Area | Files | Done | Remaining | Risk |
 |---|---|---|---|---|
 | Prototype wiring strategy | `js/battle/BattleSceneStageRuntimeWiring.js`, `js/main.js`, `js/battle/BattleScene.js` | Prototype wiring is idempotent and imported from `js/main.js` before app boot, and it injects spawn/runtime debug bridging. | Still temporary patch style; full safe migration into `BattleScene.js` main body is not done yet. | Medium: load order and wrapper layering must stay stable. |
 | Spawn commit/reject contract | `js/battle/BattleScene.js`, `js/battle/BcuStageSpawnRuntime.js` | `tickStageEnemySpawn` commits only on successful `spawnStageEnemy`, and rejects on failure with retry delay. `rejectSpawn` resets pending state and advances `nextFrame` for retry. | Need browser/manual confirmation for all failure paths (template missing, runtime edge cases) under real assets. | Medium: runtime-only checks may miss rendering-path failures. |
+| Kill counter ownership in battle runtime | `js/battle/BcuStageSpawnRuntime.js`, `js/battle/StageRuntimeSceneAdapter.js`, `js/battle/BattleSceneStageRuntimeWiring.js` | Spawn runtime now supports kill counter hook inputs. | Real battle runtime still does not define a single owner/updater for kill counters per row. | Medium: kill-trigger rows can behave differently across callers. |
+| BCU group semantics parity | `js/battle/BcuStageSpawnRuntime.js` | Spawn runtime now supports `isGroupAllowed` hook input. | Full BCU group semantics are not hardcoded yet (intentional). | Medium: grouped spawn ordering may drift from BCU. |
 | Debug surface completeness | `js/battle/BattleSceneStageRuntimeWiring.js`, `js/battle/DebugBattleInspector.js` | Wiring event now includes major Task 2 debug fields for spawn. | Inspector panel-level visualization of all new fields is not fully audited in this task. | Low/Medium observability gap. |
 
 ## Unresolved
@@ -37,6 +44,10 @@
 - `StageBackgroundResolver.js`: Exists; bgId resolution priority via runtime/stage/definition and fallback with reason tracking.  
 - `BattleScene.js`: still contains broad runtime responsibilities (spawn, attack loop, effects, production, state update), with stage spawn integration performed directly in `tickStageEnemySpawn` + wiring overlay.  
 - Task 2 unresolved verification points: full browser-side debug panel audit and kill/group parity behavior remain pending.
+
+| Group allow full parity | `js/battle/BcuStageSpawnRuntime.js` | AGENTS 3.7 expects full BCU `s.data.allow(...)` semantics | This patch only adds hook points; semantics remain caller-defined. | Grouped spawn behavior can diverge from BCU in complex waves. | Define/implement shared group model in battle runtime and wire through context. |
+| Kill counter runtime source | `js/battle/BcuStageSpawnRuntime.js`, `js/battle/BattleScene*` | AGENTS 3.5/3.7 expects `killCounter[i]` progression | Hook accepts counters but BattleScene-side authoritative counter update source is still not fixed. | killCount rows may be under-enforced unless caller supplies counters. | Implement counter ownership/update in runtime tick and pass via spawn context. |
+| Respawn +1 default policy | `js/battle/BcuStageSpawnRuntime.js` | AGENTS 3.8 discusses BCU `rem++` parity | Default behavior intentionally unchanged to keep existing expectations (`nextFrame=15`) and avoid regression. | Default still differs from strict BCU unless opt-in is enabled. | Decide migration flag rollout plan; flip default only after browser parity validation. |
 
 ## Manual browser check
 - [ ] `?debugBattle=1`

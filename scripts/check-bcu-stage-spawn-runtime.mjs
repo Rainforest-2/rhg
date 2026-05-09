@@ -68,4 +68,50 @@ rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
 ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100})[0];
 for (const k of ['rowIndex','magnification','hpMagnification','attackMagnification','layerMin','layerMax','rawEnemyId','sourceEnemyId','enemyId','spawnWorldX','spawnWorldXSource']) assert.ok(k in ev);
 
+
+
+// 17A-17C: killCountTrigger hook behavior
+row=mkRow({killCountTrigger:2});
+rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
+assert.equal(rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100,killCounterByRowIndex:{0:1}}).length,0);
+assert.equal(rt.rows[0].lastBlockedReason,'kill-count-trigger');
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100,killCounterByRowIndex:{0:0}});
+assert.equal(ev.length,1);
+rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+assert.equal(ev.length,1);
+assert.equal(rt.rows[0].warnings.filter((w)=>w==='kill-count-trigger-not-enforced').length,1);
+rt.rejectSpawn(ev[0],'retry',{retryDelayFrame:0,currentFrame:10});
+rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+assert.equal(rt.rows[0].warnings.filter((w)=>w==='kill-count-trigger-not-enforced').length,1);
+
+// 17D-17F: group gating hook behavior
+row=mkRow({group:2});
+rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
+assert.equal(rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100,isGroupAllowed:()=>false}).length,0);
+assert.equal(rt.rows[0].lastBlockedReason,'group-gating');
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100,isGroupAllowed:()=>true});
+assert.equal(ev.length,1);
+rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+assert.equal(ev.length,1);
+assert.equal(rt.rows[0].warnings.filter((w)=>w==='group-gating-not-enforced').length,1);
+rt.rejectSpawn(ev[0],'retry',{retryDelayFrame:0,currentFrame:10});
+rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+assert.equal(rt.rows[0].warnings.filter((w)=>w==='group-gating-not-enforced').length,1);
+
+// 17G: respawn +1 parity option via runtime
+row=mkRow({count:0,isInfinite:true,respawnMinFrame:5,respawnMaxFrame:5});
+rt=new BcuStageSpawnRuntime(mkRuntime(row,{respawnAddsOneFrame:true}),[mkDef()]);
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+rt.commitSpawn(ev[0],{random:()=>0});
+assert.equal(rt.rows[0].nextFrame,16);
+
+// 17H: default respawn behavior unchanged
+row=mkRow({count:0,isInfinite:true,respawnMinFrame:5,respawnMaxFrame:5});
+rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+rt.commitSpawn(ev[0],{random:()=>0});
+assert.equal(rt.rows[0].nextFrame,15);
+
 console.log('check-bcu-stage-spawn-runtime: OK');

@@ -10,31 +10,52 @@ export class BattleBase {
     this.bgId = debug?.bgId ?? null;
     this.castleGeometry = null;
     this.frontX = this.getBattlePosBcu();
+    this.visualX = Number.isFinite(x) ? x : this.frontX;
+    this.visualAnchorSource = 'initial-x';
     this.combatBodySource = 'bcu-base-pos-point';
+  }
+
+  getVisualAnchorX() {
+    return Number.isFinite(this.visualX) ? this.visualX : (Number.isFinite(this.x) ? this.x : this.getBattlePosBcu());
   }
 
   updateCombatBodyFromVisualBounds(bounds, scale = 1, side = this.side, options = {}) {
     const s = Number.isFinite(scale) && scale > 0 ? scale : 1;
     const width = Math.max(1, Number(bounds?.width || this.castleAsset?.visualBounds?.width || this.castleAsset?.image?.width || 160) || 160) * s;
     const height = Math.max(1, Number(bounds?.height || this.castleAsset?.visualBounds?.height || this.castleAsset?.image?.height || 220) || 220) * s;
+    const combatX = this.getBattlePosBcu();
+    let visualCenterX = combatX;
+    let visualAnchor = 'center-on-combat-point';
+    if (side === 'cat-enemy') {
+      visualCenterX = combatX - width * 0.5;
+      visualAnchor = 'enemy-combat-point-at-visual-right-edge';
+    } else if (side === 'dog-player') {
+      visualCenterX = combatX + width * 0.5;
+      visualAnchor = 'player-combat-point-at-visual-left-edge';
+    }
+    this.visualX = visualCenterX;
+    this.visualAnchorSource = visualAnchor;
     const bottom = this.y + (Number.isFinite(this.visualYOffsetPx) ? this.visualYOffsetPx : 0);
     this.visualBoundsPx = { width, height };
     this.castleGeometry = {
       side,
-      x: this.x,
+      combatX,
+      x: combatX,
+      visualX: visualCenterX,
       y: this.y,
       scale: s,
       visualBounds: { width, height, source: options?.source || 'image-size-no-imgcut' },
-      visualWorldBox: { left: this.x - width * 0.5, right: this.x + width * 0.5, top: bottom - height, bottom, width, height, centerX: this.x, centerY: bottom - height * 0.5 },
+      visualWorldBox: { left: visualCenterX - width * 0.5, right: visualCenterX + width * 0.5, top: bottom - height, bottom, width, height, centerX: visualCenterX, centerY: bottom - height * 0.5 },
       combatBodyBox: this.getCombatBodyBox(),
       frontX: this.getFrontX(),
       bodySource: 'bcu-base-pos-point',
-      anchor: 'visual-bottom-center-combat-point'
+      anchor: visualAnchor
     };
     this.combatBodyHalfWidthPx = 0;
     this.combatBodyHeightPx = 0;
     this.combatBodySource = 'bcu-base-pos-point';
-    this.frontX = this.getBattlePosBcu();
+    this.frontX = combatX;
+    this.x = combatX;
     this.visualBottomToGround = true;
     this.visualBottomToCurrentCenter = false;
     this.debug = {
@@ -42,6 +63,8 @@ export class BattleBase {
       castleGeometry: this.castleGeometry,
       castleBodySource: this.combatBodySource,
       castleFrontX: this.frontX,
+      castleVisualX: this.visualX,
+      castleVisualAnchor: this.visualAnchorSource,
       castleVisualWidth: width,
       castleVisualHeight: height,
       castleCombatModel: 'bcu-base-pos-point-not-image-width'
@@ -54,10 +77,11 @@ export class BattleBase {
     const scale = Number.isFinite(this.scale) ? this.scale : 1;
     const width = (this.castleAsset?.visualBounds?.width || this.visualBoundsPx?.width || this.collisionRadius * 2) * (this.castleAsset?.visualBounds ? scale : 1);
     const height = (this.castleAsset?.visualBounds?.height || this.visualBoundsPx?.height || this.collisionRadius * 2) * (this.castleAsset?.visualBounds ? scale : 1);
-    const left = this.x - width * 0.5;
+    const centerX = this.getVisualAnchorX();
+    const left = centerX - width * 0.5;
     const bottom = this.y + (Number.isFinite(this.visualYOffsetPx) ? this.visualYOffsetPx : 0);
     const top = bottom - height;
-    return { left, right: left + width, top, bottom, width, height, centerX: this.x, centerY: top + height * 0.5 };
+    return { left, right: left + width, top, bottom, width, height, centerX, centerY: top + height * 0.5 };
   }
 
   getFrontX() { return this.getBattlePosBcu(); }

@@ -65,7 +65,9 @@ function wireBattleSceneStageRuntime() {
         spawnWorldX: debug.worldX ?? row?.spawnWorldX ?? row?.worldX ?? null,
         spawnWorldXSource: debug.source ?? row?.spawnWorldXSource ?? null,
         stageLen: debug.stageLen ?? this.stage?.runtime?.stageLen ?? null,
-        baseFrontX: debug.baseFrontX ?? null
+        baseFrontX: debug.baseFrontX ?? null,
+        bossFlag: debug.bossFlag ?? row?.bossFlag ?? row?.row?.bossFlag ?? null,
+        fallbackReason: debug.fallbackReason ?? null
       });
     }
     return result;

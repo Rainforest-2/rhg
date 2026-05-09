@@ -9,46 +9,54 @@ const files = [
   'js/battle/BattleCastleResolver.js',
   'js/battle/BcuCastleAssetLoader.js',
   'js/battle/BattleBase.js',
-  'js/battle/DebugBattleInspector.js'
+  'js/battle/BattleSpawnResolver.js'
 ];
 for (const file of files) assert.ok(fs.existsSync(file), `${file} must exist`);
 
-const candidates = resolveEnemyCastleAssetCandidates(7);
-assert.equal(candidates.resolvedCastleId, 7, 'castleId should normalize to numeric id');
-assert.ok(candidates.imageCandidates.some((p) => p.includes('nyankoCastle_007')), 'castle image candidates should use padded castle id');
-assert.ok(candidates.imgcutCandidates.some((p) => p.endsWith('.imgcut')), 'castle imgcut candidates should be generated');
+const c0 = resolveEnemyCastleAssetCandidates(0);
+assert.equal(c0.resolvedCastleId, 0);
+assert.equal(c0.groupName, 'rc');
+assert.equal(c0.localCastleId, 0);
+assert.equal(c0.usesImgcut, false);
+assert.equal(c0.imagePath, './public/assets/bcu/000001/org/img/rc/rc000.png');
+assert.deepEqual(c0.imgcutCandidates, []);
 
-const asset = {
-  crop: { x: 10, y: 20, w: 300, h: 240, parser: 'bcu-imgcut', name: 'castle-body' },
-  visualBounds: { width: 300, height: 240 },
-  image: { width: 512, height: 512 }
-};
-const enemy = new BattleBase({ id: 'enemy-base', side: 'cat-enemy', label: 'Enemy Base', x: 800, y: 560, scale: 1, collisionRadius: 80 });
-const geom = BattleCastleResolver.applyToBase(enemy, { asset, source: 'test-castle' });
-assert.equal(geom.visualBounds.width, 300, 'visual width should come from castle crop');
-assert.equal(geom.visualBounds.height, 240, 'visual height should come from castle crop');
-assert.equal(enemy.getCombatBodyBox().left, 650, 'enemy castle body left should be visual crop left');
-assert.equal(enemy.getCombatBodyBox().right, 950, 'enemy castle body right should be visual crop right');
-assert.equal(enemy.getFrontX(), 950, 'enemy front should be combat body right edge');
-assert.equal(BattleSpawnResolver.getBaseFrontX(enemy, 'cat-enemy'), 950, 'spawn resolver must use resolved castle front');
-assert.equal(BattleSpawnResolver.getSpawnWorldXForSide({ side: 'cat-enemy', base: enemy, gapWorld: 8, actorRadius: 0 }), 958, 'enemy spawn should be front + gap');
+const c1000 = resolveEnemyCastleAssetCandidates(1000);
+assert.equal(c1000.groupName, 'ec');
+assert.equal(c1000.localCastleId, 0);
+assert.equal(c1000.imagePath, './public/assets/bcu/000001/org/img/ec/ec000.png');
 
-const player = new BattleBase({ id: 'player-base', side: 'dog-player', label: 'Player Base', x: 3200, y: 560, scale: 1, collisionRadius: 80 });
-BattleCastleResolver.applyToBase(player, { asset, source: 'test-castle' });
-assert.equal(player.getCombatBodyBox().left, 3050, 'player castle body left should be visual crop left');
-assert.equal(player.getCombatBodyBox().right, 3350, 'player castle body right should be visual crop right');
-assert.equal(player.getFrontX(), 3050, 'player front should be combat body left edge');
-assert.equal(BattleSpawnResolver.getSpawnWorldXForSide({ side: 'dog-player', base: player, gapWorld: 8, actorRadius: 0 }), 3042, 'player spawn should be front - gap');
+const enemy = new BattleBase({ id: 'enemy-base', side: 'cat-enemy', label: 'Enemy Base', x: 800, posBcu: 800, y: 560, collisionRadius: 0 });
+assert.equal(enemy.getBattlePosBcu(), 800, 'enemy base combat pos should be BCU 800');
+assert.equal(enemy.getFrontX(), 800, 'enemy base front/combat point should be BCU pos point');
+assert.equal(enemy.getCombatBodyBox().left, 800);
+assert.equal(enemy.getCombatBodyBox().right, 800);
+assert.equal(enemy.getCombatBodyBox().source, 'bcu-base-pos-point');
+assert.equal(BattleSpawnResolver.getBaseFrontX(enemy, 'cat-enemy'), 800);
+assert.equal(BattleSpawnResolver.getBcuEnemySpawnX(), 700, 'normal enemy spawn should be BCU 700');
+assert.equal(BattleSpawnResolver.getSpawnWorldXForSide({ side: 'cat-enemy', base: enemy }), 700);
+
+const player = new BattleBase({ id: 'player-base', side: 'dog-player', label: 'Player Base', x: 4000, posBcu: 4000, y: 560, collisionRadius: 0 });
+assert.equal(player.getBattlePosBcu(), 4000, 'player base combat pos should be stageLen - 800 for stageLen 4800');
+assert.equal(BattleSpawnResolver.getBcuPlayerSpawnX(4800), 4100, 'player spawn should be stageLen - 700');
+assert.equal(BattleSpawnResolver.getSpawnWorldXForSide({ side: 'dog-player', base: player, stageLen: 4800 }), 4100);
+assert.equal(BattleSpawnResolver.getSpawnWorldXForSide({ side: 'dog-player', base: player }), 4100, 'player spawn should fallback to base pos + 100 when stageLen is omitted');
+
+const visual = BattleCastleResolver.applyToBase(enemy, { asset: { image: { width: 165, height: 165 } }, source: 'test-visual' });
+assert.equal(visual.combatBodyBox, null, 'castle visual resolver must not create combat body from image width');
+assert.equal(visual.bodySource, 'none-visual-only-bcu-base-uses-pos-point');
+assert.equal(enemy.getCombatBodyBox().left, 800, 'visual apply must not change BCU point combat body');
 
 const loaderText = fs.readFileSync('js/battle/BcuCastleAssetLoader.js', 'utf8');
 const baseText = fs.readFileSync('js/battle/BattleBase.js', 'utf8');
-const inspectorText = fs.readFileSync('js/battle/DebugBattleInspector.js', 'utf8');
-assert.match(loaderText, /parseImgcut/, 'castle loader must use BCU imgcut parser');
-assert.match(loaderText, /bcu-imgcut/, 'castle loader must mark BCU imgcut parser source');
-assert.match(baseText, /BattleCastleResolver/, 'BattleBase must use castle geometry resolver');
-assert.match(baseText, /combatBodyBoxOverride/, 'BattleBase must expose resolved combat body override');
-assert.match(inspectorText, /castle geom/, 'Debug panel must show castle geometry');
-assert.match(inspectorText, /imgcutParser/, 'Debug panel must expose castle imgcut parser source');
-assert.doesNotMatch(loaderText + baseText + inspectorText, /ProcResolver|KBRuntime|EffectRuntime/, 'castle task must not expand into unrelated combat systems');
+const spawnText = fs.readFileSync('js/battle/BattleSpawnResolver.js', 'utf8');
+assert.match(loaderText, /org\/img\/\$\{groupName\}/, 'castle loader must use org/img rc/ec/wc/sc paths');
+assert.doesNotMatch(loaderText, /nyankoCastle/, 'enemy castle loader must not use nyankoCastle assets');
+assert.doesNotMatch(loaderText, /parseImgcut/, 'enemy castle loader must not parse imgcut');
+assert.match(baseText, /bcu-base-pos-point/, 'BattleBase must use BCU base pos point for combat');
+assert.match(spawnText, /getBcuEnemySpawnX/, 'spawn resolver must expose BCU enemy spawn');
+assert.match(spawnText, /700/, 'spawn resolver must encode normal enemy spawn 700');
+assert.match(spawnText, /stageLen - 700/, 'spawn resolver must encode player spawn stageLen - 700');
+assert.doesNotMatch(loaderText + baseText + spawnText, /ProcResolver|KBRuntime|EffectRuntime/, 'castle task must not expand into unrelated combat systems');
 
 console.log('check-bcu-castle-runtime-geometry: OK');

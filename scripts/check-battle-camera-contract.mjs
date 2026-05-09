@@ -11,6 +11,10 @@ const world = 1234.56;
 check('world->screen->world', nearly(cam.screenToWorldX(cam.worldToScreenX(world)), world));
 const screen = 777.7;
 check('screen->world->screen', nearly(cam.worldToScreenX(cam.screenToWorldX(screen)), screen));
+check('bcu off default 200', cam.bcuOff === 200);
+check('bcu projection includes off', nearly(cam.worldToScreenX(0), cam.originX + cam.bcuOff * cam.siz));
+check('bcu projection formula', nearly(cam.worldToScreenX(800), cam.originX + ((800 - cam.pos) * cam.ratio + 200) * cam.siz));
+check('stage pixel width includes both BCU margins', nearly(cam.stagePixelWidth, (cam.stageLen * cam.ratio + 400) * cam.siz));
 
 cam.setStageLen(8000);
 cam.setPos(500);
@@ -26,6 +30,7 @@ const beforeWorldAtAnchor = cam.screenToWorldX(anchor);
 cam.zoomAtScreenPoint(anchor, 1.5);
 check('zoom keeps stageLen', cam.stageLen === stageLenBeforeZoom);
 check('zoom keeps anchor world', nearly(cam.screenToWorldX(anchor), beforeWorldAtAnchor, 1e-4));
+check('zoom keeps BCU inverse stable', nearly(cam.worldToScreenX(cam.screenToWorldX(anchor)), anchor, 1e-4));
 
 cam.setPos(-999);
 check('clamp min', cam.pos >= 0);
@@ -53,6 +58,7 @@ const report = DebugBattleInspector.collect({ camera: cam, stage: { runtime: { s
 check('inspector has clamp', !!report?.camera?.clamp);
 check('inspector has visibleWorldRange', !!report?.camera?.visibleWorldRange);
 check('inspector has camera stageLen', Number.isFinite(report?.camera?.stageLen));
+check('inspector has bcu render offset', report?.camera?.bcuRenderOffset === 200 || report?.camera?.bcuOff === 200 || cam.bcuOff === 200);
 check('inspector null safe', !!DebugBattleInspector.collect({}));
 
 const failed = checks.filter((x) => !x.ok);

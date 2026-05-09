@@ -1,103 +1,93 @@
-import { parseImgcut } from '../bcu/BcuImgcutParser.js';
-
 function id3(v){ return String(Math.max(0, Number(v) || 0)).padStart(3, '0'); }
+
+const ENEMY_CASTLE_GROUPS = Object.freeze(['rc', 'ec', 'wc', 'sc']);
 
 function normalizeCastleId(castleId) {
   const n = Number(castleId);
-  if (!Number.isFinite(n) || n < 0) return null;
+  if (!Number.isFinite(n) || n < 0) return 0;
   return Math.floor(n);
-}
-
-async function fetchTextSafe(path) {
-  try {
-    const r = await fetch(path);
-    if (!r.ok) return null;
-    return await r.text();
-  } catch { return null; }
-}
-
-function chooseLargestPart(parts = []) {
-  const valid = (parts || [])
-    .map((p, index) => ({
-      index: Number.isFinite(p?.index) ? p.index : index,
-      x: Number(p?.x) || 0,
-      y: Number(p?.y) || 0,
-      w: Number(p?.w) || 0,
-      h: Number(p?.h) || 0,
-      name: p?.name || `part_${index}`
-    }))
-    .filter((p) => p.w > 0 && p.h > 0)
-    .map((p) => ({ ...p, area: p.w * p.h }));
-  if (!valid.length) return null;
-  return valid.sort((a, b) => b.area - a.area)[0];
-}
-
-function parseLegacyNumericImgcutPart(text) {
-  if (typeof text !== 'string' || !text.trim()) return null;
-  const rows = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  const parts = [];
-  for (const row of rows) {
-    const nums = row.split(',').map((v) => Number(v.trim()));
-    if (nums.length < 4 || nums.some((n) => !Number.isFinite(n))) continue;
-    const [x, y, w, h] = nums;
-    if (w <= 0 || h <= 0) continue;
-    parts.push({ x, y, w, h, area: w * h, name: 'legacy-numeric-row' });
-  }
-  return chooseLargestPart(parts);
-}
-
-function parseImgcutPart(text) {
-  if (typeof text !== 'string' || !text.trim()) return null;
-  try {
-    const parsed = parseImgcut(text);
-    const part = chooseLargestPart(parsed?.parts || []);
-    if (part) return { ...part, parser: 'bcu-imgcut' };
-  } catch (_) {
-    // Fall back to the pre-existing numeric-row parser for older local test fixtures.
-  }
-  const legacy = parseLegacyNumericImgcutPart(text);
-  return legacy ? { ...legacy, parser: 'legacy-numeric' } : null;
 }
 
 export function resolveEnemyCastleAssetCandidates(castleId = 0) {
   const resolvedCastleId = normalizeCastleId(castleId);
-  if (resolvedCastleId === null) return { castleId, resolvedCastleId: null, baseDir: null, imageCandidates: [], imgcutCandidates: [] };
-  const id = id3(resolvedCastleId);
-  const baseDir = `./public/assets/bcu/000001/org/castle/${id}/`;
-  const names = [`nyankoCastle_${id}_00`, `nyankoCastle_${id}_00_00`, `nyankoCastle_${id}`];
+  const groupIndex = Math.floor(resolvedCastleId / 1000);
+  const localCastleId = resolvedCastleId % 1000;
+  const groupName = ENEMY_CASTLE_GROUPS[groupIndex] || ENEMY_CASTLE_GROUPS[0];
+  const imagePath = `./public/assets/bcu/000001/org/img/${groupName}/${groupName}${id3(localCastleId)}.png`;
   return {
-    castleId: Number(castleId) || 0,
+    requestedCastleId: castleId,
     resolvedCastleId,
-    baseDir,
-    imageCandidates: names.map((n) => `${baseDir}${n}.png`),
-    imgcutCandidates: names.map((n) => `${baseDir}${n}.imgcut`)
+    groupIndex,
+    groupName,
+    localCastleId,
+    imagePath,
+    imageCandidates: [imagePath],
+    imgcutCandidates: [],
+    usesImgcut: false,
+    assetKind: 'bcu-enemy-castle-png',
+    fallbackReason: groupIndex >= ENEMY_CASTLE_GROUPS.length ? 'castle-group-out-of-range-fallback-rc' : null
   };
 }
 
 export class BcuCastleAssetLoader {
-  constructor(options = {}) { this.imageLoader = options.imageLoader || null; this.fetchText = options.fetchText || fetchTextSafe; }
+  constructor(options = {}) { this.imageLoader = options.imageLoader || null; }
+
   async load(castleId = 0, options = {}) {
     const requestedAnimBaseId = options?.animBaseId ?? null;
     const requestedCannonId = options?.cannonId ?? null;
     const source = options?.source || 'stage-runtime';
     const candidates = resolveEnemyCastleAssetCandidates(castleId);
-    const fallbackReason = candidates.resolvedCastleId === null ? 'castleId-invalid-fallback-0' : null;
-    const resolvedCastleId = candidates.resolvedCastleId === null ? 0 : candidates.resolvedCastleId;
-    const resolvedAnimBaseId = Number.isFinite(Number(requestedAnimBaseId)) ? Math.floor(Number(requestedAnimBaseId)) : resolvedCastleId;
     for (const imagePath of candidates.imageCandidates) {
       const image = await this.loadImage(imagePath);
       if (!image) continue;
-      let imgcut = null; let imgcutPath = null;
-      for (const c of candidates.imgcutCandidates) {
-        const t = await this.fetchText(c);
-        const part = parseImgcutPart(t);
-        if (part) { imgcut = { text: t, part }; imgcutPath = c; break; }
-      }
-      const crop = imgcut?.part || { x: 0, y: 0, w: image.width, h: image.height, parser: 'image-size' };
-      return { ok: true, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, image, imagePath, imgcut, imgcutPath, crop, visualBounds: { width: crop.w, height: crop.h, cropX: crop.x, cropY: crop.y, parser: crop.parser || null, partName: crop.name || null, partIndex: crop.index ?? null }, usedFallback: !!fallbackReason, fallbackReason, reason: null, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
+      const w = Number(image.naturalWidth || image.width || 0);
+      const h = Number(image.naturalHeight || image.height || 0);
+      return {
+        ok: true,
+        requestedCastleId: castleId,
+        requestedAnimBaseId,
+        requestedCannonId,
+        resolvedCastleId: candidates.resolvedCastleId,
+        resolvedAnimBaseId: Number.isFinite(Number(requestedAnimBaseId)) ? Math.floor(Number(requestedAnimBaseId)) : candidates.resolvedCastleId,
+        castleGroupName: candidates.groupName,
+        castleGroupIndex: candidates.groupIndex,
+        localCastleId: candidates.localCastleId,
+        assetKind: candidates.assetKind,
+        usesImgcut: false,
+        image,
+        imagePath,
+        imgcut: null,
+        imgcutPath: null,
+        crop: null,
+        visualBounds: { width: w, height: h, parser: 'image-size-no-imgcut', partName: null, partIndex: null },
+        usedFallback: !!candidates.fallbackReason,
+        fallbackReason: candidates.fallbackReason,
+        reason: null,
+        source,
+        candidateReport: candidates
+      };
     }
-    if (candidates.resolvedCastleId === null) return { ok:false, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, imagePath:null, imgcutPath:null, usedFallback:true, fallbackReason, reason:'castleId-invalid-fallback-0', placeholder:true, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
-    return { ok: false, requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId, resolvedAnimBaseId, imagePath:null, imgcutPath:null, usedFallback:false, fallbackReason:null, reason: 'image-load-failed', placeholder: true, source, candidateReport: { baseDir: candidates.baseDir, imageCandidates: candidates.imageCandidates, imgcutCandidates: candidates.imgcutCandidates } };
+    return {
+      ok: false,
+      requestedCastleId: castleId,
+      requestedAnimBaseId,
+      requestedCannonId,
+      resolvedCastleId: candidates.resolvedCastleId,
+      resolvedAnimBaseId: Number.isFinite(Number(requestedAnimBaseId)) ? Math.floor(Number(requestedAnimBaseId)) : candidates.resolvedCastleId,
+      castleGroupName: candidates.groupName,
+      castleGroupIndex: candidates.groupIndex,
+      localCastleId: candidates.localCastleId,
+      assetKind: candidates.assetKind,
+      usesImgcut: false,
+      imagePath: candidates.imagePath,
+      imgcutPath: null,
+      usedFallback: !!candidates.fallbackReason,
+      fallbackReason: candidates.fallbackReason,
+      reason: 'image-load-failed',
+      placeholder: true,
+      source,
+      candidateReport: candidates
+    };
   }
 
   loadImage(src) { if (typeof this.imageLoader === 'function') return Promise.resolve(this.imageLoader(src));

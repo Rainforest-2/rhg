@@ -162,6 +162,7 @@ assert.ok(characterCatalogRuntimeSrc.includes('validatePreviewAssets'));
 assert.ok(characterCatalogRuntimeSrc.includes('buildCatalogDiagnostics'));
 for (const fn of ['buildGeneratedDogSpecs','buildGeneratedCatSpecs','getPlayableRegistrySummary','validatePlayableRegistry','ALL_DOG_PLAYABLE_SPECS','ALL_CAT_PLAYABLE_SPECS']) assert.ok(playableRegistrySrc.includes(fn));
 for (const fn of ['getCharacterCatalogSummary','validateCharacterCatalog','getCharacterCatalogDiagnostics']) assert.ok(characterCatalogSrc.includes(fn));
+assert.ok(characterCatalogSrc.includes('export function isGeneratedCharacter'), 'CharacterCatalog must export isGeneratedCharacter');
 assert.ok(inspectorSrc.includes('characterCatalog'));
 assert.ok(previewAssetsSrc.includes('buildPlayablePreviewAssets(ANIM4_E)'));
 
@@ -443,6 +444,10 @@ const { getAvailableCharacters, getCharactersByFaction, getCharacterById, isGene
 
 for (const id of ['dog-enemy-013','dog-enemy-030','cat-unit-013-f','cat-unit-030-f']) assert.ok(getCharacterById(id));
 assert.equal(isGeneratedCharacter('cat-unit-013-f'), true);
+assert.equal(isGeneratedCharacter('dog-enemy-013'), true);
+assert.equal(isGeneratedCharacter('dog-wanko'), false);
+assert.equal(getCharacterById('cat-unit-013-f')?.generated, true);
+assert.equal(getCharacterById('dog-enemy-013')?.generated, true);
 assert.ok(getAvailableCharacters().some((c) => c.characterId === 'cat-unit-013-f'));
 assert.ok(getCharactersByFaction('cat').some((c) => c.characterId === 'cat-unit-013-f'));
 assert.ok(getCharactersByFaction('dog').some((c) => c.characterId === 'dog-enemy-013'));

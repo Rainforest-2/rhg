@@ -41,6 +41,8 @@
 | Task 12-FINAL | CharacterCatalog diagnostics API | `js/battle/CharacterCatalog.js` | Added summary/validation/diagnostics API via CharacterCatalogRuntime and bumped catalog version. | wiring check pass. |
 | Task 12-FINAL | Inspector catalog diagnostics | `js/battle/DebugBattleInspector.js` | Added characterCatalog diagnostics bundle and compact DOM line `catalog total/dog/cat/generated/errors`. | wiring check static assertion pass. |
 | Task 12-FINAL | Preview/formation/catalog contract checks | `scripts/check-battle-scene-stage-runtime-wiring.mjs`, `js/data/previewAssets.js` | Added assertions for generated preview ids, registry/catalog validations, and formation 2x5 compatibility; kept `buildPlayablePreviewAssets(ANIM4_E)` contract. | command pass. |
+| Task 12-HOTFIX | CharacterCatalog export fix | `js/battle/CharacterCatalog.js`, `js/battle/DebugBattleInspector.js` | Fixed blank-page ES module import error caused by missing `CharacterCatalog.isGeneratedCharacter` export. | wiring check pass. |
+| Task 12-HOTFIX | Generated metadata propagation | `js/battle/PlayableCharacterRegistry.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Generated character metadata now flows into catalog entries and is asserted (`generated/generationSource/generatedRange`). | wiring check pass. |
 
 ## Partial
 - Production runtime still uses existing BattleEconomy simple income model if true
@@ -137,3 +139,6 @@
 - [ ] Apply Battle 後 productionRuntime に generatedRosterCount が出る
 - [ ] generated キャラの画像が missing でも UI が落ちない
 - [ ] debugBattle=1 で characterCatalog.generatedSelectable が見える
+- [ ] webを開いて編成画面が表示される
+- [ ] console に missing export error が出ない
+- [ ] generated filter / generated diagnostics が動く

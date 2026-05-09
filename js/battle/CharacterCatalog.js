@@ -18,8 +18,12 @@ export function isSameBaseCharacter(a, b) { const aa = getCharacterBaseId(a); co
 
 
 export function isGeneratedCharacter(characterOrId) {
-  if (characterOrId && typeof characterOrId === 'object') return !!characterOrId.generated;
-  if (typeof characterOrId === 'string') return !!getCharacterById(characterOrId)?.generated;
+  if (characterOrId && typeof characterOrId === 'object') {
+    return characterOrId.generated === true;
+  }
+  if (typeof characterOrId === 'string') {
+    return getCharacterById(characterOrId)?.generated === true;
+  }
   return false;
 }
 export function getCharacterCatalogSummary() { return CharacterCatalogRuntime.summarizeCatalog(CHARACTER_CATALOG); }

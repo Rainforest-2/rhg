@@ -29,6 +29,21 @@ export function resolveEnemyCastleAssetCandidates(castleId = 0) {
   };
 }
 
+function buildFullImageRenderCrop(image) {
+  const w = Math.max(1, Number(image?.naturalWidth || image?.width || 0) || 1);
+  const h = Math.max(1, Number(image?.naturalHeight || image?.height || 0) || 1);
+  return {
+    x: 0,
+    y: 0,
+    w,
+    h,
+    name: 'full-enemy-castle-png',
+    parser: 'image-size-no-imgcut',
+    usesImgcut: false,
+    renderOnly: true
+  };
+}
+
 export class BcuCastleAssetLoader {
   constructor(options = {}) { this.imageLoader = options.imageLoader || null; }
 
@@ -40,8 +55,7 @@ export class BcuCastleAssetLoader {
     for (const imagePath of candidates.imageCandidates) {
       const image = await this.loadImage(imagePath);
       if (!image) continue;
-      const w = Number(image.naturalWidth || image.width || 0);
-      const h = Number(image.naturalHeight || image.height || 0);
+      const crop = buildFullImageRenderCrop(image);
       return {
         ok: true,
         requestedCastleId: castleId,
@@ -58,8 +72,8 @@ export class BcuCastleAssetLoader {
         imagePath,
         imgcut: null,
         imgcutPath: null,
-        crop: null,
-        visualBounds: { width: w, height: h, parser: 'image-size-no-imgcut', partName: null, partIndex: null },
+        crop,
+        visualBounds: { width: crop.w, height: crop.h, parser: 'image-size-no-imgcut', partName: null, partIndex: null, usesImgcut: false },
         usedFallback: !!candidates.fallbackReason,
         fallbackReason: candidates.fallbackReason,
         reason: null,

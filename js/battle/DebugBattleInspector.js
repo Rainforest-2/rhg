@@ -3,6 +3,7 @@ import { BattleAttackResolver } from './BattleAttackResolver.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
 import { BattleAttackTimeline } from './BattleAttackTimeline.js';
+import { AbilityModel } from './AbilityModel.js';
 
 export class DebugBattleInspector {
   static enabled(scene) {
@@ -151,6 +152,7 @@ export class DebugBattleInspector {
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
       `cam invariant stageLenMatch:${info?.cameraInvariants?.stageLenMatchesRuntime === true ? 'true' : (info?.cameraInvariants?.stageLenMatchesRuntime === false ? 'false' : '-')} roundTrip:${info?.cameraInvariants?.projectionRoundTripOk === true ? 'true' : (info?.cameraInvariants?.projectionRoundTripOk === false ? 'false' : '-')} vis:${this.fmt(info?.cameraInvariants?.visibleWorldRange?.left)}..${this.fmt(info?.cameraInvariants?.visibleWorldRange?.right)}`,
       `tick phases enemyBeforeActor:${info?.tickOrder?.enemySpawnBeforeActorUpdate === true ? 'true' : (info?.tickOrder?.enemySpawnBeforeActorUpdate === false ? 'false' : '-')} current:${info?.tickOrder?.currentTickPhase || '-'} trace:${this.fmt(info?.tickOrder?.traceLength)}`,
+      `damage/proc ability rawOnly:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.rawOnly || 0)} partial:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.partial || 0)} procSkipped:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procSkipped || 0)}`,
       `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
       `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
       `note: castle body uses resolved castle crop as base combat body. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
@@ -473,6 +475,42 @@ export class DebugBattleInspector {
         traceLength: Array.isArray(scene?.tickPhaseTrace) ? scene.tickPhaseTrace.length : 0
       },
       statsScaling: { contract: 'ActorStatsModel', stageScaledActors, stageScaledTemplates, examples, warnings: examples.flatMap((e) => Array.isArray(e?.warnings) ? e.warnings : []) },
+
+      damageAndProc: (() => {
+        const damageEvents = (scene?.debugEvents || []).filter((e) => ['damageApplied', 'damageResolved', 'attackTimelineHitResolved'].includes(e?.type)).slice(-8);
+        const procEvents = (scene?.debugEvents || []).filter((e) => e?.type === 'procResolved').slice(-8);
+        const abilityStatusExamples = actorsAll.filter((a) => a?.abilityModel).slice(0, 3).map((a) => ({ actor: a?.instanceId || a?.slotId || a?.label || null, status: AbilityModel.describeImplementationStatus(a.abilityModel) }));
+        const sample = damageEvents.find((e) => e?.damageResult?.abilityResolver || e?.damageResult?.proc) || null;
+        const abilitySummary = abilityStatusExamples.reduce((acc, item) => {
+          const st = item?.status || {};
+          acc.rawOnly += (st.rawOnlyUnverified || []).length;
+          acc.partial += (st.partial || []).length;
+          return acc;
+        }, { rawOnly: 0, partial: 0 });
+        return {
+          resolver: {
+            damageCalculator: 'DamageCalculator',
+            damageAbilityResolver: {
+              source: sample?.damageResult?.abilityResolver?.source || 'DamageAbilityResolver.v1-debug-opt-in',
+              mode: sample?.damageResult?.abilityResolver?.implementationStatus?.mode || 'disabled',
+              partialAbilities: sample?.damageResult?.abilityResolver?.implementationStatus?.partialAbilities || ['critical', 'baseDestroyer', 'metal']
+            },
+            procResolver: {
+              source: sample?.damageResult?.proc?.source || 'ProcResolver.v1-noop-contract',
+              mode: sample?.damageResult?.proc?.mode || 'noop'
+            }
+          },
+          recentDamageEvents: damageEvents,
+          recentProcEvents: procEvents,
+          abilityStatusExamples,
+          abilityStatusSummary: {
+            rawOnly: abilitySummary.rawOnly,
+            partial: abilitySummary.partial,
+            procSkipped: procEvents.reduce((n, e) => n + (e?.skippedCount || 0), 0)
+          }
+        };
+      })(),
+
       warnings: [...(scene?.debugWarnings || [])]
     };
     this.updateDomOverlay(scene, info);

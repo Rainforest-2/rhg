@@ -40,6 +40,12 @@ export class DamageAbilityResolver {
       modifiers: { critical: 1, baseDestroyer: 1, metal: 1 },
       applied: { critical: false, baseDestroyer: false, metal: false },
       notes: [],
+      implementationStatus: {
+        resolver: 'DamageAbilityResolver',
+        mode: enabled ? 'debug-opt-in' : 'disabled',
+        partialAbilities: ['critical', 'baseDestroyer', 'metal'],
+        nonDamageProcHandled: false
+      },
       debug: {
         rawAbi: event?.rawAbi ?? null,
         abilityMappingStatus: event?.abilityMappingStatus || null,
@@ -60,6 +66,7 @@ export class DamageAbilityResolver {
     }
     if ((event?.rawAbi ?? 0) > 0 && event?.abilityMappingStatus === 'raw-only-unverified') {
       result.notes.push('raw-abi-present-but-not-applied-without-semantic-mapping');
+      result.notes.push('raw-abi-present-proc-mapping-not-verified');
     }
     if (config?.allowCritical === true && semantic.critical === true) {
       result.modifiers.critical = Number.isFinite(config.criticalMultiplier) ? config.criticalMultiplier : 2;

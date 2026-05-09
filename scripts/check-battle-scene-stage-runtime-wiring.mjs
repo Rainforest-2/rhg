@@ -13,7 +13,11 @@ const files = {
   actorStatsModel: 'js/battle/ActorStatsModel.js',
   statsLoader: 'js/battle/BattleStatsLoader.js',
   actorFactory: 'js/battle/BattleActorFactory.js',
-  inspector: 'js/battle/DebugBattleInspector.js'
+  inspector: 'js/battle/DebugBattleInspector.js',
+  abilityModel: 'js/battle/AbilityModel.js',
+  damageCalculator: 'js/battle/DamageCalculator.js',
+  damageAbilityResolver: 'js/battle/DamageAbilityResolver.js',
+  procResolver: 'js/battle/ProcResolver.js'
 };
 
 for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path} must exist`);
@@ -63,6 +67,22 @@ assert.ok(actorStatsModelSrc.includes('describe'), 'ActorStatsModel must include
 assert.ok(statsLoaderSrc.includes("from './ActorStatsModel.js'"), 'BattleStatsLoader must import ActorStatsModel');
 assert.ok(statsLoaderSrc.includes('ActorStatsModel.applyStageEnemyMagnification'), 'BattleStatsLoader magnification must delegate to ActorStatsModel');
 assert.ok(actorFactorySrc.includes('actorStatsModel') || actorFactorySrc.includes('statsModelDebug') || actorFactorySrc.includes('actorStatsModelDebug'), 'BattleActorFactory must keep ActorStatsModel debug references');
+
+const abilityModelSrc = fs.readFileSync(files.abilityModel, 'utf8');
+const damageCalculatorSrc = fs.readFileSync(files.damageCalculator, 'utf8');
+const damageAbilityResolverSrc = fs.readFileSync(files.damageAbilityResolver, 'utf8');
+const procResolverSrc = fs.readFileSync(files.procResolver, 'utf8');
+assert.ok(procResolverSrc.includes('collectProcCandidates'));
+assert.ok(procResolverSrc.includes('resolve('));
+assert.ok(procResolverSrc.includes('getProcCatalog'));
+assert.ok(damageCalculatorSrc.includes("from './ProcResolver.js'"));
+assert.ok(damageCalculatorSrc.includes('proc,'));
+assert.ok(!damageCalculatorSrc.includes('target.hp ='));
+assert.ok(damageAbilityResolverSrc.includes('implementationStatus'));
+assert.ok(abilityModelSrc.includes('ABILITY_CATALOG') || abilityModelSrc.includes('getAbilityCatalog'));
+assert.ok(abilityModelSrc.includes('describeImplementationStatus'));
+assert.ok(inspectorSrc.includes('damageAndProc'));
+
 assert.ok(inspectorSrc.includes('ActorStatsModel') || inspectorSrc.includes('actorStatsModelDebug') || inspectorSrc.includes('statsModelDebug'), 'DebugBattleInspector must reference ActorStatsModel contract/debug');
 
 const battleCamera = fs.readFileSync('js/battle/BattleCamera.js', 'utf8');
@@ -203,5 +223,36 @@ assert.equal(due1.length, 1); assert.equal(due1[0].event.hitIndex, 0); BattleAtt
 const due2 = BattleAttackTimeline.getDueHitEvents(actor, 200);
 assert.equal(due2.length, 1); assert.equal(due2[0].event.hitIndex, 1); BattleAttackTimeline.markHitResolved(actor, due2[0].key);
 assert.equal(BattleAttackTimeline.getDueHitEvents(actor, 9999).length, 0);
+
+
+const { AbilityModel, ABILITY_STATUS } = await import('../js/battle/AbilityModel.js');
+const { DamageAbilityResolver } = await import('../js/battle/DamageAbilityResolver.js');
+const { ProcResolver } = await import('../js/battle/ProcResolver.js');
+const { DamageCalculator } = await import('../js/battle/DamageCalculator.js');
+
+const hitAbility = AbilityModel.buildHitAbility({ hit: { abi: 3 }, hitIndex: 0 });
+assert.equal(hitAbility.mappingStatus, ABILITY_STATUS.RAW_ONLY_UNVERIFIED);
+const implStatus = AbilityModel.describeImplementationStatus({ mappingStatus: ABILITY_STATUS.RAW_ONLY_UNVERIFIED, hasRawAbi: true, attackAbilities: [hitAbility] });
+assert.ok(implStatus.rawOnlyUnverified.length > 0);
+
+const semanticEvent = { abilities: { critical: true }, rawAbi: 3, abilityMappingStatus: 'raw-only-unverified' };
+const disabledAbility = DamageAbilityResolver.resolve({ event: semanticEvent, baseDamage: 100, context: {} });
+assert.equal(disabledAbility.enabled, false);
+assert.equal(disabledAbility.applied.critical, false);
+const enabledAbility = DamageAbilityResolver.resolve({ event: semanticEvent, baseDamage: 100, context: { damageAbilityResolver: { enabled: true, allowCritical: true } } });
+assert.equal(enabledAbility.applied.critical, true);
+
+const target = { hp: 1000 };
+const procResult = ProcResolver.resolve({ target, event: { abilities: { freeze: true }, rawAbi: 1, abilityMappingStatus: 'raw-only-unverified' } });
+assert.ok(procResult.notes.includes('raw-abi-present-proc-mapping-not-verified'));
+assert.ok(procResult.debug.candidates.includes('freeze'));
+assert.ok(procResult.skipped.some((x) => x.key === 'freeze'));
+assert.equal(target.hp, 1000);
+
+const calcBase = DamageCalculator.calculate({ attacker: { damage: 100 }, event: { damage: 100 }, context: {} });
+assert.equal(calcBase.finalDamage, 100);
+assert.ok(calcBase.proc);
+const calcCrit = DamageCalculator.calculate({ attacker: { damage: 100 }, event: { damage: 100, abilities: { critical: true } }, context: { damageAbilityResolver: { enabled: true, allowCritical: true, criticalMultiplier: 2 } } });
+assert.equal(calcCrit.finalDamage, 200);
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');

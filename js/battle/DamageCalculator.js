@@ -1,4 +1,5 @@
 import { DamageAbilityResolver } from './DamageAbilityResolver.js';
+import { ProcResolver } from './ProcResolver.js';
 
 export class DamageCalculator {
   static normalizeDamage(value, fallback = 0) {
@@ -87,6 +88,14 @@ export class DamageCalculator {
       modifiers.stage;
 
     const finalDamage = this.normalizeDamage(baseDamage * multiplier, baseDamage);
+    const proc = ProcResolver.resolve({
+      attacker,
+      target,
+      targetType,
+      event,
+      damageResult: { baseDamage, finalDamage, modifiers },
+      context
+    });
 
     return {
       baseDamage,
@@ -105,6 +114,7 @@ export class DamageCalculator {
         targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null
       },
       abilityResolver: abilityResult,
+      proc,
       applied: {
         stageMagnification: false,
         baseDestroyer: !!abilityResult.applied?.baseDestroyer,

@@ -78,6 +78,14 @@ export function sanitizeFormation(rawFormation) {
   return removeDuplicateBaseCharacterIds(migrateLegacyFiveSlotFormation(rawFormation));
 }
 
+export function getFormationSummary(formation) {
+  const sanitized = sanitizeFormation(formation);
+  const flatSlots = getFormationFlatSlots(sanitized);
+  const filledCount = flatSlots.filter(Boolean).length;
+  const total = LINEUP_TOTAL;
+  return { version: sanitized.version, rows: LINEUP_ROWS, cols: LINEUP_COLS, total, filledCount, emptyCount: total - filledCount, duplicatePolicy: 'removeDuplicateBaseCharacterIds', storageKey: FORMATION_STORAGE_KEY, flatSlots };
+}
+
 function canUseStorage() { return !!globalThis?.localStorage || (typeof window !== 'undefined' && !!window.localStorage); }
 
 export const FormationStore = {
@@ -99,6 +107,7 @@ export const FormationStore = {
   reset() { return this.save(getDefaultFormation()); },
   getDefault() { return getDefaultFormation(); },
   sanitize(formation) { return sanitizeFormation(formation); },
+  getFormationSummary(formation) { return getFormationSummary(formation); },
   setSlot(index, characterId) {
     const i = Math.floor(index); if (i < 0 || i >= LINEUP_TOTAL) return this.load();
     const { row, col } = toRowCol(i); const current = this.load(); const pages = clonePages(current.pages);

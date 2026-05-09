@@ -25,7 +25,11 @@ const files = {
   animationRuntime: 'js/bcu/AnimationRuntime.js',
   bcuAnimator: 'js/bcu/BcuAnimator.js',
   bcuModelInstance: 'js/bcu/BcuModelInstance.js',
-  renderer: 'js/battle/BattleSceneRenderer.js'
+  renderer: 'js/battle/BattleSceneRenderer.js',
+  productionRuntime: 'js/battle/ProductionRuntime.js',
+  playerProductionBar: 'js/ui/PlayerProductionBar.js',
+  battleEconomy: 'js/battle/BattleEconomy.js',
+  formationStore: 'js/battle/FormationStore.js'
 };
 
 for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path} must exist`);
@@ -96,6 +100,11 @@ const animationRuntimeSrc = fs.readFileSync(files.animationRuntime, 'utf8');
 const bcuAnimatorSrc = fs.readFileSync(files.bcuAnimator, 'utf8');
 const bcuModelInstanceSrc = fs.readFileSync(files.bcuModelInstance, 'utf8');
 const rendererSrc = fs.readFileSync(files.renderer, 'utf8');
+const productionRuntimeSrc = fs.readFileSync(files.productionRuntime, 'utf8');
+const playerProductionBarSrc = fs.readFileSync(files.playerProductionBar, 'utf8');
+const battleEconomySrc = fs.readFileSync(files.battleEconomy, 'utf8');
+const sceneSrcProd = fs.readFileSync(files.battleScene, 'utf8');
+const formationStoreSrc = fs.readFileSync(files.formationStore, 'utf8');
 for (const fn of ['getActorAnimationState', 'tickActor', 'applyActorModel', 'buildActorDrawList', 'describeActor', 'describeDrawList', 'getAnimationContract']) {
   assert.ok(animationRuntimeSrc.includes(fn), `AnimationRuntime must include ${fn}`);
 }
@@ -105,6 +114,17 @@ assert.ok(bcuAnimatorSrc.includes('lastValuesDebug'));
 assert.ok(bcuModelInstanceSrc.includes('getState('));
 assert.ok(bcuModelInstanceSrc.includes('lastDrawListDebug'));
 assert.ok(inspectorSrc.includes('animationRuntime'));
+for (const fn of ['getContract','describeEconomy','getUnitStatus','buildRosterStatus','buildLineupRows','validateRequest','produce','describeProductionSources']) assert.ok(productionRuntimeSrc.includes(fn));
+assert.ok(battleEconomySrc.includes('getState()'));
+assert.ok(battleEconomySrc.includes('lastTickDebug'));
+assert.ok(battleEconomySrc.includes('lastProduceDebug'));
+assert.ok(sceneSrcProd.includes("from './ProductionRuntime.js'"));
+assert.ok(sceneSrcProd.includes('getPlayerRosterStatus(){return ProductionRuntime.buildRosterStatus'));
+assert.ok(playerProductionBarSrc.includes('ProductionRuntime.getUnitStatus'));
+assert.ok(!playerProductionBarSrc.includes('economy.produce'));
+assert.ok(!playerProductionBarSrc.includes('economy.tick'));
+assert.ok(inspectorSrc.includes('productionRuntime'));
+assert.ok(formationStoreSrc.includes('getFormationSummary') || productionRuntimeSrc.includes('describeFormation'));
 assert.ok(!rendererSrc.includes('animator.tick'));
 assert.ok(!rendererSrc.includes('model.reset'));
 for (const bad of ['BattleSceneRenderer', 'BattleCamera', 'DamageCalculator', 'BattleAttackTimeline']) {
@@ -338,3 +358,31 @@ const drawRt = AnimationRuntime.buildActorDrawList(actorRt); assert.ok(Array.isA
 const descRt = AnimationRuntime.describeActor(actorRt); assert.equal(descRt.currentAnimId, 'anim00'); assert.ok(descRt.modelPartCount >= 2);
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');
+
+const { ProductionRuntime } = await import('../js/battle/ProductionRuntime.js');
+const { BattleEconomy } = await import('../js/battle/BattleEconomy.js');
+const { FormationStore } = await import('../js/battle/FormationStore.js');
+const econ = new BattleEconomy({ startMoney: 100, maxMoney: 1000, incomePerSecond: 60 });
+econ.tick(1000);
+assert.equal(econ.money, 160);
+const unit = { slotId:'u1', cost:50, cooldownMs:1000 };
+assert.equal(econ.produce(unit), true);
+assert.equal(econ.money, 110);
+assert.ok(econ.getCooldown('u1') > 0);
+assert.equal(typeof econ.produce(unit), 'boolean');
+assert.ok(econ.lastProduceDebug);
+const fakeEcon = { money: 20, maxMoney: 100, incomePerSecond: 1, getStatus:(u)=>({ canProduce:false, affordable:false, cooldownReady:true, cooldownRemainingMs:0, cooldownProgressRatio:1, cooldownMs:u.cooldownMs, money:20, maxMoney:100, cost:u.cost }) };
+const us = ProductionRuntime.getUnitStatus({ slotId:'a', label:'A', cost:30, cooldownMs:1000 }, fakeEcon);
+assert.equal(us.slotId, 'a');
+assert.equal(us.affordable, false);
+const rs = ProductionRuntime.buildRosterStatus([null, { slotId:'a', cost:30, cooldownMs:1000 }], fakeEcon);
+assert.equal(rs[0].empty, true);
+assert.equal(ProductionRuntime.buildLineupRows([], { rows:2, cols:5 }).length, 2);
+assert.equal(ProductionRuntime.validateRequest({ scene:{ battleState:'running' }, unitDef:{ slotId:'a' }, economy:null }).reason, 'economy-missing');
+const pe = new BattleEconomy({ startMoney:100, maxMoney:1000, incomePerSecond:0 });
+const pr1 = ProductionRuntime.produce({ scene:{ battleState:'running' }, unitDef:{ slotId:'p1', cost:50, cooldownMs:1000 }, economy:pe });
+assert.equal(pr1.ok, true);
+const pr2 = ProductionRuntime.produce({ scene:{ battleState:'running' }, unitDef:{ slotId:'p1', cost:50, cooldownMs:1000 }, economy:pe });
+assert.equal(pr2.ok, false);
+const summary = FormationStore.getFormationSummary(FormationStore.getDefault());
+assert.equal(summary.rows, 2); assert.equal(summary.cols, 5); assert.equal(summary.total, 10);

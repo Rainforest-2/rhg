@@ -3,7 +3,7 @@
 ## Last updated
 - date: 2026-05-09 (UTC)
 - commit: (working tree)
-- task: Task 10-FINAL (AnimationRuntime / BcuAnimator / BcuModelInstance contract)
+- task: Task 11-FINAL (ProductionRuntime / BattleEconomy / PlayerProductionBar contract)
 
 ## Completed
 | Task | Area | Files | What changed | Evidence |
@@ -31,7 +31,15 @@
 | Task 10-FINAL | Renderer no-mutate contract checked | `js/battle/BattleSceneRenderer.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Renderer audited to avoid animator.tick/model.reset and keep animation-state mutation outside renderer. | wiring check static assertion pass. |
 | Task 10-FINAL | Node checks for animation contract | `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Added static + dynamic assertions for AnimationRuntime/BcuAnimator/BcuModelInstance/Inspector contracts. | command pass. |
 
+
+| Task 11-FINAL | ProductionRuntime façade | `js/battle/ProductionRuntime.js` | Added production façade contract for economy status, unit status, request validation, produce, roster/lineup/formation diagnostics. | wiring check pass. |
+| Task 11-FINAL | Economy/Scene/UI production contract | `js/battle/BattleEconomy.js`, `js/battle/BattleScene.js`, `js/ui/PlayerProductionBar.js` | Added economy debug/state contract and routed scene/UI production status/request flow via ProductionRuntime while keeping spawn in BattleScene. | wiring check pass. |
+| Task 11-FINAL | Formation/Inspector/checks | `js/battle/FormationStore.js`, `js/battle/DebugBattleInspector.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Added 2x5 formation summary helper, productionRuntime diagnostics panel data, and static/dynamic contract assertions. | wiring check pass. |
 ## Partial
+- Production runtime still uses existing BattleEconomy simple income model if true
+- Large character roster expansion remains Task 12
+- Full BCU max deploy / will / production limit parity if not implemented
+- Full BCU wallet/worker cat parity if not implemented
 - Exact BCU easing/interpolation parity is not fully source-verified
 - Full mamodel/maanim visual parity is not manually verified
 - Animation viewer parity remains future/manual
@@ -61,6 +69,17 @@
 - [ ] renderer が animation frame を進めていない
 - [ ] attack hit timing が animation frame に戻っていない
 - [ ] KB/effect runtime の Task 9 contract が壊れていない
+
+
+### Task 11
+- [ ] debugBattle=1 で productionRuntime が見える
+- [ ] money / maxMoney / cooldowns が見える
+- [ ] rosterStatus に cost/cooldown/source が見える
+- [ ] 2x5 lineup rows が見える
+- [ ] card UI が economy.tick / produce を直接呼んでいない
+- [ ] クリックで scene.requestPlayerSpawn だけが呼ばれる
+- [ ] BCU unit stats 由来の price / respawn が反映される場合 source が見える
+- [ ] Task 10 animationRuntime の contract が壊れていない
 
 ## Node checks
 - command: `node scripts/check-battle-scene-stage-runtime-wiring.mjs`

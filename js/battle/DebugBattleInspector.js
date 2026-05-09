@@ -7,6 +7,8 @@ import { AbilityModel } from './AbilityModel.js';
 import { KBRuntime } from './KBRuntime.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { AnimationRuntime } from '../bcu/AnimationRuntime.js';
+import { ProductionRuntime } from './ProductionRuntime.js';
+import { FormationStore } from './FormationStore.js';
 
 export class DebugBattleInspector {
   static enabled(scene) {
@@ -267,6 +269,10 @@ export class DebugBattleInspector {
     const kbRecent = (scene?.debugEvents || []).filter((e) => String(e?.type || '').startsWith('kbRuntime')).slice(-10);
     const effectSummary = EffectRuntime.describeEffects(scene?.effects || []);
     const effectRecent = (scene?.debugEvents || []).filter((e) => String(e?.type || '').startsWith('effectRuntime')).slice(-10);
+
+    const productionRoster = scene?.getPlayerProductionRoster?.() || [];
+    const productionRecentEvents = (scene?.debugEvents || []).filter((e) => ['playerSpawnRejected','playerSpawned','productionLineupChanged','productionRuntimeRequest'].includes(e?.type)).slice(-10);
+    const formationSummary = FormationStore?.getFormationSummary ? FormationStore.getFormationSummary(FormationStore.load()) : ProductionRuntime.describeFormation(FormationStore.load());
     const info = {
       frame: scene?.logicFrame ?? Math.floor((scene?.timeMs || 0) / (1000 / 30)),
       timeMs: scene?.timeMs || 0,

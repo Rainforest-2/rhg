@@ -3,7 +3,7 @@
 ## Last updated
 - date: 2026-05-09 (UTC)
 - commit: (working tree)
-- task: Task 11-FINAL (ProductionRuntime / BattleEconomy / PlayerProductionBar contract)
+- task: Task 12-FINAL (CharacterCatalog / PlayableCharacterRegistry / large roster foundation)
 
 ## Completed
 | Task | Area | Files | What changed | Evidence |
@@ -35,9 +35,18 @@
 | Task 11-FINAL | ProductionRuntime façade | `js/battle/ProductionRuntime.js` | Added production façade contract for economy status, unit status, request validation, produce, roster/lineup/formation diagnostics. | wiring check pass. |
 | Task 11-FINAL | Economy/Scene/UI production contract | `js/battle/BattleEconomy.js`, `js/battle/BattleScene.js`, `js/ui/PlayerProductionBar.js` | Added economy debug/state contract and routed scene/UI production status/request flow via ProductionRuntime while keeping spawn in BattleScene. | wiring check pass. |
 | Task 11-FINAL | Formation/Inspector/checks | `js/battle/FormationStore.js`, `js/battle/DebugBattleInspector.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Added 2x5 formation summary helper, productionRuntime diagnostics panel data, and static/dynamic contract assertions. | wiring check pass. |
+
+| Task 12-FINAL | CharacterCatalogRuntime façade | `js/battle/CharacterCatalogRuntime.js` | Added pure diagnostics/validation façade for catalog, rosters, preview assets, and formation compatibility summaries. | `node scripts/check-battle-scene-stage-runtime-wiring.mjs` pass. |
+| Task 12-FINAL | Generated playable registry range | `js/battle/PlayableCharacterRegistry.js` | Added bounded generated dog/cat specs (13-30), ALL_* merged lists, and registry summary/validation contract while preserving manual specs. | wiring check static+dynamic assertions pass. |
+| Task 12-FINAL | CharacterCatalog diagnostics API | `js/battle/CharacterCatalog.js` | Added summary/validation/diagnostics API via CharacterCatalogRuntime and bumped catalog version. | wiring check pass. |
+| Task 12-FINAL | Inspector catalog diagnostics | `js/battle/DebugBattleInspector.js` | Added characterCatalog diagnostics bundle and compact DOM line `catalog total/dog/cat/generated/errors`. | wiring check static assertion pass. |
+| Task 12-FINAL | Preview/formation/catalog contract checks | `scripts/check-battle-scene-stage-runtime-wiring.mjs`, `js/data/previewAssets.js` | Added assertions for generated preview ids, registry/catalog validations, and formation 2x5 compatibility; kept `buildPlayablePreviewAssets(ANIM4_E)` contract. | command pass. |
+
 ## Partial
 - Production runtime still uses existing BattleEconomy simple income model if true
-- Large character roster expansion remains Task 12
+- Generated asset visual/manual existence validation remains partial (candidate paths only)
+- Full 0〜999 BCU roster expansion remains future work
+- Full form evolution / multi-form unit support beyond current generated form remains partial
 - Full BCU max deploy / will / production limit parity if not implemented
 - Full BCU wallet/worker cat parity if not implemented
 - Exact BCU easing/interpolation parity is not fully source-verified
@@ -48,6 +57,8 @@
 
 ## Unresolved
 - Browser manual validation by Codex
+- Generated asset paths are candidate-based and not manually verified
+- Full BCU unit/enemy roster parity is not complete
 - Full BCU animation visual parity is not manually verified
 - Exact easing parity is not verified from BCU common source
 
@@ -88,3 +99,13 @@
 - result: pass
 - command: `node scripts/check-stage-asset-tracing.mjs`
 - result: pass
+
+
+### Task 12
+- [ ] debugBattle=1 で characterCatalog が見える
+- [ ] catalog total / dog / cat / generated count が見える
+- [ ] FormationEditor で generated character が表示される
+- [ ] generated character を 2x5 formation に入れられる
+- [ ] Apply Battle 後に generated character が production roster に入る
+- [ ] asset missing の場合も既存 fallback/debugで落ちない
+- [ ] Task 11 productionRuntime の contract が壊れていない

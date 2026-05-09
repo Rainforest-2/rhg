@@ -1,6 +1,7 @@
 import { buildCharacterCatalog } from './PlayableCharacterRegistry.js';
+import { CharacterCatalogRuntime } from './CharacterCatalogRuntime.js';
 
-export const CHARACTER_CATALOG_VERSION = '0.12.0';
+export const CHARACTER_CATALOG_VERSION = '0.13.0';
 export const CHARACTER_FACTIONS = Object.freeze({ all: 'all', dog: 'dog', cat: 'cat' });
 export const CHARACTER_CATALOG = Object.freeze(buildCharacterCatalog());
 
@@ -14,3 +15,7 @@ export function getCharacterBaseId(characterOrId) {
   return null;
 }
 export function isSameBaseCharacter(a, b) { const aa = getCharacterBaseId(a); const bb = getCharacterBaseId(b); return !!aa && !!bb && aa === bb; }
+
+export function getCharacterCatalogSummary() { return CharacterCatalogRuntime.summarizeCatalog(CHARACTER_CATALOG); }
+export function validateCharacterCatalog() { return CharacterCatalogRuntime.validateCatalog(CHARACTER_CATALOG); }
+export function getCharacterCatalogDiagnostics() { return CharacterCatalogRuntime.buildCatalogDiagnostics({ catalog: CHARACTER_CATALOG }); }

@@ -29,7 +29,11 @@ const files = {
   productionRuntime: 'js/battle/ProductionRuntime.js',
   playerProductionBar: 'js/ui/PlayerProductionBar.js',
   battleEconomy: 'js/battle/BattleEconomy.js',
-  formationStore: 'js/battle/FormationStore.js'
+  formationStore: 'js/battle/FormationStore.js',
+  characterCatalogRuntime: 'js/battle/CharacterCatalogRuntime.js',
+  playableRegistry: 'js/battle/PlayableCharacterRegistry.js',
+  characterCatalog: 'js/battle/CharacterCatalog.js',
+  previewAssets: 'js/data/previewAssets.js'
 };
 
 for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path} must exist`);
@@ -146,6 +150,20 @@ assert.ok(!effectRuntimeSrc.includes('BattleCamera'));assert.ok(!effectRuntimeSr
 
 
 assert.ok(inspectorSrc.includes('ActorStatsModel') || inspectorSrc.includes('actorStatsModelDebug') || inspectorSrc.includes('statsModelDebug'), 'DebugBattleInspector must reference ActorStatsModel contract/debug');
+
+
+const characterCatalogRuntimeSrc = fs.readFileSync(files.characterCatalogRuntime, 'utf8');
+const playableRegistrySrc = fs.readFileSync(files.playableRegistry, 'utf8');
+const characterCatalogSrc = fs.readFileSync(files.characterCatalog, 'utf8');
+const previewAssetsSrc = fs.readFileSync(files.previewAssets, 'utf8');
+assert.ok(characterCatalogRuntimeSrc.includes('summarizeCatalog'));
+assert.ok(characterCatalogRuntimeSrc.includes('validateCatalog'));
+assert.ok(characterCatalogRuntimeSrc.includes('validatePreviewAssets'));
+assert.ok(characterCatalogRuntimeSrc.includes('buildCatalogDiagnostics'));
+for (const fn of ['buildGeneratedDogSpecs','buildGeneratedCatSpecs','getPlayableRegistrySummary','validatePlayableRegistry','ALL_DOG_PLAYABLE_SPECS','ALL_CAT_PLAYABLE_SPECS']) assert.ok(playableRegistrySrc.includes(fn));
+for (const fn of ['getCharacterCatalogSummary','validateCharacterCatalog','getCharacterCatalogDiagnostics']) assert.ok(characterCatalogSrc.includes(fn));
+assert.ok(inspectorSrc.includes('characterCatalog'));
+assert.ok(previewAssetsSrc.includes('buildPlayablePreviewAssets(ANIM4_E)'));
 
 const battleCamera = fs.readFileSync('js/battle/BattleCamera.js', 'utf8');
 const inputController = fs.readFileSync('js/preview/BattleCameraInputController.js', 'utf8');
@@ -356,6 +374,31 @@ const tickRes = AnimationRuntime.tickActor(actorRt, 100); assert.equal(tickRes.a
 const applyRt = AnimationRuntime.applyActorModel(actorRt); assert.ok(applyRt.appliedTrackCount >= 1);
 const drawRt = AnimationRuntime.buildActorDrawList(actorRt); assert.ok(Array.isArray(drawRt.drawList)); assert.ok(drawRt.summary.count >= 1);
 const descRt = AnimationRuntime.describeActor(actorRt); assert.equal(descRt.currentAnimId, 'anim00'); assert.ok(descRt.modelPartCount >= 2);
+
+
+const { CharacterCatalogRuntime } = await import('../js/battle/CharacterCatalogRuntime.js');
+const { PREVIEW_ASSETS } = await import('../js/data/previewAssets.js');
+const { formatBcuId, buildGeneratedDogSpecs, buildGeneratedCatSpecs, buildPlayableRosters, buildCharacterCatalog, DOG_PLAYABLE_SPECS, CAT_PLAYABLE_SPECS, validatePlayableRegistry } = await import('../js/battle/PlayableCharacterRegistry.js');
+const { validateCharacterCatalog, getCharacterCatalogSummary, getCharacterBaseId } = await import('../js/battle/CharacterCatalog.js');
+assert.equal(formatBcuId(0), '000');
+assert.equal(formatBcuId(30), '030');
+assert.equal(buildGeneratedDogSpecs({ start: 13, end: 15 }).length, 3);
+assert.equal(buildGeneratedCatSpecs({ start: 13, end: 15 }).length, 3);
+assert.equal(buildGeneratedDogSpecs({ start: 13, end: 13 })[0].characterId, 'dog-enemy-013');
+assert.equal(buildGeneratedCatSpecs({ start: 13, end: 13 })[0].characterId, 'cat-unit-013-f');
+const ro = buildPlayableRosters();
+assert.ok(ro.dogPlayer.length > DOG_PLAYABLE_SPECS.length);
+assert.ok(ro.catUnits.length > CAT_PLAYABLE_SPECS.length);
+assert.equal(buildCharacterCatalog().length, ro.dogPlayer.length + ro.catUnits.length);
+assert.equal(validatePlayableRegistry().ok, true);
+assert.equal(validateCharacterCatalog().ok, true);
+assert.ok(getCharacterCatalogSummary().total > 26);
+assert.ok(PREVIEW_ASSETS.some((a) => a.id === 'enemy-013'));
+assert.ok(PREVIEW_ASSETS.some((a) => a.id === 'unit-013-f'));
+assert.equal(CharacterCatalogRuntime.validatePreviewAssets(PREVIEW_ASSETS).ok, true);
+const { FormationStore: FormationStoreDyn } = await import('../js/battle/FormationStore.js');
+assert.equal(FormationStoreDyn.getFormationSummary(FormationStoreDyn.getDefault()).total, 10);
+assert.equal(getCharacterBaseId('cat-unit-013-f'), 'cat-unit-013');
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');
 

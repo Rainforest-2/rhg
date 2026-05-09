@@ -9,6 +9,10 @@ import { EffectRuntime } from './EffectRuntime.js';
 import { AnimationRuntime } from '../bcu/AnimationRuntime.js';
 import { ProductionRuntime } from './ProductionRuntime.js';
 import { FormationStore } from './FormationStore.js';
+import { CharacterCatalogRuntime } from './CharacterCatalogRuntime.js';
+import { PREVIEW_ASSETS } from '../data/previewAssets.js';
+import { CHARACTER_CATALOG_VERSION, getCharacterCatalogSummary, validateCharacterCatalog, getCharacterCatalogDiagnostics } from './CharacterCatalog.js';
+import { PLAYABLE_REGISTRY_VERSION, getPlayableRegistrySummary, validatePlayableRegistry, buildPlayableRosters } from './PlayableCharacterRegistry.js';
 
 export class DebugBattleInspector {
   static enabled(scene) {
@@ -160,6 +164,7 @@ export class DebugBattleInspector {
       `damage/proc ability rawOnly:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.rawOnly || 0)} partial:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.partial || 0)} procSkipped:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procSkipped || 0)}`,
       `kb active:${this.fmt(info?.kbRuntime?.activeKnockbacks || 0)} dead:${this.fmt(info?.kbRuntime?.dyingOrDead || 0)} removable:${this.fmt(info?.kbRuntime?.removable || 0)}`,
       `effects active:${this.fmt(info?.effectRuntime?.activeCount || 0)} finished:${this.fmt(info?.effectRuntime?.finishedCount || 0)}`,
+      `catalog total:${this.fmt(info?.characterCatalog?.catalogSummary?.total || 0)} dog:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.dog || 0)} cat:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.cat || 0)} generated:${this.fmt((info?.characterCatalog?.registrySummary?.generatedDogs || 0)+(info?.characterCatalog?.registrySummary?.generatedCats || 0))} errors:${this.fmt((info?.characterCatalog?.validation?.errors || []).length)}`,
       `anim actors:${this.fmt(info?.animationRuntime?.actors?.length || 0)} frame:${this.fmt(info?.animationRuntime?.examples?.[0]?.frame)} tracks:${this.fmt(info?.animationRuntime?.examples?.[0]?.appliedTrackCount || 0)}/${this.fmt(info?.animationRuntime?.examples?.[0]?.failedTrackCount || 0)} parts:${this.fmt(info?.animationRuntime?.examples?.[0]?.modelPartCount || 0)}`,
       `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
       `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
@@ -529,6 +534,23 @@ export class DebugBattleInspector {
 
       kbRuntime: { actors: kbActors, activeKnockbacks: kbActors.filter((a) => a?.state === 'knockback').length, dyingOrDead: kbActors.filter((a) => a?.state === 'dead' || a?.deathPending || a?.deathAfterKnockback).length, removable: kbActors.filter((a) => a?.isRemovable).length, recentEvents: kbRecent },
       effectRuntime: { ...effectSummary, recentEvents: effectRecent },
+      characterCatalog: (() => {
+        const catalogDiagnostics = getCharacterCatalogDiagnostics();
+        const registrySummary = getPlayableRegistrySummary();
+        const registryValidation = validatePlayableRegistry();
+        const rosters = buildPlayableRosters();
+        return {
+          contract: CharacterCatalogRuntime.getContract(),
+          version: CHARACTER_CATALOG_VERSION,
+          registryVersion: PLAYABLE_REGISTRY_VERSION,
+          catalogSummary: getCharacterCatalogSummary(),
+          registrySummary,
+          validation: { ...validateCharacterCatalog(), registry: registryValidation },
+          previewAssetValidation: CharacterCatalogRuntime.validatePreviewAssets(PREVIEW_ASSETS),
+          formationCompatibility: CharacterCatalogRuntime.buildCatalogDiagnostics({ catalog: scene?.characterCatalog || [], rosters, previewAssets: PREVIEW_ASSETS, formation: FormationStore.load() }).formationCompatibility,
+          examples: catalogDiagnostics?.examples || {}
+        };
+      })(),
       animationRuntime: (() => {
         const actors = (actorsAll || []).map((actor) => {
           const desc = AnimationRuntime.describeActor(actor);

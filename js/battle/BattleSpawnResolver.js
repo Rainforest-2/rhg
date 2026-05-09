@@ -31,12 +31,13 @@ export class BattleSpawnResolver {
     const baseFrontX = BattleSpawnResolver.getBaseFrontX(base, side);
     const resolvedStageLen = Number.isFinite(stageLen) ? stageLen : (Number.isFinite(row?.stageLen) ? row.stageLen : null);
     const bossFlag = row?.bossFlag === true || row?.bossFlag === 1;
+    const eventSource = row?.spawnWorldXSource || null;
 
-    if (Number.isFinite(explicitWorldX) && row?.spawnWorldXSource !== 'legacy-fixed') {
-      return { ok: true, worldX: explicitWorldX, source: 'event-worldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
+    if (Number.isFinite(explicitWorldX) && eventSource !== 'legacy-fixed') {
+      return { ok: true, worldX: explicitWorldX, source: eventSource || 'event-worldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
     }
-    if (Number.isFinite(explicitSpawnWorldX) && row?.spawnWorldXSource !== 'legacy-fixed' && row?.spawnWorldXSource !== 'stage-runtime-enemy-base-front') {
-      return { ok: true, worldX: explicitSpawnWorldX, source: row?.spawnWorldXSource || 'event-spawnWorldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
+    if (Number.isFinite(explicitSpawnWorldX) && eventSource !== 'legacy-fixed' && eventSource !== 'stage-runtime-enemy-base-front') {
+      return { ok: true, worldX: explicitSpawnWorldX, source: eventSource || 'event-spawnWorldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
     }
 
     const resolved = BattleSpawnResolver.getSpawnWorldXForSide({ side, base, stageLen: resolvedStageLen, bossSpawnX, bossFlag });

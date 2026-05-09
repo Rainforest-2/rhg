@@ -1,11 +1,10 @@
 export class BattleCamera {
-  // Camera / BCU render contract:
+  // Camera contract:
   // - stageLen is immutable during pan/zoom/input. Only setStageLen() may change it when a new stage/runtime is applied.
   // - pos is the left visible battle-world X used for scroll/clamp.
-  // - BCU-java-PC BattleBox projects X as: getX(x) = (x * ratio + off) * siz + sb.pos.
-  // - In this canvas camera, sb.pos is represented by -pos * ratio * siz + originX.
-  // - Therefore worldToScreenX(worldX) = originX + ((worldX - pos) * ratio + bcuRenderOffset) * siz.
-  // - screenToWorldX is the exact inverse of worldToScreenX.
+  // - worldToScreenX/screenToWorldX are the normal renderer projection and do not include BCU's +200 render offset.
+  // - BCU-java-PC BattleBox projects X as: getX(x) = (x * ratio + off) * siz + sb.pos, where off=200.
+  // - Use bcuWorldToScreenX/getBcuRenderX only for code paths explicitly porting BCU BattleBox rendering.
   // - panByScreenDelta accepts logical canvas pixel delta, not raw clientX delta.
   // - zoomAtScreenPoint accepts logical canvas X, not raw window clientX.
   constructor({ stageLen, logicalW, ratio = 768 / 2400, initialSiz = 1, minSiz = 0.75, maxSiz = 2.5, bcuRenderOffset = 200 }) {
@@ -33,20 +32,23 @@ export class BattleCamera {
 
   get pixelsPerWorldUnit() { return this.ratio * this.siz; }
   get visibleWorldWidth() { return this.logicalW / Math.max(0.0001, this.pixelsPerWorldUnit); }
-  get stagePixelWidth() { return (this.stageLen * this.ratio + this.bcuRenderOffset * 2) * this.siz; }
+  get stagePixelWidth() { return this.stageLen * this.pixelsPerWorldUnit; }
+  get bcuStagePixelWidth() { return (this.stageLen * this.ratio + this.bcuRenderOffset * 2) * this.siz; }
   get bcuLeftMarginPx() { return this.bcuRenderOffset * this.siz; }
   get bcuRightMarginPx() { return this.bcuRenderOffset * this.siz; }
 
-  worldToScreenX(worldX) { return this.originX + ((worldX - this.pos) * this.ratio + this.bcuRenderOffset) * this.siz; }
-  screenToWorldX(screenX) { return this.pos + (((screenX - this.originX) / Math.max(0.0001, this.siz)) - this.bcuRenderOffset) / Math.max(0.0001, this.ratio); }
-  getBcuRenderX(posBcu) { return this.worldToScreenX(posBcu); }
+  worldToScreenX(worldX) { return this.originX + (worldX - this.pos) * this.pixelsPerWorldUnit; }
+  screenToWorldX(screenX) { return this.pos + (screenX - this.originX) / Math.max(0.0001, this.pixelsPerWorldUnit); }
+  bcuWorldToScreenX(posBcu) { return this.originX + ((posBcu - this.pos) * this.ratio + this.bcuRenderOffset) * this.siz; }
+  bcuScreenToWorldX(screenX) { return this.pos + (((screenX - this.originX) / Math.max(0.0001, this.siz)) - this.bcuRenderOffset) / Math.max(0.0001, this.ratio); }
+  getBcuRenderX(posBcu) { return this.bcuWorldToScreenX(posBcu); }
 
   panByScreenDelta(dx) { this.pos -= dx / this.pixelsPerWorldUnit; this.clamp(); }
 
   zoomAtScreenPoint(screenX, nextSiz) {
     const beforeWorld = this.screenToWorldX(screenX);
     this.siz = this._clampSiz(nextSiz);
-    this.pos = beforeWorld - (((screenX - this.originX) / Math.max(0.0001, this.siz)) - this.bcuRenderOffset) / Math.max(0.0001, this.ratio);
+    this.pos = beforeWorld - (screenX - this.originX) / Math.max(0.0001, this.pixelsPerWorldUnit);
     this.clamp();
   }
 
@@ -68,6 +70,7 @@ export class BattleCamera {
       bcuOff: this.bcuOff,
       bcuLeftMarginPx: this.bcuLeftMarginPx,
       bcuRightMarginPx: this.bcuRightMarginPx,
+      bcuStagePixelWidth: this.bcuStagePixelWidth,
       siz: this.siz,
       zoom: this.zoom,
       pos: this.pos,

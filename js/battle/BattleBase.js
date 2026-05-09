@@ -41,8 +41,6 @@ export class BattleBase {
     this.combatBodyHeightPx = 0;
     this.combatBodySource = 'bcu-base-pos-point';
     this.frontX = combatX;
-    // Renderer currently draws bases around base.x. Keep posBcu as the BCU combat point, but let x be the visual center.
-    this.x = visualCenterX;
     this.visualBottomToGround = true;
     this.visualBottomToCurrentCenter = false;
     this.castleGeometry = {
@@ -95,5 +93,5 @@ export class BattleBase {
   isAlive() { return this.attackable && !this.destroyed && this.hp > 0; }
   takeDamage(amount) { if (!this.isAlive()) return { destroyed: this.destroyed, hpBefore: this.hp, hpAfter: this.hp }; const hpBefore = this.hp; this.hp = Math.max(0, this.hp - Math.max(0, amount)); if (this.hp <= 0) this.destroyed = true; return { destroyed: this.destroyed, hpBefore, hpAfter: this.hp }; }
   getBattlePosBcu(){ if (Number.isFinite(this.posBcu)) return this.posBcu; if (Number.isFinite(this.frontX)) return this.frontX; if (Number.isFinite(this.x)) return this.x; return null; }
-  applyCoordinate(coordinate){ if (!coordinate) return; this.battleCoordinate = coordinate; this.posBcu = coordinate.getBasePosBcu(this.side); if (!this.castleGeometry) this.x = coordinate.getBaseScreenX(this.side); this.frontX = this.getBattlePosBcu(); }
+  applyCoordinate(coordinate){ if (!coordinate) return; this.battleCoordinate = coordinate; this.posBcu = coordinate.getBasePosBcu(this.side); this.x = coordinate.getBaseScreenX(this.side); this.frontX = this.getBattlePosBcu(); }
 }

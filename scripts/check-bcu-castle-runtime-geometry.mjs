@@ -47,7 +47,8 @@ assert.equal(BattleSpawnResolver.getSpawnWorldXForSide({ side: 'cat-enemy', base
 enemy.castleAsset = castleAsset;
 const enemyGeometry = enemy.updateCombatBodyFromVisualBounds(castleAsset.visualBounds, 1, 'cat-enemy', { source: 'test-enemy-castle' }).geometry;
 assert.equal(enemy.getBattlePosBcu(), 800, 'visual update must not move enemy combat point');
-assert.equal(enemy.x, 736, 'renderer x should become enemy castle visual center when combat point is right edge');
+assert.equal(enemy.x, 800, 'base.x must remain combat coordinate after visual update');
+assert.equal(enemy.visualX, 736, 'visualX should become enemy castle visual center when combat point is right edge');
 assert.equal(enemyGeometry.visualWorldBox.right, 800, 'enemy visual right edge should align to combat point');
 assert.equal(enemyGeometry.anchor, 'enemy-combat-point-at-visual-right-edge');
 
@@ -59,7 +60,8 @@ assert.equal(BattleSpawnResolver.getSpawnWorldXForSide({ side: 'dog-player', bas
 player.castleAsset = castleAsset;
 const playerGeometry = player.updateCombatBodyFromVisualBounds(castleAsset.visualBounds, 1, 'dog-player', { source: 'test-player-castle' }).geometry;
 assert.equal(player.getBattlePosBcu(), 4000, 'visual update must not move player combat point');
-assert.equal(player.x, 4064, 'renderer x should become player castle visual center when combat point is left edge');
+assert.equal(player.x, 4000, 'base.x must remain combat coordinate after visual update');
+assert.equal(player.visualX, 4064, 'visualX should become player castle visual center when combat point is left edge');
 assert.equal(playerGeometry.visualWorldBox.left, 4000, 'player visual left edge should align to combat point');
 assert.equal(playerGeometry.anchor, 'player-combat-point-at-visual-left-edge');
 
@@ -78,6 +80,7 @@ assert.doesNotMatch(loaderText, /parseImgcut/, 'enemy castle loader must not par
 assert.match(baseText, /bcu-base-pos-point/, 'BattleBase must use BCU base pos point for combat');
 assert.match(baseText, /enemy-combat-point-at-visual-right-edge/, 'enemy castle visual must align right edge to combat point');
 assert.match(baseText, /player-combat-point-at-visual-left-edge/, 'player castle visual must align left edge to combat point');
+assert.doesNotMatch(baseText, /this\.x = visualCenterX/, 'BattleBase must not rewrite combat x to visual center');
 assert.match(spawnText, /getBcuEnemySpawnX/, 'spawn resolver must expose BCU enemy spawn');
 assert.match(spawnText, /700/, 'spawn resolver must encode normal enemy spawn 700');
 assert.match(spawnText, /stageLen - 700/, 'spawn resolver must encode player spawn stageLen - 700');

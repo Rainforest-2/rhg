@@ -109,3 +109,31 @@
 - [ ] Apply Battle 後に generated character が production roster に入る
 - [ ] asset missing の場合も既存 fallback/debugで落ちない
 - [ ] Task 11 productionRuntime の contract が壊れていない
+
+## Task 12-BUGFIX (generated selectable formation)
+### Completed
+- FormationEditor generated/manual visibility controls.
+- FormationEditor search/filter/count UI for generated catalog.
+- Generated character selection path verified through FormationStore.
+- Generated character production lineup entry compatibility.
+- DebugBattleInspector generatedSelectable diagnostics.
+- Node checks for generated selectable formation path.
+
+### Partial
+- Browser manual validation if not run.
+- Generated asset visual/manual existence validation.
+- Full 0〜999 BCU roster expansion.
+- Full form evolution / multi-form support.
+
+### Unresolved
+- Browser manual validation by Codex.
+- Generated asset paths are candidate-based and not manually verified.
+
+### Manual browser check
+- [ ] 編成画面で Generated filter を押すと generated キャラだけ出る
+- [ ] search に `013` と入れると dog-enemy-013 / cat-unit-013-f が見える
+- [ ] cat-unit-013-f をクリックすると active slot に入る
+- [ ] dog-enemy-013 をクリックすると active slot に入る
+- [ ] Apply Battle 後 productionRuntime に generatedRosterCount が出る
+- [ ] generated キャラの画像が missing でも UI が落ちない
+- [ ] debugBattle=1 で characterCatalog.generatedSelectable が見える

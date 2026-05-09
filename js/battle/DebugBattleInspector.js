@@ -11,7 +11,7 @@ import { ProductionRuntime } from './ProductionRuntime.js';
 import { FormationStore } from './FormationStore.js';
 import { CharacterCatalogRuntime } from './CharacterCatalogRuntime.js';
 import { PREVIEW_ASSETS } from '../data/previewAssets.js';
-import { CHARACTER_CATALOG_VERSION, getCharacterCatalogSummary, validateCharacterCatalog, getCharacterCatalogDiagnostics } from './CharacterCatalog.js';
+import { CHARACTER_CATALOG_VERSION, getCharacterCatalogSummary, validateCharacterCatalog, getCharacterCatalogDiagnostics, getAvailableCharacters, getCharactersByFaction, getCharacterById, isGeneratedCharacter } from './CharacterCatalog.js';
 import { PLAYABLE_REGISTRY_VERSION, getPlayableRegistrySummary, validatePlayableRegistry, buildPlayableRosters } from './PlayableCharacterRegistry.js';
 
 export class DebugBattleInspector {
@@ -276,6 +276,7 @@ export class DebugBattleInspector {
     const effectRecent = (scene?.debugEvents || []).filter((e) => String(e?.type || '').startsWith('effectRuntime')).slice(-10);
 
     const productionRoster = scene?.getPlayerProductionRoster?.() || [];
+    const generatedExamples = ['dog-enemy-013','dog-enemy-030','cat-unit-013-f','cat-unit-030-f'];
     const productionRecentEvents = (scene?.debugEvents || []).filter((e) => ['playerSpawnRejected','playerSpawned','productionLineupChanged','productionRuntimeRequest'].includes(e?.type)).slice(-10);
     const formationSummary = FormationStore?.getFormationSummary ? FormationStore.getFormationSummary(FormationStore.load()) : ProductionRuntime.describeFormation(FormationStore.load());
     const info = {
@@ -548,7 +549,14 @@ export class DebugBattleInspector {
           validation: { ...validateCharacterCatalog(), registry: registryValidation },
           previewAssetValidation: CharacterCatalogRuntime.validatePreviewAssets(PREVIEW_ASSETS),
           formationCompatibility: CharacterCatalogRuntime.buildCatalogDiagnostics({ catalog: scene?.characterCatalog || [], rosters, previewAssets: PREVIEW_ASSETS, formation: FormationStore.load() }).formationCompatibility,
-          examples: catalogDiagnostics?.examples || {}
+          examples: catalogDiagnostics?.examples || {},
+          generatedSelectable: {
+            expectedExamples: generatedExamples,
+            foundInCatalog: generatedExamples.filter((id) => !!getCharacterById(id)),
+            foundInAvailableCharacters: generatedExamples.filter((id) => getAvailableCharacters().some((c) => c.characterId === id)),
+            formationContainsGenerated: (formationSummary?.flatSlots || []).some((id) => id && isGeneratedCharacter(id)),
+            productionRosterContainsGenerated: (productionRoster || []).some((u) => u?.characterId && isGeneratedCharacter(u.characterId))
+          }
         };
       })(),
       animationRuntime: (() => {

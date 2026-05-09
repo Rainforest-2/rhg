@@ -10,3 +10,13 @@ button,input[type=range],select{width:100%;background:#0f1520;border:1px solid #
 .prod-ui{position:absolute;inset:0;pointer-events:none;z-index:20}.prod-ui .battle-money{position:absolute;top:14px;right:18px;width:clamp(180px,24%,320px);height:auto;pointer-events:none}.prod-ui .cards{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:grid;grid-template-columns:repeat(5,var(--prod-card-w));gap:var(--prod-card-gap);pointer-events:auto}.prod-card-stack{position:relative;width:var(--prod-card-w);height:calc(var(--prod-card-h) + var(--prod-card-back-offset-y))}.prod-ui .prod-card{position:absolute;left:0;top:0;width:var(--prod-card-w);height:var(--prod-card-h);aspect-ratio:auto;touch-action:manipulation;border:0;background:transparent;transition:transform .08s}.prod-ui .prod-card.press{transform:scale(.95)}.prod-card.is-back{transform:translate(var(--prod-card-back-offset-x),var(--prod-card-back-offset-y)) scale(.96);opacity:.82;z-index:1;pointer-events:none;filter:brightness(.82)}.prod-card.is-front{transform:translate(0,0) scale(1);opacity:1;z-index:2;pointer-events:auto}.prod-card.is-front.is-disabled{pointer-events:none}.prod-ui.is-hidden{display:none}
 .app-loading-overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(circle at top,#111827,#020617);backdrop-filter:blur(3px);transition:opacity .25s ease}.app-loading-overlay.is-hidden{opacity:0;pointer-events:none}
 @media (max-width: 820px),(orientation: portrait){.formation-panel{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.formation-action-rail{border-left:0;border-top:1px solid #334155;padding-left:0;padding-top:10px;display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:stretch}.formation-action-hint{display:none}}
+.formation-catalog-toolbar{display:grid;grid-template-columns:1fr;gap:8px}
+.formation-search-input{width:100%}
+.formation-generated-tabs{display:flex;gap:6px}
+.formation-generated-tabs button{width:auto;padding:6px 10px}
+.formation-catalog-summary{font-size:.85rem;color:var(--muted)}
+.formation-character-card .generated-badge{font-size:.72rem;color:#86efac;background:#14532d;border-radius:999px;padding:1px 8px}
+.formation-character-card.is-generated{border-color:#22c55e}
+.formation-character-card .character-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem}
+.formation-character-card .base-id{font-size:.72rem;color:#93c5fd}
+.formation-character-card img.image-missing,.formation-slot img.image-missing{opacity:.35}

@@ -1,4 +1,4 @@
-import { getCharacterById, getCharacterBaseId } from './CharacterCatalog.js';
+import { getCharacterById, getCharacterBaseId, isGeneratedCharacter } from './CharacterCatalog.js';
 
 export const LINEUP_ROWS = 2;
 export const LINEUP_COLS = 5;
@@ -53,7 +53,7 @@ export function swapFormationSlots(formation, aRow, aCol, bRow, bCol) {
 
 export function migrateLegacyFiveSlotFormation(rawFormation) {
   const slots = Array.isArray(rawFormation?.slots) ? rawFormation.slots : [];
-  if (Array.isArray(rawFormation?.pages) && rawFormation?.version >= FORMATION_VERSION) return rawFormation;
+  if (Array.isArray(rawFormation?.pages)) return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages: clonePages(rawFormation.pages), slots: clonePages(rawFormation.pages)[0].slice() };
   const front = Array.from({ length: LINEUP_COLS }, (_, i) => (typeof slots[i] === 'string' ? slots[i] : null));
   return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages: [front, Array(LINEUP_COLS).fill(null)], slots: front.slice() };
 }
@@ -83,7 +83,8 @@ export function getFormationSummary(formation) {
   const flatSlots = getFormationFlatSlots(sanitized);
   const filledCount = flatSlots.filter(Boolean).length;
   const total = LINEUP_TOTAL;
-  return { version: sanitized.version, rows: LINEUP_ROWS, cols: LINEUP_COLS, total, filledCount, emptyCount: total - filledCount, duplicatePolicy: 'removeDuplicateBaseCharacterIds', storageKey: FORMATION_STORAGE_KEY, flatSlots };
+  const generatedCount = flatSlots.filter((id) => id && isGeneratedCharacter(id)).length;
+  return { version: sanitized.version, rows: LINEUP_ROWS, cols: LINEUP_COLS, total, filledCount, emptyCount: total - filledCount, generatedCount, manualCount: filledCount - generatedCount, duplicatePolicy: 'removeDuplicateBaseCharacterIds', storageKey: FORMATION_STORAGE_KEY, flatSlots };
 }
 
 function canUseStorage() { return !!globalThis?.localStorage || (typeof window !== 'undefined' && !!window.localStorage); }

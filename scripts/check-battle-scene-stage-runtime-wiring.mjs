@@ -376,10 +376,10 @@ const drawRt = AnimationRuntime.buildActorDrawList(actorRt); assert.ok(Array.isA
 const descRt = AnimationRuntime.describeActor(actorRt); assert.equal(descRt.currentAnimId, 'anim00'); assert.ok(descRt.modelPartCount >= 2);
 
 
-const { CharacterCatalogRuntime } = await import('../js/battle/CharacterCatalogRuntime.js');
 const { PREVIEW_ASSETS } = await import('../js/data/previewAssets.js');
 const { formatBcuId, buildGeneratedDogSpecs, buildGeneratedCatSpecs, buildPlayableRosters, buildCharacterCatalog, DOG_PLAYABLE_SPECS, CAT_PLAYABLE_SPECS, validatePlayableRegistry } = await import('../js/battle/PlayableCharacterRegistry.js');
 const { validateCharacterCatalog, getCharacterCatalogSummary, getCharacterBaseId } = await import('../js/battle/CharacterCatalog.js');
+const { CharacterCatalogRuntime } = await import('../js/battle/CharacterCatalogRuntime.js');
 assert.equal(formatBcuId(0), '000');
 assert.equal(formatBcuId(30), '030');
 assert.equal(buildGeneratedDogSpecs({ start: 13, end: 15 }).length, 3);
@@ -404,7 +404,6 @@ console.log('check-battle-scene-stage-runtime-wiring: OK');
 
 const { ProductionRuntime } = await import('../js/battle/ProductionRuntime.js');
 const { BattleEconomy } = await import('../js/battle/BattleEconomy.js');
-const { FormationStore } = await import('../js/battle/FormationStore.js');
 const econ = new BattleEconomy({ startMoney: 100, maxMoney: 1000, incomePerSecond: 60 });
 econ.tick(1000);
 assert.equal(econ.money, 160);
@@ -427,5 +426,28 @@ const pr1 = ProductionRuntime.produce({ scene:{ battleState:'running' }, unitDef
 assert.equal(pr1.ok, true);
 const pr2 = ProductionRuntime.produce({ scene:{ battleState:'running' }, unitDef:{ slotId:'p1', cost:50, cooldownMs:1000 }, economy:pe });
 assert.equal(pr2.ok, false);
-const summary = FormationStore.getFormationSummary(FormationStore.getDefault());
+const summary = FormationStoreDyn.getFormationSummary(FormationStoreDyn.getDefault());
 assert.equal(summary.rows, 2); assert.equal(summary.cols, 5); assert.equal(summary.total, 10);
+
+const formationEditorSrc = fs.readFileSync('js/ui/FormationEditor.js', 'utf8');
+assert.ok(formationEditorSrc.includes('searchText'));
+assert.ok(formationEditorSrc.includes('generatedFilter'));
+assert.ok(formationEditorSrc.includes('data-generated'));
+assert.ok(formationEditorSrc.includes('formation-catalog-summary'));
+assert.ok(formationEditorSrc.includes("type='button'") || formationEditorSrc.includes('type="button"'));
+assert.ok(characterCatalogSrc.includes('isGeneratedCharacter'));
+assert.ok(formationStoreSrc.includes('generatedCount') || inspectorSrc.includes('generatedRosterCount'));
+assert.ok(inspectorSrc.includes('generatedSelectable'));
+
+const { getAvailableCharacters, getCharactersByFaction, getCharacterById, isGeneratedCharacter, buildProductionLineupEntryFromCharacter } = await import('../js/battle/CharacterCatalog.js');
+
+for (const id of ['dog-enemy-013','dog-enemy-030','cat-unit-013-f','cat-unit-030-f']) assert.ok(getCharacterById(id));
+assert.equal(isGeneratedCharacter('cat-unit-013-f'), true);
+assert.ok(getAvailableCharacters().some((c) => c.characterId === 'cat-unit-013-f'));
+assert.ok(getCharactersByFaction('cat').some((c) => c.characterId === 'cat-unit-013-f'));
+assert.ok(getCharactersByFaction('dog').some((c) => c.characterId === 'dog-enemy-013'));
+const sanitized = FormationStoreDyn.sanitize({ pages: [['cat-unit-013-f', null, null, null, null], [null, null, null, null, null]] });
+assert.equal(sanitized.pages[0][0], 'cat-unit-013-f');
+assert.ok(FormationStoreDyn.getFormationSummary(sanitized).generatedCount >= 1);
+assert.equal(buildProductionLineupEntryFromCharacter(getCharacterById('cat-unit-013-f')).characterId, 'cat-unit-013-f');
+assert.equal(CharacterCatalogRuntime.validateCatalog(getAvailableCharacters()).ok, true);

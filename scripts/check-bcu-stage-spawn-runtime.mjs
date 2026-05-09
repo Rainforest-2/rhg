@@ -107,6 +107,13 @@ ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercen
 rt.commitSpawn(ev[0],{random:()=>0});
 assert.equal(rt.rows[0].nextFrame,16);
 
+// 17I: respawn +1 parity option via row
+row=mkRow({count:0,isInfinite:true,respawnMinFrame:5,respawnMaxFrame:5,respawnAddsOneFrame:true});
+rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+rt.commitSpawn(ev[0],{random:()=>0});
+assert.equal(rt.rows[0].nextFrame,16);
+
 // 17H: default respawn behavior unchanged
 row=mkRow({count:0,isInfinite:true,respawnMinFrame:5,respawnMaxFrame:5});
 rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);

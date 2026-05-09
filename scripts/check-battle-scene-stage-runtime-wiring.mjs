@@ -37,5 +37,15 @@ assert.ok(runtime.includes('enemyBaseHp'), 'StageRuntime must expose enemyBaseHp
 assert.ok(spawnRuntime.includes('spawnResolveDebug'), 'spawn runtime must emit spawnResolveDebug');
 assert.ok(!adapter.includes('enemyBaseHpPercent: 100'), 'adapter must not hardcode enemyBaseHpPercent to 100');
 assert.ok(!wiring.includes('enemyBaseHpPercent: 100'), 'wiring must not hardcode enemyBaseHpPercent to 100');
+assert.ok(adapter.includes('killCounterByRowIndex = overrides.killCounterByRowIndex'), 'spawn context must prioritize killCounterByRowIndex override');
+assert.ok(adapter.includes('scene?.stageSpawnKillCounterByRowIndex'), 'spawn context must use scene kill counter ownership');
+assert.ok(adapter.includes('isGroupAllowed: groupAllowed.fn'), 'spawn context must provide group policy hook');
+assert.ok(wiring.includes('initializeStageSpawnKillCounters'), 'wiring must initialize kill counters');
+assert.ok(wiring.includes('stageSpawnKillCounterDecrement'), 'wiring must emit kill counter decrement debug event');
+assert.ok(wiring.includes('stageSpawnRowIndex'), 'wiring must tag spawned actors with row index metadata');
+assert.ok(wiring.includes("wrapMethod(proto, 'cleanupDead'"), 'wiring must hook cleanupDead for kill counter decrement');
+const inspector = fs.readFileSync('js/battle/DebugBattleInspector.js', 'utf8');
+assert.ok(inspector.includes('killCounters'), 'inspector must expose spawn kill counters');
+assert.ok(inspector.includes('rowsWithWarnings'), 'inspector must expose spawn row warnings');
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');

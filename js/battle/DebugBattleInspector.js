@@ -322,7 +322,16 @@ export class DebugBattleInspector {
         waitingForSpawnCommitCount,
         pendingSpawnCount,
         baseHpBlockedCount,
-        maxSlotBlockedCount
+        maxSlotBlockedCount,
+        killCounters: scene?.stageSpawnKillCounterByRowIndex || null,
+        groupPolicy: scene?.lastStageSpawnTickContext?.groupPolicySource === 'scene.isStageSpawnGroupAllowed'
+          ? 'scene-hook'
+          : (scene?.lastStageSpawnTickContext?.groupPolicySource ? 'default-allow' : 'not-wired'),
+        rowsWithWarnings: rows
+          .filter((r) => Array.isArray(r?.warnings) && r.warnings.length > 0)
+          .map((r) => ({ rowIndex: r.rowIndex, warnings: r.warnings, lastBlockedReason: r.lastBlockedReason })),
+        blockedByKillCount: rows.filter((r) => r?.lastBlockedReason === 'kill-count-trigger').length,
+        blockedByGroup: rows.filter((r) => r?.lastBlockedReason === 'group-gating').length
       },
       actors: {
         playerAlive: actorsAll.filter((a) => a?.isAlive?.() && a.side === 'dog-player').length,

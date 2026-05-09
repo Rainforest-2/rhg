@@ -5,6 +5,24 @@ function toFiniteNumber(value, fallback = null) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+
+function defaultIsGroupAllowed() {
+  return true;
+}
+
+function resolveSpawnGroupAllowed(scene, overrides = {}) {
+  if (typeof overrides?.isGroupAllowed === 'function') {
+    return { fn: overrides.isGroupAllowed, source: 'overrides.isGroupAllowed' };
+  }
+  if (typeof scene?.isStageSpawnGroupAllowed === 'function') {
+    return { fn: scene.isStageSpawnGroupAllowed.bind(scene), source: 'scene.isStageSpawnGroupAllowed' };
+  }
+  if (typeof scene?.stage?.runtime?.isGroupAllowed === 'function') {
+    return { fn: scene.stage.runtime.isGroupAllowed, source: 'stage.runtime.isGroupAllowed' };
+  }
+  return { fn: defaultIsGroupAllowed, source: 'default-allow' };
+}
+
 function getConfigMaxEnemyCount(scene, fallback = 15) {
   const n = toFiniteNumber(scene?.stage?.maxEnemyCount, null);
   if (Number.isFinite(n) && n > 0) return n;
@@ -60,6 +78,11 @@ export class StageRuntimeSceneAdapter {
 
   static buildSpawnTickContext(scene, overrides = {}) {
     const runtime = scene?.stage?.runtime || {};
+    const killCounterByRowIndex = overrides.killCounterByRowIndex
+      || scene?.stageSpawnKillCounterByRowIndex
+      || scene?.stage?.runtime?.killCounterByRowIndex
+      || {};
+    const groupAllowed = resolveSpawnGroupAllowed(scene, overrides);
     return {
       logicFrame: scene?.logicFrame,
       aliveEnemyCount: Array.isArray(scene?.actors)
@@ -74,6 +97,15 @@ export class StageRuntimeSceneAdapter {
       enemySpawnWorldX: runtime.enemySpawnWorldX,
       bossSpawnWorldX: runtime.bossSpawnWorldX,
       random: Math.random,
+      killCounterByRowIndex,
+      isGroupAllowed: groupAllowed.fn,
+      groupPolicySource: groupAllowed.source,
+      contextDebug: {
+        killCounterSource: overrides.killCounterByRowIndex ? 'overrides.killCounterByRowIndex'
+          : (scene?.stageSpawnKillCounterByRowIndex ? 'scene.stageSpawnKillCounterByRowIndex'
+            : (scene?.stage?.runtime?.killCounterByRowIndex ? 'stage.runtime.killCounterByRowIndex' : 'empty-object')),
+        groupAllowedSource: groupAllowed.source
+      },
       ...overrides
     };
   }

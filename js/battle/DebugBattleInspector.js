@@ -2,6 +2,7 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BattleAttackResolver } from './BattleAttackResolver.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
+import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 
 export class DebugBattleInspector {
   static enabled(scene) {
@@ -141,6 +142,8 @@ export class DebugBattleInspector {
       this.timingLine(timings.enemy, 'cat cycle'),
       `dog wait state:${waitActors.player?.state || '-'} remain:${this.fmt(waitActors.player?.remainingMs)}ms ready:${waitActors.player?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.player?.setCount)} src:${waitActors.player?.source || '-'}`,
       `cat wait state:${waitActors.enemy?.state || '-'} remain:${this.fmt(waitActors.enemy?.remainingMs)}ms ready:${waitActors.enemy?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.enemy?.setCount)} src:${waitActors.enemy?.source || '-'}`,
+      `atk timeline dog hits:${this.fmt(info?.attackTimeline?.actors?.player?.resolvedHitCount)}/${this.fmt(info?.attackTimeline?.actors?.player?.totalHitCount)} due:${this.fmt(info?.attackTimeline?.actors?.player?.dueHitCount)} state:${info?.attackTimeline?.actors?.player?.state || '-'}`,
+      `atk timeline cat hits:${this.fmt(info?.attackTimeline?.actors?.enemy?.resolvedHitCount)}/${this.fmt(info?.attackTimeline?.actors?.enemy?.totalHitCount)} due:${this.fmt(info?.attackTimeline?.actors?.enemy?.dueHitCount)} state:${info?.attackTimeline?.actors?.enemy?.state || '-'}`,
       `bases dog posBcu:${this.fmt(cc.bases?.player?.posBcu)} front:${this.fmt(cc.bases?.player?.frontX)} enemy posBcu:${this.fmt(cc.bases?.enemy?.posBcu)} front:${this.fmt(cc.bases?.enemy?.frontX)}`,
       `castle req/res:${castle.requestedCastleId ?? '-'}=>${castle.resolvedCastleId ?? '-'} group:${castle.castleGroupName || '-'} local:${castle.localCastleId ?? '-'} fallback:${castle.fallbackReason ?? '-'}`,
       `castle path:${castle.imagePath || '-'} src:${castle.source || '-'} kind:${castle.assetKind || '-'}`,
@@ -300,6 +303,23 @@ export class DebugBattleInspector {
           player: describeTiming(firstAliveBySide.player),
           enemy: describeTiming(firstAliveBySide.enemy)
         }
+      },
+      attackTimeline: {
+        actors: {
+          player: firstAliveBySide.player ? {
+            id: firstAliveBySide.player.instanceId || firstAliveBySide.player.slotId || firstAliveBySide.player.label || null,
+            side: firstAliveBySide.player.side || null,
+            ...BattleAttackTimeline.describe(firstAliveBySide.player, nowMs),
+            events: (firstAliveBySide.player.attackProfile?.events || []).map((e, i) => ({ key: e?.key || `hit-${i}`, hitIndex: e?.hitIndex ?? i, atMs: e?.atMs ?? null, damage: e?.damage ?? null, targetMode: e?.targetMode || null, attackKind: e?.attackKind || null, abilityMappingStatus: e?.abilityMappingStatus || null }))
+          } : null,
+          enemy: firstAliveBySide.enemy ? {
+            id: firstAliveBySide.enemy.instanceId || firstAliveBySide.enemy.slotId || firstAliveBySide.enemy.label || null,
+            side: firstAliveBySide.enemy.side || null,
+            ...BattleAttackTimeline.describe(firstAliveBySide.enemy, nowMs),
+            events: (firstAliveBySide.enemy.attackProfile?.events || []).map((e, i) => ({ key: e?.key || `hit-${i}`, hitIndex: e?.hitIndex ?? i, atMs: e?.atMs ?? null, damage: e?.damage ?? null, targetMode: e?.targetMode || null, attackKind: e?.attackKind || null, abilityMappingStatus: e?.abilityMappingStatus || null }))
+          } : null
+        },
+        recentEvents: (scene?.debugEvents || []).filter((e) => String(e?.type || '').startsWith('attackTimeline') || String(e?.type || '').startsWith('attackTargets')).slice(-8)
       },
       attackWait: {
         actors: {

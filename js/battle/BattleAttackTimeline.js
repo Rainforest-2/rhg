@@ -132,6 +132,29 @@ export class BattleAttackTimeline {
     return this.getElapsedMs(actor, nowMs) >= this.getAttackEndMs(actor);
   }
 
+  static describe(actor, nowMs = 0) {
+    const profile = this.getProfile(actor);
+    const events = Array.isArray(profile?.events) ? profile.events : [];
+    const due = this.getDueHitEvents(actor, nowMs);
+    const waitState = this.getAttackWaitState(actor, nowMs);
+    const resolvedKeys = actor?.resolvedAttackEventKeys instanceof Set ? [...actor.resolvedAttackEventKeys] : [];
+    return {
+      state: actor?.state || null,
+      attackStartedAtMs: Number.isFinite(actor?.attackStartedAtMs) ? actor.attackStartedAtMs : null,
+      attackElapsedMs: this.getElapsedMs(actor, nowMs),
+      attackEndMs: this.getAttackEndMs(actor),
+      attackComplete: this.isAttackComplete(actor, nowMs),
+      dueHitCount: due.length,
+      resolvedHitCount: resolvedKeys.length,
+      totalHitCount: events.length,
+      resolvedKeys,
+      waitState,
+      bcuAttackIntervalMs: this.getBcuAttackIntervalMs(actor),
+      bcuAttackIntervalFrames: profile?.bcuAttackIntervalFrames ?? profile?.bcuTiming?.bcuAttackIntervalFrames ?? null,
+      source: profile?.source || null
+    };
+  }
+
   static enterAttackWait(actor, { nowMs = 0, reason = 'attack-complete' } = {}) {
     if (!actor) return;
 

@@ -167,4 +167,41 @@ assert.equal(desc.scaledHp, 2500);
 assert.equal(desc.baseDamage, 200);
 assert.equal(desc.scaledDamage, 300);
 
+
+const attackTimelineSrc = fs.readFileSync('js/battle/BattleAttackTimeline.js', 'utf8');
+const attackProfileSrc = fs.readFileSync('js/battle/BattleAttackProfile.js', 'utf8');
+const attackResolverSrc = fs.readFileSync('js/battle/BattleAttackResolver.js', 'utf8');
+const battleSceneSrc = fs.readFileSync('js/battle/BattleScene.js', 'utf8');
+const debugInspectorSrc = fs.readFileSync('js/battle/DebugBattleInspector.js', 'utf8');
+assert.ok(attackTimelineSrc.includes('getDueHitEvents'));
+assert.ok(attackTimelineSrc.includes('markHitResolved'));
+assert.ok(attackTimelineSrc.includes('beginAttack'));
+assert.ok(!attackTimelineSrc.includes('DamageCalculator'));
+assert.ok(!attackTimelineSrc.includes('BattleAttackResolver'));
+assert.ok(!attackResolverSrc.includes("from './DamageCalculator.js'"));
+assert.ok(attackProfileSrc.includes('stats.attackHits'));
+assert.ok(attackProfileSrc.includes('hitIndex') && attackProfileSrc.includes('atMs') && attackProfileSrc.includes('attackKind') && attackProfileSrc.includes('targetMode'));
+assert.ok(battleSceneSrc.includes('getDueHitEvents'));
+assert.ok(battleSceneSrc.includes('markHitResolved'));
+assert.ok(debugInspectorSrc.includes('attackTimeline'));
+
+const { BattleAttackTimeline } = await import('../js/battle/BattleAttackTimeline.js');
+const { BattleAttackProfile } = await import('../js/battle/BattleAttackProfile.js');
+const actor = { fps: 30, rawStats: { attackHits: [
+  { hitIndex: 0, damage: 100, preFrames: 3, preFramesAbsolute: 3, ldStartRaw: 0, ldRangeRaw: 0 },
+  { hitIndex: 1, damage: 50, preFrames: 6, preFramesAbsolute: 6, ldStartRaw: 0, ldRangeRaw: 0 }
+], isRange: false, detectionRange: 100, width: 20, tbaFrames: 30, abilityModel: null },
+ timingParity: { enabled: true, disableAttackPhaseMultiplier: true, disableMinAttackStartup: true, disableMinAttackAnim: true },
+ attackAnimDurationMs: 0, attackWaitMs: 1000, attackPhaseTimeMultiplier: 1,
+ setState(state) { this.state = state; }, setAnimation() {}, applyCurrentAnimationFrame() {} };
+const p2 = BattleAttackProfile.ensure(actor);
+assert.equal(p2.events.length, 2);
+BattleAttackTimeline.beginAttack(actor, { nowMs: 0 });
+assert.equal(BattleAttackTimeline.getDueHitEvents(actor, 0).length, 0);
+const due1 = BattleAttackTimeline.getDueHitEvents(actor, 100);
+assert.equal(due1.length, 1); assert.equal(due1[0].event.hitIndex, 0); BattleAttackTimeline.markHitResolved(actor, due1[0].key);
+const due2 = BattleAttackTimeline.getDueHitEvents(actor, 200);
+assert.equal(due2.length, 1); assert.equal(due2[0].event.hitIndex, 1); BattleAttackTimeline.markHitResolved(actor, due2[0].key);
+assert.equal(BattleAttackTimeline.getDueHitEvents(actor, 9999).length, 0);
+
 console.log('check-battle-scene-stage-runtime-wiring: OK');

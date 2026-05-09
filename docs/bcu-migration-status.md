@@ -3,7 +3,7 @@
 ## Last updated
 - date: 2026-05-09 (UTC)
 - commit: (working tree)
-- task: Task 6-FINAL (ActorStatsModel / stage magnification contract)
+- task: Task 7-FINAL (AttackTimeline / hit timing / target capture contract)
 
 ## Completed
 | Task | Area | Files | What changed | Evidence |
@@ -20,9 +20,16 @@
 | Task 5-FINAL | DebugBattleInspector tick order diagnostics | `js/battle/DebugBattleInspector.js` | Added `tickOrder` diagnostics (`currentTickPhase`, `lastFramePhaseOrder`, expected order, spawn-before-actor). | wiring check assertions + debug DOM line. |
 | Task 5-FINAL | Node checks for tick order contract | `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Added static/dynamic checks for frame clock and tick phase contract; render/tick separation check retained. | Node pass results below. |
 
+- BattleAttackTimeline contract finalized
+- BattleAttackProfile hit event shape finalized
+- BattleAttackResolver target capture responsibility fixed
+- BattleScene attack flow traceable through due-hit/capture/damage/mark-resolved
+- DebugBattleInspector attack timeline diagnostics
+- Node checks for attack timeline contract
+
 ## Partial
 - Ability/proc application remains later task
-- DamageCalculator integration remains later task
+- DamageCalculator full integration remains Task 8
 - Browser manual validation if not run
 - BattleScene monolith responsibility
 
@@ -45,3 +52,10 @@
 - result: pass
 - command: `node scripts/check-bcu-stage-spawn-runtime.mjs`
 - result: pass
+
+- [ ] debugBattle=1 で attackTimeline が見える
+- [ ] multi-hit actor の totalHitCount / resolvedHitCount が見える
+- [ ] due hit ごとに attackTargetsCaptured / attackTimelineHitResolved が出る
+- [ ] markHitResolved が二重実行されない
+- [ ] damage が hit timing 前に入らない
+- [ ] ability/proc は partial として扱われている

@@ -4,6 +4,8 @@ import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.j
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
 import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { AbilityModel } from './AbilityModel.js';
+import { KBRuntime } from './KBRuntime.js';
+import { EffectRuntime } from './EffectRuntime.js';
 
 export class DebugBattleInspector {
   static enabled(scene) {
@@ -153,6 +155,8 @@ export class DebugBattleInspector {
       `cam invariant stageLenMatch:${info?.cameraInvariants?.stageLenMatchesRuntime === true ? 'true' : (info?.cameraInvariants?.stageLenMatchesRuntime === false ? 'false' : '-')} roundTrip:${info?.cameraInvariants?.projectionRoundTripOk === true ? 'true' : (info?.cameraInvariants?.projectionRoundTripOk === false ? 'false' : '-')} vis:${this.fmt(info?.cameraInvariants?.visibleWorldRange?.left)}..${this.fmt(info?.cameraInvariants?.visibleWorldRange?.right)}`,
       `tick phases enemyBeforeActor:${info?.tickOrder?.enemySpawnBeforeActorUpdate === true ? 'true' : (info?.tickOrder?.enemySpawnBeforeActorUpdate === false ? 'false' : '-')} current:${info?.tickOrder?.currentTickPhase || '-'} trace:${this.fmt(info?.tickOrder?.traceLength)}`,
       `damage/proc ability rawOnly:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.rawOnly || 0)} partial:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.partial || 0)} procSkipped:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procSkipped || 0)}`,
+      `kb active:${this.fmt(info?.kbRuntime?.activeKnockbacks || 0)} dead:${this.fmt(info?.kbRuntime?.dyingOrDead || 0)} removable:${this.fmt(info?.kbRuntime?.removable || 0)}`,
+      `effects active:${this.fmt(info?.effectRuntime?.activeCount || 0)} finished:${this.fmt(info?.effectRuntime?.finishedCount || 0)}`,
       `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
       `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
       `note: castle body uses resolved castle crop as base combat body. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
@@ -257,6 +261,10 @@ export class DebugBattleInspector {
         examples.push({ slotId: tpl?.unitDef?.slotId ?? null, actorId: null, rowIndex: dbg?.rowIndex ?? mag?.rowIndex ?? null, enemyId: dbg?.enemyId ?? mag?.enemyId ?? tpl?.unitDef?.statsId ?? null, rawEnemyId: dbg?.rawEnemyId ?? mag?.rawEnemyId ?? null, sourceEnemyId: dbg?.sourceEnemyId ?? mag?.sourceEnemyId ?? null, baseHp: dbg?.baseHp ?? tpl?.baseStats?.hp ?? null, scaledHp: dbg?.scaledHp ?? tpl?.stats?.hp ?? null, baseDamage: dbg?.baseDamage ?? tpl?.baseStats?.damage ?? null, scaledDamage: dbg?.scaledDamage ?? tpl?.stats?.damage ?? null, magnification: dbg?.magnification ?? mag?.magnification ?? null, hpMagnification: dbg?.hpMagnification ?? mag?.hpMagnification ?? null, attackMagnification: dbg?.attackMagnification ?? mag?.attackMagnification ?? null, attackHits: Array.isArray(dbg?.attackHits) ? dbg.attackHits : [] });
       }
     }
+    const kbActors = actorsAll.map((a) => KBRuntime.describeActor(a)).filter(Boolean);
+    const kbRecent = (scene?.debugEvents || []).filter((e) => String(e?.type || '').startsWith('kbRuntime')).slice(-10);
+    const effectSummary = EffectRuntime.describeEffects(scene?.effects || []);
+    const effectRecent = (scene?.debugEvents || []).filter((e) => String(e?.type || '').startsWith('effectRuntime')).slice(-10);
     const info = {
       frame: scene?.logicFrame ?? Math.floor((scene?.timeMs || 0) / (1000 / 30)),
       timeMs: scene?.timeMs || 0,
@@ -511,6 +519,8 @@ export class DebugBattleInspector {
         };
       })(),
 
+      kbRuntime: { actors: kbActors, activeKnockbacks: kbActors.filter((a) => a?.state === 'knockback').length, dyingOrDead: kbActors.filter((a) => a?.state === 'dead' || a?.deathPending || a?.deathAfterKnockback).length, removable: kbActors.filter((a) => a?.isRemovable).length, recentEvents: kbRecent },
+      effectRuntime: { ...effectSummary, recentEvents: effectRecent },
       warnings: [...(scene?.debugWarnings || [])]
     };
     this.updateDomOverlay(scene, info);

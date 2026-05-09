@@ -354,6 +354,7 @@ export class BattleActor {
     if (kb.kbeffRuntime && useKbeffParent) { this.kbeffRuntime = kb.kbeffRuntime; this.kbeffRuntime.reset(); if (kb.kbeffInitialUpdate !== false) this.kbeffRuntime.stepFrame(); this.kbeffEnabled = true; this.kbeffType = this.kbBcuType; this.kbeffSource = 'bcu-a-kb-kbeff-visual-parity-v0116'; this.updateKbeffTransform(); }
     this.lastKnockbackDebug = { serial: this.knockbackSerial, type: this.knockbackType, reason: this.knockbackReason, fromX: this.knockbackFromX, toX: this.knockbackToX, distancePx: distance, durationMs: this.knockbackPositionDurationMs, combatEasing: this.kbCombatEasing, visualEasing: this.kbVisualEasing, visualOffsetYMaxPx: this.kbVisualOffsetYMaxPx, visualBackSwingPx: this.kbVisualBackSwingPx, visualScalePeak: this.kbVisualScalePeak, deathAfterKnockback: this.deathAfterKnockback, targetableDuringKb: this.kbTargetable, touchableDuringKb: this.kbTouchable, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames, bcuDistance: kb.bcuDistance ?? null, framesTotal: this.kbFramesTotal, moveFramesTotal: this.kbMoveFramesTotal, moveMode: this.kbMoveMode, distanceSource: this.kbDistanceSource, knockbackDistanceToPx: this.kbDistanceScale };
     if (useKbeffParent) { if (this.activeAnimRole === 'attack') { const fallbackAnim = this.idleAnimId || this.moveAnimId || this.currentAnimId; this.setAnimation(fallbackAnim, 'knockback-kbeff-base', true); } else { this.activeAnimRole = 'knockback-kbeff-base'; } this.applyCurrentAnimationFrame(); } else if (useUnitKbAnim) { this.setAnimation(this.knockbackAnimId, 'knockback', true); this.applyCurrentAnimationFrame(); } else { this.applyCurrentAnimationFrame(); }
+    this.lastKbRuntimeDebug = { source: 'BattleActor.startKnockback', serial: this.knockbackSerial, state: this.state, type: this.knockbackType, reason: this.knockbackReason, bcuType: this.kbBcuType, specType: this.kbSpecType, framesTotal: this.kbFramesTotal, frameIndex: this.kbFrameIndex, distanceWorld: this.kbDistanceTotalWorld, distancePx: this.kbDistanceTotalPx, deathAfterKnockback: this.deathAfterKnockback, targetableDuringKb: this.kbTargetable, touchableDuringKb: this.kbTouchable, kbeffEnabled: this.kbeffEnabled, kbeffType: this.kbeffType, kbeffSource: this.kbeffSource };
   }
 
   stepKnockbackFrame() {
@@ -366,6 +367,7 @@ export class BattleActor {
     if (this.kbeffEnabled && this.kbeffRuntime) { this.kbeffRuntime.stepFrame(); this.updateKbeffTransform(); }
     this.lastKnockbackFrameDebug = { frameIndex: this.kbFrameIndex, moveFrameIndex: this.kbFrameIndex, framesRemaining: this.kbFramesRemaining, moveFramesRemaining: this.kbMoveFramesRemaining, moved, x: this.x, remainingDistancePx: this.kbRemainingDistancePx, progress, moveMode: this.kbMoveMode, bcuType: this.kbBcuType, bcuTimeFrames: this.kbBcuTimeFrames, kbeffFrame: this.kbeffFrame };
     const done = this.kbMotionFrameIndex >= this.kbMotionFramesTotal;
+    this.lastKbRuntimeFrameDebug = { source: 'BattleActor.stepKnockbackFrame', done, frameIndex: this.kbFrameIndex, framesTotal: this.kbFramesTotal, moved, x: this.x, remainingDistancePx: this.kbRemainingDistancePx };
     return { active: !done, done, moved, progress };
   }
 
@@ -398,6 +400,7 @@ export class BattleActor {
     this.clearPendingDamage();
     if (kbRequest) { this.startKnockback(kbRequest); result.knockedBack = true; }
     else if (deathReached) { this.enterDeadState(nowMs); result.dead = true; }
+    this.lastKbRuntimePostDamageDebug = { source: 'BattleActor.resolvePostDamage', serial: this.damageResolveSerial, damaged: result.damaged, dead: result.dead, deathPending: result.deathPending, knockedBack: result.knockedBack, hp: this.hp, maxHp: this.maxHp, knockbackType: this.knockbackType, knockbackReason: this.knockbackReason };
     return result;
   }
 

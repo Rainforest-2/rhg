@@ -3,7 +3,7 @@
 ## Last updated
 - date: 2026-05-09 (UTC)
 - commit: (working tree)
-- task: Task 8-FINAL (DamageCalculator / AbilityModel / ProcResolver foundation)
+- task: Task 9-FINAL (KBRuntime / EffectRuntime contract)
 
 ## Completed
 | Task | Area | Files | What changed | Evidence |
@@ -19,7 +19,17 @@
 | Task 8-FINAL | DebugBattleInspector damage/proc diagnostics | `js/battle/DebugBattleInspector.js`, `js/battle/BattleScene.js` | Added damage/proc resolver diagnostics, recent proc events, ability status examples, and procResolved debug event hook. | wiring check static assertions pass. |
 | Task 8-FINAL | Node checks for damage/ability/proc contract | `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Added static and dynamic assertions for AbilityModel/DamageAbilityResolver/ProcResolver/DamageCalculator/Inspector contracts. | command pass. |
 
+
+| Task 9-FINAL | KB runtime facade | `js/battle/KBRuntime.js`, `js/battle/BattleActor.js`, `js/battle/BattleScene.js` | KBRuntime facade/contract added; BattleActor KB debug shape aligned; BattleScene post-damage path traced via KBRuntime. | wiring check pass. |
+| Task 9-FINAL | Effect runtime contract | `js/battle/EffectRuntime.js`, `js/battle/BattleEffect.js`, `js/battle/BattleScene.js` | EffectRuntime added for world-coordinate effect create/tick/cleanup; BattleEffect source/debug/world coordinates added; BattleScene effect runtime wiring added. | wiring check pass. |
+| Task 9-FINAL | Inspector and checks | `js/battle/DebugBattleInspector.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | kbRuntime/effectRuntime diagnostics and Node contract assertions added. | wiring check pass. |
+
 ## Partial
+- Full BCU wave/surge/effect parity
+- Full proc-driven KB/freeze/slow/weaken application
+- Boss shockwave full runtime if not actually implemented
+- Browser manual validation if not run
+- BattleScene monolith responsibility
 - Full BCU ability semantic mapping
 - Full ProcResolver effects application
 - Trait-based damage modifiers beyond debug opt-in
@@ -29,6 +39,8 @@
 
 ## Unresolved
 - Browser manual validation by Codex
+- Full BCU KB/effect visual parity if not manually verified
+- ProcResolver non-damage effects still no-op unless unchanged
 - Full BCU ability/proc parity is not implemented
 - Raw ABI bit-to-semantic mapping is not verified
 
@@ -56,3 +68,14 @@
 - result: pass
 - command: `node scripts/check-stage-asset-tracing.mjs`
 - result: pass
+
+
+### Task 9-FINAL
+- [ ] debugBattle=1 で kbRuntime が見える
+- [ ] debugBattle=1 で effectRuntime が見える
+- [ ] HP KB で kbFrameIndex / kbFramesTotal が進む
+- [ ] final KB 後に death animation / cleanup が維持される
+- [ ] kbeffEnabled / kbeffFrame が表示される場合がある
+- [ ] effect active/finished count が見える
+- [ ] wave/surge/freeze/slow は未実装/no-op として扱われている
+- [ ] damage/proc の Task 8 contract が壊れていない

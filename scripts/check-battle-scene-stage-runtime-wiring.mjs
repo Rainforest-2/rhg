@@ -17,7 +17,11 @@ const files = {
   abilityModel: 'js/battle/AbilityModel.js',
   damageCalculator: 'js/battle/DamageCalculator.js',
   damageAbilityResolver: 'js/battle/DamageAbilityResolver.js',
-  procResolver: 'js/battle/ProcResolver.js'
+  procResolver: 'js/battle/ProcResolver.js',
+  kbRuntime: 'js/battle/KBRuntime.js',
+  effectRuntime: 'js/battle/EffectRuntime.js',
+  battleEffect: 'js/battle/BattleEffect.js',
+  battleScene: 'js/battle/BattleScene.js'
 };
 
 for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path} must exist`);
@@ -82,6 +86,21 @@ assert.ok(damageAbilityResolverSrc.includes('implementationStatus'));
 assert.ok(abilityModelSrc.includes('ABILITY_CATALOG') || abilityModelSrc.includes('getAbilityCatalog'));
 assert.ok(abilityModelSrc.includes('describeImplementationStatus'));
 assert.ok(inspectorSrc.includes('damageAndProc'));
+
+const kbRuntimeSrc = fs.readFileSync(files.kbRuntime, 'utf8');
+const effectRuntimeSrc = fs.readFileSync(files.effectRuntime, 'utf8');
+const battleEffectSrc = fs.readFileSync(files.battleEffect, 'utf8');
+const battleSceneSrc2 = fs.readFileSync(files.battleScene, 'utf8');
+assert.ok(kbRuntimeSrc.includes('getActorKbState'));assert.ok(kbRuntimeSrc.includes('describeActor'));assert.ok(kbRuntimeSrc.includes('resolvePostDamage'));assert.ok(kbRuntimeSrc.includes('startKnockback'));assert.ok(kbRuntimeSrc.includes('tickKnockback'));assert.ok(kbRuntimeSrc.includes('shouldCleanup'));
+assert.ok(effectRuntimeSrc.includes('createHitEffect'));assert.ok(effectRuntimeSrc.includes('tickEffects'));assert.ok(effectRuntimeSrc.includes('cleanupEffects'));assert.ok(effectRuntimeSrc.includes('tickAndCleanup'));assert.ok(effectRuntimeSrc.includes('describeEffects'));
+assert.ok(battleEffectSrc.includes('source'));assert.ok(battleEffectSrc.includes('effectRuntimeDebug'));assert.ok(battleEffectSrc.includes('worldX'));assert.ok(battleEffectSrc.includes('worldY'));
+assert.ok(battleSceneSrc2.includes("from './KBRuntime.js'"));
+assert.ok(battleSceneSrc2.includes("from './EffectRuntime.js'"));
+assert.ok(inspectorSrc.includes('kbRuntime'));assert.ok(inspectorSrc.includes('effectRuntime'));
+assert.ok(procResolverSrc.includes('wave') && procResolverSrc.includes('implemented: false'));
+assert.ok(!kbRuntimeSrc.includes('BattleScene'));assert.ok(!kbRuntimeSrc.includes('Renderer'));
+assert.ok(!effectRuntimeSrc.includes('BattleCamera'));assert.ok(!effectRuntimeSrc.includes('Renderer'));
+
 
 assert.ok(inspectorSrc.includes('ActorStatsModel') || inspectorSrc.includes('actorStatsModelDebug') || inspectorSrc.includes('statsModelDebug'), 'DebugBattleInspector must reference ActorStatsModel contract/debug');
 
@@ -254,5 +273,22 @@ assert.equal(calcBase.finalDamage, 100);
 assert.ok(calcBase.proc);
 const calcCrit = DamageCalculator.calculate({ attacker: { damage: 100 }, event: { damage: 100, abilities: { critical: true } }, context: { damageAbilityResolver: { enabled: true, allowCritical: true, criticalMultiplier: 2 } } });
 assert.equal(calcCrit.finalDamage, 200);
+
+
+const { KBRuntime } = await import('../js/battle/KBRuntime.js');
+const { EffectRuntime } = await import('../js/battle/EffectRuntime.js');
+const { BattleEffect } = await import('../js/battle/BattleEffect.js');
+let started = 0; let stepped = 0; let removableCalls = 0;
+const fake = { state: 'move', hp: 10, maxHp: 10, startKnockback(){ started += 1; this.state='knockback'; return { ok:true }; }, stepKnockbackFrame(){ stepped += 1; this.state='move'; return { done:true }; }, resolvePostDamage(){ return { damaged:true, dead:false, knockedBack:false }; }, isRemovable(){ removableCalls += 1; return true; }, isAlive(){ return true; }, isTargetable(){ return true; }, isTouchable(){ return true; }, isRenderable(){ return true; } };
+KBRuntime.startKnockback(fake, {}); assert.equal(started, 1);
+KBRuntime.tickKnockback(fake, { dtMs: 10 }); assert.equal(stepped, 1);
+fake.state = 'move'; KBRuntime.tickKnockback(fake, { dtMs: 10 }); assert.equal(stepped, 1);
+assert.equal(KBRuntime.shouldCleanup(fake, 0), true); assert.ok(removableCalls > 0);
+const descKb = KBRuntime.describeActor(fake); assert.equal(descKb.state, 'move'); assert.equal(descKb.hp, 10);
+const effect = EffectRuntime.createHitEffect({ id:'fx-1', x:100, y:200, asset:{ image:null, parts:[{name:'p0'}] } });
+assert.ok(effect instanceof BattleEffect); assert.equal(effect.x, 100); assert.equal(effect.worldX, 100);
+EffectRuntime.tickEffects([effect], 9999); assert.ok(effect.elapsedMs > 0);
+const cleaned = EffectRuntime.cleanupEffects([effect]); assert.equal(cleaned.effects.length, 0); assert.equal(cleaned.removed, 1);
+const tnc = EffectRuntime.tickAndCleanup([EffectRuntime.createHitEffect({ id:'fx-2', x:1, y:2 })], 1); assert.ok(Number.isFinite(tnc.active)); assert.ok(Number.isFinite(tnc.removed));
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');

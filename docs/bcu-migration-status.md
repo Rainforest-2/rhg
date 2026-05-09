@@ -3,7 +3,7 @@
 ## Last updated
 - date: 2026-05-09 (UTC)
 - commit: (working tree)
-- task: Task 5-FINAL (BattleFrameClock / tick order phase contract)
+- task: Task 6-FINAL (ActorStatsModel / stage magnification contract)
 
 ## Completed
 | Task | Area | Files | What changed | Evidence |
@@ -21,26 +21,22 @@
 | Task 5-FINAL | Node checks for tick order contract | `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Added static/dynamic checks for frame clock and tick phase contract; render/tick separation check retained. | Node pass results below. |
 
 ## Partial
-- Browser manual validation (Codex run not executed in this task)
-- BCU PC exact +200 render offset parity (not fully re-audited in this task)
-- Proc phase is placeholder (trace only; resolver remains partial)
-- Base post update phase is placeholder (trace only)
+- Ability/proc application remains later task
+- DamageCalculator integration remains later task
+- Browser manual validation if not run
 - BattleScene monolith responsibility
 
 ## Unresolved
 - Browser manual validation by Codex
+- Only unresolved stats items pending browser verification
 
 ## Manual browser check
 - [ ] `?debugBattle=1`
-- [ ] debugBattle=1 で tick phases が見える
-- [ ] enemySpawnBeforeActorUpdate が true
-- [ ] currentTickPhase が tick 終了後 null
-- [ ] render 中に logicFrame が進まない
-- [ ] effects / cleanup が二重実行されていない
-- [ ] spawnWorldXSource は tick order 整理後も残る
-- [ ] stageLen does not change with zoom
-- [ ] actor.x does not change with zoom
-- [ ] base.x does not change with zoom
+- [ ] debugBattle=1 で statsScaling が見える
+- [ ] stage-scaled enemy actor の baseHp/scaledHp が見える
+- [ ] stage-scaled enemy actor の baseDamage/scaledDamage が見える
+- [ ] rowIndex / hpMagnification / attackMagnification が見える
+- [ ] ability/proc は未適用/partial として扱われている
 
 ## Node checks
 - command: `node scripts/check-stage-asset-tracing.mjs`

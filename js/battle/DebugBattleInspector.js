@@ -237,11 +237,20 @@ export class DebugBattleInspector {
       };
     };
     const examples = [];
-    for (const tpl of templates) {
+    for (const actor of actorsAll) {
       if (examples.length >= 5) break;
-      const mag = tpl?.stats?.stageMagnification;
-      if (!mag) continue;
-      examples.push({ slotId: tpl?.unitDef?.slotId ?? null, rowIndex: mag?.rowIndex ?? null, enemyId: mag?.enemyId ?? tpl?.unitDef?.statsId ?? null, baseHp: tpl?.baseStats?.hp ?? null, scaledHp: tpl?.stats?.hp ?? null, baseDamage: tpl?.baseStats?.damage ?? null, scaledDamage: tpl?.stats?.damage ?? null, hpMagnification: mag?.hpMagnification ?? null, attackMagnification: mag?.attackMagnification ?? null });
+      const dbg = actor?.actorStatsModelDebug || actor?.statScalingDebug;
+      if (!dbg) continue;
+      examples.push({ slotId: actor?.slotId ?? null, actorId: actor?.id ?? actor?.instanceId ?? null, rowIndex: dbg?.rowIndex ?? dbg?.stageMagnification?.rowIndex ?? null, enemyId: dbg?.enemyId ?? dbg?.stageMagnification?.enemyId ?? null, rawEnemyId: dbg?.rawEnemyId ?? dbg?.stageMagnification?.rawEnemyId ?? null, sourceEnemyId: dbg?.sourceEnemyId ?? dbg?.stageMagnification?.sourceEnemyId ?? null, baseHp: dbg?.baseHp ?? null, scaledHp: dbg?.scaledHp ?? null, baseDamage: dbg?.baseDamage ?? null, scaledDamage: dbg?.scaledDamage ?? null, magnification: dbg?.magnification ?? dbg?.stageMagnification?.magnification ?? null, hpMagnification: dbg?.hpMagnification ?? dbg?.stageMagnification?.hpMagnification ?? null, attackMagnification: dbg?.attackMagnification ?? dbg?.stageMagnification?.attackMagnification ?? null, attackHits: Array.isArray(dbg?.attackHits) ? dbg.attackHits : [] });
+    }
+    if (examples.length === 0) {
+      for (const tpl of templates) {
+        if (examples.length >= 5) break;
+        const dbg = tpl?.statsModelDebug || tpl?.stats?.statsModelDebug;
+        const mag = tpl?.stats?.stageMagnification;
+        if (!dbg && !mag) continue;
+        examples.push({ slotId: tpl?.unitDef?.slotId ?? null, actorId: null, rowIndex: dbg?.rowIndex ?? mag?.rowIndex ?? null, enemyId: dbg?.enemyId ?? mag?.enemyId ?? tpl?.unitDef?.statsId ?? null, rawEnemyId: dbg?.rawEnemyId ?? mag?.rawEnemyId ?? null, sourceEnemyId: dbg?.sourceEnemyId ?? mag?.sourceEnemyId ?? null, baseHp: dbg?.baseHp ?? tpl?.baseStats?.hp ?? null, scaledHp: dbg?.scaledHp ?? tpl?.stats?.hp ?? null, baseDamage: dbg?.baseDamage ?? tpl?.baseStats?.damage ?? null, scaledDamage: dbg?.scaledDamage ?? tpl?.stats?.damage ?? null, magnification: dbg?.magnification ?? mag?.magnification ?? null, hpMagnification: dbg?.hpMagnification ?? mag?.hpMagnification ?? null, attackMagnification: dbg?.attackMagnification ?? mag?.attackMagnification ?? null, attackHits: Array.isArray(dbg?.attackHits) ? dbg.attackHits : [] });
+      }
     }
     const info = {
       frame: scene?.logicFrame ?? Math.floor((scene?.timeMs || 0) / (1000 / 30)),
@@ -443,7 +452,7 @@ export class DebugBattleInspector {
         renderOutsideSimulation: true,
         traceLength: Array.isArray(scene?.tickPhaseTrace) ? scene.tickPhaseTrace.length : 0
       },
-      statsScaling: { stageScaledActors, stageScaledTemplates, examples },
+      statsScaling: { contract: 'ActorStatsModel', stageScaledActors, stageScaledTemplates, examples, warnings: examples.flatMap((e) => Array.isArray(e?.warnings) ? e.warnings : []) },
       warnings: [...(scene?.debugWarnings || [])]
     };
     this.updateDomOverlay(scene, info);

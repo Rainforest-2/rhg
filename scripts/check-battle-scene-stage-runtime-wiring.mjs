@@ -2,13 +2,18 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { BattleCamera } from '../js/battle/BattleCamera.js';
 import { BattleFrameClock } from '../js/battle/BattleFrameClock.js';
+import { ActorStatsModel } from '../js/battle/ActorStatsModel.js';
 
 const files = {
   main: 'js/main.js',
   wiring: 'js/battle/BattleSceneStageRuntimeWiring.js',
   adapter: 'js/battle/StageRuntimeSceneAdapter.js',
   runtime: 'js/battle/StageRuntime.js',
-  spawnRuntime: 'js/battle/BcuStageSpawnRuntime.js'
+  spawnRuntime: 'js/battle/BcuStageSpawnRuntime.js',
+  actorStatsModel: 'js/battle/ActorStatsModel.js',
+  statsLoader: 'js/battle/BattleStatsLoader.js',
+  actorFactory: 'js/battle/BattleActorFactory.js',
+  inspector: 'js/battle/DebugBattleInspector.js'
 };
 
 for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path} must exist`);
@@ -47,6 +52,18 @@ assert.ok(wiring.includes('stageSpawnKillCounterDecrement'), 'wiring must emit k
 assert.ok(wiring.includes('stageSpawnRowIndex'), 'wiring must tag spawned actors with row index metadata');
 assert.ok(wiring.includes("wrapMethod(proto, 'cleanupDead'"), 'wiring must hook cleanupDead for kill counter decrement');
 const inspector = fs.readFileSync('js/battle/DebugBattleInspector.js', 'utf8');
+
+const actorStatsModelSrc = fs.readFileSync(files.actorStatsModel, 'utf8');
+const statsLoaderSrc = fs.readFileSync(files.statsLoader, 'utf8');
+const actorFactorySrc = fs.readFileSync(files.actorFactory, 'utf8');
+const inspectorSrc = fs.readFileSync(files.inspector, 'utf8');
+assert.ok(actorStatsModelSrc.includes('applyStageEnemyMagnification'), 'ActorStatsModel must include applyStageEnemyMagnification');
+assert.ok(actorStatsModelSrc.includes('toStatsObject'), 'ActorStatsModel must include toStatsObject');
+assert.ok(actorStatsModelSrc.includes('describe'), 'ActorStatsModel must include describe');
+assert.ok(statsLoaderSrc.includes("from './ActorStatsModel.js'"), 'BattleStatsLoader must import ActorStatsModel');
+assert.ok(statsLoaderSrc.includes('ActorStatsModel.applyStageEnemyMagnification'), 'BattleStatsLoader magnification must delegate to ActorStatsModel');
+assert.ok(actorFactorySrc.includes('actorStatsModel') || actorFactorySrc.includes('statsModelDebug') || actorFactorySrc.includes('actorStatsModelDebug'), 'BattleActorFactory must keep ActorStatsModel debug references');
+assert.ok(inspectorSrc.includes('ActorStatsModel') || inspectorSrc.includes('actorStatsModelDebug') || inspectorSrc.includes('statsModelDebug'), 'DebugBattleInspector must reference ActorStatsModel contract/debug');
 
 const battleCamera = fs.readFileSync('js/battle/BattleCamera.js', 'utf8');
 const inputController = fs.readFileSync('js/preview/BattleCameraInputController.js', 'utf8');
@@ -108,5 +125,46 @@ assert.equal(s2.logicFrame, 2);
 clock.reset();
 assert.equal(clock.logicFrame, 0);
 assert.equal(clock.stepCount, 0);
+
+
+const baseStats = {
+  hp: 1000,
+  damage: 200,
+  attackHits: [
+    { hitIndex: 0, damage: 200 },
+    { hitIndex: 1, damage: 50 }
+  ],
+  rawValues: [1000, 3, 10],
+  source: { type: 'enemy', enemyId: 5 }
+};
+
+const model = ActorStatsModel.applyStageEnemyMagnification(baseStats, {
+  rowIndex: 2,
+  rawEnemyId: 7,
+  sourceEnemyId: 5,
+  enemyId: 5,
+  magnification: 100,
+  hpMagnification: 250,
+  attackMagnification: 150
+});
+
+assert.equal(model.baseStats.hp, 1000);
+assert.equal(model.finalStats.hp, 2500);
+assert.equal(model.finalStats.damage, 300);
+assert.equal(model.finalStats.attackHits[0].damage, 300);
+assert.equal(model.finalStats.attackHits[0].baseDamage, 200);
+assert.equal(model.finalStats.stageMagnification.rowIndex, 2);
+assert.equal(model.finalStats.source.stageMagnificationApplied, true);
+assert.equal(baseStats.hp, 1000);
+assert.equal(baseStats.attackHits[0].damage, 200);
+
+const stats = ActorStatsModel.toStatsObject(model);
+assert.equal(stats.hp, 2500);
+
+const desc = ActorStatsModel.describe(model);
+assert.equal(desc.baseHp, 1000);
+assert.equal(desc.scaledHp, 2500);
+assert.equal(desc.baseDamage, 200);
+assert.equal(desc.scaledDamage, 300);
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');

@@ -14,11 +14,15 @@ export class BattleSpawnResolver {
   static getBcuEnemySpawnX({ bossSpawnX = null, bossFlag = false } = {}) {
     return bossFlag && Number.isFinite(bossSpawnX) ? bossSpawnX : 700;
   }
-  static getBcuPlayerSpawnX(stageLen) { return Number.isFinite(stageLen) ? stageLen - 700 : null; }
+  static getBcuPlayerSpawnX(stageLen, base = null) {
+    if (Number.isFinite(stageLen)) return stageLen - 700;
+    const baseX = BattleSpawnResolver.getBaseFrontX(base, 'dog-player');
+    return Number.isFinite(baseX) ? baseX + 100 : null;
+  }
 
   static getSpawnWorldXForSide({ side, base, stageLen = null, bossSpawnX = null, bossFlag = false }) {
     if (side === 'cat-enemy') return BattleSpawnResolver.getBcuEnemySpawnX({ bossSpawnX, bossFlag });
-    if (side === 'dog-player') return BattleSpawnResolver.getBcuPlayerSpawnX(stageLen);
+    if (side === 'dog-player') return BattleSpawnResolver.getBcuPlayerSpawnX(stageLen, base);
     return Number.isFinite(base?.x) ? base.x : null;
   }
 
@@ -37,7 +41,10 @@ export class BattleSpawnResolver {
 
     const resolved = BattleSpawnResolver.getSpawnWorldXForSide({ side, base, stageLen: resolvedStageLen, bossSpawnX, bossFlag });
     if (Number.isFinite(resolved)) {
-      return { ok: true, worldX: resolved, source: side === 'cat-enemy' ? (bossFlag && Number.isFinite(bossSpawnX) ? 'bcu-boss-spawn' : 'bcu-enemy-spawn-700') : 'bcu-player-spawn-stageLen-700', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
+      const source = side === 'cat-enemy'
+        ? (bossFlag && Number.isFinite(bossSpawnX) ? 'bcu-boss-spawn' : 'bcu-enemy-spawn-700')
+        : (Number.isFinite(resolvedStageLen) ? 'bcu-player-spawn-stageLen-700' : 'bcu-player-spawn-base-pos+100');
+      return { ok: true, worldX: resolved, source, side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
     }
 
     return { ok: false, worldX: null, source: 'bcu-spawn-unresolved', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };

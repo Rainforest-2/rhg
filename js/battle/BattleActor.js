@@ -1,4 +1,5 @@
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
+import { AnimationRuntime } from '../bcu/AnimationRuntime.js';
 import { BattleBodyResolver } from './BattleBodyResolver.js';
 import { BattleAttackProfile } from './BattleAttackProfile.js';
 import { getBcuKnockbackSpec, convertBcuDistanceToWorld, convertBcuDistanceToPx, getDefaultSpecTypeForKind } from './BcuKnockbackSpec.js';
@@ -235,6 +236,7 @@ export class BattleActor {
   }
   isRemovable(nowMs = 0) { if (this.state !== 'dead') return false; if (!Number.isFinite(this.deadAtMs)) return false; const removeAfter = Number.isFinite(this.removeAfterMs) ? this.removeAfterMs : 1000; return nowMs - this.deadAtMs >= removeAfter; }
   setAnimation(animId, role, restart = false) {
+    const previousAnimId = this.currentAnimId;
     if (!animId) return;
     if (this.currentAnimId === animId && !restart) return;
     this.animator = new BcuAnimator(this.animations.get(animId) || this.animations.get('anim00') || { tracks: [], maxFrame: 1 });
@@ -243,13 +245,16 @@ export class BattleActor {
     this.currentAnimId = animId;
     this.activeAnimId = animId;
     this.activeAnimRole = role || this.activeAnimRole;
+    this.lastAnimationSwitchDebug = { previousAnimId, currentAnimId: this.currentAnimId, activeAnimId: this.activeAnimId, activeAnimRole: this.activeAnimRole, state: this.state, source: "BattleActor.setAnimation" };
   }
 
   setState(nextState) {
     if (this.state === nextState) return false;
+    const previousState = this.state;
     this.state = nextState;
     if (nextState === 'attack') { this.attackElapsedMs = 0; this.hasHitInCurrentAttack = false; this.resolvedAttackEventKeys = new Set(); this.attackCycleId += 1; }
     if (nextState === 'attack-wait') this.attackWaitElapsedMs = 0;
+    this.lastAnimationSwitchDebug = { ...(this.lastAnimationSwitchDebug || {}), previousState, nextState, activeAnimId: this.activeAnimId, activeAnimRole: this.activeAnimRole, source: "BattleActor.setState" };
     return true;
   }
 
@@ -419,13 +424,31 @@ export class BattleActor {
     this.knockbackReason = this.knockbackReason || 'death';
   }
 
-  applyCurrentAnimationFrame() { if (!this.model) return; this.model.reset(); this.animator.apply(this.model); }
+  applyCurrentAnimationFrame() {
+    const applied = AnimationRuntime.applyActorModel(this);
+    const draw = AnimationRuntime.buildActorDrawList(this);
+    this.lastAnimationRuntimeDebug = {
+      currentAnimId: this.currentAnimId,
+      activeAnimId: this.activeAnimId,
+      activeAnimRole: this.activeAnimRole,
+      state: this.state,
+      frame: this.animator?.frame ?? null,
+      speed: this.animator?.speed ?? null,
+      loop: this.animator?.loop ?? null,
+      modelPartCount: this.model?.parts?.length ?? 0,
+      appliedTrackCount: applied.appliedTrackCount ?? 0,
+      failedTrackCount: applied.failedTrackCount ?? 0,
+      drawListCount: draw?.summary?.count ?? 0,
+      source: "BattleActor.applyCurrentAnimationFrame"
+    };
+  }
 
   tick(dt) {
     if (!this.model || this.state === 'removed') return;
     if (this.state === 'dead') { this.deathElapsedMs += dt; return; }
     if (!this.isAlive() && this.state !== 'knockback') return;
-    this.animator.tick(dt); this.model.reset(); this.animator.apply(this.model);
+    AnimationRuntime.tickActor(this, dt);
+    this.applyCurrentAnimationFrame();
   }
 
   getRenderOriginOffsetPx() {

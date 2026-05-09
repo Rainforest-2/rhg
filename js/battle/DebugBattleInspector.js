@@ -6,6 +6,7 @@ import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { AbilityModel } from './AbilityModel.js';
 import { KBRuntime } from './KBRuntime.js';
 import { EffectRuntime } from './EffectRuntime.js';
+import { AnimationRuntime } from '../bcu/AnimationRuntime.js';
 
 export class DebugBattleInspector {
   static enabled(scene) {
@@ -157,6 +158,7 @@ export class DebugBattleInspector {
       `damage/proc ability rawOnly:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.rawOnly || 0)} partial:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.partial || 0)} procSkipped:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procSkipped || 0)}`,
       `kb active:${this.fmt(info?.kbRuntime?.activeKnockbacks || 0)} dead:${this.fmt(info?.kbRuntime?.dyingOrDead || 0)} removable:${this.fmt(info?.kbRuntime?.removable || 0)}`,
       `effects active:${this.fmt(info?.effectRuntime?.activeCount || 0)} finished:${this.fmt(info?.effectRuntime?.finishedCount || 0)}`,
+      `anim actors:${this.fmt(info?.animationRuntime?.actors?.length || 0)} frame:${this.fmt(info?.animationRuntime?.examples?.[0]?.frame)} tracks:${this.fmt(info?.animationRuntime?.examples?.[0]?.appliedTrackCount || 0)}/${this.fmt(info?.animationRuntime?.examples?.[0]?.failedTrackCount || 0)} parts:${this.fmt(info?.animationRuntime?.examples?.[0]?.modelPartCount || 0)}`,
       `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
       `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
       `note: castle body uses resolved castle crop as base combat body. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
@@ -521,6 +523,36 @@ export class DebugBattleInspector {
 
       kbRuntime: { actors: kbActors, activeKnockbacks: kbActors.filter((a) => a?.state === 'knockback').length, dyingOrDead: kbActors.filter((a) => a?.state === 'dead' || a?.deathPending || a?.deathAfterKnockback).length, removable: kbActors.filter((a) => a?.isRemovable).length, recentEvents: kbRecent },
       effectRuntime: { ...effectSummary, recentEvents: effectRecent },
+      animationRuntime: (() => {
+        const actors = (actorsAll || []).map((actor) => {
+          const desc = AnimationRuntime.describeActor(actor);
+          return {
+            id: actor?.instanceId || actor?.slotId || actor?.label || null,
+            side: actor?.side || null,
+            state: desc?.state || null,
+            currentAnimId: desc?.currentAnimId || null,
+            activeAnimId: desc?.activeAnimId || null,
+            activeAnimRole: desc?.activeAnimRole || null,
+            frame: desc?.frame ?? null,
+            speed: desc?.speed ?? null,
+            loop: desc?.loop ?? null,
+            maxFrame: desc?.maxFrame ?? null,
+            modelPartCount: desc?.modelPartCount ?? 0,
+            appliedTrackCount: desc?.appliedTrackCount ?? 0,
+            failedTrackCount: desc?.failedTrackCount ?? 0,
+            drawListCount: desc?.drawListCount ?? 0,
+            lastAnimatorDebug: desc?.lastAnimatorDebug ?? null,
+            lastModelDebug: desc?.lastModelDebug ?? null,
+            lastAnimationRuntimeDebug: desc?.lastAnimationRuntimeDebug ?? null
+          };
+        });
+        return {
+          contract: AnimationRuntime.getAnimationContract(),
+          actors,
+          examples: actors.slice(0, 3),
+          warnings: actors.filter((a) => !a.currentAnimId || a.modelPartCount <= 0).slice(0, 5).map((a) => ({ id: a.id, reason: !a.currentAnimId ? 'missing-currentAnimId' : 'model-part-empty' }))
+        };
+      })(),
       warnings: [...(scene?.debugWarnings || [])]
     };
     this.updateDomOverlay(scene, info);

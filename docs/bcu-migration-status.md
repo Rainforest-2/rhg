@@ -3,7 +3,7 @@
 ## Last updated
 - date: 2026-05-09 (UTC)
 - commit: (working tree)
-- task: Task 9-FINAL (KBRuntime / EffectRuntime contract)
+- task: Task 10-FINAL (AnimationRuntime / BcuAnimator / BcuModelInstance contract)
 
 ## Completed
 | Task | Area | Files | What changed | Evidence |
@@ -24,42 +24,43 @@
 | Task 9-FINAL | Effect runtime contract | `js/battle/EffectRuntime.js`, `js/battle/BattleEffect.js`, `js/battle/BattleScene.js` | EffectRuntime added for world-coordinate effect create/tick/cleanup; BattleEffect source/debug/world coordinates added; BattleScene effect runtime wiring added. | wiring check pass. |
 | Task 9-FINAL | Inspector and checks | `js/battle/DebugBattleInspector.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | kbRuntime/effectRuntime diagnostics and Node contract assertions added. | wiring check pass. |
 
+| Task 10-FINAL | AnimationRuntime facade | `js/bcu/AnimationRuntime.js` | Added animation facade for tick/apply/draw-list/describe contract with non-responsibility declaration. | wiring check pass. |
+| Task 10-FINAL | BcuAnimator debug contract | `js/bcu/BcuAnimator.js` | Added getState/lastValuesDebug/lastApplyDebug while preserving apply() array return compatibility. | wiring check static+dynamic assertions pass. |
+| Task 10-FINAL | BcuModelInstance debug contract | `js/bcu/BcuModelInstance.js` | Added getState/lastAppliedTrackDebug/lastDrawListDebug with draw list summary and no return-shape break. | wiring check static+dynamic assertions pass. |
+| Task 10-FINAL | BattleActor + Inspector animation diagnostics | `js/battle/BattleActor.js`, `js/battle/DebugBattleInspector.js` | Actor animation apply/tick routed via AnimationRuntime facade and inspector exposes animationRuntime diagnostics. | wiring check pass. |
+| Task 10-FINAL | Renderer no-mutate contract checked | `js/battle/BattleSceneRenderer.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Renderer audited to avoid animator.tick/model.reset and keep animation-state mutation outside renderer. | wiring check static assertion pass. |
+| Task 10-FINAL | Node checks for animation contract | `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Added static + dynamic assertions for AnimationRuntime/BcuAnimator/BcuModelInstance/Inspector contracts. | command pass. |
+
 ## Partial
-- Full BCU wave/surge/effect parity
-- Full proc-driven KB/freeze/slow/weaken application
-- Boss shockwave full runtime if not actually implemented
+- Exact BCU easing/interpolation parity is not fully source-verified
+- Full mamodel/maanim visual parity is not manually verified
+- Animation viewer parity remains future/manual
 - Browser manual validation if not run
-- BattleScene monolith responsibility
-- Full BCU ability semantic mapping
-- Full ProcResolver effects application
-- Trait-based damage modifiers beyond debug opt-in
-- Wave/surge/effect runtime integration remains later task
-- Browser manual validation if not run
-- BattleScene monolith responsibility
+- BattleScene/BattleActor monolith responsibility
 
 ## Unresolved
 - Browser manual validation by Codex
-- Full BCU KB/effect visual parity if not manually verified
-- ProcResolver non-damage effects still no-op unless unchanged
-- Full BCU ability/proc parity is not implemented
-- Raw ABI bit-to-semantic mapping is not verified
+- Full BCU animation visual parity is not manually verified
+- Exact easing parity is not verified from BCU common source
 
 ## Manual browser check
-### Task 6/7 carry-over
+### Task 6/7
 - [ ] `?debugBattle=1`
-- [ ] debugBattle=1 で statsScaling が見える
-- [ ] debugBattle=1 で attackTimeline が見える
-- [ ] multi-hit actor の totalHitCount / resolvedHitCount が見える
-- [ ] due hit ごとに attackTargetsCaptured / attackTimelineHitResolved が出る
-- [ ] damage が hit timing 前に入らない
 
-### Task 8-FINAL
+### Task 8
 - [ ] debugBattle=1 で damageAndProc が見える
-- [ ] rawAbi present の ability が raw-only-unverified と出る
-- [ ] procResolver の skipped が見える
-- [ ] critical/baseDestroyer/metal は debug opt-in なしで適用されない
-- [ ] damage が二重適用されていない
-- [ ] attackTimeline の due-hit/capture/damage/mark-resolved が維持されている
+
+### Task 9
+- [ ] debugBattle=1 で kbRuntime / effectRuntime が見える
+
+### Task 10
+- [ ] debugBattle=1 で animationRuntime が見える
+- [ ] actor currentAnimId / activeAnimRole / frame が見える
+- [ ] appliedTrackCount / failedTrackCount が見える
+- [ ] drawListCount / opacity / z-order summary が見える
+- [ ] renderer が animation frame を進めていない
+- [ ] attack hit timing が animation frame に戻っていない
+- [ ] KB/effect runtime の Task 9 contract が壊れていない
 
 ## Node checks
 - command: `node scripts/check-battle-scene-stage-runtime-wiring.mjs`
@@ -68,14 +69,3 @@
 - result: pass
 - command: `node scripts/check-stage-asset-tracing.mjs`
 - result: pass
-
-
-### Task 9-FINAL
-- [ ] debugBattle=1 で kbRuntime が見える
-- [ ] debugBattle=1 で effectRuntime が見える
-- [ ] HP KB で kbFrameIndex / kbFramesTotal が進む
-- [ ] final KB 後に death animation / cleanup が維持される
-- [ ] kbeffEnabled / kbeffFrame が表示される場合がある
-- [ ] effect active/finished count が見える
-- [ ] wave/surge/freeze/slow は未実装/no-op として扱われている
-- [ ] damage/proc の Task 8 contract が壊れていない

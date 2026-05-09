@@ -21,7 +21,11 @@ const files = {
   kbRuntime: 'js/battle/KBRuntime.js',
   effectRuntime: 'js/battle/EffectRuntime.js',
   battleEffect: 'js/battle/BattleEffect.js',
-  battleScene: 'js/battle/BattleScene.js'
+  battleScene: 'js/battle/BattleScene.js',
+  animationRuntime: 'js/bcu/AnimationRuntime.js',
+  bcuAnimator: 'js/bcu/BcuAnimator.js',
+  bcuModelInstance: 'js/bcu/BcuModelInstance.js',
+  renderer: 'js/battle/BattleSceneRenderer.js'
 };
 
 for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path} must exist`);
@@ -87,6 +91,25 @@ assert.ok(abilityModelSrc.includes('ABILITY_CATALOG') || abilityModelSrc.include
 assert.ok(abilityModelSrc.includes('describeImplementationStatus'));
 assert.ok(inspectorSrc.includes('damageAndProc'));
 
+
+const animationRuntimeSrc = fs.readFileSync(files.animationRuntime, 'utf8');
+const bcuAnimatorSrc = fs.readFileSync(files.bcuAnimator, 'utf8');
+const bcuModelInstanceSrc = fs.readFileSync(files.bcuModelInstance, 'utf8');
+const rendererSrc = fs.readFileSync(files.renderer, 'utf8');
+for (const fn of ['getActorAnimationState', 'tickActor', 'applyActorModel', 'buildActorDrawList', 'describeActor', 'describeDrawList', 'getAnimationContract']) {
+  assert.ok(animationRuntimeSrc.includes(fn), `AnimationRuntime must include ${fn}`);
+}
+assert.ok(bcuAnimatorSrc.includes('getState('));
+assert.ok(bcuAnimatorSrc.includes('lastApplyDebug'));
+assert.ok(bcuAnimatorSrc.includes('lastValuesDebug'));
+assert.ok(bcuModelInstanceSrc.includes('getState('));
+assert.ok(bcuModelInstanceSrc.includes('lastDrawListDebug'));
+assert.ok(inspectorSrc.includes('animationRuntime'));
+assert.ok(!rendererSrc.includes('animator.tick'));
+assert.ok(!rendererSrc.includes('model.reset'));
+for (const bad of ['BattleSceneRenderer', 'BattleCamera', 'DamageCalculator', 'BattleAttackTimeline']) {
+  assert.ok(!animationRuntimeSrc.includes(bad), `AnimationRuntime must not import ${bad}`);
+}
 const kbRuntimeSrc = fs.readFileSync(files.kbRuntime, 'utf8');
 const effectRuntimeSrc = fs.readFileSync(files.effectRuntime, 'utf8');
 const battleEffectSrc = fs.readFileSync(files.battleEffect, 'utf8');
@@ -290,5 +313,28 @@ assert.ok(effect instanceof BattleEffect); assert.equal(effect.x, 100); assert.e
 EffectRuntime.tickEffects([effect], 9999); assert.ok(effect.elapsedMs > 0);
 const cleaned = EffectRuntime.cleanupEffects([effect]); assert.equal(cleaned.effects.length, 0); assert.equal(cleaned.removed, 1);
 const tnc = EffectRuntime.tickAndCleanup([EffectRuntime.createHitEffect({ id:'fx-2', x:1, y:2 })], 1); assert.ok(Number.isFinite(tnc.active)); assert.ok(Number.isFinite(tnc.removed));
+
+
+const { BcuAnimator } = await import('../js/bcu/BcuAnimator.js');
+const { BcuModelInstance } = await import('../js/bcu/BcuModelInstance.js');
+const { AnimationRuntime } = await import('../js/bcu/AnimationRuntime.js');
+const anim = { maxFrame: 10, tracks: [
+  { partId: 1, modification: 4, keyframes: [{ frame: 0, value: 0, easing: 0 }, { frame: 10, value: 100, easing: 0 }] },
+  { partId: 1, modification: 12, keyframes: [{ frame: 0, value: 255, easing: 0 }, { frame: 10, value: 128, easing: 0 }] }
+]};
+const mdl = new BcuModelInstance({ baseScale: 1000, baseAngle: 3600, baseOpacity: 255, confs: [], parts: [
+  { index: 0, parent: -1, imgcutIndex: 0, partIndex: 0, zOrder: 0, posX: 0, posY: 0, pivotX: 0, pivotY: 0, scaleX: 1000, scaleY: 1000, angle: 0, opacity: 255 },
+  { index: 1, parent: 0, imgcutIndex: 1, partIndex: 1, zOrder: 1, posX: 10, posY: 0, pivotX: 0, pivotY: 0, scaleX: 1000, scaleY: 1000, angle: 0, opacity: 255 }
+]});
+const animator = new BcuAnimator(anim);
+const values = animator.getValuesAtFrame(5); assert.ok(values.length >= 2);
+const applyRes = animator.apply(mdl); assert.ok(Array.isArray(applyRes)); assert.ok(animator.lastApplyDebug.appliedCount >= 1);
+const dl = mdl.getBattleDrawList(); assert.ok(Array.isArray(dl)); assert.equal(mdl.lastDrawListDebug.count, dl.length);
+const st = mdl.getState(); assert.equal(st.partCount, 2); assert.equal(st.baseScale, 1000); assert.equal(st.baseOpacity, 255);
+const actorRt = { currentAnimId: 'anim00', activeAnimId: 'anim00', activeAnimRole: 'idle', state: 'move', animator, model: mdl };
+const tickRes = AnimationRuntime.tickActor(actorRt, 100); assert.equal(tickRes.advanced, true);
+const applyRt = AnimationRuntime.applyActorModel(actorRt); assert.ok(applyRt.appliedTrackCount >= 1);
+const drawRt = AnimationRuntime.buildActorDrawList(actorRt); assert.ok(Array.isArray(drawRt.drawList)); assert.ok(drawRt.summary.count >= 1);
+const descRt = AnimationRuntime.describeActor(actorRt); assert.equal(descRt.currentAnimId, 'anim00'); assert.ok(descRt.modelPartCount >= 2);
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');

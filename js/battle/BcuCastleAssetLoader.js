@@ -1,33 +1,4 @@
-function id3(v){ return String(Math.max(0, Number(v) || 0)).padStart(3, '0'); }
-
-const ENEMY_CASTLE_GROUPS = Object.freeze(['rc', 'ec', 'wc', 'sc']);
-
-function normalizeCastleId(castleId) {
-  const n = Number(castleId);
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.floor(n);
-}
-
-export function resolveEnemyCastleAssetCandidates(castleId = 0) {
-  const resolvedCastleId = normalizeCastleId(castleId);
-  const groupIndex = Math.floor(resolvedCastleId / 1000);
-  const localCastleId = resolvedCastleId % 1000;
-  const groupName = ENEMY_CASTLE_GROUPS[groupIndex] || ENEMY_CASTLE_GROUPS[0];
-  const imagePath = `./public/assets/bcu/000001/org/img/${groupName}/${groupName}${id3(localCastleId)}.png`;
-  return {
-    requestedCastleId: castleId,
-    resolvedCastleId,
-    groupIndex,
-    groupName,
-    localCastleId,
-    imagePath,
-    imageCandidates: [imagePath],
-    imgcutCandidates: [],
-    usesImgcut: false,
-    assetKind: 'bcu-enemy-castle-png',
-    fallbackReason: groupIndex >= ENEMY_CASTLE_GROUPS.length ? 'castle-group-out-of-range-fallback-rc' : null
-  };
-}
+import { CastleAssetResolver, resolveEnemyCastleAssetCandidates } from './CastleAssetResolver.js';
 
 function buildFullImageRenderCrop(image) {
   const w = Math.max(1, Number(image?.naturalWidth || image?.width || 0) || 1);
@@ -51,18 +22,21 @@ export class BcuCastleAssetLoader {
     const requestedAnimBaseId = options?.animBaseId ?? null;
     const requestedCannonId = options?.cannonId ?? null;
     const source = options?.source || 'stage-runtime';
-    const candidates = resolveEnemyCastleAssetCandidates(castleId);
+    const candidates = resolveEnemyCastleAssetCandidates(castleId, options);
     for (const imagePath of candidates.imageCandidates) {
       const image = await this.loadImage(imagePath);
       if (!image) continue;
       const crop = buildFullImageRenderCrop(image);
+      const resolvedAnimBaseId = Number.isFinite(Number(requestedAnimBaseId))
+        ? Math.floor(Number(requestedAnimBaseId))
+        : candidates.resolvedCastleId;
       return {
         ok: true,
         requestedCastleId: castleId,
         requestedAnimBaseId,
         requestedCannonId,
         resolvedCastleId: candidates.resolvedCastleId,
-        resolvedAnimBaseId: Number.isFinite(Number(requestedAnimBaseId)) ? Math.floor(Number(requestedAnimBaseId)) : candidates.resolvedCastleId,
+        resolvedAnimBaseId,
         castleGroupName: candidates.groupName,
         castleGroupIndex: candidates.groupIndex,
         localCastleId: candidates.localCastleId,
@@ -74,20 +48,39 @@ export class BcuCastleAssetLoader {
         imgcutPath: null,
         crop,
         visualBounds: { width: crop.w, height: crop.h, parser: 'image-size-no-imgcut', partName: null, partIndex: null, usesImgcut: false },
-        usedFallback: !!candidates.fallbackReason,
+        usedFallback: !!candidates.usedFallback,
         fallbackReason: candidates.fallbackReason,
         reason: null,
         source,
-        candidateReport: candidates
+        candidateReport: candidates,
+        baseDebug: CastleAssetResolver.buildBaseDebug({
+          requestedCastleId: castleId,
+          requestedAnimBaseId,
+          requestedCannonId,
+          resolvedCastleId: candidates.resolvedCastleId,
+          resolvedAnimBaseId,
+          castleGroupName: candidates.groupName,
+          castleGroupIndex: candidates.groupIndex,
+          localCastleId: candidates.localCastleId,
+          imagePath,
+          imgcutPath: null,
+          usedFallback: !!candidates.usedFallback,
+          fallbackReason: candidates.fallbackReason,
+          source,
+          candidateReport: candidates
+        })
       };
     }
+    const resolvedAnimBaseId = Number.isFinite(Number(requestedAnimBaseId))
+      ? Math.floor(Number(requestedAnimBaseId))
+      : candidates.resolvedCastleId;
     return {
       ok: false,
       requestedCastleId: castleId,
       requestedAnimBaseId,
       requestedCannonId,
       resolvedCastleId: candidates.resolvedCastleId,
-      resolvedAnimBaseId: Number.isFinite(Number(requestedAnimBaseId)) ? Math.floor(Number(requestedAnimBaseId)) : candidates.resolvedCastleId,
+      resolvedAnimBaseId,
       castleGroupName: candidates.groupName,
       castleGroupIndex: candidates.groupIndex,
       localCastleId: candidates.localCastleId,
@@ -95,12 +88,29 @@ export class BcuCastleAssetLoader {
       usesImgcut: false,
       imagePath: candidates.imagePath,
       imgcutPath: null,
-      usedFallback: !!candidates.fallbackReason,
+      usedFallback: !!candidates.usedFallback,
       fallbackReason: candidates.fallbackReason,
       reason: 'image-load-failed',
       placeholder: true,
       source,
-      candidateReport: candidates
+      candidateReport: candidates,
+      baseDebug: CastleAssetResolver.buildBaseDebug({
+        requestedCastleId: castleId,
+        requestedAnimBaseId,
+        requestedCannonId,
+        resolvedCastleId: candidates.resolvedCastleId,
+        resolvedAnimBaseId,
+        castleGroupName: candidates.groupName,
+        castleGroupIndex: candidates.groupIndex,
+        localCastleId: candidates.localCastleId,
+        imagePath: candidates.imagePath,
+        imgcutPath: null,
+        usedFallback: !!candidates.usedFallback,
+        fallbackReason: candidates.fallbackReason,
+        reason: 'image-load-failed',
+        source,
+        candidateReport: candidates
+      })
     };
   }
 
@@ -114,3 +124,5 @@ export class BcuCastleAssetLoader {
     });
   }
 }
+
+export { resolveEnemyCastleAssetCandidates };

@@ -1,6 +1,7 @@
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
 
 const DEFAULT_FPS = 30;
+const DEFAULT_BCU_ENEMY_SPAWN_X = 700;
 
 function toFiniteNumber(value, fallback = 0) {
   const n = Number(value);
@@ -31,9 +32,11 @@ function findRowState(rows, eventOrRowIndex) {
 }
 
 function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
-  const explicit = Number.isFinite(context.enemySpawnWorldX)
-    ? context.enemySpawnWorldX
-    : (Number.isFinite(stageRuntime?.enemySpawnWorldX) ? stageRuntime.enemySpawnWorldX : null);
+  const contextSpawnX = Number.isFinite(context.enemySpawnWorldX) ? context.enemySpawnWorldX : null;
+  const runtimeSpawnX = Number.isFinite(stageRuntime?.enemySpawnWorldX) ? stageRuntime.enemySpawnWorldX : null;
+  const explicit = Number.isFinite(contextSpawnX)
+    ? contextSpawnX
+    : (Number.isFinite(runtimeSpawnX) && runtimeSpawnX !== DEFAULT_BCU_ENEMY_SPAWN_X ? runtimeSpawnX : null);
   const bossSpawnX = Number.isFinite(context.bossSpawnWorldX)
     ? context.bossSpawnWorldX
     : (Number.isFinite(stageRuntime?.bossSpawnWorldX) ? stageRuntime.bossSpawnWorldX : null);
@@ -51,7 +54,7 @@ function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
 
   const fallback = Number.isFinite(stageRuntime?.enemyBaseFrontX)
     ? stageRuntime.enemyBaseFrontX - 100
-    : 700;
+    : DEFAULT_BCU_ENEMY_SPAWN_X;
   return {
     ...(debug || {}),
     ok: false,

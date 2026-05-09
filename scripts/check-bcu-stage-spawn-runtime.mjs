@@ -27,7 +27,7 @@ ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercen
 assert.equal(ev.length,1);
 assert.equal(ev[0].spawnWorldX,730);
 assert.equal(ev[0].spawnResolveDebug.stageLen,4200);
-assert.equal(ev[0].spawnWorldXSource,'event-worldX');
+assert.equal(ev[0].spawnWorldXSource,'event-spawnWorldX');
 
 // 7,8
 row=mkRow({count:0,isInfinite:true,respawnMinFrame:3,respawnMaxFrame:7});

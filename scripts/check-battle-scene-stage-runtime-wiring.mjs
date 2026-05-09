@@ -23,6 +23,9 @@ assert.ok(wiring.includes('StageRuntimeSceneAdapter.build'), 'wiring must build 
 assert.ok(wiring.includes('getEnemyBaseHpPercent'), 'wiring must expose enemy base HP percent helper');
 assert.ok(wiring.includes('getStageSpawnTickContext'), 'wiring must expose spawn tick context helper');
 assert.ok(wiring.includes('stageEnemySpawnRuntimeDebug'), 'wiring must report spawn runtime debug');
+assert.ok(wiring.includes('spawnWorldXSource'), 'wiring debug event must keep spawnWorldXSource');
+assert.ok(wiring.includes('templateMissing'), 'wiring debug event must include templateMissing flag');
+assert.ok(wiring.includes('enemyBaseHpPercent'), 'wiring debug event must include enemyBaseHpPercent');
 assert.ok(adapter.includes('buildSpawnTickContext'), 'adapter must build spawn tick context');
 assert.ok(adapter.includes('enemyBaseHpPercent: StageRuntimeSceneAdapter.getEnemyBaseHpPercent(scene)'), 'spawn context must use real enemy base HP percent');
 assert.ok(adapter.includes('stageLen: runtime.stageLen'), 'spawn context must include stageLen');

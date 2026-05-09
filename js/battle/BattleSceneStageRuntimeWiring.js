@@ -58,16 +58,23 @@ function wireBattleSceneStageRuntime() {
   wrapMethod(proto, 'spawnStageEnemy', (original) => function spawnStageEnemyWithRuntimeDebug(unitDef, row) {
     const result = original.apply(this, arguments);
     const debug = row?.spawnResolveDebug || row?.row?.spawnResolveDebug || this.lastSpawnResolveDebug || null;
-    if (result && debug) {
+    if (debug) {
+      const context = this.lastStageSpawnTickContext || StageRuntimeSceneAdapter.buildSpawnTickContext(this);
       this.pushEvent?.({
         type: 'stageEnemySpawnRuntimeDebug',
         rowIndex: row?.rowIndex ?? row?.row?.rowIndex ?? null,
+        spawnId: row?.spawnId ?? null,
+        spawnFrame: row?.spawnFrame ?? null,
         spawnWorldX: debug.worldX ?? row?.spawnWorldX ?? row?.worldX ?? null,
         spawnWorldXSource: debug.source ?? row?.spawnWorldXSource ?? null,
         stageLen: debug.stageLen ?? this.stage?.runtime?.stageLen ?? null,
         baseFrontX: debug.baseFrontX ?? null,
         bossFlag: debug.bossFlag ?? row?.bossFlag ?? row?.row?.bossFlag ?? null,
-        fallbackReason: debug.fallbackReason ?? null
+        fallbackReason: debug.fallbackReason ?? null,
+        enemyBaseHpPercent: context?.enemyBaseHpPercent ?? null,
+        maxEnemyCount: context?.maxEnemyCount ?? null,
+        aliveEnemyCount: context?.aliveEnemyCount ?? null,
+        templateMissing: !result
       });
     }
     return result;

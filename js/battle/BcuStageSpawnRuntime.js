@@ -48,7 +48,7 @@ function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
     side: 'cat-enemy',
     bases: context.bases || [],
     row,
-    explicitWorldX: explicit,
+    explicitWorldX: null,
     explicitSpawnWorldX: explicit,
     stageLen: context.stageLen ?? stageRuntime?.stageLen ?? null,
     bossSpawnX

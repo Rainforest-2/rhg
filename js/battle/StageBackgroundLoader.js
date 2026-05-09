@@ -1,4 +1,5 @@
 import { parseImgcut as parseBcuImgcut } from '../bcu/BcuImgcutParser.js';
+import { BATTLE_CONFIG } from './BattleConfig.js';
 
 async function fetchText(path) { const r = await fetch(path); if (!r.ok) throw new Error(`Failed to fetch ${path}: ${r.status}`); return await r.text(); }
 async function fetchTextSafe(path) { try { return await fetchText(path); } catch { return null; } }
@@ -84,12 +85,19 @@ function imageFullCrop(image, name = 'whole-image') {
   return { x: 0, y: 0, w: Math.max(1, w), h: Math.max(1, h), name, cropRole: 'full-image-fallback-because-imgcut-missing' };
 }
 
+function forceCoverModeForWholeImageBackground() {
+  if (!BATTLE_CONFIG?.stage) return;
+  BATTLE_CONFIG.stage.backgroundMode = 'cover';
+  BATTLE_CONFIG.stage.backgroundModeSource = 'bcu-bg-image-whole-crop-cover-no-ground-fill';
+}
+
 export class StageBackgroundLoader {
   constructor(log) { this.log = log || (() => {}); }
   async load(stage) {
     if (this.__test) {
       const bgResolved = resolveStageBackgroundAssetCandidates(stage?.bgId, stage || {});
-      return { image: { width: 1024, height: 512, src: bgResolved.imagePath }, crop: { x: 0, y: 0, w: 1024, h: 512, name: 'whole-image', cropRole: 'full-image-fallback-because-imgcut-missing' }, upperCrop: null, colors: defaultBgRow(stage?.id || 0), source: { requestedBgId: bgResolved.requestedBgId, resolvedBgId: bgResolved.resolvedBgId, bgUsedFallback: false, bgFallbackReason: null, imagePath: bgResolved.imagePath, imgcutPath: null, csvPath: bgResolved.csvPath, stageId: stage?.id || 0, imgcutId: 0, showUpper: false, backgroundCsvKind: 'bcu-bg-csv', usesWholeImageAsCrop: true, disableGroundFill: true, candidateReport: bgResolved.candidateReport } };
+      forceCoverModeForWholeImageBackground();
+      return { image: { width: 1024, height: 512, src: bgResolved.imagePath }, crop: { x: 0, y: 0, w: 1024, h: 512, name: 'whole-image', cropRole: 'full-image-fallback-because-imgcut-missing' }, upperCrop: null, colors: defaultBgRow(stage?.id || 0), source: { requestedBgId: bgResolved.requestedBgId, resolvedBgId: bgResolved.resolvedBgId, bgUsedFallback: false, bgFallbackReason: null, imagePath: bgResolved.imagePath, imgcutPath: null, csvPath: bgResolved.csvPath, stageId: stage?.id || 0, imgcutId: 0, showUpper: false, backgroundCsvKind: 'bcu-bg-csv', usesWholeImageAsCrop: true, disableGroundFill: true, rendererMode: 'cover', rendererModeSource: BATTLE_CONFIG.stage.backgroundModeSource, candidateReport: bgResolved.candidateReport } };
     }
     const fallbackStage = stage || {};
     const bgResolved = resolveStageBackgroundAssetCandidates(stage?.bgId, fallbackStage);
@@ -129,7 +137,8 @@ export class StageBackgroundLoader {
       part = imageFullCrop(image);
       usesWholeImageAsCrop = true;
       bgFallbackReason = bgFallbackReason || null;
-      this.log('warn', `background imgcut missing for bgId=${bgResolved.resolvedBgId}; using whole bg image as crop`);
+      forceCoverModeForWholeImageBackground();
+      this.log('warn', `background imgcut missing for bgId=${bgResolved.resolvedBgId}; using whole bg image as crop with cover renderer`);
     }
 
     return {
@@ -151,6 +160,8 @@ export class StageBackgroundLoader {
         backgroundCsvKind: 'bcu-bg-csv',
         usesWholeImageAsCrop,
         disableGroundFill: usesWholeImageAsCrop,
+        rendererMode: usesWholeImageAsCrop ? 'cover' : (BATTLE_CONFIG.stage?.backgroundMode || 'bcu-stage0'),
+        rendererModeSource: usesWholeImageAsCrop ? BATTLE_CONFIG.stage?.backgroundModeSource : null,
         candidateReport: bgResolved.candidateReport
       }
     };

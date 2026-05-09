@@ -142,10 +142,12 @@ export class DebugBattleInspector {
       `dog wait state:${waitActors.player?.state || '-'} remain:${this.fmt(waitActors.player?.remainingMs)}ms ready:${waitActors.player?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.player?.setCount)} src:${waitActors.player?.source || '-'}`,
       `cat wait state:${waitActors.enemy?.state || '-'} remain:${this.fmt(waitActors.enemy?.remainingMs)}ms ready:${waitActors.enemy?.ready === true ? 'true' : 'false'} setCount:${this.fmt(waitActors.enemy?.setCount)} src:${waitActors.enemy?.source || '-'}`,
       `bases dog posBcu:${this.fmt(cc.bases?.player?.posBcu)} front:${this.fmt(cc.bases?.player?.frontX)} enemy posBcu:${this.fmt(cc.bases?.enemy?.posBcu)} front:${this.fmt(cc.bases?.enemy?.frontX)}`,
-      `castle resolved:${castle.resolvedCastleId ?? '-'} imgcut:${castle.imgcutParser || '-'} path:${castle.imagePath || '-'}`,
+      `castle req/res:${castle.requestedCastleId ?? '-'}=>${castle.resolvedCastleId ?? '-'} group:${castle.castleGroupName || '-'} local:${castle.localCastleId ?? '-'} fallback:${castle.fallbackReason ?? '-'}`,
+      `castle path:${castle.imagePath || '-'} src:${castle.source || '-'} kind:${castle.assetKind || '-'}`,
       this.castleLine(castle),
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
-      `bg resolved:${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
+      `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
+      `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
       `note: castle body uses resolved castle crop as base combat body. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
     ];
     el.textContent = lines.join('\n');
@@ -339,42 +341,61 @@ export class DebugBattleInspector {
         dead: actorsAll.filter((a) => !a?.isAlive?.()).length,
         knockback: actorsAll.filter((a) => a?.state === 'knockback').length
       },
-      assets: {
-        castle: {
-          requestedCastleId: enemyBase?.debug?.requestedCastleId ?? enemyBase?.requestedCastleId ?? null,
-          resolvedCastleId: enemyBase?.debug?.resolvedCastleId ?? enemyBase?.castleId ?? null,
-          requestedAnimBaseId: enemyBase?.debug?.requestedAnimBaseId ?? enemyBase?.requestedAnimBaseId ?? null,
-          resolvedAnimBaseId: enemyBase?.debug?.resolvedAnimBaseId ?? enemyBase?.animBaseId ?? null,
-          requestedCannonId: enemyBase?.debug?.requestedCannonId ?? null,
-          imagePath: enemyBase?.debug?.castleImagePath ?? enemyBase?.castleAsset?.imagePath ?? null,
-          imgcutPath: enemyBase?.debug?.castleImgcutPath ?? enemyBase?.castleAsset?.imgcutPath ?? null,
-          imgcutParser: enemyBase?.castleAsset?.crop?.parser ?? enemyBase?.castleAsset?.visualBounds?.parser ?? null,
-          usedFallback: enemyBase?.debug?.enemyCastleUsedFallback ?? false,
-          fallbackReason: enemyBase?.debug?.enemyCastleFallbackReason ?? enemyBase?.castleFallbackReason ?? null,
-          geometry: {
-            visualWidth: enemyBase?.castleGeometry?.visualBounds?.width ?? null,
-            visualHeight: enemyBase?.castleGeometry?.visualBounds?.height ?? null,
-            bodyLeft: enemyBaseBox?.left ?? null,
-            bodyRight: enemyBaseBox?.right ?? null,
-            bodyTop: enemyBaseBox?.top ?? null,
-            bodyBottom: enemyBaseBox?.bottom ?? null,
-            bodyWidth: enemyBaseBox?.width ?? null,
-            frontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null,
-            bodySource: enemyBase?.combatBodySource ?? enemyBaseBox?.source ?? null
+      assets: (() => {
+        const castleAsset = enemyBase?.castleAsset || {};
+        const castleBaseDebug = castleAsset?.baseDebug || {};
+        const castleDebug = enemyBase?.debug || {};
+        const castleSource = {
+          ...castleAsset,
+          ...castleDebug,
+          ...castleBaseDebug
+        };
+        return {
+          castle: {
+            requestedCastleId: castleSource.requestedCastleId ?? enemyBase?.requestedCastleId ?? null,
+            resolvedCastleId: castleSource.resolvedCastleId ?? enemyBase?.castleId ?? null,
+            requestedAnimBaseId: castleSource.requestedAnimBaseId ?? enemyBase?.requestedAnimBaseId ?? null,
+            resolvedAnimBaseId: castleSource.resolvedAnimBaseId ?? enemyBase?.animBaseId ?? null,
+            requestedCannonId: castleSource.requestedCannonId ?? null,
+            castleGroupName: castleSource.castleGroupName ?? castleSource.groupName ?? null,
+            castleGroupIndex: castleSource.castleGroupIndex ?? castleSource.groupIndex ?? null,
+            localCastleId: castleSource.localCastleId ?? null,
+            imagePath: castleSource.castleImagePath ?? castleSource.imagePath ?? null,
+            imgcutPath: castleSource.castleImgcutPath ?? castleSource.imgcutPath ?? null,
+            imgcutParser: castleAsset?.crop?.parser ?? castleAsset?.visualBounds?.parser ?? null,
+            assetKind: castleSource.assetKind ?? null,
+            source: castleSource.castleAssetSource ?? castleSource.source ?? null,
+            usedFallback: castleSource.enemyCastleUsedFallback ?? castleSource.usedFallback ?? false,
+            fallbackReason: castleSource.enemyCastleFallbackReason ?? castleSource.fallbackReason ?? enemyBase?.castleFallbackReason ?? null,
+            candidateReport: castleSource.castleCandidateReport ?? castleSource.candidateReport ?? castleAsset?.candidateReport ?? null,
+            geometry: {
+              visualWidth: enemyBase?.castleGeometry?.visualBounds?.width ?? null,
+              visualHeight: enemyBase?.castleGeometry?.visualBounds?.height ?? null,
+              bodyLeft: enemyBaseBox?.left ?? null,
+              bodyRight: enemyBaseBox?.right ?? null,
+              bodyTop: enemyBaseBox?.top ?? null,
+              bodyBottom: enemyBaseBox?.bottom ?? null,
+              bodyWidth: enemyBaseBox?.width ?? null,
+              frontX: BattleSpawnResolver.getBaseFrontX(enemyBase, 'cat-enemy') ?? null,
+              bodySource: enemyBase?.combatBodySource ?? enemyBaseBox?.source ?? null
+            }
+          },
+          background: {
+            requestedBgId: bgSource.requestedBgId ?? null,
+            resolvedBgId: bgSource.resolvedBgId ?? null,
+            imagePath: bgSource.imagePath ?? null,
+            imgcutPath: bgSource.imgcutPath ?? null,
+            csvPath: bgSource.csvPath ?? null,
+            assetKind: bgSource.assetKind ?? null,
+            backgroundCsvKind: bgSource.backgroundCsvKind ?? null,
+            usedFallback: bgSource.bgUsedFallback ?? false,
+            fallbackReason: bgSource.bgFallbackReason ?? null,
+            imgcutId: bgSource.imgcutId ?? null,
+            showUpper: bgSource.showUpper ?? null,
+            candidateReport: bgSource.candidateReport ?? null
           }
-        },
-        background: {
-          requestedBgId: bgSource.requestedBgId ?? null,
-          resolvedBgId: bgSource.resolvedBgId ?? null,
-          imagePath: bgSource.imagePath ?? null,
-          imgcutPath: bgSource.imgcutPath ?? null,
-          csvPath: bgSource.csvPath ?? null,
-          usedFallback: bgSource.bgUsedFallback ?? false,
-          fallbackReason: bgSource.bgFallbackReason ?? null,
-          imgcutId: bgSource.imgcutId ?? null,
-          showUpper: bgSource.showUpper ?? null
-        }
-      },
+        };
+      })(),
       statsScaling: { stageScaledActors, stageScaledTemplates, examples },
       warnings: [...(scene?.debugWarnings || [])]
     };

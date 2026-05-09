@@ -44,7 +44,14 @@ function parseBgCsv(text, stageId) {
 }
 
 export class StageBackgroundLoader {
-  constructor(log) { this.log = log || (() => {}); }
+  constructor(log, options = {}) {
+    this.log = log || (() => {});
+    this.fetchText = options.fetchText || fetchText;
+    this.fetchTextSafe = options.fetchTextSafe || (async (path) => {
+      try { return await this.fetchText(path); } catch { return null; }
+    });
+    this.loadImage = options.loadImage || loadImage;
+  }
 
   async load(stage) {
     const fallbackStage = stage || {};
@@ -53,20 +60,20 @@ export class StageBackgroundLoader {
     let image = null;
     let imagePath = null;
     for (const candidate of bgResolved.imageCandidates) {
-      try { image = await loadImage(candidate); imagePath = candidate; break; } catch {}
+      try { image = await this.loadImage(candidate); imagePath = candidate; break; } catch {}
     }
     let imgcutText = null;
     let imgcutPath = null;
     for (const candidate of bgResolved.imgcutCandidates) {
-      imgcutText = await fetchTextSafe(candidate);
+      imgcutText = await this.fetchTextSafe(candidate);
       if (imgcutText) { imgcutPath = candidate; break; }
     }
 
     if (!image || !imgcutText) {
       const fallbackImagePath = fallbackStage.imagePath || bgResolved.imagePath;
       const fallbackImgcutPath = fallbackStage.imgcutPath || bgResolved.imgcutPath;
-      image = await loadImage(fallbackImagePath);
-      imgcutText = await fetchText(fallbackImgcutPath);
+      image = await this.loadImage(fallbackImagePath);
+      imgcutText = await this.fetchText(fallbackImgcutPath);
       imagePath = fallbackImagePath;
       imgcutPath = fallbackImgcutPath;
       bgResolved.usedFallback = true;
@@ -74,7 +81,7 @@ export class StageBackgroundLoader {
     }
 
     const csvPath = stage?.csvPath || bgResolved.csvPath;
-    const csvText = await fetchTextSafe(csvPath);
+    const csvText = await this.fetchTextSafe(csvPath);
     const bgRow = parseBgCsv(csvText, stage?.id || 0);
     const { parts } = parseImgcut(imgcutText);
     const part = parts.find((p) => p.name === stage?.cropName) || parts.find((p) => p.name === bgResolved.cropName) || parts[bgRow.imgcutId] || parts[0];

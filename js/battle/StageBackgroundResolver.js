@@ -21,10 +21,10 @@ function normalizeBgId(bgId) {
   };
 }
 
-function firstFinite(...values) {
+function firstResolvableBgValue(...values) {
   for (const value of values) {
-    const n = Number(value);
-    if (Number.isFinite(n)) return n;
+    if (value === undefined || value === null || value === '') continue;
+    return value;
   }
   return null;
 }
@@ -76,7 +76,7 @@ export class StageBackgroundResolver {
 
   static fromStage(stage = {}, runtime = null, options = {}) {
     const stageDefinition = stage?.definition || stage?.stageDefinition || null;
-    const bgId = firstFinite(
+    const bgId = firstResolvableBgValue(
       runtime?.bgId,
       stage?.runtime?.bgId,
       stageDefinition?.runtime?.bgId,

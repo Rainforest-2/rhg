@@ -1,3 +1,5 @@
+import { BattleSpawnResolver } from './BattleSpawnResolver.js';
+
 const DEFAULT_FPS = 30;
 
 function toFiniteNumber(value, fallback = 0) {
@@ -28,6 +30,39 @@ function findRowState(rows, eventOrRowIndex) {
   return null;
 }
 
+function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
+  const explicit = Number.isFinite(context.enemySpawnWorldX)
+    ? context.enemySpawnWorldX
+    : (Number.isFinite(stageRuntime?.enemySpawnWorldX) ? stageRuntime.enemySpawnWorldX : null);
+  const bossSpawnX = Number.isFinite(context.bossSpawnWorldX)
+    ? context.bossSpawnWorldX
+    : (Number.isFinite(stageRuntime?.bossSpawnWorldX) ? stageRuntime.bossSpawnWorldX : null);
+  const debug = BattleSpawnResolver.resolveSpawnWorldXWithDebug({
+    side: 'cat-enemy',
+    bases: context.bases || [],
+    row,
+    explicitWorldX: explicit,
+    explicitSpawnWorldX: explicit,
+    stageLen: context.stageLen ?? stageRuntime?.stageLen ?? null,
+    bossSpawnX
+  });
+
+  if (Number.isFinite(debug?.worldX)) return debug;
+
+  const fallback = Number.isFinite(stageRuntime?.enemyBaseFrontX)
+    ? stageRuntime.enemyBaseFrontX - 100
+    : 700;
+  return {
+    ...(debug || {}),
+    ok: false,
+    worldX: fallback,
+    source: Number.isFinite(stageRuntime?.enemyBaseFrontX) ? 'stage-runtime-enemy-base-front-fallback' : 'legacy-fixed-700-fallback',
+    fallbackReason: debug?.source || 'spawn-unresolved',
+    baseFrontX: stageRuntime?.enemyBaseFrontX ?? null,
+    stageLen: context.stageLen ?? stageRuntime?.stageLen ?? null
+  };
+}
+
 export class BcuStageSpawnRuntime {
   constructor(stageRuntime, stageEnemyUnitDefs = []) {
     this.stageRuntime = stageRuntime || {};
@@ -54,6 +89,7 @@ export class BcuStageSpawnRuntime {
         lastSpawnFrame: null,
         lastAttemptFrame: null,
         lastBlockedReason: null,
+        lastSpawnResolveDebug: null,
         warnings: []
       };
     });
@@ -113,7 +149,9 @@ export class BcuStageSpawnRuntime {
       s.triggered = true;
       s.lastBlockedReason = null;
 
-      const spawnX = 700;
+      const spawnDebug = resolveEnemySpawnDebug(this.stageRuntime, s.row, context);
+      s.lastSpawnResolveDebug = spawnDebug;
+      const spawnX = spawnDebug.worldX;
       const spawnEvent = {
         type: 'spawnEnemy',
         rowIndex: s.rowIndex,
@@ -125,7 +163,8 @@ export class BcuStageSpawnRuntime {
         rawEnemyId: s.row?.rawEnemyId,
         worldX: spawnX,
         spawnWorldX: spawnX,
-        spawnWorldXSource: 'bcu-enemy-spawn-700',
+        spawnWorldXSource: spawnDebug.source,
+        spawnResolveDebug: spawnDebug,
         bossFlag: s.row?.bossFlag,
         magnification: s.row?.magnification,
         hpMagnification: s.row?.hpMagnification,

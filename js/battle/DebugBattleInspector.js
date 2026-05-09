@@ -146,6 +146,7 @@ export class DebugBattleInspector {
       `castle path:${castle.imagePath || '-'} src:${castle.source || '-'} kind:${castle.assetKind || '-'}`,
       this.castleLine(castle),
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
+      `cam invariant stageLenMatch:${info?.cameraInvariants?.stageLenMatchesRuntime === true ? 'true' : (info?.cameraInvariants?.stageLenMatchesRuntime === false ? 'false' : '-')} roundTrip:${info?.cameraInvariants?.projectionRoundTripOk === true ? 'true' : (info?.cameraInvariants?.projectionRoundTripOk === false ? 'false' : '-')} vis:${this.fmt(info?.cameraInvariants?.visibleWorldRange?.left)}..${this.fmt(info?.cameraInvariants?.visibleWorldRange?.right)}`,
       `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
       `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
       `note: castle body uses resolved castle crop as base combat body. combat remains screen-combat-point unless bcu-pos is explicitly enabled.`
@@ -315,6 +316,38 @@ export class DebugBattleInspector {
       cameraStageLenMatchesRuntime: Number.isFinite(scene?.camera?.stageLen) && Number.isFinite(stageRt?.stageLen)
         ? Math.abs(scene.camera.stageLen - stageRt.stageLen) <= 1e-6
         : null,
+      cameraInvariants: (() => {
+        const cam = scene?.camera;
+        const stageLenRuntime = Number.isFinite(stageRt?.stageLen) ? stageRt.stageLen : null;
+        const stageLenCamera = Number.isFinite(cam?.stageLen) ? cam.stageLen : null;
+        const stageLenMatchesRuntime = Number.isFinite(stageLenRuntime) && Number.isFinite(stageLenCamera)
+          ? Math.abs(stageLenRuntime - stageLenCamera) <= 1e-6
+          : null;
+        const projectionSampleWorldX = Number.isFinite(stageRt?.enemySpawnWorldX)
+          ? stageRt.enemySpawnWorldX
+          : (Number.isFinite(stageRt?.enemyBaseWorldX) ? stageRt.enemyBaseWorldX : 0);
+        const projectionSampleScreenX = cam?.worldToScreenX?.(projectionSampleWorldX) ?? null;
+        const projectionRoundTripWorldX = cam?.screenToWorldX?.(projectionSampleScreenX) ?? null;
+        const projectionRoundTripOk = Number.isFinite(projectionSampleWorldX) && Number.isFinite(projectionRoundTripWorldX)
+          ? Math.abs(projectionSampleWorldX - projectionRoundTripWorldX) <= 0.001
+          : null;
+        return {
+          stageLenRuntime,
+          stageLenCamera,
+          stageLenMatchesRuntime,
+          playerBaseWorldX: stageRt?.playerBaseWorldX ?? playerBase?.x ?? null,
+          enemyBaseWorldX: stageRt?.enemyBaseWorldX ?? enemyBase?.x ?? null,
+          lastSpawnWorldX: scene?.lastSpawnResolveDebug?.worldX ?? null,
+          lastSpawnWorldXSource: scene?.lastSpawnResolveDebug?.source ?? null,
+          visibleWorldRange: cam?.getVisibleWorldRange?.() ?? null,
+          clamp: cam?.getState?.()?.clamp ?? cam?.getClampRange?.() ?? null,
+          projectionRoundTripOk,
+          projectionSampleWorldX,
+          projectionSampleScreenX,
+          projectionRoundTripWorldX,
+          inputDebug: scene?.cameraInputController?.lastInputDebug ?? null
+        };
+      })(),
       spawn: {
         rowCount: rows.length,
         activeRows,

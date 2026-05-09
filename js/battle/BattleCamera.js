@@ -78,7 +78,8 @@ export class BattleCamera {
       pixelsPerWorldUnit: this.pixelsPerWorldUnit,
       visibleWorldWidth: this.visibleWorldWidth,
       stagePixelWidth: this.stagePixelWidth,
-      clamp: this.getClampRange()
+      clamp: this.getClampRange(),
+      projectionMode: 'world-x-to-logical-screen-x'
     };
   }
 

@@ -21,6 +21,14 @@ function normalizeBgId(bgId) {
   };
 }
 
+function firstFinite(...values) {
+  for (const value of values) {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
 function pad2(v) { return String(Math.max(0, Number(v) || 0)).padStart(2, '0'); }
 function pad3(v) { return String(Math.max(0, Number(v) || 0)).padStart(3, '0'); }
 
@@ -67,7 +75,14 @@ export class StageBackgroundResolver {
   }
 
   static fromStage(stage = {}, runtime = null, options = {}) {
-    const bgId = Number.isFinite(Number(runtime?.bgId)) ? runtime.bgId : stage?.bgId;
+    const stageDefinition = stage?.definition || stage?.stageDefinition || null;
+    const bgId = firstFinite(
+      runtime?.bgId,
+      stage?.runtime?.bgId,
+      stageDefinition?.runtime?.bgId,
+      stageDefinition?.bgId,
+      stage?.bgId
+    );
     return StageBackgroundResolver.resolve(bgId, stage, options);
   }
 

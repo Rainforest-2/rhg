@@ -16,13 +16,27 @@ function buildFullImageRenderCrop(image) {
 }
 
 export class BcuCastleAssetLoader {
-  constructor(options = {}) { this.imageLoader = options.imageLoader || null; }
+  constructor(options = {}) { this.imageLoader = options.imageLoader || null; this.db = options.bcuDb || null; }
 
   async load(castleId = 0, options = {}) {
     const requestedAnimBaseId = options?.animBaseId ?? null;
     const requestedCannonId = options?.cannonId ?? null;
     const source = options?.source || 'stage-runtime';
-    const candidates = resolveEnemyCastleAssetCandidates(castleId, options);
+    const castle = this.db?.castles?.enemy?.get(castleId);
+    const candidates = castle ? {
+      requestedCastleId: castleId,
+      resolvedCastleId: castle.numericId,
+      groupName: castle.groupName,
+      groupIndex: castle.groupIndex,
+      localCastleId: castle.localCastleId,
+      assetKind: 'enemy-castle',
+      usesImgcut: false,
+      imagePath: castle.assets.imagePath,
+      imageCandidates: castle.assets.imageCandidates,
+      usedFallback: !!castle.diagnostics?.fallbackReason,
+      fallbackReason: castle.diagnostics?.fallbackReason || null,
+      name: castle.name
+    } : resolveEnemyCastleAssetCandidates(castleId, options);
     for (const imagePath of candidates.imageCandidates) {
       const image = await this.loadImage(imagePath);
       if (!image) continue;
@@ -123,6 +137,10 @@ export class BcuCastleAssetLoader {
       img.src = src;
     });
   }
+}
+
+export function resolveEnemyCastleAsset(castleId = 0, options = {}) {
+  return resolveEnemyCastleAssetCandidates(castleId, options);
 }
 
 export { resolveEnemyCastleAssetCandidates };

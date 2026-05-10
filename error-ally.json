@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "reserved ally error list",
+    "definition": "Ally IDs in this file are display IDs. The BCU asset unit ID is display ID - 1."
+  },
+  "checkedMaxAllyId": 0,
+  "count": 0,
+  "missingAllyIds": [],
+  "missingAllyIdsPadded": [],
+  "missingRanges": [],
+  "notes": [
+    "When populated, use assetUnitId = missingAllyId - 1."
+  ]
+}

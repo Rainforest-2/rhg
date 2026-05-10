@@ -1,4 +1,4 @@
-import { CHARACTER_FACTIONS, getAvailableCharacters, getCharactersByFaction, getCharacterBaseId, getCharacterById, isGeneratedCharacter } from '../battle/CharacterCatalog.js';
+import { CHARACTER_FACTIONS, getAvailableCharacters, getCharactersByFaction, getCharacterBaseId, getCharacterById } from '../battle/CharacterCatalog.js';
 import { FormationStore } from '../battle/FormationStore.js';
 
 export class FormationEditor {
@@ -8,7 +8,6 @@ export class FormationEditor {
     this.onApplyBattle = onApplyBattle || (() => {});
     this.filter = CHARACTER_FACTIONS.all;
     this.searchText = '';
-    this.generatedFilter = 'all';
     this.formation = FormationStore.load();
     this.activeSlot = 0;
     this.applying = false;
@@ -68,11 +67,9 @@ export class FormationEditor {
 
     const slot = e.target.closest('[data-slot]');
     const filter = e.target.closest('[data-filter]');
-    const generatedFilterBtn = e.target.closest('[data-generated-filter]');
     const character = e.target.closest('[data-character]');
     if (slot) { this.activeSlot = Number(slot.dataset.slot); return this.renderDynamic(); }
     if (filter) { this.filter = filter.dataset.filter; return this.renderDynamic(); }
-    if (generatedFilterBtn) { this.generatedFilter = generatedFilterBtn.dataset.generatedFilter || 'all'; return this.renderDynamic(); }
     if (character) {
       const characterId = character.dataset.character;
       const selected = getCharacterById(characterId);
@@ -87,14 +84,9 @@ export class FormationEditor {
 
   getFilteredCharacters() {
     const baseChars = this.filter === CHARACTER_FACTIONS.all ? getAvailableCharacters() : getCharactersByFaction(this.filter);
-    const byGenerated = baseChars.filter((c) => {
-      if (this.generatedFilter === 'manual') return !isGeneratedCharacter(c);
-      if (this.generatedFilter === 'generated') return isGeneratedCharacter(c);
-      return true;
-    });
     const q = this.searchText.trim().toLowerCase();
-    if (!q) return byGenerated;
-    return byGenerated.filter((c) => [c.characterId, c.baseCharacterId, c.label, c.sourceSlotId, c.statsSummary].some((v) => String(v || '').toLowerCase().includes(q)));
+    if (!q) return baseChars;
+    return baseChars.filter((c) => [c.characterId, c.baseCharacterId, c.label, c.sourceSlotId, c.statsSummary].some((v) => String(v || '').toLowerCase().includes(q)));
   }
 
   renderIconMarkup(c, extraClass = '') {
@@ -104,14 +96,12 @@ export class FormationEditor {
 
   renderDynamic() {
     const chars = this.getFilteredCharacters();
-    const allChars = getAvailableCharacters();
     const dogCount = getCharactersByFaction('dog').length;
     const catCount = getCharactersByFaction('cat').length;
-    const generatedCount = allChars.filter((c) => isGeneratedCharacter(c)).length;
     const flat = (this.formation?.pages || []).flat();
     const usedBaseIds = new Set(flat.filter(Boolean).map((id) => getCharacterBaseId(id)).filter(Boolean));
 
-    this.root.querySelector('.formation-catalog-summary').textContent = `Catalog: ${chars.length} / dog ${dogCount} / cat ${catCount} / generated ${generatedCount}`;
+    this.root.querySelector('.formation-catalog-summary').textContent = `Catalog: ${chars.length} / dog ${dogCount} / cat ${catCount}`;
 
     this.root.querySelector('.formation-slots').innerHTML = flat.map((id, i) => {
       const c = id ? getCharacterById(id) : null;
@@ -119,13 +109,12 @@ export class FormationEditor {
     }).join('');
 
     this.root.querySelector('.formation-catalog-grid').innerHTML = chars.map((c) => {
-      const generated = isGeneratedCharacter(c);
-      return `<button type='button' class='formation-character-card ${usedBaseIds.has(getCharacterBaseId(c.characterId)) ? 'is-used' : ''} ${generated ? 'is-generated' : ''}' data-character='${c.characterId}' data-generated='${generated ? '1' : '0'}' data-faction='${c.faction}' data-base-character-id='${c.baseCharacterId || ''}'>${this.renderIconMarkup(c)}<span>${c.factionLabel || c.faction}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small>${generated ? `<small class='generated-badge'>generated</small>` : ''}<small class='base-id'>base:${c.baseCharacterId || '-'}</small><small>${c.sourceSlotId || '-'}</small><small>${c.statsSummary || ''}</small></button>`;
+      return `<button type='button' class='formation-character-card ${usedBaseIds.has(getCharacterBaseId(c.characterId)) ? 'is-used' : ''}' data-character='${c.characterId}' data-faction='${c.faction}' data-base-character-id='${c.baseCharacterId || ''}'>${this.renderIconMarkup(c)}<span>${c.factionLabel || c.faction}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small><small class='base-id'>base:${c.baseCharacterId || '-'}</small><small>${c.sourceSlotId || '-'}</small><small>${c.statsSummary || ''}</small></button>`;
     }).join('');
   }
 
   refresh() {
-    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><h3>編成</h3><p>キャラを選び、右の Apply Battle で開始</p></header><section class='formation-slots-wrap'><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-generated-tabs'><button type='button' data-generated-filter='all'>All</button><button type='button' data-generated-filter='manual'>Manual</button><button type='button' data-generated-filter='generated'>Generated</button></div><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>Apply Battleで戦闘開始</p></aside></div>`;
+    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><h3>編成</h3><p>キャラを選び、右の Apply Battle で開始</p></header><section class='formation-slots-wrap'><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>Apply Battleで戦闘開始</p></aside></div>`;
     this.renderDynamic();
   }
 }

@@ -34,7 +34,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor() { this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock(); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.fixedStepMs=1000/30; this.maxSubStepsPerFrame=5; this.cameraInputController=null; }
+  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock(); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.fixedStepMs=1000/30; this.maxSubStepsPerFrame=5; this.cameraInputController=null; }
 
   async start() {
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
@@ -149,7 +149,7 @@ export class PreviewApp {
       overlay?.startTimer();
       overlay?.setProgress({ phase: 'battle-scene', message: 'Preparing battle scene', value: 0.05 });
       await nextFrame();
-      const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), { selectedStageId: this.selectedStageId || undefined });
+      const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), { selectedStageId: this.selectedStageId || undefined, bcuDb: this.bcuDb });
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       console.info('battleScene:init:ok');
       const elapsed=performance.now()-t0;

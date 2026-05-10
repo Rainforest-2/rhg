@@ -11,7 +11,7 @@ import { ProductionRuntime } from './ProductionRuntime.js';
 import { FormationStore } from './FormationStore.js';
 import { CharacterCatalogRuntime } from './CharacterCatalogRuntime.js';
 import { PREVIEW_ASSETS } from '../data/previewAssets.js';
-import { CHARACTER_CATALOG_VERSION, getCharacterCatalogSummary, validateCharacterCatalog, getCharacterCatalogDiagnostics, getAvailableCharacters, getCharactersByFaction, getCharacterById, isGeneratedCharacter } from './CharacterCatalog.js';
+import { CHARACTER_CATALOG_VERSION, getCharacterCatalogSummary, validateCharacterCatalog, getCharacterCatalogDiagnostics, getAvailableCharacters, getCharactersByFaction, getCharacterById } from './CharacterCatalog.js';
 import { PLAYABLE_REGISTRY_VERSION, getPlayableRegistrySummary, validatePlayableRegistry, buildPlayableRosters } from './PlayableCharacterRegistry.js';
 
 export class DebugBattleInspector {
@@ -164,7 +164,7 @@ export class DebugBattleInspector {
       `damage/proc rawOnly:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.rawOnly || 0)} partial:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.partial || 0)} procPending:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procPending || 0)} procSkipped:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procSkipped || 0)}`,
       `kb active:${this.fmt(info?.kbRuntime?.activeKnockbacks || 0)} dead:${this.fmt(info?.kbRuntime?.dyingOrDead || 0)} removable:${this.fmt(info?.kbRuntime?.removable || 0)}`,
       `effects active:${this.fmt(info?.effectRuntime?.activeCount || 0)} finished:${this.fmt(info?.effectRuntime?.finishedCount || 0)}`,
-      `catalog total:${this.fmt(info?.characterCatalog?.catalogSummary?.total || 0)} dog:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.dog || 0)} cat:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.cat || 0)} generated:${this.fmt((info?.characterCatalog?.registrySummary?.generatedDogs || 0)+(info?.characterCatalog?.registrySummary?.generatedCats || 0))} errors:${this.fmt((info?.characterCatalog?.validation?.errors || []).length)}`,
+      `catalog total:${this.fmt(info?.characterCatalog?.catalogSummary?.total || 0)} dog:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.dog || 0)} cat:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.cat || 0)} errors:${this.fmt((info?.characterCatalog?.validation?.errors || []).length)}`,
       `anim actors:${this.fmt(info?.animationRuntime?.actors?.length || 0)} frame:${this.fmt(info?.animationRuntime?.examples?.[0]?.frame)} tracks:${this.fmt(info?.animationRuntime?.examples?.[0]?.appliedTrackCount || 0)}/${this.fmt(info?.animationRuntime?.examples?.[0]?.failedTrackCount || 0)} parts:${this.fmt(info?.animationRuntime?.examples?.[0]?.modelPartCount || 0)}`,
       `bg req/res:${bg.requestedBgId ?? '-'}=>${bg.resolvedBgId ?? '-'} fallback:${bg.fallbackReason ?? '-'}`,
       `bg path:${bg.imagePath || '-'} kind:${bg.assetKind || '-'} csvKind:${bg.backgroundCsvKind || '-'}`,
@@ -633,12 +633,10 @@ export class DebugBattleInspector {
           previewAssetValidation: CharacterCatalogRuntime.validatePreviewAssets(PREVIEW_ASSETS),
           formationCompatibility: CharacterCatalogRuntime.buildCatalogDiagnostics({ catalog: scene?.characterCatalog || [], rosters, previewAssets: PREVIEW_ASSETS, formation: FormationStore.load() }).formationCompatibility,
           examples: catalogDiagnostics?.examples || {},
-          generatedSelectable: {
+          fullRangeSelectable: {
             expectedExamples: generatedExamples,
             foundInCatalog: generatedExamples.filter((id) => !!getCharacterById(id)),
-            foundInAvailableCharacters: generatedExamples.filter((id) => getAvailableCharacters().some((c) => c.characterId === id)),
-            formationContainsGenerated: (formationSummary?.flatSlots || []).some((id) => id && isGeneratedCharacter(id)),
-            productionRosterContainsGenerated: (productionRoster || []).some((u) => u?.characterId && isGeneratedCharacter(u.characterId))
+            foundInAvailableCharacters: generatedExamples.filter((id) => getAvailableCharacters().some((c) => c.characterId === id))
           }
         };
       })(),

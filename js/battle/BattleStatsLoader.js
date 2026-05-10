@@ -8,27 +8,15 @@ import {
 import { AbilityModel } from './AbilityModel.js';
 import { ActorStatsModel } from './ActorStatsModel.js';
 
-const UNIT_VERSION = '000004';
-const ENEMY_VERSION = '000001';
 const val = (v, i, fallback = 0) => Number.isFinite(v?.[i]) ? v[i] : fallback;
-
-async function fetchText(path) {
-  const isRelative = typeof path === 'string' && (path.startsWith('./') || path.startsWith('../'));
-  if (isRelative && typeof window === 'undefined') {
-    const { readFile } = await import('node'+':fs'+'/promises');
-    const { fileURLToPath, pathToFileURL } = await import('node:url');
-    const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
-    const absPath = fileURLToPath(new URL(path, cwdBase));
-    return await readFile(absPath, 'utf8');
-  }
-  const r = await fetch(path);
-  if (!r.ok) throw new Error(`Failed to fetch ${path}: ${r.status}`);
-  return await r.text();
-}
 const parseCsvRows = (text) => text.split(/\r?\n/).map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean).map((line) => line.split(',').map((x) => x.trim()));
 const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number(v) : 0));
 
 export class BattleStatsLoader {
+  constructor({ bcuDb } = {}) {
+    this.db = bcuDb || null;
+  }
+
   parseUnitCsv(text) { return parseCsvRows(text).map(toNumbers); }
   parseEnemyTUnitCsv(text) { return parseCsvRows(text).map(toNumbers); }
 
@@ -110,6 +98,12 @@ export class BattleStatsLoader {
     return ActorStatsModel.toStatsObject(model);
   }
 
-  async loadUnitStats(unitId, form = 'f', formRow = 0) { const unit = String(unitId).padStart(3, '0'); const file = `./public/assets/bcu/${UNIT_VERSION}/org/unit/${unit}/unit${unit}.csv`; const rows = this.parseUnitCsv(await fetchText(file)); const row = rows[formRow] || rows[0]; if (!row) throw new Error(`No unit stat rows in ${file}`); return this.normalizeUnitStats(row, { file, row: rows[formRow] ? formRow : 0, type: 'unit', unitId, form, formRow, mappingStatus: 'valid', assetSource: 'org/unit/{unit}/unit{unit}.csv', csvKind: 'unit-form-row' }); }
-  async loadEnemyStats(enemyId) { const file = `./public/assets/bcu/${ENEMY_VERSION}/org/data/t_unit.csv`; const rows = this.parseEnemyTUnitCsv(await fetchText(file)); const rowIndex = Number(enemyId) + 2; const row = rows[rowIndex]; if (!row) throw new Error(`No enemy stat row found for enemyId=${enemyId} in ${file}`); return this.normalizeEnemyStats(row, { file, row: rowIndex, type: 'enemy', enemyId, mappingStatus: 'valid', assetSource: 'org/data/t_unit.csv', csvKind: 'enemy-table-row' }); }
+  async loadUnitStats(unitId, form = 'f', formRow = 0) {
+    if (!this.db) throw new Error('BattleStatsLoader requires bcuDb; stats CSV fetch is centralized in BcuAssetDatabase.');
+    return this.db.units.getFormStats(unitId, Number.isFinite(Number(formRow)) ? Number(formRow) : form);
+  }
+  async loadEnemyStats(enemyId) {
+    if (!this.db) throw new Error('BattleStatsLoader requires bcuDb; stats CSV fetch is centralized in BcuAssetDatabase.');
+    return this.db.enemies.getStats(enemyId);
+  }
 }

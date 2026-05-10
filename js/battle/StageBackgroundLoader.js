@@ -32,8 +32,7 @@ function parseImgcut(text) {
 
 function parseRgb(cols, start) { return { r: Number(cols[start] || 0), g: Number(cols[start + 1] || 0), b: Number(cols[start + 2] || 0) }; }
 function pad2(v) { return String(Math.max(0, Number(v) || 0)).padStart(2, '0'); }
-function pad3(v) { return String(Math.max(0, Number(v) || 0)).padStart(3, '0'); }
-function defaultBgRow(bgId = 0) { return { bgId, skyTop: { r: 0, g: 0, b: 0 }, skyBottom: { r: 0, g: 0, b: 0 }, groundTop: { r: 0, g: 0, b: 0 }, groundBottom: { r: 0, g: 0, b: 0 }, imgcutId: 1, showUpper: true, imageReferenceId: null, csvRowFound: false, source: 'bcu-background-default-constructor' }; }
+function defaultBgRow(bgId = 0) { return { bgId, skyTop: { r: 0, g: 0, b: 0 }, skyBottom: { r: 0, g: 0, b: 0 }, groundTop: { r: 0, g: 0, b: 0 }, groundBottom: { r: 0, g: 0, b: 0 }, imgcutId: 1, showUpper: true, imageReferenceId: null, sourceFile: null, csvRowFound: false }; }
 function parseBgCsv(text, bgId) {
   if (typeof text !== 'string' || !text.trim()) return defaultBgRow(bgId);
   const rows = text.replace(/^\uFEFF/, '').split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
@@ -41,7 +40,7 @@ function parseBgCsv(text, bgId) {
     const cols = row.split(',');
     if (Number(cols[0]) !== bgId) continue;
     const ref = Number(cols[15]);
-    return { bgId, skyTop: parseRgb(cols, 1), skyBottom: parseRgb(cols, 4), groundTop: parseRgb(cols, 7), groundBottom: parseRgb(cols, 10), imgcutId: Number(cols[13] || 0), showUpper: Number(bgId) === 110 || Number(cols[14] || 0) !== 0, imageReferenceId: Number.isFinite(ref) && ref >= 0 ? ref : null, csvRowFound: true, source: 'bcu-bg.csv-row' };
+    return { bgId, skyTop: parseRgb(cols, 1), skyBottom: parseRgb(cols, 4), groundTop: parseRgb(cols, 7), groundBottom: parseRgb(cols, 10), imgcutId: Number(cols[13] || 0), showUpper: Number(bgId) === 110 || Number(cols[14] || 0) !== 0, imageReferenceId: Number.isFinite(ref) && ref >= 0 ? ref : null, sourceFile: null, csvRowFound: true };
   }
   return defaultBgRow(bgId);
 }
@@ -49,6 +48,7 @@ function parseBgCsv(text, bgId) {
 export class StageBackgroundLoader {
   constructor(log, options = {}) {
     this.log = log || (() => {});
+    this.db = options.bcuDb || null;
     this.fetchText = options.fetchText || fetchText;
     this.fetchTextSafe = options.fetchTextSafe || (async (path) => {
       try { return await this.fetchText(path); } catch { return null; }
@@ -60,18 +60,12 @@ export class StageBackgroundLoader {
     const fallbackStage = stage || {};
     const runtime = fallbackStage.runtime || fallbackStage.stageRuntime || null;
     const bgResolved = StageBackgroundResolver.fromStage(fallbackStage, runtime);
-    const csvPath = stage?.csvPath || bgResolved.csvPath;
-    const csvText = await this.fetchTextSafe(csvPath);
-    const bgRow = parseBgCsv(csvText, bgResolved.resolvedBgId || 0);
-    const baseDir = './public/assets/bcu/000001/org';
-    const imageCandidates = [
-      Number.isFinite(bgRow.imageReferenceId) ? `${baseDir}/img/bg/bg${pad3(bgRow.imageReferenceId)}.png` : null,
-      ...bgResolved.imageCandidates
-    ].filter(Boolean);
-    const imgcutCandidates = [
-      `${baseDir}/battle/bg/bg${pad2(bgRow.imgcutId)}.imgcut`,
-      ...bgResolved.imgcutCandidates
-    ].filter(Boolean);
+    const bg = this.db?.backgrounds?.get(bgResolved.resolvedBgId || 0);
+    let bgRow = bg?.csv || null;
+    if (!bgRow && !this.db) bgRow = parseBgCsv(await this.fetchTextSafe(stage?.csvPath || bgResolved.csvPath), bgResolved.resolvedBgId || 0);
+    bgRow = bgRow || { skyTop: { r: 0, g: 0, b: 0 }, skyBottom: { r: 0, g: 0, b: 0 }, groundTop: { r: 0, g: 0, b: 0 }, groundBottom: { r: 0, g: 0, b: 0 }, imgcutId: 1, showUpper: true, imageReferenceId: null, sourceFile: null, csvRowFound: false };
+    const imageCandidates = bg?.assets?.imageCandidates || bgResolved.imageCandidates;
+    const imgcutCandidates = bg?.assets?.imgcutCandidates || (!this.db ? [`./public/assets/bcu/000001/org/battle/bg/bg${pad2(bgRow.imgcutId)}.imgcut`, ...bgResolved.imgcutCandidates] : bgResolved.imgcutCandidates);
     let image = null;
     let imagePath = null;
     for (const candidate of imageCandidates) {
@@ -103,7 +97,7 @@ export class StageBackgroundLoader {
       crop: { x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || stage?.cropName, cropRole: 'BCU Background.BG part' },
       upperCrop: upperPart ? { x: upperPart.x, y: upperPart.y, w: upperPart.w, h: upperPart.h, name: upperPart.name, upperCropRole: 'BCU Background.TOP part if present' } : null,
       colors: { skyTop: bgRow.skyTop, skyBottom: bgRow.skyBottom, groundTop: bgRow.groundTop, groundBottom: bgRow.groundBottom },
-      source: StageBackgroundResolver.buildSource(bgResolved, { imagePath, imgcutPath, csvPath, stageId: stage?.id || 0, bgId: bgRow.bgId, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, imageReferenceId: bgRow.imageReferenceId, csvRowFound: bgRow.csvRowFound, bgCsvSource: bgRow.source })
+      source: StageBackgroundResolver.buildSource(bgResolved, { imagePath, imgcutPath, csvPath: bgRow.sourceFile, stageId: stage?.id || 0, bgId: bg?.id ?? bgResolved.resolvedBgId, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, imageReferenceId: bgRow.imageReferenceId, csvRowFound: !!bg || !!bgRow.csvRowFound, bgCsvSource: bgRow.sourceFile ? 'bcu-db-bg.csv-row' : (bgRow.csvRowFound ? 'legacy-test-bg.csv-row' : 'bcu-db-missing-row') })
     };
   }
 }

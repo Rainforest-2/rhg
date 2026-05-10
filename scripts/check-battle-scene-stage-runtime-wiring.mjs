@@ -532,13 +532,13 @@ const { validateCharacterCatalog, getCharacterCatalogSummary, getCharacterBaseId
 const { CharacterCatalogRuntime } = await import('../js/battle/CharacterCatalogRuntime.js');
 assert.equal(formatBcuId(0), '000');
 assert.equal(formatBcuId(30), '030');
-assert.equal(buildGeneratedDogSpecs({ start: 13, end: 15 }).length, 3);
-assert.equal(buildGeneratedCatSpecs({ start: 13, end: 15 }).length, 3);
-assert.equal(buildGeneratedDogSpecs({ start: 13, end: 13 })[0].characterId, 'dog-enemy-013');
-assert.equal(buildGeneratedCatSpecs({ start: 13, end: 13 })[0].characterId, 'cat-unit-013-f');
+assert.ok(buildGeneratedDogSpecs().length >= 700);
+assert.ok(buildGeneratedCatSpecs().length >= 860);
+assert.ok(buildGeneratedDogSpecs().some((x) => x.characterId === 'dog-enemy-013'));
+assert.ok(buildGeneratedCatSpecs().some((x) => x.characterId === 'cat-unit-013-f'));
 const ro = buildPlayableRosters();
-assert.ok(ro.dogPlayer.length > DOG_PLAYABLE_SPECS.length);
-assert.ok(ro.catUnits.length > CAT_PLAYABLE_SPECS.length);
+assert.equal(ro.dogPlayer.length, DOG_PLAYABLE_SPECS.length);
+assert.equal(ro.catUnits.length, CAT_PLAYABLE_SPECS.length);
 assert.equal(buildCharacterCatalog().length, ro.dogPlayer.length + ro.catUnits.length);
 assert.equal(validatePlayableRegistry().ok, true);
 assert.equal(validateCharacterCatalog().ok, true);
@@ -581,27 +581,27 @@ assert.equal(summary.rows, 2); assert.equal(summary.cols, 5); assert.equal(summa
 
 const formationEditorSrc = fs.readFileSync('js/ui/FormationEditor.js', 'utf8');
 assert.ok(formationEditorSrc.includes('searchText'));
-assert.ok(formationEditorSrc.includes('generatedFilter'));
-assert.ok(formationEditorSrc.includes('data-generated'));
+assert.ok(!formationEditorSrc.includes('generatedFilter'));
+assert.ok(!formationEditorSrc.includes('data-generated'));
 assert.ok(formationEditorSrc.includes('formation-catalog-summary'));
 assert.ok(formationEditorSrc.includes("type='button'") || formationEditorSrc.includes('type="button"'));
 assert.ok(characterCatalogSrc.includes('isGeneratedCharacter'));
-assert.ok(formationStoreSrc.includes('generatedCount') || inspectorSrc.includes('generatedRosterCount'));
-assert.ok(inspectorSrc.includes('generatedSelectable'));
+assert.ok(!formationStoreSrc.includes('generatedCount'));
+assert.ok(inspectorSrc.includes('fullRangeSelectable'));
 
 const { getAvailableCharacters, getCharactersByFaction, getCharacterById, isGeneratedCharacter, buildProductionLineupEntryFromCharacter } = await import('../js/battle/CharacterCatalog.js');
 
 for (const id of ['dog-enemy-013','dog-enemy-030','cat-unit-013-f','cat-unit-030-f']) assert.ok(getCharacterById(id));
-assert.equal(isGeneratedCharacter('cat-unit-013-f'), true);
-assert.equal(isGeneratedCharacter('dog-enemy-013'), true);
+assert.equal(isGeneratedCharacter('cat-unit-013-f'), false);
+assert.equal(isGeneratedCharacter('dog-enemy-013'), false);
 assert.equal(isGeneratedCharacter('dog-wanko'), false);
-assert.equal(getCharacterById('cat-unit-013-f')?.generated, true);
-assert.equal(getCharacterById('dog-enemy-013')?.generated, true);
+assert.equal(getCharacterById('cat-unit-013-f')?.generated, undefined);
+assert.equal(getCharacterById('dog-enemy-013')?.generated, undefined);
 assert.ok(getAvailableCharacters().some((c) => c.characterId === 'cat-unit-013-f'));
 assert.ok(getCharactersByFaction('cat').some((c) => c.characterId === 'cat-unit-013-f'));
 assert.ok(getCharactersByFaction('dog').some((c) => c.characterId === 'dog-enemy-013'));
 const sanitized = FormationStoreDyn.sanitize({ pages: [['cat-unit-013-f', null, null, null, null], [null, null, null, null, null]] });
 assert.equal(sanitized.pages[0][0], 'cat-unit-013-f');
-assert.ok(FormationStoreDyn.getFormationSummary(sanitized).generatedCount >= 1);
+assert.equal(FormationStoreDyn.getFormationSummary(sanitized).filledCount, 1);
 assert.equal(buildProductionLineupEntryFromCharacter(getCharacterById('cat-unit-013-f')).characterId, 'cat-unit-013-f');
 assert.equal(CharacterCatalogRuntime.validateCatalog(getAvailableCharacters()).ok, true);

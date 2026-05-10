@@ -1,4 +1,4 @@
-import { getCharacterById, getCharacterBaseId, isGeneratedCharacter } from './CharacterCatalog.js';
+import { getCharacterById, getCharacterBaseId } from './CharacterCatalog.js';
 
 export const LINEUP_ROWS = 2;
 export const LINEUP_COLS = 5;
@@ -7,7 +7,7 @@ export const FORMATION_VERSION = 2;
 export const FORMATION_STORAGE_KEY = 'wanko-battle.formation.v2';
 
 export const DEFAULT_FLAT_SLOTS = Object.freeze([
-  'dog-wanko', 'dog-nyoro', 'dog-rei', 'cat-basic', 'cat-tank',
+  'dog-enemy-000', 'dog-enemy-001', 'dog-enemy-002', 'cat-unit-000-f', 'cat-unit-001-f',
   null, null, null, null, null
 ]);
 
@@ -83,8 +83,7 @@ export function getFormationSummary(formation) {
   const flatSlots = getFormationFlatSlots(sanitized);
   const filledCount = flatSlots.filter(Boolean).length;
   const total = LINEUP_TOTAL;
-  const generatedCount = flatSlots.filter((id) => id && isGeneratedCharacter(id)).length;
-  return { version: sanitized.version, rows: LINEUP_ROWS, cols: LINEUP_COLS, total, filledCount, emptyCount: total - filledCount, generatedCount, manualCount: filledCount - generatedCount, duplicatePolicy: 'removeDuplicateBaseCharacterIds', storageKey: FORMATION_STORAGE_KEY, flatSlots };
+  return { version: sanitized.version, rows: LINEUP_ROWS, cols: LINEUP_COLS, total, filledCount, emptyCount: total - filledCount, duplicatePolicy: 'removeDuplicateBaseCharacterIds', storageKey: FORMATION_STORAGE_KEY, flatSlots };
 }
 
 function canUseStorage() { return !!globalThis?.localStorage || (typeof window !== 'undefined' && !!window.localStorage); }

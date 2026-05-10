@@ -103,8 +103,10 @@ export function buildDogRosterEntry(spec) {
     uiIcon: {
       kind: 'enemy',
       bcuId,
-      source: 'runtime-enemy-sprite-sheet-000002',
+      source: 'runtime-enemy-imgcut-first-cut-000002',
       primary: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png`,
+      imgcut: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.imgcut`,
+      cropIndex: 0,
       runtimeImage: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png`
     }
   };

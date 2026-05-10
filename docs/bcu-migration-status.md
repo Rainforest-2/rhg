@@ -1,7 +1,7 @@
 # BCU migration status
 
 ## Last updated
-- date: 2026-05-09 (UTC)
+- date: 2026-05-10 (UTC)
 - commit: (working tree)
 - task: Task 12-FINAL (CharacterCatalog / PlayableCharacterRegistry / large roster foundation)
 
@@ -43,6 +43,7 @@
 | Task 12-FINAL | Preview/formation/catalog contract checks | `scripts/check-battle-scene-stage-runtime-wiring.mjs`, `js/data/previewAssets.js` | Added assertions for generated preview ids, registry/catalog validations, and formation 2x5 compatibility; kept `buildPlayablePreviewAssets(ANIM4_E)` contract. | command pass. |
 | Task 12-HOTFIX | CharacterCatalog export fix | `js/battle/CharacterCatalog.js`, `js/battle/DebugBattleInspector.js` | Fixed blank-page ES module import error caused by missing `CharacterCatalog.isGeneratedCharacter` export. | wiring check pass. |
 | Task 12-HOTFIX | Generated metadata propagation | `js/battle/PlayableCharacterRegistry.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Generated character metadata now flows into catalog entries and is asserted (`generated/generationSource/generatedRange`). | wiring check pass. |
+| Task 12-HOTFIX | BattleScene syntax restore (background-only boot failure) | `js/battle/BattleScene.js` | Removed an extra `}` in `applyBcuProductionStatsFromTemplates`; ES module parsing had failed before `getPlayerProductionRoster`, so battle scene initialization stopped and only background was visible. | `node --input-type=module -e "import './js/main.js'"` pass. |
 
 ## Partial
 - Production runtime still uses existing BattleEconomy simple income model if true

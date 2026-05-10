@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { BcuStageSpawnRuntime } from '../js/battle/BcuStageSpawnRuntime.js';
+import { BCU_STAGE_ENEMY_COLUMNS, StageDefinitionLoader } from '../js/battle/StageDefinitionLoader.js';
 
 function mkRow(overrides={}){return {rowIndex:0,enemyId:3,sourceEnemyId:5,rawEnemyId:7,count:2,isInfinite:false,firstFrame:10,respawnMinFrame:5,respawnMaxFrame:5,baseHpTrigger:100,baseHpTriggerPercent:100,magnification:120,hpMagnification:120,attackMagnification:130,layerMin:1,layerMax:2,frontLayer:1,backLayer:2,bossFlag:0,...overrides};}
 function mkRuntime(row, overrides={}){
@@ -128,5 +129,54 @@ rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
 ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
 rt.commitSpawn(ev[0],{random:()=>0});
 assert.equal(rt.rows[0].nextFrame,15);
+
+// 18: StageDefinitionLoader preserves raw/capped stage header and SCDef aliases.
+assert.equal(BCU_STAGE_ENEMY_COLUMNS.S1, 10);
+const loader = new StageDefinitionLoader();
+const parsed = loader.parse([
+  '12,3,1,0,0,0,0,0,4',
+  '5000,12345,0,0,7,99,0,180',
+  '5,2,10,5,5,100,1,2,0,120,20,80,2,130,1,0'
+].join('\n'), './stage-test.csv');
+assert.equal(parsed.castleId, 12);
+assert.equal(parsed.cannonId, 3);
+assert.equal(parsed.noContinue, 1);
+assert.equal(parsed.bossGuard, 4);
+assert.equal(parsed.runtime.castleRowSource, 'bcu-stage-castle-row-extended-cannon');
+assert.equal(parsed.maxEnemyCountRaw, 99);
+assert.equal(parsed.maxEnemyCount, 50);
+assert.equal(parsed.runtime.maxEnemyCountRaw, 99);
+assert.equal(parsed.runtime.maxEnemyCount, 50);
+assert.equal(parsed.enemyRows[0].rawEnemyId, 5);
+assert.equal(parsed.enemyRows[0].enemyId, 3);
+assert.equal(parsed.enemyRows[0].firstFrameMin, 20);
+assert.equal(parsed.enemyRows[0].firstFrameMax, 40);
+assert.equal(parsed.enemyRows[0].respawnMinFrame, 10);
+assert.equal(parsed.enemyRows[0].respawnMaxFrame, 10);
+assert.equal(parsed.enemyRows[0].attackMagnification, 130);
+assert.equal(parsed.enemyRows[0].baseHpTriggerUpperPercent, 80);
+assert.ok(parsed.enemyRows[0].debug?.scdefRaw);
+assert.ok(parsed.debug?.castleRawRow);
+
+const parsedBcuCastleRow = loader.parse([
+  '12,1',
+  '5000,12345,0,0,7,99,0,180,1',
+  '5,1,10,5,5,100,1,2,0,120'
+].join('\n'), './stage-test-bcu-castle.csv');
+assert.equal(parsedBcuCastleRow.castleId, 12);
+assert.equal(parsedBcuCastleRow.cannonId, null);
+assert.equal(parsedBcuCastleRow.noContinue, 1);
+assert.equal(parsedBcuCastleRow.bossGuard, 1);
+assert.equal(parsedBcuCastleRow.runtime.castleRowSource, 'bcu-stage-castle-row');
+assert.equal(parsedBcuCastleRow.castle.source, 'bcu-stage-castle-row');
+
+// 19: C1 health-window hook is visible and enforced as a partial upper hook.
+row=mkRow({baseHpTriggerPercent:100,baseHpTriggerUpperPercent:80});
+rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
+assert.equal(rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:90}).length,0);
+assert.equal(rt.rows[0].lastBlockedReason,'base-hp-upper-trigger');
+ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:80});
+assert.equal(ev.length,1);
+assert.equal(ev[0].healthWindowDebug.upperPercent,80);
 
 console.log('check-bcu-stage-spawn-runtime: OK');

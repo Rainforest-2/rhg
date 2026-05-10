@@ -1,16 +1,17 @@
 import { BattleEffect } from './BattleEffect.js';
 
 export class EffectRuntime {
-  static createHitEffect({ id, x, y, asset = null, scale = 1, source = 'hit-effect', createdAtMs = null } = {}) {
-    return this.createEffect({ id, type: 'hit', x, y, frameParts: asset?.parts || [], image: asset?.image || null, scale, source, createdAtMs });
+  static createHitEffect({ id, x, y, asset = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null } = {}) {
+    return this.createEffect({ id, type: 'hit', x, y, frameParts: asset?.parts || [], image: asset?.image || null, scale, source, createdAtMs, layer, debug });
   }
 
   static createEffect(payload = {}) {
-    const { id, type = 'hit', x = 0, y = 0, frameParts = [], image = null, scale = 1, source = 'effect-runtime', createdAtMs = null } = payload;
+    const { id, type = 'hit', x = 0, y = 0, frameParts = [], image = null, scale = 1, source = 'effect-runtime', createdAtMs = null, layer = null, debug = null } = payload;
     return new BattleEffect({
       id: id || `fx-${Date.now()}-${Math.random()}`,
       type, x, y, frameParts, image, scale, source, createdAtMs,
-      debug: { source, type, worldX: x, worldY: y, hasImage: !!image, frameCount: Array.isArray(frameParts) ? frameParts.length : 0 }
+      layer,
+      debug: { source, type, worldX: x, worldY: y, hasImage: !!image, frameCount: Array.isArray(frameParts) ? frameParts.length : 0, layer, ...(debug || {}) }
     });
   }
 
@@ -41,7 +42,7 @@ export class EffectRuntime {
       activeCount: list.filter((e) => !e?.finished).length,
       finishedCount,
       byType,
-      examples: list.slice(0, 5).map((e) => ({ id: e?.id || null, type: e?.type || null, worldX: e?.worldX ?? e?.x ?? null, worldY: e?.worldY ?? e?.y ?? null, source: e?.source || null })),
+      examples: list.slice(0, 5).map((e) => ({ id: e?.id || null, type: e?.type || null, worldX: e?.worldX ?? e?.x ?? null, worldY: e?.worldY ?? e?.y ?? null, layer: e?.currentLayer ?? e?.bcuRenderLayer ?? null, source: e?.source || null })),
       unsupportedCatalog: this.getUnsupportedEffectCatalog()
     };
   }

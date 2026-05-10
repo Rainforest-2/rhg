@@ -74,6 +74,7 @@ assert.match(timelineText, /getBcuAttackIntervalMs/, 'timeline must use BCU inte
 assert.match(inspectorText, /attackTiming/, 'debug inspector must expose attackTiming info');
 assert.match(inspectorText, /dog cycle/, 'DOM panel must show dog cycle timing');
 assert.match(inspectorText, /cat cycle/, 'DOM panel must show cat cycle timing');
-assert.doesNotMatch(timelineText + inspectorText, /ProcResolver|KBRuntime|EffectRuntime|DamageCalculator\.calculate\(/, 'task must not expand into unrelated systems');
+assert.doesNotMatch(timelineText, /ProcResolver|KBRuntime|EffectRuntime|DamageCalculator\.calculate\(/, 'BattleAttackTimeline must not expand into unrelated systems');
+assert.match(inspectorText, /kbRuntime|effectRuntime|damageAndProc/, 'DebugBattleInspector may aggregate later runtime diagnostics');
 
 console.log('check-battle-attack-wait-runtime: OK');

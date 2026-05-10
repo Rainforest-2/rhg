@@ -75,6 +75,7 @@ assert.match(timelineText, /set-bcu-attack-interval-on-attack-start/, 'timeline 
 assert.match(inspectorText, /dog cycle/, 'debug DOM must show dog cycle');
 assert.match(inspectorText, /cat cycle/, 'debug DOM must show cat cycle');
 assert.doesNotMatch(profileText + timelineText + inspectorText, /combatPositionMode\s*=\s*['"]bcu-pos['"]/, 'task must not switch combat mode');
-assert.doesNotMatch(profileText + timelineText + inspectorText, /ProcResolver|KBRuntime|EffectRuntime/, 'task must not expand into unrelated systems');
+assert.doesNotMatch(profileText + timelineText, /ProcResolver|KBRuntime|EffectRuntime/, 'attack timing modules must not expand into unrelated systems');
+assert.match(inspectorText, /kbRuntime|effectRuntime|damageAndProc/, 'DebugBattleInspector may aggregate later runtime diagnostics');
 
 console.log('check-bcu-attack-interval-timing: OK');

@@ -109,6 +109,13 @@ function wireBattleSceneStageRuntime() {
         spawned.stageSpawnId = row?.spawnId ?? null;
         spawned.stageSpawnSourceEnemyId = row?.sourceEnemyId ?? row?.row?.sourceEnemyId ?? null;
         spawned.stageSpawnRawEnemyId = row?.rawEnemyId ?? row?.row?.rawEnemyId ?? null;
+        spawned.stageSpawnLayerMin = row?.layerMin ?? row?.row?.layerMin ?? row?.frontLayer ?? row?.row?.frontLayer ?? null;
+        spawned.stageSpawnLayerMax = row?.layerMax ?? row?.row?.layerMax ?? row?.backLayer ?? row?.row?.backLayer ?? null;
+        const layerMin = Number(spawned.stageSpawnLayerMin);
+        const layerMax = Number(spawned.stageSpawnLayerMax);
+        if (Number.isFinite(layerMin) && Number.isFinite(layerMax) && layerMax > layerMin) spawned.currentLayer = layerMin + Math.floor(Math.random() * (layerMax - layerMin + 1));
+        else spawned.currentLayer = Number.isFinite(layerMin) ? layerMin : 0;
+        spawned.bcuRenderLayerSource = 'BCU EEnemy spawnLayer random L0-L1';
         spawned.stageSpawnKillCountApplied = false;
       }
     }

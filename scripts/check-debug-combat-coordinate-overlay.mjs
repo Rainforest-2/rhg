@@ -25,6 +25,7 @@ assert.match(inspector, /this\.updateDomOverlay\(scene, info\)/, 'collect should
 assert.match(renderer, /drawDebugBattleOverlay/, 'existing canvas overlay must remain');
 assert.match(renderer, /debugBattleEnabled/, 'renderer must still respect debugBattleEnabled');
 assert.doesNotMatch(inspector + renderer, /combatPositionMode\s*=\s*['"]bcu-pos['"]/, 'task must not switch runtime to bcu-pos');
-assert.doesNotMatch(inspector + renderer, /DamageCalculator|ProcResolver|KBRuntime|EffectRuntime/, 'task must not touch unrelated combat systems');
+assert.doesNotMatch(renderer, /DamageCalculator|ProcResolver|KBRuntime|EffectRuntime/, 'renderer must not touch unrelated combat systems');
+assert.match(inspector, /damageAndProc|kbRuntime|effectRuntime/, 'DebugBattleInspector may aggregate later combat diagnostics');
 
 console.log('check-debug-combat-coordinate-overlay: OK');

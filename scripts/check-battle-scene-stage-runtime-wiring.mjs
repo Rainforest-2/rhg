@@ -5,8 +5,10 @@ import { BattleFrameClock } from '../js/battle/BattleFrameClock.js';
 import { ActorStatsModel } from '../js/battle/ActorStatsModel.js';
 
 const files = {
+  index: 'index.html',
   main: 'js/main.js',
   wiring: 'js/battle/BattleSceneStageRuntimeWiring.js',
+  previewApp: 'js/preview/PreviewApp.js',
   adapter: 'js/battle/StageRuntimeSceneAdapter.js',
   runtime: 'js/battle/StageRuntime.js',
   spawnRuntime: 'js/battle/BcuStageSpawnRuntime.js',
@@ -39,12 +41,18 @@ const files = {
 for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path} must exist`);
 
 const main = fs.readFileSync(files.main, 'utf8');
+const indexHtml = fs.readFileSync(files.index, 'utf8');
 const wiring = fs.readFileSync(files.wiring, 'utf8');
 const adapter = fs.readFileSync(files.adapter, 'utf8');
 const runtime = fs.readFileSync(files.runtime, 'utf8');
 const spawnRuntime = fs.readFileSync(files.spawnRuntime, 'utf8');
 
-assert.ok(main.includes("./battle/BattleSceneStageRuntimeWiring.js"), 'main.js must load wiring before PreviewApp starts');
+assert.ok(indexHtml.includes('__WAN_BOOT_ERROR__'), 'index.html must register boot error handler');
+assert.ok(indexHtml.includes('boot-error-panel'), 'index.html must render boot-error-panel for startup failures');
+assert.ok(main.includes('async function boot()'), 'main.js must use async boot()');
+assert.ok(main.includes("await import('./battle/BattleSceneStageRuntimeWiring.js')"), 'main.js must dynamically import stage runtime wiring before PreviewApp starts');
+assert.ok(main.includes("await import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp');
+assert.ok(main.includes('globalThis.__WAN_BOOT_ERROR__?.(error)'), 'main.js must report boot failures to the page overlay');
 assert.ok(wiring.includes("import { BattleScene } from './BattleScene.js'"), 'wiring must import BattleScene');
 assert.ok(wiring.includes('StageRuntimeSceneAdapter.build'), 'wiring must build StageRuntime through adapter');
 assert.ok(wiring.includes('getEnemyBaseHpPercent'), 'wiring must expose enemy base HP percent helper');
@@ -70,6 +78,9 @@ assert.ok(adapter.includes('isGroupAllowed: groupAllowed.fn'), 'spawn context mu
 assert.ok(wiring.includes('initializeStageSpawnKillCounters'), 'wiring must initialize kill counters');
 assert.ok(wiring.includes('stageSpawnKillCounterDecrement'), 'wiring must emit kill counter decrement debug event');
 assert.ok(wiring.includes('stageSpawnRowIndex'), 'wiring must tag spawned actors with row index metadata');
+assert.ok(wiring.includes('stageSpawnLayerMin'), 'wiring must tag spawned actors with BCU layer metadata');
+assert.ok(wiring.includes('currentLayer'), 'wiring must expose BCU currentLayer for render ordering/Y');
+assert.ok(wiring.includes('Math.random() * (layerMax - layerMin + 1)'), 'stage enemy currentLayer must be randomized across SCDef L0-L1 like BCU EEnemy');
 assert.ok(wiring.includes("wrapMethod(proto, 'cleanupDead'"), 'wiring must hook cleanupDead for kill counter decrement');
 const inspector = fs.readFileSync('js/battle/DebugBattleInspector.js', 'utf8');
 
@@ -207,8 +218,8 @@ assert.ok(rendererSrc.includes('const drawX=sx-drawW;'), 'drawBcuEnemyCastle mus
 assert.ok(!rendererSrc.includes('drawX=sx-drawW*0.5'), 'drawBcuEnemyCastle must not use center anchor');
 assert.ok(rendererSrc.includes('baseScreenX=this.projectBcuX(this._scene,base.x)'), 'castle-composite base render must use projectBcuX');
 assert.ok(rendererSrc.includes('const sx=this.projectBcuX(this._scene,base.x); c.fillRect'), 'placeholder base render must use projectBcuX');
-assert.ok(rendererSrc.includes('drawEffects(c, effects)') && rendererSrc.includes('this.projectX(this._scene,effect.x)'), 'effects render must remain on projectX');
-assert.ok(rendererSrc.includes('drawActor(c, actor)') && rendererSrc.includes('this.projectX(this._scene,actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX)'), 'actor render must remain on projectX');
+assert.ok(rendererSrc.includes('drawEffects(c, effects)') && rendererSrc.includes('this.projectBattleX(this._scene,effect.x)'), 'effects render must use BCU battle projection');
+assert.ok(rendererSrc.includes('drawActor(c, actor)') && rendererSrc.includes('this.projectBattleX(this._scene,actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX)'), 'actor render must use BCU battle projection');
 assert.ok(sceneSrcProd.includes('b.applyStageRuntime?.(rt);'), 'loadBase must apply stage runtime');
 assert.ok(sceneSrcProd.includes("type:'baseStageRuntimeApplied'"), 'loadBase should emit baseStageRuntimeApplied event');
 
@@ -230,6 +241,22 @@ catBase.applyStageRuntime(fakeRt);
 assert.equal(catBase.x, 800);
 assert.equal(catBase.frontX, 800);
 assert.equal(catBase.posBcu, 800);
+
+const previewAppModule = await import('../js/preview/PreviewApp.js');
+assert.equal(typeof previewAppModule.PreviewApp, 'function');
+const stageRuntimeWiringModule = await import('../js/battle/BattleSceneStageRuntimeWiring.js');
+assert.equal(typeof stageRuntimeWiringModule.wireBattleSceneStageRuntime, 'function');
+const characterCatalogModule = await import('../js/battle/CharacterCatalog.js');
+for (const exportName of [
+  'CHARACTER_CATALOG',
+  'getCharacterById',
+  'getAvailableCharacters',
+  'buildProductionLineupEntryFromCharacter',
+  'isGeneratedCharacter',
+  'getCharacterCatalogDiagnostics'
+]) {
+  assert.ok(exportName in characterCatalogModule, `CharacterCatalog.js must export ${exportName}`);
+}
 
 
 const stageDefLoaderSrc = fs.readFileSync('js/battle/StageDefinitionLoader.js','utf8');

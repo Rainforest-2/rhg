@@ -202,6 +202,9 @@ export class BcuStageSpawnRuntime {
       const trigger = Number.isFinite(s.row?.baseHpTriggerPercent)
         ? s.row.baseHpTriggerPercent
         : (Number.isFinite(s.row?.baseHpTrigger) ? s.row.baseHpTrigger : 100);
+      const upperTrigger = Number.isFinite(s.row?.baseHpTriggerUpperPercent)
+        ? s.row.baseHpTriggerUpperPercent
+        : null;
 
       if (!Number.isFinite(context.enemyBaseHpPercent)) {
         pushUniqueWarning(s, 'enemyBaseHpPercent-missing-default-100');
@@ -210,6 +213,11 @@ export class BcuStageSpawnRuntime {
       if (!(hp <= trigger)) {
         s.waitingForMaxEnemySlot = false;
         s.lastBlockedReason = 'base-hp-trigger';
+        continue;
+      }
+      if (Number.isFinite(upperTrigger) && hp > upperTrigger) {
+        s.waitingForMaxEnemySlot = false;
+        s.lastBlockedReason = 'base-hp-upper-trigger';
         continue;
       }
 
@@ -262,6 +270,15 @@ export class BcuStageSpawnRuntime {
         backLayer: s.row?.backLayer,
         baseHpTrigger: s.row?.baseHpTrigger,
         baseHpTriggerPercent: trigger,
+        baseHpTriggerUpperPercent: upperTrigger,
+        healthWindowDebug: {
+          source: 'BcuStageSpawnRuntime.health-window-partial-parity',
+          enemyBaseHpPercent: hp,
+          lowerPercent: trigger,
+          upperPercent: upperTrigger,
+          lowerRule: 'spawn-when-enemy-base-hp-percent-is-at-or-below-C0',
+          upperRule: Number.isFinite(upperTrigger) ? 'C1 upper hook enforced as hp <= C1 pending full source verification' : 'not-present'
+        },
         firstFrame: s.row?.firstFrame,
         respawnMinFrame: s.row?.respawnMinFrame,
         respawnMaxFrame: s.row?.respawnMaxFrame,

@@ -62,7 +62,7 @@ assert.equal(bgCands.imgcutPath.endsWith('bg07.imgcut'), true);
 assert.ok(bgCands.candidateReport);
 
 const IMG_CUT_FIXTURE = ['0', '0', '0', '2', '0,0,320,180,背景bg', '0,0,320,60,背景上部'].join('\n');
-const BG_CSV_FIXTURE = '1,0,0,0,10,20,30,40,50,60,70,80,90,0,1';
+const BG_CSV_FIXTURE = '7,0,0,0,10,20,30,40,50,60,70,80,90,0,1';
 const bgLoader = new StageBackgroundLoader(null, {
   loadImage: async (path) => ({ width: 640, height: 360, src: path }),
   fetchText: async (path) => {
@@ -75,7 +75,9 @@ const bg = await bgLoader.load({ id: 1, bgId: 7, cropName: '背景bg' });
 assert.equal(bg.source.requestedBgId, 7);
 assert.equal(bg.source.resolvedBgId, 7);
 assert.equal(bg.source.imagePath.endsWith('bg007.png'), true);
-assert.equal(bg.source.imgcutPath.endsWith('bg07.imgcut'), true);
+assert.equal(bg.source.imgcutPath.endsWith('bg00.imgcut'), true);
+assert.equal(bg.source.bgId, 7);
+assert.equal(bg.source.csvRowFound, true);
 assert.ok(bg.source.candidateReport);
 assert.equal(bg.crop.name, '背景bg');
 assert.ok(bg.upperCrop);

@@ -92,6 +92,7 @@ assert.match(timeline, /isAttackCompleteReason/, 'Timeline must gate new TBA by 
 assert.match(timeline, /no-new-tba-non-complete-reason/, 'Timeline must report non-complete no-new-TBA source');
 assert.match(runtime, /value === null/, 'Runtime must avoid Number(null) becoming 0');
 assert.doesNotMatch(inspector + timeline, /combatPositionMode\s*=\s*['"]bcu-pos['"]/, 'Task must not switch combat mode to bcu-pos');
-assert.doesNotMatch(inspector + timeline, /ProcResolver|KBRuntime|EffectRuntime/, 'Task must not expand into unrelated systems');
+assert.doesNotMatch(timeline, /ProcResolver|KBRuntime|EffectRuntime/, 'Attack timeline must not expand into unrelated systems');
+assert.match(inspector, /kbRuntime|effectRuntime|damageAndProc/, 'DebugBattleInspector may aggregate later runtime diagnostics');
 
 console.log('check-battle-attack-interval-debug: OK');

@@ -24,5 +24,7 @@ if(!scene.includes('config:BATTLE_CONFIG')) fail('BattleScene missing config con
 if(!scene.includes('abilityResolver:{enabled:!!damageResult.abilityResolver?.enabled')) fail('event missing abilityResolver');
 if(!scene.includes('damageCalculation?.abilityResolver') && !scene.includes('lastDamageCalculation?.abilityResolver')) fail('stats report missing abilityResolver summary');
 if(calc.includes('abilityEnabledBits') && calc.match(/abilityEnabledBits.*critical|rawAbi.*critical|enabledBits.*baseDestroyer|rawAbi.*baseDestroyer/)) fail('raw bits drive semantic ability');
-if(existsSync('js/battle/ProcResolver.js')||existsSync('js/battle/KBRuntime.js')||existsSync('js/battle/EffectRuntime.js')) fail('forbidden runtime files created');
+if(!existsSync('js/battle/ProcResolver.js')||!existsSync('js/battle/KBRuntime.js')||!existsSync('js/battle/EffectRuntime.js')) fail('expected later runtime files missing');
+const proc = readFileSync('js/battle/ProcResolver.js','utf8');
+if(!proc.includes('pending-no-apply') || proc.includes('target.hp =')) fail('ProcResolver no-op contract broken');
 console.log('ok: damage-ability-resolver checks passed');

@@ -349,7 +349,7 @@ export class DebugBattleInspector {
         activeMode: tuning?.combatPositionMode || null,
         contractMode: tuning?.coordinateContract?.mode || null,
         bcuPosEnabled: tuning?.coordinateContract?.bcuPosEnabled === true,
-        note: 'debug-only: actor.x remains current combat coordinate unless combatPositionMode is later switched to bcu-pos',
+        note: 'debug-only: combat is still screen-combat-point; actor.x remains current combat coordinate unless combatPositionMode is later switched to bcu-pos',
         actors: coordinateActors,
         firstOpposingDistance: firstAliveBySide.player && firstAliveBySide.enemy
           ? BattleCombatCoordinateRuntime.describeDistance(firstAliveBySide.player, firstAliveBySide.enemy)

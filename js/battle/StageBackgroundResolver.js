@@ -96,8 +96,12 @@ export class StageBackgroundResolver {
       imgcutPath: loaded?.imgcutPath || resolved?.imgcutPath || null,
       csvPath: loaded?.csvPath || resolved?.csvPath || null,
       stageId: loaded?.stageId ?? resolved?.stageId ?? 0,
+      bgId: loaded?.bgId ?? resolved?.resolvedBgId ?? null,
       imgcutId: loaded?.imgcutId ?? null,
       showUpper: !!loaded?.showUpper,
+      imageReferenceId: loaded?.imageReferenceId ?? null,
+      csvRowFound: loaded?.csvRowFound ?? null,
+      bgCsvSource: loaded?.bgCsvSource || null,
       backgroundCsvKind: resolved?.backgroundCsvKind || 'bcu-bg-csv',
       assetKind: resolved?.assetKind || 'bcu-stage-background',
       candidateReport: resolved?.candidateReport || null

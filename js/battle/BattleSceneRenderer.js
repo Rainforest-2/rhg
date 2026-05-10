@@ -4,6 +4,14 @@ import { BattleAttackProfile } from './BattleAttackProfile.js';
 import { BattleAttackResolver } from './BattleAttackResolver.js';
 import { DebugBattleInspector } from './DebugBattleInspector.js';
 
+const BCU_RENDER_CONSTANTS = Object.freeze({
+  off: 200,
+  roadH: 156,
+  depthStep: 4,
+  spriteScale: 0.8,
+  source: 'BCU-java-PC BattleBox.BBPainter'
+});
+
 export class BattleSceneRenderer {
   // Renderer X projection contract:
   // - World X values must be converted with projectX(scene, worldX).
@@ -19,6 +27,12 @@ export class BattleSceneRenderer {
     if (camera && typeof camera.getBcuRenderX === 'function') return camera.getBcuRenderX(worldX);
     if (camera && typeof camera.bcuWorldToScreenX === 'function') return camera.bcuWorldToScreenX(worldX);
     return this.projectX(scene, worldX);
+  }
+  projectBattleX(scene, worldX) {
+    const cfg = BATTLE_CONFIG.visualLayout?.bcuEntityRender || {};
+    return cfg.enabled && cfg.applyBcuProjection !== false
+      ? this.projectBcuX(scene, worldX)
+      : this.projectX(scene, worldX);
   }
   getCameraScale(scene) {
     const camera = scene?.camera;
@@ -43,6 +57,89 @@ export class BattleSceneRenderer {
     const pos = this.getCameraWorldLeft(scene);
     const pxPerWorld = this.getPixelsPerWorldUnit(scene);
     return -(pos * pxPerWorld);
+  }
+  getBcuRenderConstants() {
+    return BCU_RENDER_CONSTANTS;
+  }
+  getBcuStageGroundY(scene, fallbackH = 720) {
+    const runtimeGround = Number(scene?.stage?.runtime?.groundY);
+    if (Number.isFinite(runtimeGround)) return runtimeGround;
+    const sceneGround = Number(scene?.groundY);
+    if (Number.isFinite(sceneGround)) return sceneGround;
+    return fallbackH;
+  }
+  getBcuLayerScreenY(scene, layer = 0, fallbackH = 720) {
+    const c = this.getBcuRenderConstants();
+    const scale = this.getCameraScale(scene);
+    const groundY = this.getBcuStageGroundY(scene, fallbackH);
+    const dep = (Number(layer) || 0) * c.depthStep;
+    return groundY - (c.roadH - dep) * scale;
+  }
+  getBcuSpriteScale(scene, baseScale = 1) {
+    return (Number(baseScale) || 1) * this.getCameraScale(scene) * this.getBcuRenderConstants().spriteScale;
+  }
+  getBcuEntityLayer(entity) {
+    const candidates = [
+      entity?.currentLayer,
+      entity?.bcuRenderLayer,
+      entity?.stageSpawnLayerMin,
+      entity?.layerMin,
+      entity?.frontLayer
+    ];
+    for (const value of candidates) {
+      const n = Number(value);
+      if (Number.isFinite(n)) return n;
+    }
+    return 0;
+  }
+  getEntityRenderY(scene, entity, fallbackH = 720) {
+    const cfg = BATTLE_CONFIG.visualLayout?.bcuEntityRender || {};
+    if (cfg.enabled && cfg.applyRoadBaseline !== false) {
+      const layer = this.getBcuEntityLayer(entity);
+      const baseline = this.getBcuLayerScreenY(scene, layer, fallbackH);
+      const legacyY = Number.isFinite(entity?.y) ? entity.y : this.getBcuStageGroundY(scene, fallbackH);
+      if (entity) entity.lastRenderYDebug = { source: cfg.source || 'bcu-entity-render', layer, baselineY: baseline, legacyY };
+      return baseline;
+    }
+    return Number.isFinite(entity?.y) ? entity.y : this.getBcuStageGroundY(scene, fallbackH);
+  }
+  getEntityRenderScale(scene, entity, baseScale = 1) {
+    const cfg = BATTLE_CONFIG.visualLayout?.bcuEntityRender || {};
+    if (cfg.enabled && cfg.applySpriteScale === true) {
+      const scaleBase = cfg.ignoreActorConfigScale === true ? 1 : baseScale;
+      return this.getBcuSpriteScale(scene, scaleBase);
+    }
+    return (Number(baseScale) || 1) * this.getCameraScale(scene);
+  }
+  getBcuBackgroundLayout(scene, bg, w, h) {
+    const crop = bg?.crop;
+    const layout = BATTLE_CONFIG.stage.backgroundLayout || {};
+    const camera = scene?.camera || {};
+    const scale = (Number.isFinite(layout.cropScale) ? layout.cropScale : 1.0) * this.getCameraScale(scene);
+    const cropW = Math.max(1, Number(crop?.w || 0) * scale);
+    const cropH = Math.max(1, Number(crop?.h || 0) * scale);
+    const off = Number.isFinite(camera.bcuOff) ? camera.bcuOff : this.getBcuRenderConstants().off;
+    const ratio = Number.isFinite(camera.ratio) ? camera.ratio : (Number.isFinite(camera.bcuRatio) ? camera.bcuRatio : 768 / 2400);
+    const posWorld = this.getCameraWorldLeft(scene);
+    const sbPosPx = -(posWorld * ratio * this.getCameraScale(scene));
+    const offsetX = Number.isFinite(layout.cropOffsetX) ? layout.cropOffsetX * scale : 0;
+    const offsetY = Number.isFinite(layout.cropOffsetY) ? layout.cropOffsetY * scale : 0;
+    const groundY = this.getBcuStageGroundY(scene, h);
+    return {
+      source: 'BCU Background.draw parity',
+      scale,
+      cropW,
+      cropH,
+      sbPosPx,
+      offPx: off * this.getCameraScale(scene),
+      dx: sbPosPx + off * this.getCameraScale(scene) - cropW + offsetX,
+      dy: groundY - cropH + offsetY,
+      groundY,
+      canvasW: w,
+      canvasH: h,
+      ratio,
+      posWorld
+    };
   }
   addScreenOffsetX(screenX, offsetPx = 0, scene = this._scene) {
     const scale = this.getCameraScale(scene);
@@ -73,9 +170,9 @@ export class BattleSceneRenderer {
   drawVerticalGradient(c,x,y,w,h,top,bottom){const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,this.rgb(top));g.addColorStop(1,this.rgb(bottom));c.fillStyle=g;c.fillRect(x,y,w,h);}
   drawCropTiledX(c,image,crop,dx,dy,scale,targetW){const dw=crop.w*scale;const dh=crop.h*scale;if(dw<=0||dh<=0)return;let x=dx;while(x>0)x-=dw;while(x<targetW){c.drawImage(image,crop.x,crop.y,crop.w,crop.h,x,dy,dw,dh);x+=dw;}}
   drawCropTiledXWithTopFade(c,image,crop,dx,dy,scale,targetW,fadeHeight=0,step=4){const dw=crop.w*scale;const dh=crop.h*scale;if(dw<=0||dh<=0)return;let x0=dx;while(x0>0)x0-=dw;const fadePx=Math.max(0,Math.min(crop.h,fadeHeight||0));const strip=Math.max(1,step||4);for(let x=x0;x<targetW;x+=dw){if(fadePx>0){for(let sy=0;sy<fadePx;sy+=strip){const sh=Math.min(strip,fadePx-sy);const alpha=Math.max(0,Math.min(1,(sy+sh)/fadePx));c.save();c.globalAlpha=alpha;c.drawImage(image,crop.x,crop.y+sy,crop.w,sh,x,dy+sy*scale,dw,sh*scale);c.restore();}const restH=crop.h-fadePx;if(restH>0)c.drawImage(image,crop.x,crop.y+fadePx,crop.w,restH,x,dy+fadePx*scale,dw,restH*scale);}else{c.drawImage(image,crop.x,crop.y,crop.w,crop.h,x,dy,dw,dh);}}}
-  drawBackgroundBcuStage0(c,bg,w,h,scene){const colors=bg.colors;const crop=bg.crop;const image=bg.image;const layout=BATTLE_CONFIG.stage.backgroundLayout||{};if(!image||!crop||!colors){this.drawBackgroundCropCover(c,bg,w,h);return;}const cameraScale=this.getCameraScale(scene);const cameraOffsetX=this.getBackgroundCameraOffsetX(scene);const scale=(Number.isFinite(layout.cropScale)?layout.cropScale:1.0)*cameraScale;const dx=(Number.isFinite(layout.cropOffsetX)?layout.cropOffsetX:0)*cameraScale+cameraOffsetX;const dy=Number.isFinite(layout.cropOffsetY)?layout.cropOffsetY:130;const fadeHeight=Number.isFinite(layout.cropTopFadeHeight)?layout.cropTopFadeHeight:0;const fadeStep=Number.isFinite(layout.cropTopFadeStep)?layout.cropTopFadeStep:4;const cropBottomY=dy+crop.h*scale;this.drawVerticalGradient(c,0,0,w,h,colors.skyTop,colors.skyBottom);if(layout.tileX!==false)this.drawCropTiledXWithTopFade(c,image,crop,dx,dy,scale,w,fadeHeight,fadeStep);else this.drawCropTiledXWithTopFade(c,image,crop,dx,dy,scale,dx+crop.w*scale,fadeHeight,fadeStep);if(cropBottomY<h)this.drawVerticalGradient(c,0,cropBottomY,w,h-cropBottomY,colors.groundTop,colors.groundBottom);}
+  drawBackgroundBcuStage0(c,bg,w,h,scene){const colors=bg.colors;const crop=bg.crop;const image=bg.image;const layout=BATTLE_CONFIG.stage.backgroundLayout||{};if(!image||!crop||!colors){this.drawBackgroundCropCover(c,bg,w,h);return;}const bcu=this.getBcuBackgroundLayout(scene,bg,w,h);const fadeHeight=Number.isFinite(layout.cropTopFadeHeight)?layout.cropTopFadeHeight:0;const fadeStep=Number.isFinite(layout.cropTopFadeStep)?layout.cropTopFadeStep:4;const groundY=bcu.groundY;if(groundY<h)this.drawVerticalGradient(c,0,groundY,w,h-groundY,colors.groundTop,colors.groundBottom);if(groundY>bcu.cropH){let topY=groundY-bcu.cropH*2;if(bg.upperCrop){const top=bg.upperCrop;const topW=top.w*bcu.scale;const topH=top.h*bcu.scale;topY+=bcu.cropH-topH;let tx=bcu.dx;while(tx>0)tx-=topW;for(;tx<w;tx+=topW)if(tx+topW>0)c.drawImage(image,top.x,top.y,top.w,top.h,tx,topY,topW,topH);if(topY>0)this.drawVerticalGradient(c,0,0,w,topY,colors.skyTop,colors.skyBottom);}else{this.drawVerticalGradient(c,0,0,w,Math.max(0,bcu.cropH+topY),colors.skyTop,colors.skyBottom);}}if(layout.tileX!==false)this.drawCropTiledXWithTopFade(c,image,crop,bcu.dx,groundY-bcu.cropH,bcu.scale,w,fadeHeight,fadeStep);else this.drawCropTiledXWithTopFade(c,image,crop,bcu.dx,groundY-bcu.cropH,bcu.scale,bcu.dx+bcu.cropW,fadeHeight,fadeStep);bg.lastRenderDebug={source:bcu.source,drawSource:'BCU Background.draw ground-gradient-first',dx:bcu.dx,dy:groundY-bcu.cropH,scale:bcu.scale,cropW:bcu.cropW,cropH:bcu.cropH,groundY,posWorld:bcu.posWorld,offPx:bcu.offPx,upperCrop:!!bg.upperCrop};}
   drawBackgroundCropCover(c,bg,w,h){const{image,crop}=bg;const scale=Math.max(w/crop.w,h/crop.h);const dw=crop.w*scale,dh=crop.h*scale;const dx=(w-dw)*0.5;const alignY=Number.isFinite(BATTLE_CONFIG.visualLayout?.backgroundVerticalAlign)?BATTLE_CONFIG.visualLayout.backgroundVerticalAlign:0.5;const dy=(h-dh)*alignY;c.drawImage(image,crop.x,crop.y,crop.w,crop.h,dx,dy,dw,dh)}
-  drawFallbackBackground(c,w,h,groundY){const sky=c.createLinearGradient(0,0,0,groundY);sky.addColorStop(0,'#7dc7ff');sky.addColorStop(1,'#d9f0ff');c.fillStyle=sky;c.fillRect(0,0,w,groundY);c.fillStyle='#c9b78f';c.fillRect(0,groundY,w,h-groundY)}
+  drawFallbackBackground(c,w,h,groundY){const sky=c.createLinearGradient(0,0,0,groundY);sky.addColorStop(0,'#7dc7ff');sky.addColorStop(1,'#d9f0ff');c.fillStyle=sky;c.fillRect(0,0,w,groundY);const ground=c.createLinearGradient(0,groundY,0,h);ground.addColorStop(0,'#d8c59a');ground.addColorStop(1,'#80633d');c.fillStyle=ground;c.fillRect(0,groundY,w,h-groundY)}
 
   getCompositeBaseLocalBounds(base) {
     const layers = base?.layers || [];
@@ -117,12 +214,12 @@ export class BattleSceneRenderer {
     return y;
   }
   drawBases(c,bases,groundY,showParts){for(const base of bases) this.drawBase(c,base,groundY,showParts)}
-  drawBase(c,base,groundY,showParts){ if(base.visualKind==='bcu-enemy-castle'&&base.castleAsset?.image){this.drawBcuEnemyCastle(c,base);} else if(base.visualKind==='castle-composite'&&base.layers?.length){ const visualYOffset = this.getBaseVisualYOffset(base); for(const layer of base.layers){const s=(base.scale||1)*this.getCameraScale(this._scene);const baseScreenX=this.projectBcuX(this._scene,base.x);const x=this.addScreenOffsetX(baseScreenX,Number.isFinite(layer.offsetX)?layer.offsetX*base.scale:0,this._scene)-layer.image.width*0.5*s;const y=base.y+visualYOffset+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; const sx=this.projectBcuX(this._scene,base.x); c.fillRect(sx-pw*0.5, base.y-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', sx-pw*0.44, base.y-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }
+  drawBase(c,base,groundY,showParts){const renderY=this.getEntityRenderY(this._scene,base,groundY); if(base.visualKind==='bcu-enemy-castle'&&base.castleAsset?.image){this.drawBcuEnemyCastle(c,base);} else if(base.visualKind==='castle-composite'&&base.layers?.length){ const visualYOffset = this.getBaseVisualYOffset(base); for(const layer of base.layers){const s=(base.scale||1)*this.getCameraScale(this._scene);const baseScreenX=this.projectBcuX(this._scene,base.x);const offsetX=Number.isFinite(layer.offsetX)?layer.offsetX*base.scale:0;const anchorX=base.side==='dog-player'?this.addScreenOffsetX(baseScreenX,offsetX,this._scene):this.addScreenOffsetX(baseScreenX,offsetX,this._scene)-layer.image.width*0.5*s;const x=anchorX;const y=renderY+visualYOffset+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; const sx=this.projectBcuX(this._scene,base.x); c.fillRect(sx-pw*0.5, renderY-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', sx-pw*0.44, renderY-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }
 
-  drawBcuEnemyCastle(c,base){const a=base.castleAsset;const crop=a?.crop;if(!a?.image||!crop)return;const s=(Number.isFinite(base.scale)?base.scale:1)*this.getCameraScale(this._scene);const sx=this.projectBcuX(this._scene,base.x);const drawW=crop.w*s,drawH=crop.h*s;const drawX=sx-drawW;const drawY=base.y-drawH+(Number.isFinite(base.visualYOffsetPx)?base.visualYOffsetPx:0);// BCU enemy castle uses right-edge anchor: drawX = getX(ebase.pos) - width.
+  drawBcuEnemyCastle(c,base){const a=base.castleAsset;const crop=a?.crop;if(!a?.image||!crop)return;const s=(Number.isFinite(base.scale)?base.scale:1)*this.getCameraScale(this._scene);const sx=this.projectBcuX(this._scene,base.x);const renderY=this.getEntityRenderY(this._scene,base,base.y);const drawW=crop.w*s,drawH=crop.h*s;const drawX=sx-drawW;const drawY=renderY-drawH+(Number.isFinite(base.visualYOffsetPx)?base.visualYOffsetPx:0);// BCU enemy castle uses right-edge anchor: drawX = getX(ebase.pos) - width.
 c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
-  drawBaseHpBar(c,base){const yOffset=BATTLE_CONFIG.visualLayout?.baseHpBarYOffset??210;const x=this.projectX(this._scene,base.x)-60,y=base.y-yOffset,w=120,h=10;const ratio=Math.max(0,Math.min(1,base.hp/Math.max(1,base.maxHp)));c.fillStyle='#111827';c.fillRect(x,y,w,h);c.fillStyle='#60a5fa';c.fillRect(x,y,w*ratio,h);c.strokeStyle='#e5e7eb';c.strokeRect(x,y,w,h);}
-  drawBaseDebug(c,base){c.fillStyle='#0008';const sx=this.projectX(this._scene,base.x); c.fillRect(sx-90,base.y-250,180,34);c.fillStyle='#f8fafc';c.font='12px ui-monospace';c.fillText(`${base.label} hp:${base.hp}/${base.maxHp}`,sx-84,base.y-230);}
+  drawBaseHpBar(c,base){const yOffset=BATTLE_CONFIG.visualLayout?.baseHpBarYOffset??210;const renderY=this.getEntityRenderY(this._scene,base,base.y);const x=this.projectBattleX(this._scene,base.x)-60,y=renderY-yOffset,w=120,h=10;const ratio=Math.max(0,Math.min(1,base.hp/Math.max(1,base.maxHp)));c.fillStyle='#111827';c.fillRect(x,y,w,h);c.fillStyle='#60a5fa';c.fillRect(x,y,w*ratio,h);c.strokeStyle='#e5e7eb';c.strokeRect(x,y,w,h);}
+  drawBaseDebug(c,base){c.fillStyle='#0008';const sx=this.projectBattleX(this._scene,base.x);const sy=this.getEntityRenderY(this._scene,base,base.y); c.fillRect(sx-90,sy-250,180,34);c.fillStyle='#f8fafc';c.font='12px ui-monospace';c.fillText(`${base.label} hp:${base.hp}/${base.maxHp}`,sx-84,sy-230);}
 
   getDebugCombatBodyBox(entity){return BattleBodyResolver.getCombatBodyBox(entity);}
 
@@ -155,8 +252,8 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     c.restore();
   }
   drawHud(c, scene, debug) { const dog = scene?.actors?.find((a) => a.side === 'dog-player'); const cat = scene?.actors?.find((a) => a.side === 'cat-enemy'); const dogBase=scene?.bases?.find((b)=>b.side==='dog-player'); const catBase=scene?.bases?.find((b)=>b.side==='cat-enemy'); const aliveDogs=(scene?.actors||[]).filter(a=>a.isAlive()&&a.side==='dog-player').length; const aliveCats=(scene?.actors||[]).filter(a=>a.isAlive()&&a.side==='cat-enemy').length; c.fillStyle = '#0008'; c.fillRect(14, 14, 1080, 236); c.fillStyle = '#f8fafc'; c.font = '20px ui-sans-serif'; const version = BATTLE_CONFIG.version || '0.0.0'; c.fillText(`Wanko Battle v${version}`, 24, 40); c.font = '14px ui-monospace, monospace'; c.fillText(`dogBase HP:${dogBase?.hp ?? '-'} catBase HP:${catBase?.hp ?? '-'}`,24,62); c.fillText(`dog HP/state: ${dog?.hp ?? '-'} / ${dog?.state ?? '-'}`, 24, 84); c.fillText(`cat HP/state: ${cat?.hp ?? '-'} / ${cat?.state ?? '-'}`, 24, 104); const kbActors=(scene?.actors||[]).filter(a=>a.state==='knockback').length; c.fillText(`money:${Math.floor(scene?.economy?.money||0)}/${scene?.economy?.maxMoney||0} dogs:${aliveDogs} cats:${aliveCats} kb:${kbActors}`,24,124); c.fillText(`battleState:${scene?.battleState || '-'} debug:${debug?.showBounds?'ON':'OFF'} effects:${(scene?.effects||[]).length}`,24,144); const sd=scene?.stage?.definition?.summary; c.fillText(`stageDefinition len:${sd?.stageLen ?? '-'} bg:${sd?.bgId ?? '-'} baseHp:${sd?.enemyBaseHp ?? '-'} maxEnemy:${sd?.maxEnemyCount ?? '-'}`,24,164); const rt=scene?.stage?.runtime; c.fillText(`stageRuntime maxEnemy:${rt?.effectiveMaxEnemyCount ?? '-'} src:${rt?.effectiveMaxEnemyCountSource ?? '-'} bg:${rt?.bgId ?? '-'} len:${rt?.stageLen ?? '-'}`,24,184); const sp=scene?.stage?.spawnPreview?.summary; const firstMs=Number.isFinite(sp?.firstSpawnMs)?sp.firstSpawnMs:'-'; c.font='13px ui-monospace, monospace'; const cam=scene?.camera; c.fillText(`cam pos:${Math.round(cam?.pos??cam?.offsetX??0)} siz:${(cam?.siz??cam?.zoom??1).toFixed(2)} ratio:${(cam?.bcuRatio??0.32).toFixed(2)} visW:${Math.round(cam?.visibleWorldWidth??0)} stagePx:${Math.round(cam?.stagePixelWidth??0)}`,24,204); c.fillText(`stageSpawn rows:${sp?.totalRows ?? '-'} boss:${sp?.bossRows ?? '-'} unresolved:${sp?.unresolvedRows ?? '-'} first:${firstMs}ms`,24,224); }
-  drawHpBar(c, actor) { const yOffset = BATTLE_CONFIG.visualLayout?.actorHpBarYOffset ?? 194; const visualX=actor.x+(actor.visualRenderOffsetWorldPx||0)+(actor.visualCrowdFanoutPx||0)+(actor.kbVisualOffsetX||0); const visualY=actor.y+(actor.visualCrowdYOffsetPx||0)+(actor.kbVisualOffsetY||0); const x = this.projectX(this._scene,visualX) - 40, y = visualY - yOffset, w = 80, h = 8; const ratio = Math.max(0, Math.min(1, actor.hp / Math.max(1, actor.maxHp))); c.fillStyle = '#111827'; c.fillRect(x, y, w, h); c.fillStyle = '#22c55e'; c.fillRect(x, y, w * ratio, h); c.strokeStyle = '#e5e7eb'; c.strokeRect(x, y, w, h); }
-  drawActorDebug(c, actor, battleState) { const d = actor.debugDistance || {}; const lifeState = actor.isAlive?.() ? 'alive' : (actor.isFinalKnockback?.() ? 'finalKB' : actor.state); const frontScreenOffset = Number.isFinite(actor.visualRenderOffsetDebug?.frontScreenOffset) ? Math.round(actor.visualRenderOffsetDebug.frontScreenOffset) : '-'; const mode = actor.combatPositionMode || BATTLE_CONFIG.tuning?.combatPositionMode || 'screen-combat-point'; const combatX = Math.round(BattleBodyResolver.getActorCombatPositionX(actor)); const cap=actor.lastCaptureDebug?.capturedCount; const q=actor.lastHitQueueDebug?.damage; const crowdX=Math.round(actor.visualCrowdFanoutPx||0); const crowdY=Math.round(actor.visualCrowdYOffsetPx||0); const kb=actor.lastKnockbackDebug;const frame=actor.lastKnockbackFrameDebug;const touchState=actor.getTouchState?.()||actor.kbTouchState||'normal';const kbText=actor.state==='knockback'&&kb?`kb:${actor.knockbackType} ${actor.kbBcuType} f:${actor.kbFrameIndex}/${actor.kbFramesTotal} rem:${Math.round(actor.kbRemainingDistancePx||0)} y:${Math.round(actor.kbVisualOffsetY||0)} tch:${touchState}`:`cap:${cap===undefined?'-':cap} mode:${actor.lastCaptureDebug?.mode||mode} q:${q===undefined?'-':q} tch:${touchState}`; const lines = [`${actor.instanceId||'-'} ${actor.state} hp:${Math.round(actor.hp||0)}`,`combatX:${combatX} range:${Math.round(actor.detectionRangePx||0)} dist:${Math.round(d.combatBodyDistance??0)} can:${d.canAttack===undefined?'-':d.canAttack}`,`${kbText} ro:${Math.round(actor.visualRenderOffsetWorldPx||0)} crowd:${crowdX}/${crowdY}`]; c.fillStyle = '#0008'; const sx=this.projectX(this._scene,actor.x);c.fillRect(sx - 170, actor.y - 190, 560, 48); c.fillStyle = '#f8fafc'; c.font = '12px ui-monospace, monospace'; lines.forEach((line, i) => c.fillText(line, sx - 164, actor.y - 176 + i * 14)); }
+  drawHpBar(c, actor) { const yOffset = BATTLE_CONFIG.visualLayout?.actorHpBarYOffset ?? 194; const visualX=actor.x+(actor.visualRenderOffsetWorldPx||0)+(actor.visualCrowdFanoutPx||0)+(actor.kbVisualOffsetX||0); const visualY=this.getEntityRenderY(this._scene,actor,actor.y)+(actor.visualCrowdYOffsetPx||0)+(actor.kbVisualOffsetY||0); const x = this.projectBattleX(this._scene,visualX) - 40, y = visualY - yOffset, w = 80, h = 8; const ratio = Math.max(0, Math.min(1, actor.hp / Math.max(1, actor.maxHp))); c.fillStyle = '#111827'; c.fillRect(x, y, w, h); c.fillStyle = '#22c55e'; c.fillRect(x, y, w * ratio, h); c.strokeStyle = '#e5e7eb'; c.strokeRect(x, y, w, h); }
+  drawActorDebug(c, actor, battleState) { const d = actor.debugDistance || {}; const lifeState = actor.isAlive?.() ? 'alive' : (actor.isFinalKnockback?.() ? 'finalKB' : actor.state); const frontScreenOffset = Number.isFinite(actor.visualRenderOffsetDebug?.frontScreenOffset) ? Math.round(actor.visualRenderOffsetDebug.frontScreenOffset) : '-'; const mode = actor.combatPositionMode || BATTLE_CONFIG.tuning?.combatPositionMode || 'screen-combat-point'; const combatX = Math.round(BattleBodyResolver.getActorCombatPositionX(actor)); const cap=actor.lastCaptureDebug?.capturedCount; const q=actor.lastHitQueueDebug?.damage; const crowdX=Math.round(actor.visualCrowdFanoutPx||0); const crowdY=Math.round(actor.visualCrowdYOffsetPx||0); const kb=actor.lastKnockbackDebug;const frame=actor.lastKnockbackFrameDebug;const touchState=actor.getTouchState?.()||actor.kbTouchState||'normal';const kbText=actor.state==='knockback'&&kb?`kb:${actor.knockbackType} ${actor.kbBcuType} f:${actor.kbFrameIndex}/${actor.kbFramesTotal} rem:${Math.round(actor.kbRemainingDistancePx||0)} y:${Math.round(actor.kbVisualOffsetY||0)} tch:${touchState}`:`cap:${cap===undefined?'-':cap} mode:${actor.lastCaptureDebug?.mode||mode} q:${q===undefined?'-':q} tch:${touchState}`; const lines = [`${actor.instanceId||'-'} ${actor.state} hp:${Math.round(actor.hp||0)}`,`combatX:${combatX} range:${Math.round(actor.detectionRangePx||0)} dist:${Math.round(d.combatBodyDistance??0)} can:${d.canAttack===undefined?'-':d.canAttack}`,`${kbText} ro:${Math.round(actor.visualRenderOffsetWorldPx||0)} crowd:${crowdX}/${crowdY}`]; c.fillStyle = '#0008'; const sx=this.projectBattleX(this._scene,actor.x);const sy=this.getEntityRenderY(this._scene,actor,actor.y);c.fillRect(sx - 170, sy - 190, 560, 48); c.fillStyle = '#f8fafc'; c.font = '12px ui-monospace, monospace'; lines.forEach((line, i) => c.fillText(line, sx - 164, sy - 176 + i * 14)); }
 
   drawStageSpawnPreview(c, scene){const rows=scene?.stage?.spawnPreview?.visibleRows||[];if(!rows.length)return;const maxRows=Math.min(rows.length,Number.isFinite(scene?.stage?.spawnPreview?.summary?.visibleRows)?scene.stage.spawnPreview.summary.visibleRows:rows.length);const lines=['CSV spawn preview:'];for(let i=0;i<maxRows;i+=1){const r=rows[i]||{};const firstMs=Number.isFinite(r.firstMs)?r.firstMs:'-';const repMin=Number.isFinite(r.respawnMinMs)?r.respawnMinMs:'-';const repMax=Number.isFinite(r.respawnMaxMs)?r.respawnMaxMs:'-';lines.push(`#${r.index ?? i} id:${r.enemyId ?? '-'} first:${firstMs}ms rep:${repMin}-${repMax} count:${r.countLabel || '-'} trigger:${r.triggerLabel || '-'} boss:${r.bossLabel || '-'} map:${r.mapping?.status || '-'}`);}c.fillStyle='#0008';c.fillRect(14,344,1240,Math.max(40,lines.length*14+14));c.fillStyle='#f8fafc';c.font='12px ui-monospace';lines.forEach((line,idx)=>c.fillText(line,24,362+idx*14));}
   drawEventLog(c, events){c.fillStyle='#0008';c.fillRect(14,170,900,170);c.fillStyle='#fde68a';c.font='13px ui-monospace';c.fillText('battle events (latest 10)',24,190);c.fillStyle='#f8fafc';(events||[]).slice().reverse().forEach((e,i)=>{const actor=e.actor||'-'; const target=e.target?` -> ${e.target}`:''; const dmg=e.damage!==undefined?` dmg:${e.damage}`:''; const cnt=e.count!==undefined?` count:${e.count}`:''; const mode=e.mode?` ${e.mode}`:''; const kbTypeSet=new Set(['knockbackStart','finalKnockbackStart','knockbackEnd','finalKnockbackEnd','deadAfterFinalKnockback']); const kb=kbTypeSet.has(e.type)&&(e.bcuType||e.frames!==undefined||e.distance!==undefined||e.moveMode)?`${e.bcuType?` ${e.bcuType}`:''}${e.frames!==undefined?` f:${e.frames}`:''}${e.distance!==undefined?` d:${e.distance}`:''}${e.moveMode?` ${e.moveMode}`:''}`:''; c.fillText(`${Math.round(e.timeMs)} ${e.type} ${actor}${target}${kb}${cnt}${dmg}${mode}`,24,210+i*14);});}
@@ -165,10 +262,10 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
       if (!effect || effect.finished || !effect.image || !effect.currentPart) continue;
       const p = effect.currentPart;
       if (!p || p.w <= 0 || p.h <= 0) continue;
-      const s = (effect.scale || 1) * this.getCameraScale(this._scene);
+      const s = this.getEntityRenderScale(this._scene,effect,effect.scale || 1);
       const dw = p.w * s;
       const dh = p.h * s;
-      c.drawImage(effect.image, p.x, p.y, p.w, p.h, this.projectX(this._scene,effect.x) - dw * 0.5, effect.y - dh * 0.5, dw, dh);
+      c.drawImage(effect.image, p.x, p.y, p.w, p.h, this.projectBattleX(this._scene,effect.x) - dw * 0.5, this.getEntityRenderY(this._scene,effect,effect.y) - dh * 0.5, dw, dh);
     }
   }
 
@@ -260,7 +357,7 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
   }
   drawActorLegacy(c, actor, drawList) {
     const baseAngle = actor.model.baseAngle || 3600;
-    c.save(); c.translate(this.projectX(this._scene,actor.x), actor.y); if (actor.renderFlipX) c.scale(-1, 1);
+    c.save(); c.translate(this.projectBattleX(this._scene,actor.x), this.getEntityRenderY(this._scene,actor,actor.y)); if (actor.renderFlipX) c.scale(-1, 1);
     for (const p of drawList) { const w = p.world; const partIndex = p.current?.partIndex ?? p.partIndex; const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex; if (!Number.isInteger(partIndex) || partIndex < 0) continue; if ((imgcutIndex ?? 0) < 0) continue; if (!w || (w.o ?? 1) <= 0) continue; const part = actor.sprite?.imgcut?.parts?.[partIndex]; if (!part || part.w <= 0 || part.h <= 0) continue; c.save(); c.translate(w.x * actor.scale, w.y * actor.scale); c.rotate((w.a / baseAngle) * Math.PI * 2); c.globalAlpha = w.o ?? 1; const sx = w.sx * actor.scale; const sy = w.sy * actor.scale; actor.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy }); c.restore(); }
     c.restore();
   }
@@ -293,10 +390,11 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     const kbOffsetY = Number.isFinite(actor.kbVisualOffsetY) ? actor.kbVisualOffsetY : 0;
     const crowdScale = Number.isFinite(actor.visualCrowdScaleMultiplier) ? actor.visualCrowdScaleMultiplier : 1;
     const kbScale = Number.isFinite(actor.kbVisualScale) ? actor.kbVisualScale : 1;
-    c.translate(this.projectX(this._scene,actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX), actor.y + crowdOffsetY + kbOffsetY);
+    const renderY=this.getEntityRenderY(this._scene,actor,actor.y);
+    c.translate(this.projectBattleX(this._scene,actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX), renderY + crowdOffsetY + kbOffsetY);
     if (actor.renderFlipX) c.scale(-1, 1);
     const s = Number.isFinite(actor.scale) ? actor.scale : 1;
-    const stageScale=(this._scene?.camera?.siz??this._scene?.camera?.zoom??1);c.scale(s * crowdScale * kbScale * stageScale, s * crowdScale * kbScale * stageScale);
+    const renderScale=this.getEntityRenderScale(this._scene,actor,s);c.scale(renderScale * crowdScale * kbScale, renderScale * crowdScale * kbScale);
     c.translate(0, -anchorY);
     const k = actor.kbeffParentTransform;
     if (k && actor.kbeffEnabled) {

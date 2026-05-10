@@ -64,7 +64,7 @@ export class StageRuntime {
     this.cannonId = toFiniteNumber(stageDefinition?.cannonId, null);
     this.bgId = toFiniteNumber(stageDefinition?.bgId, null);
     this.enemyBaseHp = enemyBaseHp;
-    this.maxEnemyCountRaw = toFiniteNumber(stageDefinition?.maxEnemyCount, null);
+    this.maxEnemyCountRaw = toFiniteNumber(stageDefinition?.maxEnemyCountRaw, toFiniteNumber(stageDefinition?.maxEnemyCount, null));
     this.maxEnemyCount = clampEnemyMax(stageDefinition?.maxEnemyCount, toFiniteNumber(options.maxEnemyCount, 20));
     this.effectiveMaxEnemyCount = this.maxEnemyCount;
     this.minSpawnFrame = toFiniteNumber(stageDefinition?.minSpawnFrame, null);
@@ -142,7 +142,7 @@ export class StageRuntime {
 
     this.killCounterByRowIndex = Object.fromEntries(this.enemyRows.map((row, i) => [i, Number(row?.killCountTrigger) > 0 ? Number(row.killCountTrigger) : 0]));
     this.groupState = { source: 'StageRuntime.default-allow-partial', policy: 'default-allow-partial' };
-    this.debug = { source: 'StageRuntime', spawnCoordinateSource: 'stage-runtime-fields', maxEnemyCountRaw: this.maxEnemyCountRaw, maxEnemyCount: this.maxEnemyCount, baseFrontSource: 'base-worldX-placeholder', killCounterRows: this.killCounterByRowIndex, groupPolicy: 'default-allow-partial', warnings };
+    this.debug = { source: 'StageRuntime', spawnCoordinateSource: 'stage-runtime-fields', maxEnemyCountRaw: this.maxEnemyCountRaw, maxEnemyCount: this.maxEnemyCount, noContinue: this.noContinue, castleRawRow: stageDefinition?.runtime?.castleRawRow || stageDefinition?.castle?.raw || [], headerRawRow: stageDefinition?.runtime?.headerRawRow || [], baseFrontSource: 'base-worldX-placeholder', killCounterRows: this.killCounterByRowIndex, groupPolicy: 'default-allow-partial', warnings };
 
   }
 
@@ -213,6 +213,7 @@ export class StageRuntime {
       cannonId: this.cannonId,
       bgId: this.bgId,
       enemyBaseHp: this.enemyBaseHp,
+      maxEnemyCountRaw: this.maxEnemyCountRaw,
       maxEnemyCount: this.maxEnemyCount,
       effectiveMaxEnemyCount: this.effectiveMaxEnemyCount,
       minSpawnFrame: this.minSpawnFrame,

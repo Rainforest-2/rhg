@@ -21,8 +21,9 @@ const phases = JSON.parse(phasesMatch[1].replace(/'/g, '"'));
 const idx = (p) => phases.indexOf(p);
 if (!(idx('advance-clock') >= 0 && idx('enemy-spawn') >= 0 && idx('advance-clock') < idx('enemy-spawn'))) fail('advance-clock before enemy-spawn');
 if (!(idx('enemy-spawn') < idx('actor-state-update'))) fail('enemy-spawn before actor-state-update');
-if (!(idx('damage-resolve') < idx('effects'))) fail('combat before effects');
-if (!(idx('effects') < idx('cleanup'))) fail('effects before cleanup');
+if (!(idx('damage-resolve') < idx('effect-spawn'))) fail('combat before effect-spawn');
+if (!(idx('effect-spawn') < idx('effect-tick'))) fail('effect-spawn before effect-tick');
+if (!(idx('effect-tick') < idx('cleanup'))) fail('effect-tick before cleanup');
 ok('phase ordering valid');
 
 for (const token of ['runTickPhase(', 'tickStageEnemySpawn(', 'stageSpawnRuntime.tick(this.logicFrame', 'commitSpawn(', 'rejectSpawn(', 'phaseOrder:BATTLE_TICK_PHASES', 'recentPhaseTrace']) {
@@ -30,9 +31,9 @@ for (const token of ['runTickPhase(', 'tickStageEnemySpawn(', 'stageSpawnRuntime
 }
 ok('required BattleScene hooks present');
 
-for (const disallowed of ['AttackTimeline.js', 'ProcResolver.js', 'KBRuntime.js', 'EffectRuntime.js']) {
-  if (fs.existsSync(`js/battle/${disallowed}`)) fail(`disallowed new file exists: ${disallowed}`);
+for (const required of ['BattleAttackTimeline.js', 'ProcResolver.js', 'KBRuntime.js', 'EffectRuntime.js']) {
+  if (!fs.existsSync(`js/battle/${required}`)) fail(`required runtime file missing: ${required}`);
 }
-ok('no disallowed runtime files added');
+ok('later runtime files present');
 
 console.log('All checks passed.');

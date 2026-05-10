@@ -34,10 +34,10 @@ export class BattleSpawnResolver {
     const eventSource = row?.spawnWorldXSource || null;
 
     if (Number.isFinite(explicitWorldX) && eventSource !== 'legacy-fixed') {
-      return { ok: true, worldX: explicitWorldX, source: eventSource || 'event-worldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
+      return { ok: true, worldX: explicitWorldX, source: eventSource || 'event-worldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX, actorRadius, gapWorld, actorRadiusApplied: false, gapWorldApplied: false };
     }
     if (Number.isFinite(explicitSpawnWorldX) && eventSource !== 'legacy-fixed' && eventSource !== 'stage-runtime-enemy-base-front') {
-      return { ok: true, worldX: explicitSpawnWorldX, source: eventSource || 'event-spawnWorldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
+      return { ok: true, worldX: explicitSpawnWorldX, source: eventSource || 'event-spawnWorldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX, actorRadius, gapWorld, actorRadiusApplied: false, gapWorldApplied: false };
     }
 
     if (stageRuntime && typeof stageRuntime.getSpawnWorldX === 'function') {

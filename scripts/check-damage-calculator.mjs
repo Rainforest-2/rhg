@@ -34,7 +34,9 @@ ok('damageQueued has base/final/multiplier', sceneText.includes("type:'damageQue
 ok('baseDamageQueued has base/final/multiplier', sceneText.includes("type:'baseDamageQueued'") && sceneText.includes('baseDamage:damageResult.baseDamage') && sceneText.includes('finalDamage:damageResult.finalDamage') && sceneText.includes('damageMultiplier:damageResult.multiplier'));
 ok('getStatsSourceReport includes damageCalculation', sceneText.includes('damageCalculation:actor.lastDamageCalculation?'));
 
-ok('forbidden runtime files not added', !['js/battle/ProcResolver.js','js/battle/AbilityModel.js','js/battle/KBRuntime.js','js/battle/EffectRuntime.js'].some((p) => fs.existsSync(p)));
+ok('later runtime files present', ['js/battle/ProcResolver.js','js/battle/AbilityModel.js','js/battle/KBRuntime.js','js/battle/EffectRuntime.js'].every((p) => fs.existsSync(p)));
+const procText = fs.readFileSync('js/battle/ProcResolver.js', 'utf8');
+ok('ProcResolver remains no-apply', procText.includes('applied: []') && !procText.includes('target.hp ='));
 
 console.log('check-damage-calculator: OK');
 for (const row of results) console.log(` - ${row.name}`);

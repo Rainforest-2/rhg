@@ -3,6 +3,10 @@ import { formatBcuId } from './BcuStageEnemyResolver.js';
 const FRAME_MUL = 2;
 const FPS = 30;
 
+export const BCU_STAGE_ENEMY_COLUMNS = Object.freeze({
+  E: 0, N: 1, S0: 2, R0: 3, R1: 4, C0: 5, L0: 6, L1: 7, B: 8, M: 9, SCORE: 10, C1: 11, G: 12, M1: 13, KC: 14, SC: 15
+});
+
 const stripComment = (line) => String(line || '').split('//')[0].trim();
 const parseCsvLine = (line) => stripComment(line).split(',').map((x) => x.trim());
 const toNum = (v, d = null) => {
@@ -66,87 +70,36 @@ export class StageDefinitionLoader {
 
     const parsedRows = enemyRowsRaw.map((raw, sourceOrder) => {
       const rowWarnings = [];
-      const rawEnemyId = toNum(raw[0], null);
+      const c = BCU_STAGE_ENEMY_COLUMNS;
+      const scdefRaw = Object.fromEntries(Object.entries(c).map(([k, idx]) => [k, raw[idx] ?? null]));
+      const rawEnemyId = toNum(raw[c.E], null);
       const sourceEnemyId = rawEnemyId;
       const enemyId = Number.isFinite(rawEnemyId) ? rawEnemyId - 2 : null;
-      if (!Number.isFinite(enemyId)) rowWarnings.push('enemyId is not finite after rawEnemyId-2 normalization');
-
-      let baseHpTrigger = toNum(raw[5], 100);
-      let magnification = toNum(raw[9], 100);
-      if (baseHpTrigger > 100 && magnification === 100) {
-        magnification = baseHpTrigger;
-        baseHpTrigger = 100;
-        const msg = `row ${sourceOrder}: normalized baseHpTrigger>100 into magnification`;
-        warnings.push(msg);
-        rowWarnings.push(msg);
-      }
-
-      const atkMagRaw = toNum(raw[11], null);
-      const attackMagnification = atkMagRaw === 0 ? magnification : (atkMagRaw ?? magnification);
-
-      const firstFrameBase = toNum(raw[2], 0);
-      const isNegSpawn = toNum(raw[12], 0) === 1;
-      const firstFrame = (isNegSpawn ? -firstFrameBase : firstFrameBase) * FRAME_MUL;
-
-      let respawnMinFrame = toNum(raw[3], 0) * FRAME_MUL;
-      let respawnMaxFrame = toNum(raw[4], 0) * FRAME_MUL;
-      if (respawnMinFrame < 0) {
-        respawnMinFrame = 0;
-        rowWarnings.push('respawnMinFrame clamped to 0');
-      }
-      if (respawnMaxFrame < 0) {
-        respawnMaxFrame = 0;
-        rowWarnings.push('respawnMaxFrame clamped to 0');
-      }
-      if (respawnMinFrame > respawnMaxFrame) {
-        const swap = respawnMinFrame;
-        respawnMinFrame = respawnMaxFrame;
-        respawnMaxFrame = swap;
-        rowWarnings.push('respawnMinFrame and respawnMaxFrame swapped');
-      }
-
-      const count = toNum(raw[1], 0);
+      if (!Number.isFinite(enemyId)) rowWarnings.push('invalid-enemyId');
+      const count = toNum(raw[c.N], 0);
       const isInfinite = count === 0;
-      const layerMin = toNum(raw[6], 0);
-      const layerMax = toNum(raw[7], 0);
-
-      return {
-        rowIndex: null,
-        runtimeOrderIndex: null,
-        sourceOrder,
-        csvRowIndex: sourceOrder + 2,
-        originalCsvOrderIndex: sourceOrder,
-        raw,
-        rawEnemyId,
-        sourceEnemyId,
-        enemyId,
-        bcuId: Number.isFinite(enemyId) ? formatBcuId(enemyId) : null,
-        count,
-        countMode: isInfinite ? 'unlimited' : 'limited',
-        isInfinite,
-        firstFrame,
-        firstMs: toMs(firstFrame),
-        respawnMinFrame,
-        respawnMaxFrame,
-        respawnMinMs: toMs(respawnMinFrame),
-        respawnMaxMs: toMs(respawnMaxFrame),
-        baseHpTrigger,
-        baseHpTriggerPercent: baseHpTrigger,
-        frontLayer: layerMin,
-        backLayer: layerMax,
-        layerMin,
-        layerMax,
-        bossFlag: toNum(raw[8], 0),
-        magnification,
-        hpMagnification: magnification,
-        attackMagnification,
-        score: toNum(raw[10], null),
-        killCountTrigger: toNum(raw[13], null),
-        killCount: toNum(raw[13], null),
-        group: toNum(raw[12], 0),
-        spawnWorldX: null,
-        warnings: rowWarnings
-      };
+      const firstFrameMinRaw = toNum(raw[c.S0], 0);
+      let firstFrameMaxRaw = toNum(raw[c.SCORE], null);
+      if (!Number.isFinite(firstFrameMaxRaw) || firstFrameMaxRaw <= 0) firstFrameMaxRaw = firstFrameMinRaw;
+      if (firstFrameMaxRaw < firstFrameMinRaw) { [firstFrameMaxRaw] = [firstFrameMinRaw]; rowWarnings.push('firstFrameRangeNormalized'); }
+      const firstFrameMin = Math.max(0, firstFrameMinRaw * FRAME_MUL);
+      const firstFrameMax = Math.max(firstFrameMin, firstFrameMaxRaw * FRAME_MUL);
+      let respawnMinFrame = Math.max(0, toNum(raw[c.R0], 0) * FRAME_MUL);
+      let respawnMaxFrame = Math.max(0, toNum(raw[c.R1], 0) * FRAME_MUL);
+      if (respawnMinFrame > respawnMaxFrame) { const t=respawnMinFrame; respawnMinFrame=respawnMaxFrame; respawnMaxFrame=t; rowWarnings.push('respawn min/max swapped'); }
+      let baseHpTrigger = toNum(raw[c.C0], 100);
+      let magnification = toNum(raw[c.M], 100);
+      if (baseHpTrigger > 100 && magnification === 100) { magnification = baseHpTrigger; baseHpTrigger = 100; rowWarnings.push('C0>100 moved to magnification'); warnings.push(`row ${sourceOrder}: normalized baseHpTrigger>100 into magnification`);}
+      let upper = toNum(raw[c.C1], null);
+      if (!Number.isFinite(upper) || upper <= 0) upper = null;
+      if (Number.isFinite(upper) && upper < baseHpTrigger) { rowWarnings.push('C1<C0 upper ignored'); upper = null; }
+      const atkMagRaw = toNum(raw[c.M1], null);
+      const attackMagnification = Number.isFinite(atkMagRaw) && atkMagRaw > 0 ? atkMagRaw : magnification;
+      const specialSpawnControl = toNum(raw[c.SC], null);
+      if (Number.isFinite(specialSpawnControl) && specialSpawnControl !== 0) rowWarnings.push('SC present but unsupported');
+      rowWarnings.push('negative spawn legacy removed/unverified');
+      const scdef = { rawEnemyId, enemyId, count, firstFrameMin, firstFrameMax, respawnMinFrame, respawnMaxFrame, baseHpTriggerLowerPercent: baseHpTrigger, baseHpTriggerUpperPercent: upper, group: toNum(raw[c.G], 0), magnification, attackMagnification, killCountTrigger: toNum(raw[c.KC], null), specialSpawnControl };
+      return { rowIndex:null,runtimeOrderIndex:null,sourceOrder,csvRowIndex:sourceOrder+2,originalCsvOrderIndex:sourceOrder,raw,scdefRaw,scdef,rawEnemyId,sourceEnemyId,enemyId,bcuId:Number.isFinite(enemyId)?formatBcuId(enemyId):null,count,countMode:isInfinite?'unlimited':'limited',isInfinite,firstFrameMin,firstFrameMax,firstFrame:firstFrameMin,firstMs:toMs(firstFrameMin),respawnMinFrame,respawnMaxFrame,respawnMinMs:toMs(respawnMinFrame),respawnMaxMs:toMs(respawnMaxFrame),baseHpTrigger,baseHpTriggerPercent:baseHpTrigger,baseHpTriggerLowerPercent:baseHpTrigger,baseHpTriggerUpperPercent:upper,frontLayer:toNum(raw[c.L0],0),backLayer:toNum(raw[c.L1],0),layerMin:toNum(raw[c.L0],0),layerMax:toNum(raw[c.L1],0),bossFlag:toNum(raw[c.B],0),magnification,hpMagnification:magnification,attackMagnification,score:toNum(raw[c.SCORE],null),killCountTrigger:toNum(raw[c.KC],null),killCount:toNum(raw[c.KC],null),group:toNum(raw[c.G],0),specialSpawnControl,unsupportedSpawnControl:specialSpawnControl,spawnWorldX:null,warnings:rowWarnings };
     });
 
     const runtimeRows = parsedRows.slice().reverse();

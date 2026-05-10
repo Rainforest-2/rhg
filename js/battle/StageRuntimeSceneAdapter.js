@@ -72,7 +72,7 @@ export class StageRuntimeSceneAdapter {
       : null;
     const hp = toFiniteNumber(base?.hp, toFiniteNumber(runtime?.enemyBase?.hp, toFiniteNumber(runtime?.enemyBaseHp, null)));
     const maxHp = toFiniteNumber(base?.maxHp, toFiniteNumber(runtime?.enemyBase?.maxHp, toFiniteNumber(runtime?.enemyBaseHp, null)));
-    if (!Number.isFinite(hp) || !Number.isFinite(maxHp) || maxHp <= 0) return 100;
+    if (!Number.isFinite(hp) || !Number.isFinite(maxHp) || maxHp <= 0) { runtime.warnings = Array.isArray(runtime.warnings)?runtime.warnings:[]; if (!runtime.warnings.includes("enemy-base-hp-percent-fallback-100")) runtime.warnings.push("enemy-base-hp-percent-fallback-100"); return 100; }
     return Math.max(0, Math.min(100, (hp / maxHp) * 100));
   }
 
@@ -96,7 +96,8 @@ export class StageRuntimeSceneAdapter {
       bases: Array.isArray(scene?.bases) ? scene.bases : [],
       enemySpawnWorldX: runtime.enemySpawnWorldX,
       bossSpawnWorldX: runtime.bossSpawnWorldX,
-      random: Math.random,
+      random: overrides.random || runtime.random || Math.random,
+      groupState: runtime.groupState || null,
       killCounterByRowIndex,
       isGroupAllowed: groupAllowed.fn,
       groupPolicySource: groupAllowed.source,

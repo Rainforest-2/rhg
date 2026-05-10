@@ -137,12 +137,18 @@ function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
 }
 
 export class BcuStageSpawnRuntime {
-  constructor(stageRuntime, stageEnemyUnitDefs = []) {
+  constructor(stageRuntime, stageEnemyUnitDefs = [], options = {}) {
+    this.options = options || {};
+    this.warningFlags = new Set();
     this.stageRuntime = stageRuntime || {};
     this.lastTickFrame = 0;
     const map = new Map(stageEnemyUnitDefs.map((u) => [u?.stageSpawn?.rowIndex, u]));
     this.rows = (this.stageRuntime.enemyRows || []).map((r) => {
-      const nextFrame = Number.isFinite(r?.firstFrame) ? Math.floor(r.firstFrame) : 0;
+      const firstFrameMin = Number.isFinite(r?.firstFrameMin) ? Math.floor(r.firstFrameMin) : (Number.isFinite(r?.firstFrame) ? Math.floor(r.firstFrame) : 0);
+      const firstFrameMax = Number.isFinite(r?.firstFrameMax) ? Math.floor(r.firstFrameMax) : firstFrameMin;
+      const rand = typeof this.options?.random === "function" ? this.options.random : (typeof this.stageRuntime?.random === "function" ? this.stageRuntime.random : Math.random);
+      const rv = Math.max(0, Math.min(1, Number(rand?.()) || 0));
+      const nextFrame = firstFrameMax <= firstFrameMin ? firstFrameMin : Math.floor(firstFrameMin + ((firstFrameMax-firstFrameMin) * rv));
       return {
         rowIndex: r?.rowIndex,
         def: r,
@@ -163,6 +169,7 @@ export class BcuStageSpawnRuntime {
         lastAttemptFrame: null,
         lastBlockedReason: null,
         lastSpawnResolveDebug: null,
+        firstFrameResolvedDebug: { firstFrameMin, firstFrameMax, firstFrameResolved: nextFrame },
         warnings: []
       };
     });
@@ -174,6 +181,8 @@ export class BcuStageSpawnRuntime {
     const alive = Number.isFinite(context.aliveEnemyCount) ? context.aliveEnemyCount : 0;
     const max = Number.isFinite(context.maxEnemyCount) ? context.maxEnemyCount : (this.stageRuntime.maxEnemyCount || 20);
     const hp = Number.isFinite(context.enemyBaseHpPercent) ? context.enemyBaseHpPercent : 100;
+    const killCounterByRowIndex = context.killCounterByRowIndex || this.stageRuntime.killCounterByRowIndex || {};
+    context = { ...context, killCounterByRowIndex };
     const out = [];
 
     for (const s of this.rows) {

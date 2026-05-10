@@ -166,6 +166,18 @@ assert.ok(characterCatalogSrc.includes('export function isGeneratedCharacter'), 
 assert.ok(inspectorSrc.includes('characterCatalog'));
 assert.ok(previewAssetsSrc.includes('buildPlayablePreviewAssets(ANIM4_E)'));
 
+
+const stageDefLoaderSrc = fs.readFileSync('js/battle/StageDefinitionLoader.js','utf8');
+assert.ok(stageDefLoaderSrc.includes('BCU_STAGE_ENEMY_COLUMNS'));
+assert.ok(stageDefLoaderSrc.includes('scdefRaw'));
+assert.ok(stageDefLoaderSrc.includes('specialSpawnControl'));
+assert.ok(runtime.includes('killCounterByRowIndex'));
+assert.ok(runtime.includes('groupState'));
+assert.ok(runtime.includes('debug'));
+assert.ok(adapter.includes('groupState: runtime.groupState'));
+assert.ok(adapter.includes('killCounterByRowIndex'));
+assert.ok(inspectorSrc.includes('stageRuntime'));
+assert.ok(inspectorSrc.includes('spawnRuntime'));
 const battleCamera = fs.readFileSync('js/battle/BattleCamera.js', 'utf8');
 const inputController = fs.readFileSync('js/preview/BattleCameraInputController.js', 'utf8');
 const renderer = fs.readFileSync('js/battle/BattleSceneRenderer.js', 'utf8');

@@ -43,6 +43,8 @@ export class StageRuntime {
     const playerSpawnWorldX = toFiniteNumber(options.playerSpawnWorldX, stageLen - DEFAULT_PLAYER_SPAWN_OFFSET);
     const bossSpawnWorldX = toFiniteNumber(options.bossSpawnWorldX, null);
 
+    this.source = 'StageRuntime';
+    this.definition = stageDefinition;
     this.stageDefinition = stageDefinition;
     this.sourcePath = stageDefinition?.sourcePath || '';
     this.sourceType = stageDefinition?.sourceType || 'bcu-stage-csv';
@@ -94,9 +96,9 @@ export class StageRuntime {
     });
 
     this.enemyBaseWorldX = enemyBaseWorldX;
-    this.enemyBaseFrontX = enemyBaseWorldX;
+    this.enemyBaseFrontX = toFiniteNumber(options.enemyBaseFrontX, enemyBaseWorldX);
     this.playerBaseWorldX = playerBaseWorldX;
-    this.playerBaseFrontX = playerBaseWorldX;
+    this.playerBaseFrontX = toFiniteNumber(options.playerBaseFrontX, playerBaseWorldX);
     this.enemySpawnWorldX = enemySpawnWorldX;
     this.playerSpawnWorldX = playerSpawnWorldX;
     this.bossSpawnWorldX = bossSpawnWorldX;
@@ -115,6 +117,11 @@ export class StageRuntime {
     };
 
     this.warnings = warnings;
+
+    this.killCounterByRowIndex = Object.fromEntries(this.enemyRows.map((row, i) => [i, Number(row?.killCountTrigger) > 0 ? Number(row.killCountTrigger) : 0]));
+    this.groupState = { source: 'StageRuntime.default-allow-partial', policy: 'default-allow-partial' };
+    this.debug = { source: 'StageRuntime', spawnCoordinateSource: 'stage-runtime-fields', maxEnemyCountRaw: this.maxEnemyCountRaw, maxEnemyCount: this.maxEnemyCount, baseFrontSource: 'base-worldX-placeholder', killCounterRows: this.killCounterByRowIndex, groupPolicy: 'default-allow-partial', warnings };
+
   }
 
   getEnemyBaseHpPercent(base = null) {
@@ -126,6 +133,9 @@ export class StageRuntime {
 
   toJSON() {
     return {
+      source: this.source,
+      definition: this.definition,
+      stageDefinition: this.stageDefinition,
       sourcePath: this.sourcePath,
       sourceType: this.sourceType,
       coordinateMode: this.coordinateMode,
@@ -161,6 +171,9 @@ export class StageRuntime {
       bossSpawnWorldX: this.bossSpawnWorldX,
       spawn: this.spawn,
       background: this.background,
+      killCounterByRowIndex: this.killCounterByRowIndex,
+      groupState: this.groupState,
+      debug: this.debug,
       warnings: this.warnings
     };
   }

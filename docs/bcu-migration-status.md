@@ -1,6 +1,7 @@
 # BCU migration status
 
 ## Last updated
+- note: Priority 1 parity repair updated (AGENTS reference-based, partial where noted).
 - date: 2026-05-10 (UTC)
 - commit: (working tree)
 - task: Task 12-FINAL (CharacterCatalog / PlayableCharacterRegistry / large roster foundation)
@@ -44,6 +45,10 @@
 | Task 12-HOTFIX | CharacterCatalog export fix | `js/battle/CharacterCatalog.js`, `js/battle/DebugBattleInspector.js` | Fixed blank-page ES module import error caused by missing `CharacterCatalog.isGeneratedCharacter` export. | wiring check pass. |
 | Task 12-HOTFIX | Generated metadata propagation | `js/battle/PlayableCharacterRegistry.js`, `scripts/check-battle-scene-stage-runtime-wiring.mjs` | Generated character metadata now flows into catalog entries and is asserted (`generated/generationSource/generatedRange`). | wiring check pass. |
 | Task 12-HOTFIX | BattleScene syntax restore (background-only boot failure) | `js/battle/BattleScene.js` | Removed an extra `}` in `applyBcuProductionStatsFromTemplates`; ES module parsing had failed before `getPlayerProductionRoster`, so battle scene initialization stopped and only background was visible. | `node --input-type=module -e "import './js/main.js'"` pass. |
+
+- StageDefinitionLoader SCDef column contract added.
+- StageRuntime battle-time state strengthened with killCounter/groupState/debug.
+- BcuStageSpawnRuntime firstFrame range debug and strict respawn source added.
 
 ## Partial
 - Production runtime still uses existing BattleEconomy simple income model if true
@@ -122,7 +127,11 @@
 - DebugBattleInspector generatedSelectable diagnostics.
 - Node checks for generated selectable formation path.
 
-### Partial
+#- StageDefinitionLoader SCDef column contract added.
+- StageRuntime battle-time state strengthened with killCounter/groupState/debug.
+- BcuStageSpawnRuntime firstFrame range debug and strict respawn source added.
+
+## Partial
 - Browser manual validation if not run.
 - Generated asset visual/manual existence validation.
 - Full 0〜999 BCU roster expansion.

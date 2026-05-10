@@ -279,9 +279,35 @@ export class DebugBattleInspector {
     const generatedExamples = ['dog-enemy-013','dog-enemy-030','cat-unit-013-f','cat-unit-030-f'];
     const productionRecentEvents = (scene?.debugEvents || []).filter((e) => ['playerSpawnRejected','playerSpawned','productionLineupChanged','productionRuntimeRequest'].includes(e?.type)).slice(-10);
     const formationSummary = FormationStore?.getFormationSummary ? FormationStore.getFormationSummary(FormationStore.load()) : ProductionRuntime.describeFormation(FormationStore.load());
+    const stageRuntimeDiagnostics = {
+      stageLen: stageRt.stageLen ?? stageDef.stageLen ?? null,
+      bgId: stageRt.bgId ?? stageDef.bgId ?? null,
+      castleId: stageRt.castleId ?? stageDef.castleId ?? null,
+      cannonId: stageRt.cannonId ?? stageDef.cannonId ?? null,
+      animBaseId: stageRt.animBaseId ?? stageDef.animBaseId ?? null,
+      enemyBaseHp: stageRt.enemyBaseHp ?? stageDef.enemyBaseHp ?? null,
+      maxEnemyCountRaw: stageRt.maxEnemyCountRaw ?? null,
+      maxEnemyCount: stageRt.maxEnemyCount ?? null,
+      enemyBaseWorldX: stageRt.enemyBaseWorldX ?? null, enemyBaseFrontX: stageRt.enemyBaseFrontX ?? null,
+      playerBaseWorldX: stageRt.playerBaseWorldX ?? null, playerBaseFrontX: stageRt.playerBaseFrontX ?? null,
+      enemySpawnWorldX: stageRt.enemySpawnWorldX ?? null, playerSpawnWorldX: stageRt.playerSpawnWorldX ?? null,
+      killCounterByRowIndex: scene?.stageSpawnKillCounterByRowIndex ?? stageRt.killCounterByRowIndex ?? {},
+      groupState: stageRt.groupState ?? null, warnings: stageRt.warnings ?? [], debug: stageRt.debug ?? null
+    };
+    const spawnRuntimeDiagnostics = {
+      rowCount: rows.length,
+      rows: rows.map((r)=>({rowIndex:r.rowIndex,firstFrameMin:r.row?.firstFrameMin,firstFrameMax:r.row?.firstFrameMax,firstFrameResolved:r.firstFrameResolvedDebug?.firstFrameResolved,baseHpTriggerLowerPercent:r.row?.baseHpTriggerLowerPercent ?? r.row?.baseHpTriggerPercent,baseHpTriggerUpperPercent:r.row?.baseHpTriggerUpperPercent ?? null,lastBlockedReason:r.lastBlockedReason,warnings:r.warnings||[]})),
+      rowsWaitingForMax: rows.filter((r)=>r.waitingForMaxEnemySlot).map((r)=>r.rowIndex),
+      warnings: rows.flatMap((r)=>r.warnings||[]),
+      lastSpawnResolveDebug: scene?.lastSpawnResolveDebug ?? null,
+      spawnWorldXSource: scene?.lastSpawnResolveDebug?.source ?? null,
+      respawnAddsOneFrameSource: rows.find((r)=>r.pendingSpawnEvent?.respawnAddsOneFrameSource)?.pendingSpawnEvent?.respawnAddsOneFrameSource ?? null
+    };
     const info = {
       frame: scene?.logicFrame ?? Math.floor((scene?.timeMs || 0) / (1000 / 30)),
       timeMs: scene?.timeMs || 0,
+      stageRuntime: stageRuntimeDiagnostics,
+      spawnRuntime: spawnRuntimeDiagnostics,
       stage: {
         castleId: stageRt.castleId ?? stageDef.castleId ?? null,
         animBaseId: stageRt.animBaseId ?? stageDef.animBaseId ?? null,

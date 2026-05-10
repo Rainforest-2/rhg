@@ -1,75 +1,79 @@
-name: Sync BCU library assets
+name: Replace BCU 000003 assets
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 3 * * 0"
+  push:
+    branches:
+      - main
+    paths:
+      - "000003.asset.converted.zip"
+      - ".github/workflows/replace-bcu-000003.yml"
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  sync-bcu-assets:
+  replace-bcu-assets:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout game repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          path: game
+          ref: main
+          fetch-depth: 0
 
-      - name: Checkout upstream bcu-assets sparse
-        uses: actions/checkout@v4
-        with:
-          repository: battlecatsultimate/bcu-assets
-          ref: master
-          path: upstream
-          sparse-checkout: |
-            fonts
-            lang
-          sparse-checkout-cone-mode: false
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip rsync
 
-      - name: Sync selected assets
+      - name: Replace public/assets/bcu/000003 with zip contents
+        shell: bash
         run: |
           set -euo pipefail
 
-          mkdir -p game/public/assets/bcu/fonts
-          mkdir -p game/public/assets/bcu/lang
+          ZIP_FILE="000003.asset.converted.zip"
+          TARGET_DIR="public/assets/bcu/000003"
+          TMP_DIR="$(mktemp -d)"
 
-          rsync -a --delete upstream/fonts/ game/public/assets/bcu/fonts/
-          rsync -a --delete upstream/lang/ game/public/assets/bcu/lang/
+          if [ ! -f "$ZIP_FILE" ]; then
+            echo "::error::$ZIP_FILE が見つかりません"
+            exit 1
+          fi
 
-          cd game
+          unzip -q "$ZIP_FILE" -d "$TMP_DIR"
 
-          cat > public/assets/bcu/BCU_ASSET_SYNC.md <<'EOF'
-          # BCU synced assets
+          # macOS由来の不要ファイルがあれば削除
+          find "$TMP_DIR" -name "__MACOSX" -type d -prune -exec rm -rf {} +
+          find "$TMP_DIR" -name ".DS_Store" -type f -delete
 
-          Source repository:
-          battlecatsultimate/bcu-assets
+          rm -rf "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
 
-          Synced directories:
-          - fonts -> public/assets/bcu/fonts
-          - lang -> public/assets/bcu/lang
+          # ZIPの中身が「単一フォルダ」なら、そのフォルダの中身だけを配置する
+          mapfile -t entries < <(find "$TMP_DIR" -mindepth 1 -maxdepth 1)
 
-          This folder is consumed by the browser runtime.
-          Do not edit synced files manually; update via the sync workflow.
-          EOF
+          if [ "${#entries[@]}" -eq 1 ] && [ -d "${entries[0]}" ]; then
+            rsync -a --delete "${entries[0]}/" "$TARGET_DIR/"
+          else
+            rsync -a --delete "$TMP_DIR/" "$TARGET_DIR/"
+          fi
 
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          path: game
-          branch: chore/sync-bcu-library-assets
-          commit-message: Sync BCU fonts lang assets
-          title: Sync BCU fonts, lang assets
-          body: |
-            Syncs selected assets from battlecatsultimate/bcu-assets.
+      - name: Commit and push changes
+        shell: bash
+        run: |
+          set -euo pipefail
 
-            Included:
-            - fonts
-            - lang
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            Runtime destination:
-            - public/assets/bcu/fonts
-            - public/assets/bcu/lang
+          git add public/assets/bcu/000003
+
+          if git diff --cached --quiet; then
+            echo "変更がないためコミットしません"
+            exit 0
+          fi
+
+          git commit -m "Replace BCU 000003 assets from converted zip"
+          git push

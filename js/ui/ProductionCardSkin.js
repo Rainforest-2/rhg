@@ -61,6 +61,7 @@ export class ProductionCardSkin {
   drawCard(ctx, {
     unitDef,
     icon,
+    iconCrop = null,
     cost,
     cooldownProgressRatio = 1,
     affordable = true,
@@ -79,7 +80,7 @@ export class ProductionCardSkin {
     }
 
     if (unitDef.faction === 'cat') this.drawCatCard(ctx, icon, state);
-    else this.drawDogCard(ctx, icon);
+    else this.drawDogCard(ctx, icon, iconCrop);
 
     if (!cooldownReady) {
       this.drawCooldown(ctx, cooldownProgressRatio, state);
@@ -105,9 +106,9 @@ export class ProductionCardSkin {
     }
   }
 
-  drawDogCard(ctx, icon) {
+  drawDogCard(ctx, icon, iconCrop = null) {
     this.drawSlotFrame(ctx);
-    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect);
+    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect, iconCrop);
   }
 
   drawEmptyCard(ctx) {
@@ -129,16 +130,19 @@ export class ProductionCardSkin {
     ctx.fillRect(0, 61, w, h - 61);
   }
 
-  drawContainedIcon(ctx, icon, rect) {
-    const sw = imageWidth(icon);
-    const sh = imageHeight(icon);
-    if (!icon || sw <= 0 || sh <= 0) return;
+  drawContainedIcon(ctx, icon, rect, crop = null) {
+    if (!icon) return;
+    const sw = crop?.w || imageWidth(icon);
+    const sh = crop?.h || imageHeight(icon);
+    if (sw <= 0 || sh <= 0) return;
+    const sx = crop?.x || 0;
+    const sy = crop?.y || 0;
     const fit = Math.min(rect.w / sw, rect.h / sh);
     const dw = Math.max(1, Math.floor(sw * fit));
     const dh = Math.max(1, Math.floor(sh * fit));
     const dx = rect.x + Math.floor((rect.w - dw) / 2);
     const dy = rect.y + Math.floor((rect.h - dh) / 2);
-    ctx.drawImage(icon, 0, 0, sw, sh, dx, dy, dw, dh);
+    ctx.drawImage(icon, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
   drawAvailabilityOverlay(ctx, state) {

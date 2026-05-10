@@ -26,7 +26,7 @@ export class BattleSpawnResolver {
     return Number.isFinite(base?.x) ? base.x : null;
   }
 
-  static resolveSpawnWorldXWithDebug({ side, bases, row, explicitSpawnWorldX, explicitWorldX, gapWorld = 8, actorRadius = 0, stageLen = null, bossSpawnX = null }) {
+  static resolveSpawnWorldXWithDebug({ side, bases, row, explicitSpawnWorldX, explicitWorldX, gapWorld = 8, actorRadius = 0, stageLen = null, bossSpawnX = null, stageRuntime = null }) {
     const base = (bases || []).find((b) => b.side === side) || null;
     const baseFrontX = BattleSpawnResolver.getBaseFrontX(base, side);
     const resolvedStageLen = Number.isFinite(stageLen) ? stageLen : (Number.isFinite(row?.stageLen) ? row.stageLen : null);
@@ -40,12 +40,17 @@ export class BattleSpawnResolver {
       return { ok: true, worldX: explicitSpawnWorldX, source: eventSource || 'event-spawnWorldX', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
     }
 
+    if (stageRuntime && typeof stageRuntime.getSpawnWorldX === 'function') {
+      const rt = stageRuntime.getSpawnWorldX(side, { bossFlag, row });
+      if (Number.isFinite(rt?.worldX)) {
+        return { ok: true, worldX: rt.worldX, source: rt.source || 'stage-runtime-spawn', coordinateSource: 'stage-runtime', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX, actorRadius, gapWorld };
+      }
+    }
+
     const resolved = BattleSpawnResolver.getSpawnWorldXForSide({ side, base, stageLen: resolvedStageLen, bossSpawnX, bossFlag });
     if (Number.isFinite(resolved)) {
-      const source = side === 'cat-enemy'
-        ? (bossFlag && Number.isFinite(bossSpawnX) ? 'bcu-boss-spawn' : 'bcu-enemy-spawn-700')
-        : (Number.isFinite(resolvedStageLen) ? 'bcu-player-spawn-stageLen-700' : 'bcu-player-spawn-base-pos+100');
-      return { ok: true, worldX: resolved, source, side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };
+      const source = 'legacy-bcu-fixed-fallback';
+      return { ok: true, worldX: resolved, source, coordinateSource: 'legacy-bcu-fixed-fallback', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX, actorRadius, gapWorld };
     }
 
     return { ok: false, worldX: null, source: 'bcu-spawn-unresolved', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX };

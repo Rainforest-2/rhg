@@ -199,3 +199,26 @@
 - [ ] semantic true のテストeventだけ pendingになる
 - [ ] freeze/slow/wave/surge が実際にはまだ適用されない
 - [ ] attack order fix が壊れていない
+
+## Priority 4 — StageRuntime coordinate / base front / spawn position repair (2026-05-10)
+### Completed
+- StageRuntime coordinate contract added (`stageLen`, base positions/fronts, spawn positions, coordinate sources, summary methods).
+- Base combat position and spawn position are StageRuntime-first.
+- BattleSpawnResolver now uses StageRuntime before legacy fixed fallback.
+- BattleScene.getSpawnWorldX passes StageRuntime to resolver.
+- actorRadius/gap no longer shifts StageRuntime spawn position.
+- Node checks cover base/spawn coordinate contract.
+
+### Partial
+- Exact animated castle visual offset parity remains future work.
+- Boss spawn special cases remain partial where source rows/runtime are absent.
+- Browser manual validation remains pending.
+
+### Manual browser check
+- [ ] debugBattle=1 で stageRuntime coordinate が見える
+- [ ] enemyBasePosBcu / playerBasePosBcu が見える
+- [ ] enemySpawnWorldX / playerSpawnWorldX が見える
+- [ ] spawnWorldXSource が stage-runtime-* になる
+- [ ] zoomしても spawn位置 / stageLen が変わらない
+- [ ] 敵城visual centerではなくbase combat point基準で敵が出る
+- [ ] actorRadius変更でspawn位置が不自然にずれない

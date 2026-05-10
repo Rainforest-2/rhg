@@ -107,6 +107,15 @@ export class StageRuntimeSceneAdapter {
             : (scene?.stage?.runtime?.killCounterByRowIndex ? 'stage.runtime.killCounterByRowIndex' : 'empty-object')),
         groupAllowedSource: groupAllowed.source
       },
+      stageRuntimeCoordinateSummary: typeof runtime?.getCoordinateSummary === 'function'
+        ? runtime.getCoordinateSummary()
+        : {
+            stageLen: runtime?.stageLen ?? null,
+            enemyBasePosBcu: runtime?.enemyBasePosBcu ?? runtime?.enemyBaseWorldX ?? null,
+            playerBasePosBcu: runtime?.playerBasePosBcu ?? runtime?.playerBaseWorldX ?? null,
+            enemySpawnWorldX: runtime?.enemySpawnWorldX ?? null,
+            playerSpawnWorldX: runtime?.playerSpawnWorldX ?? null
+          },
       ...overrides
     };
   }

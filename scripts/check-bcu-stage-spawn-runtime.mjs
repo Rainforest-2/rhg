@@ -12,7 +12,7 @@ assert.equal(rt.tick(9,{logicFrame:9,aliveEnemyCount:0,maxEnemyCount:5,enemyBase
 let ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
 assert.equal(ev.length,1);
 assert.equal(ev[0].spawnWorldX,700);
-assert.equal(ev[0].spawnWorldXSource,'bcu-enemy-spawn-700');
+assert.equal(ev[0].spawnWorldXSource,'legacy-bcu-fixed-fallback');
 assert.equal(rt.rows[0].spawnedCount,0);
 rt.commitSpawn(ev[0],{random:()=>0});
 assert.equal(rt.rows[0].spawnedCount,1);

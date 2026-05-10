@@ -36,11 +36,17 @@ export class StageRuntime {
     const warnings = [...(stageDefinition?.warnings || [])];
     const stageLen = toFiniteNumber(stageDefinition?.stageLen, toFiniteNumber(options.stageLen, DEFAULT_STAGE_LEN));
     const groundY = toFiniteNumber(options.groundY, DEFAULT_GROUND_Y);
+    let resolvedStageLen = stageLen;
+    const stageLenValid = Number.isFinite(resolvedStageLen) && resolvedStageLen > 0;
+    if (!stageLenValid) {
+      warnings.push('stageLen-invalid-fallback-default-4000');
+      resolvedStageLen = DEFAULT_STAGE_LEN;
+    }
     const enemyBaseHp = Math.max(1, toFiniteNumber(stageDefinition?.enemyBaseHp, toFiniteNumber(options.enemyBaseHp, 1)) || 1);
     const enemyBaseWorldX = toFiniteNumber(options.enemyBaseWorldX, DEFAULT_ENEMY_BASE_X);
-    const playerBaseWorldX = toFiniteNumber(options.playerBaseWorldX, stageLen - DEFAULT_PLAYER_BASE_OFFSET);
+    const playerBaseWorldX = toFiniteNumber(options.playerBaseWorldX, resolvedStageLen - DEFAULT_PLAYER_BASE_OFFSET);
     const enemySpawnWorldX = toFiniteNumber(options.enemySpawnWorldX, DEFAULT_ENEMY_SPAWN_X);
-    const playerSpawnWorldX = toFiniteNumber(options.playerSpawnWorldX, stageLen - DEFAULT_PLAYER_SPAWN_OFFSET);
+    const playerSpawnWorldX = toFiniteNumber(options.playerSpawnWorldX, resolvedStageLen - DEFAULT_PLAYER_SPAWN_OFFSET);
     const bossSpawnWorldX = toFiniteNumber(options.bossSpawnWorldX, null);
 
     this.source = 'StageRuntime';
@@ -49,10 +55,10 @@ export class StageRuntime {
     this.sourcePath = stageDefinition?.sourcePath || '';
     this.sourceType = stageDefinition?.sourceType || 'bcu-stage-csv';
     this.coordinateMode = stageDefinition?.coordinateMode || 'bcu-stage-world';
-    this.stageLen = stageLen;
+    this.stageLen = resolvedStageLen;
     this.groundY = groundY;
     this.scrollMinX = 0;
-    this.scrollMaxX = stageLen;
+    this.scrollMaxX = resolvedStageLen;
     this.castleId = toFiniteNumber(stageDefinition?.castleId, null);
     this.animBaseId = toFiniteNumber(stageDefinition?.animBaseId, this.castleId);
     this.cannonId = toFiniteNumber(stageDefinition?.cannonId, null);
@@ -103,6 +109,11 @@ export class StageRuntime {
     this.playerSpawnWorldX = playerSpawnWorldX;
     this.bossSpawnWorldX = bossSpawnWorldX;
 
+    this.enemyBasePosBcu = this.enemyBaseWorldX;
+    this.playerBasePosBcu = this.playerBaseWorldX;
+    this.coordinateSource = 'stage-runtime-bcu-world-contract';
+    this.spawnCoordinateSource = 'stage-runtime-bcu-spawn-contract';
+
     this.spawn = {
       playerSpawnWorldX,
       enemySpawnWorldX,
@@ -129,6 +140,47 @@ export class StageRuntime {
     const maxHp = toFiniteNumber(base?.maxHp, this.enemyBase?.maxHp);
     if (!Number.isFinite(hp) || !Number.isFinite(maxHp) || maxHp <= 0) return 100;
     return Math.max(0, Math.min(100, (hp / maxHp) * 100));
+  }
+
+  getBasePosBcu(side) {
+    if (side === 'cat-enemy') return this.enemyBasePosBcu;
+    if (side === 'dog-player') return this.playerBasePosBcu;
+    return null;
+  }
+
+  getBaseFrontX(side) {
+    if (side === 'cat-enemy') return this.enemyBaseFrontX;
+    if (side === 'dog-player') return this.playerBaseFrontX;
+    return null;
+  }
+
+  getSpawnWorldX(side, options = {}) {
+    const bossFlag = options?.bossFlag === true || options?.bossFlag === 1;
+    if (side === 'cat-enemy') {
+      if (bossFlag && Number.isFinite(this.bossSpawnWorldX)) {
+        return { worldX: this.bossSpawnWorldX, source: 'stage-runtime-boss-spawn' };
+      }
+      return { worldX: this.enemySpawnWorldX, source: 'stage-runtime-enemy-spawn' };
+    }
+    if (side === 'dog-player') {
+      return { worldX: this.playerSpawnWorldX, source: 'stage-runtime-player-spawn' };
+    }
+    return { worldX: null, source: 'stage-runtime-unknown-side' };
+  }
+
+  getCoordinateSummary() {
+    return {
+      coordinateSource: this.coordinateSource,
+      spawnCoordinateSource: this.spawnCoordinateSource,
+      stageLen: this.stageLen,
+      enemyBasePosBcu: this.enemyBasePosBcu,
+      playerBasePosBcu: this.playerBasePosBcu,
+      enemyBaseFrontX: this.enemyBaseFrontX,
+      playerBaseFrontX: this.playerBaseFrontX,
+      enemySpawnWorldX: this.enemySpawnWorldX,
+      playerSpawnWorldX: this.playerSpawnWorldX,
+      bossSpawnWorldX: this.bossSpawnWorldX
+    };
   }
 
   toJSON() {
@@ -163,12 +215,16 @@ export class StageRuntime {
       playerBase: this.playerBase,
       enemyBase: this.enemyBase,
       playerBaseWorldX: this.playerBaseWorldX,
+      playerBasePosBcu: this.playerBasePosBcu,
       playerBaseFrontX: this.playerBaseFrontX,
       enemyBaseWorldX: this.enemyBaseWorldX,
+      enemyBasePosBcu: this.enemyBasePosBcu,
       enemyBaseFrontX: this.enemyBaseFrontX,
       playerSpawnWorldX: this.playerSpawnWorldX,
       enemySpawnWorldX: this.enemySpawnWorldX,
       bossSpawnWorldX: this.bossSpawnWorldX,
+      coordinateSource: this.coordinateSource,
+      spawnCoordinateSource: this.spawnCoordinateSource,
       spawn: this.spawn,
       background: this.background,
       killCounterByRowIndex: this.killCounterByRowIndex,

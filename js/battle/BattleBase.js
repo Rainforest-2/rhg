@@ -93,5 +93,25 @@ export class BattleBase {
   isAlive() { return this.attackable && !this.destroyed && this.hp > 0; }
   takeDamage(amount) { if (!this.isAlive()) return { destroyed: this.destroyed, hpBefore: this.hp, hpAfter: this.hp }; const hpBefore = this.hp; this.hp = Math.max(0, this.hp - Math.max(0, amount)); if (this.hp <= 0) this.destroyed = true; return { destroyed: this.destroyed, hpBefore, hpAfter: this.hp }; }
   getBattlePosBcu(){ if (Number.isFinite(this.posBcu)) return this.posBcu; if (Number.isFinite(this.frontX)) return this.frontX; if (Number.isFinite(this.x)) return this.x; return null; }
-  applyCoordinate(coordinate){ if (!coordinate) return; this.battleCoordinate = coordinate; this.posBcu = coordinate.getBasePosBcu(this.side); this.x = coordinate.getBaseScreenX(this.side); this.frontX = this.getBattlePosBcu(); }
+  applyCoordinate(coordinate){
+    if (!coordinate) return;
+    this.battleCoordinate = coordinate;
+    const pos = typeof coordinate.getBasePosBcu === 'function' ? coordinate.getBasePosBcu(this.side) : null;
+    if (Number.isFinite(pos)) {
+      this.posBcu = pos;
+      this.x = pos;
+      this.frontX = pos;
+      this.coordinateSource = 'stage-runtime';
+    }
+  }
+  applyStageRuntime(stageRuntime){
+    if (!stageRuntime) return;
+    const pos = typeof stageRuntime.getBasePosBcu === 'function' ? stageRuntime.getBasePosBcu(this.side) : null;
+    if (Number.isFinite(pos)) {
+      this.posBcu = pos;
+      this.x = pos;
+      this.frontX = pos;
+      this.coordinateSource = 'stage-runtime';
+    }
+  }
 }

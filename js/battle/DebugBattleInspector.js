@@ -290,7 +290,19 @@ export class DebugBattleInspector {
       maxEnemyCount: stageRt.maxEnemyCount ?? null,
       enemyBaseWorldX: stageRt.enemyBaseWorldX ?? null, enemyBaseFrontX: stageRt.enemyBaseFrontX ?? null,
       playerBaseWorldX: stageRt.playerBaseWorldX ?? null, playerBaseFrontX: stageRt.playerBaseFrontX ?? null,
+      enemyBasePosBcu: stageRt.enemyBasePosBcu ?? stageRt.enemyBaseWorldX ?? null,
+      playerBasePosBcu: stageRt.playerBasePosBcu ?? stageRt.playerBaseWorldX ?? null,
       enemySpawnWorldX: stageRt.enemySpawnWorldX ?? null, playerSpawnWorldX: stageRt.playerSpawnWorldX ?? null,
+      coordinateSource: stageRt.coordinateSource ?? null,
+      spawnCoordinateSource: stageRt.spawnCoordinateSource ?? null,
+      baseRuntimeMismatch: (() => {
+        const expectedEnemy = typeof stageRt?.getBasePosBcu === 'function' ? stageRt.getBasePosBcu('cat-enemy') : (stageRt.enemyBasePosBcu ?? null);
+        const expectedPlayer = typeof stageRt?.getBasePosBcu === 'function' ? stageRt.getBasePosBcu('dog-player') : (stageRt.playerBasePosBcu ?? null);
+        const actualEnemy = Number.isFinite(enemyBase?.posBcu) ? enemyBase.posBcu : null;
+        const actualPlayer = Number.isFinite(playerBase?.posBcu) ? playerBase.posBcu : null;
+        return (Number.isFinite(expectedEnemy) && Number.isFinite(actualEnemy) && expectedEnemy !== actualEnemy)
+          || (Number.isFinite(expectedPlayer) && Number.isFinite(actualPlayer) && expectedPlayer !== actualPlayer);
+      })(),
       killCounterByRowIndex: scene?.stageSpawnKillCounterByRowIndex ?? stageRt.killCounterByRowIndex ?? {},
       groupState: stageRt.groupState ?? null, warnings: stageRt.warnings ?? [], debug: stageRt.debug ?? null
     };

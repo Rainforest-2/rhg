@@ -161,7 +161,7 @@ export class DebugBattleInspector {
       `camera pos:${this.fmt(camera.pos)} zoom:${this.fmt(camera.zoom, 2)} stageLen:${this.fmt(camera.stageLen)} pxPerWorld:${this.fmt(camera.pixelsPerWorldUnit, 3)}`,
       `cam invariant stageLenMatch:${info?.cameraInvariants?.stageLenMatchesRuntime === true ? 'true' : (info?.cameraInvariants?.stageLenMatchesRuntime === false ? 'false' : '-')} roundTrip:${info?.cameraInvariants?.projectionRoundTripOk === true ? 'true' : (info?.cameraInvariants?.projectionRoundTripOk === false ? 'false' : '-')} vis:${this.fmt(info?.cameraInvariants?.visibleWorldRange?.left)}..${this.fmt(info?.cameraInvariants?.visibleWorldRange?.right)}`,
       `tick phases enemyBeforeActor:${info?.tickOrder?.enemySpawnBeforeActorUpdate === true ? 'true' : (info?.tickOrder?.enemySpawnBeforeActorUpdate === false ? 'false' : '-')} current:${info?.tickOrder?.currentTickPhase || '-'} trace:${this.fmt(info?.tickOrder?.traceLength)}`,
-      `damage/proc ability rawOnly:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.rawOnly || 0)} partial:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.partial || 0)} procSkipped:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procSkipped || 0)}`,
+      `damage/proc rawOnly:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.rawOnly || 0)} partial:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.partial || 0)} procPending:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procPending || 0)} procSkipped:${this.fmt(info?.damageAndProc?.abilityStatusSummary?.procSkipped || 0)}`,
       `kb active:${this.fmt(info?.kbRuntime?.activeKnockbacks || 0)} dead:${this.fmt(info?.kbRuntime?.dyingOrDead || 0)} removable:${this.fmt(info?.kbRuntime?.removable || 0)}`,
       `effects active:${this.fmt(info?.effectRuntime?.activeCount || 0)} finished:${this.fmt(info?.effectRuntime?.finishedCount || 0)}`,
       `catalog total:${this.fmt(info?.characterCatalog?.catalogSummary?.total || 0)} dog:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.dog || 0)} cat:${this.fmt(info?.characterCatalog?.catalogSummary?.byFaction?.cat || 0)} generated:${this.fmt((info?.characterCatalog?.registrySummary?.generatedDogs || 0)+(info?.characterCatalog?.registrySummary?.generatedCats || 0))} errors:${this.fmt((info?.characterCatalog?.validation?.errors || []).length)}`,
@@ -581,16 +581,24 @@ export class DebugBattleInspector {
               partialAbilities: sample?.damageResult?.abilityResolver?.implementationStatus?.partialAbilities || ['critical', 'baseDestroyer', 'metal']
             },
             procResolver: {
-              source: sample?.damageResult?.proc?.source || 'ProcResolver.v1-noop-contract',
-              mode: sample?.damageResult?.proc?.mode || 'noop'
+              source: sample?.damageResult?.proc?.source || 'ProcResolver.v2-pending-contract',
+              mode: sample?.damageResult?.proc?.mode || 'pending-no-apply'
             }
           },
+          procResolverMode: sample?.damageResult?.proc?.mode || 'pending-no-apply',
           recentDamageEvents: damageEvents,
           recentProcEvents: procEvents,
+          recentPendingProcEvents: procEvents.filter((e) => (e?.pendingCount || 0) > 0),
           abilityStatusExamples,
+          pendingByType: procEvents.reduce((acc, e) => { for (const p of (e?.pending || [])) { const key = p?.pendingType || p?.category || p?.key || 'unknown'; acc[key] = (acc[key] || 0) + 1; } return acc; }, {}),
+          skippedByType: procEvents.reduce((acc, e) => { for (const p of (e?.skipped || [])) { const key = p?.pendingType || p?.category || p?.key || 'unknown'; acc[key] = (acc[key] || 0) + 1; } return acc; }, {}),
+          rawAbiUnverifiedCount: procEvents.reduce((n, e) => n + ((e?.notes || []).includes('raw-abi-present-proc-mapping-not-verified') ? 1 : 0), 0),
+          pendingProcCount: procEvents.reduce((n, e) => n + (e?.pendingCount || 0), 0),
+          skippedProcCount: procEvents.reduce((n, e) => n + (e?.skippedCount || 0), 0),
           abilityStatusSummary: {
             rawOnly: abilitySummary.rawOnly,
             partial: abilitySummary.partial,
+            procPending: procEvents.reduce((n, e) => n + (e?.pendingCount || 0), 0),
             procSkipped: procEvents.reduce((n, e) => n + (e?.skippedCount || 0), 0)
           }
         };

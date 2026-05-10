@@ -176,3 +176,26 @@
 - [ ] multi-hit が hitIndex/key 単位で解決される
 - [ ] damage が二重適用されない
 - [ ] attack timing が animation frame依存に戻っていない
+
+## Priority 3 — ProcResolver pending hooks / no-op contract hardening (2026-05-10)
+### Completed
+- ProcResolver pending hook contract added (`ProcResolver.v2-pending-contract`).
+- ProcResolver remains no-apply/no-state-mutation (applied stays empty).
+- DamageCalculator now carries proc pending/skipped counts and passes richer damageResult context to ProcResolver.
+- BattleScene emits `procResolved` debug event with pending/skipped payload.
+- DebugBattleInspector damageAndProc diagnostics now include pending summaries.
+- Node wiring checks now assert pending contract and no forbidden runtime mutation/imports.
+
+### Partial
+- Full raw ABI -> semantic BCU proc mapping remains unverified (`raw-only-unverified` preserved).
+- Actual freeze/slow/weaken/warp state application remains future work.
+- Actual wave/surge effect runtime application remains future work.
+- Browser manual validation remains pending.
+
+### Manual browser check
+- [ ] `?debugBattle=1` で damageAndProc が見える
+- [ ] procPending / procSkipped が表示される
+- [ ] rawAbi-only は raw-only-unverified として pending化されない
+- [ ] semantic true のテストeventだけ pendingになる
+- [ ] freeze/slow/wave/surge が実際にはまだ適用されない
+- [ ] attack order fix が壊れていない

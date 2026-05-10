@@ -91,13 +91,23 @@ const procResolverSrc = fs.readFileSync(files.procResolver, 'utf8');
 assert.ok(procResolverSrc.includes('collectProcCandidates'));
 assert.ok(procResolverSrc.includes('resolve('));
 assert.ok(procResolverSrc.includes('getProcCatalog'));
+assert.ok(procResolverSrc.includes('pendingSupported'));
+assert.ok(procResolverSrc.includes('pendingType'));
+assert.ok(procResolverSrc.includes('ProcResolver.v2-pending-contract'));
+assert.ok(procResolverSrc.includes('semantic-pending-no-apply'));
+assert.ok(!procResolverSrc.includes('KBRuntime'));
+assert.ok(!procResolverSrc.includes('EffectRuntime'));
+assert.ok(!procResolverSrc.includes('target.hp ='));
 assert.ok(damageCalculatorSrc.includes("from './ProcResolver.js'"));
 assert.ok(damageCalculatorSrc.includes('proc,'));
+assert.ok(damageCalculatorSrc.includes('procPendingCount') || damageCalculatorSrc.includes('proc?.pending'));
 assert.ok(!damageCalculatorSrc.includes('target.hp ='));
 assert.ok(damageAbilityResolverSrc.includes('implementationStatus'));
 assert.ok(abilityModelSrc.includes('ABILITY_CATALOG') || abilityModelSrc.includes('getAbilityCatalog'));
 assert.ok(abilityModelSrc.includes('describeImplementationStatus'));
 assert.ok(inspectorSrc.includes('damageAndProc'));
+assert.ok(inspectorSrc.includes('pendingProcCount'));
+assert.ok(inspectorSrc.includes('pendingByType'));
 
 
 const animationRuntimeSrc = fs.readFileSync(files.animationRuntime, 'utf8');
@@ -300,6 +310,7 @@ assert.ok(battleSceneSrc.includes('markHitResolved'));
 assert.ok(battleSceneSrc.includes('attackTimelineHitDue'));
 assert.ok(battleSceneSrc.includes('attackTargetsCaptured'));
 assert.ok(battleSceneSrc.includes('attackDamageResolved'));
+assert.ok(battleSceneSrc.includes('procResolved'));
 assert.ok(battleSceneSrc.includes('attackTimelineHitResolved'));
 assert.ok(inspectorSrc.includes('attackOrder'));
 assert.ok(attackTimelineSrc.includes('describe('));
@@ -345,17 +356,26 @@ assert.equal(disabledAbility.applied.critical, false);
 const enabledAbility = DamageAbilityResolver.resolve({ event: semanticEvent, baseDamage: 100, context: { damageAbilityResolver: { enabled: true, allowCritical: true } } });
 assert.equal(enabledAbility.applied.critical, true);
 
-const target = { hp: 1000 };
-const procResult = ProcResolver.resolve({ target, event: { abilities: { freeze: true }, rawAbi: 1, abilityMappingStatus: 'raw-only-unverified' } });
-assert.ok(procResult.notes.includes('raw-abi-present-proc-mapping-not-verified'));
-assert.ok(procResult.debug.candidates.includes('freeze'));
-assert.ok(procResult.skipped.some((x) => x.key === 'freeze'));
-assert.equal(target.hp, 1000);
+const targetFreeze = { hp: 1000, instanceId: 'target-1' };
+const procFreeze = ProcResolver.resolve({ attacker: { instanceId: 'attacker-1' }, target: targetFreeze, targetType: 'actor', event: { hitIndex: 0, key: 'hit-0', abilities: { freeze: true }, rawAbi: 0, abilityMappingStatus: 'semantic-test' }, damageResult: { finalDamage: 100, applied: {} }, context: { attackEventKey: 'hit-0' } });
+assert.equal(procFreeze.applied.length, 0);
+assert.ok(procFreeze.pending.some((p) => p.key === 'freeze'));
+assert.equal(targetFreeze.hp, 1000);
 
-const calcBase = DamageCalculator.calculate({ attacker: { damage: 100 }, event: { damage: 100 }, context: {} });
+const procWave = ProcResolver.resolve({ attacker: { instanceId: 'attacker-1' }, target: { hp: 1000, instanceId: 'target-2' }, targetType: 'actor', event: { hitIndex: 1, key: 'hit-1', abilities: { wave: true }, rawAbi: 0, abilityMappingStatus: 'semantic-test' }, damageResult: { finalDamage: 50, applied: {} }, context: { attackEventKey: 'hit-1' } });
+assert.ok(procWave.pending.some((p) => p.key === 'wave' && p.pendingType === 'effect'));
+
+const procRawOnly = ProcResolver.resolve({ target: { hp: 1000, instanceId: 'target-3' }, event: { abilities: {}, rawAbi: 1, abilityMappingStatus: 'raw-only-unverified' } });
+assert.equal(procRawOnly.pending.length, 0);
+assert.ok(procRawOnly.notes.includes('raw-abi-present-proc-mapping-not-verified'));
+
+const targetCalc = { hp: 1000, instanceId: 'target-calc', traitFlags: {} };
+const calcBase = DamageCalculator.calculate({ attacker: { damage: 100, instanceId: 'attacker-calc' }, target: targetCalc, targetType: 'actor', event: { abilities: { freeze: true }, rawAbi: 0, key: 'calc-hit' }, context: { attackEventKey: 'calc-hit' } });
 assert.equal(calcBase.finalDamage, 100);
-assert.ok(calcBase.proc);
+assert.ok(calcBase.proc?.pending?.some((p) => p.key === 'freeze'));
+assert.equal(targetCalc.hp, 1000);
 const calcCrit = DamageCalculator.calculate({ attacker: { damage: 100 }, event: { damage: 100, abilities: { critical: true } }, context: { damageAbilityResolver: { enabled: true, allowCritical: true, criticalMultiplier: 2 } } });
+assert.equal(calcCrit.finalDamage, 200);
 assert.equal(calcCrit.finalDamage, 200);
 
 

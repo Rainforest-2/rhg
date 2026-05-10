@@ -93,7 +93,7 @@ export class DamageCalculator {
       target,
       targetType,
       event,
-      damageResult: { baseDamage, finalDamage, modifiers },
+      damageResult: { baseDamage, finalDamage, multiplier, modifiers, applied: abilityResult.applied || {} },
       context
     });
 
@@ -115,6 +115,8 @@ export class DamageCalculator {
       },
       abilityResolver: abilityResult,
       proc,
+      procPendingCount: Array.isArray(proc?.pending) ? proc.pending.length : 0,
+      procSkippedCount: Array.isArray(proc?.skipped) ? proc.skipped.length : 0,
       applied: {
         stageMagnification: false,
         baseDestroyer: !!abilityResult.applied?.baseDestroyer,

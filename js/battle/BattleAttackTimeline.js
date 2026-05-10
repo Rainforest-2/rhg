@@ -122,6 +122,7 @@ export class BattleAttackTimeline {
     if (!actor.resolvedAttackEventKeys) actor.resolvedAttackEventKeys = new Set();
     actor.resolvedAttackEventKeys.add(key);
     actor.hasHitInCurrentAttack = true;
+    actor.lastAttackHitResolvedDebug = { key, resolvedHitCount: actor.resolvedAttackEventKeys.size };
   }
 
   static getAttackEndMs(actor) {
@@ -147,7 +148,11 @@ export class BattleAttackTimeline {
       dueHitCount: due.length,
       resolvedHitCount: resolvedKeys.length,
       totalHitCount: events.length,
+      unresolvedHitCount: Math.max(0, events.length - resolvedKeys.length),
       resolvedKeys,
+      hasHitInCurrentAttack: actor?.hasHitInCurrentAttack === true,
+      lastAttackTimelineDebug: actor?.lastAttackTimelineDebug || null,
+      lastAttackWaitDebug: actor?.lastAttackWaitDebug || null,
       waitState,
       bcuAttackIntervalMs: this.getBcuAttackIntervalMs(actor),
       bcuAttackIntervalFrames: profile?.bcuAttackIntervalFrames ?? profile?.bcuTiming?.bcuAttackIntervalFrames ?? null,

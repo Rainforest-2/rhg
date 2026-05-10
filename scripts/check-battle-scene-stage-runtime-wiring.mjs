@@ -296,6 +296,16 @@ assert.ok(attackProfileSrc.includes('stats.attackHits'));
 assert.ok(attackProfileSrc.includes('hitIndex') && attackProfileSrc.includes('atMs') && attackProfileSrc.includes('attackKind') && attackProfileSrc.includes('targetMode'));
 assert.ok(battleSceneSrc.includes('getDueHitEvents'));
 assert.ok(battleSceneSrc.includes('markHitResolved'));
+
+assert.ok(battleSceneSrc.includes('attackTimelineHitDue'));
+assert.ok(battleSceneSrc.includes('attackTargetsCaptured'));
+assert.ok(battleSceneSrc.includes('attackDamageResolved'));
+assert.ok(battleSceneSrc.includes('attackTimelineHitResolved'));
+assert.ok(inspectorSrc.includes('attackOrder'));
+assert.ok(attackTimelineSrc.includes('describe('));
+const attackResolverNoDamageSrc = fs.readFileSync('js/battle/BattleAttackResolver.js', 'utf8');
+assert.ok(!attackResolverNoDamageSrc.includes('DamageCalculator'));
+
 assert.ok(debugInspectorSrc.includes('attackTimeline'));
 
 const { BattleAttackTimeline } = await import('../js/battle/BattleAttackTimeline.js');

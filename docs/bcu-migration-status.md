@@ -152,3 +152,27 @@
 - [ ] webを開いて編成画面が表示される
 - [ ] console に missing export error が出ない
 - [ ] generated filter / generated diagnostics が動く
+
+
+## Priority 2 — Attack order fix (2026-05-10)
+### Completed
+- Attack order fixed: due-hit -> capture -> damage attempt/apply -> markHitResolved.
+- BattleScene attack hit resolution helper added (`resolveAttackHitEvent`).
+- No-target hits are explicitly skipped then marked resolved.
+- Multi-hit remains key/hitIndex based.
+- DebugBattleInspector attackOrder diagnostics added.
+- `scripts/check-battle-attack-timeline.mjs` updated to current runtime reality.
+
+### Partial
+- Full BCU ability/proc parity.
+- Full BCU attack/proc side effects.
+- Browser manual validation.
+- BattleScene monolith responsibility.
+
+### Manual browser check
+- [ ] `?debugBattle=1` で `attackOrder` が見える
+- [ ] `attackTimelineHitDue -> attackTargetsCaptured -> attackDamageResolved -> attackTimelineHitResolved` の順に出る
+- [ ] no-target hit が skipped として出る
+- [ ] multi-hit が hitIndex/key 単位で解決される
+- [ ] damage が二重適用されない
+- [ ] attack timing が animation frame依存に戻っていない

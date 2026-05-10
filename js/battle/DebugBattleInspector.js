@@ -524,6 +524,43 @@ export class DebugBattleInspector {
       },
       statsScaling: { contract: 'ActorStatsModel', stageScaledActors, stageScaledTemplates, examples, warnings: examples.flatMap((e) => Array.isArray(e?.warnings) ? e.warnings : []) },
 
+      attackOrder: (() => {
+        const events = (scene?.debugEvents || []).filter((e) => ['attackTimelineHitDue','attackTargetsCaptured','attackDamageResolved','attackTimelineHitResolved'].includes(e?.type));
+        const recent = events.slice(-24);
+        const recentDue = recent.filter((e) => e?.type === 'attackTimelineHitDue').slice(-6);
+        const recentCaptured = recent.filter((e) => e?.type === 'attackTargetsCaptured').slice(-6);
+        const recentDamageResolved = recent.filter((e) => e?.type === 'attackDamageResolved').slice(-6);
+        const recentHitResolved = recent.filter((e) => e?.type === 'attackTimelineHitResolved').slice(-6);
+        let lastOrderOk = null;
+        let lastViolation = null;
+        const lastResolved = recentHitResolved[recentHitResolved.length - 1] || null;
+        const key = lastResolved?.eventKey || null;
+        if (key) {
+          const seq = recent.filter((e) => e?.eventKey === key);
+          const names = seq.map((e) => e.type);
+          const dueIdx = names.indexOf('attackTimelineHitDue');
+          const capIdx = names.indexOf('attackTargetsCaptured');
+          const dmgIdx = names.indexOf('attackDamageResolved');
+          const resIdx = names.lastIndexOf('attackTimelineHitResolved');
+          const hasNoTargetSkip = seq.some((e) => e?.type === 'attackDamageResolved' && e?.skipped === true && e?.reason === 'no-targets-captured');
+          const dmgSatisfied = dmgIdx !== -1 || hasNoTargetSkip;
+          if (dueIdx !== -1 && capIdx !== -1 && resIdx !== -1 && dmgSatisfied) {
+            const damageIndexForOrder = dmgIdx === -1 ? capIdx : dmgIdx;
+            lastOrderOk = dueIdx < capIdx && capIdx <= damageIndexForOrder && damageIndexForOrder < resIdx;
+            if (!lastOrderOk) lastViolation = { eventKey: key, names };
+          }
+        }
+        return {
+          recentDue,
+          recentCaptured,
+          recentDamageResolved,
+          recentHitResolved,
+          lastOrderOk,
+          lastViolation,
+          recentEvents: recent
+        };
+      })(),
+
       damageAndProc: (() => {
         const damageEvents = (scene?.debugEvents || []).filter((e) => ['damageApplied', 'damageResolved', 'attackTimelineHitResolved'].includes(e?.type)).slice(-8);
         const procEvents = (scene?.debugEvents || []).filter((e) => e?.type === 'procResolved').slice(-8);

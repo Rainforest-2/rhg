@@ -1,13 +1,5 @@
 import { CHARACTER_FACTIONS, getAvailableCharacters, getCharactersByFaction, getCharacterBaseId, getCharacterById, isGeneratedCharacter } from '../battle/CharacterCatalog.js';
 import { FormationStore } from '../battle/FormationStore.js';
-import { BcuImgCut } from './BcuImgCut.js';
-
-const loadImage = (src) => new Promise((res, rej) => {
-  const i = new Image();
-  i.onload = () => res(i);
-  i.onerror = () => rej(new Error(`image load failed:${src}`));
-  i.src = src;
-});
 
 export class FormationEditor {
   constructor({ mount, onFormationChanged, onApplyBattle }) {
@@ -20,8 +12,6 @@ export class FormationEditor {
     this.formation = FormationStore.load();
     this.activeSlot = 0;
     this.applying = false;
-    this.imageCache = new Map();
-    this.imgcutCache = new Map();
     this.root = document.createElement('div');
     this.root.className = 'formation-ui';
     this.mount.appendChild(this.root);
@@ -107,60 +97,9 @@ export class FormationEditor {
     return byGenerated.filter((c) => [c.characterId, c.baseCharacterId, c.label, c.sourceSlotId, c.statsSummary].some((v) => String(v || '').toLowerCase().includes(q)));
   }
 
-  getCachedImage(src) {
-    if (!src) return Promise.reject(new Error('missing image src'));
-    if (!this.imageCache.has(src)) this.imageCache.set(src, loadImage(src));
-    return this.imageCache.get(src);
-  }
-
-  getCachedImgCut(src) {
-    if (!src) return Promise.reject(new Error('missing imgcut src'));
-    if (!this.imgcutCache.has(src)) this.imgcutCache.set(src, BcuImgCut.load(src));
-    return this.imgcutCache.get(src);
-  }
-
   renderIconMarkup(c, extraClass = '') {
     const icon = c?.uiIcon || {};
-    if (icon.primary && icon.imgcut) {
-      const cropIndex = Number.isInteger(icon.cropIndex) ? icon.cropIndex : 0;
-      return `<canvas class='formation-icon-canvas ${extraClass}' width='64' height='64' data-imgcut-icon='1' data-image='${icon.primary}' data-imgcut='${icon.imgcut}' data-crop-index='${cropIndex}' data-fallback='${icon.fallback || ''}'></canvas>`;
-    }
     return `<img class='${extraClass}' src='${icon.primary || ''}' onerror="this.onerror=null;this.classList.add('image-missing');this.src='${icon.fallback || ''}'">`;
-  }
-
-  async renderImgcutIcons() {
-    const canvases = [...this.root.querySelectorAll('canvas[data-imgcut-icon]')];
-    await Promise.all(canvases.map(async (canvas) => {
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      try {
-        const [image, cut] = await Promise.all([
-          this.getCachedImage(canvas.dataset.image),
-          this.getCachedImgCut(canvas.dataset.imgcut)
-        ]);
-        const part = cut.getByIndex(Number(canvas.dataset.cropIndex || 0)) || cut.getByIndex(0);
-        if (!part) throw new Error(`imgcut part missing: ${canvas.dataset.imgcut}`);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const fit = Math.min(canvas.width / part.w, canvas.height / part.h);
-        const dw = Math.max(1, Math.floor(part.w * fit));
-        const dh = Math.max(1, Math.floor(part.h * fit));
-        const dx = Math.floor((canvas.width - dw) / 2);
-        const dy = Math.floor((canvas.height - dh) / 2);
-        ctx.drawImage(image, part.x, part.y, part.w, part.h, dx, dy, dw, dh);
-        canvas.dataset.loaded = '1';
-      } catch (err) {
-        console.warn('[FormationEditor] imgcut icon render failed', canvas.dataset.image, canvas.dataset.imgcut, err);
-        canvas.classList.add('image-missing');
-        const fallback = canvas.dataset.fallback;
-        if (fallback) {
-          const img = document.createElement('img');
-          img.src = fallback;
-          img.className = canvas.className;
-          img.onerror = () => img.classList.add('image-missing');
-          canvas.replaceWith(img);
-        }
-      }
-    }));
   }
 
   renderDynamic() {
@@ -183,8 +122,6 @@ export class FormationEditor {
       const generated = isGeneratedCharacter(c);
       return `<button type='button' class='formation-character-card ${usedBaseIds.has(getCharacterBaseId(c.characterId)) ? 'is-used' : ''} ${generated ? 'is-generated' : ''}' data-character='${c.characterId}' data-generated='${generated ? '1' : '0'}' data-faction='${c.faction}' data-base-character-id='${c.baseCharacterId || ''}'>${this.renderIconMarkup(c)}<span>${c.factionLabel || c.faction}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small>${generated ? `<small class='generated-badge'>generated</small>` : ''}<small class='base-id'>base:${c.baseCharacterId || '-'}</small><small>${c.sourceSlotId || '-'}</small><small>${c.statsSummary || ''}</small></button>`;
     }).join('');
-
-    void this.renderImgcutIcons();
   }
 
   refresh() {

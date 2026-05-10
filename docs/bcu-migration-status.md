@@ -222,3 +222,29 @@
 - [ ] zoomしても spawn位置 / stageLen が変わらない
 - [ ] 敵城visual centerではなくbase combat point基準で敵が出る
 - [ ] actorRadius変更でspawn位置が不自然にずれない
+
+## Priority 1 — BCU StageBasis parity: base/spawn/stage coordinate (2026-05-10)
+### Completed
+- StageRuntime now exposes BCU StageBasis coordinate contract fields and methods (`enemyCastleWorldX=800`, `playerCastleWorldX=stageLen-800`, `enemyNormalSpawnWorldX=700`, `playerSpawnWorldX=stageLen-700`).
+- StageRuntime spawn resolution now distinguishes normal enemy spawn / boss spawn / enemy base entity spawn with explicit `stage-runtime-*` sources.
+- StageRuntime now tracks enemy base row detection state (`enemyBaseRow`, `enemyBaseRowIndex`, `hasEnemyBaseEntity`) and exposes enemy-base-entity spawn coordinate.
+- BattleBase `applyStageRuntime()` now applies BCU combat point coordinates directly to `posBcu/x/frontX` and keeps coordinate source/debug.
+- BattleSpawnResolver is StageRuntime-first and keeps legacy fallback source explicit as `legacy-bcu-fixed-fallback`.
+- BcuStageSpawnRuntime spawn event now carries StageRuntime coordinate/source metadata (`spawnWorldXSource`, `coordinateSource`, `stageRuntimeCoordinate`, `baseEnemy`, `bossFlag`).
+- Node checks now assert StageRuntime coordinate methods/fields and StageRuntime-first spawn behavior.
+
+### Partial
+- Full enemy base entity runtime behavior remains partial (this patch adds StageRuntime state + non-silent spawn-source contract, not full entity lifecycle parity).
+- boss_spawn asset extraction remains partial where source data is unavailable.
+- Full BCU castle visual offset parity remains future work.
+- Browser manual validation remains pending.
+
+### Manual browser check
+- [ ] `?debugBattle=1` で `enemyCastleWorldX=800` が見える
+- [ ] `playerCastleWorldX=stageLen-800` が見える
+- [ ] `enemySpawnWorldX=700` が見える
+- [ ] `playerSpawnWorldX=stageLen-700` が見える
+- [ ] boss_spawn が取れるステージで `bossSpawnWorldX` が使われる
+- [ ] zoomしても `stageLen/baseX/spawnX` が変わらない
+- [ ] actorRadius で spawn 位置がずれない
+- [ ] 敵城が 0 番やにゃんこ城に fallback しない

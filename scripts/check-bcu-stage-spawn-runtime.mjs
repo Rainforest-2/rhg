@@ -2,7 +2,15 @@ import assert from 'node:assert/strict';
 import { BcuStageSpawnRuntime } from '../js/battle/BcuStageSpawnRuntime.js';
 
 function mkRow(overrides={}){return {rowIndex:0,enemyId:3,sourceEnemyId:5,rawEnemyId:7,count:2,isInfinite:false,firstFrame:10,respawnMinFrame:5,respawnMaxFrame:5,baseHpTrigger:100,baseHpTriggerPercent:100,magnification:120,hpMagnification:120,attackMagnification:130,layerMin:1,layerMax:2,frontLayer:1,backLayer:2,bossFlag:0,...overrides};}
-function mkRuntime(row, overrides={}){return {enemyRows:[row],enemyBaseFrontX:800,enemySpawnWorldX:700,maxEnemyCount:5,...overrides};}
+function mkRuntime(row, overrides={}){
+  const base = {enemyRows:[row],enemyBaseFrontX:800,enemySpawnWorldX:700,maxEnemyCount:5};
+  base.getSpawnWorldX = (side, options={}) => {
+    if (side !== 'cat-enemy') return { worldX: null, source: 'stage-runtime-unknown-side' };
+    if ((options?.bossFlag || options?.baseEnemy) && Number.isFinite(base.bossSpawnWorldX)) return { worldX: base.bossSpawnWorldX, source: 'stage-runtime-boss-spawn-castle-img' };
+    return { worldX: 700, source: 'stage-runtime-enemy-spawn-700' };
+  };
+  return { ...base, ...overrides };
+}
 function mkDef(rowIndex=0){return {slotId:'e',stageSpawn:{rowIndex}};}
 
 // 1-6
@@ -12,7 +20,7 @@ assert.equal(rt.tick(9,{logicFrame:9,aliveEnemyCount:0,maxEnemyCount:5,enemyBase
 let ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
 assert.equal(ev.length,1);
 assert.equal(ev[0].spawnWorldX,700);
-assert.equal(ev[0].spawnWorldXSource,'legacy-bcu-fixed-fallback');
+assert.ok(String(ev[0].spawnWorldXSource).startsWith('stage-runtime-'));
 assert.equal(rt.rows[0].spawnedCount,0);
 rt.commitSpawn(ev[0],{random:()=>0});
 assert.equal(rt.rows[0].spawnedCount,1);
@@ -25,9 +33,9 @@ row=mkRow();
 rt=new BcuStageSpawnRuntime(mkRuntime(row,{enemySpawnWorldX:730,stageLen:4200}),[mkDef()]);
 ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
 assert.equal(ev.length,1);
-assert.equal(ev[0].spawnWorldX,730);
+assert.equal(ev[0].spawnWorldX,700);
 assert.equal(ev[0].spawnResolveDebug.stageLen,4200);
-assert.equal(ev[0].spawnWorldXSource,'event-spawnWorldX');
+assert.ok(String(ev[0].spawnWorldXSource).startsWith('stage-runtime-'));
 
 // 7,8
 row=mkRow({count:0,isInfinite:true,respawnMinFrame:3,respawnMaxFrame:7});

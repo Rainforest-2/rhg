@@ -98,15 +98,6 @@ function findRowState(rows, eventOrRowIndex) {
 }
 
 function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
-  const contextSpawnX = Number.isFinite(context.enemySpawnWorldX) && context.enemySpawnWorldX !== DEFAULT_BCU_ENEMY_SPAWN_X
-    ? context.enemySpawnWorldX
-    : null;
-  const runtimeSpawnX = Number.isFinite(stageRuntime?.enemySpawnWorldX) && stageRuntime.enemySpawnWorldX !== DEFAULT_BCU_ENEMY_SPAWN_X
-    ? stageRuntime.enemySpawnWorldX
-    : null;
-  const explicit = Number.isFinite(contextSpawnX)
-    ? contextSpawnX
-    : (Number.isFinite(runtimeSpawnX) ? runtimeSpawnX : null);
   const bossSpawnX = Number.isFinite(context.bossSpawnWorldX)
     ? context.bossSpawnWorldX
     : (Number.isFinite(stageRuntime?.bossSpawnWorldX) ? stageRuntime.bossSpawnWorldX : null);
@@ -115,9 +106,10 @@ function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
     bases: context.bases || [],
     row,
     explicitWorldX: null,
-    explicitSpawnWorldX: explicit,
+    explicitSpawnWorldX: null,
     stageLen: context.stageLen ?? stageRuntime?.stageLen ?? null,
-    bossSpawnX
+    bossSpawnX,
+    stageRuntime
   });
 
   if (Number.isFinite(debug?.worldX)) return debug;
@@ -129,7 +121,7 @@ function resolveEnemySpawnDebug(stageRuntime, row, context = {}) {
     ...(debug || {}),
     ok: false,
     worldX: fallback,
-    source: Number.isFinite(stageRuntime?.enemyBaseFrontX) ? 'stage-runtime-enemy-base-front-fallback' : 'legacy-fixed-700-fallback',
+    source: Number.isFinite(stageRuntime?.enemyBaseFrontX) ? 'stage-runtime-enemy-base-front-fallback' : 'legacy-bcu-fixed-fallback',
     fallbackReason: debug?.source || 'spawn-unresolved',
     baseFrontX: stageRuntime?.enemyBaseFrontX ?? null,
     stageLen: context.stageLen ?? stageRuntime?.stageLen ?? null
@@ -256,6 +248,9 @@ export class BcuStageSpawnRuntime {
         worldX: spawnX,
         spawnWorldX: spawnX,
         spawnWorldXSource: spawnDebug.source,
+        coordinateSource: spawnDebug.coordinateSource || (String(spawnDebug.source || '').startsWith('stage-runtime') ? 'stage-runtime' : 'legacy-bcu-fixed-fallback'),
+        stageRuntimeCoordinate: typeof this.stageRuntime?.getCoordinateSummary === 'function' ? this.stageRuntime.getCoordinateSummary() : null,
+        baseEnemy: s.row?.baseEnemy === true,
         spawnResolveDebug: spawnDebug,
         bossFlag: s.row?.bossFlag,
         magnification: s.row?.magnification,

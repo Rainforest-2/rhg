@@ -101,17 +101,28 @@ export class StageRuntime {
       }
     });
 
+    this.enemyCastleWorldX = DEFAULT_ENEMY_BASE_X;
+    this.playerCastleWorldX = resolvedStageLen - DEFAULT_PLAYER_BASE_OFFSET;
+    this.enemyNormalSpawnWorldX = DEFAULT_ENEMY_SPAWN_X;
     this.enemyBaseWorldX = enemyBaseWorldX;
     this.enemyBaseFrontX = toFiniteNumber(options.enemyBaseFrontX, enemyBaseWorldX);
     this.playerBaseWorldX = playerBaseWorldX;
     this.playerBaseFrontX = toFiniteNumber(options.playerBaseFrontX, playerBaseWorldX);
     this.enemySpawnWorldX = enemySpawnWorldX;
     this.playerSpawnWorldX = playerSpawnWorldX;
+    this.enemyBaseEnemySpawnWorldX = Number.isFinite(bossSpawnWorldX) ? bossSpawnWorldX : this.enemyNormalSpawnWorldX;
+    this.enemyBaseMode = 'bcu-stagebasis-partial-parity';
     this.bossSpawnWorldX = bossSpawnWorldX;
+    const baseRowCandidate = this.enemyRows[this.enemyRows.length - 1] || null;
+    const baseRowC0 = Number(baseRowCandidate?.baseHpTriggerLowerPercent ?? baseRowCandidate?.baseHpTriggerPercent ?? baseRowCandidate?.baseHpTrigger ?? baseRowCandidate?.scdef?.baseHpTriggerLowerPercent ?? NaN);
+    this.enemyBaseRow = Number.isFinite(baseRowC0) && baseRowC0 === 0 ? baseRowCandidate : null;
+    this.enemyBaseRowIndex = this.enemyBaseRow?.rowIndex ?? null;
+    this.hasEnemyBaseEntity = !!this.enemyBaseRow;
+    this.enemyBaseEntitySpawnWorldX = this.getEnemySpawnWorldX({ baseEnemy: true })?.worldX ?? this.enemyNormalSpawnWorldX;
 
     this.enemyBasePosBcu = this.enemyBaseWorldX;
     this.playerBasePosBcu = this.playerBaseWorldX;
-    this.coordinateSource = 'stage-runtime-bcu-world-contract';
+    this.coordinateSource = 'stage-runtime-bcu-stagebasis-coordinate';
     this.spawnCoordinateSource = 'stage-runtime-bcu-spawn-contract';
 
     this.spawn = {
@@ -143,10 +154,11 @@ export class StageRuntime {
   }
 
   getBasePosBcu(side) {
-    if (side === 'cat-enemy') return this.enemyBasePosBcu;
-    if (side === 'dog-player') return this.playerBasePosBcu;
+    if (side === 'cat-enemy') return this.enemyCastleWorldX;
+    if (side === 'dog-player') return this.playerCastleWorldX;
     return null;
   }
+  getCastlePosBcu(side) { return this.getBasePosBcu(side); }
 
   getBaseFrontX(side) {
     if (side === 'cat-enemy') return this.enemyBaseFrontX;
@@ -154,30 +166,31 @@ export class StageRuntime {
     return null;
   }
 
-  getSpawnWorldX(side, options = {}) {
+  getEnemySpawnWorldX(options = {}) {
     const bossFlag = options?.bossFlag === true || options?.bossFlag === 1;
-    if (side === 'cat-enemy') {
-      if (bossFlag && Number.isFinite(this.bossSpawnWorldX)) {
-        return { worldX: this.bossSpawnWorldX, source: 'stage-runtime-boss-spawn' };
-      }
-      return { worldX: this.enemySpawnWorldX, source: 'stage-runtime-enemy-spawn' };
+    const baseEnemy = options?.baseEnemy === true || options?.row?.baseEnemy === true;
+    if (baseEnemy || bossFlag) {
+      if (Number.isFinite(this.bossSpawnWorldX)) return { worldX: this.bossSpawnWorldX, source: 'stage-runtime-boss-spawn-castle-img' };
+      return { worldX: this.enemyNormalSpawnWorldX, source: baseEnemy ? 'stage-runtime-enemy-base-entity-spawn-700' : 'stage-runtime-boss-spawn-fallback-700' };
     }
-    if (side === 'dog-player') {
-      return { worldX: this.playerSpawnWorldX, source: 'stage-runtime-player-spawn' };
-    }
+    return { worldX: this.enemyNormalSpawnWorldX, source: 'stage-runtime-enemy-spawn-700' };
+  }
+  getPlayerSpawnWorldX() { return { worldX: this.playerSpawnWorldX, source: 'stage-runtime-player-spawn-stageLen-700' }; }
+  getSpawnWorldX(side, options = {}) {
+    if (side === 'cat-enemy') return this.getEnemySpawnWorldX(options);
+    if (side === 'dog-player') return this.getPlayerSpawnWorldX();
     return { worldX: null, source: 'stage-runtime-unknown-side' };
   }
 
   getCoordinateSummary() {
     return {
+      source: 'StageRuntime.BCU-StageBasis-coordinate',
       coordinateSource: this.coordinateSource,
-      spawnCoordinateSource: this.spawnCoordinateSource,
       stageLen: this.stageLen,
-      enemyBasePosBcu: this.enemyBasePosBcu,
-      playerBasePosBcu: this.playerBasePosBcu,
-      enemyBaseFrontX: this.enemyBaseFrontX,
-      playerBaseFrontX: this.playerBaseFrontX,
-      enemySpawnWorldX: this.enemySpawnWorldX,
+      enemyCastleWorldX: this.enemyCastleWorldX,
+      playerCastleWorldX: this.playerCastleWorldX,
+      enemyNormalSpawnWorldX: this.enemyNormalSpawnWorldX,
+      enemyBaseEnemySpawnWorldX: this.enemyBaseEnemySpawnWorldX,
       playerSpawnWorldX: this.playerSpawnWorldX,
       bossSpawnWorldX: this.bossSpawnWorldX
     };

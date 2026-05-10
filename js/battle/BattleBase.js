@@ -101,7 +101,8 @@ export class BattleBase {
       this.posBcu = pos;
       this.x = pos;
       this.frontX = pos;
-      this.coordinateSource = 'stage-runtime';
+      this.coordinateSource = 'stage-runtime-bcu-stagebasis';
+      this.debug = { ...(this.debug || {}), coordinateSource: this.coordinateSource, bcuBasePos: pos };
     }
   }
   applyStageRuntime(stageRuntime){
@@ -111,7 +112,9 @@ export class BattleBase {
       this.posBcu = pos;
       this.x = pos;
       this.frontX = pos;
-      this.coordinateSource = 'stage-runtime';
+      this.coordinateSource = 'stage-runtime-bcu-stagebasis';
+      this.debug = { ...(this.debug || {}), coordinateSource: this.coordinateSource, bcuBasePos: pos };
     }
+    return this;
   }
 }

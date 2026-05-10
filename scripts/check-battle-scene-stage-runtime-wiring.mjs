@@ -81,7 +81,11 @@ const stageRuntimeSrc = fs.readFileSync(files.runtime, 'utf8');
 const spawnResolverSrc = fs.readFileSync('js/battle/BattleSpawnResolver.js', 'utf8');
 const battleSceneSpawnSrc = fs.readFileSync(files.battleScene, 'utf8');
 assert.ok(stageRuntimeSrc.includes('getBasePosBcu('), 'StageRuntime must provide getBasePosBcu');
+assert.ok(stageRuntimeSrc.includes('getEnemySpawnWorldX('), 'StageRuntime must provide getEnemySpawnWorldX');
 assert.ok(stageRuntimeSrc.includes('getSpawnWorldX('), 'StageRuntime must provide getSpawnWorldX');
+assert.ok(stageRuntimeSrc.includes('getCoordinateSummary('), 'StageRuntime must provide getCoordinateSummary');
+assert.ok(stageRuntimeSrc.includes('enemyCastleWorldX') && stageRuntimeSrc.includes('playerCastleWorldX') && stageRuntimeSrc.includes('enemyNormalSpawnWorldX') && stageRuntimeSrc.includes('playerSpawnWorldX'), 'StageRuntime must expose BCU coordinate fields');
+assert.ok(fs.readFileSync('js/battle/BattleBase.js', 'utf8').includes('applyStageRuntime('), 'BattleBase must provide applyStageRuntime');
 assert.ok(stageRuntimeSrc.includes('getCoordinateSummary('), 'StageRuntime must provide getCoordinateSummary');
 assert.ok(spawnResolverSrc.includes('stageRuntime = null'), 'BattleSpawnResolver must accept stageRuntime');
 assert.ok(spawnResolverSrc.includes('stageRuntime.getSpawnWorldX'), 'BattleSpawnResolver must use stageRuntime.getSpawnWorldX');
@@ -277,6 +281,10 @@ assert.equal(enemySpawnDbg.worldX, 700);
 assert.equal(playerSpawnDbg.worldX, 5300);
 const enemySpawnNoRt = BattleSpawnResolver.resolveSpawnWorldXWithDebug({ side: 'cat-enemy', bases: [], row: {}, stageLen: 6000 });
 assert.equal(enemySpawnNoRt.source, 'legacy-bcu-fixed-fallback');
+assert.equal(enemySpawnDbg.actorRadiusApplied, false);
+assert.equal(enemySpawnDbg.gapWorldApplied, false);
+const coordSummary = stageRt.getCoordinateSummary();
+assert.equal(coordSummary.source, 'StageRuntime.BCU-StageBasis-coordinate');
 
 
 const baseStats = {

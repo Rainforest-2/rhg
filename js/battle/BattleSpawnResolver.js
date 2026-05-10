@@ -41,9 +41,9 @@ export class BattleSpawnResolver {
     }
 
     if (stageRuntime && typeof stageRuntime.getSpawnWorldX === 'function') {
-      const rt = stageRuntime.getSpawnWorldX(side, { bossFlag, row });
+      const rt = stageRuntime.getSpawnWorldX(side, { bossFlag, baseEnemy: row?.baseEnemy === true, row });
       if (Number.isFinite(rt?.worldX)) {
-        return { ok: true, worldX: rt.worldX, source: rt.source || 'stage-runtime-spawn', coordinateSource: 'stage-runtime', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX, actorRadius, gapWorld };
+        return { ok: true, worldX: rt.worldX, source: rt.source || 'stage-runtime-spawn', coordinateSource: 'stage-runtime', side, baseId: base?.id ?? null, baseX: base?.x ?? null, baseFrontX, stageLen: resolvedStageLen, bossFlag, bossSpawnX, explicitWorldX, explicitSpawnWorldX, actorRadius, gapWorld, actorRadiusApplied: false, gapWorldApplied: false };
       }
     }
 

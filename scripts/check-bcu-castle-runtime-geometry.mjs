@@ -6,6 +6,7 @@ import { resolveEnemyCastleAssetCandidates, BcuCastleAssetLoader } from '../js/b
 import { BattleSpawnResolver } from '../js/battle/BattleSpawnResolver.js';
 
 const files = [
+  'js/battle/BattleSceneRenderer.js',
   'js/battle/BattleCastleResolver.js',
   'js/battle/BcuCastleAssetLoader.js',
   'js/battle/BattleBase.js',
@@ -73,7 +74,8 @@ assert.equal(enemy.getCombatBodyBox().left, 800, 'visual helper must not change 
 const loaderText = fs.readFileSync('js/battle/BcuCastleAssetLoader.js', 'utf8');
 const baseText = fs.readFileSync('js/battle/BattleBase.js', 'utf8');
 const spawnText = fs.readFileSync('js/battle/BattleSpawnResolver.js', 'utf8');
-assert.match(loaderText, /org\/img\/\$\{groupName\}/, 'castle loader must use org/img rc/ec/wc/sc paths');
+const rendererText = fs.readFileSync('js/battle/BattleSceneRenderer.js', 'utf8');
+assert.ok(loaderText.includes('resolveEnemyCastleAssetCandidates'), 'castle loader must resolve rc/ec/wc/sc paths via resolver');
 assert.match(loaderText, /full-enemy-castle-png/, 'castle loader must expose full PNG render crop');
 assert.doesNotMatch(loaderText, /nyankoCastle/, 'enemy castle loader must not use nyankoCastle assets');
 assert.doesNotMatch(loaderText, /parseImgcut/, 'enemy castle loader must not parse imgcut');
@@ -84,6 +86,10 @@ assert.doesNotMatch(baseText, /this\.x = visualCenterX/, 'BattleBase must not re
 assert.match(spawnText, /getBcuEnemySpawnX/, 'spawn resolver must expose BCU enemy spawn');
 assert.match(spawnText, /700/, 'spawn resolver must encode normal enemy spawn 700');
 assert.match(spawnText, /stageLen - 700/, 'spawn resolver must encode player spawn stageLen - 700');
-assert.doesNotMatch(loaderText + baseText + spawnText, /ProcResolver|KBRuntime|EffectRuntime/, 'castle task must not expand into unrelated combat systems');
+assert.match(rendererText, /projectBcuX\(scene, worldX\)/, 'renderer must expose projectBcuX for castle/base projection');
+assert.match(rendererText, /drawBcuEnemyCastle\(c,base\)[\s\S]*const sx=this.projectBcuX\(this\._scene,base\.x\);/, 'enemy castle must use projectBcuX');
+assert.match(rendererText, /drawBcuEnemyCastle\(c,base\)[\s\S]*const drawX=sx-drawW;/, 'enemy castle must use right-edge anchor');
+assert.doesNotMatch(rendererText, /drawBcuEnemyCastle\(c,base\)[\s\S]*drawW\*0\.5/, 'enemy castle must not use center anchor');
+assert.doesNotMatch(loaderText + baseText + spawnText + rendererText, /ProcResolver|KBRuntime|EffectRuntime/, 'castle task must not expand into unrelated combat systems');
 
 console.log('check-bcu-castle-runtime-geometry: OK');

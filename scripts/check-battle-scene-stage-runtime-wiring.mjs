@@ -193,6 +193,44 @@ assert.ok(characterCatalogSrc.includes('export function isGeneratedCharacter'), 
 assert.ok(inspectorSrc.includes('characterCatalog'));
 assert.ok(previewAssetsSrc.includes('buildPlayablePreviewAssets(ANIM4_E)'));
 
+assert.ok(playableRegistrySrc.includes("source: 'runtime-enemy-asset-pack-000002'"), 'Dog uiIcon should mark runtime asset pack source');
+assert.ok(playableRegistrySrc.includes("primary: `./public/assets/bcu/000002/org/enemy/${bcuId}/edi_${bcuId}.png`"), 'Dog uiIcon primary must use 000002 enemy icon');
+assert.ok(!playableRegistrySrc.includes('000010/org/enemy/${bcuId}/enemy_icon_${bcuId}.png'), 'Dog uiIcon primary must not use 000010 enemy_icon');
+assert.ok(playableRegistrySrc.includes('runtimeImage: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png`'), 'Dog uiIcon must include runtimeImage fallback target');
+assert.ok(playableRegistrySrc.includes('baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`'), 'buildDogPreviewAsset must remain on 000002 pack');
+
+assert.ok(rendererSrc.includes('projectBcuX(scene, worldX)'), 'renderer must expose projectBcuX helper');
+assert.ok(rendererSrc.includes('camera.getBcuRenderX') || rendererSrc.includes('camera.bcuWorldToScreenX'), 'projectBcuX must use BCU projection methods');
+assert.ok(rendererSrc.includes('drawBcuEnemyCastle(c,base)'), 'renderer must keep drawBcuEnemyCastle');
+assert.ok(rendererSrc.includes('const sx=this.projectBcuX(this._scene,base.x);'), 'drawBcuEnemyCastle must use projectBcuX');
+assert.ok(rendererSrc.includes('const drawX=sx-drawW;'), 'drawBcuEnemyCastle must use right-edge anchor drawX=sx-drawW');
+assert.ok(!rendererSrc.includes('drawX=sx-drawW*0.5'), 'drawBcuEnemyCastle must not use center anchor');
+assert.ok(rendererSrc.includes('baseScreenX=this.projectBcuX(this._scene,base.x)'), 'castle-composite base render must use projectBcuX');
+assert.ok(rendererSrc.includes('const sx=this.projectBcuX(this._scene,base.x); c.fillRect'), 'placeholder base render must use projectBcuX');
+assert.ok(rendererSrc.includes('drawEffects(c, effects)') && rendererSrc.includes('this.projectX(this._scene,effect.x)'), 'effects render must remain on projectX');
+assert.ok(rendererSrc.includes('drawActor(c, actor)') && rendererSrc.includes('this.projectX(this._scene,actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX)'), 'actor render must remain on projectX');
+assert.ok(sceneSrcProd.includes('b.applyStageRuntime?.(rt);'), 'loadBase must apply stage runtime');
+assert.ok(sceneSrcProd.includes("type:'baseStageRuntimeApplied'"), 'loadBase should emit baseStageRuntimeApplied event');
+
+const { BattleSceneRenderer } = await import('../js/battle/BattleSceneRenderer.js');
+const rendererInstance = new BattleSceneRenderer();
+const fakeScene = { camera: { getBcuRenderX: (x) => x + 2000, worldToScreenX: (x) => x + 1000 } };
+assert.equal(rendererInstance.projectBcuX(fakeScene, 800), 2800);
+assert.equal(rendererInstance.projectX(fakeScene, 800), 1800);
+
+const { BattleBase } = await import('../js/battle/BattleBase.js');
+const fakeRt = { getBasePosBcu(side) { return side === 'dog-player' ? 4000 : 800; }, getBaseFrontX(side) { return side === 'dog-player' ? 4000 : 800; }, coordinateSource: 'test-rt' };
+const dogBase = new BattleBase({ id: 'dog', side: 'dog-player', x: 0, y: 0 });
+dogBase.applyStageRuntime(fakeRt);
+assert.equal(dogBase.x, 4000);
+assert.equal(dogBase.frontX, 4000);
+assert.equal(dogBase.posBcu, 4000);
+const catBase = new BattleBase({ id: 'cat', side: 'cat-enemy', x: 0, y: 0 });
+catBase.applyStageRuntime(fakeRt);
+assert.equal(catBase.x, 800);
+assert.equal(catBase.frontX, 800);
+assert.equal(catBase.posBcu, 800);
+
 
 const stageDefLoaderSrc = fs.readFileSync('js/battle/StageDefinitionLoader.js','utf8');
 assert.ok(stageDefLoaderSrc.includes('BCU_STAGE_ENEMY_COLUMNS'));

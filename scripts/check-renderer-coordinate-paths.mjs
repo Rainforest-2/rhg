@@ -42,7 +42,9 @@ const report = {
     hasDrawBcuEnemyCastle: has(renderer, 'drawBcuEnemyCastle'),
     hasDrawBackgroundBcuStage0: has(renderer, 'drawBackgroundBcuStage0'),
     mentionsVisualX: has(renderer, 'visualX'),
-    mentionsGetBcuRenderX: has(renderer, 'getBcuRenderX')
+    mentionsGetBcuRenderX: has(renderer, 'getBcuRenderX'),
+    hasProjectBcuX: renderer.includes('projectBcuX(scene, worldX)'),
+    enemyCastleUsesProjectBcuX: /drawBcuEnemyCastle\(c,base\)[\s\S]*projectBcuX/.test(renderer)
   },
   patch: {
     fileExists: fs.existsSync(files.patch),
@@ -60,6 +62,10 @@ assert.equal(report.base.visualXExists, true, 'BattleBase must keep visualX sepa
 assert.equal(report.base.doesNotRewriteXToVisualCenter, true, 'BattleBase must not rewrite x to visual center');
 assert.equal(report.renderer.hasDrawBase, true, 'Renderer must have drawBase for future targeted fix');
 assert.equal(report.renderer.hasDrawBackgroundBcuStage0, true, 'Renderer must have background draw path for future targeted fix');
+assert.equal(report.renderer.hasProjectBcuX, true, 'Renderer must expose projectBcuX helper');
+assert.equal(report.renderer.enemyCastleUsesProjectBcuX, true, 'Enemy castle draw should use BCU projection helper');
+assert.match(renderer, /drawX=sx-drawW;/, 'Enemy castle draw must use right-edge anchor');
+assert.doesNotMatch(renderer, /drawBcuEnemyCastle\(c,base\)[\s\S]*drawW\*0\.5/, 'Enemy castle draw must not use center anchor');
 assert.equal(report.patch.notLoadedByIndex, true, 'Experimental renderer patch must not be loaded by index.html');
 assert.doesNotMatch(camera + base + renderer, /ProcResolver|KBRuntime|EffectRuntime/, 'renderer coordinate stabilization must not touch combat systems');
 

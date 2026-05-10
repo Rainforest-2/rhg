@@ -248,3 +248,28 @@
 - [ ] zoomしても `stageLen/baseX/spawnX` が変わらない
 - [ ] actorRadius で spawn 位置がずれない
 - [ ] 敵城が 0 番やにゃんこ城に fallback しない
+
+## BCU visual bugfix — formation enemy icon + castle projection/anchor + base runtime apply (2026-05-10)
+### Completed
+- Dog/enemy formation icon primary now uses runtime enemy asset pack `000002`.
+- `000010` enemy_icon is no longer primary for dog/enemy formation icons.
+- BattleSceneRenderer adds `projectBcuX()` for base/castle rendering path.
+- Enemy castle render anchor changed to BCU right-edge (`drawX = sx - drawW`).
+- Castle-composite and placeholder base rendering now use BCU projection helper for base.x.
+- BattleScene `loadBase()` now applies `BattleBase.applyStageRuntime()` before return (initial + final apply).
+- Node checks now cover dog uiIcon source and castle projection/anchor contracts.
+
+### Partial
+- Full actor/render projection parity remains future work.
+- Full HP bar/debug overlay BCU projection parity remains future work.
+- Full CastleImg boss_spawn parity remains future work.
+- Browser manual validation remains pending.
+
+### Manual browser check
+- [ ] 編成画面で dog-enemy-020〜030 の画像が runtime enemy と一致する
+- [ ] 000010 enemy_icon の別キャラ画像が出ない
+- [ ] 戦闘中の敵城がBCU右端アンカー位置に寄る
+- [ ] 敵城が base.x 中心描画されていない
+- [ ] stageLen=4800 で enemy base=800, player base=4000 が視覚的にも一致する
+- [ ] debugBattle=1 で castle resolved が出る
+- [ ] zoomしても城のcombat positionが変わらない

@@ -14,6 +14,12 @@ export class BattleSceneRenderer {
   projectX(scene, worldX) {
     return scene?.camera ? scene.camera.worldToScreenX(worldX) : worldX;
   }
+  projectBcuX(scene, worldX) {
+    const camera = scene?.camera;
+    if (camera && typeof camera.getBcuRenderX === 'function') return camera.getBcuRenderX(worldX);
+    if (camera && typeof camera.bcuWorldToScreenX === 'function') return camera.bcuWorldToScreenX(worldX);
+    return this.projectX(scene, worldX);
+  }
   getCameraScale(scene) {
     const camera = scene?.camera;
     return Number.isFinite(camera?.siz)
@@ -111,9 +117,10 @@ export class BattleSceneRenderer {
     return y;
   }
   drawBases(c,bases,groundY,showParts){for(const base of bases) this.drawBase(c,base,groundY,showParts)}
-  drawBase(c,base,groundY,showParts){ if(base.visualKind==='bcu-enemy-castle'&&base.castleAsset?.image){this.drawBcuEnemyCastle(c,base);} else if(base.visualKind==='castle-composite'&&base.layers?.length){ const visualYOffset = this.getBaseVisualYOffset(base); for(const layer of base.layers){const s=(base.scale||1)*this.getCameraScale(this._scene);const baseScreenX=this.projectX(this._scene,base.x);const x=this.addScreenOffsetX(baseScreenX,Number.isFinite(layer.offsetX)?layer.offsetX*base.scale:0,this._scene)-layer.image.width*0.5*s;const y=base.y+visualYOffset+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; const sx=this.projectX(this._scene,base.x); c.fillRect(sx-pw*0.5, base.y-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', sx-pw*0.44, base.y-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }
+  drawBase(c,base,groundY,showParts){ if(base.visualKind==='bcu-enemy-castle'&&base.castleAsset?.image){this.drawBcuEnemyCastle(c,base);} else if(base.visualKind==='castle-composite'&&base.layers?.length){ const visualYOffset = this.getBaseVisualYOffset(base); for(const layer of base.layers){const s=(base.scale||1)*this.getCameraScale(this._scene);const baseScreenX=this.projectBcuX(this._scene,base.x);const x=this.addScreenOffsetX(baseScreenX,Number.isFinite(layer.offsetX)?layer.offsetX*base.scale:0,this._scene)-layer.image.width*0.5*s;const y=base.y+visualYOffset+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; const sx=this.projectBcuX(this._scene,base.x); c.fillRect(sx-pw*0.5, base.y-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', sx-pw*0.44, base.y-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }
 
-  drawBcuEnemyCastle(c,base){const a=base.castleAsset;const crop=a?.crop;if(!a?.image||!crop)return;const s=(Number.isFinite(base.scale)?base.scale:1)*this.getCameraScale(this._scene);const sx=this.projectX(this._scene,base.x);const drawW=crop.w*s,drawH=crop.h*s;const drawX=sx-drawW*0.5;const drawY=base.y-drawH+(Number.isFinite(base.visualYOffsetPx)?base.visualYOffsetPx:0);c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
+  drawBcuEnemyCastle(c,base){const a=base.castleAsset;const crop=a?.crop;if(!a?.image||!crop)return;const s=(Number.isFinite(base.scale)?base.scale:1)*this.getCameraScale(this._scene);const sx=this.projectBcuX(this._scene,base.x);const drawW=crop.w*s,drawH=crop.h*s;const drawX=sx-drawW;const drawY=base.y-drawH+(Number.isFinite(base.visualYOffsetPx)?base.visualYOffsetPx:0);// BCU enemy castle uses right-edge anchor: drawX = getX(ebase.pos) - width.
+c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
   drawBaseHpBar(c,base){const yOffset=BATTLE_CONFIG.visualLayout?.baseHpBarYOffset??210;const x=this.projectX(this._scene,base.x)-60,y=base.y-yOffset,w=120,h=10;const ratio=Math.max(0,Math.min(1,base.hp/Math.max(1,base.maxHp)));c.fillStyle='#111827';c.fillRect(x,y,w,h);c.fillStyle='#60a5fa';c.fillRect(x,y,w*ratio,h);c.strokeStyle='#e5e7eb';c.strokeRect(x,y,w,h);}
   drawBaseDebug(c,base){c.fillStyle='#0008';const sx=this.projectX(this._scene,base.x); c.fillRect(sx-90,base.y-250,180,34);c.fillStyle='#f8fafc';c.font='12px ui-monospace';c.fillText(`${base.label} hp:${base.hp}/${base.maxHp}`,sx-84,base.y-230);}
 

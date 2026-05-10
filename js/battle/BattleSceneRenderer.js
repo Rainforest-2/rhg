@@ -62,6 +62,12 @@ export class BattleSceneRenderer {
     return BCU_RENDER_CONSTANTS;
   }
   getBcuStageGroundY(scene, fallbackH = 720) {
+    const cameraMidh = Number(scene?.camera?.midh);
+    if (Number.isFinite(cameraMidh)) return cameraMidh;
+    if (typeof scene?.camera?.computeBcuMidhForSiz === 'function') {
+      const computed = scene.camera.computeBcuMidhForSiz(scene.camera.siz);
+      if (Number.isFinite(computed)) return computed;
+    }
     const runtimeGround = Number(scene?.stage?.runtime?.groundY);
     if (Number.isFinite(runtimeGround)) return runtimeGround;
     const sceneGround = Number(scene?.groundY);
@@ -265,7 +271,8 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
       const s = this.getEntityRenderScale(this._scene,effect,effect.scale || 1);
       const dw = p.w * s;
       const dh = p.h * s;
-      c.drawImage(effect.image, p.x, p.y, p.w, p.h, this.projectBattleX(this._scene,effect.x) - dw * 0.5, this.getEntityRenderY(this._scene,effect,effect.y) - dh * 0.5, dw, dh);
+      const yOffset = Number.isFinite(effect.bcuSmokeYOffset) ? effect.bcuSmokeYOffset * this.getCameraScale(this._scene) : 0;
+      c.drawImage(effect.image, p.x, p.y, p.w, p.h, this.projectBattleX(this._scene,effect.x) - dw * 0.5, this.getEntityRenderY(this._scene,effect,effect.y) - yOffset - dh * 0.5, dw, dh);
     }
   }
 

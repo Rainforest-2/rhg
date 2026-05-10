@@ -20,6 +20,8 @@ check('getBcuRenderX aliases BCU projection', nearly(cam.getBcuRenderX(800), cam
 check('normal stage pixel width excludes BCU margins', nearly(cam.stagePixelWidth, cam.stageLen * cam.ratio * cam.siz));
 check('BCU stage pixel width includes both BCU margins', nearly(cam.bcuStagePixelWidth, (cam.stageLen * cam.ratio + 400) * cam.siz));
 check('BCU inverse roundtrip', nearly(cam.bcuScreenToWorldX(cam.bcuWorldToScreenX(world)), world));
+check('BCU dynamic min/max siz exists', Number.isFinite(cam.minSiz) && Number.isFinite(cam.maxSiz) && cam.maxSiz > cam.minSiz);
+check('BCU one-row midh exists', Number.isFinite(cam.midh) && cam.bcuTwoRow === false);
 
 cam.setStageLen(8000);
 cam.setPos(500);
@@ -44,6 +46,7 @@ cam.setPos(-999);
 check('clamp min', cam.pos >= 0);
 cam.setPos(999999);
 check('clamp max', cam.pos <= cam.getClampRange().maxPos + 1e-6);
+check('clamp max includes BCU margins', cam.getClampRange().maxPos > Math.max(0, cam.stageLen - cam.visibleWorldWidth));
 
 cam.setStageLen(10);
 cam.setViewport(1280);
@@ -61,6 +64,7 @@ check('getCanvasLogicalX converts', nearly(ctrl.getCanvasLogicalX(420), ((420 - 
 check('getCanvasLogicalDeltaX converts', nearly(ctrl.getCanvasLogicalDeltaX(32), (32 / 640) * 1280));
 ctrl.onWheel({ preventDefault() {}, ctrlKey: true, metaKey: false, clientX: 420, deltaY: -1, deltaX: 0 });
 check('wheel zoom debug logicalX', Number.isFinite(ctrl.lastInputDebug?.logicalX));
+check('wheel zoom uses BCU exp range', cam.zoom <= cam.maxSiz && cam.zoom >= cam.minSiz);
 
 const report = DebugBattleInspector.collect({ camera: cam, stage: { runtime: { stageLen: cam.stageLen }, definition: {} }, bases: [], actors: [], effects: [] });
 check('inspector has clamp', !!report?.camera?.clamp);

@@ -7,27 +7,63 @@ export class BattleCamera {
   // - Use bcuWorldToScreenX/getBcuRenderX only for code paths explicitly porting BCU BattleBox rendering.
   // - panByScreenDelta accepts logical canvas pixel delta, not raw clientX delta.
   // - zoomAtScreenPoint accepts logical canvas X, not raw window clientX.
-  constructor({ stageLen, logicalW, ratio = 768 / 2400, initialSiz = 1, minSiz = 0.75, maxSiz = 2.5, bcuRenderOffset = 200 }) {
+  constructor({ stageLen, logicalW, logicalH = 720, ratio = 768 / 2400, initialSiz = 1, minSiz = null, maxSiz = null, bcuRenderOffset = 200, bcuLayout = {} }) {
     this.stageLen = Number.isFinite(stageLen) && stageLen > 0 ? stageLen : 4000;
     this.logicalW = Number.isFinite(logicalW) && logicalW > 0 ? logicalW : 1280;
+    this.logicalH = Number.isFinite(logicalH) && logicalH > 0 ? logicalH : 720;
     this.ratio = Number.isFinite(ratio) && ratio > 0 ? ratio : 768 / 2400;
     this.bcuRenderOffset = Number.isFinite(bcuRenderOffset) ? bcuRenderOffset : 200;
-    this.minSiz = minSiz;
-    this.maxSiz = maxSiz;
+    this.bcuMinH = Number.isFinite(bcuLayout.minH) ? bcuLayout.minH : 510;
+    this.bcuMaxH = Number.isFinite(bcuLayout.maxH) ? bcuLayout.maxH : 510 * 3;
+    this.bcuTwoRow = bcuLayout.twoRow === true;
+    const limits = this.computeBcuSizeLimits();
+    this.minSiz = Number.isFinite(minSiz) ? minSiz : limits.minSiz;
+    this.maxSiz = Number.isFinite(maxSiz) ? maxSiz : limits.maxSiz;
+    this.groundHeight = limits.groundHeight;
+    this.midh = this.computeBcuMidhForSiz(initialSiz);
     this.originX = 0;
     this.pos = 0;
     this.siz = this._clampSiz(initialSiz);
+    this.midh = this.computeBcuMidhForSiz(this.siz);
     this.clamp();
   }
 
   _clampSiz(v) { return Math.max(this.minSiz, Math.min(this.maxSiz, Number.isFinite(v) ? v : 1)); }
+  getBcuMaxW() { return this.stageLen * this.ratio + this.bcuRenderOffset * 2; }
+  getRegulatedSiz(size) {
+    let s = Number.isFinite(size) ? size : 0;
+    if (s * this.bcuMinH > this.logicalH) s = this.logicalH / this.bcuMinH;
+    if (s * this.bcuMaxH < this.logicalH) s = this.logicalH / this.bcuMaxH;
+    if (s * this.getBcuMaxW() < this.logicalW) s = this.logicalW / this.getBcuMaxW();
+    return s;
+  }
+  computeBcuSizeLimits() {
+    const minSiz = this.getRegulatedSiz(0);
+    const maxSiz = this.getRegulatedSiz(Number.MAX_VALUE);
+    const groundHeight = (this.logicalH * 2 / 10) * (1 - minSiz / Math.max(0.0001, maxSiz));
+    return { minSiz, maxSiz, groundHeight, source: 'BCU BattleBox.calculateSiz' };
+  }
+  computeBcuMidhForSiz(siz = this.siz) {
+    const span = Math.max(0.0001, this.maxSiz - this.minSiz);
+    let midh = this.logicalH + this.groundHeight * ((Number(siz) || this.minSiz) - this.maxSiz) / span;
+    if (this.bcuTwoRow) midh -= this.logicalH * 0.75 / 10;
+    return midh;
+  }
+  updateBcuLayout() {
+    const limits = this.computeBcuSizeLimits();
+    this.minSiz = limits.minSiz;
+    this.maxSiz = limits.maxSiz;
+    this.groundHeight = limits.groundHeight;
+    this.siz = this._clampSiz(this.siz);
+    this.midh = this.computeBcuMidhForSiz(this.siz);
+  }
   get bcuRatio() { return this.ratio; }
   get bcuOff() { return this.bcuRenderOffset; }
   get zoom() { return this.siz; }
   set zoom(v) { this.siz = this._clampSiz(v); this.clamp(); }
 
-  setViewport(logicalW) { if (Number.isFinite(logicalW) && logicalW > 0) this.logicalW = logicalW; this.clamp(); }
-  setStageLen(stageLen, _reason = 'stage-runtime') { if (Number.isFinite(stageLen) && stageLen > 0) this.stageLen = stageLen; this.clamp(); }
+  setViewport(logicalW, logicalH = this.logicalH) { if (Number.isFinite(logicalW) && logicalW > 0) this.logicalW = logicalW; if (Number.isFinite(logicalH) && logicalH > 0) this.logicalH = logicalH; this.updateBcuLayout(); this.clamp(); }
+  setStageLen(stageLen, _reason = 'stage-runtime') { if (Number.isFinite(stageLen) && stageLen > 0) this.stageLen = stageLen; this.updateBcuLayout(); this.clamp(); }
   setPos(pos) { this.pos = Number.isFinite(pos) ? pos : this.pos; this.clamp(); }
 
   get pixelsPerWorldUnit() { return this.ratio * this.siz; }
@@ -48,6 +84,7 @@ export class BattleCamera {
   zoomAtScreenPoint(screenX, nextSiz) {
     const beforeWorld = this.screenToWorldX(screenX);
     this.siz = this._clampSiz(nextSiz);
+    this.midh = this.computeBcuMidhForSiz(this.siz);
     this.pos = beforeWorld - (screenX - this.originX) / Math.max(0.0001, this.pixelsPerWorldUnit);
     this.clamp();
   }
@@ -57,14 +94,17 @@ export class BattleCamera {
 
   getClampRange() {
     const visibleWorldWidth = this.visibleWorldWidth;
-    const maxPos = visibleWorldWidth >= this.stageLen ? 0 : Math.max(0, this.stageLen - visibleWorldWidth);
-    return { minPos: 0, maxPos, visibleWorldWidth, stageLen: this.stageLen, canScroll: maxPos > 0 };
+    const bcuVisibleWorldWidth = this.logicalW / Math.max(0.0001, this.ratio * this.siz);
+    const bcuScrollableWorldWidth = this.stageLen + (this.bcuRenderOffset * 2) / Math.max(0.0001, this.ratio);
+    const maxPos = bcuVisibleWorldWidth >= bcuScrollableWorldWidth ? 0 : Math.max(0, bcuScrollableWorldWidth - bcuVisibleWorldWidth);
+    return { minPos: 0, maxPos, visibleWorldWidth, bcuVisibleWorldWidth, stageLen: this.stageLen, canScroll: maxPos > 0, source: 'BCU BattleBox.regulate maxW includes off*2' };
   }
 
   getState() {
     return {
       stageLen: this.stageLen,
       logicalW: this.logicalW,
+      logicalH: this.logicalH,
       ratio: this.ratio,
       bcuRenderOffset: this.bcuRenderOffset,
       bcuOff: this.bcuOff,
@@ -72,6 +112,11 @@ export class BattleCamera {
       bcuRightMarginPx: this.bcuRightMarginPx,
       bcuStagePixelWidth: this.bcuStagePixelWidth,
       siz: this.siz,
+      minSiz: this.minSiz,
+      maxSiz: this.maxSiz,
+      midh: this.midh,
+      groundHeight: this.groundHeight,
+      bcuTwoRow: this.bcuTwoRow,
       zoom: this.zoom,
       pos: this.pos,
       originX: this.originX,

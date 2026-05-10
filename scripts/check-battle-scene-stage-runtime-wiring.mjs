@@ -147,6 +147,7 @@ const playerProductionBarSrc = fs.readFileSync(files.playerProductionBar, 'utf8'
 const battleEconomySrc = fs.readFileSync(files.battleEconomy, 'utf8');
 const sceneSrcProd = fs.readFileSync(files.battleScene, 'utf8');
 const formationStoreSrc = fs.readFileSync(files.formationStore, 'utf8');
+assert.ok(sceneSrcProd.includes("source:'prefer-base-over-out-of-range-respawn'"), 'target selection should avoid chasing out-of-range respawn enemies through the castle when base remains attackable');
 for (const fn of ['getActorAnimationState', 'tickActor', 'applyActorModel', 'buildActorDrawList', 'describeActor', 'describeDrawList', 'getAnimationContract']) {
   assert.ok(animationRuntimeSrc.includes(fn), `AnimationRuntime must include ${fn}`);
 }
@@ -163,6 +164,7 @@ assert.ok(battleEconomySrc.includes('lastProduceDebug'));
 assert.ok(sceneSrcProd.includes("from './ProductionRuntime.js'"));
 assert.ok(sceneSrcProd.includes('getPlayerRosterStatus(){return ProductionRuntime.buildRosterStatus'));
 assert.ok(playerProductionBarSrc.includes('ProductionRuntime.getUnitStatus'));
+assert.ok(playerProductionBarSrc.includes('unitDef.uiIcon.primary') && playerProductionBarSrc.includes("join('|')"), 'production card icon cache key must include image paths to avoid reused photos across different IDs');
 assert.ok(!playerProductionBarSrc.includes('economy.produce'));
 assert.ok(!playerProductionBarSrc.includes('economy.tick'));
 assert.ok(inspectorSrc.includes('productionRuntime'));
@@ -219,8 +221,11 @@ assert.ok(!rendererSrc.includes('drawX=sx-drawW*0.5'), 'drawBcuEnemyCastle must 
 assert.ok(rendererSrc.includes('baseScreenX=this.projectBcuX(this._scene,base.x)'), 'castle-composite base render must use projectBcuX');
 assert.ok(rendererSrc.includes('const sx=this.projectBcuX(this._scene,base.x); c.fillRect'), 'placeholder base render must use projectBcuX');
 assert.ok(rendererSrc.includes('drawEffects(c, effects)') && rendererSrc.includes('this.projectBattleX(this._scene,effect.x)'), 'effects render must use BCU battle projection');
+assert.ok(rendererSrc.includes('effect.bcuSmokeYOffset'), 'hit smoke render must apply BCU smoke Y offset');
 assert.ok(rendererSrc.includes('drawActor(c, actor)') && rendererSrc.includes('this.projectBattleX(this._scene,actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX)'), 'actor render must use BCU battle projection');
 assert.ok(sceneSrcProd.includes('b.applyStageRuntime?.(rt);'), 'loadBase must apply stage runtime');
+assert.ok(sceneSrcProd.includes("bcuLayout:{twoRow:false"), 'BattleScene camera must use BCU one-lineup layout by default');
+assert.ok(sceneSrcProd.includes('bcuSmokeYOffset=targetType===') && sceneSrcProd.includes('BCU damaged smokeX/smokeLayer/smokeYOffset'), 'spawnHitEffect must keep BCU smoke offset diagnostics');
 assert.ok(sceneSrcProd.includes("type:'baseStageRuntimeApplied'"), 'loadBase should emit baseStageRuntimeApplied event');
 
 const { BattleSceneRenderer } = await import('../js/battle/BattleSceneRenderer.js');

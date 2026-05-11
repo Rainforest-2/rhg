@@ -39,19 +39,49 @@ async function tryLoadSemanticActor(def) {
   if (!provider) return null;
   try {
     const entry = provider.getActorEntry(def.semanticKey);
-    if (!entry?.bundleRef) return null;
+    if (!entry?.bundleRef) {
+      if (entry?.status === 'rawOnly' && def.allowRawOnly === true) return null;
+      throw new Error(`Missing actor bundle for semantic key ${def.semanticKey}`);
+    }
     const bundleRef = entry.bundleRef;
     const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0, semantic: { key: def.semanticKey, bundleRef, source: 'semantic-bundle' } };
     try { r.image = await loadImageFromObjectUrl(provider, bundleRef, 'image.png'); r.imageFile = 'image.png'; r.loaded.push('image.png'); r.status.image = 'loaded'; } catch { r.missing.push('image.png'); }
     try { r.imgcut = parseImgcut(await provider.readTextByBundleRef(bundleRef, 'imgcut.imgcut')); r.imgcutFile = 'imgcut.imgcut'; r.loaded.push('imgcut.imgcut'); r.status.imgcut = 'loaded'; } catch (e) { r.errors.push(`semantic imgcut: ${e.message}`); }
     try { r.model = parseModel(await provider.readTextByBundleRef(bundleRef, 'model.mamodel')); r.modelFile = 'model.mamodel'; r.loaded.push('model.mamodel'); r.status.model = 'loaded'; } catch (e) { if (r.modelRequired) r.errors.push(`semantic model: ${e.message}`); else r.status.model = 'skipped'; }
+    if (r.errors.length || r.missing.length) {
+      throw new Error(`Incomplete actor bundle for ${def.semanticKey}: ${[...r.errors, ...r.missing].join(', ')}`);
+    }
     return r;
   } catch (error) {
     if (provider.allowRawFallback) {
       provider.recordRawFallback('actor-bundle-load-failed', { actorKey: def.semanticKey, message: error?.message || String(error) });
       return null;
     }
+    provider.diagnostics.bundleErrors.push({ semanticKey: def.semanticKey, message: error?.message || String(error) });
     throw error;
+  }
+}
+
+function deriveActorSemanticKey(def) {
+  if (def?.semanticKey) return def.semanticKey;
+  const id = String(def?.id || '');
+  let m = id.match(/^enemy-(\d{3,})$/);
+  if (m) return `enemy:${Number(m[1])}`;
+  m = id.match(/^unit-(\d{3,})-([fcsu])$/);
+  if (m) return `unit:${Number(m[1])}:${m[2]}`;
+  return null;
+}
+
+function assertRawAllowed(def) {
+  const semanticKey = deriveActorSemanticKey(def);
+  let provider = null;
+  try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
+  if (!provider || !semanticKey) return;
+  const rawPath = def?.baseDir || def?.imagePath || null;
+  provider.assertNoRawForBundledKey(semanticKey, rawPath);
+  const entry = provider.getActorEntry(semanticKey);
+  if (entry && entry.status !== 'rawOnly' && def.allowRawOnly !== true) {
+    throw new Error(`Raw actor access requires explicit rawOnly entry: ${semanticKey}`);
   }
 }
 
@@ -89,8 +119,13 @@ export class BcuAssetLoader {
   }
 
   async loadAssetSetUncached(def) {
+    if (!def.semanticKey) {
+      const derived = deriveActorSemanticKey(def);
+      if (derived) def = { ...def, semanticKey: derived };
+    }
     const semantic = await tryLoadSemanticActor(def);
     if (semantic && (semantic.image || semantic.imgcut || semantic.model)) return semantic;
+    assertRawAllowed(def);
     const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0 };
 
     const [img,ic,md] = await Promise.allSettled([
@@ -129,6 +164,10 @@ export class BcuAssetLoader {
     if (!animDef) return { loaded: [], missing: [], errors: [], file: null, anim: null, status: 'skipped' };
     counters.animationRequested++;
     const files = asArray(animDef.file);
+    if (!def.semanticKey) {
+      const derived = deriveActorSemanticKey(def);
+      if (derived) def = { ...def, semanticKey: derived };
+    }
     if (def?.semanticKey) {
       let provider = null;
       try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
@@ -136,14 +175,19 @@ export class BcuAssetLoader {
       if (provider && role) {
         try {
           const entry = provider.getActorEntry(def.semanticKey);
+          if (!entry?.bundleRef) throw new Error(`Missing actor bundle for semantic key ${def.semanticKey}`);
           const anim = parseAnim(await provider.readTextByBundleRef(entry.bundleRef, `${role}.maanim`));
           return { loaded: [`${role}.maanim`], missing: [], errors: [], file: `${role}.maanim`, anim, status: 'loaded', semantic: { key: def.semanticKey } };
         } catch (error) {
-          if (!provider.allowRawFallback) return { loaded: [], missing: [`${role}.maanim`], errors: [error.message], file: `${role}.maanim`, anim: null, status: 'error' };
+          if (!provider.allowRawFallback) {
+            provider.diagnostics.bundleErrors.push({ semanticKey: def.semanticKey, role, message: error?.message || String(error) });
+            return { loaded: [], missing: [`${role}.maanim`], errors: [error.message], file: `${role}.maanim`, anim: null, status: 'error' };
+          }
           provider.recordRawFallback('actor-animation-bundle-load-failed', { actorKey: def.semanticKey, role, message: error?.message || String(error) });
         }
       }
     }
+    assertRawAllowed(def);
     for (const file of files) {
       const key=`${def.id}:${file}`;
       if(animationCache.has(key)){ counters.animationCacheHit++; return await animationCache.get(key); }

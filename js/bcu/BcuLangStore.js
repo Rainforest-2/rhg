@@ -50,7 +50,7 @@ export class BcuLangStore {
 
   async loadFromManifest(manifest, readText) {
     const langFiles = manifest?.langFiles || {};
-    const locales = Object.keys(langFiles).sort();
+    const locales = Object.keys(langFiles).filter((locale) => locale === 'jp').sort();
     this.loadedLocales = locales;
     this.diagnostics.lang.loadedLocales = locales;
     for (const locale of locales) {
@@ -155,10 +155,11 @@ export class BcuLangStore {
 
   resolve(kind, key, locale = this.locale) {
     const requestedLocale = locale || this.locale;
+    if (requestedLocale !== 'jp') throw new Error(`Unsupported BCU language locale: ${requestedLocale}`);
     const table = this.tables.get(kind);
     const localeMap = table?.get(key);
     const warnings = [];
-    const order = [requestedLocale, 'jp', 'en', ...this.loadedLocales].filter(Boolean);
+    const order = [requestedLocale, 'jp', ...this.loadedLocales].filter(Boolean);
     for (const loc of [...new Set(order)]) {
       const hit = localeMap?.get(loc);
       if (hit?.value) {

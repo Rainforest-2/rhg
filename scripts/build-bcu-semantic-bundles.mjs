@@ -1,11 +1,13 @@
 import fs from 'node:fs/promises';
 import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
 
-const all = process.argv.includes('--all');
+const all = process.argv.includes('--all') || !process.argv.includes('--sample');
 const actor = await readJson('public/assets/generated/bcu-actor-index.json', { entries: [] });
 const stage = await readJson('public/assets/generated/bcu-stage-index.json', { entries: [] });
 const background = await readJson('public/assets/generated/bcu-background-index.json', { entries: [] });
 const castle = await readJson('public/assets/generated/bcu-castle-index.json', { enemy: [], nyanko: [] });
+const core = await readJson('public/assets/generated/bcu-core-index.json', { entries: [] });
+const language = await readJson('public/assets/generated/bcu-language-index.json', { entries: [] });
 
 const manifest = { schemaVersion: 1, generatedAt: FIXED_DATE, zipFormat: 'store-only', generationMode: all ? 'all' : 'sample', bundles: {} };
 const diagnostics = { schemaVersion: 1, generatedAt: FIXED_DATE, summary: { generated: 0, skipped: 0, sampleMode: !all }, skipped: [], oversized: [] };
@@ -76,6 +78,22 @@ for (const entry of enemyCastles) {
     { name: 'image.png', data: await fileBufferOrNull(entry.selected.image) }
   ];
   await addBundle(entry.bundleRef.bundleKey, 'enemyCastle', entry.key, entry.bundleRef.bundlePath, entry.selected.image ? 'full' : 'partial', files);
+}
+
+for (const entry of core.entries || []) {
+  const files = [
+    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, files: entry.files }, null, 2)) },
+    ...(await Promise.all((entry.files || []).map(async (file) => ({ name: file.replace(/^public\/assets\/bcu\//, '').replace(/^public\/assets\//, ''), data: await fileBufferOrNull(file) }))))
+  ];
+  await addBundle(entry.bundleRef.bundleKey, 'core', entry.key, entry.bundleRef.bundlePath, entry.status, files);
+}
+
+for (const entry of language.entries || []) {
+  const files = [
+    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, locale: entry.locale, files: entry.files }, null, 2)) },
+    ...(await Promise.all((entry.files || []).map(async (file) => ({ name: file.split('/').pop(), data: await fileBufferOrNull(file) }))))
+  ];
+  await addBundle(entry.bundleRef.bundleKey, 'language', entry.key, entry.bundleRef.bundlePath, entry.status, files);
 }
 
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);

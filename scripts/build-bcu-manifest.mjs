@@ -23,6 +23,10 @@ async function walk(dir, out = []) {
   return out;
 }
 
+async function readJson(file, fallback = null) {
+  try { return JSON.parse(await fs.readFile(file, 'utf8')); } catch { return fallback; }
+}
+
 function addSorted(set, value) {
   if (value != null) set.add(Number(value));
 }
@@ -48,6 +52,15 @@ function detectLang(files) {
   }
   for (const list of Object.values(langFiles)) list.sort();
   return { langRoots: [...langRoots].sort(), langFiles };
+}
+
+function nonJapaneseLanguageText(file) {
+  const normalized = file.replace(/\\/g, '/');
+  if (!normalized.endsWith('.txt') && !normalized.endsWith('.properties')) return false;
+  const locale = normalized.match(/\/lang\/([a-z]{2}(?:-[a-z]{2})?)-[^/]+$/i)?.[1]?.toLowerCase()
+    || normalized.match(/\/lang\/([a-z]{2})\/[^/]+$/i)?.[1]?.toLowerCase()
+    || null;
+  return !!locale && locale !== 'jp';
 }
 
 function buildPacks(files) {
@@ -135,7 +148,12 @@ function findDuplicates(files) {
   return { duplicateFiles: [], caseConflicts };
 }
 
-const files = (await walk(assetRoot)).map((p) => p.replace(/\\/g, '/')).sort();
+const pruneReport = await readJson('public/assets/generated/bcu-lang-prune-report.json', { excluded: [] });
+const excludedLang = new Set((pruneReport.excluded || []).map((p) => String(p).replace(/\\/g, '/')));
+const files = (await walk(assetRoot))
+  .map((p) => p.replace(/\\/g, '/'))
+  .filter((p) => !excludedLang.has(p) && !nonJapaneseLanguageText(p))
+  .sort();
 const { langRoots, langFiles } = detectLang(files);
 const indexes = buildIndexes(files);
 

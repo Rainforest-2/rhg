@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "targetLocale": "jp",
+  "entries": [
+    {
+      "key": "lang:jp",
+      "locale": "jp",
+      "files": [
+        "public/assets/bcu/lang/jp-CatFruitExplanation.txt",
+        "public/assets/bcu/lang/jp-ComboName.txt",
+        "public/assets/bcu/lang/jp-EnemyExplanation.txt",
+        "public/assets/bcu/lang/jp-EnemyName.txt",
+        "public/assets/bcu/lang/jp-GachaName.txt",
+        "public/assets/bcu/lang/jp-MedalExplanation.txt",
+        "public/assets/bcu/lang/jp-MedalName.txt",
+        "public/assets/bcu/lang/jp-MissionName.txt",
+        "public/assets/bcu/lang/jp-RewardName.txt",
+        "public/assets/bcu/lang/jp-StageName.txt",
+        "public/assets/bcu/lang/jp-UnitExplanation.txt",
+        "public/assets/bcu/lang/jp-UnitName.txt",
+        "public/assets/bcu/lang/jp-info.properties",
+        "public/assets/bcu/lang/jp-internet.properties",
+        "public/assets/bcu/lang/jp-page.properties",
+        "public/assets/bcu/lang/jp-util.properties"
+      ],
+      "status": "full",
+      "bundleRef": {
+        "bundleKey": "lang:jp",
+        "bundlePath": "public/assets/bundles/lang/jp.zip",
+        "readMode": "zip-text"
+      },
+      "diagnostics": {
+        "sourceRawPaths": [
+          "public/assets/bcu/lang/jp-CatFruitExplanation.txt",
+          "public/assets/bcu/lang/jp-ComboName.txt",
+          "public/assets/bcu/lang/jp-EnemyExplanation.txt",
+          "public/assets/bcu/lang/jp-EnemyName.txt",
+          "public/assets/bcu/lang/jp-GachaName.txt",
+          "public/assets/bcu/lang/jp-MedalExplanation.txt",
+          "public/assets/bcu/lang/jp-MedalName.txt",
+          "public/assets/bcu/lang/jp-MissionName.txt",
+          "public/assets/bcu/lang/jp-RewardName.txt",
+          "public/assets/bcu/lang/jp-StageName.txt",
+          "public/assets/bcu/lang/jp-UnitExplanation.txt",
+          "public/assets/bcu/lang/jp-UnitName.txt",
+          "public/assets/bcu/lang/jp-info.properties",
+          "public/assets/bcu/lang/jp-internet.properties",
+          "public/assets/bcu/lang/jp-page.properties",
+          "public/assets/bcu/lang/jp-util.properties"
+        ]
+      }
+    }
+  ],
+  "byKey": {
+    "lang:jp": {
+      "key": "lang:jp",
+      "locale": "jp",
+      "files": [
+        "public/assets/bcu/lang/jp-CatFruitExplanation.txt",
+        "public/assets/bcu/lang/jp-ComboName.txt",
+        "public/assets/bcu/lang/jp-EnemyExplanation.txt",
+        "public/assets/bcu/lang/jp-EnemyName.txt",
+        "public/assets/bcu/lang/jp-GachaName.txt",
+        "public/assets/bcu/lang/jp-MedalExplanation.txt",
+        "public/assets/bcu/lang/jp-MedalName.txt",
+        "public/assets/bcu/lang/jp-MissionName.txt",
+        "public/assets/bcu/lang/jp-RewardName.txt",
+        "public/assets/bcu/lang/jp-StageName.txt",
+        "public/assets/bcu/lang/jp-UnitExplanation.txt",
+        "public/assets/bcu/lang/jp-UnitName.txt",
+        "public/assets/bcu/lang/jp-info.properties",
+        "public/assets/bcu/lang/jp-internet.properties",
+        "public/assets/bcu/lang/jp-page.properties",
+        "public/assets/bcu/lang/jp-util.properties"
+      ],
+      "status": "full",
+      "bundleRef": {
+        "bundleKey": "lang:jp",
+        "bundlePath": "public/assets/bundles/lang/jp.zip",
+        "readMode": "zip-text"
+      },
+      "diagnostics": {
+        "sourceRawPaths": [
+          "public/assets/bcu/lang/jp-CatFruitExplanation.txt",
+          "public/assets/bcu/lang/jp-ComboName.txt",
+          "public/assets/bcu/lang/jp-EnemyExplanation.txt",
+          "public/assets/bcu/lang/jp-EnemyName.txt",
+          "public/assets/bcu/lang/jp-GachaName.txt",
+          "public/assets/bcu/lang/jp-MedalExplanation.txt",
+          "public/assets/bcu/lang/jp-MedalName.txt",
+          "public/assets/bcu/lang/jp-MissionName.txt",
+          "public/assets/bcu/lang/jp-RewardName.txt",
+          "public/assets/bcu/lang/jp-StageName.txt",
+          "public/assets/bcu/lang/jp-UnitExplanation.txt",
+          "public/assets/bcu/lang/jp-UnitName.txt",
+          "public/assets/bcu/lang/jp-info.properties",
+          "public/assets/bcu/lang/jp-internet.properties",
+          "public/assets/bcu/lang/jp-page.properties",
+          "public/assets/bcu/lang/jp-util.properties"
+        ]
+      }
+    }
+  }
+}

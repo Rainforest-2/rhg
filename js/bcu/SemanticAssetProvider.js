@@ -42,15 +42,24 @@ function parseStoreZip(buffer) {
 export class SemanticAssetProvider {
   constructor(options = {}) {
     this.indexRoot = options.indexRoot || DEFAULT_INDEX_ROOT;
-    this.mode = options.mode || 'semantic-with-raw-fallback';
-    this.allowRawFallback = options.allowRawFallback === true || this.mode === 'semantic-with-raw-fallback';
+    this.mode = options.mode || 'semantic-strict';
+    this.allowRawFallback = options.allowRawFallback === true || this.mode === 'raw-only-diagnostics';
     this.fetchJson = options.fetchJson || fetchJson;
     this.fetchImpl = options.fetch || (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : null);
     this.indexes = {};
     this.bundleFetchPromises = new Map();
     this.bundleArchives = new Map();
     this.objectUrls = new Set();
-    this.diagnostics = { mode: this.mode, bundleReads: [], rawFallbacks: [], failures: [] };
+    this.diagnostics = {
+      mode: this.mode,
+      bundleReads: [],
+      rawOnlyReads: [],
+      blockedRawReads: [],
+      bundleErrors: [],
+      missingBundles: [],
+      rawFallbacks: [],
+      failures: []
+    };
   }
 
   async load() {
@@ -63,6 +72,8 @@ export class SemanticAssetProvider {
     this.indexes.stages = await readOptional('bcu-stage-index.json', { entries: [], byKey: {} });
     this.indexes.backgrounds = await readOptional('bcu-background-index.json', { entries: [], byKey: {} });
     this.indexes.castles = await readOptional('bcu-castle-index.json', { enemy: [], nyanko: [], byKey: {} });
+    this.indexes.core = await readOptional('bcu-core-index.json', { entries: [], byKey: {} });
+    this.indexes.language = await readOptional('bcu-language-index.json', { entries: [], byKey: {} });
     this.indexes.canonical = await readOptional('bcu-canonical-index.json', {});
     return this;
   }
@@ -76,6 +87,24 @@ export class SemanticAssetProvider {
   }
   getBackgroundEntry(key) { const k = String(key).startsWith('background:') ? key : `background:${key}`; return this.indexes.backgrounds?.byKey?.[k] || null; }
   getCastleEntry(key) { return this.indexes.castles?.byKey?.[key] || this.indexes.castles?.byKey?.[`enemyCastle:${key}`] || null; }
+  getCoreEntry(key) { return this.indexes.core?.byKey?.[key] || this.indexes.core?.entries?.find((e) => e.key === key) || null; }
+  getLanguageEntry(key) { return this.indexes.language?.byKey?.[key] || this.indexes.language?.entries?.find((e) => e.key === key) || null; }
+
+  hasBundleForKey(key) {
+    if (!key) return false;
+    const bundleKey = String(key).startsWith('actor:') || String(key).startsWith('stage-map:') ? String(key) : null;
+    const direct = this.indexes.bundleManifest?.bundles?.[key] || (bundleKey ? this.indexes.bundleManifest?.bundles?.[bundleKey] : null);
+    if (direct) return true;
+    const entry = this.getActorEntry(key) || this.getStageEntry(key) || this.getBackgroundEntry(key) || this.getCastleEntry(key) || this.getCoreEntry(key) || this.getLanguageEntry(key);
+    return !!entry?.bundleRef?.bundleKey && !!this.indexes.bundleManifest?.bundles?.[entry.bundleRef.bundleKey];
+  }
+
+  assertNoRawForBundledKey(key, rawPath) {
+    if (!this.hasBundleForKey(key)) return;
+    const detail = { type: 'blockedRawReadForBundledKey', semanticKey: key, rawPath };
+    this.diagnostics.blockedRawReads.push(detail);
+    throw new Error(`Raw BCU access blocked for bundled semantic key ${key}: ${rawPath}`);
+  }
 
   async fetchBundle(bundleRef) {
     if (!bundleRef?.bundlePath) throw new Error('Missing bundleRef.bundlePath');
@@ -127,30 +156,51 @@ export class SemanticAssetProvider {
 
   async readActorBundle(actorKey) {
     const entry = this.getActorEntry(actorKey);
-    if (!entry?.bundleRef) throw new Error(`Unknown actor semantic key: ${actorKey}`);
+    if (!entry?.bundleRef) {
+      this.diagnostics.missingBundles.push({ semanticKey: actorKey, kind: 'actor' });
+      throw new Error(`Unknown actor semantic key: ${actorKey}`);
+    }
     return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
   }
 
   async readStageCsv(stageKey) {
     const entry = this.getStageEntry(stageKey);
-    if (!entry?.bundleRef) throw new Error(`Unknown stage semantic key: ${stageKey}`);
+    if (!entry?.bundleRef) {
+      this.diagnostics.missingBundles.push({ semanticKey: stageKey, kind: 'stage' });
+      throw new Error(`Unknown stage semantic key: ${stageKey}`);
+    }
     return { entry, text: await this.readTextByBundleRef(entry.bundleRef, entry.bundleRef.internalPath), logicalPath: entry.key };
   }
 
   async readBackgroundBundle(backgroundKey) {
     const entry = this.getBackgroundEntry(backgroundKey);
-    if (!entry?.bundleRef) throw new Error(`Unknown background semantic key: ${backgroundKey}`);
+    if (!entry?.bundleRef) {
+      this.diagnostics.missingBundles.push({ semanticKey: backgroundKey, kind: 'background' });
+      throw new Error(`Unknown background semantic key: ${backgroundKey}`);
+    }
     return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
   }
 
   async readCastleBundle(castleKey) {
     const entry = this.getCastleEntry(castleKey);
-    if (!entry?.bundleRef) throw new Error(`Unknown castle semantic key: ${castleKey}`);
+    if (!entry?.bundleRef) {
+      this.diagnostics.missingBundles.push({ semanticKey: castleKey, kind: 'castle' });
+      throw new Error(`Unknown castle semantic key: ${castleKey}`);
+    }
     return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
+  }
+
+  async readLanguageFile(locale, internalPath) {
+    if (locale !== 'jp') throw new Error(`Unsupported BCU language locale: ${locale}`);
+    const entry = this.getLanguageEntry('lang:jp');
+    if (!entry?.bundleRef) throw new Error('Missing lang:jp bundle');
+    return await this.readTextByBundleRef(entry.bundleRef, internalPath);
   }
 
   recordRawFallback(reason, detail = {}) {
     if (!this.allowRawFallback) throw new Error(`Raw fallback disabled: ${reason}`);
-    this.diagnostics.rawFallbacks.push({ reason, ...detail });
+    const item = { reason, ...detail };
+    this.diagnostics.rawFallbacks.push(item);
+    this.diagnostics.rawOnlyReads.push(item);
   }
 }

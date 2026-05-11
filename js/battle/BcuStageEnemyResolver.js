@@ -1,4 +1,5 @@
 import { hasBcuEnemyAsset } from '../data/bcuAvailableEnemyAssets.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 export function formatBcuId(id) {
   const n = Number(id);
   if (!Number.isFinite(n)) return '000';
@@ -17,12 +18,41 @@ export function getStageEnemySlotId(enemyId, rowIndex = null) {
 
 export function buildBcuEnemyAssetDef(enemyId) {
   const bcuId = formatBcuId(enemyId);
+  const semanticKey = `enemy:${Number(enemyId)}`;
+  try {
+    const db = getBcuAssetDatabase();
+    const resolved = db?.assets?.resolveEnemyAsset?.(enemyId);
+    const entry = db?.semanticProvider?.getActorEntry?.(semanticKey);
+    if (resolved?.semanticKey && resolved?.bundleRef) {
+      return { ...resolved, id: `enemy-${bcuId}`, label: `敵${bcuId}`, role: 'stage-enemy', group: 'stage-enemies', renderMode: 'animated-unit', semanticKey, bundleRef: resolved.bundleRef };
+    }
+    if (entry?.bundleRef) {
+      return {
+        id: `enemy-${bcuId}`,
+        label: `敵${bcuId}`,
+        role: 'stage-enemy',
+        group: 'stage-enemies',
+        renderMode: 'animated-unit',
+        semanticKey,
+        bundleRef: entry.bundleRef,
+        image: `${bcuId}_e.png`,
+        imgcut: `${bcuId}_e.imgcut`,
+        model: `${bcuId}_e.mamodel`,
+        animations: ['00', '01', '02', '03'].map((n) => ({ id: `anim${n}`, file: `${bcuId}_e${n}.maanim` }))
+      };
+    }
+    if (entry && entry.status !== 'rawOnly') throw new Error(`BCU semantic actor exists without bundle: ${semanticKey}`);
+  } catch (error) {
+    if (!String(error?.message || error).includes('BCU asset database is not loaded')) throw error;
+  }
   return {
     id: `enemy-${bcuId}`,
     label: `敵${bcuId}`,
     role: 'stage-enemy',
     group: 'stage-enemies',
     renderMode: 'animated-unit',
+    semanticKey,
+    allowRawOnly: true,
     baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`,
     image: `${bcuId}_e.png`,
     imgcut: `${bcuId}_e.imgcut`,

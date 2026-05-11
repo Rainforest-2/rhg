@@ -18,7 +18,7 @@ export class BcuBootLoader {
     manifestPath = './public/assets/bcu-manifest.json',
     locale = 'jp',
     preloadMode = 'metadata-and-current-battle',
-    semanticMode = 'semantic-with-raw-fallback'
+    semanticMode = 'semantic-strict'
   } = {}) {
     const diagnostics = createBcuDiagnostics();
     const manifest = await BcuManifestLoader.load({ manifestPath });
@@ -28,7 +28,7 @@ export class BcuBootLoader {
     manifest.semanticMode = semanticMode;
     const semanticProvider = new SemanticAssetProvider({
       mode: semanticMode,
-      allowRawFallback: semanticMode === 'semantic-with-raw-fallback'
+      allowRawFallback: semanticMode === 'raw-only-diagnostics'
     });
     await semanticProvider.load();
     manifest.semanticIndexes = semanticProvider.indexes;

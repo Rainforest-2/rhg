@@ -14,7 +14,7 @@
     "backgrounds": 361,
     "enemyCastles": 330,
     "nyankoCastles": 4,
-    "bundles": 13
+    "bundles": 4244
   },
   "diagnosticsSummary": {
     "partialActors": 22,
@@ -22,9 +22,9 @@
     "stageAliasConflicts": 1944,
     "missingBackgrounds": 10,
     "bundleDiagnostics": {
-      "generated": 13,
+      "generated": 4244,
       "skipped": 0,
-      "sampleMode": true
+      "sampleMode": false
     }
   }
 }

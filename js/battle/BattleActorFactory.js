@@ -6,6 +6,7 @@ import { BattleActor } from './BattleActor.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { bcuRangeToWorld, bcuSpeedToWorldPerSecond, bcuWidthToWorld } from './BattleWorldUnits.js';
 import { ActorStatsModel } from './ActorStatsModel.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 export const TEMPLATE_LOAD_LEVEL = { STATS:'stats', RENDER_CORE:'render-core', SPAWN_READY:'spawn-ready', FULL_VISUAL:'full-visual' };
 const LEVEL_RANK = { 'stats':1, 'render-core':2, 'spawn-ready':3, 'full-visual':4 };
@@ -42,6 +43,15 @@ export class BattleActorFactory {
       tpl.statsModelDebug = tpl.stats?.statsModelDebug || (tpl.actorStatsModel ? ActorStatsModel.describe(tpl.actorStatsModel) : null);
     }
     if(LEVEL_RANK[level] >= LEVEL_RANK[TEMPLATE_LOAD_LEVEL.RENDER_CORE] && LEVEL_RANK[tpl.loadingLevel] < LEVEL_RANK[TEMPLATE_LOAD_LEVEL.RENDER_CORE]){
+      try {
+        const provider = getBcuAssetDatabase()?.semanticProvider;
+        const key = assetDef.semanticKey || (unitDef.statsType === 'enemy' ? `enemy:${unitDef.statsId}` : unitDef.statsType === 'unit' ? `unit:${unitDef.statsId}:f` : null);
+        if (provider?.hasBundleForKey?.(key) && !assetDef.semanticKey) {
+          throw new Error(`Bundled actor assetDef missing semanticKey: ${key}`);
+        }
+      } catch (error) {
+        if (!String(error?.message || error).includes('BCU asset database is not loaded')) throw error;
+      }
       const set = await this.loader.loadAssetSet(assetDef);
       tpl.sprite = set.image && set.imgcut ? new BcuSpriteSheet(set.image, set.imgcut) : null;
       tpl.modelData = set.model;

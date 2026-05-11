@@ -2,6 +2,7 @@ import { fetchBcuText } from './BcuText.js';
 import { parseImgcut } from './BcuImgcutParser.js';
 import { parseModel } from './BcuModelParser.js';
 import { parseAnim } from './BcuAnimParser.js';
+import { getBcuAssetDatabase } from './BcuAssetDatabase.js';
 
 const cache = new Map();
 const counters={assetSetRequested:0,assetSetCacheHit:0,imageRequested:0,imageCacheHit:0,animationRequested:0,animationCacheHit:0};
@@ -24,6 +25,34 @@ function loadImage(url) {
   });
   imageCache.set(url,p);
   return p;
+}
+
+async function loadImageFromObjectUrl(provider, bundleRef, internalPath) {
+  return await loadImage(await provider.createObjectUrl(bundleRef, internalPath, 'image/png'));
+}
+
+async function tryLoadSemanticActor(def) {
+  if (!def?.semanticKey) return null;
+  let db = null;
+  try { db = getBcuAssetDatabase(); } catch { return null; }
+  const provider = db?.semanticProvider;
+  if (!provider) return null;
+  try {
+    const entry = provider.getActorEntry(def.semanticKey);
+    if (!entry?.bundleRef) return null;
+    const bundleRef = entry.bundleRef;
+    const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0, semantic: { key: def.semanticKey, bundleRef, source: 'semantic-bundle' } };
+    try { r.image = await loadImageFromObjectUrl(provider, bundleRef, 'image.png'); r.imageFile = 'image.png'; r.loaded.push('image.png'); r.status.image = 'loaded'; } catch { r.missing.push('image.png'); }
+    try { r.imgcut = parseImgcut(await provider.readTextByBundleRef(bundleRef, 'imgcut.imgcut')); r.imgcutFile = 'imgcut.imgcut'; r.loaded.push('imgcut.imgcut'); r.status.imgcut = 'loaded'; } catch (e) { r.errors.push(`semantic imgcut: ${e.message}`); }
+    try { r.model = parseModel(await provider.readTextByBundleRef(bundleRef, 'model.mamodel')); r.modelFile = 'model.mamodel'; r.loaded.push('model.mamodel'); r.status.model = 'loaded'; } catch (e) { if (r.modelRequired) r.errors.push(`semantic model: ${e.message}`); else r.status.model = 'skipped'; }
+    return r;
+  } catch (error) {
+    if (provider.allowRawFallback) {
+      provider.recordRawFallback('actor-bundle-load-failed', { actorKey: def.semanticKey, message: error?.message || String(error) });
+      return null;
+    }
+    throw error;
+  }
 }
 
 async function tryLoadText(baseDir, candidates, parser, field) {
@@ -60,6 +89,8 @@ export class BcuAssetLoader {
   }
 
   async loadAssetSetUncached(def) {
+    const semantic = await tryLoadSemanticActor(def);
+    if (semantic && (semantic.image || semantic.imgcut || semantic.model)) return semantic;
     const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0 };
 
     const [img,ic,md] = await Promise.allSettled([
@@ -98,6 +129,21 @@ export class BcuAssetLoader {
     if (!animDef) return { loaded: [], missing: [], errors: [], file: null, anim: null, status: 'skipped' };
     counters.animationRequested++;
     const files = asArray(animDef.file);
+    if (def?.semanticKey) {
+      let provider = null;
+      try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
+      const role = animDef.id === 'anim00' ? 'move' : animDef.id === 'anim01' ? 'idle' : animDef.id === 'anim02' ? 'attack' : animDef.id === 'anim03' ? 'kb' : null;
+      if (provider && role) {
+        try {
+          const entry = provider.getActorEntry(def.semanticKey);
+          const anim = parseAnim(await provider.readTextByBundleRef(entry.bundleRef, `${role}.maanim`));
+          return { loaded: [`${role}.maanim`], missing: [], errors: [], file: `${role}.maanim`, anim, status: 'loaded', semantic: { key: def.semanticKey } };
+        } catch (error) {
+          if (!provider.allowRawFallback) return { loaded: [], missing: [`${role}.maanim`], errors: [error.message], file: `${role}.maanim`, anim: null, status: 'error' };
+          provider.recordRawFallback('actor-animation-bundle-load-failed', { actorKey: def.semanticKey, role, message: error?.message || String(error) });
+        }
+      }
+    }
     for (const file of files) {
       const key=`${def.id}:${file}`;
       if(animationCache.has(key)){ counters.animationCacheHit++; return await animationCache.get(key); }

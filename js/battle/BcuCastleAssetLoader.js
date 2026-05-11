@@ -22,6 +22,47 @@ export class BcuCastleAssetLoader {
     const requestedAnimBaseId = options?.animBaseId ?? null;
     const requestedCannonId = options?.cannonId ?? null;
     const source = options?.source || 'stage-runtime';
+    const provider = this.db?.semanticProvider || null;
+    if (provider) {
+      const semanticKey = `enemyCastle:${castleId}`;
+      try {
+        const semantic = provider.getCastleEntry(semanticKey);
+        if (semantic?.bundleRef) {
+          const imagePath = await provider.createObjectUrl(semantic.bundleRef, 'image.png', 'image/png');
+          const image = await this.loadImage(imagePath);
+          if (image) {
+            const crop = buildFullImageRenderCrop(image);
+            return {
+              ok: true,
+              requestedCastleId: castleId,
+              requestedAnimBaseId,
+              requestedCannonId,
+              resolvedCastleId: semantic.numericId,
+              resolvedAnimBaseId: Number.isFinite(Number(requestedAnimBaseId)) ? Math.floor(Number(requestedAnimBaseId)) : semantic.numericId,
+              castleGroupName: semantic.group,
+              castleGroupIndex: semantic.groupIndex,
+              localCastleId: semantic.localId,
+              assetKind: 'enemy-castle',
+              usesImgcut: false,
+              image,
+              imagePath,
+              imgcut: null,
+              imgcutPath: null,
+              crop,
+              visualBounds: { width: crop.w, height: crop.h, parser: 'image-size-no-imgcut', partName: null, partIndex: null, usesImgcut: false },
+              usedFallback: false,
+              fallbackReason: null,
+              reason: null,
+              source: 'semantic-castle-bundle',
+              candidateReport: semantic,
+              baseDebug: CastleAssetResolver.buildBaseDebug({ requestedCastleId: castleId, requestedAnimBaseId, requestedCannonId, resolvedCastleId: semantic.numericId, resolvedAnimBaseId: semantic.numericId, castleGroupName: semantic.group, castleGroupIndex: semantic.groupIndex, localCastleId: semantic.localId, imagePath, imgcutPath: null, usedFallback: false, fallbackReason: null, source, candidateReport: semantic })
+            };
+          }
+        }
+      } catch (error) {
+        provider.recordRawFallback('castle-bundle-load-failed', { castleKey: semanticKey, message: error?.message || String(error) });
+      }
+    }
     const castle = this.db?.castles?.enemy?.get(castleId);
     const candidates = castle ? {
       requestedCastleId: castleId,

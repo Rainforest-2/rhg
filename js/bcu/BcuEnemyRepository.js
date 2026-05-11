@@ -31,6 +31,13 @@ export class BcuEnemyRepository {
       const name = this.names.enemy(enemyId, this.locale);
       if (name.source !== 'lang') this.diagnostics.enemies.missingNames.push({ enemyId, key: enemyKey(enemyId), source: name.source });
       const asset = resolveEnemyAsset(files, enemyId);
+      const semanticKey = `enemy:${enemyId}`;
+      const semanticEntry = this.manifest.semanticIndexes?.actors?.byKey?.[semanticKey] || null;
+      if (asset && semanticEntry) {
+        asset.semanticKey = semanticKey;
+        asset.bundleRef = semanticEntry.bundleRef;
+        asset.semanticStatus = semanticEntry.status;
+      }
       if (!asset?.imagePath || !asset?.imgcutPath) this.diagnostics.enemies.missingAssets.push({ enemyId, asset });
       const stats = raw.length ? this.statsLoader.normalizeEnemyStats(raw, {
         file: toFetchPath(statsPath),

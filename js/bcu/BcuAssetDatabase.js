@@ -36,7 +36,7 @@ export class BcuAssetSetRepository {
 }
 
 export class BcuAssetDatabase {
-  constructor({ locale, manifest, names, units, enemies, backgrounds, castles, stages, assets, diagnostics, playable }) {
+  constructor({ locale, manifest, names, units, enemies, backgrounds, castles, stages, assets, diagnostics, playable, semanticProvider }) {
     this.ready = true;
     this.locale = locale;
     this.manifest = manifest;
@@ -50,6 +50,9 @@ export class BcuAssetDatabase {
     this.assets = assets;
     this.diagnostics = diagnostics;
     this.playable = playable || { enemies: { excludedAssetIds: [] }, allies: { excludedAssetIds: [] } };
+    this.semanticProvider = semanticProvider || null;
+    this.semanticIndexes = semanticProvider?.indexes || manifest?.semanticIndexes || {};
+    this.semanticMode = semanticProvider?.mode || manifest?.semanticMode || 'legacy-raw';
   }
 
   getSummary() {
@@ -73,6 +76,11 @@ export class BcuAssetDatabase {
         allyExcluded: this.playable?.allies?.excludedAssetIds?.length || 0
       },
       diagnostics: diag,
+      semantic: {
+        mode: this.semanticMode,
+        bundles: Object.keys(this.semanticIndexes?.bundleManifest?.bundles || {}).length,
+        rawFallbacks: this.semanticProvider?.diagnostics?.rawFallbacks?.length || 0
+      },
       fallbackCounts: {
         names: this.diagnostics.lang.missingNames.length,
         unitNames: this.diagnostics.units.missingNames.length,

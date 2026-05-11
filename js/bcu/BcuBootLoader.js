@@ -7,6 +7,7 @@ import { BcuEnemyRepository } from './BcuEnemyRepository.js';
 import { BcuBackgroundRepository } from './BcuBackgroundRepository.js';
 import { BcuCastleRepository } from './BcuCastleRepository.js';
 import { BcuStageRepository } from './BcuStageRepository.js';
+import { SemanticAssetProvider } from './SemanticAssetProvider.js';
 
 export { setBcuAssetDatabase } from './BcuAssetDatabase.js';
 
@@ -16,13 +17,21 @@ export class BcuBootLoader {
     bcuRoot = './public/assets/bcu',
     manifestPath = './public/assets/bcu-manifest.json',
     locale = 'jp',
-    preloadMode = 'metadata-and-current-battle'
+    preloadMode = 'metadata-and-current-battle',
+    semanticMode = 'semantic-with-raw-fallback'
   } = {}) {
     const diagnostics = createBcuDiagnostics();
     const manifest = await BcuManifestLoader.load({ manifestPath });
     manifest.assetRoot = manifest.assetRoot || assetRoot;
     manifest.bcuRoot = manifest.bcuRoot || bcuRoot;
     manifest.preloadMode = preloadMode;
+    manifest.semanticMode = semanticMode;
+    const semanticProvider = new SemanticAssetProvider({
+      mode: semanticMode,
+      allowRawFallback: semanticMode === 'semantic-with-raw-fallback'
+    });
+    await semanticProvider.load();
+    manifest.semanticIndexes = semanticProvider.indexes;
 
     const names = new BcuLangStore({ locale, diagnostics });
     await names.loadFromManifest(manifest, readText);
@@ -35,7 +44,7 @@ export class BcuBootLoader {
     const assets = new BcuAssetSetRepository({ units, enemies, backgrounds, castles });
     const playable = await this.loadPlayableErrorConfig({ readText });
 
-    const db = new BcuAssetDatabase({ locale, manifest, names, units, enemies, backgrounds, castles, stages, assets, diagnostics, playable });
+    const db = new BcuAssetDatabase({ locale, manifest, names, units, enemies, backgrounds, castles, stages, assets, diagnostics, playable, semanticProvider });
     setBcuAssetDatabase(db);
     return db;
   }

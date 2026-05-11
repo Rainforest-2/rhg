@@ -1,10 +1,81 @@
 # BCU migration status
 
 ## Last updated
-- note: Priority 0 boot safety plus Priority 1 stage/spawn parser/runtime hardening and check-suite refresh.
-- date: 2026-05-10 (UTC)
+- note: BCU semantic bundle migration contract implemented with generated semantic indexes, sample STORE ZIP bundles, runtime semantic provider, and explicit raw fallback migration mode.
+- date: 2026-05-11 (UTC)
 - commit: (working tree)
-- task: AGENTS.md ordered execution pass through Priority 1 and repository check-suite stabilization
+- task: AGENTS.md BCU semantic bundle migration contract
+
+## BCU Semantic Bundle Migration (2026-05-11)
+### Generated index list
+- `public/assets/generated/bcu-asset-audit.json`
+- `public/assets/generated/bcu-asset-audit.md`
+- `public/assets/generated/bcu-canonical-index.json`
+- `public/assets/generated/bcu-actor-index.json`
+- `public/assets/generated/bcu-stage-index.json`
+- `public/assets/generated/bcu-background-index.json`
+- `public/assets/generated/bcu-castle-index.json`
+- `public/assets/generated/bcu-bundle-manifest.json`
+- `public/assets/generated/bcu-diagnostics.json`
+
+### Generated bundle families
+- `public/assets/bundles/actor/enemy/*.zip`
+- `public/assets/bundles/actor/unit/*.zip`
+- `public/assets/bundles/stage/map/*.zip`
+- `public/assets/bundles/background/*.zip`
+- `public/assets/bundles/castle/enemy/*.zip`
+- ZIP format: STORE/no-compression only. Browser runtime uses `js/bcu/SemanticAssetProvider.js` minimal STORE ZIP reader.
+- Repository mode: representative sample bundles committed by default. Full local generation command: `node scripts/build-bcu-semantic-bundles.mjs --all`.
+
+### Current generated counts
+- Audit file count: 47,413; files included in no classification: 0; unknown files retained in audit diagnostics: 2,680.
+- Actor entries: 2,855 total; 2,833 full; 22 partial; 0 iconOnly.
+- Known partial actor entries include: `unit:515:c`, `unit:729:f`, `unit:732:f`, `unit:734:f`, `unit:739:f`, `unit:755:f`, `unit:761:f`, `unit:764:f`, `unit:770:f`, `unit:775:f`.
+- Stage entries: 8,519 total; duplicate basename / alias conflict entries: 1,944.
+- Background entries: 361 total; entries missing image or imgcut: 10; candidate images: 574; candidate imgcuts: 370.
+- Castle entries: 330 enemy castles; 4 nyanko castle parts; locale/default fallback warnings: 1.
+- Bundle manifest: 13 sample bundles, `generationMode: "sample"`.
+
+### Runtime migration status
+- `BcuBootLoader` initializes `SemanticAssetProvider`.
+- Default runtime mode is `semantic-with-raw-fallback`, so sample bundles do not break the default app flow.
+- `BcuAssetDatabase.getSummary()` exposes semantic mode, bundle count, and raw fallback count.
+- `BcuAssetLoader` prefers semantic actor bundles when `semanticKey` is present, then records explicit raw fallback diagnostics.
+- `StageRegistry` exposes generated stage entries first and avoids silently choosing conflicting aliases.
+- `StageDefinitionLoader` reads semantic stage CSVs through `SemanticAssetProvider.readStageCsv(stageKey)` before legacy fallback.
+- `StageBackgroundLoader` and `BcuCastleAssetLoader` prefer semantic bundles when present, then record explicit fallback diagnostics.
+- Raw source assets under `public/assets/bcu/` were not deleted, moved, or rewritten.
+
+### Validation command results
+- `node scripts/build-bcu-manifest.mjs` pass: `files=47413 packs=248 locales=10`
+- `node scripts/audit-bcu-assets.mjs` pass: `files=47413`
+- `node scripts/build-bcu-canonical-index.mjs` pass: `bundles=13`
+- `node scripts/build-bcu-actor-index.mjs` pass: `entries=2855`
+- `node scripts/build-bcu-stage-index.mjs` pass: `entries=8519`
+- `node scripts/build-bcu-background-index.mjs` pass: `entries=361`
+- `node scripts/build-bcu-castle-index.mjs` pass: `enemy=330 nyanko=4`
+- `node scripts/build-bcu-semantic-bundles.mjs` pass: `bundles=13 mode=sample`
+- `node scripts/check-bcu-semantic-bundles.mjs` pass: `count=13 mode=sample`
+- `node scripts/check-no-raw-runtime-paths.mjs` pass.
+- `node scripts/check-battle-scene-stage-runtime-wiring.mjs` pass.
+- `node scripts/check-stage-asset-tracing.mjs` pass.
+- `node scripts/check-bcu-stage-spawn-runtime.mjs` pass.
+- `node scripts/check-battle-attack-timeline.mjs` pass.
+- After the exact ordered pass, `node scripts/build-bcu-canonical-index.mjs` was run again so canonical bundle counts reflect the final bundle manifest.
+
+### Unresolved risks
+- Only representative sample bundles are committed. Full semantic-only deployment requires `node scripts/build-bcu-semantic-bundles.mjs --all` and hosting all generated bundles.
+- `semantic-only` mode is implemented as the final target but is not the default while sample bundles are committed.
+- Some non-actor runtime/effect/UI paths still rely on legacy raw assets and are treated as explicit migration compatibility by the raw-path checker.
+- Browser visual verification was not run in this terminal session.
+
+### Manual browser verification checklist
+- [ ] Boot default app in migration mode and confirm no startup failure with sample bundles only.
+- [ ] Load a bundled actor (`enemy:0` or `unit:0:f`) and confirm semantic bundle diagnostics show bundle source.
+- [ ] Load a non-sample actor and confirm raw fallback is explicit in diagnostics.
+- [ ] Select `stageRNA001_00` and confirm stage CSV source is semantic when sample bundle exists.
+- [ ] Confirm duplicate stage aliases require disambiguation and do not silently pick a basename conflict.
+- [ ] Confirm background and enemy castle render with semantic bundle source where sample bundle exists.
 
 ## Completed
 | Task | Area | Files | What changed | Evidence |

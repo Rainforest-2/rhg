@@ -61,6 +61,29 @@ export class StageBackgroundLoader {
     const runtime = fallbackStage.runtime || fallbackStage.stageRuntime || null;
     const bgResolved = StageBackgroundResolver.fromStage(fallbackStage, runtime);
     const bg = this.db?.backgrounds?.get(bgResolved.resolvedBgId || 0);
+    const provider = this.db?.semanticProvider || null;
+    if (provider) {
+      try {
+        const semantic = provider.getBackgroundEntry(bgResolved.resolvedBgId || 0);
+        if (semantic?.bundleRef) {
+          const bgRow = semantic.csv || {};
+          const image = await this.loadImage(await provider.createObjectUrl(semantic.bundleRef, 'image.png', 'image/png'));
+          const imgcutText = await provider.readTextByBundleRef(semantic.bundleRef, 'imgcut.imgcut');
+          const { parts } = parseImgcut(imgcutText);
+          const part = parts[0] || parts.find((p) => p.name === fallbackStage?.cropName) || parts.find((p) => p.name === bgResolved.cropName);
+          const upperPart = bgRow.showUpper ? (parts[20] || parts.find((p) => p.name === '背景上部')) : null;
+          return {
+            image,
+            crop: { x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || fallbackStage?.cropName, cropRole: 'BCU Background.BG part' },
+            upperCrop: upperPart ? { x: upperPart.x, y: upperPart.y, w: upperPart.w, h: upperPart.h, name: upperPart.name, upperCropRole: 'BCU Background.TOP part if present' } : null,
+            colors: { skyTop: bgRow.skyTop, skyBottom: bgRow.skyBottom, groundTop: bgRow.groundTop, groundBottom: bgRow.groundBottom },
+            source: StageBackgroundResolver.buildSource(bgResolved, { imagePath: semantic.bundleRef.bundlePath, imgcutPath: 'imgcut.imgcut', csvPath: bgRow.sourceFile, stageId: fallbackStage?.id || 0, bgId: semantic.bgId, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, imageReferenceId: bgRow.imageReferenceId, csvRowFound: true, bgCsvSource: 'semantic-background-bundle' })
+          };
+        }
+      } catch (error) {
+        provider.recordRawFallback('background-bundle-load-failed', { backgroundKey: `background:${bgResolved.resolvedBgId || 0}`, message: error?.message || String(error) });
+      }
+    }
     let bgRow = bg?.csv || null;
     if (!bgRow && !this.db) bgRow = parseBgCsv(await this.fetchTextSafe(stage?.csvPath || bgResolved.csvPath), bgResolved.resolvedBgId || 0);
     bgRow = bgRow || { skyTop: { r: 0, g: 0, b: 0 }, skyBottom: { r: 0, g: 0, b: 0 }, groundTop: { r: 0, g: 0, b: 0 }, groundBottom: { r: 0, g: 0, b: 0 }, imgcutId: 1, showUpper: true, imageReferenceId: null, sourceFile: null, csvRowFound: false };

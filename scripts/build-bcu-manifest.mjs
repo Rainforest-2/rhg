@@ -4,6 +4,9 @@ import path from 'node:path';
 const assetRoot = 'public/assets';
 const bcuRoot = 'public/assets/bcu';
 const outFile = 'public/assets/bcu-manifest.json';
+const generatedAt = process.env.SOURCE_DATE_EPOCH
+  ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
+  : (process.argv.includes('--no-timestamp') ? '1970-01-01T00:00:00.000Z' : '1970-01-01T00:00:00.000Z');
 
 async function exists(p) {
   try { await fs.access(p); return true; } catch { return false; }
@@ -148,7 +151,7 @@ indexes.backgroundIds = [...new Set(indexes.backgroundIds)].sort((a, b) => a - b
 const conflicts = findDuplicates(files);
 const manifest = {
   schemaVersion: 1,
-  generatedAt: new Date().toISOString(),
+  generatedAt,
   assetRoot,
   bcuRoot,
   files,

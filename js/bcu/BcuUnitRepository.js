@@ -37,6 +37,13 @@ export class BcuUnitRepository {
         const name = this.names.unitForm(unitId, index, this.locale);
         if (name.source !== 'lang') this.diagnostics.units.missingNames.push({ unitId, formIndex: index, key: unitFormKey(unitId, index), source: name.source });
         const asset = resolveUnitAsset(files, unitId, code);
+        const semanticKey = `unit:${unitId}:${code}`;
+        const semanticEntry = this.manifest.semanticIndexes?.actors?.byKey?.[semanticKey] || null;
+        if (semanticEntry) {
+          asset.semanticKey = semanticKey;
+          asset.bundleRef = semanticEntry.bundleRef;
+          asset.semanticStatus = semanticEntry.status;
+        }
         if (!asset?.imagePath || !asset?.imgcutPath) this.diagnostics.units.missingAssets.push({ unitId, formIndex: index, asset });
         const stats = raw.length ? this.statsLoader.normalizeUnitStats(raw, {
           file: toFetchPath(statsPath),

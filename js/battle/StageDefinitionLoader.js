@@ -1,4 +1,5 @@
 import { formatBcuId } from './BcuStageEnemyResolver.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 const FRAME_MUL = 2;
 const FPS = 30;
@@ -238,6 +239,26 @@ export class StageDefinitionLoader {
   }
 
   async load(stageConfig = {}) {
+    const stageKey = stageConfig.stageKey || stageConfig.semanticKey;
+    if (stageKey || stageConfig.bundleRef) {
+      try {
+        const provider = getBcuAssetDatabase()?.semanticProvider;
+        if (provider) {
+          const read = stageKey
+            ? await provider.readStageCsv(stageKey)
+            : { text: await provider.readTextByBundleRef(stageConfig.bundleRef), logicalPath: stageConfig.bundleRef.internalPath };
+          return this.parse(read.text, read.logicalPath);
+        }
+      } catch (err) {
+        let provider = null;
+        try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
+        if (!provider?.allowRawFallback && !stageConfig.allowRawFallback) {
+          this.log('warn', `semantic stage load failed: ${err?.message || err}`);
+          return this.createFallback('semantic-stage-load-failed', stageKey || '');
+        }
+        provider?.recordRawFallback('stage-bundle-load-failed', { stageKey, message: err?.message || String(err) });
+      }
+    }
     const path = stageConfig.stageCsvPath;
     if (!path) return this.createFallback('missing-stageCsvPath');
     try { return this.parse(await fetchText(path), path); }

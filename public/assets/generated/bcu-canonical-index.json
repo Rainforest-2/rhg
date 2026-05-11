@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "indexes": {
+    "actors": "public/assets/generated/bcu-actor-index.json",
+    "stages": "public/assets/generated/bcu-stage-index.json",
+    "backgrounds": "public/assets/generated/bcu-background-index.json",
+    "castles": "public/assets/generated/bcu-castle-index.json",
+    "bundles": "public/assets/generated/bcu-bundle-manifest.json"
+  },
+  "counts": {
+    "actors": 2855,
+    "stages": 8519,
+    "backgrounds": 361,
+    "enemyCastles": 330,
+    "nyankoCastles": 4,
+    "bundles": 13
+  },
+  "diagnosticsSummary": {
+    "partialActors": 22,
+    "iconOnlyActors": 0,
+    "stageAliasConflicts": 1944,
+    "missingBackgrounds": 10,
+    "bundleDiagnostics": {
+      "generated": 13,
+      "skipped": 0,
+      "sampleMode": true
+    }
+  }
+}

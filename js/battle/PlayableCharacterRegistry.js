@@ -15,7 +15,7 @@ export function formatBcuId(id) {
 }
 
 function range(start, end) {
-  return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
+  return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => i + start);
 }
 
 function excludedEnemyAssetIds(db = null) {
@@ -127,7 +127,7 @@ export function buildDogRosterEntry(spec, options = {}) {
     attackAnimId: 'anim02',
     knockbackAnimId: 'anim03',
     economySource: 'provisional-design',
-    uiIcon: { kind: 'enemy', bcuId, source: 'runtime-enemy-asset-pack-000002', primary: `./public/assets/bcu/000002/org/enemy/${bcuId}/edi_${bcuId}.png`, fallback: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png`, runtimeImage: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png` }
+    uiIcon: { kind: 'enemy', bcuId, source: 'enemy-icon-pack-000010', primary: `./public/assets/bcu/000010/org/enemy/${bcuId}/enemy_icon_${bcuId}.png`, fallback: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png`, runtimeImage: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png` }
   };
 }
 

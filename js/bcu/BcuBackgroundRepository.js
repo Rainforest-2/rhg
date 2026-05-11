@@ -57,6 +57,23 @@ export class BcuBackgroundRepository {
     return this;
   }
 
+  static fromCoreDb(coreDb, { manifest, names, diagnostics, locale = 'jp' } = {}) {
+    const repo = new BcuBackgroundRepository({ manifest, names, diagnostics, readText: null, locale });
+    for (const record of Object.values(coreDb?.backgrounds?.backgrounds || {})) {
+      const id = toInt(record.id ?? record.bgId, null);
+      if (!Number.isFinite(id)) continue;
+      repo.backgrounds.set(id, {
+        id,
+        id3: record.id3 || pad3(id),
+        key: record.key || backgroundKey(id),
+        name: record.name || names.background(id, locale),
+        csv: record.csv || {},
+        assets: record.assets || null
+      });
+    }
+    return repo;
+  }
+
   get(bgId) { return this.backgrounds.get(toInt(bgId, -1)) || null; }
   list() { return [...this.backgrounds.values()].sort((a, b) => a.id - b.id); }
 }

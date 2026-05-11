@@ -6,21 +6,22 @@
 - commit: (working tree)
 - task: AGENTS.md BCU semantic bundle migration contract
 
-## BCU Semantic Bundle Migration (2026-05-11)
+## BCU Zip-First Runtime Migration (2026-05-11)
 ### Strict semantic bundle pass
 - Runtime default: `semantic-strict`.
 - Language target: `jp` only.
 - Non-Japanese language prune result: 0 deleted, 109 excluded from shipped runtime manifests/indexes, 16 Japanese files kept, 25 `languageUnknown` entries reported for explicit follow-up.
-- Bundle generation result: full generation, `generationMode: "all"`, 4,244 bundles.
-- Bundle count by kind: actor 2,855; stage-map 695; background 361; enemyCastle 330; core 2; language 1.
+- Bundle generation result: full generation, `generationMode: "all"`, 4,243 bundles.
+- Bundle count by kind: actor 2,855; stage-map 695; background 361; enemyCastle 330; core 1; language 1.
 - Actor index: 2,855 total; 2,833 full; 22 partial; 0 rawOnly.
 - Stage index: 8,519 total; duplicate/alias conflict entries 1,944.
 - Background index: 361 total; 351 complete; 10 partial; 0 rawOnly.
 - Castle index: 330 enemy castles complete; 0 partial; 4 nyanko castle entries.
-- Core/lang bundle status: `core:stats`, `core:manifest`, and `lang:jp` bundles generated.
-- Raw runtime blocking status: `SemanticAssetProvider.hasBundleForKey()` and `assertNoRawForBundledKey()` are wired; actor loading blocks raw access for bundled keys; stage enemy asset defs resolve semantic bundle identity from DB before rawOnly fallback.
+- Core DB bundle status: `public/assets/bundles/core/core-db.zip` is generated and is the default boot database. It contains `bundle.json`, `manifest-lite.json`, `units.json`, `enemies.json`, `names-jp.json`, `backgrounds.json`, `castles.json`, `stages.json`, `stage-aliases.json`, `asset-keys.json`, and `diagnostics-summary.json`.
+- Language bundle status: `public/assets/bundles/lang/jp.zip` is generated for compatibility, but normal boot reads Japanese names from `core-db.zip:names-jp.json`.
+- Raw runtime blocking status: runtime guard is installed in `semantic-strict`; boot, formation icons, actor assets, stages, backgrounds, and enemy castles use generated ZIP bundles.
 - Known remaining rawOnly assets: none reported in generated semantic indexes.
-- Browser Network verification result: local static server responds at `http://127.0.0.1:4173/`; automated browser Network verification was not run because Playwright is not installed in this workspace.
+- Browser Network verification result: passed on `http://127.0.0.1:4173/index.html` with Playwright Chromium. Observed bundle/core requests, no `public/assets/bcu/**`, no `public/assets/bcu-manifest.json`, `semanticMode = semantic-strict`, `blockedRawReads = 0`, and formation icon raw DOM sources `[]`.
 
 ### Generated index list
 - `public/assets/generated/bcu-asset-audit.json`
@@ -55,16 +56,17 @@
 - Stage entries: 8,519 total; duplicate basename / alias conflict entries: 1,944.
 - Background entries: 361 total; entries missing image or imgcut: 10; candidate images: 574; candidate imgcuts: 370.
 - Castle entries: 330 enemy castles; 4 nyanko castle parts; locale/default fallback warnings: 1.
-- Bundle manifest: 4,244 bundles, `generationMode: "all"`.
+- Bundle manifest: 4,243 bundles, `generationMode: "all"`.
 
 ### Runtime migration status
-- `BcuBootLoader` initializes `SemanticAssetProvider`.
+- `BcuBootLoader` initializes `SemanticAssetProvider`, reads `core/core-db.zip`, and constructs runtime repositories through `fromCoreDb`.
 - Default runtime mode is `semantic-strict`.
 - `BcuAssetDatabase.getSummary()` exposes semantic mode, bundle count, and raw fallback/rawOnly count.
 - `BcuAssetLoader` uses semantic actor bundles when `semanticKey` is present and blocks raw access for bundled keys.
 - `StageRegistry` exposes generated stage entries first and avoids silently choosing conflicting aliases.
 - `StageDefinitionLoader` reads semantic stage CSVs through `SemanticAssetProvider.readStageCsv(stageKey)` before legacy fallback.
-- `StageBackgroundLoader` and `BcuCastleAssetLoader` prefer semantic bundles when present, then record explicit fallback diagnostics.
+- `StageBackgroundLoader` and `BcuCastleAssetLoader` use semantic bundles for bundled backgrounds/castles; raw fallback is blocked in normal `semantic-strict`.
+- Formation and production icons resolve through `SemanticAssetProvider.getActorIconUrl()` and produce `blob:` URLs or placeholders, not raw BCU image paths.
 - Raw source assets under `public/assets/bcu/` were not deleted, moved, or rewritten.
 
 ### Validation command results
@@ -76,18 +78,24 @@
 - `node scripts/build-bcu-stage-index.mjs` pass: `entries=8519`
 - `node scripts/build-bcu-background-index.mjs` pass: `entries=361`
 - `node scripts/build-bcu-castle-index.mjs` pass: `enemy=330 nyanko=4`
-- `node scripts/build-bcu-core-index.mjs` pass: `entries=2 statsFiles=2258`
+- `node scripts/build-bcu-core-index.mjs` pass: `entries=1 core-db=public/assets/bundles/core/core-db.zip`
 - `node scripts/build-bcu-language-index.mjs` pass: `entries=1 files=16`
-- `node scripts/build-bcu-semantic-bundles.mjs --all` pass: `bundles=4244 mode=all`
-- `node scripts/check-bcu-semantic-bundles.mjs` pass: `count=4244 mode=all`
+- `node scripts/build-bcu-core-db-bundle.mjs` pass: `entries=11`
+- `node scripts/build-bcu-semantic-bundles.mjs --all` pass: `bundles=4243 mode=all`
+- `node scripts/check-bcu-semantic-bundles.mjs` pass: `count=4243 mode=all`
+- `node scripts/check-runtime-uses-zip-bundles.mjs` pass.
 - `node scripts/check-bundled-assets-never-load-raw.mjs` pass.
 - `node scripts/check-no-raw-runtime-paths.mjs` pass.
 - `node scripts/check-no-non-jp-lang-assets.mjs` pass.
+- `node scripts/check-core-db-runtime.mjs` pass.
+- `node scripts/check-formation-icons-use-bundles.mjs` pass.
+- `node scripts/check-stage-runtime-uses-bundles.mjs` pass.
+- `node scripts/check-background-castle-use-bundles.mjs` pass.
 - `node scripts/check-battle-scene-stage-runtime-wiring.mjs` pass.
 - `node scripts/check-stage-asset-tracing.mjs` pass.
 - `node scripts/check-bcu-stage-spawn-runtime.mjs` pass.
 - `node scripts/check-battle-attack-timeline.mjs` pass.
-- After the exact ordered pass, `node scripts/build-bcu-canonical-index.mjs` was run again so canonical bundle counts reflect the final bundle manifest.
+- Browser verification command: `PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/pw/node_modules/.bin/playwright test /tmp/pw/browser-raw-check.spec.mjs --reporter=line` pass.
 
 ### Unresolved risks
 - 25 `languageUnknown` text files are retained only in the prune report for explicit classification.

@@ -1,5 +1,6 @@
 import { formatBcuId } from './BcuStageEnemyResolver.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+import { assertRuntimeUrlAllowed } from '../bcu/RuntimeAssetGuard.js';
 
 const FRAME_MUL = 2;
 const FPS = 30;
@@ -261,6 +262,9 @@ export class StageDefinitionLoader {
     }
     const path = stageConfig.stageCsvPath;
     if (!path) return this.createFallback('missing-stageCsvPath');
+    const provider = getBcuAssetDatabase()?.semanticProvider || null;
+    assertRuntimeUrlAllowed(path, 'StageDefinitionLoader.stageCsvPath', provider);
+    if (!provider?.allowRawFallback && /public\/assets\/bcu\//.test(String(path))) return this.createFallback('raw-stageCsvPath-blocked', path);
     try { return this.parse(await fetchText(path), path); }
     catch (err) { this.log('warn', `stage definition load failed: ${err?.message || err}`); return this.createFallback('load-failed', path); }
   }

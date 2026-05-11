@@ -18,6 +18,7 @@ export class BcuEnemyRepository {
 
   async build() {
     const files = new Set(this.manifest.files || []);
+    // raw-only-diagnostics: default semantic boot uses fromCoreDb instead of this CSV path.
     const statsPath = 'public/assets/bcu/000001/org/data/t_unit.csv';
     let rows = [];
     try { rows = parseCsvRows(await this.readText(statsPath)).map(toNumbers); }
@@ -49,6 +50,25 @@ export class BcuEnemyRepository {
       this.enemies.set(enemyId, { id: enemyId, id3, key: enemyKey(enemyId), sourcePack: '000001', name, stats, rawStats: raw, asset });
     }
     return this;
+  }
+
+  static fromCoreDb(coreDb, { manifest, names, diagnostics, locale = 'jp' } = {}) {
+    const repo = new BcuEnemyRepository({ manifest, names, diagnostics, readText: null, locale });
+    for (const record of Object.values(coreDb?.enemies?.enemies || {})) {
+      const enemyId = toInt(record.enemyId ?? record.id, null);
+      if (!Number.isFinite(enemyId)) continue;
+      repo.enemies.set(enemyId, {
+        id: enemyId,
+        id3: record.id3 || pad3(enemyId),
+        key: record.key || enemyKey(enemyId),
+        sourcePack: record.sourcePack || 'core-db',
+        name: record.name || names.enemy(enemyId, locale),
+        stats: record.stats || null,
+        rawStats: record.rawStats || [],
+        asset: record.asset || null
+      });
+    }
+    return repo;
   }
 
   get(enemyId) { return this.enemies.get(toInt(enemyId, -1)) || null; }

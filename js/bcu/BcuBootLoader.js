@@ -8,29 +8,58 @@ import { BcuBackgroundRepository } from './BcuBackgroundRepository.js';
 import { BcuCastleRepository } from './BcuCastleRepository.js';
 import { BcuStageRepository } from './BcuStageRepository.js';
 import { SemanticAssetProvider } from './SemanticAssetProvider.js';
+import { installRuntimeRawBcuGuard } from './RuntimeAssetGuard.js';
 
 export { setBcuAssetDatabase } from './BcuAssetDatabase.js';
 
 export class BcuBootLoader {
   static async loadGame({
     assetRoot = './public/assets',
-    bcuRoot = './public/assets/bcu',
-    manifestPath = './public/assets/bcu-manifest.json',
+    bcuRoot = null,
+    manifestPath = null,
     locale = 'jp',
     preloadMode = 'metadata-and-current-battle',
     semanticMode = 'semantic-strict'
   } = {}) {
     const diagnostics = createBcuDiagnostics();
-    const manifest = await BcuManifestLoader.load({ manifestPath });
-    manifest.assetRoot = manifest.assetRoot || assetRoot;
-    manifest.bcuRoot = manifest.bcuRoot || bcuRoot;
-    manifest.preloadMode = preloadMode;
-    manifest.semanticMode = semanticMode;
     const semanticProvider = new SemanticAssetProvider({
       mode: semanticMode,
       allowRawFallback: semanticMode === 'raw-only-diagnostics'
     });
     await semanticProvider.load();
+    installRuntimeRawBcuGuard({ mode: semanticMode, provider: semanticProvider });
+
+    if (semanticMode !== 'raw-only-diagnostics') {
+      const coreDb = await semanticProvider.readCoreDb();
+      const manifest = {
+        ...(coreDb.manifestLite || {}),
+        assetRoot,
+        bcuRoot: null,
+        preloadMode,
+        semanticMode,
+        semanticIndexes: semanticProvider.indexes,
+        files: coreDb.manifestLite?.files || [],
+        packs: coreDb.manifestLite?.packs || {}
+      };
+      const names = BcuLangStore.fromCoreDb(coreDb, { locale, diagnostics });
+      const enemies = BcuEnemyRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, locale });
+      const units = BcuUnitRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, locale });
+      const backgrounds = BcuBackgroundRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, locale });
+      const castles = BcuCastleRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, locale });
+      const stages = BcuStageRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, enemies, backgrounds, castles, locale });
+      const assets = new BcuAssetSetRepository({ units, enemies, backgrounds, castles });
+      const playable = await this.loadPlayableErrorConfig({ readText });
+      const db = new BcuAssetDatabase({ locale, manifest, names, units, enemies, backgrounds, castles, stages, assets, diagnostics, playable, semanticProvider });
+      setBcuAssetDatabase(db);
+      return db;
+    }
+
+    // raw-only-diagnostics: default semantic-strict returns above after core-db boot.
+    const manifest = await BcuManifestLoader.load({ manifestPath: manifestPath || './public/assets/bcu-manifest.json', mode: semanticMode });
+    manifest.assetRoot = manifest.assetRoot || assetRoot;
+    manifest.bcuRoot = manifest.bcuRoot || bcuRoot || './public/assets/bcu';
+    manifest.preloadMode = preloadMode;
+    manifest.semanticMode = semanticMode;
     manifest.semanticIndexes = semanticProvider.indexes;
 
     const names = new BcuLangStore({ locale, diagnostics });

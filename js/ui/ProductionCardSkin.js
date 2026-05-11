@@ -41,6 +41,7 @@ export class ProductionCardSkin {
   }
 
   async preload() {
+    if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') return;
     const tasks = [
       BcuImgCut.load(BCU_UNI_IMGCUT_PATH).then((cut) => {
         this.imgcut = cut;

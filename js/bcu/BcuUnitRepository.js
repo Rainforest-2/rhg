@@ -22,6 +22,7 @@ export class BcuUnitRepository {
       const unitId = toInt(id, null);
       if (!Number.isFinite(unitId)) return;
       const id3 = pad3(unitId);
+      // raw-only-diagnostics: default semantic boot uses fromCoreDb instead of per-unit CSV paths.
       const statsPath = (this.manifest.files || []).find((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`)) || `public/assets/bcu/000004/org/unit/${id3}/unit${id3}.csv`;
       let rows = [];
       try {
@@ -56,9 +57,35 @@ export class BcuUnitRepository {
         }) : null;
         forms.push({ index, code, key: unitFormKey(unitId, index), name, stats, rawStats: raw, asset });
       }
-      this.units.set(unitId, { id: unitId, id3, key: unitKey(unitId), sourcePack: '000004', folder: toFetchPath(`public/assets/bcu/000004/org/unit/${id3}/`), forms });
+      this.units.set(unitId, { id: unitId, id3, key: unitKey(unitId), sourcePack: '000004', folder: toFetchPath(`public/assets/bcu/000004/org/unit/${id3}/`), forms }); // raw-only-diagnostics folder provenance
     }));
     return this;
+  }
+
+  static fromCoreDb(coreDb, { manifest, names, diagnostics, locale = 'jp' } = {}) {
+    const repo = new BcuUnitRepository({ manifest, names, diagnostics, readText: null, locale });
+    const byUnit = new Map();
+    for (const record of Object.values(coreDb?.units?.forms || {})) {
+      const unitId = toInt(record.unitId, null);
+      if (!Number.isFinite(unitId)) continue;
+      if (!byUnit.has(unitId)) byUnit.set(unitId, { id: unitId, id3: record.id3 || pad3(unitId), key: unitKey(unitId), sourcePack: record.sourcePack || 'core-db', folder: null, forms: [] });
+      const unit = byUnit.get(unitId);
+      const index = normalizeFormIndex(record.formIndex ?? record.form);
+      unit.forms[index] = {
+        index,
+        code: record.form || formCodeFromIndex(index),
+        key: record.key || unitFormKey(unitId, index),
+        name: record.name || names.unitForm(unitId, index, locale),
+        stats: record.stats || null,
+        rawStats: record.rawStats || [],
+        asset: record.asset || null
+      };
+    }
+    for (const [unitId, unit] of byUnit) {
+      unit.forms = unit.forms.filter(Boolean);
+      repo.units.set(unitId, unit);
+    }
+    return repo;
   }
 
   get(unitId) { return this.units.get(toInt(unitId, -1)) || null; }

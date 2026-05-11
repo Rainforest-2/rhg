@@ -85,7 +85,7 @@ export class CharacterCatalogRuntime {
     for (const a of list) {
       if (seen.has(a?.id)) errors.push({ id: a?.id || null, reason: 'duplicate-id' });
       if (a?.id) seen.add(a.id);
-      const required = Array.isArray(a?.layers) && a.layers.length > 0 ? baseRequired : [...baseRequired, 'baseDir', 'image', 'imgcut'];
+      const required = Array.isArray(a?.layers) && a.layers.length > 0 ? baseRequired : (a?.semanticKey ? [...baseRequired, 'semanticKey'] : [...baseRequired, 'baseDir', 'image', 'imgcut']);
       const missing = required.filter((f) => !(a && Object.prototype.hasOwnProperty.call(a, f)));
       if (missing.length) errors.push({ id: a?.id || null, missing });
     }

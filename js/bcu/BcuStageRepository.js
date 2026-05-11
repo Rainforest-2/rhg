@@ -30,6 +30,15 @@ export class BcuStageRepository {
     return this;
   }
 
+  static fromCoreDb(coreDb, { manifest, names, diagnostics, readText, enemies, backgrounds, castles, locale = 'jp' } = {}) {
+    const repo = new BcuStageRepository({ manifest, names, diagnostics, readText, enemies, backgrounds, castles, locale });
+    for (const record of Object.values(coreDb?.stages?.stages || {})) {
+      if (!record?.key) continue;
+      repo.stages.set(record.key, record);
+    }
+    return repo;
+  }
+
   tripletFromPath(file) {
     const name = String(file || '').split('/').pop()?.replace(/\.csv$/i, '') || '';
     const parts = name.split('-').map((x) => toInt(x, null));

@@ -67,27 +67,31 @@ export const GENERATED_DOG_PLAYABLE_SPECS = ALL_DOG_PLAYABLE_SPECS;
 export const GENERATED_CAT_PLAYABLE_SPECS = ALL_CAT_PLAYABLE_SPECS;
 
 function unitAssetDef({ id, bcuId, kind, form = 'f' }) {
+  const semanticKey = kind === 'enemy' ? `enemy:${Number(id)}` : `unit:${Number(id)}:${form}`;
+  const entry = globalThis.__BCU_DB__?.semanticProvider?.getActorEntry?.(semanticKey) || null;
   if (kind === 'enemy') {
     return {
       id: `enemy-${bcuId}`,
       kind: 'enemy',
+      semanticKey,
+      bundleRef: entry?.bundleRef || null,
       renderMode: 'animated-unit',
-      baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`,
-      image: `${bcuId}_e.png`,
-      imgcut: `${bcuId}_e.imgcut`,
-      model: `${bcuId}_e.mamodel`,
-      animations: [0, 1, 2, 3].map((i) => ({ id: `anim0${i}`, file: `${bcuId}_e0${i}.maanim` }))
+      image: 'image.png',
+      imgcut: 'imgcut.imgcut',
+      model: 'model.mamodel',
+      animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` }))
     };
   }
   return {
     id: `unit-${bcuId}-${form}`,
     kind: 'unit',
+    semanticKey,
+    bundleRef: entry?.bundleRef || null,
     renderMode: 'animated-unit',
-    baseDir: `./public/assets/bcu/000004/org/unit/${bcuId}/${form}/`,
-    image: `${bcuId}_${form}.png`,
-    imgcut: `${bcuId}_${form}.imgcut`,
-    model: `${bcuId}_${form}.mamodel`,
-    animations: [0, 1, 2, 3].map((i) => ({ id: `anim0${i}`, file: `${bcuId}_${form}0${i}.maanim` }))
+    image: 'image.png',
+    imgcut: 'imgcut.imgcut',
+    model: 'model.mamodel',
+    animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` }))
   };
 }
 
@@ -127,7 +131,7 @@ export function buildDogRosterEntry(spec, options = {}) {
     attackAnimId: 'anim02',
     knockbackAnimId: 'anim03',
     economySource: 'provisional-design',
-    uiIcon: { kind: 'enemy', bcuId, source: 'runtime-enemy-asset-pack-000002', primary: `./public/assets/bcu/000002/org/enemy/${bcuId}/edi_${bcuId}.png`, fallback: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png`, runtimeImage: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png` }
+    uiIcon: { kind: 'enemy', bcuId, semanticKey: `enemy:${spec.id}`, preferredInternalPaths: ['icon.png', 'image.png'] }
   };
 }
 
@@ -166,7 +170,7 @@ export function buildCatRosterEntry(spec, options = {}) {
     moveAnimId: 'anim00',
     attackAnimId: 'anim02',
     knockbackAnimId: 'anim03',
-    uiIcon: { kind: 'unit', bcuId, primary: `./public/assets/bcu/000004/org/unit/${bcuId}/${form}/uni${bcuId}_${form}00.png`, fallback: `./public/assets/bcu/000004/org/unit/${bcuId}/${form}/${bcuId}_${form}.png` }
+    uiIcon: { kind: 'unit', bcuId, semanticKey: `unit:${spec.unitId}:${form}`, preferredInternalPaths: ['icon.png', 'image.png'] }
   };
 }
 

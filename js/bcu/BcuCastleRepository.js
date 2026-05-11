@@ -86,4 +86,20 @@ export class BcuCastleRepository {
     this.nyanko.build();
     return this;
   }
+
+  static fromCoreDb(coreDb, options = {}) {
+    const repo = new BcuCastleRepository(options);
+    repo.enemy.castles.clear();
+    repo.nyanko.parts.clear();
+    for (const record of Object.values(coreDb?.castles?.enemy || {})) {
+      const numericId = toInt(record.numericId ?? record.id, null);
+      if (!Number.isFinite(numericId)) continue;
+      repo.enemy.castles.set(numericId, record);
+    }
+    for (const record of Object.values(coreDb?.castles?.nyanko || {})) {
+      if (!record?.partId) continue;
+      repo.nyanko.parts.set(String(record.partId), record);
+    }
+    return repo;
+  }
 }

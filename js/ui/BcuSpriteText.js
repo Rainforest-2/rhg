@@ -24,6 +24,10 @@ export class BcuSpriteText {
   }
 
   async init() {
+    if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') {
+      this.ready = false;
+      return;
+    }
     try {
       this.img = await loadImage(this.resolveAssetPath('./public/assets/bcu/000001/org/page/img001.png'));
       this.imgcut = await BcuImgCut.load(this.resolveAssetPath('./public/assets/bcu/000001/org/page/img001.imgcut'));

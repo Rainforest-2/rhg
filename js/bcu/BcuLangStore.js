@@ -72,6 +72,23 @@ export class BcuLangStore {
     }
   }
 
+  static fromCoreDb(coreDb, { locale = 'jp', diagnostics } = {}) {
+    const store = new BcuLangStore({ locale, diagnostics });
+    store.loadedLocales = ['jp'];
+    if (diagnostics?.lang) diagnostics.lang.loadedLocales = ['jp'];
+    const names = coreDb?.namesJp?.tables || coreDb?.namesJp || {};
+    for (const [kind, table] of Object.entries(names)) {
+      if (!table || typeof table !== 'object') continue;
+      for (const [key, value] of Object.entries(table)) {
+        const text = typeof value === 'string' ? value : value?.value;
+        if (text) store.add('jp', kind, key, text, value?.file || 'core-db.zip:names-jp.json');
+      }
+    }
+    store.loadedFiles = ['core-db.zip:names-jp.json'];
+    if (diagnostics?.lang) diagnostics.lang.loadedFiles.push('core-db.zip:names-jp.json');
+    return store;
+  }
+
   parseFile(locale, file, text) {
     const name = canonicalLangFileName(file, locale);
     const lines = String(text || '').split(/\r?\n/);

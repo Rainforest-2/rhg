@@ -164,7 +164,7 @@ assert.ok(battleEconomySrc.includes('lastProduceDebug'));
 assert.ok(sceneSrcProd.includes("from './ProductionRuntime.js'"));
 assert.ok(sceneSrcProd.includes('getPlayerRosterStatus(){return ProductionRuntime.buildRosterStatus'));
 assert.ok(playerProductionBarSrc.includes('ProductionRuntime.getUnitStatus'));
-assert.ok(playerProductionBarSrc.includes('unitDef.uiIcon.primary') && playerProductionBarSrc.includes("join('|')"), 'production card icon cache key must include image paths to avoid reused photos across different IDs');
+assert.ok(playerProductionBarSrc.includes('semanticKey') && playerProductionBarSrc.includes("join('|')"), 'production card icon cache key must include semantic icon identity');
 assert.ok(!playerProductionBarSrc.includes('economy.produce'));
 assert.ok(!playerProductionBarSrc.includes('economy.tick'));
 assert.ok(inspectorSrc.includes('productionRuntime'));
@@ -206,11 +206,11 @@ assert.ok(characterCatalogSrc.includes('export function isGeneratedCharacter'), 
 assert.ok(inspectorSrc.includes('characterCatalog'));
 assert.ok(previewAssetsSrc.includes('buildPlayablePreviewAssets(ANIM4_E)'));
 
-assert.ok(playableRegistrySrc.includes("source: 'runtime-enemy-asset-pack-000002'"), 'Dog uiIcon should mark runtime asset pack source');
-assert.ok(playableRegistrySrc.includes("primary: `./public/assets/bcu/000002/org/enemy/${bcuId}/edi_${bcuId}.png`"), 'Dog uiIcon primary must use 000002 enemy icon');
-assert.ok(!playableRegistrySrc.includes('000010/org/enemy/${bcuId}/enemy_icon_${bcuId}.png'), 'Dog uiIcon primary must not use 000010 enemy_icon');
-assert.ok(playableRegistrySrc.includes('runtimeImage: `./public/assets/bcu/000002/org/enemy/${bcuId}/${bcuId}_e.png`'), 'Dog uiIcon must include runtimeImage fallback target');
-assert.ok(playableRegistrySrc.includes('baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`'), 'buildDogPreviewAsset must remain on 000002 pack');
+assert.ok(playableRegistrySrc.includes('preferredInternalPaths'), 'uiIcon should declare bundle internal path preferences');
+assert.ok(playableRegistrySrc.includes('semanticKey: `enemy:${spec.id}`'), 'Dog uiIcon must use semantic enemy key');
+assert.ok(playableRegistrySrc.includes('semanticKey: `unit:${spec.unitId}:${form}`'), 'Cat uiIcon must use semantic unit key');
+assert.ok(!playableRegistrySrc.includes('uiIcon.primary'), 'uiIcon.primary raw path must not be used');
+assert.ok(!playableRegistrySrc.includes('baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`'), 'buildDogPreviewAsset must not remain on raw 000002 pack');
 
 assert.ok(rendererSrc.includes('projectBcuX(scene, worldX)'), 'renderer must expose projectBcuX helper');
 assert.ok(rendererSrc.includes('camera.getBcuRenderX') || rendererSrc.includes('camera.bcuWorldToScreenX'), 'projectBcuX must use BCU projection methods');

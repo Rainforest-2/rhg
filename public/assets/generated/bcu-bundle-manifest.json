@@ -33932,22 +33932,6 @@
       "sizeBytes": 48385,
       "hash": "2b3e5b2a1ac1b3cd1e1fe8695352d5af925c5243227403611fa347ba0637f6f1"
     },
-    "core:stats": {
-      "kind": "core",
-      "key": "core:stats",
-      "bundlePath": "public/assets/bundles/core/core-db.zip",
-      "status": "full",
-      "sizeBytes": 44408177,
-      "hash": "4ebafbf7c4f7adf0f85bc5423c4151f50ec4be2be7be39c841876bbfc5195a41"
-    },
-    "core:manifest": {
-      "kind": "core",
-      "key": "core:manifest",
-      "bundlePath": "public/assets/bundles/core/core-manifest.zip",
-      "status": "full",
-      "sizeBytes": 15846991,
-      "hash": "e90c3c7b2fdd268e8c274009f155f4a25e99e56a1dbb6cc4d9524d85a4da3f1e"
-    },
     "lang:jp": {
       "kind": "language",
       "key": "lang:jp",
@@ -33955,6 +33939,14 @@
       "status": "full",
       "sizeBytes": 1042637,
       "hash": "dadb44898617e24b79c97f1c7e4d7cf4225700408358668cfa98d6d6c8303f82"
+    },
+    "core:db": {
+      "kind": "core",
+      "key": "core:db",
+      "bundlePath": "public/assets/bundles/core/core-db.zip",
+      "status": "full",
+      "sizeBytes": 94428913,
+      "hash": "f8fa02e81726c1f51e8b5c4643e4bf462dc775370caaa34f4afc8e173af044db"
     }
   }
 }

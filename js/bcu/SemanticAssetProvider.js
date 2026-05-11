@@ -8,6 +8,10 @@ function normalizeFetchPath(path) {
 }
 
 async function fetchJson(path) {
+  if (typeof window === 'undefined') {
+    const { readFile } = await import('node:fs/promises');
+    return JSON.parse(await readFile(String(path).replace(/^\.\//, ''), 'utf8'));
+  }
   const response = await fetch(normalizeFetchPath(path));
   if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`);
   return await response.json();
@@ -49,6 +53,9 @@ export class SemanticAssetProvider {
     this.indexes = {};
     this.bundleFetchPromises = new Map();
     this.bundleArchives = new Map();
+    this.coreJsonCache = new Map();
+    this.actorIconUrlCache = new Map();
+    this.actorImageUrlCache = new Map();
     this.objectUrls = new Set();
     this.diagnostics = {
       mode: this.mode,
@@ -111,6 +118,11 @@ export class SemanticAssetProvider {
     const url = normalizeFetchPath(bundleRef.bundlePath);
     if (!this.bundleFetchPromises.has(url)) {
       this.bundleFetchPromises.set(url, (async () => {
+        if (typeof window === 'undefined') {
+          const { readFile } = await import('node:fs/promises');
+          const bytes = await readFile(url.replace(/^\.\//, ''));
+          return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+        }
         if (!this.fetchImpl) throw new Error('fetch is unavailable');
         const response = await this.fetchImpl(url);
         if (!response.ok) throw new Error(`Failed to fetch bundle ${url}: ${response.status}`);
@@ -152,6 +164,34 @@ export class SemanticAssetProvider {
   clearObjectUrls() {
     for (const url of this.objectUrls) URL.revokeObjectURL(url);
     this.objectUrls.clear();
+    this.actorIconUrlCache.clear();
+    this.actorImageUrlCache.clear();
+  }
+
+  async readCoreJson(internalPath) {
+    const entry = this.getCoreEntry('core:db') || this.getCoreEntry('core:stats');
+    if (!entry?.bundleRef) throw new Error('Missing core-db bundle');
+    const key = `${entry.bundleRef.bundlePath}:${internalPath}`;
+    if (!this.coreJsonCache.has(key)) {
+      this.coreJsonCache.set(key, JSON.parse(await this.readTextByBundleRef(entry.bundleRef, internalPath)));
+    }
+    return this.coreJsonCache.get(key);
+  }
+
+  async readCoreDb() {
+    const [manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary] = await Promise.all([
+      this.readCoreJson('manifest-lite.json'),
+      this.readCoreJson('units.json'),
+      this.readCoreJson('enemies.json'),
+      this.readCoreJson('names-jp.json'),
+      this.readCoreJson('backgrounds.json'),
+      this.readCoreJson('castles.json'),
+      this.readCoreJson('stages.json'),
+      this.readCoreJson('stage-aliases.json'),
+      this.readCoreJson('asset-keys.json'),
+      this.readCoreJson('diagnostics-summary.json')
+    ]);
+    return { manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary };
   }
 
   async readActorBundle(actorKey) {
@@ -161,6 +201,33 @@ export class SemanticAssetProvider {
       throw new Error(`Unknown actor semantic key: ${actorKey}`);
     }
     return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
+  }
+
+  async getActorBundle(actorKey) {
+    return await this.readActorBundle(actorKey);
+  }
+
+  async getActorIconUrl(actorKey) {
+    if (this.actorIconUrlCache.has(actorKey)) return this.actorIconUrlCache.get(actorKey);
+    const { bundleRef, archive } = await this.readActorBundle(actorKey);
+    const internalPath = archive.has('icon.png') ? 'icon.png' : (archive.has('image.png') ? 'image.png' : null);
+    if (!internalPath) throw new Error(`Actor bundle has no icon or image: ${actorKey}`);
+    const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
+    this.actorIconUrlCache.set(actorKey, url);
+    return url;
+  }
+
+  async getActorImageUrl(actorKey) {
+    if (this.actorImageUrlCache.has(actorKey)) return this.actorImageUrlCache.get(actorKey);
+    const { bundleRef } = await this.readActorBundle(actorKey);
+    const url = await this.createObjectUrl(bundleRef, 'image.png', 'image/png');
+    this.actorImageUrlCache.set(actorKey, url);
+    return url;
+  }
+
+  async readActorText(actorKey, internalPath) {
+    const { bundleRef } = await this.readActorBundle(actorKey);
+    return await this.readTextByBundleRef(bundleRef, internalPath);
   }
 
   async readStageCsv(stageKey) {
@@ -190,11 +257,24 @@ export class SemanticAssetProvider {
     return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
   }
 
+  async readLanguageJson(locale, internalPath) {
+    return JSON.parse(await this.readLanguageFile(locale, internalPath));
+  }
+
   async readLanguageFile(locale, internalPath) {
     if (locale !== 'jp') throw new Error(`Unsupported BCU language locale: ${locale}`);
     const entry = this.getLanguageEntry('lang:jp');
     if (!entry?.bundleRef) throw new Error('Missing lang:jp bundle');
     return await this.readTextByBundleRef(entry.bundleRef, internalPath);
+  }
+
+  assertNoRawBcuUrl(url, context = 'runtime') {
+    const raw = /(?:^|\/|\.)public\/assets\/bcu(?:\/|-manifest\.json)|public\/assets\/bcu-manifest\.json/.test(String(url || '').replace(/\\/g, '/'));
+    if (!raw) return;
+    const detail = { type: 'blockedRawBcuUrl', url: String(url), context };
+    this.diagnostics.blockedRawReads.push(detail);
+    if (!this.allowRawFallback) throw new Error(`Raw BCU URL blocked in ${context}: ${url}`);
+    this.diagnostics.rawOnlyReads.push(detail);
   }
 
   recordRawFallback(reason, detail = {}) {

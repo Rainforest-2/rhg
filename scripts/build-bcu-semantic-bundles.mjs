@@ -6,7 +6,6 @@ const actor = await readJson('public/assets/generated/bcu-actor-index.json', { e
 const stage = await readJson('public/assets/generated/bcu-stage-index.json', { entries: [] });
 const background = await readJson('public/assets/generated/bcu-background-index.json', { entries: [] });
 const castle = await readJson('public/assets/generated/bcu-castle-index.json', { enemy: [], nyanko: [] });
-const core = await readJson('public/assets/generated/bcu-core-index.json', { entries: [] });
 const language = await readJson('public/assets/generated/bcu-language-index.json', { entries: [] });
 
 const manifest = { schemaVersion: 1, generatedAt: FIXED_DATE, zipFormat: 'store-only', generationMode: all ? 'all' : 'sample', bundles: {} };
@@ -80,14 +79,6 @@ for (const entry of enemyCastles) {
   await addBundle(entry.bundleRef.bundleKey, 'enemyCastle', entry.key, entry.bundleRef.bundlePath, entry.selected.image ? 'full' : 'partial', files);
 }
 
-for (const entry of core.entries || []) {
-  const files = [
-    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, files: entry.files }, null, 2)) },
-    ...(await Promise.all((entry.files || []).map(async (file) => ({ name: file.replace(/^public\/assets\/bcu\//, '').replace(/^public\/assets\//, ''), data: await fileBufferOrNull(file) }))))
-  ];
-  await addBundle(entry.bundleRef.bundleKey, 'core', entry.key, entry.bundleRef.bundlePath, entry.status, files);
-}
-
 for (const entry of language.entries || []) {
   const files = [
     { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, locale: entry.locale, files: entry.files }, null, 2)) },
@@ -98,4 +89,7 @@ for (const entry of language.entries || []) {
 
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);
 await writeJson('public/assets/generated/bcu-diagnostics.json', diagnostics);
+await import('./build-bcu-core-db-bundle.mjs');
+manifest.bundles['core:db'] = { kind: 'core', key: 'core:db', bundlePath: 'public/assets/bundles/core/core-db.zip', status: 'full', sizeBytes: (await fs.stat('public/assets/bundles/core/core-db.zip')).size, hash: await hashFile('public/assets/bundles/core/core-db.zip') };
+await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);
 console.log(`wrote bcu-bundle-manifest bundles=${Object.keys(manifest.bundles).length} mode=${manifest.generationMode}`);

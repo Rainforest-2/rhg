@@ -1,5 +1,6 @@
 import { CHARACTER_FACTIONS, getAvailableCharacters, getCharactersByFaction, getCharacterBaseId, getCharacterById } from '../battle/CharacterCatalog.js';
 import { FormationStore } from '../battle/FormationStore.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 export class FormationEditor {
   constructor({ mount, onFormationChanged, onApplyBattle }) {
@@ -91,7 +92,24 @@ export class FormationEditor {
 
   renderIconMarkup(c, extraClass = '') {
     const icon = c?.uiIcon || {};
-    return `<img class='${extraClass}' src='${icon.primary || ''}' onerror="this.onerror=null;this.classList.add('image-missing');this.src='${icon.fallback || ''}'">`;
+    const semanticKey = icon.semanticKey || c?.assetDef?.semanticKey || '';
+    return `<img class='${extraClass}' data-semantic-icon='${semanticKey}' alt=''>`;
+  }
+
+  resolveSemanticIcons() {
+    let provider = null;
+    try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
+    if (!provider) return;
+    for (const img of this.root.querySelectorAll('img[data-semantic-icon]')) {
+      const key = img.dataset.semanticIcon;
+      if (!key || img.dataset.iconResolved === '1') continue;
+      img.dataset.iconResolved = '1';
+      provider.getActorIconUrl(key).then((url) => {
+        img.src = url;
+      }).catch(() => {
+        img.classList.add('image-missing');
+      });
+    }
   }
 
   renderDynamic() {
@@ -111,6 +129,7 @@ export class FormationEditor {
     this.root.querySelector('.formation-catalog-grid').innerHTML = chars.map((c) => {
       return `<button type='button' class='formation-character-card ${usedBaseIds.has(getCharacterBaseId(c.characterId)) ? 'is-used' : ''}' data-character='${c.characterId}' data-faction='${c.faction}' data-base-character-id='${c.baseCharacterId || ''}'>${this.renderIconMarkup(c)}<span>${c.factionLabel || c.faction}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small><small class='base-id'>base:${c.baseCharacterId || '-'}</small><small>${c.sourceSlotId || '-'}</small><small>${c.statsSummary || ''}</small></button>`;
     }).join('');
+    this.resolveSemanticIcons();
   }
 
   refresh() {

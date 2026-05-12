@@ -133,7 +133,13 @@ export class PreviewApp {
       this.productionBar?.setVisible(false);
       this.sceneReady = false;
       this.loadingOverlay?.setError(e);
-      console.error('[PreviewApp] applyFormationToBattle failed', e);
+      console.error('[PreviewApp] applyFormationToBattle failed detail', {
+        name: e?.name,
+        message: e?.message,
+        stack: e?.stack,
+        cause: e?.cause,
+        error: e
+      });
       throw e;
     }
   }

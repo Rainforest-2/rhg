@@ -1,8 +1,8 @@
 # BCU migration status
 
 ## Last updated
-- note: BCU semantic bundle migration contract implemented with generated semantic indexes, sample STORE ZIP bundles, runtime semantic provider, and explicit raw fallback migration mode.
-- date: 2026-05-11 (UTC)
+- note: Zip-first runtime migration updated for aggregated UI icon bundles, icon source audit, in-flight ZIP/core DB promise caching, KBEff semantic bundle generation/gating, and detailed Safari-friendly error diagnostics.
+- date: 2026-05-12 (UTC)
 - commit: (working tree)
 - task: AGENTS.md BCU semantic bundle migration contract
 
@@ -23,6 +23,45 @@
 - Known remaining rawOnly assets: none reported in generated semantic indexes.
 - Browser Network verification result: passed on `http://127.0.0.1:4173/index.html` with Playwright Chromium. Observed bundle/core requests, no `public/assets/bcu/**`, no `public/assets/bcu-manifest.json`, `semanticMode = semantic-strict`, `blockedRawReads = 0`, and formation icon raw DOM sources `[]`.
 
+## Aggregated Icon Bundle Pass (2026-05-12)
+### Icon source audit summary
+- Audit files generated: `public/assets/generated/bcu-icon-source-audit.json` and `public/assets/generated/bcu-icon-source-audit.md`.
+- Audit records: 2,855 actor keys.
+- Enemy icon policy: prefer `public/assets/bcu/000010/org/enemy/<id3>/enemy_icon_<id3>.png` when present.
+- Audit summary: `ok=2074`, `needs-remap=525`, `missing=256`, `ambiguous=0`.
+- Missing mappings are omitted from `bcu-icon-index.json`; UI shows `image-missing` placeholders instead of guessing from actor `image.png`.
+
+### Generated icon runtime index and bundles
+- Icon index generated: `public/assets/generated/bcu-icon-index.json`, 2,851 entries.
+- Aggregate icon bundles in `public/assets/generated/bcu-bundle-manifest.json`:
+  - `public/assets/bundles/icon/enemy.zip`: 777 icons.
+  - `public/assets/bundles/icon/unit-f.zip`: 835 icons.
+  - `public/assets/bundles/icon/unit-c.zip`: 813 icons.
+  - `public/assets/bundles/icon/unit-s.zip`: 407 icons.
+  - `public/assets/bundles/icon/unit-u.zip`: 19 icons.
+- Rejected one-ZIP-per-icon paths are not generated.
+- ZIP format remains STORE/no-compression.
+
+### Runtime status
+- Formation catalog/slot icons now call `SemanticAssetProvider.getActorUiIconUrl()` and lazy-load with `IntersectionObserver`, de-duped work, and concurrency limit 6.
+- Production card icons now call `SemanticAssetProvider.getActorUiIconUrl()`.
+- `getActorUiIconUrl()` reads `bcu-icon-index.json` and aggregate icon ZIPs only; it does not call actor bundle icon fallback or actor `image.png`.
+- `SemanticAssetProvider.archive()` uses `bundleArchivePromises` for in-flight ZIP parse caching.
+- `SemanticAssetProvider.readCoreDb()` uses `coreDbPromise` and retries after failure.
+- Node concurrency probe: simultaneous `readCoreDb()` plus icon reads ended with `blockedRawReads=0`, `rawFallbacks=0`, `bundleErrors=0`, and only aggregate icon ZIPs parsed for UI icons.
+- Formation initial actor bundle request count: not browser-verified in this session; static checks and provider probe confirm UI icon code does not call actor icon APIs before Apply.
+- Formation initial icon bundle request names observed in provider probe: `enemy.zip`, `unit-f.zip`, `unit-c.zip`, `unit-s.zip`, `unit-u.zip`.
+- Production card icon source: aggregate icon ZIP via `getActorUiIconUrl()`.
+- Browser Network verification result: local server responded at `http://127.0.0.1:4173/index.html`; automated browser network verification was not rerun because Playwright is not installed in this workspace.
+
+### Effect and diagnostics status
+- KBEff semantic bundle generated: `public/assets/bundles/effect/kbeff.zip` with `bundle.json`, `image.png`, `imgcut.imgcut`, `model.mamodel`, `kb_hb.maanim`, `kb_sw.maanim`, and `kb_ass.maanim`.
+- KBEff runtime remains gated in `semantic-strict` by `BattleScene.ensureKbeffLoading()`; if enabled with a semantic provider, `BcuKbeffLoader` reads the effect ZIP instead of raw `public/assets/bcu/000001/org/battle/a/**`.
+- Safari error logging status: `PreviewApp.applyFormationToBattle` and `FormationEditor` apply/icon failures log `{ name, message, stack, cause, error }`; UI hints use `err?.message || String(err)`.
+- Bundle diagnostics now include concrete `kind`, `semanticKey`, `bundlePath`, `internalPath`, `missingEntries`, original error fields, and message for icon/effect/background/castle/actor paths.
+- Blocked raw read count in Node provider probe: 0.
+- Raw fallback count in Node provider probe: 0.
+
 ### Generated index list
 - `public/assets/generated/bcu-asset-audit.json`
 - `public/assets/generated/bcu-asset-audit.md`
@@ -33,6 +72,9 @@
 - `public/assets/generated/bcu-castle-index.json`
 - `public/assets/generated/bcu-core-index.json`
 - `public/assets/generated/bcu-language-index.json`
+- `public/assets/generated/bcu-icon-source-audit.json`
+- `public/assets/generated/bcu-icon-source-audit.md`
+- `public/assets/generated/bcu-icon-index.json`
 - `public/assets/generated/bcu-bundle-manifest.json`
 - `public/assets/generated/bcu-diagnostics.json`
 - `public/assets/generated/bcu-lang-prune-report.json`
@@ -45,6 +87,12 @@
 - `public/assets/bundles/background/*.zip`
 - `public/assets/bundles/castle/enemy/*.zip`
 - `public/assets/bundles/core/*.zip`
+- `public/assets/bundles/icon/enemy.zip`
+- `public/assets/bundles/icon/unit-f.zip`
+- `public/assets/bundles/icon/unit-c.zip`
+- `public/assets/bundles/icon/unit-s.zip`
+- `public/assets/bundles/icon/unit-u.zip`
+- `public/assets/bundles/effect/kbeff.zip`
 - `public/assets/bundles/lang/jp.zip`
 - ZIP format: STORE/no-compression only. Browser runtime uses `js/bcu/SemanticAssetProvider.js` minimal STORE ZIP reader.
 - Repository mode: full semantic bundle generation. Full local generation command: `node scripts/build-bcu-semantic-bundles.mjs --all`.
@@ -56,7 +104,7 @@
 - Stage entries: 8,519 total; duplicate basename / alias conflict entries: 1,944.
 - Background entries: 361 total; entries missing image or imgcut: 10; candidate images: 574; candidate imgcuts: 370.
 - Castle entries: 330 enemy castles; 4 nyanko castle parts; locale/default fallback warnings: 1.
-- Bundle manifest: 4,243 bundles, `generationMode: "all"`.
+- Bundle manifest: 4,249 bundles, `generationMode: "all"`; kind counts are actor 2,855, stage-map 695, background 361, enemyCastle 330, language 1, effect 1, core 1, icon 5.
 
 ### Runtime migration status
 - `BcuBootLoader` initializes `SemanticAssetProvider`, reads `core/core-db.zip`, and constructs runtime repositories through `fromCoreDb`.
@@ -66,7 +114,7 @@
 - `StageRegistry` exposes generated stage entries first and avoids silently choosing conflicting aliases.
 - `StageDefinitionLoader` reads semantic stage CSVs through `SemanticAssetProvider.readStageCsv(stageKey)` before legacy fallback.
 - `StageBackgroundLoader` and `BcuCastleAssetLoader` use semantic bundles for bundled backgrounds/castles; raw fallback is blocked in normal `semantic-strict`.
-- Formation and production icons resolve through `SemanticAssetProvider.getActorIconUrl()` and produce `blob:` URLs or placeholders, not raw BCU image paths.
+- Formation and production icons resolve through `SemanticAssetProvider.getActorUiIconUrl()` and aggregate icon ZIPs, producing `blob:` URLs or placeholders, not raw BCU image paths and not actor bundle image fallbacks.
 - Raw source assets under `public/assets/bcu/` were not deleted, moved, or rewritten.
 
 ### Validation command results
@@ -81,7 +129,13 @@
 - `node scripts/build-bcu-core-index.mjs` pass: `entries=1 core-db=public/assets/bundles/core/core-db.zip`
 - `node scripts/build-bcu-language-index.mjs` pass: `entries=1 files=16`
 - `node scripts/build-bcu-core-db-bundle.mjs` pass: `entries=11`
-- `node scripts/build-bcu-semantic-bundles.mjs --all` pass: `bundles=4243 mode=all`
+- `node scripts/build-bcu-semantic-bundles.mjs --all` pass: console reported `bundles=4244 mode=all` before icon post-step; final manifest contains 4,249 bundles including 5 icon bundles.
+- `node scripts/audit-bcu-icon-sources.mjs` pass: `records=2855 summary={"needs-remap":525,"missing":256,"ok":2074}`
+- `node scripts/build-bcu-icon-index.mjs` pass: `entries=2851 forms=c,f,s,u`
+- `node scripts/build-bcu-icon-bundles.mjs` pass: `enemy=777 unit-c=813 unit-f=835 unit-s=407 unit-u=19`
+- `node scripts/check-icon-bundles-are-aggregated.mjs` pass.
+- `node scripts/check-icon-bundles-never-load-actor-bundles.mjs` pass.
+- `node scripts/check-production-icons-use-icon-bundles.mjs` pass.
 - `node scripts/check-bcu-semantic-bundles.mjs` pass: `count=4243 mode=all`
 - `node scripts/check-runtime-uses-zip-bundles.mjs` pass.
 - `node scripts/check-bundled-assets-never-load-raw.mjs` pass.

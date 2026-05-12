@@ -33940,13 +33940,66 @@
       "sizeBytes": 1042637,
       "hash": "dadb44898617e24b79c97f1c7e4d7cf4225700408358668cfa98d6d6c8303f82"
     },
+    "effect:kbeff": {
+      "kind": "effect",
+      "key": "effect:kbeff",
+      "bundlePath": "public/assets/bundles/effect/kbeff.zip",
+      "status": "full",
+      "sizeBytes": 18231,
+      "hash": "6a106caf9e55540b29e89e8bea05ab20c1729a71d566f49bbd9291bc4603c27f"
+    },
     "core:db": {
       "kind": "core",
       "key": "core:db",
       "bundlePath": "public/assets/bundles/core/core-db.zip",
       "status": "full",
       "sizeBytes": 94428913,
-      "hash": "f8fa02e81726c1f51e8b5c4643e4bf462dc775370caaa34f4afc8e173af044db"
+      "hash": "f073e80b043de250dcf8f7468b3ca045161e2455847420e8c6f586feb6dcfeae"
+    },
+    "icon:enemy": {
+      "kind": "icon",
+      "key": "icon:enemy",
+      "bundlePath": "public/assets/bundles/icon/enemy.zip",
+      "status": "full",
+      "iconCount": 777,
+      "sizeBytes": 2030405,
+      "hash": "02f25ea6077974886520c71a55727985d477e1b9f5b556ae14dc00dad2226c09"
+    },
+    "icon:unit:c": {
+      "kind": "icon",
+      "key": "icon:unit:c",
+      "bundlePath": "public/assets/bundles/icon/unit-c.zip",
+      "status": "full",
+      "iconCount": 813,
+      "sizeBytes": 4250169,
+      "hash": "f7de7cbbcd0e7c95539ffbdbc4bb15314138849b1d05a8060cbf92918b4b096b"
+    },
+    "icon:unit:f": {
+      "kind": "icon",
+      "key": "icon:unit:f",
+      "bundlePath": "public/assets/bundles/icon/unit-f.zip",
+      "status": "full",
+      "iconCount": 835,
+      "sizeBytes": 4322840,
+      "hash": "c3fde97981952b02cfc5f8e73e12511f89333d3ea4bd906f1ecb76db8eb64f45"
+    },
+    "icon:unit:s": {
+      "kind": "icon",
+      "key": "icon:unit:s",
+      "bundlePath": "public/assets/bundles/icon/unit-s.zip",
+      "status": "full",
+      "iconCount": 407,
+      "sizeBytes": 2137711,
+      "hash": "074de0b5c1452f77da9e869fd32bdad413676c8ff49529ebdada24c25629289e"
+    },
+    "icon:unit:u": {
+      "kind": "icon",
+      "key": "icon:unit:u",
+      "bundlePath": "public/assets/bundles/icon/unit-u.zip",
+      "status": "full",
+      "iconCount": 19,
+      "sizeBytes": 107181,
+      "hash": "1b60387dac9854ca6444f4d2662ef8c2f235eafa474c2d732cc69491452f75b1"
     }
   }
 }

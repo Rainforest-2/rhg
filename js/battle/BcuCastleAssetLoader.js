@@ -60,7 +60,20 @@ export class BcuCastleAssetLoader {
           }
         }
       } catch (error) {
-        provider.recordRawFallback('castle-bundle-load-failed', { castleKey: semanticKey, message: error?.message || String(error) });
+        const semantic = provider.getCastleEntry(semanticKey);
+        const detail = {
+          kind: 'castle',
+          semanticKey,
+          bundlePath: semantic?.bundleRef?.bundlePath || null,
+          internalPath: 'image.png',
+          missingEntries: ['image.png'],
+          originalErrorName: error?.name,
+          originalErrorMessage: error?.message,
+          message: error?.message || String(error)
+        };
+        provider.diagnostics?.bundleErrors?.push(detail);
+        if (!provider.allowRawFallback) throw error;
+        provider.recordRawFallback('castle-bundle-load-failed', detail);
       }
     }
     const castle = this.db?.castles?.enemy?.get(castleId);

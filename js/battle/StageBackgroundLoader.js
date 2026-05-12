@@ -81,7 +81,21 @@ export class StageBackgroundLoader {
           };
         }
       } catch (error) {
-        provider.recordRawFallback('background-bundle-load-failed', { backgroundKey: `background:${bgResolved.resolvedBgId || 0}`, message: error?.message || String(error) });
+        const semanticKey = `background:${bgResolved.resolvedBgId || 0}`;
+        const semantic = provider.getBackgroundEntry(bgResolved.resolvedBgId || 0);
+        const detail = {
+          kind: 'background',
+          semanticKey,
+          bundlePath: semantic?.bundleRef?.bundlePath || null,
+          internalPath: null,
+          missingEntries: ['image.png', 'imgcut.imgcut'],
+          originalErrorName: error?.name,
+          originalErrorMessage: error?.message,
+          message: error?.message || String(error)
+        };
+        provider.diagnostics?.bundleErrors?.push(detail);
+        if (!provider.allowRawFallback) throw error;
+        provider.recordRawFallback('background-bundle-load-failed', detail);
       }
     }
     let bgRow = bg?.csv || null;

@@ -11,8 +11,12 @@ if (!registry.includes('semanticKey: `enemy:${spec.id}`')) errors.push('enemy ui
 if (!registry.includes('semanticKey: `unit:${spec.unitId}:${form}`')) errors.push('unit uiIcon does not expose semanticKey');
 if (/uiIcon:\s*\{[^}]*primary:/.test(registry)) errors.push('PlayableCharacterRegistry still emits uiIcon.primary');
 if (editor.includes("src='${icon.primary")) errors.push('FormationEditor still renders uiIcon.primary');
-if (!editor.includes('getActorIconUrl(key)')) errors.push('FormationEditor does not call SemanticAssetProvider.getActorIconUrl');
-if (!prod.includes('provider.getActorIconUrl(semanticKey)')) errors.push('PlayerProductionBar does not load semantic icon URLs');
+if (!editor.includes('getActorUiIconUrl(key)')) errors.push('FormationEditor does not call SemanticAssetProvider.getActorUiIconUrl');
+if (editor.includes('getActorIconUrl(key)')) errors.push('FormationEditor still calls actor bundle icon API');
+if (!editor.includes('IntersectionObserver')) errors.push('FormationEditor does not lazy-load icons with IntersectionObserver');
+if (!editor.includes('this.iconConcurrency = 6')) errors.push('FormationEditor icon concurrency limit is not 6');
+if (!prod.includes('provider.getActorUiIconUrl(semanticKey)')) errors.push('PlayerProductionBar does not load semantic UI icon URLs');
+if (prod.includes('provider.getActorIconUrl(semanticKey)')) errors.push('PlayerProductionBar still calls actor bundle icon API');
 
 const db = await BcuBootLoader.loadGame();
 const catalog = buildCharacterCatalog({ bcuDb: db, locale: 'jp' }).slice(0, 20);

@@ -57,7 +57,16 @@ async function tryLoadSemanticActor(def) {
       provider.recordRawFallback('actor-bundle-load-failed', { actorKey: def.semanticKey, message: error?.message || String(error) });
       return null;
     }
-    provider.diagnostics.bundleErrors.push({ semanticKey: def.semanticKey, message: error?.message || String(error) });
+    provider.diagnostics.bundleErrors.push({
+      kind: 'actor',
+      semanticKey: def.semanticKey,
+      bundlePath: provider.getActorEntry(def.semanticKey)?.bundleRef?.bundlePath || null,
+      internalPath: null,
+      missingEntries: [],
+      originalErrorName: error?.name,
+      originalErrorMessage: error?.message,
+      message: error?.message || String(error)
+    });
     throw error;
   }
 }

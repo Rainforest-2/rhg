@@ -12,6 +12,11 @@ export class FormationEditor {
     this.formation = FormationStore.load();
     this.activeSlot = 0;
     this.applying = false;
+    this.iconWork = new Map();
+    this.iconQueue = [];
+    this.iconActive = 0;
+    this.iconConcurrency = 6;
+    this.iconObserver = null;
     this.root = document.createElement('div');
     this.root.className = 'formation-ui';
     this.mount.appendChild(this.root);
@@ -46,7 +51,16 @@ export class FormationEditor {
         this.applying = true;
         if (btn) { btn.disabled = true; btn.textContent = 'Applying...'; }
         try { await this.onApplyBattle(this.formation); }
-        catch (err) { console.error('[FormationEditor] apply failed', err); this.setHint(`Apply failed: ${err instanceof Error ? err.message : String(err)}`); }
+        catch (err) {
+          console.error('[FormationEditor] apply failed detail', {
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+            cause: err?.cause,
+            error: err
+          });
+          this.setHint(`Apply failed: ${err?.message || String(err)}`);
+        }
         finally { this.applying = false; if (btn) { btn.disabled = false; btn.textContent = 'Apply Battle'; } }
         return;
       }
@@ -93,23 +107,63 @@ export class FormationEditor {
   renderIconMarkup(c, extraClass = '') {
     const icon = c?.uiIcon || {};
     const semanticKey = icon.semanticKey || c?.assetDef?.semanticKey || '';
-    return `<img class='${extraClass}' data-semantic-icon='${semanticKey}' alt=''>`;
+    return `<img class='${extraClass} image-missing' data-semantic-icon='${semanticKey}' alt=''>`;
+  }
+
+  scheduleIconLoad(img, provider) {
+    const key = img.dataset.semanticIcon;
+    if (!key || img.dataset.iconResolved === '1') return Promise.resolve();
+    img.dataset.iconResolved = '1';
+    const existing = this.iconWork.get(key) || provider.getActorUiIconUrl(key);
+    this.iconWork.set(key, existing);
+    return existing.then((url) => {
+      img.src = url;
+      img.classList.remove('image-missing');
+    }).catch((err) => {
+      console.error('[FormationEditor] icon load failed detail', {
+        name: err?.name,
+        message: err?.message,
+        stack: err?.stack,
+        cause: err?.cause,
+        error: err,
+        semanticKey: key
+      });
+      img.classList.add('image-missing');
+    });
+  }
+
+  pumpIconQueue(provider) {
+    while (this.iconActive < this.iconConcurrency && this.iconQueue.length) {
+      const img = this.iconQueue.shift();
+      if (!img?.isConnected) continue;
+      this.iconActive += 1;
+      this.scheduleIconLoad(img, provider).finally(() => {
+        this.iconActive -= 1;
+        this.pumpIconQueue(provider);
+      });
+    }
   }
 
   resolveSemanticIcons() {
     let provider = null;
     try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
     if (!provider) return;
-    for (const img of this.root.querySelectorAll('img[data-semantic-icon]')) {
-      const key = img.dataset.semanticIcon;
-      if (!key || img.dataset.iconResolved === '1') continue;
-      img.dataset.iconResolved = '1';
-      provider.getActorIconUrl(key).then((url) => {
-        img.src = url;
-      }).catch(() => {
-        img.classList.add('image-missing');
-      });
+    if (!this.iconObserver && typeof IntersectionObserver !== 'undefined') {
+      this.iconObserver = new IntersectionObserver((items) => {
+        for (const item of items) {
+          if (!item.isIntersecting) continue;
+          this.iconObserver.unobserve(item.target);
+          this.iconQueue.push(item.target);
+        }
+        this.pumpIconQueue(provider);
+      }, { root: this.root.querySelector('.formation-catalog-scroll') || null, rootMargin: '160px' });
     }
+    for (const img of this.root.querySelectorAll('img[data-semantic-icon]')) {
+      if (!img.dataset.semanticIcon || img.dataset.iconResolved === '1') continue;
+      if (this.iconObserver) this.iconObserver.observe(img);
+      else this.iconQueue.push(img);
+    }
+    this.pumpIconQueue(provider);
   }
 
   renderDynamic() {

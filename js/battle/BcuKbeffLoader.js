@@ -28,12 +28,35 @@ export async function verifyKbeffAssetPaths(baseDir = './public/assets/bcu/00000
 }
 
 export class BcuKbeffLoader {
-  constructor(config = null) { this.config = config || BATTLE_CONFIG.tuning?.knockback?.kbEffect || {}; this.baseDir = this.config.baseDir || './public/assets/bcu/000001/org/battle/a/'; this.definitions = new Map(); this.shared = null; }
+  constructor(config = null, options = {}) { this.config = config || BATTLE_CONFIG.tuning?.knockback?.kbEffect || {}; this.provider = options.semanticProvider || null; this.bundleRef = { bundleKey: 'effect:kbeff', bundlePath: 'public/assets/bundles/effect/kbeff.zip' }; this.baseDir = this.config.baseDir || './public/assets/bcu/000001/org/battle/a/'; this.definitions = new Map(); this.shared = null; }
+  async readBundleText(internalPath) {
+    if (!this.provider) return null;
+    try {
+      return await this.provider.readTextByBundleRef(this.bundleRef, internalPath);
+    } catch (error) {
+      const detail = {
+        kind: 'effect',
+        semanticKey: 'effect:kbeff',
+        bundlePath: this.bundleRef.bundlePath,
+        internalPath,
+        missingEntries: [internalPath],
+        originalErrorName: error?.name,
+        originalErrorMessage: error?.message,
+        message: error?.message || String(error)
+      };
+      this.provider.diagnostics?.bundleErrors?.push(detail);
+      throw error;
+    }
+  }
+  async readKbeffText(internalPath, rawFile) {
+    const bundled = await this.readBundleText(internalPath);
+    if (bundled != null) return bundled;
+    if (this.provider && this.provider.mode !== 'raw-only-diagnostics') throw new Error(`KBEff semantic bundle unavailable: ${internalPath}`);
+    return await readText(`${this.baseDir}${rawFile}`);
+  }
   async loadAll() {
     const imagePath = `${this.baseDir}${this.config.image || '000_a.png'}`;
-    const imgcutPath = `${this.baseDir}${this.config.imgcut || '000_a.imgcut'}`;
-    const modelPath = `${this.baseDir}${this.config.model || 'kb.mamodel'}`;
-    this.shared = { imagePath, imgcut: parseImgcut(await readText(imgcutPath)), model: parseModel(await readText(modelPath)), image: null };
+    this.shared = { imagePath: this.provider ? `${this.bundleRef.bundlePath}:image.png` : imagePath, imgcut: parseImgcut(await this.readKbeffText('imgcut.imgcut', this.config.imgcut || '000_a.imgcut')), model: parseModel(await this.readKbeffText('model.mamodel', this.config.model || 'kb.mamodel')), image: null };
     for (const t of Object.keys(BCU_KBEFF_TYPE_TO_FILE)) await this.loadType(t);
     return { ok: true, loaded: [...this.definitions.keys()] };
   }
@@ -41,7 +64,7 @@ export class BcuKbeffLoader {
     const animFile = this.config.animations?.[bcuType] || BCU_KBEFF_TYPE_TO_FILE[bcuType];
     if (!animFile) throw new Error(`Unknown kbeff type: ${bcuType}`);
     if (!this.shared) await this.loadAll();
-    const anim = parseAnim(await readText(`${this.baseDir}${animFile}`));
+    const anim = parseAnim(await this.readKbeffText(animFile, animFile));
     const d = { bcuType, kbeffType: TYPE_TO_ENUM[bcuType] || bcuType, animFile, model: this.shared.model, anim, image: this.shared.image, imgcut: this.shared.imgcut, maxFrame: anim.maxFrame || 0, source: 'bcu-a-kb-kbeff-v0115' };
     this.definitions.set(bcuType, d);
     return d;

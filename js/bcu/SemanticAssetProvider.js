@@ -53,8 +53,11 @@ export class SemanticAssetProvider {
     this.indexes = {};
     this.bundleFetchPromises = new Map();
     this.bundleArchives = new Map();
+    this.bundleArchivePromises = new Map();
+    this.coreDbPromise = null;
     this.coreJsonCache = new Map();
     this.actorIconUrlCache = new Map();
+    this.actorUiIconUrlCache = new Map();
     this.actorImageUrlCache = new Map();
     this.objectUrls = new Set();
     this.diagnostics = {
@@ -80,6 +83,7 @@ export class SemanticAssetProvider {
     this.indexes.backgrounds = await readOptional('bcu-background-index.json', { entries: [], byKey: {} });
     this.indexes.castles = await readOptional('bcu-castle-index.json', { enemy: [], nyanko: [], byKey: {} });
     this.indexes.core = await readOptional('bcu-core-index.json', { entries: [], byKey: {} });
+    this.indexes.icons = await readOptional('bcu-icon-index.json', { entries: [], byKey: {} });
     this.indexes.language = await readOptional('bcu-language-index.json', { entries: [], byKey: {} });
     this.indexes.canonical = await readOptional('bcu-canonical-index.json', {});
     return this;
@@ -95,6 +99,7 @@ export class SemanticAssetProvider {
   getBackgroundEntry(key) { const k = String(key).startsWith('background:') ? key : `background:${key}`; return this.indexes.backgrounds?.byKey?.[k] || null; }
   getCastleEntry(key) { return this.indexes.castles?.byKey?.[key] || this.indexes.castles?.byKey?.[`enemyCastle:${key}`] || null; }
   getCoreEntry(key) { return this.indexes.core?.byKey?.[key] || this.indexes.core?.entries?.find((e) => e.key === key) || null; }
+  getIconEntry(actorKey) { return this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || null; }
   getLanguageEntry(key) { return this.indexes.language?.byKey?.[key] || this.indexes.language?.entries?.find((e) => e.key === key) || null; }
 
   hasBundleForKey(key) {
@@ -134,8 +139,18 @@ export class SemanticAssetProvider {
 
   async archive(bundleRef) {
     const url = normalizeFetchPath(bundleRef.bundlePath);
-    if (!this.bundleArchives.has(url)) this.bundleArchives.set(url, parseStoreZip(await this.fetchBundle(bundleRef)));
-    return this.bundleArchives.get(url);
+    if (this.bundleArchives.has(url)) return this.bundleArchives.get(url);
+    if (!this.bundleArchivePromises.has(url)) {
+      this.bundleArchivePromises.set(url, (async () => {
+        const archive = parseStoreZip(await this.fetchBundle(bundleRef));
+        this.bundleArchives.set(url, archive);
+        return archive;
+      })().catch((error) => {
+        this.bundleArchivePromises.delete(url);
+        throw error;
+      }));
+    }
+    return await this.bundleArchivePromises.get(url);
   }
 
   async readArrayBufferByBundleRef(bundleRef, internalPath = bundleRef?.internalPath) {
@@ -179,19 +194,27 @@ export class SemanticAssetProvider {
   }
 
   async readCoreDb() {
-    const [manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary] = await Promise.all([
-      this.readCoreJson('manifest-lite.json'),
-      this.readCoreJson('units.json'),
-      this.readCoreJson('enemies.json'),
-      this.readCoreJson('names-jp.json'),
-      this.readCoreJson('backgrounds.json'),
-      this.readCoreJson('castles.json'),
-      this.readCoreJson('stages.json'),
-      this.readCoreJson('stage-aliases.json'),
-      this.readCoreJson('asset-keys.json'),
-      this.readCoreJson('diagnostics-summary.json')
-    ]);
-    return { manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary };
+    if (!this.coreDbPromise) {
+      this.coreDbPromise = (async () => {
+        const [manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary] = await Promise.all([
+          this.readCoreJson('manifest-lite.json'),
+          this.readCoreJson('units.json'),
+          this.readCoreJson('enemies.json'),
+          this.readCoreJson('names-jp.json'),
+          this.readCoreJson('backgrounds.json'),
+          this.readCoreJson('castles.json'),
+          this.readCoreJson('stages.json'),
+          this.readCoreJson('stage-aliases.json'),
+          this.readCoreJson('asset-keys.json'),
+          this.readCoreJson('diagnostics-summary.json')
+        ]);
+        return { manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary };
+      })().catch((error) => {
+        this.coreDbPromise = null;
+        throw error;
+      });
+    }
+    return await this.coreDbPromise;
   }
 
   async readActorBundle(actorKey) {
@@ -214,6 +237,47 @@ export class SemanticAssetProvider {
     if (!internalPath) throw new Error(`Actor bundle has no icon or image: ${actorKey}`);
     const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
     this.actorIconUrlCache.set(actorKey, url);
+    return url;
+  }
+
+  async readIconBundle(actorKey) {
+    const entry = this.getIconEntry(actorKey);
+    const bundleRef = entry?.bundleRef;
+    const internalPath = entry?.internalPath || bundleRef?.internalPath;
+    if (!entry || !bundleRef?.bundlePath || !internalPath) {
+      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, missingEntries: internalPath ? [internalPath] : [], message: `Unknown icon semantic key: ${actorKey}` };
+      this.diagnostics.missingBundles.push(detail);
+      throw new Error(detail.message);
+    }
+    try {
+      const archive = await this.archive(bundleRef);
+      if (!archive.has(internalPath)) {
+        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, missingEntries: [internalPath], message: `Icon bundle file missing: ${internalPath}` };
+        this.diagnostics.bundleErrors.push(detail);
+        throw new Error(detail.message);
+      }
+      return { entry, archive, bundleRef, internalPath };
+    } catch (error) {
+      const detail = {
+        kind: 'icon',
+        semanticKey: actorKey,
+        bundlePath: bundleRef.bundlePath,
+        internalPath,
+        missingEntries: [internalPath],
+        originalErrorName: error?.name,
+        originalErrorMessage: error?.message,
+        message: error?.message || String(error)
+      };
+      this.diagnostics.bundleErrors.push(detail);
+      throw error;
+    }
+  }
+
+  async getActorUiIconUrl(actorKey) {
+    if (this.actorUiIconUrlCache.has(actorKey)) return this.actorUiIconUrlCache.get(actorKey);
+    const { bundleRef, internalPath } = await this.readIconBundle(actorKey);
+    const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
+    this.actorUiIconUrlCache.set(actorKey, url);
     return url;
   }
 

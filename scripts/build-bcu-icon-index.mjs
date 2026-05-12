@@ -8,14 +8,15 @@ const forms = new Set();
 function sourceStatus(status) {
   if (status === 'ok' || status === 'needs-remap') return 'audited';
   if (status === 'ambiguous') return 'ambiguous';
+  if (status === 'invalid-png') return 'invalid-png';
   return 'missing';
 }
 
 const entries = [];
 for (const entry of actor.entries || []) {
   const auditRecord = auditByKey.get(entry.key) || null;
-  const sourcePath = auditRecord?.desiredSourcePath || auditRecord?.currentSourcePath || null;
-  if (!sourcePath || auditRecord?.status === 'ambiguous') continue;
+  const sourcePath = auditRecord?.desiredSourcePath || null;
+  if (!sourcePath || auditRecord?.status === 'ambiguous' || auditRecord?.status === 'invalid-png' || auditRecord?.pngValidation?.valid !== true) continue;
   if (entry.kind === 'enemy') {
     entries.push({
       key: entry.key,

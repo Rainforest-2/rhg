@@ -354,3 +354,82 @@ export async function fileBufferOrNull(file) {
 export async function hashFile(file) {
   try { return createHash('sha256').update(await fs.readFile(file)).digest('hex'); } catch { return null; }
 }
+
+export function validatePngBuffer(input, options = {}) {
+  const bytes = Buffer.isBuffer(input) ? input : Buffer.from(input || []);
+  const signature = bytes.subarray(0, 8).toString('hex');
+  const result = { valid: false, reason: null, width: null, height: null, sizeBytes: bytes.length, signature };
+  const fail = (reason) => ({ ...result, valid: false, reason });
+  if (bytes.length < 33) return fail('truncated');
+  if (signature !== '89504e470d0a1a0a') return fail('bad-signature');
+  let offset = 8;
+  let seenIhdr = false;
+  let seenIend = false;
+  const compatible = new Set(['1:0', '2:0', '4:0', '8:0', '16:0', '8:2', '16:2', '1:3', '2:3', '4:3', '8:3', '8:4', '16:4', '8:6', '16:6']);
+  while (offset < bytes.length) {
+    if (offset + 12 > bytes.length) return fail('truncated-chunk');
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.subarray(offset + 4, offset + 8).toString('ascii');
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + length;
+    const crcEnd = dataEnd + 4;
+    if (dataEnd > bytes.length || crcEnd > bytes.length) return fail('truncated-chunk');
+    const expectedCrc = bytes.readUInt32BE(dataEnd);
+    const actualCrc = crc32(bytes.subarray(offset + 4, dataEnd));
+    if (actualCrc !== expectedCrc) return fail('crc-failed');
+    if (!seenIhdr && type !== 'IHDR') return fail('missing-ihdr');
+    if (type === 'IHDR') {
+      if (seenIhdr) return fail('duplicate-ihdr');
+      if (length !== 13) return fail('invalid-ihdr-length');
+      seenIhdr = true;
+      result.width = bytes.readUInt32BE(dataStart);
+      result.height = bytes.readUInt32BE(dataStart + 4);
+      const bitDepth = bytes[dataStart + 8];
+      const colorType = bytes[dataStart + 9];
+      if (result.width <= 0 || result.height <= 0) return fail('invalid-dimensions');
+      if (!compatible.has(`${bitDepth}:${colorType}`)) return fail('unsupported-color-type');
+    }
+    if (type === 'IEND') {
+      if (length !== 0) return fail('invalid-iend-length');
+      seenIend = true;
+      if (crcEnd !== bytes.length && options.allowTrailingBytes !== true) return fail('trailing-bytes');
+      break;
+    }
+    offset = crcEnd;
+  }
+  if (!seenIhdr) return fail('missing-ihdr');
+  if (!seenIend) return fail('missing-iend');
+  return { ...result, valid: true, reason: null };
+}
+
+export async function validatePngFile(file) {
+  const data = await fileBufferOrNull(file);
+  if (!data) return { valid: false, reason: 'missing', width: null, height: null, sizeBytes: 0, signature: null };
+  return validatePngBuffer(data);
+}
+
+function readU16(buf, off) { return buf.readUInt16LE(off); }
+function readU32(buf, off) { return buf.readUInt32LE(off); }
+
+export async function readStoreZipEntries(zipPath) {
+  const bytes = await fs.readFile(zipPath);
+  const files = new Map();
+  let offset = 0;
+  while (offset + 30 <= bytes.length && readU32(bytes, offset) === 0x04034b50) {
+    const method = readU16(bytes, offset + 8);
+    const compressedSize = readU32(bytes, offset + 18);
+    const uncompressedSize = readU32(bytes, offset + 22);
+    const nameLen = readU16(bytes, offset + 26);
+    const extraLen = readU16(bytes, offset + 28);
+    const nameStart = offset + 30;
+    const dataStart = nameStart + nameLen + extraLen;
+    const dataEnd = dataStart + compressedSize;
+    if (method !== 0) throw new Error(`Unsupported ZIP compression method ${method} at ${zipPath}`);
+    if (dataEnd > bytes.length) throw new Error(`Truncated ZIP entry at ${zipPath}`);
+    if (compressedSize !== uncompressedSize) throw new Error(`Invalid STORE ZIP sizes at ${zipPath}`);
+    const name = bytes.subarray(nameStart, nameStart + nameLen).toString('utf8');
+    files.set(name, bytes.subarray(dataStart, dataEnd));
+    offset = dataEnd;
+  }
+  return files;
+}

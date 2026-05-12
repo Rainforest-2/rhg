@@ -1,46 +1,141 @@
-import { FIXED_DATE, loadManifest, pad3, readJson, writeJson, writeText } from './bcu-semantic-utils.mjs';
+import { comparePackId, FIXED_DATE, loadManifest, pad3, readJson, validatePngFile, writeJson, writeText } from './bcu-semantic-utils.mjs';
 
 const manifest = await loadManifest();
 const actor = await readJson('public/assets/generated/bcu-actor-index.json', { entries: [] });
 const files = new Set(manifest.files || []);
+const pngCache = new Map();
 
-function candidateIcon(entry) {
+async function validatePath(file) {
+  if (!file) return { valid: false, reason: 'missing', width: null, height: null, sizeBytes: 0, signature: null };
+  if (!pngCache.has(file)) pngCache.set(file, validatePngFile(file));
+  return await pngCache.get(file);
+}
+
+function sortedUnique(values) {
+  return [...new Set(values.filter(Boolean))].sort();
+}
+
+function packOf(file) {
+  return String(file || '').split('/')[3] || null;
+}
+
+function enemyCandidates(entry) {
+  const id3 = entry.id3 || pad3(entry.id);
+  const samePack = entry.selected?.sourcePack || null;
+  const candidates = [];
+  for (const file of files) {
+    if (file.endsWith(`/org/enemy/${id3}/enemy_icon_${id3}.png`)) candidates.push(file);
+  }
+  return sortedUnique(candidates).sort((a, b) => {
+    const pa = packOf(a);
+    const pb = packOf(b);
+    if (samePack && pa === samePack && pb !== samePack) return -1;
+    if (samePack && pb === samePack && pa !== samePack) return 1;
+    const packCmp = comparePackId(pb || '', pa || '');
+    if (packCmp !== 0) return packCmp;
+    return a.localeCompare(b);
+  });
+}
+
+function unitCandidates(entry) {
+  const explicit = entry.selected?.files?.icon || null;
+  const raw = [];
+  if (explicit) raw.push(explicit);
+  for (const candidate of entry.sourceCandidates || []) {
+    const icon = candidate?.files?.icon || null;
+    if (icon) raw.push(icon);
+    for (const file of candidate?.diagnostics?.sourceRawPaths || []) {
+      const name = file.split('/').pop() || '';
+      if (file.endsWith('.png') && (/^uni\d+_/.test(name) || name.includes(`_${entry.form}`))) raw.push(file);
+    }
+  }
+  return sortedUnique(raw).sort((a, b) => {
+    if (a === explicit) return -1;
+    if (b === explicit) return 1;
+    return comparePackId(packOf(b) || '', packOf(a) || '') || a.localeCompare(b);
+  });
+}
+
+async function chooseValid(candidates) {
+  const checked = [];
+  for (const sourcePath of candidates) {
+    const pngValidation = await validatePath(sourcePath);
+    checked.push({ sourcePath, pngValidation });
+    if (pngValidation.valid) return { sourcePath, pngValidation, checked };
+  }
+  return { sourcePath: null, pngValidation: checked[0]?.pngValidation || await validatePath(null), checked };
+}
+
+async function buildRecord(entry) {
   if (entry.kind === 'enemy') {
-    const desired = `public/assets/bcu/000010/org/enemy/${entry.id3}/enemy_icon_${entry.id3}.png`;
     const current = entry.selected?.files?.icon || null;
-    const status = files.has(desired) ? (current === desired ? 'ok' : 'needs-remap') : 'missing';
+    const candidates = enemyCandidates(entry);
+    const chosen = await chooseValid(candidates);
+    const id = Number(entry.id);
+    const notes = ['enemy-icon-basename-policy'];
+    if (id >= 526) notes.push('enemy-id-526-new-format');
+    if (!chosen.sourcePath) {
+      return {
+        semanticKey: entry.key,
+        currentSourcePath: current,
+        desiredSourcePath: null,
+        status: candidates.length ? 'invalid-png' : 'missing',
+        pngValidation: chosen.pngValidation,
+        candidates: chosen.checked,
+        notes: candidates.length ? [...notes, 'all-enemy-icon-candidates-invalid'] : [...notes, 'missing-enemy-icon-basename']
+      };
+    }
     return {
       semanticKey: entry.key,
       currentSourcePath: current,
-      desiredSourcePath: files.has(desired) ? desired : null,
-      status,
-      notes: files.has(desired) ? ['enemy-icon-source-family-000010'] : ['missing-000010-enemy-icon']
+      desiredSourcePath: chosen.sourcePath,
+      status: current === chosen.sourcePath ? 'ok' : 'needs-remap',
+      pngValidation: chosen.pngValidation,
+      candidates: chosen.checked,
+      notes
     };
   }
-  const explicit = entry.selected?.files?.icon || null;
-  const status = explicit ? 'ok' : 'missing';
+
+  const candidates = unitCandidates(entry);
+  const chosen = await chooseValid(candidates);
+  const current = entry.selected?.files?.icon || null;
+  if (!chosen.sourcePath) {
+    return {
+      semanticKey: entry.key,
+      currentSourcePath: current,
+      desiredSourcePath: null,
+      status: candidates.length ? 'invalid-png' : 'missing',
+      pngValidation: chosen.pngValidation,
+      candidates: chosen.checked,
+      notes: candidates.length ? ['unit-icon-candidates-invalid'] : ['missing-unit-icon-source']
+    };
+  }
   return {
     semanticKey: entry.key,
-    currentSourcePath: explicit,
-    desiredSourcePath: explicit,
-    status,
-    notes: explicit ? ['unit-selected-icon-source'] : ['missing-unit-icon-source']
+    currentSourcePath: current,
+    desiredSourcePath: chosen.sourcePath,
+    status: current === chosen.sourcePath ? 'ok' : 'needs-remap',
+    pngValidation: chosen.pngValidation,
+    candidates: chosen.checked,
+    notes: ['unit-valid-png-source']
   };
 }
 
-const records = (actor.entries || []).map(candidateIcon).sort((a, b) => a.semanticKey.localeCompare(b.semanticKey, undefined, { numeric: true }));
+const records = [];
+for (const entry of actor.entries || []) records.push(await buildRecord(entry));
+records.sort((a, b) => a.semanticKey.localeCompare(b.semanticKey, undefined, { numeric: true }));
 const summary = records.reduce((acc, r) => {
   acc[r.status] = (acc[r.status] || 0) + 1;
   return acc;
 }, {});
 
 await writeJson('public/assets/generated/bcu-icon-source-audit.json', {
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: FIXED_DATE,
   sourcePolicy: {
-    enemyPreferredPack: '000010',
-    unitPolicy: 'selected audited unit icon source',
-    missingPolicy: 'runtime placeholder/image-missing'
+    enemyPolicy: 'prefer valid public/assets/bcu/<pack>/org/enemy/<id3>/enemy_icon_<id3>.png; no edi/actor fallback',
+    unitPolicy: 'choose first deterministic valid unit icon candidate; no actor image.png fallback',
+    pngValidation: 'signature, IHDR, dimensions, color type, chunk boundaries, CRC, IEND'
   },
   summary,
   records
@@ -55,12 +150,12 @@ const lines = [
   '| --- | ---: |',
   ...Object.entries(summary).sort().map(([k, v]) => `| ${k} | ${v} |`),
   '',
-  'Enemy icons prefer `public/assets/bcu/000010/org/enemy/<id3>/enemy_icon_<id3>.png` when present.',
-  'Missing or ambiguous sources are not guessed at runtime; UI uses the image-missing state.',
+  'Enemy icons use valid `enemy_icon_<id3>.png` from discovered packs. Missing enemy icons are omitted from the runtime icon index; no `edi_*.png` or actor image fallback is used.',
+  'Unit icons are included only when the selected candidate validates as PNG.',
   '',
-  '| Semantic key | Status | Current | Desired |',
-  '| --- | --- | --- | --- |',
-  ...records.slice(0, 250).map((r) => `| ${r.semanticKey} | ${r.status} | ${r.currentSourcePath || '-'} | ${r.desiredSourcePath || '-'} |`)
+  '| Semantic key | Status | Current | Desired | PNG |',
+  '| --- | --- | --- | --- | --- |',
+  ...records.slice(0, 250).map((r) => `| ${r.semanticKey} | ${r.status} | ${r.currentSourcePath || '-'} | ${r.desiredSourcePath || '-'} | ${r.pngValidation?.valid ? `${r.pngValidation.width}x${r.pngValidation.height}` : r.pngValidation?.reason || '-'} |`)
 ];
 
 if (records.length > 250) lines.push('', `_Showing first 250 of ${records.length} records._`);

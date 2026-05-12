@@ -4,264 +4,265 @@ Generated: 1970-01-01T00:00:00.000Z
 
 | Status | Count |
 | --- | ---: |
-| missing | 256 |
-| needs-remap | 525 |
-| ok | 2074 |
+| invalid-png | 570 |
+| missing | 7 |
+| needs-remap | 316 |
+| ok | 1962 |
 
-Enemy icons prefer `public/assets/bcu/000010/org/enemy/<id3>/enemy_icon_<id3>.png` when present.
-Missing or ambiguous sources are not guessed at runtime; UI uses the image-missing state.
+Enemy icons use valid `enemy_icon_<id3>.png` from discovered packs. Missing enemy icons are omitted from the runtime icon index; no `edi_*.png` or actor image fallback is used.
+Unit icons are included only when the selected candidate validates as PNG.
 
-| Semantic key | Status | Current | Desired |
-| --- | --- | --- | --- |
-| enemy:0 | needs-remap | public/assets/bcu/000002/org/enemy/000/edi_000.png | public/assets/bcu/000010/org/enemy/000/enemy_icon_000.png |
-| enemy:1 | needs-remap | public/assets/bcu/000002/org/enemy/001/edi_001.png | public/assets/bcu/000010/org/enemy/001/enemy_icon_001.png |
-| enemy:2 | needs-remap | public/assets/bcu/000002/org/enemy/002/edi_002.png | public/assets/bcu/000010/org/enemy/002/enemy_icon_002.png |
-| enemy:3 | needs-remap | public/assets/bcu/000002/org/enemy/003/edi_003.png | public/assets/bcu/000010/org/enemy/003/enemy_icon_003.png |
-| enemy:4 | needs-remap | public/assets/bcu/000002/org/enemy/004/edi_004.png | public/assets/bcu/000010/org/enemy/004/enemy_icon_004.png |
-| enemy:5 | needs-remap | public/assets/bcu/000002/org/enemy/005/edi_005.png | public/assets/bcu/000010/org/enemy/005/enemy_icon_005.png |
-| enemy:6 | needs-remap | public/assets/bcu/000002/org/enemy/006/edi_006.png | public/assets/bcu/000010/org/enemy/006/enemy_icon_006.png |
-| enemy:7 | needs-remap | public/assets/bcu/000002/org/enemy/007/edi_007.png | public/assets/bcu/000010/org/enemy/007/enemy_icon_007.png |
-| enemy:8 | needs-remap | public/assets/bcu/000002/org/enemy/008/edi_008.png | public/assets/bcu/000010/org/enemy/008/enemy_icon_008.png |
-| enemy:9 | needs-remap | public/assets/bcu/000002/org/enemy/009/edi_009.png | public/assets/bcu/000010/org/enemy/009/enemy_icon_009.png |
-| enemy:10 | needs-remap | public/assets/bcu/000002/org/enemy/010/edi_010.png | public/assets/bcu/000010/org/enemy/010/enemy_icon_010.png |
-| enemy:11 | needs-remap | public/assets/bcu/000002/org/enemy/011/edi_011.png | public/assets/bcu/000010/org/enemy/011/enemy_icon_011.png |
-| enemy:12 | needs-remap | public/assets/bcu/000002/org/enemy/012/edi_012.png | public/assets/bcu/000010/org/enemy/012/enemy_icon_012.png |
-| enemy:13 | needs-remap | public/assets/bcu/000002/org/enemy/013/edi_013.png | public/assets/bcu/000010/org/enemy/013/enemy_icon_013.png |
-| enemy:14 | needs-remap | public/assets/bcu/000002/org/enemy/014/edi_014.png | public/assets/bcu/000010/org/enemy/014/enemy_icon_014.png |
-| enemy:15 | needs-remap | public/assets/bcu/000002/org/enemy/015/edi_015.png | public/assets/bcu/000010/org/enemy/015/enemy_icon_015.png |
-| enemy:16 | needs-remap | public/assets/bcu/000002/org/enemy/016/edi_016.png | public/assets/bcu/000010/org/enemy/016/enemy_icon_016.png |
-| enemy:17 | needs-remap | public/assets/bcu/000002/org/enemy/017/edi_017.png | public/assets/bcu/000010/org/enemy/017/enemy_icon_017.png |
-| enemy:18 | needs-remap | public/assets/bcu/000002/org/enemy/018/edi_018.png | public/assets/bcu/000010/org/enemy/018/enemy_icon_018.png |
-| enemy:19 | needs-remap | public/assets/bcu/000002/org/enemy/019/edi_019.png | public/assets/bcu/000010/org/enemy/019/enemy_icon_019.png |
-| enemy:20 | needs-remap | public/assets/bcu/000002/org/enemy/020/edi_020.png | public/assets/bcu/000010/org/enemy/020/enemy_icon_020.png |
-| enemy:21 | needs-remap | public/assets/bcu/000002/org/enemy/021/edi_021.png | public/assets/bcu/000010/org/enemy/021/enemy_icon_021.png |
-| enemy:22 | needs-remap | public/assets/bcu/000002/org/enemy/022/edi_022.png | public/assets/bcu/000010/org/enemy/022/enemy_icon_022.png |
-| enemy:23 | needs-remap | public/assets/bcu/000002/org/enemy/023/edi_023.png | public/assets/bcu/000010/org/enemy/023/enemy_icon_023.png |
-| enemy:24 | needs-remap | public/assets/bcu/000002/org/enemy/024/edi_024.png | public/assets/bcu/000010/org/enemy/024/enemy_icon_024.png |
-| enemy:25 | needs-remap | public/assets/bcu/000002/org/enemy/025/edi_025.png | public/assets/bcu/000010/org/enemy/025/enemy_icon_025.png |
-| enemy:26 | needs-remap | public/assets/bcu/000002/org/enemy/026/edi_026.png | public/assets/bcu/000010/org/enemy/026/enemy_icon_026.png |
-| enemy:27 | needs-remap | public/assets/bcu/000002/org/enemy/027/edi_027.png | public/assets/bcu/000010/org/enemy/027/enemy_icon_027.png |
-| enemy:28 | needs-remap | public/assets/bcu/000002/org/enemy/028/edi_028.png | public/assets/bcu/000010/org/enemy/028/enemy_icon_028.png |
-| enemy:29 | needs-remap | public/assets/bcu/000002/org/enemy/029/edi_029.png | public/assets/bcu/000010/org/enemy/029/enemy_icon_029.png |
-| enemy:30 | needs-remap | public/assets/bcu/000002/org/enemy/030/edi_030.png | public/assets/bcu/000010/org/enemy/030/enemy_icon_030.png |
-| enemy:31 | needs-remap | public/assets/bcu/000002/org/enemy/031/edi_031.png | public/assets/bcu/000010/org/enemy/031/enemy_icon_031.png |
-| enemy:32 | needs-remap | public/assets/bcu/000002/org/enemy/032/edi_032.png | public/assets/bcu/000010/org/enemy/032/enemy_icon_032.png |
-| enemy:33 | needs-remap | public/assets/bcu/000002/org/enemy/033/edi_033.png | public/assets/bcu/000010/org/enemy/033/enemy_icon_033.png |
-| enemy:34 | needs-remap | public/assets/bcu/000002/org/enemy/034/edi_034.png | public/assets/bcu/000010/org/enemy/034/enemy_icon_034.png |
-| enemy:35 | needs-remap | public/assets/bcu/000002/org/enemy/035/edi_035.png | public/assets/bcu/000010/org/enemy/035/enemy_icon_035.png |
-| enemy:36 | needs-remap | public/assets/bcu/000002/org/enemy/036/edi_036.png | public/assets/bcu/000010/org/enemy/036/enemy_icon_036.png |
-| enemy:37 | needs-remap | public/assets/bcu/000002/org/enemy/037/edi_037.png | public/assets/bcu/000010/org/enemy/037/enemy_icon_037.png |
-| enemy:38 | needs-remap | public/assets/bcu/000002/org/enemy/038/edi_038.png | public/assets/bcu/000010/org/enemy/038/enemy_icon_038.png |
-| enemy:39 | needs-remap | public/assets/bcu/000002/org/enemy/039/edi_039.png | public/assets/bcu/000010/org/enemy/039/enemy_icon_039.png |
-| enemy:40 | needs-remap | public/assets/bcu/000002/org/enemy/040/edi_040.png | public/assets/bcu/000010/org/enemy/040/enemy_icon_040.png |
-| enemy:41 | needs-remap | public/assets/bcu/000002/org/enemy/041/edi_041.png | public/assets/bcu/000010/org/enemy/041/enemy_icon_041.png |
-| enemy:42 | needs-remap | public/assets/bcu/000002/org/enemy/042/edi_042.png | public/assets/bcu/000010/org/enemy/042/enemy_icon_042.png |
-| enemy:43 | needs-remap | public/assets/bcu/000002/org/enemy/043/edi_043.png | public/assets/bcu/000010/org/enemy/043/enemy_icon_043.png |
-| enemy:44 | needs-remap | public/assets/bcu/000002/org/enemy/044/edi_044.png | public/assets/bcu/000010/org/enemy/044/enemy_icon_044.png |
-| enemy:45 | needs-remap | public/assets/bcu/000002/org/enemy/045/edi_045.png | public/assets/bcu/000010/org/enemy/045/enemy_icon_045.png |
-| enemy:46 | needs-remap | public/assets/bcu/000002/org/enemy/046/edi_046.png | public/assets/bcu/000010/org/enemy/046/enemy_icon_046.png |
-| enemy:47 | needs-remap | public/assets/bcu/000002/org/enemy/047/edi_047.png | public/assets/bcu/000010/org/enemy/047/enemy_icon_047.png |
-| enemy:48 | needs-remap | public/assets/bcu/000002/org/enemy/048/edi_048.png | public/assets/bcu/000010/org/enemy/048/enemy_icon_048.png |
-| enemy:49 | needs-remap | public/assets/bcu/000002/org/enemy/049/edi_049.png | public/assets/bcu/000010/org/enemy/049/enemy_icon_049.png |
-| enemy:50 | needs-remap | public/assets/bcu/000002/org/enemy/050/edi_050.png | public/assets/bcu/000010/org/enemy/050/enemy_icon_050.png |
-| enemy:51 | needs-remap | public/assets/bcu/000002/org/enemy/051/edi_051.png | public/assets/bcu/000010/org/enemy/051/enemy_icon_051.png |
-| enemy:52 | needs-remap | public/assets/bcu/000002/org/enemy/052/edi_052.png | public/assets/bcu/000010/org/enemy/052/enemy_icon_052.png |
-| enemy:53 | needs-remap | public/assets/bcu/000002/org/enemy/053/edi_053.png | public/assets/bcu/000010/org/enemy/053/enemy_icon_053.png |
-| enemy:54 | needs-remap | public/assets/bcu/000002/org/enemy/054/edi_054.png | public/assets/bcu/000010/org/enemy/054/enemy_icon_054.png |
-| enemy:55 | needs-remap | public/assets/bcu/000002/org/enemy/055/edi_055.png | public/assets/bcu/000010/org/enemy/055/enemy_icon_055.png |
-| enemy:56 | needs-remap | public/assets/bcu/000002/org/enemy/056/edi_056.png | public/assets/bcu/000010/org/enemy/056/enemy_icon_056.png |
-| enemy:57 | needs-remap | public/assets/bcu/100503/org/enemy/057/edi_057.png | public/assets/bcu/000010/org/enemy/057/enemy_icon_057.png |
-| enemy:58 | needs-remap | public/assets/bcu/000002/org/enemy/058/edi_058.png | public/assets/bcu/000010/org/enemy/058/enemy_icon_058.png |
-| enemy:59 | needs-remap | public/assets/bcu/000002/org/enemy/059/edi_059.png | public/assets/bcu/000010/org/enemy/059/enemy_icon_059.png |
-| enemy:60 | needs-remap | public/assets/bcu/000002/org/enemy/060/edi_060.png | public/assets/bcu/000010/org/enemy/060/enemy_icon_060.png |
-| enemy:61 | needs-remap | public/assets/bcu/000002/org/enemy/061/edi_061.png | public/assets/bcu/000010/org/enemy/061/enemy_icon_061.png |
-| enemy:62 | needs-remap | public/assets/bcu/000002/org/enemy/062/edi_062.png | public/assets/bcu/000010/org/enemy/062/enemy_icon_062.png |
-| enemy:63 | needs-remap | public/assets/bcu/000002/org/enemy/063/edi_063.png | public/assets/bcu/000010/org/enemy/063/enemy_icon_063.png |
-| enemy:64 | needs-remap | public/assets/bcu/000002/org/enemy/064/edi_064.png | public/assets/bcu/000010/org/enemy/064/enemy_icon_064.png |
-| enemy:65 | needs-remap | public/assets/bcu/000002/org/enemy/065/edi_065.png | public/assets/bcu/000010/org/enemy/065/enemy_icon_065.png |
-| enemy:66 | needs-remap | public/assets/bcu/000002/org/enemy/066/edi_066.png | public/assets/bcu/000010/org/enemy/066/enemy_icon_066.png |
-| enemy:67 | needs-remap | public/assets/bcu/100503/org/enemy/067/edi_067.png | public/assets/bcu/000010/org/enemy/067/enemy_icon_067.png |
-| enemy:68 | needs-remap | public/assets/bcu/000002/org/enemy/068/edi_068.png | public/assets/bcu/000010/org/enemy/068/enemy_icon_068.png |
-| enemy:69 | needs-remap | public/assets/bcu/000002/org/enemy/069/edi_069.png | public/assets/bcu/000010/org/enemy/069/enemy_icon_069.png |
-| enemy:70 | needs-remap | public/assets/bcu/000002/org/enemy/070/edi_070.png | public/assets/bcu/000010/org/enemy/070/enemy_icon_070.png |
-| enemy:71 | needs-remap | public/assets/bcu/000002/org/enemy/071/edi_071.png | public/assets/bcu/000010/org/enemy/071/enemy_icon_071.png |
-| enemy:72 | needs-remap | public/assets/bcu/000002/org/enemy/072/edi_072.png | public/assets/bcu/000010/org/enemy/072/enemy_icon_072.png |
-| enemy:73 | needs-remap | public/assets/bcu/000002/org/enemy/073/edi_073.png | public/assets/bcu/000010/org/enemy/073/enemy_icon_073.png |
-| enemy:74 | needs-remap | public/assets/bcu/000002/org/enemy/074/edi_074.png | public/assets/bcu/000010/org/enemy/074/enemy_icon_074.png |
-| enemy:75 | needs-remap | public/assets/bcu/000002/org/enemy/075/edi_075.png | public/assets/bcu/000010/org/enemy/075/enemy_icon_075.png |
-| enemy:76 | needs-remap | public/assets/bcu/000002/org/enemy/076/edi_076.png | public/assets/bcu/000010/org/enemy/076/enemy_icon_076.png |
-| enemy:77 | needs-remap | public/assets/bcu/000002/org/enemy/077/edi_077.png | public/assets/bcu/000010/org/enemy/077/enemy_icon_077.png |
-| enemy:78 | needs-remap | public/assets/bcu/000002/org/enemy/078/edi_078.png | public/assets/bcu/000010/org/enemy/078/enemy_icon_078.png |
-| enemy:79 | needs-remap | public/assets/bcu/000002/org/enemy/079/edi_079.png | public/assets/bcu/000010/org/enemy/079/enemy_icon_079.png |
-| enemy:80 | needs-remap | public/assets/bcu/000002/org/enemy/080/edi_080.png | public/assets/bcu/000010/org/enemy/080/enemy_icon_080.png |
-| enemy:81 | needs-remap | public/assets/bcu/000002/org/enemy/081/edi_081.png | public/assets/bcu/000010/org/enemy/081/enemy_icon_081.png |
-| enemy:82 | needs-remap | public/assets/bcu/000002/org/enemy/082/edi_082.png | public/assets/bcu/000010/org/enemy/082/enemy_icon_082.png |
-| enemy:83 | needs-remap | public/assets/bcu/000002/org/enemy/083/edi_083.png | public/assets/bcu/000010/org/enemy/083/enemy_icon_083.png |
-| enemy:84 | needs-remap | public/assets/bcu/000002/org/enemy/084/edi_084.png | public/assets/bcu/000010/org/enemy/084/enemy_icon_084.png |
-| enemy:85 | needs-remap | public/assets/bcu/000002/org/enemy/085/edi_085.png | public/assets/bcu/000010/org/enemy/085/enemy_icon_085.png |
-| enemy:86 | needs-remap | public/assets/bcu/000002/org/enemy/086/edi_086.png | public/assets/bcu/000010/org/enemy/086/enemy_icon_086.png |
-| enemy:87 | needs-remap | public/assets/bcu/000002/org/enemy/087/edi_087.png | public/assets/bcu/000010/org/enemy/087/enemy_icon_087.png |
-| enemy:88 | needs-remap | public/assets/bcu/000002/org/enemy/088/edi_088.png | public/assets/bcu/000010/org/enemy/088/enemy_icon_088.png |
-| enemy:89 | needs-remap | public/assets/bcu/000002/org/enemy/089/edi_089.png | public/assets/bcu/000010/org/enemy/089/enemy_icon_089.png |
-| enemy:90 | needs-remap | public/assets/bcu/000002/org/enemy/090/edi_090.png | public/assets/bcu/000010/org/enemy/090/enemy_icon_090.png |
-| enemy:91 | needs-remap | public/assets/bcu/000002/org/enemy/091/edi_091.png | public/assets/bcu/000010/org/enemy/091/enemy_icon_091.png |
-| enemy:92 | needs-remap | public/assets/bcu/000002/org/enemy/092/edi_092.png | public/assets/bcu/000010/org/enemy/092/enemy_icon_092.png |
-| enemy:93 | needs-remap | public/assets/bcu/000002/org/enemy/093/edi_093.png | public/assets/bcu/000010/org/enemy/093/enemy_icon_093.png |
-| enemy:94 | needs-remap | public/assets/bcu/000002/org/enemy/094/edi_094.png | public/assets/bcu/000010/org/enemy/094/enemy_icon_094.png |
-| enemy:95 | needs-remap | public/assets/bcu/000002/org/enemy/095/edi_095.png | public/assets/bcu/000010/org/enemy/095/enemy_icon_095.png |
-| enemy:96 | needs-remap | public/assets/bcu/000002/org/enemy/096/edi_096.png | public/assets/bcu/000010/org/enemy/096/enemy_icon_096.png |
-| enemy:97 | needs-remap | public/assets/bcu/000002/org/enemy/097/edi_097.png | public/assets/bcu/000010/org/enemy/097/enemy_icon_097.png |
-| enemy:98 | needs-remap | public/assets/bcu/000002/org/enemy/098/edi_098.png | public/assets/bcu/000010/org/enemy/098/enemy_icon_098.png |
-| enemy:99 | needs-remap | public/assets/bcu/000002/org/enemy/099/edi_099.png | public/assets/bcu/000010/org/enemy/099/enemy_icon_099.png |
-| enemy:100 | needs-remap | public/assets/bcu/000002/org/enemy/100/edi_100.png | public/assets/bcu/000010/org/enemy/100/enemy_icon_100.png |
-| enemy:101 | needs-remap | public/assets/bcu/000002/org/enemy/101/edi_101.png | public/assets/bcu/000010/org/enemy/101/enemy_icon_101.png |
-| enemy:102 | needs-remap | public/assets/bcu/000002/org/enemy/102/edi_102.png | public/assets/bcu/000010/org/enemy/102/enemy_icon_102.png |
-| enemy:103 | needs-remap | public/assets/bcu/000002/org/enemy/103/edi_103.png | public/assets/bcu/000010/org/enemy/103/enemy_icon_103.png |
-| enemy:104 | needs-remap | public/assets/bcu/000002/org/enemy/104/edi_104.png | public/assets/bcu/000010/org/enemy/104/enemy_icon_104.png |
-| enemy:105 | needs-remap | public/assets/bcu/000002/org/enemy/105/edi_105.png | public/assets/bcu/000010/org/enemy/105/enemy_icon_105.png |
-| enemy:106 | needs-remap | public/assets/bcu/000002/org/enemy/106/edi_106.png | public/assets/bcu/000010/org/enemy/106/enemy_icon_106.png |
-| enemy:107 | needs-remap | public/assets/bcu/000002/org/enemy/107/edi_107.png | public/assets/bcu/000010/org/enemy/107/enemy_icon_107.png |
-| enemy:108 | needs-remap | public/assets/bcu/000002/org/enemy/108/edi_108.png | public/assets/bcu/000010/org/enemy/108/enemy_icon_108.png |
-| enemy:109 | needs-remap | public/assets/bcu/000002/org/enemy/109/edi_109.png | public/assets/bcu/000010/org/enemy/109/enemy_icon_109.png |
-| enemy:110 | needs-remap | public/assets/bcu/000002/org/enemy/110/edi_110.png | public/assets/bcu/000010/org/enemy/110/enemy_icon_110.png |
-| enemy:111 | needs-remap | public/assets/bcu/000002/org/enemy/111/edi_111.png | public/assets/bcu/000010/org/enemy/111/enemy_icon_111.png |
-| enemy:112 | needs-remap | public/assets/bcu/000002/org/enemy/112/edi_112.png | public/assets/bcu/000010/org/enemy/112/enemy_icon_112.png |
-| enemy:113 | needs-remap | public/assets/bcu/000002/org/enemy/113/edi_113.png | public/assets/bcu/000010/org/enemy/113/enemy_icon_113.png |
-| enemy:114 | needs-remap | public/assets/bcu/000002/org/enemy/114/edi_114.png | public/assets/bcu/000010/org/enemy/114/enemy_icon_114.png |
-| enemy:115 | needs-remap | public/assets/bcu/000002/org/enemy/115/edi_115.png | public/assets/bcu/000010/org/enemy/115/enemy_icon_115.png |
-| enemy:116 | needs-remap | public/assets/bcu/000002/org/enemy/116/edi_116.png | public/assets/bcu/000010/org/enemy/116/enemy_icon_116.png |
-| enemy:117 | needs-remap | public/assets/bcu/000002/org/enemy/117/edi_117.png | public/assets/bcu/000010/org/enemy/117/enemy_icon_117.png |
-| enemy:118 | needs-remap | public/assets/bcu/000002/org/enemy/118/edi_118.png | public/assets/bcu/000010/org/enemy/118/enemy_icon_118.png |
-| enemy:119 | needs-remap | public/assets/bcu/000002/org/enemy/119/edi_119.png | public/assets/bcu/000010/org/enemy/119/enemy_icon_119.png |
-| enemy:120 | needs-remap | public/assets/bcu/000002/org/enemy/120/edi_120.png | public/assets/bcu/000010/org/enemy/120/enemy_icon_120.png |
-| enemy:121 | needs-remap | public/assets/bcu/000002/org/enemy/121/edi_121.png | public/assets/bcu/000010/org/enemy/121/enemy_icon_121.png |
-| enemy:122 | needs-remap | public/assets/bcu/000002/org/enemy/122/edi_122.png | public/assets/bcu/000010/org/enemy/122/enemy_icon_122.png |
-| enemy:123 | needs-remap | public/assets/bcu/000002/org/enemy/123/edi_123.png | public/assets/bcu/000010/org/enemy/123/enemy_icon_123.png |
-| enemy:124 | needs-remap | public/assets/bcu/000002/org/enemy/124/edi_124.png | public/assets/bcu/000010/org/enemy/124/enemy_icon_124.png |
-| enemy:125 | needs-remap | public/assets/bcu/000002/org/enemy/125/edi_125.png | public/assets/bcu/000010/org/enemy/125/enemy_icon_125.png |
-| enemy:126 | needs-remap | public/assets/bcu/000002/org/enemy/126/edi_126.png | public/assets/bcu/000010/org/enemy/126/enemy_icon_126.png |
-| enemy:127 | needs-remap | public/assets/bcu/000002/org/enemy/127/edi_127.png | public/assets/bcu/000010/org/enemy/127/enemy_icon_127.png |
-| enemy:128 | needs-remap | public/assets/bcu/000002/org/enemy/128/edi_128.png | public/assets/bcu/000010/org/enemy/128/enemy_icon_128.png |
-| enemy:129 | needs-remap | public/assets/bcu/000002/org/enemy/129/edi_129.png | public/assets/bcu/000010/org/enemy/129/enemy_icon_129.png |
-| enemy:130 | needs-remap | public/assets/bcu/000002/org/enemy/130/edi_130.png | public/assets/bcu/000010/org/enemy/130/enemy_icon_130.png |
-| enemy:131 | needs-remap | public/assets/bcu/000002/org/enemy/131/edi_131.png | public/assets/bcu/000010/org/enemy/131/enemy_icon_131.png |
-| enemy:132 | needs-remap | public/assets/bcu/000002/org/enemy/132/edi_132.png | public/assets/bcu/000010/org/enemy/132/enemy_icon_132.png |
-| enemy:133 | needs-remap | public/assets/bcu/000002/org/enemy/133/edi_133.png | public/assets/bcu/000010/org/enemy/133/enemy_icon_133.png |
-| enemy:134 | needs-remap | public/assets/bcu/000002/org/enemy/134/edi_134.png | public/assets/bcu/000010/org/enemy/134/enemy_icon_134.png |
-| enemy:135 | needs-remap | public/assets/bcu/000002/org/enemy/135/edi_135.png | public/assets/bcu/000010/org/enemy/135/enemy_icon_135.png |
-| enemy:136 | needs-remap | public/assets/bcu/000002/org/enemy/136/edi_136.png | public/assets/bcu/000010/org/enemy/136/enemy_icon_136.png |
-| enemy:137 | needs-remap | public/assets/bcu/000002/org/enemy/137/edi_137.png | public/assets/bcu/000010/org/enemy/137/enemy_icon_137.png |
-| enemy:138 | needs-remap | public/assets/bcu/000002/org/enemy/138/edi_138.png | public/assets/bcu/000010/org/enemy/138/enemy_icon_138.png |
-| enemy:139 | needs-remap | public/assets/bcu/000002/org/enemy/139/edi_139.png | public/assets/bcu/000010/org/enemy/139/enemy_icon_139.png |
-| enemy:140 | needs-remap | public/assets/bcu/000002/org/enemy/140/edi_140.png | public/assets/bcu/000010/org/enemy/140/enemy_icon_140.png |
-| enemy:141 | needs-remap | public/assets/bcu/000002/org/enemy/141/edi_141.png | public/assets/bcu/000010/org/enemy/141/enemy_icon_141.png |
-| enemy:142 | needs-remap | public/assets/bcu/000002/org/enemy/142/edi_142.png | public/assets/bcu/000010/org/enemy/142/enemy_icon_142.png |
-| enemy:143 | needs-remap | public/assets/bcu/000002/org/enemy/143/edi_143.png | public/assets/bcu/000010/org/enemy/143/enemy_icon_143.png |
-| enemy:144 | needs-remap | public/assets/bcu/000002/org/enemy/144/edi_144.png | public/assets/bcu/000010/org/enemy/144/enemy_icon_144.png |
-| enemy:145 | needs-remap | public/assets/bcu/000002/org/enemy/145/edi_145.png | public/assets/bcu/000010/org/enemy/145/enemy_icon_145.png |
-| enemy:146 | needs-remap | public/assets/bcu/000002/org/enemy/146/edi_146.png | public/assets/bcu/000010/org/enemy/146/enemy_icon_146.png |
-| enemy:147 | needs-remap | public/assets/bcu/000002/org/enemy/147/edi_147.png | public/assets/bcu/000010/org/enemy/147/enemy_icon_147.png |
-| enemy:148 | needs-remap | public/assets/bcu/000002/org/enemy/148/edi_148.png | public/assets/bcu/000010/org/enemy/148/enemy_icon_148.png |
-| enemy:149 | needs-remap | public/assets/bcu/000002/org/enemy/149/edi_149.png | public/assets/bcu/000010/org/enemy/149/enemy_icon_149.png |
-| enemy:150 | needs-remap | public/assets/bcu/000002/org/enemy/150/edi_150.png | public/assets/bcu/000010/org/enemy/150/enemy_icon_150.png |
-| enemy:151 | needs-remap | public/assets/bcu/000002/org/enemy/151/edi_151.png | public/assets/bcu/000010/org/enemy/151/enemy_icon_151.png |
-| enemy:152 | needs-remap | public/assets/bcu/000002/org/enemy/152/edi_152.png | public/assets/bcu/000010/org/enemy/152/enemy_icon_152.png |
-| enemy:153 | needs-remap | public/assets/bcu/000002/org/enemy/153/edi_153.png | public/assets/bcu/000010/org/enemy/153/enemy_icon_153.png |
-| enemy:154 | needs-remap | public/assets/bcu/000002/org/enemy/154/edi_154.png | public/assets/bcu/000010/org/enemy/154/enemy_icon_154.png |
-| enemy:155 | needs-remap | public/assets/bcu/000002/org/enemy/155/edi_155.png | public/assets/bcu/000010/org/enemy/155/enemy_icon_155.png |
-| enemy:156 | needs-remap | public/assets/bcu/000002/org/enemy/156/edi_156.png | public/assets/bcu/000010/org/enemy/156/enemy_icon_156.png |
-| enemy:157 | needs-remap | public/assets/bcu/000002/org/enemy/157/edi_157.png | public/assets/bcu/000010/org/enemy/157/enemy_icon_157.png |
-| enemy:158 | needs-remap | public/assets/bcu/000002/org/enemy/158/edi_158.png | public/assets/bcu/000010/org/enemy/158/enemy_icon_158.png |
-| enemy:159 | needs-remap | public/assets/bcu/000002/org/enemy/159/edi_159.png | public/assets/bcu/000010/org/enemy/159/enemy_icon_159.png |
-| enemy:160 | needs-remap | public/assets/bcu/000002/org/enemy/160/edi_160.png | public/assets/bcu/000010/org/enemy/160/enemy_icon_160.png |
-| enemy:161 | needs-remap | public/assets/bcu/000002/org/enemy/161/edi_161.png | public/assets/bcu/000010/org/enemy/161/enemy_icon_161.png |
-| enemy:162 | needs-remap | public/assets/bcu/000002/org/enemy/162/edi_162.png | public/assets/bcu/000010/org/enemy/162/enemy_icon_162.png |
-| enemy:163 | needs-remap | public/assets/bcu/000002/org/enemy/163/edi_163.png | public/assets/bcu/000010/org/enemy/163/enemy_icon_163.png |
-| enemy:164 | needs-remap | public/assets/bcu/000002/org/enemy/164/edi_164.png | public/assets/bcu/000010/org/enemy/164/enemy_icon_164.png |
-| enemy:165 | needs-remap | public/assets/bcu/000002/org/enemy/165/edi_165.png | public/assets/bcu/000010/org/enemy/165/enemy_icon_165.png |
-| enemy:166 | needs-remap | public/assets/bcu/000002/org/enemy/166/edi_166.png | public/assets/bcu/000010/org/enemy/166/enemy_icon_166.png |
-| enemy:167 | needs-remap | public/assets/bcu/000002/org/enemy/167/edi_167.png | public/assets/bcu/000010/org/enemy/167/enemy_icon_167.png |
-| enemy:168 | needs-remap | public/assets/bcu/000002/org/enemy/168/edi_168.png | public/assets/bcu/000010/org/enemy/168/enemy_icon_168.png |
-| enemy:169 | needs-remap | public/assets/bcu/000002/org/enemy/169/edi_169.png | public/assets/bcu/000010/org/enemy/169/enemy_icon_169.png |
-| enemy:170 | needs-remap | public/assets/bcu/000002/org/enemy/170/edi_170.png | public/assets/bcu/000010/org/enemy/170/enemy_icon_170.png |
-| enemy:171 | needs-remap | public/assets/bcu/000002/org/enemy/171/edi_171.png | public/assets/bcu/000010/org/enemy/171/enemy_icon_171.png |
-| enemy:172 | needs-remap | public/assets/bcu/000002/org/enemy/172/edi_172.png | public/assets/bcu/000010/org/enemy/172/enemy_icon_172.png |
-| enemy:173 | needs-remap | public/assets/bcu/000002/org/enemy/173/edi_173.png | public/assets/bcu/000010/org/enemy/173/enemy_icon_173.png |
-| enemy:174 | needs-remap | public/assets/bcu/000002/org/enemy/174/edi_174.png | public/assets/bcu/000010/org/enemy/174/enemy_icon_174.png |
-| enemy:175 | needs-remap | public/assets/bcu/000002/org/enemy/175/edi_175.png | public/assets/bcu/000010/org/enemy/175/enemy_icon_175.png |
-| enemy:176 | needs-remap | public/assets/bcu/000002/org/enemy/176/edi_176.png | public/assets/bcu/000010/org/enemy/176/enemy_icon_176.png |
-| enemy:177 | needs-remap | public/assets/bcu/000002/org/enemy/177/edi_177.png | public/assets/bcu/000010/org/enemy/177/enemy_icon_177.png |
-| enemy:178 | needs-remap | public/assets/bcu/000002/org/enemy/178/edi_178.png | public/assets/bcu/000010/org/enemy/178/enemy_icon_178.png |
-| enemy:179 | needs-remap | public/assets/bcu/000002/org/enemy/179/edi_179.png | public/assets/bcu/000010/org/enemy/179/enemy_icon_179.png |
-| enemy:180 | needs-remap | public/assets/bcu/000002/org/enemy/180/edi_180.png | public/assets/bcu/000010/org/enemy/180/enemy_icon_180.png |
-| enemy:181 | needs-remap | public/assets/bcu/000002/org/enemy/181/edi_181.png | public/assets/bcu/000010/org/enemy/181/enemy_icon_181.png |
-| enemy:182 | needs-remap | public/assets/bcu/000002/org/enemy/182/edi_182.png | public/assets/bcu/000010/org/enemy/182/enemy_icon_182.png |
-| enemy:183 | needs-remap | public/assets/bcu/000002/org/enemy/183/edi_183.png | public/assets/bcu/000010/org/enemy/183/enemy_icon_183.png |
-| enemy:184 | needs-remap | public/assets/bcu/000002/org/enemy/184/edi_184.png | public/assets/bcu/000010/org/enemy/184/enemy_icon_184.png |
-| enemy:185 | needs-remap | public/assets/bcu/000002/org/enemy/185/edi_185.png | public/assets/bcu/000010/org/enemy/185/enemy_icon_185.png |
-| enemy:186 | needs-remap | - | public/assets/bcu/000010/org/enemy/186/enemy_icon_186.png |
-| enemy:187 | needs-remap | public/assets/bcu/000002/org/enemy/187/edi_187.png | public/assets/bcu/000010/org/enemy/187/enemy_icon_187.png |
-| enemy:188 | needs-remap | public/assets/bcu/000002/org/enemy/188/edi_188.png | public/assets/bcu/000010/org/enemy/188/enemy_icon_188.png |
-| enemy:189 | needs-remap | public/assets/bcu/000002/org/enemy/189/edi_189.png | public/assets/bcu/000010/org/enemy/189/enemy_icon_189.png |
-| enemy:190 | needs-remap | public/assets/bcu/000002/org/enemy/190/edi_190.png | public/assets/bcu/000010/org/enemy/190/enemy_icon_190.png |
-| enemy:191 | needs-remap | public/assets/bcu/000002/org/enemy/191/edi_191.png | public/assets/bcu/000010/org/enemy/191/enemy_icon_191.png |
-| enemy:192 | needs-remap | public/assets/bcu/000002/org/enemy/192/edi_192.png | public/assets/bcu/000010/org/enemy/192/enemy_icon_192.png |
-| enemy:193 | needs-remap | public/assets/bcu/000002/org/enemy/193/edi_193.png | public/assets/bcu/000010/org/enemy/193/enemy_icon_193.png |
-| enemy:194 | needs-remap | public/assets/bcu/000002/org/enemy/194/edi_194.png | public/assets/bcu/000010/org/enemy/194/enemy_icon_194.png |
-| enemy:195 | needs-remap | public/assets/bcu/000002/org/enemy/195/edi_195.png | public/assets/bcu/000010/org/enemy/195/enemy_icon_195.png |
-| enemy:196 | needs-remap | public/assets/bcu/000002/org/enemy/196/edi_196.png | public/assets/bcu/000010/org/enemy/196/enemy_icon_196.png |
-| enemy:197 | needs-remap | public/assets/bcu/000002/org/enemy/197/edi_197.png | public/assets/bcu/000010/org/enemy/197/enemy_icon_197.png |
-| enemy:198 | needs-remap | public/assets/bcu/000002/org/enemy/198/edi_198.png | public/assets/bcu/000010/org/enemy/198/enemy_icon_198.png |
-| enemy:199 | needs-remap | public/assets/bcu/000002/org/enemy/199/edi_199.png | public/assets/bcu/000010/org/enemy/199/enemy_icon_199.png |
-| enemy:200 | needs-remap | public/assets/bcu/000002/org/enemy/200/edi_200.png | public/assets/bcu/000010/org/enemy/200/enemy_icon_200.png |
-| enemy:201 | needs-remap | public/assets/bcu/000002/org/enemy/201/edi_201.png | public/assets/bcu/000010/org/enemy/201/enemy_icon_201.png |
-| enemy:202 | needs-remap | public/assets/bcu/000002/org/enemy/202/edi_202.png | public/assets/bcu/000010/org/enemy/202/enemy_icon_202.png |
-| enemy:203 | needs-remap | public/assets/bcu/000002/org/enemy/203/edi_203.png | public/assets/bcu/000010/org/enemy/203/enemy_icon_203.png |
-| enemy:204 | needs-remap | public/assets/bcu/000002/org/enemy/204/edi_204.png | public/assets/bcu/000010/org/enemy/204/enemy_icon_204.png |
-| enemy:205 | needs-remap | public/assets/bcu/000002/org/enemy/205/edi_205.png | public/assets/bcu/000010/org/enemy/205/enemy_icon_205.png |
-| enemy:206 | needs-remap | public/assets/bcu/000002/org/enemy/206/edi_206.png | public/assets/bcu/000010/org/enemy/206/enemy_icon_206.png |
-| enemy:207 | needs-remap | public/assets/bcu/000002/org/enemy/207/edi_207.png | public/assets/bcu/000010/org/enemy/207/enemy_icon_207.png |
-| enemy:208 | needs-remap | public/assets/bcu/000002/org/enemy/208/edi_208.png | public/assets/bcu/000010/org/enemy/208/enemy_icon_208.png |
-| enemy:209 | needs-remap | public/assets/bcu/000002/org/enemy/209/edi_209.png | public/assets/bcu/000010/org/enemy/209/enemy_icon_209.png |
-| enemy:210 | needs-remap | public/assets/bcu/000002/org/enemy/210/edi_210.png | public/assets/bcu/000010/org/enemy/210/enemy_icon_210.png |
-| enemy:211 | needs-remap | public/assets/bcu/000002/org/enemy/211/edi_211.png | public/assets/bcu/000010/org/enemy/211/enemy_icon_211.png |
-| enemy:212 | needs-remap | public/assets/bcu/100503/org/enemy/212/edi_212.png | public/assets/bcu/000010/org/enemy/212/enemy_icon_212.png |
-| enemy:213 | needs-remap | public/assets/bcu/000002/org/enemy/213/edi_213.png | public/assets/bcu/000010/org/enemy/213/enemy_icon_213.png |
-| enemy:214 | needs-remap | public/assets/bcu/000002/org/enemy/214/edi_214.png | public/assets/bcu/000010/org/enemy/214/enemy_icon_214.png |
-| enemy:215 | needs-remap | public/assets/bcu/000002/org/enemy/215/edi_215.png | public/assets/bcu/000010/org/enemy/215/enemy_icon_215.png |
-| enemy:216 | needs-remap | public/assets/bcu/000002/org/enemy/216/edi_216.png | public/assets/bcu/000010/org/enemy/216/enemy_icon_216.png |
-| enemy:217 | needs-remap | public/assets/bcu/000002/org/enemy/217/edi_217.png | public/assets/bcu/000010/org/enemy/217/enemy_icon_217.png |
-| enemy:218 | needs-remap | public/assets/bcu/000002/org/enemy/218/edi_218.png | public/assets/bcu/000010/org/enemy/218/enemy_icon_218.png |
-| enemy:219 | needs-remap | public/assets/bcu/000002/org/enemy/219/edi_219.png | public/assets/bcu/000010/org/enemy/219/enemy_icon_219.png |
-| enemy:220 | needs-remap | public/assets/bcu/000002/org/enemy/220/edi_220.png | public/assets/bcu/000010/org/enemy/220/enemy_icon_220.png |
-| enemy:221 | needs-remap | public/assets/bcu/000002/org/enemy/221/edi_221.png | public/assets/bcu/000010/org/enemy/221/enemy_icon_221.png |
-| enemy:222 | needs-remap | public/assets/bcu/000002/org/enemy/222/edi_222.png | public/assets/bcu/000010/org/enemy/222/enemy_icon_222.png |
-| enemy:223 | needs-remap | public/assets/bcu/000002/org/enemy/223/edi_223.png | public/assets/bcu/000010/org/enemy/223/enemy_icon_223.png |
-| enemy:224 | needs-remap | public/assets/bcu/000002/org/enemy/224/edi_224.png | public/assets/bcu/000010/org/enemy/224/enemy_icon_224.png |
-| enemy:225 | needs-remap | public/assets/bcu/000002/org/enemy/225/edi_225.png | public/assets/bcu/000010/org/enemy/225/enemy_icon_225.png |
-| enemy:226 | needs-remap | public/assets/bcu/000002/org/enemy/226/edi_226.png | public/assets/bcu/000010/org/enemy/226/enemy_icon_226.png |
-| enemy:227 | needs-remap | public/assets/bcu/000002/org/enemy/227/edi_227.png | public/assets/bcu/000010/org/enemy/227/enemy_icon_227.png |
-| enemy:228 | needs-remap | public/assets/bcu/000002/org/enemy/228/edi_228.png | public/assets/bcu/000010/org/enemy/228/enemy_icon_228.png |
-| enemy:229 | needs-remap | public/assets/bcu/000002/org/enemy/229/edi_229.png | public/assets/bcu/000010/org/enemy/229/enemy_icon_229.png |
-| enemy:230 | needs-remap | public/assets/bcu/000002/org/enemy/230/edi_230.png | public/assets/bcu/000010/org/enemy/230/enemy_icon_230.png |
-| enemy:231 | needs-remap | public/assets/bcu/000002/org/enemy/231/edi_231.png | public/assets/bcu/000010/org/enemy/231/enemy_icon_231.png |
-| enemy:232 | needs-remap | public/assets/bcu/000002/org/enemy/232/edi_232.png | public/assets/bcu/000010/org/enemy/232/enemy_icon_232.png |
-| enemy:233 | needs-remap | public/assets/bcu/000002/org/enemy/233/edi_233.png | public/assets/bcu/000010/org/enemy/233/enemy_icon_233.png |
-| enemy:234 | needs-remap | public/assets/bcu/000002/org/enemy/234/edi_234.png | public/assets/bcu/000010/org/enemy/234/enemy_icon_234.png |
-| enemy:235 | needs-remap | public/assets/bcu/000002/org/enemy/235/edi_235.png | public/assets/bcu/000010/org/enemy/235/enemy_icon_235.png |
-| enemy:236 | needs-remap | public/assets/bcu/000002/org/enemy/236/edi_236.png | public/assets/bcu/000010/org/enemy/236/enemy_icon_236.png |
-| enemy:237 | needs-remap | public/assets/bcu/000002/org/enemy/237/edi_237.png | public/assets/bcu/000010/org/enemy/237/enemy_icon_237.png |
-| enemy:238 | needs-remap | public/assets/bcu/000002/org/enemy/238/edi_238.png | public/assets/bcu/000010/org/enemy/238/enemy_icon_238.png |
-| enemy:239 | needs-remap | public/assets/bcu/000002/org/enemy/239/edi_239.png | public/assets/bcu/000010/org/enemy/239/enemy_icon_239.png |
-| enemy:240 | needs-remap | public/assets/bcu/000002/org/enemy/240/edi_240.png | public/assets/bcu/000010/org/enemy/240/enemy_icon_240.png |
-| enemy:241 | needs-remap | public/assets/bcu/000002/org/enemy/241/edi_241.png | public/assets/bcu/000010/org/enemy/241/enemy_icon_241.png |
-| enemy:242 | needs-remap | public/assets/bcu/000002/org/enemy/242/edi_242.png | public/assets/bcu/000010/org/enemy/242/enemy_icon_242.png |
-| enemy:243 | needs-remap | public/assets/bcu/000002/org/enemy/243/edi_243.png | public/assets/bcu/000010/org/enemy/243/enemy_icon_243.png |
-| enemy:244 | needs-remap | public/assets/bcu/000002/org/enemy/244/edi_244.png | public/assets/bcu/000010/org/enemy/244/enemy_icon_244.png |
-| enemy:245 | needs-remap | public/assets/bcu/000002/org/enemy/245/edi_245.png | public/assets/bcu/000010/org/enemy/245/enemy_icon_245.png |
-| enemy:246 | needs-remap | public/assets/bcu/000002/org/enemy/246/edi_246.png | public/assets/bcu/000010/org/enemy/246/enemy_icon_246.png |
-| enemy:247 | needs-remap | public/assets/bcu/000002/org/enemy/247/edi_247.png | public/assets/bcu/000010/org/enemy/247/enemy_icon_247.png |
-| enemy:248 | needs-remap | public/assets/bcu/000002/org/enemy/248/edi_248.png | public/assets/bcu/000010/org/enemy/248/enemy_icon_248.png |
-| enemy:249 | needs-remap | public/assets/bcu/000002/org/enemy/249/edi_249.png | public/assets/bcu/000010/org/enemy/249/enemy_icon_249.png |
+| Semantic key | Status | Current | Desired | PNG |
+| --- | --- | --- | --- | --- |
+| enemy:0 | invalid-png | public/assets/bcu/000002/org/enemy/000/edi_000.png | - | trailing-bytes |
+| enemy:1 | invalid-png | public/assets/bcu/000002/org/enemy/001/edi_001.png | - | trailing-bytes |
+| enemy:2 | invalid-png | public/assets/bcu/000002/org/enemy/002/edi_002.png | - | trailing-bytes |
+| enemy:3 | invalid-png | public/assets/bcu/000002/org/enemy/003/edi_003.png | - | trailing-bytes |
+| enemy:4 | invalid-png | public/assets/bcu/000002/org/enemy/004/edi_004.png | - | trailing-bytes |
+| enemy:5 | invalid-png | public/assets/bcu/000002/org/enemy/005/edi_005.png | - | trailing-bytes |
+| enemy:6 | invalid-png | public/assets/bcu/000002/org/enemy/006/edi_006.png | - | trailing-bytes |
+| enemy:7 | invalid-png | public/assets/bcu/000002/org/enemy/007/edi_007.png | - | trailing-bytes |
+| enemy:8 | invalid-png | public/assets/bcu/000002/org/enemy/008/edi_008.png | - | trailing-bytes |
+| enemy:9 | invalid-png | public/assets/bcu/000002/org/enemy/009/edi_009.png | - | trailing-bytes |
+| enemy:10 | invalid-png | public/assets/bcu/000002/org/enemy/010/edi_010.png | - | trailing-bytes |
+| enemy:11 | invalid-png | public/assets/bcu/000002/org/enemy/011/edi_011.png | - | trailing-bytes |
+| enemy:12 | invalid-png | public/assets/bcu/000002/org/enemy/012/edi_012.png | - | trailing-bytes |
+| enemy:13 | invalid-png | public/assets/bcu/000002/org/enemy/013/edi_013.png | - | trailing-bytes |
+| enemy:14 | invalid-png | public/assets/bcu/000002/org/enemy/014/edi_014.png | - | trailing-bytes |
+| enemy:15 | invalid-png | public/assets/bcu/000002/org/enemy/015/edi_015.png | - | trailing-bytes |
+| enemy:16 | invalid-png | public/assets/bcu/000002/org/enemy/016/edi_016.png | - | trailing-bytes |
+| enemy:17 | invalid-png | public/assets/bcu/000002/org/enemy/017/edi_017.png | - | trailing-bytes |
+| enemy:18 | invalid-png | public/assets/bcu/000002/org/enemy/018/edi_018.png | - | trailing-bytes |
+| enemy:19 | invalid-png | public/assets/bcu/000002/org/enemy/019/edi_019.png | - | trailing-bytes |
+| enemy:20 | invalid-png | public/assets/bcu/000002/org/enemy/020/edi_020.png | - | trailing-bytes |
+| enemy:21 | invalid-png | public/assets/bcu/000002/org/enemy/021/edi_021.png | - | trailing-bytes |
+| enemy:22 | invalid-png | public/assets/bcu/000002/org/enemy/022/edi_022.png | - | trailing-bytes |
+| enemy:23 | invalid-png | public/assets/bcu/000002/org/enemy/023/edi_023.png | - | trailing-bytes |
+| enemy:24 | invalid-png | public/assets/bcu/000002/org/enemy/024/edi_024.png | - | trailing-bytes |
+| enemy:25 | invalid-png | public/assets/bcu/000002/org/enemy/025/edi_025.png | - | trailing-bytes |
+| enemy:26 | invalid-png | public/assets/bcu/000002/org/enemy/026/edi_026.png | - | trailing-bytes |
+| enemy:27 | invalid-png | public/assets/bcu/000002/org/enemy/027/edi_027.png | - | trailing-bytes |
+| enemy:28 | invalid-png | public/assets/bcu/000002/org/enemy/028/edi_028.png | - | trailing-bytes |
+| enemy:29 | invalid-png | public/assets/bcu/000002/org/enemy/029/edi_029.png | - | trailing-bytes |
+| enemy:30 | invalid-png | public/assets/bcu/000002/org/enemy/030/edi_030.png | - | trailing-bytes |
+| enemy:31 | invalid-png | public/assets/bcu/000002/org/enemy/031/edi_031.png | - | trailing-bytes |
+| enemy:32 | invalid-png | public/assets/bcu/000002/org/enemy/032/edi_032.png | - | trailing-bytes |
+| enemy:33 | invalid-png | public/assets/bcu/000002/org/enemy/033/edi_033.png | - | trailing-bytes |
+| enemy:34 | invalid-png | public/assets/bcu/000002/org/enemy/034/edi_034.png | - | trailing-bytes |
+| enemy:35 | invalid-png | public/assets/bcu/000002/org/enemy/035/edi_035.png | - | trailing-bytes |
+| enemy:36 | invalid-png | public/assets/bcu/000002/org/enemy/036/edi_036.png | - | trailing-bytes |
+| enemy:37 | invalid-png | public/assets/bcu/000002/org/enemy/037/edi_037.png | - | trailing-bytes |
+| enemy:38 | invalid-png | public/assets/bcu/000002/org/enemy/038/edi_038.png | - | trailing-bytes |
+| enemy:39 | invalid-png | public/assets/bcu/000002/org/enemy/039/edi_039.png | - | trailing-bytes |
+| enemy:40 | invalid-png | public/assets/bcu/000002/org/enemy/040/edi_040.png | - | trailing-bytes |
+| enemy:41 | invalid-png | public/assets/bcu/000002/org/enemy/041/edi_041.png | - | trailing-bytes |
+| enemy:42 | invalid-png | public/assets/bcu/000002/org/enemy/042/edi_042.png | - | trailing-bytes |
+| enemy:43 | invalid-png | public/assets/bcu/000002/org/enemy/043/edi_043.png | - | trailing-bytes |
+| enemy:44 | invalid-png | public/assets/bcu/000002/org/enemy/044/edi_044.png | - | trailing-bytes |
+| enemy:45 | invalid-png | public/assets/bcu/000002/org/enemy/045/edi_045.png | - | trailing-bytes |
+| enemy:46 | invalid-png | public/assets/bcu/000002/org/enemy/046/edi_046.png | - | trailing-bytes |
+| enemy:47 | invalid-png | public/assets/bcu/000002/org/enemy/047/edi_047.png | - | trailing-bytes |
+| enemy:48 | invalid-png | public/assets/bcu/000002/org/enemy/048/edi_048.png | - | trailing-bytes |
+| enemy:49 | invalid-png | public/assets/bcu/000002/org/enemy/049/edi_049.png | - | trailing-bytes |
+| enemy:50 | invalid-png | public/assets/bcu/000002/org/enemy/050/edi_050.png | - | trailing-bytes |
+| enemy:51 | invalid-png | public/assets/bcu/000002/org/enemy/051/edi_051.png | - | trailing-bytes |
+| enemy:52 | invalid-png | public/assets/bcu/000002/org/enemy/052/edi_052.png | - | trailing-bytes |
+| enemy:53 | invalid-png | public/assets/bcu/000002/org/enemy/053/edi_053.png | - | trailing-bytes |
+| enemy:54 | invalid-png | public/assets/bcu/000002/org/enemy/054/edi_054.png | - | trailing-bytes |
+| enemy:55 | invalid-png | public/assets/bcu/000002/org/enemy/055/edi_055.png | - | trailing-bytes |
+| enemy:56 | invalid-png | public/assets/bcu/000002/org/enemy/056/edi_056.png | - | trailing-bytes |
+| enemy:57 | invalid-png | public/assets/bcu/100503/org/enemy/057/edi_057.png | - | trailing-bytes |
+| enemy:58 | invalid-png | public/assets/bcu/000002/org/enemy/058/edi_058.png | - | trailing-bytes |
+| enemy:59 | invalid-png | public/assets/bcu/000002/org/enemy/059/edi_059.png | - | trailing-bytes |
+| enemy:60 | invalid-png | public/assets/bcu/000002/org/enemy/060/edi_060.png | - | trailing-bytes |
+| enemy:61 | invalid-png | public/assets/bcu/000002/org/enemy/061/edi_061.png | - | trailing-bytes |
+| enemy:62 | invalid-png | public/assets/bcu/000002/org/enemy/062/edi_062.png | - | trailing-bytes |
+| enemy:63 | invalid-png | public/assets/bcu/000002/org/enemy/063/edi_063.png | - | trailing-bytes |
+| enemy:64 | invalid-png | public/assets/bcu/000002/org/enemy/064/edi_064.png | - | trailing-bytes |
+| enemy:65 | invalid-png | public/assets/bcu/000002/org/enemy/065/edi_065.png | - | trailing-bytes |
+| enemy:66 | invalid-png | public/assets/bcu/000002/org/enemy/066/edi_066.png | - | trailing-bytes |
+| enemy:67 | invalid-png | public/assets/bcu/100503/org/enemy/067/edi_067.png | - | trailing-bytes |
+| enemy:68 | invalid-png | public/assets/bcu/000002/org/enemy/068/edi_068.png | - | trailing-bytes |
+| enemy:69 | invalid-png | public/assets/bcu/000002/org/enemy/069/edi_069.png | - | trailing-bytes |
+| enemy:70 | invalid-png | public/assets/bcu/000002/org/enemy/070/edi_070.png | - | trailing-bytes |
+| enemy:71 | invalid-png | public/assets/bcu/000002/org/enemy/071/edi_071.png | - | trailing-bytes |
+| enemy:72 | invalid-png | public/assets/bcu/000002/org/enemy/072/edi_072.png | - | trailing-bytes |
+| enemy:73 | invalid-png | public/assets/bcu/000002/org/enemy/073/edi_073.png | - | trailing-bytes |
+| enemy:74 | invalid-png | public/assets/bcu/000002/org/enemy/074/edi_074.png | - | trailing-bytes |
+| enemy:75 | invalid-png | public/assets/bcu/000002/org/enemy/075/edi_075.png | - | trailing-bytes |
+| enemy:76 | invalid-png | public/assets/bcu/000002/org/enemy/076/edi_076.png | - | trailing-bytes |
+| enemy:77 | invalid-png | public/assets/bcu/000002/org/enemy/077/edi_077.png | - | trailing-bytes |
+| enemy:78 | invalid-png | public/assets/bcu/000002/org/enemy/078/edi_078.png | - | trailing-bytes |
+| enemy:79 | invalid-png | public/assets/bcu/000002/org/enemy/079/edi_079.png | - | trailing-bytes |
+| enemy:80 | invalid-png | public/assets/bcu/000002/org/enemy/080/edi_080.png | - | trailing-bytes |
+| enemy:81 | invalid-png | public/assets/bcu/000002/org/enemy/081/edi_081.png | - | trailing-bytes |
+| enemy:82 | invalid-png | public/assets/bcu/000002/org/enemy/082/edi_082.png | - | trailing-bytes |
+| enemy:83 | invalid-png | public/assets/bcu/000002/org/enemy/083/edi_083.png | - | trailing-bytes |
+| enemy:84 | invalid-png | public/assets/bcu/000002/org/enemy/084/edi_084.png | - | trailing-bytes |
+| enemy:85 | invalid-png | public/assets/bcu/000002/org/enemy/085/edi_085.png | - | trailing-bytes |
+| enemy:86 | invalid-png | public/assets/bcu/000002/org/enemy/086/edi_086.png | - | trailing-bytes |
+| enemy:87 | invalid-png | public/assets/bcu/000002/org/enemy/087/edi_087.png | - | trailing-bytes |
+| enemy:88 | invalid-png | public/assets/bcu/000002/org/enemy/088/edi_088.png | - | trailing-bytes |
+| enemy:89 | invalid-png | public/assets/bcu/000002/org/enemy/089/edi_089.png | - | trailing-bytes |
+| enemy:90 | invalid-png | public/assets/bcu/000002/org/enemy/090/edi_090.png | - | trailing-bytes |
+| enemy:91 | invalid-png | public/assets/bcu/000002/org/enemy/091/edi_091.png | - | trailing-bytes |
+| enemy:92 | invalid-png | public/assets/bcu/000002/org/enemy/092/edi_092.png | - | trailing-bytes |
+| enemy:93 | invalid-png | public/assets/bcu/000002/org/enemy/093/edi_093.png | - | trailing-bytes |
+| enemy:94 | invalid-png | public/assets/bcu/000002/org/enemy/094/edi_094.png | - | trailing-bytes |
+| enemy:95 | invalid-png | public/assets/bcu/000002/org/enemy/095/edi_095.png | - | trailing-bytes |
+| enemy:96 | invalid-png | public/assets/bcu/000002/org/enemy/096/edi_096.png | - | trailing-bytes |
+| enemy:97 | invalid-png | public/assets/bcu/000002/org/enemy/097/edi_097.png | - | trailing-bytes |
+| enemy:98 | invalid-png | public/assets/bcu/000002/org/enemy/098/edi_098.png | - | trailing-bytes |
+| enemy:99 | invalid-png | public/assets/bcu/000002/org/enemy/099/edi_099.png | - | trailing-bytes |
+| enemy:100 | invalid-png | public/assets/bcu/000002/org/enemy/100/edi_100.png | - | trailing-bytes |
+| enemy:101 | invalid-png | public/assets/bcu/000002/org/enemy/101/edi_101.png | - | trailing-bytes |
+| enemy:102 | invalid-png | public/assets/bcu/000002/org/enemy/102/edi_102.png | - | trailing-bytes |
+| enemy:103 | invalid-png | public/assets/bcu/000002/org/enemy/103/edi_103.png | - | trailing-bytes |
+| enemy:104 | invalid-png | public/assets/bcu/000002/org/enemy/104/edi_104.png | - | trailing-bytes |
+| enemy:105 | invalid-png | public/assets/bcu/000002/org/enemy/105/edi_105.png | - | trailing-bytes |
+| enemy:106 | invalid-png | public/assets/bcu/000002/org/enemy/106/edi_106.png | - | trailing-bytes |
+| enemy:107 | invalid-png | public/assets/bcu/000002/org/enemy/107/edi_107.png | - | trailing-bytes |
+| enemy:108 | invalid-png | public/assets/bcu/000002/org/enemy/108/edi_108.png | - | trailing-bytes |
+| enemy:109 | invalid-png | public/assets/bcu/000002/org/enemy/109/edi_109.png | - | trailing-bytes |
+| enemy:110 | invalid-png | public/assets/bcu/000002/org/enemy/110/edi_110.png | - | trailing-bytes |
+| enemy:111 | invalid-png | public/assets/bcu/000002/org/enemy/111/edi_111.png | - | trailing-bytes |
+| enemy:112 | invalid-png | public/assets/bcu/000002/org/enemy/112/edi_112.png | - | trailing-bytes |
+| enemy:113 | invalid-png | public/assets/bcu/000002/org/enemy/113/edi_113.png | - | trailing-bytes |
+| enemy:114 | invalid-png | public/assets/bcu/000002/org/enemy/114/edi_114.png | - | trailing-bytes |
+| enemy:115 | invalid-png | public/assets/bcu/000002/org/enemy/115/edi_115.png | - | trailing-bytes |
+| enemy:116 | invalid-png | public/assets/bcu/000002/org/enemy/116/edi_116.png | - | trailing-bytes |
+| enemy:117 | invalid-png | public/assets/bcu/000002/org/enemy/117/edi_117.png | - | trailing-bytes |
+| enemy:118 | invalid-png | public/assets/bcu/000002/org/enemy/118/edi_118.png | - | trailing-bytes |
+| enemy:119 | invalid-png | public/assets/bcu/000002/org/enemy/119/edi_119.png | - | trailing-bytes |
+| enemy:120 | invalid-png | public/assets/bcu/000002/org/enemy/120/edi_120.png | - | trailing-bytes |
+| enemy:121 | invalid-png | public/assets/bcu/000002/org/enemy/121/edi_121.png | - | trailing-bytes |
+| enemy:122 | invalid-png | public/assets/bcu/000002/org/enemy/122/edi_122.png | - | trailing-bytes |
+| enemy:123 | invalid-png | public/assets/bcu/000002/org/enemy/123/edi_123.png | - | trailing-bytes |
+| enemy:124 | invalid-png | public/assets/bcu/000002/org/enemy/124/edi_124.png | - | trailing-bytes |
+| enemy:125 | invalid-png | public/assets/bcu/000002/org/enemy/125/edi_125.png | - | trailing-bytes |
+| enemy:126 | invalid-png | public/assets/bcu/000002/org/enemy/126/edi_126.png | - | trailing-bytes |
+| enemy:127 | invalid-png | public/assets/bcu/000002/org/enemy/127/edi_127.png | - | trailing-bytes |
+| enemy:128 | invalid-png | public/assets/bcu/000002/org/enemy/128/edi_128.png | - | trailing-bytes |
+| enemy:129 | invalid-png | public/assets/bcu/000002/org/enemy/129/edi_129.png | - | trailing-bytes |
+| enemy:130 | invalid-png | public/assets/bcu/000002/org/enemy/130/edi_130.png | - | trailing-bytes |
+| enemy:131 | invalid-png | public/assets/bcu/000002/org/enemy/131/edi_131.png | - | trailing-bytes |
+| enemy:132 | invalid-png | public/assets/bcu/000002/org/enemy/132/edi_132.png | - | trailing-bytes |
+| enemy:133 | invalid-png | public/assets/bcu/000002/org/enemy/133/edi_133.png | - | trailing-bytes |
+| enemy:134 | invalid-png | public/assets/bcu/000002/org/enemy/134/edi_134.png | - | trailing-bytes |
+| enemy:135 | invalid-png | public/assets/bcu/000002/org/enemy/135/edi_135.png | - | trailing-bytes |
+| enemy:136 | invalid-png | public/assets/bcu/000002/org/enemy/136/edi_136.png | - | trailing-bytes |
+| enemy:137 | invalid-png | public/assets/bcu/000002/org/enemy/137/edi_137.png | - | trailing-bytes |
+| enemy:138 | invalid-png | public/assets/bcu/000002/org/enemy/138/edi_138.png | - | trailing-bytes |
+| enemy:139 | invalid-png | public/assets/bcu/000002/org/enemy/139/edi_139.png | - | trailing-bytes |
+| enemy:140 | invalid-png | public/assets/bcu/000002/org/enemy/140/edi_140.png | - | trailing-bytes |
+| enemy:141 | invalid-png | public/assets/bcu/000002/org/enemy/141/edi_141.png | - | trailing-bytes |
+| enemy:142 | invalid-png | public/assets/bcu/000002/org/enemy/142/edi_142.png | - | trailing-bytes |
+| enemy:143 | invalid-png | public/assets/bcu/000002/org/enemy/143/edi_143.png | - | trailing-bytes |
+| enemy:144 | invalid-png | public/assets/bcu/000002/org/enemy/144/edi_144.png | - | trailing-bytes |
+| enemy:145 | invalid-png | public/assets/bcu/000002/org/enemy/145/edi_145.png | - | trailing-bytes |
+| enemy:146 | invalid-png | public/assets/bcu/000002/org/enemy/146/edi_146.png | - | trailing-bytes |
+| enemy:147 | invalid-png | public/assets/bcu/000002/org/enemy/147/edi_147.png | - | trailing-bytes |
+| enemy:148 | invalid-png | public/assets/bcu/000002/org/enemy/148/edi_148.png | - | trailing-bytes |
+| enemy:149 | invalid-png | public/assets/bcu/000002/org/enemy/149/edi_149.png | - | trailing-bytes |
+| enemy:150 | invalid-png | public/assets/bcu/000002/org/enemy/150/edi_150.png | - | trailing-bytes |
+| enemy:151 | invalid-png | public/assets/bcu/000002/org/enemy/151/edi_151.png | - | trailing-bytes |
+| enemy:152 | invalid-png | public/assets/bcu/000002/org/enemy/152/edi_152.png | - | trailing-bytes |
+| enemy:153 | invalid-png | public/assets/bcu/000002/org/enemy/153/edi_153.png | - | trailing-bytes |
+| enemy:154 | invalid-png | public/assets/bcu/000002/org/enemy/154/edi_154.png | - | trailing-bytes |
+| enemy:155 | invalid-png | public/assets/bcu/000002/org/enemy/155/edi_155.png | - | trailing-bytes |
+| enemy:156 | invalid-png | public/assets/bcu/000002/org/enemy/156/edi_156.png | - | trailing-bytes |
+| enemy:157 | invalid-png | public/assets/bcu/000002/org/enemy/157/edi_157.png | - | trailing-bytes |
+| enemy:158 | invalid-png | public/assets/bcu/000002/org/enemy/158/edi_158.png | - | trailing-bytes |
+| enemy:159 | invalid-png | public/assets/bcu/000002/org/enemy/159/edi_159.png | - | trailing-bytes |
+| enemy:160 | invalid-png | public/assets/bcu/000002/org/enemy/160/edi_160.png | - | trailing-bytes |
+| enemy:161 | invalid-png | public/assets/bcu/000002/org/enemy/161/edi_161.png | - | trailing-bytes |
+| enemy:162 | invalid-png | public/assets/bcu/000002/org/enemy/162/edi_162.png | - | trailing-bytes |
+| enemy:163 | invalid-png | public/assets/bcu/000002/org/enemy/163/edi_163.png | - | trailing-bytes |
+| enemy:164 | invalid-png | public/assets/bcu/000002/org/enemy/164/edi_164.png | - | trailing-bytes |
+| enemy:165 | invalid-png | public/assets/bcu/000002/org/enemy/165/edi_165.png | - | trailing-bytes |
+| enemy:166 | invalid-png | public/assets/bcu/000002/org/enemy/166/edi_166.png | - | trailing-bytes |
+| enemy:167 | invalid-png | public/assets/bcu/000002/org/enemy/167/edi_167.png | - | trailing-bytes |
+| enemy:168 | invalid-png | public/assets/bcu/000002/org/enemy/168/edi_168.png | - | trailing-bytes |
+| enemy:169 | invalid-png | public/assets/bcu/000002/org/enemy/169/edi_169.png | - | trailing-bytes |
+| enemy:170 | invalid-png | public/assets/bcu/000002/org/enemy/170/edi_170.png | - | trailing-bytes |
+| enemy:171 | invalid-png | public/assets/bcu/000002/org/enemy/171/edi_171.png | - | trailing-bytes |
+| enemy:172 | invalid-png | public/assets/bcu/000002/org/enemy/172/edi_172.png | - | trailing-bytes |
+| enemy:173 | invalid-png | public/assets/bcu/000002/org/enemy/173/edi_173.png | - | trailing-bytes |
+| enemy:174 | invalid-png | public/assets/bcu/000002/org/enemy/174/edi_174.png | - | trailing-bytes |
+| enemy:175 | invalid-png | public/assets/bcu/000002/org/enemy/175/edi_175.png | - | trailing-bytes |
+| enemy:176 | invalid-png | public/assets/bcu/000002/org/enemy/176/edi_176.png | - | trailing-bytes |
+| enemy:177 | invalid-png | public/assets/bcu/000002/org/enemy/177/edi_177.png | - | trailing-bytes |
+| enemy:178 | invalid-png | public/assets/bcu/000002/org/enemy/178/edi_178.png | - | trailing-bytes |
+| enemy:179 | invalid-png | public/assets/bcu/000002/org/enemy/179/edi_179.png | - | trailing-bytes |
+| enemy:180 | invalid-png | public/assets/bcu/000002/org/enemy/180/edi_180.png | - | trailing-bytes |
+| enemy:181 | invalid-png | public/assets/bcu/000002/org/enemy/181/edi_181.png | - | trailing-bytes |
+| enemy:182 | invalid-png | public/assets/bcu/000002/org/enemy/182/edi_182.png | - | trailing-bytes |
+| enemy:183 | invalid-png | public/assets/bcu/000002/org/enemy/183/edi_183.png | - | trailing-bytes |
+| enemy:184 | invalid-png | public/assets/bcu/000002/org/enemy/184/edi_184.png | - | trailing-bytes |
+| enemy:185 | invalid-png | public/assets/bcu/000002/org/enemy/185/edi_185.png | - | trailing-bytes |
+| enemy:186 | invalid-png | - | - | trailing-bytes |
+| enemy:187 | invalid-png | public/assets/bcu/000002/org/enemy/187/edi_187.png | - | trailing-bytes |
+| enemy:188 | invalid-png | public/assets/bcu/000002/org/enemy/188/edi_188.png | - | trailing-bytes |
+| enemy:189 | invalid-png | public/assets/bcu/000002/org/enemy/189/edi_189.png | - | trailing-bytes |
+| enemy:190 | invalid-png | public/assets/bcu/000002/org/enemy/190/edi_190.png | - | trailing-bytes |
+| enemy:191 | invalid-png | public/assets/bcu/000002/org/enemy/191/edi_191.png | - | trailing-bytes |
+| enemy:192 | invalid-png | public/assets/bcu/000002/org/enemy/192/edi_192.png | - | trailing-bytes |
+| enemy:193 | invalid-png | public/assets/bcu/000002/org/enemy/193/edi_193.png | - | trailing-bytes |
+| enemy:194 | invalid-png | public/assets/bcu/000002/org/enemy/194/edi_194.png | - | trailing-bytes |
+| enemy:195 | invalid-png | public/assets/bcu/000002/org/enemy/195/edi_195.png | - | trailing-bytes |
+| enemy:196 | invalid-png | public/assets/bcu/000002/org/enemy/196/edi_196.png | - | trailing-bytes |
+| enemy:197 | invalid-png | public/assets/bcu/000002/org/enemy/197/edi_197.png | - | trailing-bytes |
+| enemy:198 | invalid-png | public/assets/bcu/000002/org/enemy/198/edi_198.png | - | trailing-bytes |
+| enemy:199 | invalid-png | public/assets/bcu/000002/org/enemy/199/edi_199.png | - | trailing-bytes |
+| enemy:200 | invalid-png | public/assets/bcu/000002/org/enemy/200/edi_200.png | - | trailing-bytes |
+| enemy:201 | invalid-png | public/assets/bcu/000002/org/enemy/201/edi_201.png | - | trailing-bytes |
+| enemy:202 | invalid-png | public/assets/bcu/000002/org/enemy/202/edi_202.png | - | trailing-bytes |
+| enemy:203 | invalid-png | public/assets/bcu/000002/org/enemy/203/edi_203.png | - | trailing-bytes |
+| enemy:204 | invalid-png | public/assets/bcu/000002/org/enemy/204/edi_204.png | - | trailing-bytes |
+| enemy:205 | invalid-png | public/assets/bcu/000002/org/enemy/205/edi_205.png | - | trailing-bytes |
+| enemy:206 | invalid-png | public/assets/bcu/000002/org/enemy/206/edi_206.png | - | trailing-bytes |
+| enemy:207 | invalid-png | public/assets/bcu/000002/org/enemy/207/edi_207.png | - | trailing-bytes |
+| enemy:208 | invalid-png | public/assets/bcu/000002/org/enemy/208/edi_208.png | - | trailing-bytes |
+| enemy:209 | invalid-png | public/assets/bcu/000002/org/enemy/209/edi_209.png | - | trailing-bytes |
+| enemy:210 | invalid-png | public/assets/bcu/000002/org/enemy/210/edi_210.png | - | trailing-bytes |
+| enemy:211 | invalid-png | public/assets/bcu/000002/org/enemy/211/edi_211.png | - | trailing-bytes |
+| enemy:212 | invalid-png | public/assets/bcu/100503/org/enemy/212/edi_212.png | - | trailing-bytes |
+| enemy:213 | invalid-png | public/assets/bcu/000002/org/enemy/213/edi_213.png | - | trailing-bytes |
+| enemy:214 | invalid-png | public/assets/bcu/000002/org/enemy/214/edi_214.png | - | trailing-bytes |
+| enemy:215 | invalid-png | public/assets/bcu/000002/org/enemy/215/edi_215.png | - | trailing-bytes |
+| enemy:216 | invalid-png | public/assets/bcu/000002/org/enemy/216/edi_216.png | - | trailing-bytes |
+| enemy:217 | invalid-png | public/assets/bcu/000002/org/enemy/217/edi_217.png | - | trailing-bytes |
+| enemy:218 | invalid-png | public/assets/bcu/000002/org/enemy/218/edi_218.png | - | trailing-bytes |
+| enemy:219 | invalid-png | public/assets/bcu/000002/org/enemy/219/edi_219.png | - | trailing-bytes |
+| enemy:220 | invalid-png | public/assets/bcu/000002/org/enemy/220/edi_220.png | - | trailing-bytes |
+| enemy:221 | invalid-png | public/assets/bcu/000002/org/enemy/221/edi_221.png | - | trailing-bytes |
+| enemy:222 | invalid-png | public/assets/bcu/000002/org/enemy/222/edi_222.png | - | trailing-bytes |
+| enemy:223 | invalid-png | public/assets/bcu/000002/org/enemy/223/edi_223.png | - | trailing-bytes |
+| enemy:224 | invalid-png | public/assets/bcu/000002/org/enemy/224/edi_224.png | - | trailing-bytes |
+| enemy:225 | invalid-png | public/assets/bcu/000002/org/enemy/225/edi_225.png | - | trailing-bytes |
+| enemy:226 | invalid-png | public/assets/bcu/000002/org/enemy/226/edi_226.png | - | trailing-bytes |
+| enemy:227 | invalid-png | public/assets/bcu/000002/org/enemy/227/edi_227.png | - | trailing-bytes |
+| enemy:228 | invalid-png | public/assets/bcu/000002/org/enemy/228/edi_228.png | - | trailing-bytes |
+| enemy:229 | invalid-png | public/assets/bcu/000002/org/enemy/229/edi_229.png | - | trailing-bytes |
+| enemy:230 | invalid-png | public/assets/bcu/000002/org/enemy/230/edi_230.png | - | trailing-bytes |
+| enemy:231 | invalid-png | public/assets/bcu/000002/org/enemy/231/edi_231.png | - | trailing-bytes |
+| enemy:232 | invalid-png | public/assets/bcu/000002/org/enemy/232/edi_232.png | - | trailing-bytes |
+| enemy:233 | invalid-png | public/assets/bcu/000002/org/enemy/233/edi_233.png | - | trailing-bytes |
+| enemy:234 | invalid-png | public/assets/bcu/000002/org/enemy/234/edi_234.png | - | trailing-bytes |
+| enemy:235 | invalid-png | public/assets/bcu/000002/org/enemy/235/edi_235.png | - | trailing-bytes |
+| enemy:236 | invalid-png | public/assets/bcu/000002/org/enemy/236/edi_236.png | - | trailing-bytes |
+| enemy:237 | invalid-png | public/assets/bcu/000002/org/enemy/237/edi_237.png | - | trailing-bytes |
+| enemy:238 | invalid-png | public/assets/bcu/000002/org/enemy/238/edi_238.png | - | trailing-bytes |
+| enemy:239 | invalid-png | public/assets/bcu/000002/org/enemy/239/edi_239.png | - | trailing-bytes |
+| enemy:240 | invalid-png | public/assets/bcu/000002/org/enemy/240/edi_240.png | - | trailing-bytes |
+| enemy:241 | invalid-png | public/assets/bcu/000002/org/enemy/241/edi_241.png | - | trailing-bytes |
+| enemy:242 | invalid-png | public/assets/bcu/000002/org/enemy/242/edi_242.png | - | trailing-bytes |
+| enemy:243 | invalid-png | public/assets/bcu/000002/org/enemy/243/edi_243.png | - | trailing-bytes |
+| enemy:244 | invalid-png | public/assets/bcu/000002/org/enemy/244/edi_244.png | - | trailing-bytes |
+| enemy:245 | invalid-png | public/assets/bcu/000002/org/enemy/245/edi_245.png | - | trailing-bytes |
+| enemy:246 | invalid-png | public/assets/bcu/000002/org/enemy/246/edi_246.png | - | trailing-bytes |
+| enemy:247 | invalid-png | public/assets/bcu/000002/org/enemy/247/edi_247.png | - | trailing-bytes |
+| enemy:248 | invalid-png | public/assets/bcu/000002/org/enemy/248/edi_248.png | - | trailing-bytes |
+| enemy:249 | invalid-png | public/assets/bcu/000002/org/enemy/249/edi_249.png | - | trailing-bytes |
 
 _Showing first 250 of 2855 records._

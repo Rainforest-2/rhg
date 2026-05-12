@@ -28,6 +28,33 @@ export class BattleActorFactory {
     this.upgradePromises.set(key,p);
     return await p;
   }
+  async loadRequiredAnimation(tpl, assetDef, animId, role, semanticKey) {
+    if (!animId || tpl.loadedAnimations.has(animId)) return;
+    const d = assetDef.animations?.find(a=>a.id===animId);
+    if (!d) throw new Error(`actor-animation definition missing: ${semanticKey || assetDef.id} role=${role} animId=${animId}`);
+    const r = await this.loader.loadAnimation(assetDef,d);
+    if (r?.anim) {
+      tpl.animations[animId]=r.anim;
+      tpl.loadedAnimations.add(animId);
+      return;
+    }
+    const provider = (() => { try { return getBcuAssetDatabase()?.semanticProvider; } catch { return null; } })();
+    const entry = provider?.getActorEntry?.(semanticKey);
+    const internalPath = `${role}.maanim`;
+    const detail = {
+      kind: 'actor-animation',
+      semanticKey,
+      role,
+      bundlePath: entry?.bundleRef?.bundlePath || null,
+      internalPath,
+      missingEntries: [internalPath],
+      originalErrorName: null,
+      originalErrorMessage: (r?.errors || []).join('; ') || r?.status || 'missing',
+      message: `Required actor animation missing: ${semanticKey || assetDef.id} ${internalPath}`
+    };
+    provider?.diagnostics?.bundleErrors?.push?.(detail);
+    throw new Error(detail.message);
+  }
   async _preloadTemplateUpgrade(unitDef, level, options={}){
     let tpl = this.templates.get(unitDef.slotId);
     const assetDef = tpl?.assetDef || this.resolveAssetDef(unitDef);
@@ -55,18 +82,27 @@ export class BattleActorFactory {
       const set = await this.loader.loadAssetSet(assetDef);
       tpl.sprite = set.image && set.imgcut ? new BcuSpriteSheet(set.image, set.imgcut) : null;
       tpl.modelData = set.model;
-      for (const id of [unitDef.idleAnimId, unitDef.moveAnimId].filter(Boolean)) {
-        const d=assetDef.animations?.find(a=>a.id===id); if(!d) continue; const r=await this.loader.loadAnimation(assetDef,d); if(r?.anim){tpl.animations[id]=r.anim;tpl.loadedAnimations.add(id);} }
+      const semanticKey = assetDef.semanticKey || (unitDef.statsType === 'enemy' ? `enemy:${unitDef.statsId}` : unitDef.statsType === 'unit' ? `unit:${unitDef.statsId}:f` : null);
+      await this.loadRequiredAnimation(tpl, assetDef, unitDef.idleAnimId, 'idle', semanticKey);
+      await this.loadRequiredAnimation(tpl, assetDef, unitDef.moveAnimId, 'move', semanticKey);
       tpl.loadingLevel = TEMPLATE_LOAD_LEVEL.RENDER_CORE;
     }
     if(LEVEL_RANK[level] >= LEVEL_RANK[TEMPLATE_LOAD_LEVEL.SPAWN_READY]){
-      const targets = new Set([unitDef.attackAnimId, ...(options.animIds||[])].filter(Boolean));
-      for (const id of targets) { if(tpl.loadedAnimations.has(id)) continue; const d=assetDef.animations?.find(a=>a.id===id); if(!d) continue; const r=await this.loader.loadAnimation(assetDef,d); if(r?.anim){tpl.animations[id]=r.anim;tpl.loadedAnimations.add(id);} }
+      const semanticKey = assetDef.semanticKey || (unitDef.statsType === 'enemy' ? `enemy:${unitDef.statsId}` : unitDef.statsType === 'unit' ? `unit:${unitDef.statsId}:f` : null);
+      await this.loadRequiredAnimation(tpl, assetDef, unitDef.attackAnimId, 'attack', semanticKey);
+      for (const id of (options.animIds||[]).filter(Boolean)) {
+        const role = id === unitDef.moveAnimId ? 'move' : id === unitDef.idleAnimId ? 'idle' : id === unitDef.attackAnimId ? 'attack' : id === unitDef.knockbackAnimId ? 'kb' : id;
+        await this.loadRequiredAnimation(tpl, assetDef, id, role, semanticKey);
+      }
       tpl.loadingLevel = TEMPLATE_LOAD_LEVEL.SPAWN_READY;
     }
     if(LEVEL_RANK[level] >= LEVEL_RANK[TEMPLATE_LOAD_LEVEL.FULL_VISUAL]){
-      const targets = new Set([unitDef.knockbackAnimId, ...(options.animIds||[])].filter(Boolean));
-      for (const id of targets) { if(tpl.loadedAnimations.has(id)) continue; const d=assetDef.animations?.find(a=>a.id===id); if(!d) continue; const r=await this.loader.loadAnimation(assetDef,d); if(r?.anim){tpl.animations[id]=r.anim;tpl.loadedAnimations.add(id);} }
+      const semanticKey = assetDef.semanticKey || (unitDef.statsType === 'enemy' ? `enemy:${unitDef.statsId}` : unitDef.statsType === 'unit' ? `unit:${unitDef.statsId}:f` : null);
+      await this.loadRequiredAnimation(tpl, assetDef, unitDef.knockbackAnimId, 'kb', semanticKey);
+      for (const id of (options.animIds||[]).filter(Boolean)) {
+        const role = id === unitDef.moveAnimId ? 'move' : id === unitDef.idleAnimId ? 'idle' : id === unitDef.attackAnimId ? 'attack' : id === unitDef.knockbackAnimId ? 'kb' : id;
+        await this.loadRequiredAnimation(tpl, assetDef, id, role, semanticKey);
+      }
       tpl.loadingLevel = TEMPLATE_LOAD_LEVEL.FULL_VISUAL;
     }
     return tpl;

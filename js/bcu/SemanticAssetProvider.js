@@ -180,6 +180,7 @@ export class SemanticAssetProvider {
     for (const url of this.objectUrls) URL.revokeObjectURL(url);
     this.objectUrls.clear();
     this.actorIconUrlCache.clear();
+    this.actorUiIconUrlCache.clear();
     this.actorImageUrlCache.clear();
   }
 
@@ -245,14 +246,14 @@ export class SemanticAssetProvider {
     const bundleRef = entry?.bundleRef;
     const internalPath = entry?.internalPath || bundleRef?.internalPath;
     if (!entry || !bundleRef?.bundlePath || !internalPath) {
-      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, missingEntries: internalPath ? [internalPath] : [], message: `Unknown icon semantic key: ${actorKey}` };
+      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, missingEntries: internalPath ? [internalPath] : [], invalidEntries: [], message: `Unknown icon semantic key: ${actorKey}` };
       this.diagnostics.missingBundles.push(detail);
       throw new Error(detail.message);
     }
     try {
       const archive = await this.archive(bundleRef);
       if (!archive.has(internalPath)) {
-        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, missingEntries: [internalPath], message: `Icon bundle file missing: ${internalPath}` };
+        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` };
         this.diagnostics.bundleErrors.push(detail);
         throw new Error(detail.message);
       }
@@ -264,6 +265,7 @@ export class SemanticAssetProvider {
         bundlePath: bundleRef.bundlePath,
         internalPath,
         missingEntries: [internalPath],
+        invalidEntries: [],
         originalErrorName: error?.name,
         originalErrorMessage: error?.message,
         message: error?.message || String(error)

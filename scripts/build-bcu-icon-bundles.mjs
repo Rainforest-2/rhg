@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
+import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, validatePngBuffer, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
 
 const icon = await readJson('public/assets/generated/bcu-icon-index.json', { entries: [] });
 const manifest = await readJson('public/assets/generated/bcu-bundle-manifest.json', { schemaVersion: 1, generatedAt: FIXED_DATE, zipFormat: 'store-only', generationMode: 'all', bundles: {} });
@@ -14,9 +14,16 @@ for (const entry of icon.entries || []) {
 
 for (const [bundleKey, group] of [...groups.entries()].sort()) {
   const files = [
-    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ bundleKey, kind: 'icon', generatedAt: FIXED_DATE, entries: group.entries.map((e) => ({ key: e.key, internalPath: e.internalPath, sourceStatus: e.sourceStatus })) }, null, 2)) },
-    ...(await Promise.all(group.entries.map(async (entry) => ({ name: entry.internalPath, data: await fileBufferOrNull(entry.sourcePath) }))))
-  ].filter((e) => e.data);
+    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ bundleKey, kind: 'icon', generatedAt: FIXED_DATE, entries: group.entries.map((e) => ({ key: e.key, internalPath: e.internalPath, sourceStatus: e.sourceStatus })) }, null, 2)) }
+  ];
+  for (const entry of group.entries) {
+    if (!entry.sourcePath) throw new Error(`Icon index entry missing sourcePath: ${entry.key}`);
+    const data = await fileBufferOrNull(entry.sourcePath);
+    if (!data) throw new Error(`Icon source unreadable: ${entry.key} ${entry.sourcePath}`);
+    const png = validatePngBuffer(data);
+    if (!png.valid) throw new Error(`Icon source invalid PNG: ${entry.key} ${entry.sourcePath} ${png.reason}`);
+    files.push({ name: entry.internalPath, data });
+  }
   await writeStoreZip(group.bundleRef.bundlePath, files);
   manifest.bundles[bundleKey] = {
     kind: 'icon',

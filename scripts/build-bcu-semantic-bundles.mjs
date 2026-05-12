@@ -106,3 +106,5 @@ console.log(`wrote bcu-bundle-manifest bundles=${Object.keys(manifest.bundles).l
 await import('./audit-bcu-icon-sources.mjs');
 await import('./build-bcu-icon-index.mjs');
 await import('./build-bcu-icon-bundles.mjs');
+await import('./check-icon-png-integrity.mjs');
+await import('./check-icon-index-paths-exist-in-zips.mjs');

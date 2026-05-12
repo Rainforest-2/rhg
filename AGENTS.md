@@ -4,124 +4,119 @@ Repository: `rhgrive2/game`
 
 This file is the authoritative working contract for Codex and future agents working on the Battle Cats Ultimate / BCU runtime migration.
 
-The project already has partial semantic bundle infrastructure. Do not restart from the assumption that generated indexes or generated manifests are empty.
+Generated indexes, generated manifests, and bundles are **not empty**. GitHub API / contents views may show `content: ""` for large generated files. That does **not** mean those files are empty. Inspect raw links, local generated artifacts, ZIP bundles, and generated indexes before making claims.
 
-Important correction:
+Do not regress into these incorrect assumptions:
 
-- `public/assets/generated/*` and `public/assets/bundles/*` are not empty.
-- GitHub API / contents views may show `content: ""` for large generated files. That does not mean the files are empty.
-- When in doubt, inspect raw file contents, local ZIP/generated artifacts, and bundle indexes directly.
-- The current problem is not “generated manifest is empty”. The current problem is that the runtime still has heavy or wrong read paths, some raw BCU paths remain, and diagnostics are too weak.
+- `public/assets/generated/*` is empty.
+- `public/assets/bundles/*` is empty.
+- Battle fails because generated manifests are empty.
+- The zip migration is not implemented at all.
 
-Runtime-loadable BCU data must be loaded from generated ZIP bundles and generated semantic indexes, not from `public/assets/bcu/...`.
+The current problem is:
 
-Raw BCU files may remain as build inputs and diagnostics, but production/browser runtime must not fetch them.
+- zip-first migration is partially implemented,
+- runtime read paths are still too heavy,
+- UI icons still open actor ZIPs,
+- some raw BCU runtime paths remain,
+- Safari/WebKit hides useful error details,
+- KBEff still risks raw-path loading,
+- ZIP parse work can duplicate,
+- background/castle/actor bundle diagnostics are too coarse,
+- BCU runtime structure is still too monolithic and not close enough to BCU common / BCU PC.
+
+Runtime-loadable BCU data must come from:
+
+```text
+public/assets/generated/*.json
+public/assets/bundles/**/*.zip
+```
+
+Runtime-loadable BCU data must **not** come from:
+
+```text
+public/assets/bcu/**
+./public/assets/bcu/**
+public/assets/bcu-manifest.json
+./public/assets/bcu-manifest.json
+```
+
+Raw BCU files may remain only as:
+
+- build inputs,
+- audit inputs,
+- diagnostics inputs,
+- explicitly marked raw-only development mode inputs.
+
+Production/browser runtime must not fetch them.
 
 ---
 
-## 0. Active current problems Codex must solve
+# 0. Immediate runtime problems to fix first
 
-### 0.1 Formation icons currently load too much
+## 0.1 Formation icons open too many actor ZIPs
 
-Current behavior to check in `js/ui/FormationEditor.js` and `js/bcu/SemanticAssetProvider.js`:
+Current behavior to check:
 
-- `FormationEditor.renderDynamic()` renders all visible catalog card HTML.
-- It then calls `resolveSemanticIcons()`.
-- `resolveSemanticIcons()` walks every `img[data-semantic-icon]` under the formation UI.
-- For each unresolved image it calls `provider.getActorIconUrl(key)` immediately.
-- `getActorIconUrl()` opens the actor bundle and reads `icon.png`, falling back to `image.png`.
+```text
+js/ui/FormationEditor.js
+js/bcu/SemanticAssetProvider.js
+```
 
-This means opening the Formation screen can cause many actor ZIP requests, ZIP parses, and blob URL creations before the user starts Battle.
+Problem flow:
 
-Required fix:
+```text
+FormationEditor.renderDynamic()
+  -> resolveSemanticIcons()
+  -> walks every img[data-semantic-icon]
+  -> provider.getActorIconUrl(key)
+  -> actor runtime bundle ZIP open
+  -> icon.png or image.png fallback
+  -> blob URL creation
+```
+
+This can cause:
+
+- many actor ZIP requests,
+- many ZIP parses,
+- many blob URLs,
+- high memory pressure,
+- heavy loading before Battle starts,
+- Safari instability.
+
+Required:
 
 - Formation/catalog/slot icons must not open full actor runtime bundles by default.
-- Add a lightweight UI icon bundle layer.
-- Add lazy icon loading with `IntersectionObserver`.
-- Limit concurrent icon loads to 4–8; use 6 unless a stronger reason exists.
+- Formation/catalog/slot icons must not use one ZIP per icon.
+- Missing UI icons must use a non-BCU placeholder or `image-missing` state.
 - Do not catalog-wide fallback to actor `image.png`.
-- Missing UI icon should use a non-BCU placeholder or `image-missing` state, not full actor bundle fallback.
+- UI icons must use aggregated icon ZIPs described in section 1.
 
-### 0.2 Dog/enemy icon source appears wrong and must be audited
+---
 
-User requirement:
+## 0.2 `SemanticAssetProvider.archive()` needs in-flight parse caching
 
-- Dog army / enemy UI icons should use the photos/images from the `000010` source family, not the currently suspected `000002` / `000003` source family.
-- Verify this from actual source files and generation scripts before changing mappings.
-- Do not guess from runtime code alone; the displayed icon depends on which raw source file the generator packed as `icon.png`.
+Required additions:
 
-Required fix:
-
-- Add an icon source audit that records, per semantic actor key, the current generated icon source and the desired source.
-- For enemy/dog icons, prefer the `000010` source family where the ID mapping is valid.
-- For unit/cat icons, use the correct unit icon source family after auditing the actual asset tree.
-- If `000010` contains mixed or non-1:1 assets, add an explicit mapping file rather than hardcoding guesses.
-
-### 0.3 UI icon bundles must be separated from actor bundles
-
-Actor bundles are for battle runtime. UI icons are for Formation and production cards.
-
-Required new bundle family:
-
-```text
-public/assets/bundles/icon/enemy/<id3>.zip
-public/assets/bundles/icon/unit/<id3>-<form>.zip
+```js
+this.bundleArchivePromises = new Map();
+this.coreDbPromise = null;
 ```
 
-Each UI icon ZIP must be small and contain only:
+`archive(bundleRef)` must cache in-flight ZIP parse promises.
 
-```text
-bundle.json
-icon.png
-```
+`readCoreDb()` must only execute once per provider instance and retry after failure.
 
-Required generated index:
-
-```text
-public/assets/generated/bcu-icon-index.json
-```
-
-Minimum entry shape:
-
-```json
-{
-  "key": "enemy:0",
-  "kind": "enemy",
-  "bundleRef": {
-    "bundleKey": "icon:enemy:0",
-    "bundlePath": "public/assets/bundles/icon/enemy/000.zip"
-  },
-  "internalPath": "icon.png",
-  "sourcePath": "public/assets/bcu/...",
-  "sourceStatus": "audited"
-}
-```
-
-Runtime UI must use this icon index and these icon bundles for Formation and production cards.
-
-### 0.4 `SemanticAssetProvider.archive()` lacks in-flight ZIP parse caching
-
-Current cache families include fetch promises, parsed archives, core JSON cache, actor icon URL cache, actor image URL cache, and object URLs.
-
-Problem:
-
-- `fetchBundle()` coalesces simultaneous fetches.
-- `archive()` can still parse the same ZIP more than once during simultaneous first reads because it does not cache an in-flight parse promise.
-- `readCoreDb()` also needs an in-flight `coreDbPromise` so repeated calls do not start duplicate JSON reads and ZIP parse work.
-
-Required fix:
-
-- Add `this.bundleArchivePromises = new Map()`.
-- Add `this.coreDbPromise = null`.
-- `archive(bundleRef)` must cache the parse promise and delete it on failure so retry is possible.
-- `readCoreDb()` must run once per provider instance and retry after failure.
-
-Required pattern:
+Required `archive()` pattern:
 
 ```js
 async archive(bundleRef) {
   const url = normalizeFetchPath(bundleRef.bundlePath);
-  if (this.bundleArchives.has(url)) return this.bundleArchives.get(url);
+
+  if (this.bundleArchives.has(url)) {
+    return this.bundleArchives.get(url);
+  }
+
   if (!this.bundleArchivePromises.has(url)) {
     this.bundleArchivePromises.set(url, (async () => {
       const archive = parseStoreZip(await this.fetchBundle(bundleRef));
@@ -132,41 +127,38 @@ async archive(bundleRef) {
       throw error;
     }));
   }
+
   return await this.bundleArchivePromises.get(url);
 }
 ```
 
-### 0.5 Safari/WebKit hides useful error details
-
-Current symptom:
-
-- Safari sometimes displays only `Error {}`.
-- This hides whether the failure came from actor, background, castle, KBEff, raw guard, ZIP parse, missing entry, or object URL/image decode.
-
-Required fix:
-
-Add structured error logging to at least:
-
-- `js/preview/PreviewApp.js` in `applyFormationToBattle()` catch.
-- `js/ui/FormationEditor.js` in apply failure catch.
-
-Required detail object:
+Required `readCoreDb()` pattern:
 
 ```js
-{
-  name: error?.name,
-  message: error?.message,
-  stack: error?.stack,
-  cause: error?.cause,
-  error
+async readCoreDb() {
+  if (!this.coreDbPromise) {
+    this.coreDbPromise = (async () => {
+      // existing core DB read logic
+    })().catch((error) => {
+      this.coreDbPromise = null;
+      throw error;
+    });
+  }
+
+  return await this.coreDbPromise;
 }
 ```
 
-The UI hint must also show `error?.message || String(error)`.
+Must verify:
 
-### 0.6 KBEff still uses raw BCU paths
+- `core-db.zip` is parsed at most once per provider instance during simultaneous first reads.
+- `enemy.zip`, `unit-f.zip`, `unit-c.zip`, `unit-s.zip`, and `unit-u.zip` are parsed at most once per provider instance.
 
-Current known raw effect asset family:
+---
+
+## 0.3 KBEff still risks raw BCU reads
+
+Known raw KBEff family:
 
 ```text
 public/assets/bcu/000001/org/battle/a/000_a.png
@@ -177,16 +169,20 @@ public/assets/bcu/000001/org/battle/a/kb_sw.maanim
 public/assets/bcu/000001/org/battle/a/kb_ass.maanim
 ```
 
-Problem:
+In `semantic-strict`, these must not be fetched.
 
-- `BcuKbeffLoader` and/or `BattleConfig.tuning.knockback.kbEffect.baseDir` may still point at `./public/assets/bcu/000001/org/battle/a/`.
-- In `semantic-strict`, `RuntimeAssetGuard` blocks runtime reads from `public/assets/bcu/**`.
-- If KBEff loads during Battle init, Battle can fail.
+Required:
 
-Required fix:
+- add semantic KBEff bundle, or
+- gate KBEff loading until a semantic effect bundle exists.
 
-- Add an effect bundle such as `public/assets/bundles/effect/kbeff.zip`, or split by effect key if needed.
-- Required entries for KBEff bundle:
+Suggested semantic bundle:
+
+```text
+public/assets/bundles/effect/kbeff.zip
+```
+
+Suggested entries:
 
 ```text
 bundle.json
@@ -198,27 +194,65 @@ kb_sw.maanim
 kb_ass.maanim
 ```
 
-- Add `SemanticAssetProvider` APIs for effect bundles or a specific KBEff reader.
-- Until effect bundles are implemented, do not run KBEff `loadAll()` in `semantic-strict` unless a semantic effect bundle exists.
-- `BattleConfig` must not make raw `baseDir` the production authority.
+`BattleConfig.kbEffect.baseDir` must not be the production runtime authority.
 
-### 0.7 Background, castle, and actor bundle failures need concrete diagnostics
+---
 
-Current problem:
+## 0.4 Safari/WebKit hides errors
 
-- Some loaders try semantic bundles and then call `provider.recordRawFallback(...)` on failure.
-- In `semantic-strict`, raw fallback is disabled, so failures may become generic `Raw fallback disabled` errors.
-- The actual missing bundle entry or parse failure can be hidden.
+Safari sometimes shows only:
 
-Required fix:
+```text
+Error {}
+```
 
-When a semantic bundle is selected, do not treat failure as a raw fallback path. Fail with a specific bundle error.
+This hides whether the failure came from:
 
-Push diagnostic entries like:
+- actor bundle,
+- background bundle,
+- castle bundle,
+- KBEff,
+- raw guard,
+- ZIP parse,
+- missing entry,
+- object URL / image decode.
+
+Add detailed logging in:
+
+```text
+js/preview/PreviewApp.js
+js/ui/FormationEditor.js
+```
+
+Required logging shape:
+
+```js
+console.error('[PreviewApp] applyFormationToBattle failed detail', {
+  name: e?.name,
+  message: e?.message,
+  stack: e?.stack,
+  cause: e?.cause,
+  error: e
+});
+```
+
+FormationEditor apply failure should log the same shape.
+
+UI hints must show:
+
+```js
+err?.message || String(err)
+```
+
+---
+
+## 0.5 Background / castle / actor bundle diagnostics are too weak
+
+For actor/background/castle/effect/icon bundle failures, push diagnostics with:
 
 ```js
 {
-  kind: 'actor' | 'background' | 'castle' | 'effect' | 'icon',
+  kind,
   semanticKey,
   bundlePath,
   internalPath,
@@ -229,15 +263,21 @@ Push diagnostic entries like:
 }
 ```
 
+Do not treat semantic bundle failure as raw fallback in `semantic-strict`.
+
 Target files:
 
-- `js/bcu/BcuAssetLoader.js`
-- `js/battle/StageBackgroundLoader.js`
-- `js/battle/BcuCastleAssetLoader.js`
-- `js/battle/BcuKbeffLoader.js`
-- `js/bcu/SemanticAssetProvider.js`
+```text
+js/bcu/BcuAssetLoader.js
+js/battle/StageBackgroundLoader.js
+js/battle/BcuCastleAssetLoader.js
+js/battle/BcuKbeffLoader.js
+js/bcu/SemanticAssetProvider.js
+```
 
-### 0.8 Runtime raw path checks must include the new icon/effect work
+---
+
+## 0.6 Runtime raw path checks must be regression tests
 
 Any browser runtime request to these is a failure in `semantic-strict`:
 
@@ -248,278 +288,279 @@ public/assets/bcu-manifest.json
 ./public/assets/bcu-manifest.json
 ```
 
-Allowed runtime requests:
+Checks must fail if:
 
-```text
-public/assets/generated/*.json
-public/assets/bundles/**/*.zip
-application JS/CSS/HTML files
-non-BCU placeholders
-```
-
-Add or update checks so they fail if:
-
-- Formation initial display requests actor bundles just to show catalog icons.
-- Formation initial display requests `public/assets/bcu/**` images.
+- Apply Battle requests `public/assets/bcu/**`.
+- Formation display requests `public/assets/bcu/**`.
+- Formation display requests actor bundles just to show catalog icons.
+- Formation display requests one ZIP per icon.
 - Production bar requests actor bundles just to show card icons.
-- KBEff in `semantic-strict` requests raw `public/assets/bcu/000001/org/battle/a/**`.
-- `core-db.zip` is parsed more than once for simultaneous first reads.
+- KBEff requests `public/assets/bcu/000001/org/battle/a/**`.
+- `blockedRawReads` or `rawFallbacks` is non-empty after successful Apply.
 
 ---
 
-## 1. BCU source-reading conclusions that must guide implementation
+# 1. Required icon architecture: aggregated ZIPs only
 
-This project has local BCU source materials, including BCU common and BCU PC ZIPs. The next implementation must respect their structure.
+## 1.1 Rejected design
 
-### 1.1 BCU common structure
-
-BCU common is not just a data definition repo. It contains battle runtime logic.
-
-Important classes/concepts:
-
-- `util/stage/Stage.java` — stage battle CSV model.
-- `util/stage/SCDef.java` and `SCDef.Line` — enemy spawn row model.
-- `util/stage/EStage.java` — battle-time spawn runtime state.
-- `battle/StageBasis.java` — central battle runtime.
-- `battle/entity/Entity.java` — actor runtime for movement, attack, KB, damage, proc, status, death.
-- `battle/attack/*` — attack capture/hit/effects logic.
-- `util/anim/*` — `.imgcut`, `.mamodel`, `.maanim` model and runtime concepts.
-
-Do not flatten all of this into `BattleScene` indefinitely.
-
-### 1.2 BCU PC rendering structure
-
-BCU PC uses `BattleBox` as the main visual reference for battle rendering.
-
-Important rendering concepts to preserve when changing battle/runtime assets:
-
-- World X projection follows the BCU formula conceptually equivalent to `x * ratio + off`, then screen scale/position.
-- Base positions and stage length come from stage runtime, not visual fallback positions.
-- Actor render Y depends on road height and current layer.
-- Castle, actor, effect, background, and HP/UI draw order should follow BCU PC logic where already known.
-
-### 1.3 Actor bundle completeness
-
-A battle actor runtime bundle is complete only if it can provide the runtime animation set.
-
-Required actor runtime entries:
+Do **not** generate one ZIP per icon:
 
 ```text
-bundle.json
-image.png
-imgcut.imgcut
-model.mamodel
-move.maanim
-idle.maanim
-attack.maanim
-kb.maanim
-```
-
-`icon.png` is not a substitute for actor runtime data.
-
-UI icons must be treated as a separate lightweight asset family.
-
-### 1.4 Stage/spawn parity remains a structural issue
-
-BCU `SCDef.Line` carries more than a simple enemy/time/count tuple. Preserve or plan for:
-
-```text
-enemy
-number
-boss
-multiple
-group
-spawn_0 / spawn_1
-respawn_0 / respawn_1
-castle_0 / castle_1
-layer_0 / layer_1
-mult_atk
-kill_count
-score
-```
-
-Longer-term work must add a real `StageRuntime` / `SpawnScheduleRuntime` analogous to BCU `EStage`, rather than keeping all spawn logic inside `BattleScene`.
-
----
-
-## 2. Target architecture
-
-Runtime must have three asset layers and one bootstrap layer.
-
-### 2.1 Raw source layer
-
-Path:
-
-```text
-public/assets/bcu/
-```
-
-Purpose:
-
-- build input only
-- audit input only
-- generated diagnostics only
-- explicit `raw-only-diagnostics` development mode only
-
-Production/browser runtime must not fetch from this tree.
-
-### 2.2 Runtime bundle layer
-
-Path:
-
-```text
-public/assets/bundles/
-```
-
-Runtime-loadable BCU data must come from generated ZIP bundles:
-
-```text
-public/assets/bundles/core/core-db.zip
-public/assets/bundles/lang/jp.zip              # optional if Japanese names are embedded in core-db.zip
-public/assets/bundles/actor/enemy/<id3>.zip
-public/assets/bundles/actor/unit/<id3>-<form>.zip
-public/assets/bundles/stage/map/<safe-stage-group>.zip
-public/assets/bundles/background/<bgId>.zip
-public/assets/bundles/castle/enemy/<group><id3>.zip
-public/assets/bundles/castle/nyanko/<safe-id>.zip
-public/assets/bundles/effect/<safe-key>.zip
 public/assets/bundles/icon/enemy/<id3>.zip
 public/assets/bundles/icon/unit/<id3>-<form>.zip
 ```
 
-### 2.3 UI icon bundle layer
+This design is rejected because Formation/catalog rendering would still download many ZIP files.
 
-UI icons are not actor runtime assets.
+The point of this task is to keep both of these small:
 
-Formation and production icons must load from:
+- downloaded ZIP count,
+- parsed ZIP count.
+
+A one-ZIP-per-icon layout only moves the problem from actor ZIPs to icon ZIPs. That is not acceptable.
+
+---
+
+## 1.2 Required design
+
+Use aggregated icon bundles:
 
 ```text
-public/assets/bundles/icon/enemy/*.zip
-public/assets/bundles/icon/unit/*.zip
+public/assets/bundles/icon/enemy.zip
+public/assets/bundles/icon/unit-f.zip
+public/assets/bundles/icon/unit-c.zip
+public/assets/bundles/icon/unit-s.zip
+public/assets/bundles/icon/unit-u.zip
 ```
 
-They must not load from:
+`u` form is included when present.
+
+This means:
+
+- enemy icons are grouped into one enemy icon ZIP,
+- unit icons are grouped by form,
+- Formation can load a small number of icon ZIPs,
+- runtime can reuse one parsed archive for many icons.
+
+---
+
+## 1.3 `enemy.zip` structure
+
+Required:
 
 ```text
-public/assets/bundles/actor/**/*.zip
-public/assets/bcu/**/*.png
+public/assets/bundles/icon/enemy.zip
+  bundle.json
+  enemy/000.png
+  enemy/001.png
+  enemy/002.png
+  enemy/003.png
+  ...
 ```
 
-except in explicit diagnostics/audit scripts.
-
-### 2.4 Bootstrap index layer
-
-Generated JSON files may be fetched at runtime because they are not raw BCU assets:
+`enemy/000.png` maps to:
 
 ```text
-public/assets/generated/bcu-runtime-bootstrap.json
-public/assets/generated/bcu-bundle-manifest.json
-public/assets/generated/bcu-canonical-index.json
-public/assets/generated/bcu-actor-index.json
-public/assets/generated/bcu-stage-index.json
-public/assets/generated/bcu-background-index.json
-public/assets/generated/bcu-castle-index.json
-public/assets/generated/bcu-core-index.json
-public/assets/generated/bcu-language-index.json
+enemy:0
+```
+
+`enemy/001.png` maps to:
+
+```text
+enemy:1
+```
+
+and so on, unless the audit proves a non-1:1 mapping is needed.
+
+---
+
+## 1.4 Unit form ZIP structure
+
+Required:
+
+```text
+public/assets/bundles/icon/unit-f.zip
+  bundle.json
+  unit/000-f.png
+  unit/001-f.png
+  unit/002-f.png
+  ...
+
+public/assets/bundles/icon/unit-c.zip
+  bundle.json
+  unit/000-c.png
+  unit/001-c.png
+  unit/002-c.png
+  ...
+
+public/assets/bundles/icon/unit-s.zip
+  bundle.json
+  unit/000-s.png
+  unit/001-s.png
+  unit/002-s.png
+  ...
+
+public/assets/bundles/icon/unit-u.zip
+  bundle.json
+  unit/000-u.png
+  unit/001-u.png
+  unit/002-u.png
+  ...
+```
+
+The `u` form is part of this contract.
+
+Do not omit `unit-u.zip` if generated unit form data contains `u` form icons.
+
+---
+
+## 1.5 ZIP compression rule
+
+Each icon ZIP should use STORE/no-compression unless the runtime ZIP reader is upgraded and tested for DEFLATE.
+
+If the existing runtime parser only supports STORE ZIPs, the generator must write STORE ZIPs.
+
+Unsupported compression must fail with a clear error.
+
+---
+
+# 2. Icon source audit
+
+## 2.1 Dog/enemy source policy
+
+Enemy/dog icons should prefer the `000010` source family.
+
+Do not silently use:
+
+```text
+000002
+000003
+actor bundle image.png
+actor sprite sheet image.png
+raw public/assets/bcu/**/*.png at runtime
+```
+
+Audit first. If mapping is ambiguous, mark it as ambiguous and use placeholder or explicit mapping.
+
+---
+
+## 2.2 Audit outputs
+
+Required:
+
+```text
+public/assets/generated/bcu-icon-source-audit.json
+public/assets/generated/bcu-icon-source-audit.md
+```
+
+Audit record shape:
+
+```json
+{
+  "semanticKey": "enemy:0",
+  "currentSourcePath": "public/assets/bcu/...",
+  "desiredSourcePath": "public/assets/bcu/000010/...",
+  "status": "needs-remap|ok|missing|ambiguous",
+  "notes": []
+}
+```
+
+Enemy source priority:
+
+1. explicit mapping file,
+2. audited `000010` source if unambiguous,
+3. non-BCU placeholder.
+
+Unit source priority:
+
+1. explicit mapping file,
+2. audited unit source family,
+3. non-BCU placeholder.
+
+Do not silently pick ambiguous icons.
+
+---
+
+# 3. Generated icon index
+
+Required generated file:
+
+```text
 public/assets/generated/bcu-icon-index.json
 ```
 
----
+Each actor key maps to:
 
-## 3. Strict runtime rule
+- aggregate ZIP path,
+- aggregate bundle key,
+- internal PNG path,
+- audited source path,
+- source status.
 
-### 3.1 Forbidden runtime URLs
+## 3.1 Enemy index example
 
-Production browser runtime must not fetch, image-load, or otherwise request:
-
-```text
-public/assets/bcu/
-./public/assets/bcu/
-public/assets/bcu-manifest.json
-./public/assets/bcu-manifest.json
+```json
+{
+  "key": "enemy:0",
+  "kind": "enemy",
+  "bundleRef": {
+    "bundleKey": "icon:enemy",
+    "bundlePath": "public/assets/bundles/icon/enemy.zip"
+  },
+  "internalPath": "enemy/000.png",
+  "sourcePath": "public/assets/bcu/000010/...",
+  "sourceStatus": "audited"
+}
 ```
 
-This applies to:
+## 3.2 Unit index example
 
-```text
-fetch()
-Image.src
-HTMLImageElement.src
-Element.setAttribute('src', ...)
-innerHTML-created image elements
-CSS url()
-audio/image/video tags
-createImageBitmap(fetch(raw))
-any custom loader
+```json
+{
+  "key": "unit:0:u",
+  "kind": "unit",
+  "form": "u",
+  "bundleRef": {
+    "bundleKey": "icon:unit:u",
+    "bundlePath": "public/assets/bundles/icon/unit-u.zip"
+  },
+  "internalPath": "unit/000-u.png",
+  "sourcePath": "public/assets/bcu/...",
+  "sourceStatus": "audited"
+}
 ```
 
-### 3.2 Allowed runtime URLs
-
-Production runtime may fetch:
-
-```text
-public/assets/generated/*.json
-public/assets/bundles/**/*.zip
-application JS/CSS/HTML files
-non-BCU UI placeholder assets
-```
-
-### 3.3 Raw-only diagnostics mode
-
-A development-only mode may exist:
-
-```text
-raw-only-diagnostics
-```
-
-It must not be default. It must require an explicit query parameter or developer option.
-
-Default mode must be:
-
-```text
-semantic-strict
-```
-
-In `semantic-strict`, raw BCU runtime access must throw and be recorded in diagnostics.
+Also add aggregate icon bundle records to `bcu-bundle-manifest.json` if it is the global bundle registry.
 
 ---
 
-## 4. Core DB bundle contract
+# 4. Required scripts
 
-`core/core-db.zip` is the runtime database bundle. It replaces runtime reads of raw metadata CSV/TXT/JSON.
-
-Required entries:
+Add or update:
 
 ```text
-bundle.json
-manifest-lite.json
-units.json
-enemies.json
-names-jp.json
-backgrounds.json
-castles.json
-stages.json
-stage-aliases.json
-asset-keys.json
-diagnostics-summary.json
+scripts/audit-bcu-icon-sources.mjs
+scripts/build-bcu-icon-index.mjs
+scripts/build-bcu-icon-bundles.mjs
+scripts/check-icon-bundles-are-aggregated.mjs
+scripts/check-icon-bundles-never-load-actor-bundles.mjs
+scripts/check-formation-icons-use-icon-bundles.mjs
+scripts/check-production-icons-use-icon-bundles.mjs
+scripts/check-bundled-assets-never-load-raw.mjs
 ```
 
-Production boot must be:
+Integrate icon generation into:
 
 ```text
-BcuBootLoader.loadGame()
-  -> SemanticAssetProvider.load()
-  -> provider.readCoreDb()
-  -> construct BcuAssetDatabase from parsed core JSON
-  -> no runtime fetch from public/assets/bcu/
-  -> no runtime fetch from public/assets/bcu-manifest.json
+scripts/build-bcu-semantic-bundles.mjs --all
 ```
 
-`readCoreDb()` must be promise-cached.
+if that is the top-level generator.
 
 ---
 
-## 5. SemanticAssetProvider required changes
+# 5. Required runtime provider behavior
 
 Update:
 
@@ -527,244 +568,22 @@ Update:
 js/bcu/SemanticAssetProvider.js
 ```
 
-Required cache families:
-
-```text
-bundle fetch promises
-bundle archive parse promises
-parsed zip archives
-core DB read promise
-parsed JSON entries from core-db.zip
-object URLs
-actor image URLs
-UI icon URLs
-```
-
-Required APIs after this task:
+Required APIs:
 
 ```js
-await provider.load();
-await provider.readCoreDb();
-await provider.readCoreJson(internalPath);
-
-await provider.getActorBundle(actorKey);
-await provider.getActorImageUrl(actorKey);
-await provider.readActorText(actorKey, internalPath);
-
 await provider.getActorUiIconUrl(actorKey);
 await provider.readIconBundle(actorKey);
-
-await provider.readStageCsv(stageKey);
-await provider.readBackgroundBundle(backgroundKey);
-await provider.readCastleBundle(castleKey);
-
-provider.hasBundleForKey(key);
-provider.assertNoRawForBundledKey(key, rawPath);
-provider.assertNoRawBcuUrl(url, context);
-provider.clearObjectUrls();
 ```
-
-Important:
-
-- Keep `getActorIconUrl(actorKey)` only as a compatibility wrapper if needed.
-- Formation and production UI must use `getActorUiIconUrl(actorKey)`, not actor runtime bundle fallback.
-- `getActorUiIconUrl()` must prefer `bcu-icon-index.json` and icon bundles.
-- It must not open full actor bundles for catalog-wide fallback.
-
----
-
-## 6. New task: split UI icons from actor runtime bundles
-
-This is the immediate task to implement after documenting current problems.
-
-### 6.1 Goal
-
-FormationEditor and PlayerProductionBar must not open full actor bundles just to show UI icons.
-
-Generate lightweight icon bundles separated by enemy and unit, then load them through `SemanticAssetProvider`.
-
-### 6.2 Required new/updated scripts
-
-Add or update scripts with clear names. Suggested names:
-
-```text
-scripts/audit-bcu-icon-sources.mjs
-scripts/build-bcu-icon-index.mjs
-scripts/build-bcu-icon-bundles.mjs
-scripts/check-formation-icons-use-icon-bundles.mjs
-scripts/check-production-icons-use-icon-bundles.mjs
-scripts/check-icon-bundles-never-load-actor-bundles.mjs
-```
-
-If existing `build-bcu-semantic-bundles.mjs --all` is the top-level generator, integrate the icon generator into it.
-
-### 6.3 Icon source audit
-
-The audit must answer these questions with actual file evidence:
-
-- For each `enemy:<id>`, what source image currently becomes the UI icon, if any?
-- Is the current source under `000002`, `000003`, actor image, or elsewhere?
-- Is there a matching desired icon under the `000010` source family?
-- What exact path under `000010` should be used?
-- Does the ID mapping appear 1:1, shifted, named, or ambiguous?
-- For each `unit:<id>:<form>`, what is the correct unit icon source family?
-
-Emit:
-
-```text
-public/assets/generated/bcu-icon-source-audit.json
-public/assets/generated/bcu-icon-source-audit.md
-```
-
-Required JSON shape:
-
-```json
-{
-  "schemaVersion": 1,
-  "enemy": {
-    "0": {
-      "semanticKey": "enemy:0",
-      "currentSourcePath": "public/assets/bcu/...",
-      "desiredSourcePath": "public/assets/bcu/000010/...",
-      "status": "needs-remap|ok|missing|ambiguous",
-      "notes": []
-    }
-  },
-  "unit": {
-    "0:f": {
-      "semanticKey": "unit:0:f",
-      "currentSourcePath": "public/assets/bcu/...",
-      "desiredSourcePath": "public/assets/bcu/...",
-      "status": "ok|missing|ambiguous",
-      "notes": []
-    }
-  }
-}
-```
-
-Do not silently pick ambiguous icons. Mark them and use a non-BCU placeholder until the mapping is explicit.
-
-### 6.4 Icon source priority
-
-Enemy/dog icon source priority:
-
-1. Explicit mapping file if it exists.
-2. Audited `000010` source path if the ID mapping is unambiguous.
-3. Non-BCU placeholder.
-
-Forbidden for Formation/catalog-wide enemy icons:
-
-```text
-actor bundle image.png fallback
-public/assets/bcu/000002 or 000003 source if 000010 is available and correct
-raw public/assets/bcu/**/*.png at runtime
-```
-
-Unit/cat icon source priority:
-
-1. Explicit mapping file if it exists.
-2. Audited unit icon source family.
-3. Non-BCU placeholder.
-
-Forbidden for Formation/catalog-wide unit icons:
-
-```text
-actor bundle image.png fallback
-raw public/assets/bcu/**/*.png at runtime
-```
-
-### 6.5 Icon bundle output
-
-Enemy icon bundle path:
-
-```text
-public/assets/bundles/icon/enemy/<id3>.zip
-```
-
-Unit icon bundle path:
-
-```text
-public/assets/bundles/icon/unit/<id3>-<form>.zip
-```
-
-Each ZIP must be STORE/no-compression unless the ZIP reader is expanded and tested.
-
-Each ZIP must contain:
-
-```text
-bundle.json
-icon.png
-```
-
-Example `bundle.json`:
-
-```json
-{
-  "schemaVersion": 1,
-  "kind": "actor-icon",
-  "semanticKey": "enemy:0",
-  "actorKind": "enemy",
-  "sourcePath": "public/assets/bcu/000010/...",
-  "internalPath": "icon.png"
-}
-```
-
-### 6.6 Generated icon index
-
-Emit:
-
-```text
-public/assets/generated/bcu-icon-index.json
-```
-
-Minimum shape:
-
-```json
-{
-  "schemaVersion": 1,
-  "entries": [
-    {
-      "key": "enemy:0",
-      "kind": "enemy",
-      "bundleRef": {
-        "bundleKey": "icon:enemy:0",
-        "bundlePath": "public/assets/bundles/icon/enemy/000.zip"
-      },
-      "internalPath": "icon.png",
-      "sourcePath": "public/assets/bcu/000010/...",
-      "sourceStatus": "audited"
-    }
-  ],
-  "byKey": {
-    "enemy:0": {
-      "key": "enemy:0",
-      "kind": "enemy",
-      "bundleRef": {
-        "bundleKey": "icon:enemy:0",
-        "bundlePath": "public/assets/bundles/icon/enemy/000.zip"
-      },
-      "internalPath": "icon.png",
-      "sourcePath": "public/assets/bcu/000010/...",
-      "sourceStatus": "audited"
-    }
-  }
-}
-```
-
-Also add icon bundle records to `bcu-bundle-manifest.json` if that file is the global bundle registry.
-
-### 6.7 Runtime provider behavior
-
-`SemanticAssetProvider.load()` must load `bcu-icon-index.json` as optional generated index.
 
 `getActorUiIconUrl(actorKey)` must:
 
-1. Look up `actorKey` in `bcu-icon-index.json`.
-2. Read the icon bundle ZIP.
-3. Create a blob URL for `icon.png`.
-4. Cache by actor key.
-5. On missing icon bundle or missing `icon.png`, record diagnostics and return `null` or a non-BCU placeholder URL.
-6. Never open actor bundle `image.png` for Formation/catalog-wide fallback.
+1. use `bcu-icon-index.json`,
+2. open aggregate ZIP only,
+3. read indexed PNG,
+4. cache blob URL,
+5. reuse the same parsed archive,
+6. never open actor bundle for UI icon fallback,
+7. never fetch `public/assets/bcu/**`.
 
 Required diagnostics for icon failure:
 
@@ -773,13 +592,17 @@ Required diagnostics for icon failure:
   kind: 'icon',
   semanticKey: actorKey,
   bundlePath,
-  internalPath: 'icon.png',
-  missingEntries: ['icon.png'],
+  internalPath,
+  missingEntries: [internalPath],
   message
 }
 ```
 
-### 6.8 FormationEditor behavior
+---
+
+# 6. Required UI changes
+
+## 6.1 FormationEditor
 
 Update:
 
@@ -789,16 +612,19 @@ js/ui/FormationEditor.js
 
 Required:
 
-- Render placeholders first with `data-semantic-icon`.
-- Resolve UI icons with `provider.getActorUiIconUrl(key)`.
-- Use `IntersectionObserver` to load only visible or near-visible icons.
-- Use max concurrent icon loads: 6.
-- Avoid duplicate loads across search/filter/rerender.
-- If no icon exists, mark `image-missing` and keep placeholder.
-- Do not call `provider.getActorIconUrl(key)` from FormationEditor.
-- Do not open actor runtime bundles while merely displaying the catalog.
+- render placeholders first,
+- use `data-semantic-icon`,
+- use `IntersectionObserver`,
+- concurrency limit = 6,
+- no duplicate icon work,
+- call `provider.getActorUiIconUrl()`,
+- never call `provider.getActorIconUrl()` for catalog icons,
+- never open actor ZIPs for catalog display,
+- never download one ZIP per character.
 
-### 6.9 PlayerProductionBar behavior
+---
+
+## 6.2 PlayerProductionBar
 
 Update:
 
@@ -808,45 +634,226 @@ js/ui/PlayerProductionBar.js
 
 Required:
 
-- Use `provider.getActorUiIconUrl(key)` for production card icons.
-- Do not load actor runtime bundles just to draw production cards.
-- Do not use raw icon paths.
-- Preserve existing cooldown/cost UI behavior.
+- use `provider.getActorUiIconUrl()`,
+- never open actor ZIPs for card icons,
+- never use raw BCU paths.
 
-### 6.10 Checks for this task
+---
 
-Checks must prove:
+# 7. Strict runtime rules
 
-- Formation initial render requests icon bundles, not actor bundles.
-- Formation initial render does not request `public/assets/bcu/**`.
-- Production card render requests icon bundles, not actor bundles.
-- Enemy icon audit confirms `000010` source usage where available.
-- Ambiguous/missing enemy icon mappings are reported, not silently guessed.
-- `SemanticAssetProvider.getActorUiIconUrl()` caches object URLs.
-- `SemanticAssetProvider.archive()` does not parse the same ZIP multiple times during simultaneous first reads.
+Forbidden in runtime:
 
-Suggested check commands:
+```text
+public/assets/bcu/**
+./public/assets/bcu/**
+public/assets/bcu-manifest.json
+./public/assets/bcu-manifest.json
+public/assets/bundles/icon/enemy/<id3>.zip
+public/assets/bundles/icon/unit/<id3>-<form>.zip
+```
 
-```bash
-node scripts/audit-bcu-icon-sources.mjs
-node scripts/build-bcu-icon-index.mjs
-node scripts/build-bcu-icon-bundles.mjs
-node scripts/build-bcu-semantic-bundles.mjs --all
-node scripts/check-formation-icons-use-icon-bundles.mjs
-node scripts/check-production-icons-use-icon-bundles.mjs
-node scripts/check-icon-bundles-never-load-actor-bundles.mjs
-node scripts/check-bundled-assets-never-load-raw.mjs
+Allowed:
+
+```text
+public/assets/generated/*.json
+public/assets/bundles/core/core-db.zip
+public/assets/bundles/actor/**/*.zip      # battle actor runtime only
+public/assets/bundles/icon/enemy.zip
+public/assets/bundles/icon/unit-f.zip
+public/assets/bundles/icon/unit-c.zip
+public/assets/bundles/icon/unit-s.zip
+public/assets/bundles/icon/unit-u.zip
+public/assets/bundles/effect/**/*.zip
+non-BCU placeholders
+```
+
+Before Battle Apply:
+
+```text
+Formation display must NOT request actor bundles.
 ```
 
 ---
 
-## 7. Background, castle, stage, actor, and effect bundle rules
+# 8. BCU structural problems to fix after immediate runtime blockers
 
-### 7.1 Actor bundles
+The current code is not only heavy. It is also structurally not close enough to BCU common / BCU PC.
 
-Actor runtime bundles are for battle animation/model runtime only.
+These are not optional forever. They are the next migration track after immediate Battle-start blockers.
 
-Required entries:
+---
+
+## 8.1 Missing `StageRuntime` equivalent
+
+BCU common separates:
+
+```text
+Stage
+SCDef
+EStage
+StageBasis
+```
+
+Current game code has no complete equivalent to BCU `EStage`.
+
+Instead, battle-time stage state is distributed across:
+
+```text
+BattleScene
+BcuStageSpawnRuntime
+StageDefinitionLoader
+BattleConfig
+```
+
+Required direction:
+
+Add or evolve explicit runtime structures:
+
+```text
+StageDefinition
+StageRuntime
+SpawnScheduleRuntime
+```
+
+They must handle:
+
+- spawn conditions,
+- respawn,
+- kill counter,
+- group/will constraints,
+- castle HP window,
+- stage length,
+- base position,
+- camera clamp.
+
+---
+
+## 8.2 `BattleScene` is too monolithic
+
+Current `BattleScene` owns too much:
+
+- parsed stage state,
+- spawn control,
+- production,
+- camera,
+- effects,
+- combat,
+- cleanup,
+- render orchestration.
+
+BCU parity requires splitting responsibilities.
+
+Target modules:
+
+```text
+StageDefinition
+StageRuntime
+SpawnScheduleRuntime
+ProductionRuntime
+ActorRuntime
+AttackTimeline
+DamageCalculator
+ProcResolver
+RenderTransform
+CameraTransform
+```
+
+`BattleScene` should orchestrate these, not implement all of them.
+
+---
+
+## 8.3 Stage CSV parser is too shallow
+
+BCU `SCDef.Line` contains:
+
+```text
+enemy
+number
+boss
+multiple
+group
+spawn_0
+spawn_1
+respawn_0
+respawn_1
+castle_0
+castle_1
+layer_0
+layer_1
+mult_atk
+kill_count
+score
+```
+
+Current parser must not collapse this into a simplified object that loses fields.
+
+Required:
+
+- preserve `castle_0 / castle_1`,
+- preserve `layer_0 / layer_1`,
+- preserve `mult_atk`,
+- preserve `kill_count`,
+- preserve `score`,
+- preserve group/will limitations,
+- preserve first spawn / respawn random ranges.
+
+---
+
+## 8.4 Background and castle fallback are too strong
+
+Problem:
+
+- `StageBackgroundLoader` can hide bad `bgId` by falling back to default.
+- `BcuCastleAssetLoader` can hide bad `castleId` by falling back to default castle.
+
+This makes the game look “kind of working” while semantic IDs are wrong.
+
+Required:
+
+- In `semantic-strict`, do not silently default.
+- If bundled background/castle exists but fails, throw a concrete bundle error.
+- Diagnostics must include semantic key, bundle path, internal path, and missing entries.
+
+---
+
+## 8.5 Ability / proc runtime is thin
+
+BCU common `Proc` is broad.
+
+It includes many effects such as:
+
+```text
+KB
+STOP
+SLOW
+CRIT
+WAVE
+MINI WAVE
+VOLCANO / SURGE
+WEAK
+BREAK
+SHIELD BREAK
+WARP
+CURSE
+POISON
+```
+
+Current `AbilityModel` / `DamageAbilityResolver` is not enough for BCU parity.
+
+Required direction:
+
+- introduce or expand `ProcResolver`,
+- separate damage calculation from proc application,
+- add attack timeline support,
+- preserve BCU proc fields from parsed stats,
+- do not drop fields simply because current runtime does not consume them yet.
+
+---
+
+## 8.6 Actor runtime completeness
+
+A battle actor runtime bundle is complete only if it provides:
 
 ```text
 bundle.json
@@ -859,169 +866,103 @@ attack.maanim
 kb.maanim
 ```
 
-UI icon bundles are separate. Do not use actor `image.png` for catalog-wide icons.
+`icon.png` is UI-only and must not be treated as actor runtime completeness.
 
-### 7.2 Stage bundles
-
-Stage runtime must preserve:
-
-```text
-stageKey
-bundleRef
-semanticEntry
-legacyStageCsvPath as diagnostics only
-```
-
-If a stage has a bundle, `StageDefinitionLoader` must use `provider.readStageCsv(stageKey)`. Raw `stageCsvPath` is forbidden except in explicit `raw-only-diagnostics`.
-
-### 7.3 Background bundles
-
-If `background:<bgId>` has a bundle, load only from the bundle:
-
-```text
-metadata.json
-image.png
-imgcut.imgcut
-```
-
-Do not raw fallback to:
-
-```text
-org/img/bg/*.png
-org/battle/bg/*.imgcut
-org/battle/bg.csv
-```
-
-for bundled backgrounds.
-
-### 7.4 Castle bundles
-
-If `enemyCastle:<id>` or another castle semantic key has a bundle, load only from the castle bundle.
-
-Do not raw fallback to:
-
-```text
-org/img/rc/*.png
-org/img/ec/*.png
-org/img/wc/*.png
-org/img/sc/*.png
-org/castle/**/*
-```
-
-for bundled castles.
-
-### 7.5 Effect bundles
-
-KBEff must become semantic or be gated in strict mode.
-
-Do not runtime fetch:
-
-```text
-public/assets/bcu/000001/org/battle/a/**
-```
-
-in `semantic-strict`.
+Formation UI must not open `image.png` as icon fallback.
 
 ---
 
-## 8. Required runtime raw-access guard
+## 8.7 Animation asset model
 
-`js/bcu/RuntimeAssetGuard.js` or equivalent must guard:
+BCU animation assets are a set:
 
 ```text
-fetch()
-Image.src
-HTMLImageElement.prototype.src
-Element.setAttribute('src', ...)
-MutationObserver for inserted img[src]
+sprite sheet image
+.imgcut
+.mamodel
+.maanim
 ```
 
-Blocked attempts must be recorded in:
+Runtime must preserve this model.
 
-```js
-db.semanticProvider.diagnostics.blockedRawReads
-```
-
-This guard is a safety net. It is not a substitute for fixing code paths.
+Do not treat a PNG alone as a complete actor asset.
 
 ---
 
-## 9. Required verification after this icon task
+# 9. Verification
 
-Do not claim completion unless all relevant checks pass and browser behavior is verified.
+Required checks:
 
-### 9.1 DevTools Network expectations
-
-Open the app and filter:
-
-```text
-/bcu/|/bundles/|icon|actor|core-db
+```bash
+node scripts/audit-bcu-icon-sources.mjs
+node scripts/build-bcu-icon-index.mjs
+node scripts/build-bcu-icon-bundles.mjs
+node scripts/check-icon-bundles-are-aggregated.mjs
+node scripts/check-icon-bundles-never-load-actor-bundles.mjs
+node scripts/check-formation-icons-use-icon-bundles.mjs
+node scripts/check-production-icons-use-icon-bundles.mjs
+node scripts/check-bundled-assets-never-load-raw.mjs
 ```
 
-Expected after boot and opening Formation:
+Expected requests before Battle Apply:
 
 ```text
 public/assets/generated/*.json
 public/assets/bundles/core/core-db.zip
-public/assets/bundles/icon/enemy/*.zip
-public/assets/bundles/icon/unit/*.zip
+public/assets/bundles/icon/enemy.zip
+public/assets/bundles/icon/unit-f.zip
+public/assets/bundles/icon/unit-c.zip
+public/assets/bundles/icon/unit-s.zip
+public/assets/bundles/icon/unit-u.zip
 ```
 
-Not expected during Formation display only:
+Only the unit form ZIPs actually needed/visible may be requested.
+
+Not expected:
 
 ```text
 public/assets/bundles/actor/**/*.zip
+public/assets/bundles/icon/enemy/*.zip
+public/assets/bundles/icon/unit/*.zip
 public/assets/bcu/**
 public/assets/bcu-manifest.json
 ```
 
-Expected only after Battle Apply / actor preload:
-
-```text
-public/assets/bundles/actor/**/*.zip
-```
-
-### 9.2 Console checks
-
-Run after opening Formation:
+Console checks:
 
 ```js
 const p = globalThis.__BCU_DB__?.semanticProvider;
+
 console.log('mode', p?.mode);
 console.log('bundleErrors', p?.diagnostics?.bundleErrors);
 console.log('blockedRawReads', p?.diagnostics?.blockedRawReads);
 console.log('rawFallbacks', p?.diagnostics?.rawFallbacks);
-console.log('actor zip resources', performance.getEntriesByType('resource').filter(e => e.name.includes('/bundles/actor/')).length);
-console.log('icon zip resources', performance.getEntriesByType('resource').filter(e => e.name.includes('/bundles/icon/')).length);
-```
 
-Expected before Battle Apply:
+console.log(
+  'actor zip resources',
+  performance.getEntriesByType('resource')
+    .filter(e => e.name.includes('/bundles/actor/'))
+    .length
+);
 
-```text
-mode = semantic-strict
-blockedRawReads = []
-rawFallbacks = []
-actor zip resources should be low/zero for icon display
-icon zip resources should increase only for visible/lazy-loaded icons
-```
-
-### 9.3 DOM checks
-
-```js
-[...document.querySelectorAll('.formation-ui img')]
-  .map(img => img.src)
-  .filter(src => src.includes('/public/assets/bcu/'))
+console.log(
+  'icon zip resources',
+  performance.getEntriesByType('resource')
+    .filter(e => e.name.includes('/bundles/icon/'))
+    .map(e => e.name)
+);
 ```
 
 Expected:
 
-```js
-[]
-```
+- `blockedRawReads = []`
+- `rawFallbacks = []`
+- no actor ZIP flood during Formation display
+- only aggregate icon ZIPs loaded
 
 ---
 
-## 10. Documentation requirements
+# 10. Documentation requirements
 
 Update:
 
@@ -1029,64 +970,91 @@ Update:
 docs/bcu-migration-status.md
 ```
 
-Add:
+Include:
 
-```text
-icon source audit summary
-number of enemy icon bundles
-number of unit icon bundles
-how many enemy icons use 000010 source
-ambiguous/missing icon mappings
-Formation initial actor bundle request count
-Formation initial icon bundle request count
-production card icon request source
-blocked raw read count
-browser Network verification result
-```
+- icon source audit summary,
+- whether enemy icons use `000010`,
+- ambiguous/missing mappings,
+- aggregate icon bundle list,
+- number of icons inside `enemy.zip`,
+- number of icons inside each `unit-<form>.zip`,
+- Formation initial actor bundle request count,
+- Formation initial icon bundle request names,
+- production card icon source,
+- blocked raw read count,
+- raw fallback count,
+- browser Network verification result,
+- KBEff semantic/gated status,
+- Safari error logging status,
+- archive/coreDb promise-cache status.
 
-Do not write “complete” unless browser Network verification confirms no production raw BCU requests and no Formation-only actor bundle flood.
+Do not write “complete” unless verification proves it.
 
 ---
 
-## 11. Definition of Done for the current icon task
+# 11. Definition of Done
 
 Complete only when all are true:
 
-1. `bcu-icon-source-audit.json/md` exists and documents current vs desired icon sources.
+1. `bcu-icon-source-audit.json/md` exists.
 2. Enemy/dog icons prefer audited `000010` source where valid.
-3. Ambiguous icon mappings are reported, not guessed.
+3. Ambiguous mappings are reported, not guessed.
 4. `bcu-icon-index.json` exists.
-5. Enemy icon ZIPs exist under `public/assets/bundles/icon/enemy/`.
-6. Unit icon ZIPs exist under `public/assets/bundles/icon/unit/`.
-7. Each icon ZIP contains `bundle.json` and `icon.png` only unless explicitly documented.
-8. `SemanticAssetProvider.getActorUiIconUrl()` exists and uses icon bundles.
-9. FormationEditor uses `getActorUiIconUrl()` and lazy loading with concurrency limit.
-10. PlayerProductionBar uses `getActorUiIconUrl()`.
-11. Formation display does not open full actor bundles just to show icons.
-12. Formation display does not request `public/assets/bcu/**`.
-13. Production card icon display does not request `public/assets/bcu/**`.
-14. `SemanticAssetProvider.archive()` has in-flight parse promise caching.
-15. `readCoreDb()` has in-flight promise caching.
-16. Safari/WebKit error detail logging is added to apply paths.
-17. KBEff raw strict-mode risk is either fixed with effect bundle or gated so strict Battle init does not raw fetch it.
-18. Checks and browser verification are recorded in `docs/bcu-migration-status.md`.
+5. `public/assets/bundles/icon/enemy.zip` exists.
+6. `public/assets/bundles/icon/unit-f.zip` exists when form `f` icons exist.
+7. `public/assets/bundles/icon/unit-c.zip` exists when form `c` icons exist.
+8. `public/assets/bundles/icon/unit-s.zip` exists when form `s` icons exist.
+9. `public/assets/bundles/icon/unit-u.zip` exists when form `u` icons exist.
+10. No one-ZIP-per-icon generation.
+11. Icon index maps semantic key -> aggregate ZIP + internal path.
+12. `getActorUiIconUrl()` uses aggregate ZIPs.
+13. Aggregate ZIPs parse at most once.
+14. FormationEditor uses UI icon API.
+15. PlayerProductionBar uses UI icon API.
+16. Formation display does not open actor bundles.
+17. Formation display does not download one ZIP per character.
+18. Formation and production card display do not request `public/assets/bcu/**`.
+19. `archive()` and `readCoreDb()` have in-flight promise caching.
+20. Safari error diagnostics exist.
+21. KBEff raw-path risk is fixed or gated.
+22. background/castle/actor/effect/icon diagnostics are concrete.
+23. Apply Battle succeeds with `blockedRawReads = []` and `rawFallbacks = []`.
+24. Verification results are documented in `docs/bcu-migration-status.md`.
 
 ---
 
-## 12. Codex implementation instruction
+# 12. Codex instruction
 
-Implement this contract, not just a plan.
+Implement this contract.
 
-Do not stop after adding checks.
+Do not regress into:
 
-Do not stop after generating icon ZIPs.
+- “generated is empty”
+- one ZIP per icon,
+- actor ZIP icon loading,
+- raw BCU runtime fetches,
+- silent wrong icon source usage,
+- silent background/castle fallback,
+- weak `Error {}` diagnostics.
 
-Do not leave Formation or production card icons opening full actor bundles.
+Prioritize:
 
-Do not runtime-fetch `public/assets/bcu/...` for icons.
+1. detailed error logging,
+2. archive/coreDb promise cache,
+3. aggregated icon ZIPs,
+4. UI icon API,
+5. Formation/production icon switch,
+6. raw runtime regression checks,
+7. KBEff semantic/gated fix,
+8. concrete bundle diagnostics,
+9. BCU structural migration plan for StageRuntime / BattleScene split / proc runtime.
 
-Do not assume generated manifests are empty.
+Verify with:
 
-Do not claim success without checking Network/resources and recording the result.
+- Network panel,
+- resource entries,
+- diagnostics,
+- generated audit files,
+- docs update.
 
-Do not silently use the wrong dog/enemy icon source. Audit the current source and prefer the `000010` source family where the mapping is valid.
+Do not claim success without verification.

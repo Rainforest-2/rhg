@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, validatePngBuffer, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
 
+const ICON_PNG_VALIDATION_OPTIONS = { allowTrailingBytes: true };
+
 const icon = await readJson('public/assets/generated/bcu-icon-index.json', { entries: [] });
 const manifest = await readJson('public/assets/generated/bcu-bundle-manifest.json', { schemaVersion: 1, generatedAt: FIXED_DATE, zipFormat: 'store-only', generationMode: 'all', bundles: {} });
 const groups = new Map();
@@ -20,7 +22,7 @@ for (const [bundleKey, group] of [...groups.entries()].sort()) {
     if (!entry.sourcePath) throw new Error(`Icon index entry missing sourcePath: ${entry.key}`);
     const data = await fileBufferOrNull(entry.sourcePath);
     if (!data) throw new Error(`Icon source unreadable: ${entry.key} ${entry.sourcePath}`);
-    const png = validatePngBuffer(data);
+    const png = validatePngBuffer(data, ICON_PNG_VALIDATION_OPTIONS);
     if (!png.valid) throw new Error(`Icon source invalid PNG: ${entry.key} ${entry.sourcePath} ${png.reason}`);
     files.push({ name: entry.internalPath, data });
   }
@@ -34,7 +36,7 @@ for (const [bundleKey, group] of [...groups.entries()].sort()) {
     sizeBytes: (await fs.stat(group.bundleRef.bundlePath)).size,
     hash: await hashFile(group.bundleRef.bundlePath)
   };
-  console.log(`wrote ${group.bundleRef.bundlePath} icons=${group.entries.length}`);
+  console.log(`wrote ${group.bundleRef.bundlePath} icons=${group.entries.length} trailingBytes=allowed`);
 }
 
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);

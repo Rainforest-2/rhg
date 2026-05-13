@@ -79,6 +79,17 @@ for (const entry of enemyCastles) {
   await addBundle(entry.bundleRef.bundleKey, 'enemyCastle', entry.key, entry.bundleRef.bundlePath, entry.selected.image ? 'full' : 'partial', files);
 }
 
+const nyankoCastles = all ? (castle.nyanko || []) : (castle.nyanko || []).filter((e) => ['000', '002', '003'].includes(e.partId));
+for (const entry of nyankoCastles) {
+  const sourceFiles = (entry.files || []).filter((file) => /\.(png|imgcut|mamodel|maanim)$/i.test(file));
+  const files = [
+    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, partId: entry.partId, files: sourceFiles.map((file) => file.split('/').pop()) }, null, 2)) },
+    ...(await Promise.all(sourceFiles.map(async (file) => ({ name: file.split('/').pop(), data: await fileBufferOrNull(file) }))))
+  ];
+  const hasPng = sourceFiles.some((file) => file.endsWith('.png'));
+  await addBundle(entry.bundleRef.bundleKey, 'nyankoCastle', entry.key, entry.bundleRef.bundlePath, hasPng ? 'full' : 'partial', files);
+}
+
 for (const entry of language.entries || []) {
   const files = [
     { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, locale: entry.locale, files: entry.files }, null, 2)) },

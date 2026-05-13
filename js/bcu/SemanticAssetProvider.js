@@ -246,16 +246,20 @@ export class SemanticAssetProvider {
     const bundleRef = entry?.bundleRef;
     const internalPath = entry?.internalPath || bundleRef?.internalPath;
     if (!entry || !bundleRef?.bundlePath || !internalPath) {
-      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, missingEntries: internalPath ? [internalPath] : [], invalidEntries: [], message: `Unknown icon semantic key: ${actorKey}` };
+      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, sourcePath: entry?.sourcePath || null, reason: 'missing-index-entry', missingEntries: internalPath ? [internalPath] : [], invalidEntries: [], message: `Unknown icon semantic key: ${actorKey}` };
       this.diagnostics.missingBundles.push(detail);
-      throw new Error(detail.message);
+      const error = new Error(detail.message);
+      error.detail = detail;
+      throw error;
     }
     try {
       const archive = await this.archive(bundleRef);
       if (!archive.has(internalPath)) {
-        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` };
+        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: 'missing-zip-entry', missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` };
         this.diagnostics.bundleErrors.push(detail);
-        throw new Error(detail.message);
+        const error = new Error(detail.message);
+        error.detail = detail;
+        throw error;
       }
       return { entry, archive, bundleRef, internalPath };
     } catch (error) {
@@ -264,6 +268,8 @@ export class SemanticAssetProvider {
         semanticKey: actorKey,
         bundlePath: bundleRef.bundlePath,
         internalPath,
+        sourcePath: entry.sourcePath || null,
+        reason: error?.detail?.reason || 'zip-read-failed',
         missingEntries: [internalPath],
         invalidEntries: [],
         originalErrorName: error?.name,
@@ -277,10 +283,15 @@ export class SemanticAssetProvider {
 
   async getActorUiIconUrl(actorKey) {
     if (this.actorUiIconUrlCache.has(actorKey)) return this.actorUiIconUrlCache.get(actorKey);
-    const { bundleRef, internalPath } = await this.readIconBundle(actorKey);
-    const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
-    this.actorUiIconUrlCache.set(actorKey, url);
-    return url;
+    try {
+      const { bundleRef, internalPath } = await this.readIconBundle(actorKey);
+      const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
+      this.actorUiIconUrlCache.set(actorKey, url);
+      return url;
+    } catch (error) {
+      this.actorUiIconUrlCache.delete(actorKey);
+      throw error;
+    }
   }
 
   async getActorImageUrl(actorKey) {

@@ -48,6 +48,7 @@ entries.sort((a, b) => a.kind.localeCompare(b.kind) || String(a.form || '').loca
 await writeJson('public/assets/generated/bcu-icon-index.json', {
   schemaVersion: 1,
   generatedAt: FIXED_DATE,
+  enemyCoverage: audit.enemyCoverage || null,
   aggregateBundles: [
     { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' },
     ...[...forms].sort().map((form) => ({ bundleKey: `icon:unit:${form}`, bundlePath: `public/assets/bundles/icon/unit-${form}.zip` }))

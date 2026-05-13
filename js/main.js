@@ -36,7 +36,10 @@ async function boot() {
     setBcuAssetDatabase(db);
     showBootStatus('Starting preview...');
     const { PreviewApp } = await import('./preview/PreviewApp.js');
-    await new PreviewApp({ bcuDb: db }).start();
+    const app = new PreviewApp({ bcuDb: db });
+    globalThis.__APP__ = app;
+    globalThis.app = app;
+    await app.start();
     hideBootStatus();
   } catch (error) {
     hideBootStatus();

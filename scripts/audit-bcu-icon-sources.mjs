@@ -128,6 +128,36 @@ const summary = records.reduce((acc, r) => {
   acc[r.status] = (acc[r.status] || 0) + 1;
   return acc;
 }, {});
+const enemyActorEntries = (actor.entries || []).filter((entry) => entry.kind === 'enemy' && Number.isFinite(Number(entry.id))).sort((a, b) => a.id - b.id);
+const recordByKey = new Map(records.map((record) => [record.semanticKey, record]));
+const enemyCoverage = enemyActorEntries.map((entry) => {
+  const record = recordByKey.get(entry.key);
+  const decision = record?.desiredSourcePath && record?.pngValidation?.valid === true ? 'included'
+    : record?.status === 'missing' ? 'missing-source'
+    : record?.status === 'invalid-png' ? 'invalid-source'
+    : record?.status === 'intentionally-excluded' ? 'intentionally-excluded'
+    : 'undecided';
+  return { semanticKey: entry.key, id: entry.id, id3: entry.id3 || pad3(entry.id), decision, status: record?.status || null, reason: record?.pngValidation?.reason || null, sourcePath: record?.desiredSourcePath || null, candidateCount: record?.candidates?.length || 0 };
+});
+const enemyGapRanges = [];
+let activeGap = null;
+for (const item of enemyCoverage) {
+  if (item.decision === 'included') {
+    if (activeGap) enemyGapRanges.push(activeGap);
+    activeGap = null;
+    continue;
+  }
+  if (!activeGap) activeGap = { startId: item.id, endId: item.id, decision: item.decision, count: 1, reasons: [...new Set([item.reason].filter(Boolean))] };
+  else if (activeGap.decision === item.decision && activeGap.endId + 1 === item.id) {
+    activeGap.endId = item.id;
+    activeGap.count += 1;
+    if (item.reason && !activeGap.reasons.includes(item.reason)) activeGap.reasons.push(item.reason);
+  } else {
+    enemyGapRanges.push(activeGap);
+    activeGap = { startId: item.id, endId: item.id, decision: item.decision, count: 1, reasons: [...new Set([item.reason].filter(Boolean))] };
+  }
+}
+if (activeGap) enemyGapRanges.push(activeGap);
 
 await writeJson('public/assets/generated/bcu-icon-source-audit.json', {
   schemaVersion: 2,
@@ -138,6 +168,12 @@ await writeJson('public/assets/generated/bcu-icon-source-audit.json', {
     pngValidation: 'signature, IHDR, dimensions, color type, chunk boundaries, CRC, IEND'
   },
   summary,
+  enemyCoverage: {
+    expectedMinEnemyId: enemyCoverage[0]?.id ?? null,
+    expectedMaxEnemyId: enemyCoverage[enemyCoverage.length - 1]?.id ?? null,
+    decisions: enemyCoverage,
+    gapRanges: enemyGapRanges
+  },
   records
 });
 

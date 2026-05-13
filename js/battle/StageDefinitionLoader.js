@@ -49,6 +49,27 @@ function toMs(frames) {
   return Number.isFinite(frames) ? Math.round((frames / FPS) * 1000) : null;
 }
 
+function semanticStageError(stageKey, bundleRef, err) {
+  const detail = {
+    kind: 'stage-definition',
+    failedSubsystem: 'stage-definition',
+    semanticKey: stageKey || null,
+    bundlePath: bundleRef?.bundlePath || null,
+    internalPath: bundleRef?.internalPath || null,
+    missingEntries: bundleRef?.internalPath ? [bundleRef.internalPath] : [],
+    invalidEntries: [],
+    originalErrorName: err?.name,
+    originalErrorMessage: err?.message,
+    message: `Semantic stage load failed: ${err?.message || String(err)}`
+  };
+  const out = new Error(detail.message, { cause: err });
+  out.name = 'SemanticStageLoadError';
+  out.detail = detail;
+  out.failedSubsystem = 'stage-definition';
+  out.phase = 'stage-definition';
+  return out;
+}
+
 export class StageDefinitionLoader {
   constructor(log) { this.log = log || (() => {}); }
 
@@ -254,8 +275,11 @@ export class StageDefinitionLoader {
         let provider = null;
         try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
         if (!provider?.allowRawFallback && !stageConfig.allowRawFallback) {
-          this.log('warn', `semantic stage load failed: ${err?.message || err}`);
-          return this.createFallback('semantic-stage-load-failed', stageKey || '');
+          const error = semanticStageError(stageKey, stageConfig.bundleRef, err);
+          provider?.diagnostics?.bundleErrors?.push(error.detail);
+          if (provider?.diagnostics) provider.diagnostics.lastStageLoad = error.detail;
+          this.log('error', error.message);
+          throw error;
         }
         provider?.recordRawFallback('stage-bundle-load-failed', { stageKey, message: err?.message || String(err) });
       }

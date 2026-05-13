@@ -33932,6 +33932,38 @@
       "sizeBytes": 48385,
       "hash": "2b3e5b2a1ac1b3cd1e1fe8695352d5af925c5243227403611fa347ba0637f6f1"
     },
+    "nyankoCastle:000": {
+      "kind": "nyankoCastle",
+      "key": "nyankoCastle:000",
+      "bundlePath": "public/assets/bundles/castle/nyanko/000.zip",
+      "status": "full",
+      "sizeBytes": 155603,
+      "hash": "53c8ef62c294b76e27675c18354a163bb1f0874c666816452fc069222d886537"
+    },
+    "nyankoCastle:001": {
+      "kind": "nyankoCastle",
+      "key": "nyankoCastle:001",
+      "bundlePath": "public/assets/bundles/castle/nyanko/001.zip",
+      "status": "full",
+      "sizeBytes": 405025,
+      "hash": "8370b9dfa4b1159f7557dfa91572ed84b7514f22091aa09f82c13fe3bcc63233"
+    },
+    "nyankoCastle:002": {
+      "kind": "nyankoCastle",
+      "key": "nyankoCastle:002",
+      "bundlePath": "public/assets/bundles/castle/nyanko/002.zip",
+      "status": "full",
+      "sizeBytes": 46064,
+      "hash": "2c4b164799d6b264f54c800175aaf1ffd338893e89c8c9d7aa5da2a22220c0ae"
+    },
+    "nyankoCastle:003": {
+      "kind": "nyankoCastle",
+      "key": "nyankoCastle:003",
+      "bundlePath": "public/assets/bundles/castle/nyanko/003.zip",
+      "status": "full",
+      "sizeBytes": 87108,
+      "hash": "2dcde85de67252f4cbaf24dd8fff46c82451f18add145a1f96fd06006f64b55a"
+    },
     "lang:jp": {
       "kind": "language",
       "key": "lang:jp",
@@ -33954,7 +33986,7 @@
       "bundlePath": "public/assets/bundles/core/core-db.zip",
       "status": "full",
       "sizeBytes": 94429309,
-      "hash": "98e2d742d0e38d8b30a8267a75f0858328186a37cad677a48fecfced824f3ed5"
+      "hash": "e6e5bffc04f2d87928f41b0695dd4ef47236f819d012a506348f7e60c1ebaf81"
     },
     "icon:enemy": {
       "kind": "icon",

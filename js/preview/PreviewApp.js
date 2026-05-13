@@ -24,6 +24,33 @@ function formatFormationForLog(f) {
   return '(empty)';
 }
 
+const APPLY_BATTLE_SUBSYSTEMS = new Set(['boot','stage-definition','stage-runtime','background','enemy-castle','player-castle','actor-template','actor-animation','effect-kbeff','production-roster','camera','renderer','raw-guard','unknown']);
+
+function errorReport(error) {
+  const cause = error?.cause;
+  return {
+    name: error?.name || null,
+    message: error?.message || String(error || ''),
+    stack: error?.stack || null,
+    cause: cause ? { name: cause?.name || null, message: cause?.message || String(cause || ''), stack: cause?.stack || null } : null,
+    originalErrorName: error?.originalErrorName || error?.detail?.originalErrorName || cause?.name || null,
+    originalErrorMessage: error?.originalErrorMessage || error?.detail?.originalErrorMessage || cause?.message || null
+  };
+}
+
+function inferFailedSubsystem(error) {
+  const explicit = error?.failedSubsystem || error?.detail?.failedSubsystem || error?.detail?.kind;
+  const normalized = { stage: 'stage-definition', castle: 'enemy-castle', icon: 'production-roster', actor: 'actor-template', kbeff: 'effect-kbeff' }[explicit] || explicit;
+  if (APPLY_BATTLE_SUBSYSTEMS.has(normalized)) return normalized;
+  const message = String(error?.message || '').toLowerCase();
+  if (message.includes('stage')) return 'stage-definition';
+  if (message.includes('background')) return 'background';
+  if (message.includes('castle')) return 'enemy-castle';
+  if (message.includes('camera')) return 'camera';
+  if (message.includes('raw bcu')) return 'raw-guard';
+  return 'unknown';
+}
+
 async function loadImage(url) {
   return await new Promise((res, rej) => {
     const img = new Image();
@@ -114,8 +141,46 @@ export class PreviewApp {
     c.fillText('Battle assets are loaded after Apply.',24,76);
   }
 
+  buildApplyBattleReport({ ok, phase, error = null, failedSubsystem = null, timings = {} } = {}) {
+    const provider = this.bcuDb?.semanticProvider || globalThis.__BCU_DB__?.semanticProvider || null;
+    const scene = this.battleScene || null;
+    const camera = scene?.camera || null;
+    const diagnostics = provider?.diagnostics || {};
+    return {
+      ok: !!ok,
+      phase: phase || (ok ? 'ready' : 'unknown'),
+      sceneReady: !!this.sceneReady,
+      hasBattleScene: !!scene,
+      hasCamera: !!camera,
+      cameraState: camera?.getState?.() || null,
+      selectedStageId: this.selectedStageId || scene?.stage?.selectedStageId || null,
+      stageKey: scene?.stage?.stageKey || null,
+      semanticMode: this.bcuDb?.semanticMode || provider?.mode || null,
+      timings,
+      failedSubsystem: failedSubsystem || (error ? inferFailedSubsystem(error) : null),
+      error: error ? errorReport(error) : null,
+      diagnostics: {
+        bundleErrors: diagnostics.bundleErrors || [],
+        missingBundles: diagnostics.missingBundles || [],
+        blockedRawReads: diagnostics.blockedRawReads || [],
+        rawFallbacks: diagnostics.rawFallbacks || [],
+        lastActorLoad: diagnostics.lastActorLoad || null,
+        lastStageLoad: diagnostics.lastStageLoad || null,
+        lastBackgroundLoad: diagnostics.lastBackgroundLoad || null,
+        lastCastleLoad: diagnostics.lastCastleLoad || null,
+        lastKbeffLoad: diagnostics.lastKbeffLoad || null
+      }
+    };
+  }
+
+  publishApplyBattleReport(report) {
+    globalThis.__LAST_APPLY_BATTLE_REPORT__ = report;
+    return report;
+  }
+
   async applyFormationToBattle() {
     console.info('applyFormationToBattle:start');
+    const attemptStart = performance.now();
     this.loadingOverlay?.show();
     this.loadingOverlay?.startTimer();
     this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘を準備中...', value: 0.05 });
@@ -125,13 +190,26 @@ export class PreviewApp {
       console.info('applyFormationToBattle:after-resetBattle');
       this.formationEditor?.setVisible(false);
       this.productionBar?.setVisible(true);
-      this.sceneReady = true;
+      this.sceneReady = !!(this.battleScene && this.battleScene.camera);
+      this.publishApplyBattleReport(this.buildApplyBattleReport({
+        ok: this.sceneReady,
+        phase: this.sceneReady ? 'ready' : 'camera',
+        failedSubsystem: this.sceneReady ? null : 'camera',
+        timings: { applyMs: performance.now() - attemptStart, ...(this.battleScene?.loadTimings || {}) }
+      }));
       console.info('applyFormationToBattle:ready');
       this.loadingOverlay?.hide();
     } catch (e) {
       this.formationEditor?.setVisible(true);
       this.productionBar?.setVisible(false);
       this.sceneReady = false;
+      this.publishApplyBattleReport(this.buildApplyBattleReport({
+        ok: false,
+        phase: e?.phase || e?.detail?.kind || 'apply-failed',
+        error: e,
+        failedSubsystem: inferFailedSubsystem(e),
+        timings: { applyMs: performance.now() - attemptStart }
+      }));
       this.loadingOverlay?.setError(e);
       console.error('[PreviewApp] applyFormationToBattle failed detail', {
         name: e?.name,

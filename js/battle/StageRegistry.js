@@ -37,7 +37,13 @@ export function scoreStageForDefault(stageDefinition = {}, availableEnemyAssets 
   const active = rows.length;
   return Math.abs(stageLen - 4000) + Math.abs(hp - 100000) / 10000 + active * 2 + unsupported * 5 + manifestIndex;
 }
-export function getDefaultStage() { return getAvailableStages()[0] || null; }
+export function getDefaultStage() {
+  const stages = getAvailableStages();
+  return stages.find((s) => s.stageId === 'stageRNA001_00')
+    || stages.find((s) => s.semanticEntry?.kind === 'stage-definition')
+    || stages[0]
+    || null;
+}
 export function resolveStageSelection({ preferredStageId } = {}) {
   const pref = preferredStageId ? getStageById(preferredStageId) : null;
   return pref || getDefaultStage();

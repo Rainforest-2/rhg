@@ -2,7 +2,9 @@ import fs from 'node:fs/promises';
 import { BattleStatsLoader } from '../js/battle/BattleStatsLoader.js';
 import { BcuLangStore } from '../js/bcu/BcuLangStore.js';
 import { createBcuDiagnostics } from '../js/bcu/BcuDiagnostics.js';
-import { FIXED_DATE, hashFile, loadManifest, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
+import { comparePackId, FIXED_DATE, hashFile, loadManifest, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
+
+const BASE_T_UNIT_CSV = 'public/assets/bcu/000001/org/data/t_unit.csv';
 
 const parseCsvRows = (text) => String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)
   .map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean)
@@ -12,6 +14,78 @@ const pad3 = (id) => String(Math.max(0, Number(id) || 0)).padStart(3, '0');
 const formCode = (i) => ['f', 'c', 's', 'u'][Math.max(0, Number(i) || 0)] || 'f';
 const readText = async (file) => await fs.readFile(file, 'utf8');
 const jsonEntry = (name, value) => ({ name, data: Buffer.from(`${JSON.stringify(value, null, 2)}\n`) });
+
+function packIdFromBcuPath(file) {
+  return String(file || '').match(/^public\/assets\/bcu\/([^/]+)\//)?.[1] || null;
+}
+
+function addUnique(list, value) {
+  if (value == null || value === '') return;
+  const key = String(value);
+  if (!list.includes(key)) list.push(key);
+}
+
+function isUsableEnemyStatsRow(row) {
+  return Array.isArray(row) && row.length > 0 && row.some((value) => Number(value) !== 0);
+}
+
+async function loadEnemyStatSources(manifest) {
+  const files = (manifest.files || [])
+    .filter((file) => /\/org\/data\/t_unit\.csv$/i.test(file))
+    .sort((a, b) => comparePackId(packIdFromBcuPath(a), packIdFromBcuPath(b)) || a.localeCompare(b));
+  if (!files.includes(BASE_T_UNIT_CSV)) files.unshift(BASE_T_UNIT_CSV);
+
+  const sources = [];
+  const byPack = new Map();
+  for (const file of [...new Set(files)]) {
+    const packId = packIdFromBcuPath(file);
+    if (!packId) continue;
+    try {
+      const rows = parseCsvRows(await readText(file)).map(toNumbers);
+      const source = { packId, file, rows };
+      sources.push(source);
+      if (!byPack.has(packId)) byPack.set(packId, []);
+      byPack.get(packId).push(source);
+    } catch {
+      // Optional update packs can be absent in sample/test fixtures. Missing packs are ignored;
+      // the builder will fall back to another t_unit.csv when possible.
+    }
+  }
+
+  for (const packSources of byPack.values()) {
+    packSources.sort((a, b) => a.file.localeCompare(b.file));
+  }
+  const newestFirst = sources.slice().sort((a, b) => comparePackId(b.packId, a.packId) || b.file.localeCompare(a.file));
+  return { sources, byPack, newestFirst };
+}
+
+function enemyPackPriority(enemyId, actorIndex, enemyStatsSources) {
+  const priority = [];
+  const actor = actorIndex.byKey?.[`enemy:${enemyId}`] || null;
+  addUnique(priority, actor?.selected?.sourcePack);
+  for (const candidate of actor?.sourceCandidates || []) addUnique(priority, candidate?.sourcePack);
+  for (const rawPath of actor?.diagnostics?.sourceRawPaths || []) addUnique(priority, packIdFromBcuPath(rawPath));
+
+  // Preserve legacy results for enemies whose only known data is the base pack.
+  addUnique(priority, '000001');
+
+  // Then allow newer official/update packs to fill enemies that the base CSV cannot describe.
+  for (const source of enemyStatsSources.newestFirst) addUnique(priority, source.packId);
+  return priority;
+}
+
+function findEnemyStats(enemyId, actorIndex, enemyStatsSources) {
+  const rowIndex = enemyId + 2;
+  for (const packId of enemyPackPriority(enemyId, actorIndex, enemyStatsSources)) {
+    for (const source of enemyStatsSources.byPack.get(packId) || []) {
+      const rawStats = source.rows[rowIndex] || [];
+      if (isUsableEnemyStatsRow(rawStats)) {
+        return { rawStats, rowIndex, sourceFile: source.file, sourcePack: source.packId };
+      }
+    }
+  }
+  return { rawStats: [], rowIndex, sourceFile: null, sourcePack: null };
+}
 
 const manifest = await loadManifest();
 const actorIndex = await readJson('public/assets/generated/bcu-actor-index.json', { byKey: {} });
@@ -24,6 +98,7 @@ const diagnostics = createBcuDiagnostics();
 const names = new BcuLangStore({ locale: 'jp', diagnostics });
 await names.loadFromManifest(manifest, readText);
 const statsLoader = new BattleStatsLoader({ bcuDb: null });
+const enemyStatsSources = await loadEnemyStatSources(manifest);
 
 function serializeNames() {
   const tables = {};
@@ -55,20 +130,29 @@ function actorAsset(kind, id, form = null) {
   };
 }
 
-const enemyRows = parseCsvRows(await readText('public/assets/bcu/000001/org/data/t_unit.csv')).map(toNumbers);
 const enemies = {};
+let enemyStatsHitCount = 0;
+let enemyStatsMissingCount = 0;
+const enemyStatsSourceFiles = new Set();
 for (const idRaw of manifest.indexes?.enemyIds || []) {
   const enemyId = Number(idRaw);
   if (!Number.isFinite(enemyId)) continue;
-  const rowIndex = enemyId + 2;
-  const rawStats = enemyRows[rowIndex] || [];
+  const hit = findEnemyStats(enemyId, actorIndex, enemyStatsSources);
+  const rawStats = hit.rawStats;
+  if (rawStats.length) {
+    enemyStatsHitCount += 1;
+    if (hit.sourceFile) enemyStatsSourceFiles.add(hit.sourceFile);
+  } else {
+    enemyStatsMissingCount += 1;
+  }
   enemies[`enemy:${enemyId}`] = {
     enemyId,
     id3: pad3(enemyId),
     key: `enemy:${enemyId}`,
     name: names.enemy(enemyId, 'jp'),
-    stats: rawStats.length ? statsLoader.normalizeEnemyStats(rawStats, { file: 'core-db.zip:enemies.json', row: rowIndex, enemyId, type: 'enemy', mappingStatus: 'valid' }) : null,
+    stats: rawStats.length ? statsLoader.normalizeEnemyStats(rawStats, { file: 'core-db.zip:enemies.json', sourceFile: hit.sourceFile, sourcePack: hit.sourcePack, row: hit.rowIndex, enemyId, type: 'enemy', mappingStatus: 'valid' }) : null,
     rawStats,
+    statsSource: hit.sourceFile ? { file: hit.sourceFile, packId: hit.sourcePack, row: hit.rowIndex } : null,
     asset: actorAsset('enemy', enemyId)
   };
 }
@@ -181,7 +265,14 @@ const entries = [
   jsonEntry('stages.json', { schemaVersion: 1, stages }),
   jsonEntry('stage-aliases.json', { schemaVersion: 1, aliases }),
   jsonEntry('asset-keys.json', { schemaVersion: 1, actors: Object.keys(actorIndex.byKey || {}), stages: Object.keys(stages), backgrounds: Object.keys(backgrounds), castles: Object.keys(enemyCastles) }),
-  jsonEntry('diagnostics-summary.json', { schemaVersion: 1, generatedAt: FIXED_DATE, source: 'build-bcu-core-db-bundle', counts: { units: Object.keys(units).length, enemies: Object.keys(enemies).length, backgrounds: Object.keys(backgrounds).length, castles: Object.keys(enemyCastles).length, stages: Object.keys(stages).length }, bundleCount: Object.keys(bundleManifest.bundles || {}).length })
+  jsonEntry('diagnostics-summary.json', {
+    schemaVersion: 1,
+    generatedAt: FIXED_DATE,
+    source: 'build-bcu-core-db-bundle',
+    counts: { units: Object.keys(units).length, enemies: Object.keys(enemies).length, backgrounds: Object.keys(backgrounds).length, castles: Object.keys(enemyCastles).length, stages: Object.keys(stages).length },
+    enemyStats: { sources: enemyStatsSources.sources.length, sourceFilesUsed: enemyStatsSourceFiles.size, hits: enemyStatsHitCount, missing: enemyStatsMissingCount },
+    bundleCount: Object.keys(bundleManifest.bundles || {}).length
+  })
 ];
 
 const bundlePath = 'public/assets/bundles/core/core-db.zip';
@@ -195,10 +286,10 @@ const coreIndex = {
     files: entries.map((e) => e.name),
     status: 'full',
     bundleRef: { bundleKey: 'core:db', bundlePath, readMode: 'zip-json' },
-    diagnostics: { sourceRawPaths: ['public/assets/bcu/000001/org/data/t_unit.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
+    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
   }],
   byKey: {}
 };
 coreIndex.byKey['core:db'] = coreIndex.entries[0];
 await writeJson('public/assets/generated/bcu-core-index.json', coreIndex);
-console.log(`wrote ${bundlePath} entries=${entries.length} hash=${await hashFile(bundlePath)}`);
+console.log(`wrote ${bundlePath} entries=${entries.length} hash=${await hashFile(bundlePath)} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length}`);

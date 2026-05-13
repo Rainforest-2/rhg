@@ -1,5 +1,7 @@
 import { comparePackId, FIXED_DATE, loadManifest, pad3, readJson, validatePngFile, writeJson, writeText } from './bcu-semantic-utils.mjs';
 
+const ICON_PNG_VALIDATION_OPTIONS = { allowTrailingBytes: true };
+
 const manifest = await loadManifest();
 const actor = await readJson('public/assets/generated/bcu-actor-index.json', { entries: [] });
 const files = new Set(manifest.files || []);
@@ -7,7 +9,7 @@ const pngCache = new Map();
 
 async function validatePath(file) {
   if (!file) return { valid: false, reason: 'missing', width: null, height: null, sizeBytes: 0, signature: null };
-  if (!pngCache.has(file)) pngCache.set(file, validatePngFile(file));
+  if (!pngCache.has(file)) pngCache.set(file, validatePngFile(file, ICON_PNG_VALIDATION_OPTIONS));
   return await pngCache.get(file);
 }
 
@@ -72,7 +74,7 @@ async function buildRecord(entry) {
     const candidates = enemyCandidates(entry);
     const chosen = await chooseValid(candidates);
     const id = Number(entry.id);
-    const notes = ['enemy-icon-basename-policy'];
+    const notes = ['enemy-icon-basename-policy', 'png-trailing-bytes-allowed'];
     if (id >= 526) notes.push('enemy-id-526-new-format');
     if (!chosen.sourcePath) {
       return {
@@ -107,7 +109,7 @@ async function buildRecord(entry) {
       status: candidates.length ? 'invalid-png' : 'missing',
       pngValidation: chosen.pngValidation,
       candidates: chosen.checked,
-      notes: candidates.length ? ['unit-icon-candidates-invalid'] : ['missing-unit-icon-source']
+      notes: candidates.length ? ['unit-icon-candidates-invalid', 'png-trailing-bytes-allowed'] : ['missing-unit-icon-source']
     };
   }
   return {
@@ -117,7 +119,7 @@ async function buildRecord(entry) {
     status: current === chosen.sourcePath ? 'ok' : 'needs-remap',
     pngValidation: chosen.pngValidation,
     candidates: chosen.checked,
-    notes: ['unit-valid-png-source']
+    notes: ['unit-valid-png-source', 'png-trailing-bytes-allowed']
   };
 }
 
@@ -160,12 +162,12 @@ for (const item of enemyCoverage) {
 if (activeGap) enemyGapRanges.push(activeGap);
 
 await writeJson('public/assets/generated/bcu-icon-source-audit.json', {
-  schemaVersion: 2,
+  schemaVersion: 3,
   generatedAt: FIXED_DATE,
   sourcePolicy: {
     enemyPolicy: 'prefer valid public/assets/bcu/<pack>/org/enemy/<id3>/enemy_icon_<id3>.png; no edi/actor fallback',
     unitPolicy: 'choose first deterministic valid unit icon candidate; no actor image.png fallback',
-    pngValidation: 'signature, IHDR, dimensions, color type, chunk boundaries, CRC, IEND'
+    pngValidation: 'signature, IHDR, dimensions, color type, chunk boundaries, CRC, IEND; trailing bytes after IEND are allowed for icon assets'
   },
   summary,
   enemyCoverage: {
@@ -187,6 +189,7 @@ const lines = [
   ...Object.entries(summary).sort().map(([k, v]) => `| ${k} | ${v} |`),
   '',
   'Enemy icons use valid `enemy_icon_<id3>.png` from discovered packs. Missing enemy icons are omitted from the runtime icon index; no `edi_*.png` or actor image fallback is used.',
+  'Icon PNG validation allows trailing bytes after IEND because several BCU icon PNGs contain extra bytes while retaining a valid PNG image stream.',
   'Unit icons are included only when the selected candidate validates as PNG.',
   '',
   '| Semantic key | Status | Current | Desired | PNG |',

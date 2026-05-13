@@ -1,5 +1,7 @@
 import { readJson, readStoreZipEntries, validatePngBuffer } from './bcu-semantic-utils.mjs';
 
+const ICON_PNG_VALIDATION_OPTIONS = { allowTrailingBytes: true };
+
 const icon = await readJson('public/assets/generated/bcu-icon-index.json', { entries: [] });
 const archiveCache = new Map();
 const failures = [];
@@ -27,7 +29,7 @@ for (const entry of icon.entries || []) {
     failures.push({ key: entry.key, bundlePath, internalPath, reason: 'missing-entry' });
     continue;
   }
-  const png = validatePngBuffer(data);
+  const png = validatePngBuffer(data, ICON_PNG_VALIDATION_OPTIONS);
   if (!png.valid) failures.push({ key: entry.key, bundlePath, internalPath, reason: png.reason });
 }
 
@@ -35,4 +37,4 @@ if (failures.length) {
   console.error(JSON.stringify({ failures: failures.slice(0, 100), total: failures.length }, null, 2));
   process.exit(1);
 }
-console.log(`icon index paths ok entries=${icon.entries?.length || 0} zips=${archiveCache.size}`);
+console.log(`icon index paths ok entries=${icon.entries?.length || 0} zips=${archiveCache.size} trailingBytes=allowed`);

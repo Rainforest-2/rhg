@@ -402,10 +402,10 @@ export function validatePngBuffer(input, options = {}) {
   return { ...result, valid: true, reason: null };
 }
 
-export async function validatePngFile(file) {
+export async function validatePngFile(file, options = {}) {
   const data = await fileBufferOrNull(file);
   if (!data) return { valid: false, reason: 'missing', width: null, height: null, sizeBytes: 0, signature: null };
-  return validatePngBuffer(data);
+  return validatePngBuffer(data, options);
 }
 
 function readU16(buf, off) { return buf.readUInt16LE(off); }

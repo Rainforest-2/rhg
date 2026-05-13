@@ -33993,9 +33993,9 @@
       "key": "icon:enemy",
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
-      "iconCount": 246,
-      "sizeBytes": 508270,
-      "hash": "786efd4c48aca2947fa1cc1fb9a083329fc3c06e6a6d6cbcae4a26561ab6783b"
+      "iconCount": 762,
+      "sizeBytes": 1454336,
+      "hash": "33311cefa97becc429f71927092b48b9c573d0cb5fc3a05cfe3c74f16acc63dd"
     },
     "icon:unit:c": {
       "kind": "icon",
@@ -34003,8 +34003,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-c.zip",
       "status": "full",
       "iconCount": 799,
-      "sizeBytes": 4557513,
-      "hash": "d87b76e6ae671e993f69285118889df992c9ebe13471d753315eb4433f8de9a8"
+      "sizeBytes": 4500219,
+      "hash": "bc6f450aa79a2183b3ff55ad284ecf704c9142dc57fb67eaa12bd67b84ddadd3"
     },
     "icon:unit:f": {
       "kind": "icon",
@@ -34012,8 +34012,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-f.zip",
       "status": "full",
       "iconCount": 822,
-      "sizeBytes": 4556465,
-      "hash": "66833bc805ae79b20d242675b2c4a7de9f7fcc5652c1907eda5dc73730f142f2"
+      "sizeBytes": 4392579,
+      "hash": "ff8e2e227d62aba36acc856b9e929325d9a689217dd5789ba72cd69648246e25"
     },
     "icon:unit:s": {
       "kind": "icon",
@@ -34021,8 +34021,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-s.zip",
       "status": "full",
       "iconCount": 393,
-      "sizeBytes": 2197170,
-      "hash": "bb9227959eeb282733bd77fdb6a7c031c930ba8e6b9ad5b9cbeea040bd95a0b4"
+      "sizeBytes": 2152123,
+      "hash": "bdf8614719d192615f2c8b63371c2f3178f31ec82d4f3f2b5bddb166a6fbb7b1"
     },
     "icon:unit:u": {
       "kind": "icon",

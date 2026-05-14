@@ -7,6 +7,47 @@ function normalizeFetchPath(path) {
   return `./${s}`;
 }
 
+function pad3(value) {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0 || n > 999) return null;
+  return String(n).padStart(3, '0');
+}
+
+function inferAggregateIconEntry(actorKey) {
+  const key = String(actorKey || '');
+  let m = key.match(/^enemy:(\d+)$/);
+  if (m) {
+    const id3 = pad3(Number(m[1]));
+    if (!id3) return null;
+    return {
+      key,
+      kind: 'enemy',
+      id: Number(m[1]),
+      id3,
+      bundleRef: { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' },
+      internalPath: `enemy/${id3}.png`,
+      sourceStatus: 'inferred-aggregate-icon-entry'
+    };
+  }
+  m = key.match(/^unit:(\d+):(f|c|s|u)$/);
+  if (m) {
+    const id3 = pad3(Number(m[1]));
+    const form = m[2];
+    if (!id3) return null;
+    return {
+      key,
+      kind: 'unit',
+      id: Number(m[1]),
+      id3,
+      form,
+      bundleRef: { bundleKey: `icon:unit:${form}`, bundlePath: `public/assets/bundles/icon/unit-${form}.zip` },
+      internalPath: `unit/${id3}-${form}.png`,
+      sourceStatus: 'inferred-aggregate-icon-entry'
+    };
+  }
+  return null;
+}
+
 async function fetchJson(path) {
   if (typeof window === 'undefined') {
     const { readFile } = await import('node:fs/promises');
@@ -68,7 +109,8 @@ export class SemanticAssetProvider {
       bundleErrors: [],
       missingBundles: [],
       rawFallbacks: [],
-      failures: []
+      failures: [],
+      inferredIconEntries: []
     };
   }
 
@@ -99,7 +141,8 @@ export class SemanticAssetProvider {
   getBackgroundEntry(key) { const k = String(key).startsWith('background:') ? key : `background:${key}`; return this.indexes.backgrounds?.byKey?.[k] || null; }
   getCastleEntry(key) { return this.indexes.castles?.byKey?.[key] || this.indexes.castles?.byKey?.[`enemyCastle:${key}`] || null; }
   getCoreEntry(key) { return this.indexes.core?.byKey?.[key] || this.indexes.core?.entries?.find((e) => e.key === key) || null; }
-  getIconEntry(actorKey) { return this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || null; }
+  getIconEntry(actorKey) { return this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || inferAggregateIconEntry(actorKey); }
+  getActorIconEntry(actorKey) { return this.getIconEntry(actorKey); }
   getLanguageEntry(key) { return this.indexes.language?.byKey?.[key] || this.indexes.language?.entries?.find((e) => e.key === key) || null; }
 
   hasBundleForKey(key) {
@@ -227,9 +270,7 @@ export class SemanticAssetProvider {
     return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
   }
 
-  async getActorBundle(actorKey) {
-    return await this.readActorBundle(actorKey);
-  }
+  async getActorBundle(actorKey) { return await this.readActorBundle(actorKey); }
 
   async getActorIconUrl(actorKey) {
     if (this.actorIconUrlCache.has(actorKey)) return this.actorIconUrlCache.get(actorKey);
@@ -243,6 +284,7 @@ export class SemanticAssetProvider {
 
   async readIconBundle(actorKey) {
     const entry = this.getIconEntry(actorKey);
+    const inferred = entry?.sourceStatus === 'inferred-aggregate-icon-entry';
     const bundleRef = entry?.bundleRef;
     const internalPath = entry?.internalPath || bundleRef?.internalPath;
     if (!entry || !bundleRef?.bundlePath || !internalPath) {
@@ -252,10 +294,14 @@ export class SemanticAssetProvider {
       error.detail = detail;
       throw error;
     }
+    if (inferred) {
+      this.diagnostics.inferredIconEntries.push({ semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath });
+      this.diagnostics.inferredIconEntries.splice(80);
+    }
     try {
       const archive = await this.archive(bundleRef);
       if (!archive.has(internalPath)) {
-        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: 'missing-zip-entry', missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` };
+        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: inferred ? 'missing-inferred-zip-entry' : 'missing-zip-entry', missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` };
         this.diagnostics.bundleErrors.push(detail);
         const error = new Error(detail.message);
         error.detail = detail;
@@ -334,9 +380,7 @@ export class SemanticAssetProvider {
     return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
   }
 
-  async readLanguageJson(locale, internalPath) {
-    return JSON.parse(await this.readLanguageFile(locale, internalPath));
-  }
+  async readLanguageJson(locale, internalPath) { return JSON.parse(await this.readLanguageFile(locale, internalPath)); }
 
   async readLanguageFile(locale, internalPath) {
     if (locale !== 'jp') throw new Error(`Unsupported BCU language locale: ${locale}`);

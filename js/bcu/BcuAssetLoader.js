@@ -27,6 +27,62 @@ function loadImage(url) {
   return p;
 }
 
+function makeActorDiagnostic({ kind='actor', semanticKey, bundlePath=null, internalPath=null, sourcePack=null, sourceRawPaths=null, role=null, reason, error }) {
+  return {
+    kind,
+    semanticKey,
+    role: role || undefined,
+    bundlePath,
+    internalPath,
+    sourcePack: sourcePack || null,
+    sourceRawPaths: sourceRawPaths || [],
+    reason,
+    originalErrorName: error?.name || null,
+    originalErrorMessage: error?.message || (error ? String(error) : null),
+    originalErrorStack: error?.stack || null,
+    message: error?.message || reason || 'actor-bundle-error'
+  };
+}
+
+function validateActorCore({ semanticKey, bundlePath, sourcePack, sourceRawPaths, image, imgcut, model }) {
+  const failures = [];
+  const imageWidth = Number(image?.naturalWidth || image?.width || 0);
+  const imageHeight = Number(image?.naturalHeight || image?.height || 0);
+  if (!imageWidth || !imageHeight) failures.push({ internalPath: 'image.png', reason: 'invalid-image-dimensions' });
+  // BCU util/anim/ImgCut.cut clamps malformed or edge-overflowing cuts before getSubimage.
+  // Keep them diagnostic-only here; parser part count and model/animation references are the hard compatibility gate.
+  normalizeModelPartRefs(model, imgcut);
+  if (failures.length) {
+    const f = failures[0];
+    const error = new Error(`Invalid actor bundle ${semanticKey}: ${f.reason}`);
+    error.detail = makeActorDiagnostic({ semanticKey, bundlePath, sourcePack, sourceRawPaths, internalPath: f.internalPath, reason: f.reason, error });
+    error.invalidEntries = failures.map((x) => x.internalPath);
+    throw error;
+  }
+}
+
+function normalizeModelPartRefs(model, imgcut) {
+  const partCount = imgcut?.parts?.length || 0;
+  if (!model || !partCount) return model;
+  for (const part of model.parts || []) {
+    // BCU util/anim/MaModel.check clamps initial model part image refs >= imgcut.n to 0.
+    if (Number.isInteger(part.partIndex) && part.partIndex >= partCount) part.partIndex = 0;
+  }
+  return model;
+}
+
+function validateActorAnimation({ semanticKey, bundlePath, sourcePack, sourceRawPaths, role, internalPath, anim, model }) {
+  const partCount = model?.parts?.length || 0;
+  for (const track of anim?.tracks || []) {
+    const partId = Number(track?.partId);
+    if (!Number.isInteger(partId) || partId < 0 || partId >= partCount) {
+      const error = new Error(`Invalid actor animation ${semanticKey} ${internalPath}: part ${track?.partId} out of range`);
+      error.detail = makeActorDiagnostic({ kind: 'actor-animation', semanticKey, bundlePath, sourcePack, sourceRawPaths, role, internalPath, reason: 'animation-part-id-out-of-range', error });
+      throw error;
+    }
+  }
+}
+
 async function loadImageFromObjectUrl(provider, bundleRef, internalPath) {
   return await loadImage(await provider.createObjectUrl(bundleRef, internalPath, 'image/png'));
 }
@@ -39,12 +95,14 @@ async function tryLoadSemanticActor(def) {
   if (!provider) return null;
   try {
     const entry = provider.getActorEntry(def.semanticKey);
-    if (!entry?.bundleRef) {
+    if (!entry?.bundleRef || entry.status !== 'full' || !provider.hasBundleForKey(def.semanticKey)) {
       if (entry?.status === 'rawOnly' && def.allowRawOnly === true) return null;
-      throw new Error(`Missing actor bundle for semantic key ${def.semanticKey}`);
+      throw new Error(`Missing full actor bundle for semantic key ${def.semanticKey}`);
     }
     const bundleRef = entry.bundleRef;
-    const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0, semantic: { key: def.semanticKey, bundleRef, source: 'semantic-bundle' } };
+    let bundleJson = {};
+    try { bundleJson = JSON.parse(await provider.readTextByBundleRef(bundleRef, 'bundle.json')); } catch {}
+    const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0, semantic: { key: def.semanticKey, bundleRef, source: 'semantic-bundle', sourcePack: bundleJson.sourcePack || entry.selected?.sourcePack || null, sourceRawPaths: bundleJson.sourceRawPaths || entry.diagnostics?.sourceRawPaths || [] } };
     try { r.image = await loadImageFromObjectUrl(provider, bundleRef, 'image.png'); r.imageFile = 'image.png'; r.loaded.push('image.png'); r.status.image = 'loaded'; } catch { r.missing.push('image.png'); }
     try { r.imgcut = parseImgcut(await provider.readTextByBundleRef(bundleRef, 'imgcut.imgcut')); r.imgcutFile = 'imgcut.imgcut'; r.loaded.push('imgcut.imgcut'); r.status.imgcut = 'loaded'; } catch (e) { r.errors.push(`semantic imgcut: ${e.message}`); }
     try { r.model = parseModel(await provider.readTextByBundleRef(bundleRef, 'model.mamodel')); r.modelFile = 'model.mamodel'; r.loaded.push('model.mamodel'); r.status.model = 'loaded'; } catch (e) { if (r.modelRequired) r.errors.push(`semantic model: ${e.message}`); else r.status.model = 'skipped'; }
@@ -55,23 +113,15 @@ async function tryLoadSemanticActor(def) {
       error.invalidEntries = [];
       throw error;
     }
+    validateActorCore({ semanticKey: def.semanticKey, bundlePath: bundleRef.bundlePath, sourcePack: r.semantic.sourcePack, sourceRawPaths: r.semantic.sourceRawPaths, image: r.image, imgcut: r.imgcut, model: r.model });
     return r;
   } catch (error) {
     if (provider.allowRawFallback) {
       provider.recordRawFallback('actor-bundle-load-failed', { actorKey: def.semanticKey, message: error?.message || String(error) });
       return null;
     }
-    provider.diagnostics.bundleErrors.push({
-      kind: 'actor',
-      semanticKey: def.semanticKey,
-      bundlePath: provider.getActorEntry(def.semanticKey)?.bundleRef?.bundlePath || null,
-      internalPath: null,
-      missingEntries: error?.missingEntries || [],
-      invalidEntries: error?.invalidEntries || [],
-      originalErrorName: error?.name,
-      originalErrorMessage: error?.message,
-      message: error?.message || String(error)
-    });
+    const entry = provider.getActorEntry(def.semanticKey);
+    provider.diagnostics.bundleErrors.push(error?.detail || makeActorDiagnostic({ semanticKey: def.semanticKey, bundlePath: entry?.bundleRef?.bundlePath || null, sourcePack: entry?.selected?.sourcePack || null, sourceRawPaths: entry?.diagnostics?.sourceRawPaths || [], reason: 'actor-bundle-load-failed', error }));
     throw error;
   }
 }
@@ -189,22 +239,16 @@ export class BcuAssetLoader {
       if (provider && role) {
         try {
           const entry = provider.getActorEntry(def.semanticKey);
-          if (!entry?.bundleRef) throw new Error(`Missing actor bundle for semantic key ${def.semanticKey}`);
+          if (!entry?.bundleRef || entry.status !== 'full' || !provider.hasBundleForKey(def.semanticKey)) throw new Error(`Missing full actor bundle for semantic key ${def.semanticKey}`);
           const anim = parseAnim(await provider.readTextByBundleRef(entry.bundleRef, `${role}.maanim`));
+          let model = null;
+          try { model = parseModel(await provider.readTextByBundleRef(entry.bundleRef, 'model.mamodel')); } catch {}
+          if (model) validateActorAnimation({ semanticKey: def.semanticKey, bundlePath: entry.bundleRef.bundlePath, sourcePack: entry.selected?.sourcePack || null, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], role, internalPath: `${role}.maanim`, anim, model });
           return { loaded: [`${role}.maanim`], missing: [], errors: [], file: `${role}.maanim`, anim, status: 'loaded', semantic: { key: def.semanticKey } };
         } catch (error) {
           if (!provider.allowRawFallback) {
-            provider.diagnostics.bundleErrors.push({
-              kind: 'actor-animation',
-              semanticKey: def.semanticKey,
-              role,
-              bundlePath: provider.getActorEntry(def.semanticKey)?.bundleRef?.bundlePath || null,
-              internalPath: `${role}.maanim`,
-              missingEntries: [`${role}.maanim`],
-              originalErrorName: error?.name,
-              originalErrorMessage: error?.message,
-              message: error?.message || String(error)
-            });
+            const entry = provider.getActorEntry(def.semanticKey);
+            provider.diagnostics.bundleErrors.push(error?.detail || makeActorDiagnostic({ kind: 'actor-animation', semanticKey: def.semanticKey, role, bundlePath: entry?.bundleRef?.bundlePath || null, internalPath: `${role}.maanim`, sourcePack: entry?.selected?.sourcePack || null, sourceRawPaths: entry?.diagnostics?.sourceRawPaths || [], reason: 'actor-animation-load-failed', error }));
             return { loaded: [], missing: [`${role}.maanim`], errors: [error.message], file: `${role}.maanim`, anim: null, status: 'error' };
           }
           provider.recordRawFallback('actor-animation-bundle-load-failed', { actorKey: def.semanticKey, role, message: error?.message || String(error) });

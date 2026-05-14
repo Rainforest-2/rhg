@@ -17,8 +17,10 @@ export class FormationEditor {
     this.iconActive = 0;
     this.iconConcurrency = 6;
     this.iconObserver = null;
+    this.iconObserverRoot = null;
+    this.iconDebug = { resolvedIconCount: 0, failedIconCount: 0, observedIconCount: 0, eagerIconCount: 0, queuedIconCount: 0 };
     this.catalogItems = [];
-    this.catalogVirtual = { rowHeight: 176, columns: 4, overscanRows: 3, start: 0, end: 0 };
+    this.catalogVirtual = { rowHeight: 176, columns: 4, overscanRows: 8, start: 0, end: 0, firstVisibleRow: 0, lastVisibleRow: 0 };
     this.renderFrame = null;
     this.root = document.createElement('div');
     this.root.className = 'formation-ui';
@@ -124,20 +126,61 @@ export class FormationEditor {
     return `<img class='${extraClass} image-missing' data-semantic-icon='${semanticKey}' alt=''>`;
   }
 
+  getFormationIconDebug() {
+    if (!globalThis.__FORMATION_ICON_DEBUG__) {
+      globalThis.__FORMATION_ICON_DEBUG__ = { lastRender: {}, recentIconFailures: [] };
+    }
+    return globalThis.__FORMATION_ICON_DEBUG__;
+  }
+
+  recordIconFailure(semanticKey, err, detail = {}) {
+    const debug = this.getFormationIconDebug();
+    const failure = {
+      semanticKey,
+      bundlePath: detail.bundlePath || err?.detail?.bundlePath || null,
+      internalPath: detail.internalPath || err?.detail?.internalPath || null,
+      errorName: err?.name || 'Error',
+      errorMessage: err?.message || String(err)
+    };
+    debug.recentIconFailures.unshift(failure);
+    debug.recentIconFailures.splice(20);
+    this.iconDebug.failedIconCount += 1;
+  }
+
+  async waitForImageReady(img) {
+    if (!img?.isConnected) return false;
+    if (img.complete && img.naturalWidth > 0) {
+      try { await img.decode?.(); } catch {}
+      return img.isConnected && img.naturalWidth > 0;
+    }
+    await new Promise((resolve, reject) => {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', () => reject(new Error('icon image element failed to load')), { once: true });
+    });
+    try { await img.decode?.(); } catch {}
+    return img.isConnected && img.naturalWidth > 0;
+  }
+
   scheduleIconLoad(img, provider) {
     const key = img.dataset.semanticIcon;
     if (!key || img.dataset.iconPending === '1' || img.dataset.iconResolved === '1') return Promise.resolve();
     img.dataset.iconPending = '1';
     const existing = this.iconWork.get(key) || provider.getActorUiIconUrl(key);
     this.iconWork.set(key, existing);
-    return existing.then((url) => {
+    return existing.then(async (url) => {
+      if (!img.isConnected) return;
       img.src = url;
+      const ready = await this.waitForImageReady(img);
+      if (!ready) return;
       img.classList.remove('image-missing');
       img.dataset.iconResolved = '1';
       delete img.dataset.iconPending;
+      this.iconDebug.resolvedIconCount += 1;
     }).catch((err) => {
       console.error('[FormationEditor] icon load failed detail', {
         key,
+        bundlePath: err?.detail?.bundlePath || null,
+        internalPath: err?.detail?.internalPath || null,
         name: err?.name,
         message: err?.message,
         stack: err?.stack,
@@ -148,7 +191,18 @@ export class FormationEditor {
       delete img.dataset.iconPending;
       delete img.dataset.iconResolved;
       this.iconWork.delete(key);
+      this.recordIconFailure(key, err);
     });
+  }
+
+  enqueueIcon(img, provider, eager = false) {
+    if (!img?.isConnected || !img.dataset.semanticIcon || img.dataset.iconResolved === '1' || img.dataset.iconPending === '1') return false;
+    if (this.iconQueue.includes(img)) return false;
+    this.iconQueue.push(img);
+    this.iconDebug.queuedIconCount += 1;
+    if (eager) this.iconDebug.eagerIconCount += 1;
+    if (provider) this.pumpIconQueue(provider);
+    return true;
   }
 
   pumpIconQueue(provider) {
@@ -168,28 +222,55 @@ export class FormationEditor {
     try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
     if (!provider) return;
     this.resolveSelectedSlotIconsImmediately(provider);
+    this.resolveVisibleCatalogIconsImmediately(provider);
+    const root = this.root.querySelector('.formation-catalog-scroll') || null;
+    if (this.iconObserver && this.iconObserverRoot !== root) {
+      this.iconObserver.disconnect();
+      this.iconObserver = null;
+    }
     if (!this.iconObserver && typeof IntersectionObserver !== 'undefined') {
+      this.iconObserverRoot = root;
       this.iconObserver = new IntersectionObserver((items) => {
         for (const item of items) {
           if (!item.isIntersecting) continue;
           this.iconObserver.unobserve(item.target);
-          this.iconQueue.push(item.target);
+          this.enqueueIcon(item.target, provider, false);
         }
         this.pumpIconQueue(provider);
-      }, { root: this.root.querySelector('.formation-catalog-scroll') || null, rootMargin: '160px' });
+      }, { root, rootMargin: '600px 0px 900px 0px' });
     }
     for (const img of this.root.querySelectorAll('.formation-catalog-grid img[data-semantic-icon]')) {
       if (!img.dataset.semanticIcon || img.dataset.iconResolved === '1') continue;
-      if (this.iconObserver) this.iconObserver.observe(img);
-      else this.iconQueue.push(img);
+      if (this.iconObserver) { this.iconObserver.observe(img); this.iconDebug.observedIconCount += 1; }
+      else this.enqueueIcon(img, provider, false);
     }
     this.pumpIconQueue(provider);
+    this.updateFormationIconDebug();
   }
 
   resolveSelectedSlotIconsImmediately(provider) {
     for (const img of this.root.querySelectorAll('.formation-slots img[data-semantic-icon]')) {
       if (!img.dataset.semanticIcon || img.dataset.iconResolved === '1') continue;
-      this.iconQueue.push(img);
+      this.enqueueIcon(img, provider, true);
+    }
+    this.pumpIconQueue(provider);
+  }
+
+  resolveVisibleCatalogIconsImmediately(provider) {
+    const scroller = this.root.querySelector('.formation-catalog-scroll');
+    const rowHeight = this.catalogVirtual.rowHeight || 176;
+    const columns = this.catalogVirtual.columns || 1;
+    const viewportRows = Math.max(1, Math.ceil((scroller?.clientHeight || 480) / rowHeight));
+    const firstVisibleRow = Math.max(0, Math.floor((scroller?.scrollTop || 0) / rowHeight));
+    const lastVisibleRow = firstVisibleRow + viewportRows - 1;
+    const eagerRows = Math.max(this.catalogVirtual.overscanRows || 8, viewportRows * 2);
+    const eagerStart = Math.max(0, (firstVisibleRow - eagerRows) * columns);
+    const eagerEnd = Math.min(this.catalogItems.length, (lastVisibleRow + eagerRows + 1) * columns);
+    for (const img of this.root.querySelectorAll('.formation-catalog-grid img[data-semantic-icon]')) {
+      const card = img.closest('[data-catalog-index]');
+      const index = Number(card?.dataset.catalogIndex);
+      if (!Number.isFinite(index) || index < eagerStart || index >= eagerEnd) continue;
+      this.enqueueIcon(img, provider, true);
     }
     this.pumpIconQueue(provider);
   }
@@ -208,18 +289,48 @@ export class FormationEditor {
     const rowHeight = this.catalogVirtual.rowHeight;
     const totalRows = Math.ceil(chars.length / columns);
     const visibleRows = Math.ceil((scroller.clientHeight || 480) / rowHeight);
-    const firstRow = Math.max(0, Math.floor((scroller.scrollTop || 0) / rowHeight) - this.catalogVirtual.overscanRows);
-    const lastRow = Math.min(totalRows, firstRow + visibleRows + this.catalogVirtual.overscanRows * 2);
+    const dynamicOverscanRows = Math.max(8, Math.ceil(((scroller.clientHeight || 480) * 2) / rowHeight));
+    const firstVisibleRow = Math.max(0, Math.floor((scroller.scrollTop || 0) / rowHeight));
+    const lastVisibleRow = Math.min(totalRows, firstVisibleRow + visibleRows);
+    const firstRow = Math.max(0, firstVisibleRow - dynamicOverscanRows);
+    const lastRow = Math.min(totalRows, lastVisibleRow + dynamicOverscanRows);
     const start = firstRow * columns;
     const end = Math.min(chars.length, lastRow * columns);
-    this.catalogVirtual = { ...this.catalogVirtual, columns, start, end };
+    this.catalogVirtual = { ...this.catalogVirtual, columns, overscanRows: dynamicOverscanRows, start, end, firstVisibleRow, lastVisibleRow };
     const top = firstRow * rowHeight;
     const bottom = Math.max(0, (totalRows - lastRow) * rowHeight);
     const usedBaseIds = this.currentUsedBaseIds || new Set();
-    grid.innerHTML = `<div class='formation-catalog-spacer' style='height:${top}px'></div>${chars.slice(start, end).map((c) => {
+    grid.innerHTML = `<div class='formation-catalog-spacer' style='height:${top}px'></div>${chars.slice(start, end).map((c, offset) => {
       const baseId = c.baseCharacterId || c.characterId;
-      return `<button type='button' class='formation-character-card ${usedBaseIds.has(baseId) ? 'is-used' : ''}' data-character='${c.characterId}' data-faction='${c.faction}' data-base-character-id='${baseId || ''}'>${this.renderIconMarkup(c)}<span>${c.factionLabel || c.faction}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small><small class='base-id'>base:${baseId || '-'}</small><small>${c.sourceSlotId || '-'}</small><small>${c.statsSummary || ''}</small></button>`;
+      const catalogIndex = start + offset;
+      return `<button type='button' class='formation-character-card ${usedBaseIds.has(baseId) ? 'is-used' : ''}' data-character='${c.characterId}' data-catalog-index='${catalogIndex}' data-faction='${c.faction}' data-base-character-id='${baseId || ''}'>${this.renderIconMarkup(c)}<span>${c.factionLabel || c.faction}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small><small class='base-id'>base:${baseId || '-'}</small><small>${c.sourceSlotId || '-'}</small><small>${c.statsSummary || ''}</small></button>`;
     }).join('')}<div class='formation-catalog-spacer' style='height:${bottom}px'></div>`;
+  }
+
+  updateFormationIconDebug() {
+    const scroller = this.root.querySelector('.formation-catalog-scroll');
+    const catalogImgs = this.root.querySelectorAll('.formation-catalog-grid img[data-semantic-icon]');
+    const debug = this.getFormationIconDebug();
+    debug.lastRender = {
+      catalogItemCount: this.catalogItems.length,
+      renderedDomCardCount: Math.max(0, (this.catalogVirtual.end || 0) - (this.catalogVirtual.start || 0)),
+      columns: this.catalogVirtual.columns,
+      rowHeight: this.catalogVirtual.rowHeight,
+      overscanRows: this.catalogVirtual.overscanRows,
+      start: this.catalogVirtual.start,
+      end: this.catalogVirtual.end,
+      scrollerClientHeight: scroller?.clientHeight || 0,
+      scrollTop: scroller?.scrollTop || 0,
+      firstVisibleRow: this.catalogVirtual.firstVisibleRow,
+      lastVisibleRow: this.catalogVirtual.lastVisibleRow,
+      eagerIconCount: this.iconDebug.eagerIconCount,
+      observedIconCount: this.iconDebug.observedIconCount,
+      queuedIconCount: this.iconDebug.queuedIconCount,
+      activeIconCount: this.iconActive,
+      resolvedIconCount: this.iconDebug.resolvedIconCount,
+      failedIconCount: this.iconDebug.failedIconCount
+    };
+    debug.lastRender.renderedIconCount = catalogImgs.length;
   }
 
   renderDynamic() {
@@ -245,6 +356,7 @@ export class FormationEditor {
     if (scroller) scroller.scrollTop = 0;
     this.renderCatalogWindow();
     this.resolveSemanticIcons();
+    this.updateFormationIconDebug();
     performance.mark?.('formation-render-end');
     performance.measure?.('formation-render', 'formation-render-start', 'formation-render-end');
     console.debug?.('[FormationEditor] render diagnostics', {

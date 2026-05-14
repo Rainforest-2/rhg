@@ -26,7 +26,7 @@ for (const entry of actor.entries || []) {
   const missingEntries = required.filter((name) => !files.has(name));
   const invalidPngEntries = [];
   if (files.has('image.png')) {
-    const png = validatePngBuffer(files.get('image.png'), { allowTrailingBytes: true });
+    const png = validatePngBuffer(files.get('image.png'));
     if (!png.valid) invalidPngEntries.push({ internalPath: 'image.png', reason: png.reason });
   }
   if (missingEntries.length || invalidPngEntries.length) {

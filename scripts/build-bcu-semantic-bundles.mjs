@@ -13,16 +13,23 @@ const diagnostics = { schemaVersion: 1, generatedAt: FIXED_DATE, summary: { gene
 const limit = 50 * 1024 * 1024;
 
 async function addBundle(bundleKey, kind, key, bundlePath, status, entries) {
+  const requiredMissing = entries.filter((e) => e?.required && e.data == null).map((e) => e.name);
+  if (requiredMissing.length) {
+    diagnostics.skipped.push({ bundleKey, kind, key, bundlePath, reason: 'required-entry-missing', missingEntries: requiredMissing });
+    diagnostics.summary.skipped += 1;
+    return false;
+  }
   const filtered = entries.filter((e) => e && e.data != null);
   const size = filtered.reduce((n, e) => n + e.data.length, 0);
   if (size > limit) {
     diagnostics.oversized.push({ bundleKey, bundlePath, sizeBytes: size });
     diagnostics.summary.skipped += 1;
-    return;
+    return false;
   }
   await writeStoreZip(bundlePath, filtered);
   manifest.bundles[bundleKey] = { kind, key, bundlePath, status, sizeBytes: (await fs.stat(bundlePath)).size, hash: await hashFile(bundlePath) };
   diagnostics.summary.generated += 1;
+  return true;
 }
 
 function sampleActors(entries) {
@@ -34,12 +41,19 @@ function sampleActors(entries) {
 for (const entry of sampleActors(actor.entries || [])) {
   if (!entry.selected) continue;
   const files = entry.selected.files;
+  const runtimeMissing = ['image','imgcut','model'].filter((name)=>!files?.[name]);
+  for (const role of ['move','idle','attack','kb']) if (!files?.animations?.[role]) runtimeMissing.push(role);
+  if (entry.status !== 'full' || runtimeMissing.length) {
+    diagnostics.skipped.push({ bundleKey: entry.bundleRef?.bundleKey, kind: 'actor', key: entry.key, bundlePath: entry.bundleRef?.bundlePath || null, reason: 'actor-runtime-incomplete', missingEntries: runtimeMissing, sourcePack: entry.selected?.sourcePack || null, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [] });
+    diagnostics.summary.skipped += 1;
+    continue;
+  }
   const items = [
-    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, missing: entry.missing, fallbackPolicy: 'raw-fallback-or-runtime-policy', sourcePack: entry.selected.sourcePack }, null, 2)) },
-    { name: 'image.png', data: await fileBufferOrNull(files.image) },
-    { name: 'imgcut.imgcut', data: await fileBufferOrNull(files.imgcut) },
-    { name: 'model.mamodel', data: await fileBufferOrNull(files.model) },
-    ...Object.entries(files.animations || {}).map(async ([role, file]) => ({ name: `${role}.maanim`, data: await fileBufferOrNull(file) })),
+    { name: 'bundle.json', required: true, data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, missing: entry.missing, fallbackPolicy: 'no-raw-runtime-fallback', sourcePack: entry.selected.sourcePack, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], entries: { image: files.image, imgcut: files.imgcut, model: files.model, animations: files.animations || {}, icon: files.icon || null } }, null, 2)) },
+    { name: 'image.png', required: true, data: await fileBufferOrNull(files.image) },
+    { name: 'imgcut.imgcut', required: true, data: await fileBufferOrNull(files.imgcut) },
+    { name: 'model.mamodel', required: true, data: await fileBufferOrNull(files.model) },
+    ...Object.entries(files.animations || {}).map(async ([role, file]) => ({ name: `${role}.maanim`, required: true, data: await fileBufferOrNull(file) })),
     { name: 'icon.png', data: await fileBufferOrNull(files.icon) }
   ];
   await addBundle(entry.bundleRef.bundleKey, 'actor', entry.key, entry.bundleRef.bundlePath, entry.status, await Promise.all(items));

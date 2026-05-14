@@ -308,6 +308,42 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
     return { left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };
   }
+  buildActorRenderDebug(actor, drawList, bounds, skippedReason = null) {
+    const invalidRectCount = (actor?.sprite?.imgcut?.parts || []).filter((p) => p.x < 0 || p.y < 0 || p.w <= 0 || p.h <= 0 || p.x + p.w > actor.sprite.image.width || p.y + p.h > actor.sprite.image.height).length;
+    const invalidPartRefs = (actor?.model?.model?.parts || []).filter((p) => Number.isInteger(p.partIndex) && p.partIndex >= 0 && p.partIndex >= (actor?.sprite?.imgcut?.parts?.length || 0)).length;
+    const invalidTrackRefs = {};
+    for (const [role, animId] of [['move',actor?.moveAnimId],['idle',actor?.idleAnimId],['attack',actor?.attackAnimId],['kb',actor?.knockbackAnimId]]) {
+      const anim = actor?.animations?.get?.(animId);
+      invalidTrackRefs[role] = (anim?.tracks || []).filter((t) => !Number.isInteger(t.partId) || t.partId < 0 || t.partId >= (actor?.model?.parts?.length || 0)).length;
+    }
+    return {
+      semanticKey: actor?.semanticKey || actor?.assetDef?.semanticKey || null,
+      characterId: actor?.characterId || actor?.slotId || actor?.unitId || null,
+      side: actor?.side || null,
+      sourcePack: actor?.sourcePack || null,
+      bundlePath: actor?.bundlePath || null,
+      image: { width: actor?.sprite?.image?.width || 0, height: actor?.sprite?.image?.height || 0 },
+      imgcut: { partCount: actor?.sprite?.imgcut?.parts?.length || 0, invalidRectCount },
+      model: { partCount: actor?.model?.parts?.length || 0, invalidPartRefs },
+      animations: {
+        loadedRoles: [['move',actor?.moveAnimId],['idle',actor?.idleAnimId],['attack',actor?.attackAnimId],['kb',actor?.knockbackAnimId]].filter(([,id])=>actor?.animations?.has?.(id)).map(([role])=>role),
+        missingRoles: [['move',actor?.moveAnimId],['idle',actor?.idleAnimId],['attack',actor?.attackAnimId],['kb',actor?.knockbackAnimId]].filter(([,id])=>!actor?.animations?.has?.(id)).map(([role])=>role),
+        invalidTrackRefs
+      },
+      firstFrameBounds: actor?.firstFrameBounds || bounds || null,
+      lastFrameBounds: bounds || null,
+      transformExamples: (drawList || []).slice(0, 4).map((p) => ({ index: p.index, partIndex: p.partIndex, imgcutIndex: p.imgcutIndex, matrix: Array.isArray(p.matrix) ? p.matrix.slice(0, 6) : null, opacity: p.opacity })),
+      skippedReason
+    };
+  }
+  isAbsurdActorBounds(actor, bounds) {
+    if (!bounds) return false;
+    const imageW = actor?.sprite?.image?.width || 0;
+    const imageH = actor?.sprite?.image?.height || 0;
+    const maxImageDim = Math.max(imageW, imageH, 1);
+    const maxAllowed = Math.max(maxImageDim * 4, 4096);
+    return !Number.isFinite(bounds.width) || !Number.isFinite(bounds.height) || bounds.width > maxAllowed || bounds.height > maxAllowed || Math.abs(bounds.left) > maxAllowed * 2 || Math.abs(bounds.right) > maxAllowed * 2 || Math.abs(bounds.top) > maxAllowed * 2 || Math.abs(bounds.bottom) > maxAllowed * 2;
+  }
   initializeActorGroundContact(actor, drawList) {
     if (actor.visualGroundContactInitialized) return;
     const partBounds = [];
@@ -376,6 +412,16 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     const hasBattleDrawList = typeof actor.model.getBattleDrawList === 'function';
     const drawList = hasBattleDrawList ? actor.model.getBattleDrawList({ parentMatrix: actor.kbeffEnabled ? actor.kbeffParentMatrix : null }) : actor.model.getDrawList();
     if (!hasBattleDrawList) { this.drawActorLegacy(c, actor, drawList); return; }
+    const bounds = this.getBattleDrawListLocalBounds(actor, drawList);
+    if (!actor.firstFrameBounds && bounds) actor.firstFrameBounds = bounds;
+    if (this.isAbsurdActorBounds(actor, bounds)) {
+      const skippedReason = 'initial-draw-bounds-outlier';
+      globalThis.__LAST_ACTOR_RENDER_DEBUG__ = this.buildActorRenderDebug(actor, drawList, bounds, skippedReason);
+      actor.lastRenderSkippedReason = skippedReason;
+      this._scene?.pushEvent?.({ type: 'actorRenderSkipped', actor: actor.instanceId || actor.label, semanticKey: actor.semanticKey || actor.assetDef?.semanticKey || null, reason: skippedReason, bounds });
+      return;
+    }
+    globalThis.__LAST_ACTOR_RENDER_DEBUG__ = this.buildActorRenderDebug(actor, drawList, bounds, null);
     const anchorY = this.getActorGroundAnchorLocalY(actor, drawList);
     c.save();
     const alignCfg = BATTLE_CONFIG.tuning?.visualOriginAlignment || {};

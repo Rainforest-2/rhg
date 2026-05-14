@@ -2,7 +2,7 @@ import { normalizeBcuText } from './BcuText.js';
 
 export function parseAnim(text) {
   const lines = normalizeBcuText(text).split('\n');
-  if (lines[0]?.trim() !== '[modelanim:animation]') throw new Error('Invalid animation header');
+  if (!['[modelanim:animation]', '[modelanim:animation2]', '[maanim]'].includes(lines[0]?.trim())) throw new Error('Invalid animation header');
 
   const version = parseInt(lines[1] || '0', 10) || 0;
   const declaredTrackCount = Math.max(0, parseInt(lines[2] || '0', 10) || 0);

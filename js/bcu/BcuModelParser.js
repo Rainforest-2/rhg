@@ -4,7 +4,7 @@ const num = (arr, i, d = 0) => (Number.isFinite(+arr[i]) ? +arr[i] : d);
 
 export function parseModel(text) {
   const lines = normalizeBcuText(text).split('\n');
-  if (lines[0]?.trim() !== '[modelanim:model]') throw new Error('Invalid model header');
+  if (!['[modelanim:model]', '[modelanim:model2]', '[mamodel]'].includes(lines[0]?.trim())) throw new Error('Invalid model header');
 
   const version = parseInt(lines[1] || '0', 10) || 0;
   const declaredPartCount = Math.max(0, parseInt(lines[2] || '0', 10) || 0);

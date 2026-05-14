@@ -1,5 +1,7 @@
 import { BattleEffect } from './BattleEffect.js';
 
+const SUPPRESS_NON_BCU_EFFECTS = true;
+
 export class EffectRuntime {
   static createHitEffect({ id, x, y, asset = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null } = {}) {
     return this.createEffect({ id, type: 'hit', x, y, frameParts: asset?.parts || [], image: asset?.image || null, scale, source, createdAtMs, layer, debug, bcuSmokeYOffset });
@@ -18,10 +20,24 @@ export class EffectRuntime {
 
   static tickEffects(effects = [], dtMs = 0) { for (const e of (effects || [])) e?.tick?.(dtMs); return effects; }
 
+  static isBcuEffect(effect) {
+    const source = String(effect?.source || effect?.effectRuntimeDebug?.source || '');
+    return source.includes('bcu-effanim') || source.includes('BCU EffAnim') || source.includes('BackgroundEffect');
+  }
+
   static cleanupEffects(effects = []) {
     const list = Array.isArray(effects) ? effects : [];
-    const active = list.filter((e) => !e?.finished);
-    return { effects: active, removed: Math.max(0, list.length - active.length), active: active.length };
+    const active = list.filter((e) => !e?.finished && (!SUPPRESS_NON_BCU_EFFECTS || this.isBcuEffect(e)));
+    const suppressed = SUPPRESS_NON_BCU_EFFECTS ? list.filter((e) => !this.isBcuEffect(e)).length : 0;
+    globalThis.__BATTLE_EFFECT_DEBUG__ = {
+      source: 'EffectRuntime.cleanupEffects',
+      policy: SUPPRESS_NON_BCU_EFFECTS ? 'suppress-non-bcu-placeholder-effects' : 'render-all-effects',
+      input: list.length,
+      active: active.length,
+      suppressed,
+      examples: list.slice(0, 6).map((e) => ({ id: e?.id || null, type: e?.type || null, source: e?.source || e?.effectRuntimeDebug?.source || null, hasImage: !!e?.image, frameCount: e?.frameParts?.length || 0 }))
+    };
+    return { effects: active, removed: Math.max(0, list.length - active.length), active: active.length, suppressed };
   }
 
   static tickAndCleanup(effects = [], dtMs = 0) {

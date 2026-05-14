@@ -1,15 +1,26 @@
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
+const ZERO_RENDER_ALIGNMENT = Object.freeze({
+  offsetWorldPx: 0,
+  offsetLocalX: 0,
+  overall: null,
+  bounds: null,
+  frontScreenOffset: 0,
+  candidateCount: 0,
+  rejectedCount: 0,
+  direction: 1,
+  flip: 1,
+  scale: 1,
+  source: 'disabled-bcu-pos-direct-render'
+});
+
 export class BattleBodyResolver {
   static getActorCombatPositionX(actor) {
     const mode = actor?.combatPositionMode || BATTLE_CONFIG.tuning?.combatPositionMode || 'screen-combat-point';
-    if (mode === 'screen-combat-point') return Number.isFinite(actor?.x) ? actor.x : 0;
+    if (mode === 'screen-combat-point' || mode === 'bcu-pos') return Number.isFinite(actor?.x) ? actor.x : 0;
     const baseX = Number.isFinite(actor?.x) ? actor.x : 0;
     const manual = Number.isFinite(actor?.combatPositionOffsetPx) ? actor.combatPositionOffsetPx : 0;
-    const scale = Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1;
-    const flip = actor?.renderFlipX ? -1 : 1;
-    const edgeLocal = Number.isFinite(actor?.resolvedCombatEdgeLocalX) ? actor.resolvedCombatEdgeLocalX : 0;
-    return baseX + edgeLocal * scale * flip + manual;
+    return baseX + manual;
   }
 
   static setCombatEdgeFallback(actor, source) {
@@ -18,161 +29,64 @@ export class BattleBodyResolver {
     actor.resolvedCombatEdgeSource = source;
     actor.resolvedCombatEdgeCandidateCount = 0;
     actor.resolvedCombatEdgeRejectedCount = 0;
-    actor.resolvedCombatEdgeDebug = { mode: 'visual-leading-edge', source };
+    actor.resolvedCombatEdgeDebug = { mode: 'bcu-pos-direct', source };
   }
 
   static initializeActorCombatPositionFromModel(actor) {
     if (!actor || actor.resolvedCombatEdgeInitialized) return;
     actor.resolvedCombatEdgeInitialized = true;
-    const cfg = BATTLE_CONFIG.tuning?.combatEdgeResolver || {};
-    if (cfg.enabled === false) return BattleBodyResolver.setCombatEdgeFallback(actor, 'disabled');
-    if (!actor.model || !actor.sprite || typeof actor.model.getBattleDrawList !== 'function') return BattleBodyResolver.setCombatEdgeFallback(actor, 'fallback-no-model');
-
-    const drawList = actor.model.getBattleDrawList();
-    const parts = [];
-    for (const p of drawList || []) {
-      const b = BattleBodyResolver.getPartLocalBounds(actor, p);
-      if (!b) continue;
-      const area = Math.max(0, b.width * b.height);
-      parts.push({ ...b, area, centerX: (b.left + b.right) * 0.5, centerY: (b.top + b.bottom) * 0.5 });
-    }
-    if (!parts.length) return BattleBodyResolver.setCombatEdgeFallback(actor, 'fallback-no-parts');
-
-    const overall = { left: Math.min(...parts.map((b) => b.left)), right: Math.max(...parts.map((b) => b.right)), top: Math.min(...parts.map((b) => b.top)), bottom: Math.max(...parts.map((b) => b.bottom)) };
-    overall.width = overall.right - overall.left;
-    overall.height = overall.bottom - overall.top;
-    overall.area = Math.max(0, overall.width * overall.height);
-
-    const minW = Number.isFinite(cfg.minPartWidthPx) ? cfg.minPartWidthPx : 3;
-    const minH = Number.isFinite(cfg.minPartHeightPx) ? cfg.minPartHeightPx : 3;
-    const minA = Number.isFinite(cfg.minPartAreaPx) ? cfg.minPartAreaPx : 12;
-    const tinyRatio = Number.isFinite(cfg.ignoreTinyAreaRatio) ? cfg.ignoreTinyAreaRatio : 0.01;
-    const shadowRatio = Number.isFinite(cfg.ignoreFlatShadowHeightRatio) ? cfg.ignoreFlatShadowHeightRatio : 0.18;
-    const shadowBandRatio = Number.isFinite(cfg.shadowBottomBandRatio) ? cfg.shadowBottomBandRatio : 0.08;
-
-    const validParts = parts.filter((b) => {
-      if (b.width < minW || b.height < minH || b.area < minA) return false;
-      if (overall.area > 0 && b.area < overall.area * tinyRatio) return false;
-      const isFlatShadow = (b.height / Math.max(1, b.width)) < shadowRatio && b.bottom >= overall.bottom - overall.height * shadowBandRatio;
-      return !isFlatShadow;
-    });
-    const candidates = validParts.length ? validParts : parts;
-
-    const minLocalX = Math.min(...candidates.map((b) => b.left));
-    const maxLocalX = Math.max(...candidates.map((b) => b.right));
-    const flip = actor?.renderFlipX ? -1 : 1;
-    const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
-    const localMinWorldOffset = minLocalX * flip;
-    const localMaxWorldOffset = maxLocalX * flip;
-    const useRight = dir > 0;
-    const edgeLocalX = useRight
-      ? (localMinWorldOffset >= localMaxWorldOffset ? minLocalX : maxLocalX)
-      : (localMinWorldOffset <= localMaxWorldOffset ? minLocalX : maxLocalX);
-    const edgeName = useRight ? 'visual-right-edge' : 'visual-left-edge';
-
-    const insetPx = Number.isFinite(actor?.combatEdgeInsetPx) ? actor.combatEdgeInsetPx : 0;
-    const worldInsetPx = -dir * insetPx;
-    const scale = Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1;
-    let adjustedLocalX = edgeLocalX + worldInsetPx / (scale * flip);
-    const maxResolved = Number.isFinite(cfg.maxResolvedWorldOffsetPx) ? cfg.maxResolvedWorldOffsetPx : 160;
-    let worldOffset = adjustedLocalX * scale * flip;
-    if (Number.isFinite(worldOffset) && Math.abs(worldOffset) > maxResolved && maxResolved > 0) {
-      worldOffset = Math.sign(worldOffset) * maxResolved;
-      adjustedLocalX = worldOffset / (scale * flip);
-    }
-
-    actor.resolvedCombatEdgeLocalX = Number.isFinite(adjustedLocalX) ? adjustedLocalX : 0;
-    actor.resolvedCombatEdgeWorldOffsetPx = actor.resolvedCombatEdgeLocalX * scale * flip;
-    actor.resolvedCombatEdgeSource = insetPx > 0 ? `${edgeName}+inset-${insetPx}` : edgeName;
-    actor.resolvedCombatEdgeCandidateCount = candidates.length;
-    actor.resolvedCombatEdgeRejectedCount = Math.max(0, parts.length - candidates.length);
-    actor.resolvedCombatEdgeDebug = { mode: 'visual-leading-edge', edgeName, insetPx, rawEdgeLocalX: edgeLocalX, adjustedLocalX: actor.resolvedCombatEdgeLocalX, worldOffsetPx: actor.resolvedCombatEdgeWorldOffsetPx, candidateCount: actor.resolvedCombatEdgeCandidateCount, rejectedCount: actor.resolvedCombatEdgeRejectedCount, overall };
-
+    BattleBodyResolver.setCombatEdgeFallback(actor, 'disabled-bcu-pos-direct-render');
     actor.autoCombatPositionOffsetLocalX = 0;
     actor.autoCombatPositionOffsetWorldPx = 0;
     actor.autoCombatPositionSource = 'disabled';
-    actor.combatPositionDebug = { mode: actor.combatPositionMode, edgeSource: actor.resolvedCombatEdgeSource, edgeInsetPx: actor.combatEdgeInsetPx, resolvedLocalX: actor.resolvedCombatEdgeLocalX, resolvedWorldOffsetPx: actor.resolvedCombatEdgeWorldOffsetPx, source: actor.combatPositionSource };
+    actor.combatPositionDebug = {
+      mode: actor.combatPositionMode,
+      source: 'BattleBodyResolver.initializeActorCombatPositionFromModel',
+      bcuParity: 'BCU BattleBox draws at entity.pos without visual-bounds render offset',
+      resolvedLocalX: 0,
+      resolvedWorldOffsetPx: 0
+    };
+  }
+
+  static zeroRenderAlignment(actor, source = 'disabled-bcu-pos-direct-render') {
+    if (!actor) return 0;
+    actor.visualRenderOffsetWorldPx = 0;
+    actor.visualRenderOffsetLocalX = 0;
+    actor.visualRenderOffsetInitialized = true;
+    actor.visualRenderOffsetSource = source;
+    actor.visualRenderOffsetDebug = { ...ZERO_RENDER_ALIGNMENT, source };
+    actor.stableRenderOffsetWorldPx = 0;
+    actor.stableRenderOffsetLocalX = 0;
+    actor.stableRenderOffsetInitialized = true;
+    actor.stableRenderOffsetSource = source;
+    actor.stableRenderOffsetDebug = { ...ZERO_RENDER_ALIGNMENT, source };
+    return 0;
   }
 
   static computeRenderOffsetFromDrawList(actor, drawList, cfg = {}) {
-    if (!cfg?.enabled || !actor || !Array.isArray(drawList) || !actor.sprite) return { offsetWorldPx: 0, offsetLocalX: 0, overall: null, bounds: null, frontScreenOffset: 0, candidateCount: 0, rejectedCount: 0, direction: Number.isFinite(actor?.direction) ? actor.direction : 1, flip: actor?.renderFlipX ? -1 : 1, scale: Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1, source: 'front-edge-derived-render-only' };
-    const parts = [];
-    for (const p of drawList) {
-      const b = BattleBodyResolver.getPartLocalBounds(actor, p);
-      if (!b) continue;
-      const area = Math.max(0, b.width * b.height);
-      parts.push({ ...b, area });
-    }
-    if (!parts.length) return { offsetWorldPx: 0, offsetLocalX: 0, overall: null, bounds: null, frontScreenOffset: 0, candidateCount: 0, rejectedCount: 0, direction: Number.isFinite(actor?.direction) ? actor.direction : 1, flip: actor?.renderFlipX ? -1 : 1, scale: Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1, source: 'front-edge-derived-render-only' };
-    const overall = { left: Math.min(...parts.map((b) => b.left)), right: Math.max(...parts.map((b) => b.right)), top: Math.min(...parts.map((b) => b.top)), bottom: Math.max(...parts.map((b) => b.bottom)) };
-    overall.width = overall.right - overall.left;
-    overall.height = overall.bottom - overall.top;
-    overall.area = Math.max(0, overall.width * overall.height);
-    const minW = Number.isFinite(cfg.minPartWidthPx) ? cfg.minPartWidthPx : 3;
-    const minH = Number.isFinite(cfg.minPartHeightPx) ? cfg.minPartHeightPx : 3;
-    const minA = Number.isFinite(cfg.minPartAreaPx) ? cfg.minPartAreaPx : 12;
-    const tinyRatio = Number.isFinite(cfg.ignoreTinyAreaRatio) ? cfg.ignoreTinyAreaRatio : 0.01;
-    const shadowRatio = Number.isFinite(cfg.ignoreFlatShadowHeightRatio) ? cfg.ignoreFlatShadowHeightRatio : 0.18;
-    const shadowBandRatio = Number.isFinite(cfg.shadowBottomBandRatio) ? cfg.shadowBottomBandRatio : 0.08;
-    const filtered = parts.filter((b) => {
-      if (b.width < minW || b.height < minH || b.area < minA) return false;
-      if (overall.area > 0 && b.area < overall.area * tinyRatio) return false;
-      const flat = (b.height / Math.max(1, b.width)) < shadowRatio && b.bottom >= overall.bottom - overall.height * shadowBandRatio;
-      return !flat;
-    });
-    const candidates = filtered.length ? filtered : parts;
-    const bounds = { left: Math.min(...candidates.map((b) => b.left)), right: Math.max(...candidates.map((b) => b.right)), top: Math.min(...candidates.map((b) => b.top)), bottom: Math.max(...candidates.map((b) => b.bottom)) };
-    const flip = actor?.renderFlipX ? -1 : 1;
-    const scale = Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1;
-    const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
-    const leftOff = bounds.left * scale * flip;
-    const rightOff = bounds.right * scale * flip;
-    const frontScreenOffset = dir > 0 ? Math.max(leftOff, rightOff) : Math.min(leftOff, rightOff);
-    const maxOffset = Number.isFinite(cfg.maxRenderOffsetPx) ? cfg.maxRenderOffsetPx : 180;
-    const clamped = Math.max(-maxOffset, Math.min(maxOffset, -frontScreenOffset));
-    const offsetWorldPx = Number.isFinite(clamped) ? clamped : 0;
-    const offsetLocalX = scale !== 0 ? offsetWorldPx / scale : 0;
-    return { offsetWorldPx, offsetLocalX, overall, bounds, frontScreenOffset, candidateCount: candidates.length, rejectedCount: Math.max(0, parts.length - candidates.length), direction: dir, flip, scale, source: 'front-edge-derived-render-only' };
+    return {
+      ...ZERO_RENDER_ALIGNMENT,
+      direction: Number.isFinite(actor?.direction) ? actor.direction : 1,
+      flip: actor?.renderFlipX ? -1 : 1,
+      scale: Number.isFinite(actor?.scale) && actor.scale !== 0 ? actor.scale : 1,
+      drawListCount: Array.isArray(drawList) ? drawList.length : 0,
+      disabledConfigWasEnabled: cfg?.enabled === true
+    };
   }
 
   static computeActorRenderAlignmentFromDrawList(actor, drawList, cfg = {}) {
-    const result = BattleBodyResolver.computeRenderOffsetFromDrawList(actor, drawList, cfg);
-    actor.visualRenderOffsetWorldPx = Number.isFinite(result?.offsetWorldPx) ? result.offsetWorldPx : 0;
-    actor.visualRenderOffsetLocalX = Number.isFinite(result?.offsetLocalX) ? result.offsetLocalX : 0;
-    actor.visualRenderOffsetInitialized = true;
-    actor.visualRenderOffsetSource = result?.source || 'front-edge-derived-render-only';
-    actor.visualRenderOffsetDebug = result || null;
-    return actor.visualRenderOffsetWorldPx;
+    return BattleBodyResolver.zeroRenderAlignment(actor, 'disabled-bcu-pos-direct-render');
   }
 
   static initializeStableRenderAlignment(actor, drawList, cfg = {}) {
-    if (!actor || actor.stableRenderOffsetInitialized) return actor?.stableRenderOffsetWorldPx || 0;
-    const result = BattleBodyResolver.computeRenderOffsetFromDrawList(actor, drawList, cfg);
-    const offset = Number.isFinite(result?.offsetWorldPx) ? result.offsetWorldPx : 0;
-    actor.stableRenderOffsetWorldPx = offset;
-    actor.stableRenderOffsetLocalX = actor.scale ? offset / actor.scale : 0;
-    actor.stableRenderOffsetInitialized = true;
-    actor.stableRenderOffsetSource = result?.source || 'stable-render-anchor-v0113';
-    actor.stableRenderOffsetDebug = result || null;
-    actor.visualRenderOffsetWorldPx = actor.stableRenderOffsetWorldPx;
-    actor.visualRenderOffsetLocalX = actor.stableRenderOffsetLocalX;
-    actor.visualRenderOffsetInitialized = true;
-    actor.visualRenderOffsetSource = 'stable-render-anchor-v0113';
-    actor.visualRenderOffsetDebug = result || null;
-    return actor.stableRenderOffsetWorldPx;
+    return BattleBodyResolver.zeroRenderAlignment(actor, 'disabled-bcu-pos-direct-render');
   }
 
   static applyStableRenderAlignment(actor) {
-    if (!actor) return 0;
-    const offset = Number.isFinite(actor.stableRenderOffsetWorldPx) ? actor.stableRenderOffsetWorldPx : 0;
-    actor.visualRenderOffsetWorldPx = offset;
-    actor.visualRenderOffsetLocalX = actor.scale ? offset / actor.scale : 0;
-    actor.visualRenderOffsetInitialized = true;
-    actor.visualRenderOffsetSource = actor.stableRenderOffsetSource || 'stable-render-anchor-v0113';
-    return offset;
+    return BattleBodyResolver.zeroRenderAlignment(actor, 'disabled-bcu-pos-direct-render');
   }
 
-  static getPartLocalBounds(actor, p) { /* unchanged */
+  static getPartLocalBounds(actor, p) {
     const partIndex = p?.partIndex ?? p?.current?.partIndex ?? p?.rawPart?.partIndex;
     const imgcutIndex = p?.imgcutIndex ?? p?.current?.imgcutIndex ?? p?.rawPart?.imgcutIndex;
     if (!Number.isInteger(partIndex) || partIndex < 0) return null;
@@ -186,11 +100,17 @@ export class BattleBodyResolver {
     const pivotX = Number.isFinite(p?.pivotX) ? p.pivotX : part.w * 0.5;
     const pivotY = Number.isFinite(p?.pivotY) ? p.pivotY : part.h * 0.5;
     const corners = [[-pivotX, -pivotY], [part.w - pivotX, -pivotY], [-pivotX, part.h - pivotY], [part.w - pivotX, part.h - pivotY]];
-    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
     for (const [x, y] of corners) {
       const rx = m[0] * x + m[2] * y + m[4];
       const ry = m[1] * x + m[3] * y + m[5];
-      minX = Math.min(minX, rx); minY = Math.min(minY, ry); maxX = Math.max(maxX, rx); maxY = Math.max(maxY, ry);
+      minX = Math.min(minX, rx);
+      minY = Math.min(minY, ry);
+      maxX = Math.max(maxX, rx);
+      maxY = Math.max(maxY, ry);
     }
     if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
     return { left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };
@@ -198,43 +118,95 @@ export class BattleBodyResolver {
 
   static initializeActorCombatFront(actor) {
     if (!actor || actor.combatBodyFrontInitialized) return;
-    const cfg = BATTLE_CONFIG.tuning || {};
-    const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'visual-leading-edge';
-    if (mode === 'screen-combat-point' || mode === 'visual-leading-edge' || mode === 'logical' || mode === 'bcu-pos') {
-      BattleBodyResolver.initializeActorCombatPositionFromModel(actor);
-      actor.combatBodyFrontInitialized = true;
-      actor.combatBodyFrontOffsetLocalX = 0;
-      actor.combatBodyFrontSource = actor.resolvedCombatEdgeSource || actor.combatPositionSource || 'visual-leading-edge';
-      actor.combatBodyFrontDebug = { mode, combatPositionX: BattleBodyResolver.getActorCombatPositionX(actor), resolvedLocalX: actor.resolvedCombatEdgeLocalX, resolvedWorldOffsetPx: actor.resolvedCombatEdgeWorldOffsetPx, source: actor.combatBodyFrontSource };
-      return;
-    }
+    BattleBodyResolver.initializeActorCombatPositionFromModel(actor);
     actor.combatBodyFrontInitialized = true;
     actor.combatBodyFrontOffsetLocalX = 0;
-    actor.combatBodyFrontSource = 'unsupported-mode-fallback';
+    actor.combatBodyFrontSource = 'bcu-pos-direct';
+    actor.combatBodyFrontDebug = {
+      mode: actor?.combatPositionMode || BATTLE_CONFIG.tuning?.combatPositionMode || 'screen-combat-point',
+      combatPositionX: BattleBodyResolver.getActorCombatPositionX(actor),
+      resolvedLocalX: 0,
+      resolvedWorldOffsetPx: 0,
+      source: 'bcu-pos-direct'
+    };
   }
 
-  static getActorFrontX(actor) { return BattleBodyResolver.getActorCombatPositionX(actor); }
-  static getActorCombatWidth(actor) { const cfg=BATTLE_CONFIG.tuning||{}; return Number.isFinite(cfg.combatBodyWidthPx)?cfg.combatBodyWidthPx:(Number.isFinite(actor?.combatBodyWidthPx)?actor.combatBodyWidthPx:44); }
-  static getActorCombatHeight(actor) { const cfg=BATTLE_CONFIG.tuning||{}; return Number.isFinite(cfg.combatBodyHeightPx)?cfg.combatBodyHeightPx:(Number.isFinite(actor?.combatBodyHeightPx)?actor.combatBodyHeightPx:72); }
+  static getActorFrontX(actor) {
+    return BattleBodyResolver.getActorCombatPositionX(actor);
+  }
+
+  static getActorCombatWidth(actor) {
+    const cfg = BATTLE_CONFIG.tuning || {};
+    return Number.isFinite(cfg.combatBodyWidthPx) ? cfg.combatBodyWidthPx : (Number.isFinite(actor?.combatBodyWidthPx) ? actor.combatBodyWidthPx : 44);
+  }
+
+  static getActorCombatHeight(actor) {
+    const cfg = BATTLE_CONFIG.tuning || {};
+    return Number.isFinite(cfg.combatBodyHeightPx) ? cfg.combatBodyHeightPx : (Number.isFinite(actor?.combatBodyHeightPx) ? actor.combatBodyHeightPx : 72);
+  }
 
   static getActorCombatBodyBox(actor) {
+    const centerX = BattleBodyResolver.getActorCombatPositionX(actor);
     const cfg = BATTLE_CONFIG.tuning || {};
-    const mode = actor?.combatPositionMode || cfg.combatPositionMode || 'visual-leading-edge';
-    if (mode === 'screen-combat-point' || mode === 'logical' || mode === 'visual-leading-edge' || mode === 'bcu-pos') {
-      const centerX = BattleBodyResolver.getActorCombatPositionX(actor);
-      const halfW = Number.isFinite(cfg.combatPointHalfWidthPx) ? cfg.combatPointHalfWidthPx : 6;
-      const height = Number.isFinite(cfg.combatPointHeightPx) ? cfg.combatPointHeightPx : BattleBodyResolver.getActorCombatHeight(actor);
-      const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx) ? actor.combatBodyYOffsetPx : 0;
-      const bottom = (actor?.y ?? 0) + yOffset;
-      return { left: centerX - halfW, right: centerX + halfW, top: bottom - height, bottom, centerX, centerY: bottom - height * 0.5, width: halfW * 2, height, frontX: centerX, backX: centerX, combatPositionX: centerX, source: mode === 'screen-combat-point' ? 'screen-combat-point' : (actor?.combatPositionSource || actor?.combatBodyFrontSource || 'visual-leading-edge'), isCombatPoint: true };
-    }
-    const width = BattleBodyResolver.getActorCombatWidth(actor); const height = BattleBodyResolver.getActorCombatHeight(actor); const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx)?actor.combatBodyYOffsetPx:0; const bottom=(actor?.y??0)+yOffset; const frontX=BattleBodyResolver.getActorFrontX(actor); const dir=Number.isFinite(actor?.direction)?actor.direction:1; const left=dir<0?frontX:frontX-width; const right=dir<0?frontX+width:frontX;
-    return { left, right, top: bottom - height, bottom, centerX: (left + right) * 0.5, centerY: bottom - height * 0.5, width, height, frontX, backX: dir < 0 ? right : left, combatPositionX: frontX, source: actor?.combatPositionSource || actor?.combatBodyFrontSource || '-', isCombatPoint: false };
+    const halfW = Number.isFinite(cfg.combatPointHalfWidthPx) ? cfg.combatPointHalfWidthPx : 6;
+    const height = Number.isFinite(cfg.combatPointHeightPx) ? cfg.combatPointHeightPx : BattleBodyResolver.getActorCombatHeight(actor);
+    const yOffset = Number.isFinite(actor?.combatBodyYOffsetPx) ? actor.combatBodyYOffsetPx : 0;
+    const bottom = (actor?.y ?? 0) + yOffset;
+    return {
+      left: centerX - halfW,
+      right: centerX + halfW,
+      top: bottom - height,
+      bottom,
+      centerX,
+      centerY: bottom - height * 0.5,
+      width: halfW * 2,
+      height,
+      frontX: centerX,
+      backX: centerX,
+      combatPositionX: centerX,
+      source: 'bcu-pos-direct',
+      isCombatPoint: true
+    };
   }
 
-  static getBaseCombatBodyBox(base){if(typeof base?.getCombatBodyBox==='function')return base.getCombatBodyBox(); const r=base?.collisionRadius||0,b=Number.isFinite(base?.y)?base.y:0,h=r*2; return {left:(base?.x??0)-r,right:(base?.x??0)+r,top:b-h,bottom:b,centerX:base?.x??0,centerY:b-h*0.5,width:r*2,height:h};}
-  static getCombatBodyBox(entity){const isActorLike=typeof entity?.initializeCombatBodyFrontFromModel==='function'||!!entity?.animator; if(isActorLike)return BattleBodyResolver.getActorCombatBodyBox(entity); if(typeof entity?.getCombatBodyBox==='function')return BattleBodyResolver.getBaseCombatBodyBox(entity); const r=entity?.collisionRadius||0,b=Number.isFinite(entity?.y)?entity.y:0,h=r*2; return {left:(entity?.x??0)-r,right:(entity?.x??0)+r,top:b-h,bottom:b,centerX:entity?.x??0,centerY:b-h*0.5,width:r*2,height:h};}
-  static getCombatBodyDistance(a,b){const A=BattleBodyResolver.getCombatBodyBox(a),B=BattleBodyResolver.getCombatBodyBox(b); if(A?.isCombatPoint&&B?.isCombatPoint)return Math.abs((A.combatPositionX??A.centerX??0)-(B.combatPositionX??B.centerX??0)); if(A.right<B.left)return B.left-A.right; if(B.right<A.left)return A.left-B.right; return 0;}
-  static getAttackRangeDebug(actor){const box=BattleBodyResolver.getActorCombatBodyBox(actor); const dir=Number.isFinite(actor?.direction)?actor.direction:1; const range=Number.isFinite(actor?.detectionRangePx)?actor.detectionRangePx:0; const posX=BattleBodyResolver.getActorCombatPositionX(actor); return {frontX:posX,attackLineX:posX+dir*range,centerY:box.centerY,top:box.top,bottom:box.bottom,combatPositionX:posX,rangePx:range,mode:actor?.combatPositionMode||BATTLE_CONFIG.tuning?.combatPositionMode||'screen-combat-point'};}
-  static getHitEffectPosition(attacker,target){const box=BattleBodyResolver.getCombatBodyBox(target); let x; if(target?.side==='dog-player')x=box.left; else if(target?.side==='cat-enemy')x=box.right; else if(Number.isFinite(attacker?.x)&&Number.isFinite(target?.x))x=attacker.x<=target.x?box.left:box.right; else x=box.centerX; const y=box.centerY+(BATTLE_CONFIG.tuning?.hitEffectYOffsetPx??0); return {x,y};}
+  static getBaseCombatBodyBox(base) {
+    if (typeof base?.getCombatBodyBox === 'function') return base.getCombatBodyBox();
+    const r = base?.collisionRadius || 0;
+    const b = Number.isFinite(base?.y) ? base.y : 0;
+    const h = r * 2;
+    return { left: (base?.x ?? 0) - r, right: (base?.x ?? 0) + r, top: b - h, bottom: b, centerX: base?.x ?? 0, centerY: b - h * 0.5, width: r * 2, height: h };
+  }
+
+  static getCombatBodyBox(entity) {
+    const isActorLike = typeof entity?.initializeCombatBodyFrontFromModel === 'function' || !!entity?.animator;
+    if (isActorLike) return BattleBodyResolver.getActorCombatBodyBox(entity);
+    return BattleBodyResolver.getBaseCombatBodyBox(entity);
+  }
+
+  static getCombatBodyDistance(a, b) {
+    const A = BattleBodyResolver.getCombatBodyBox(a);
+    const B = BattleBodyResolver.getCombatBodyBox(b);
+    if (A.right < B.left) return B.left - A.right;
+    if (B.right < A.left) return A.left - B.right;
+    return 0;
+  }
+
+  static getAttackRangeDebug(actor) {
+    const box = BattleBodyResolver.getActorCombatBodyBox(actor);
+    const dir = Number.isFinite(actor?.direction) ? actor.direction : 1;
+    const range = Number.isFinite(actor?.detectionRangePx) ? actor.detectionRangePx : 0;
+    const posX = BattleBodyResolver.getActorCombatPositionX(actor);
+    return { frontX: posX, attackLineX: posX + dir * range, centerY: box.centerY, top: box.top, bottom: box.bottom, combatPositionX: posX, rangePx: range, mode: 'bcu-pos-direct' };
+  }
+
+  static getHitEffectPosition(attacker, target) {
+    const box = BattleBodyResolver.getCombatBodyBox(target);
+    let x;
+    if (target?.side === 'dog-player') x = box.left;
+    else if (target?.side === 'cat-enemy') x = box.right;
+    else if (Number.isFinite(attacker?.x) && Number.isFinite(target?.x)) x = attacker.x <= target.x ? box.left : box.right;
+    else x = box.centerX;
+    const y = box.centerY + (BATTLE_CONFIG.tuning?.hitEffectYOffsetPx ?? 0);
+    return { x, y };
+  }
 }

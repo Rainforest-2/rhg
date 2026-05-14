@@ -45,6 +45,18 @@ function parseBgCsv(text, bgId) {
   return defaultBgRow(bgId);
 }
 
+function stagePackId(stage = {}, runtime = null) {
+  const direct = stage?.packId || stage?.sourcePack || stage?.semanticEntry?.packId || runtime?.packId;
+  if (direct) return String(direct);
+  const source = stage?.semanticEntry?.diagnostics?.sourceRawPath || stage?.stageCsvPath || stage?.legacyStageCsvPath || runtime?.sourcePath || '';
+  const marker = '/bcu/';
+  const i = String(source).indexOf(marker);
+  if (i < 0) return null;
+  const rest = String(source).slice(i + marker.length);
+  const j = rest.indexOf('/');
+  return j > 0 ? rest.slice(0, j) : null;
+}
+
 export class StageBackgroundLoader {
   constructor(log, options = {}) {
     this.log = log || (() => {});
@@ -59,12 +71,13 @@ export class StageBackgroundLoader {
   async load(stage) {
     const fallbackStage = stage || {};
     const runtime = fallbackStage.runtime || fallbackStage.stageRuntime || null;
+    const packId = stagePackId(fallbackStage, runtime);
     const bgResolved = StageBackgroundResolver.fromStage(fallbackStage, runtime);
     const bg = this.db?.backgrounds?.get(bgResolved.resolvedBgId || 0);
     const provider = this.db?.semanticProvider || null;
     if (provider) {
       try {
-        const semantic = provider.getBackgroundEntry(bgResolved.resolvedBgId || 0);
+        const semantic = provider.getBackgroundEntry(bgResolved.resolvedBgId || 0, packId);
         if (semantic?.bundleRef) {
           const bgRow = semantic.csv || {};
           const image = await this.loadImage(await provider.createObjectUrl(semantic.bundleRef, 'image.png', 'image/png'));
@@ -77,12 +90,12 @@ export class StageBackgroundLoader {
             crop: { x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || fallbackStage?.cropName, cropRole: 'BCU Background.BG part' },
             upperCrop: upperPart ? { x: upperPart.x, y: upperPart.y, w: upperPart.w, h: upperPart.h, name: upperPart.name, upperCropRole: 'BCU Background.TOP part if present' } : null,
             colors: { skyTop: bgRow.skyTop, skyBottom: bgRow.skyBottom, groundTop: bgRow.groundTop, groundBottom: bgRow.groundBottom },
-            source: StageBackgroundResolver.buildSource(bgResolved, { imagePath: semantic.bundleRef.bundlePath, imgcutPath: 'imgcut.imgcut', csvPath: bgRow.sourceFile, stageId: fallbackStage?.id || 0, bgId: semantic.bgId, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, imageReferenceId: bgRow.imageReferenceId, csvRowFound: true, bgCsvSource: 'semantic-background-bundle' })
+            source: StageBackgroundResolver.buildSource(bgResolved, { imagePath: semantic.bundleRef.bundlePath, imgcutPath: 'imgcut.imgcut', csvPath: bgRow.sourceFile, stageId: fallbackStage?.id || 0, bgId: semantic.bgId, packId, backgroundKey: semantic.key, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, imageReferenceId: bgRow.imageReferenceId, csvRowFound: true, bgCsvSource: 'semantic-background-bundle' })
           };
         }
       } catch (error) {
-        const semanticKey = `background:${bgResolved.resolvedBgId || 0}`;
-        const semantic = provider.getBackgroundEntry(bgResolved.resolvedBgId || 0);
+        const semanticKey = packId ? `background:${packId}:${bgResolved.resolvedBgId || 0}` : `background:${bgResolved.resolvedBgId || 0}`;
+        const semantic = provider.getBackgroundEntry(bgResolved.resolvedBgId || 0, packId);
         const detail = {
           kind: 'background',
           semanticKey,
@@ -102,7 +115,7 @@ export class StageBackgroundLoader {
     if (!bgRow && !this.db) bgRow = parseBgCsv(await this.fetchTextSafe(stage?.csvPath || bgResolved.csvPath), bgResolved.resolvedBgId || 0);
     bgRow = bgRow || { skyTop: { r: 0, g: 0, b: 0 }, skyBottom: { r: 0, g: 0, b: 0 }, groundTop: { r: 0, g: 0, b: 0 }, groundBottom: { r: 0, g: 0, b: 0 }, imgcutId: 1, showUpper: true, imageReferenceId: null, sourceFile: null, csvRowFound: false };
     const imageCandidates = bg?.assets?.imageCandidates || bgResolved.imageCandidates;
-    const imgcutCandidates = bg?.assets?.imgcutCandidates || (!this.db ? [`./public/assets/bcu/000001/org/battle/bg/bg${pad2(bgRow.imgcutId)}.imgcut`, ...bgResolved.imgcutCandidates] : bgResolved.imgcutCandidates); // raw-only-diagnostics when no BCU DB is installed
+    const imgcutCandidates = bg?.assets?.imgcutCandidates || (!this.db ? [`./public/assets/bcu/000001/org/battle/bg/bg${pad2(bgRow.imgcutId)}.imgcut`, ...bgResolved.imgcutCandidates] : bgResolved.imgcutCandidates);
     let image = null;
     let imagePath = null;
     for (const candidate of imageCandidates) {
@@ -134,7 +147,7 @@ export class StageBackgroundLoader {
       crop: { x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || stage?.cropName, cropRole: 'BCU Background.BG part' },
       upperCrop: upperPart ? { x: upperPart.x, y: upperPart.y, w: upperPart.w, h: upperPart.h, name: upperPart.name, upperCropRole: 'BCU Background.TOP part if present' } : null,
       colors: { skyTop: bgRow.skyTop, skyBottom: bgRow.skyBottom, groundTop: bgRow.groundTop, groundBottom: bgRow.groundBottom },
-      source: StageBackgroundResolver.buildSource(bgResolved, { imagePath, imgcutPath, csvPath: bgRow.sourceFile, stageId: stage?.id || 0, bgId: bg?.id ?? bgResolved.resolvedBgId, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, imageReferenceId: bgRow.imageReferenceId, csvRowFound: !!bg || !!bgRow.csvRowFound, bgCsvSource: bgRow.sourceFile ? 'bcu-db-bg.csv-row' : (bgRow.csvRowFound ? 'legacy-test-bg.csv-row' : 'bcu-db-missing-row') })
+      source: StageBackgroundResolver.buildSource(bgResolved, { imagePath, imgcutPath, csvPath: bgRow.sourceFile, stageId: stage?.id || 0, bgId: bg?.id ?? bgResolved.resolvedBgId, packId, imgcutId: bgRow.imgcutId, showUpper: bgRow.showUpper, imageReferenceId: bgRow.imageReferenceId, csvRowFound: !!bg || !!bgRow.csvRowFound, bgCsvSource: bgRow.sourceFile ? 'bcu-db-bg.csv-row' : (bgRow.csvRowFound ? 'legacy-test-bg.csv-row' : 'bcu-db-missing-row') })
     };
   }
 }

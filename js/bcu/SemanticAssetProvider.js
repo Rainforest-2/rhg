@@ -19,31 +19,14 @@ function inferAggregateIconEntry(actorKey) {
   if (m) {
     const id3 = pad3(Number(m[1]));
     if (!id3) return null;
-    return {
-      key,
-      kind: 'enemy',
-      id: Number(m[1]),
-      id3,
-      bundleRef: { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' },
-      internalPath: `enemy/${id3}.png`,
-      sourceStatus: 'inferred-aggregate-icon-entry'
-    };
+    return { key, kind: 'enemy', id: Number(m[1]), id3, bundleRef: { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' }, internalPath: `enemy/${id3}.png`, sourceStatus: 'inferred-aggregate-icon-entry' };
   }
   m = key.match(/^unit:(\d+):(f|c|s|u)$/);
   if (m) {
     const id3 = pad3(Number(m[1]));
     const form = m[2];
     if (!id3) return null;
-    return {
-      key,
-      kind: 'unit',
-      id: Number(m[1]),
-      id3,
-      form,
-      bundleRef: { bundleKey: `icon:unit:${form}`, bundlePath: `public/assets/bundles/icon/unit-${form}.zip` },
-      internalPath: `unit/${id3}-${form}.png`,
-      sourceStatus: 'inferred-aggregate-icon-entry'
-    };
+    return { key, kind: 'unit', id: Number(m[1]), id3, form, bundleRef: { bundleKey: `icon:unit:${form}`, bundlePath: `public/assets/bundles/icon/unit-${form}.zip` }, internalPath: `unit/${id3}-${form}.png`, sourceStatus: 'inferred-aggregate-icon-entry' };
   }
   return null;
 }
@@ -84,6 +67,16 @@ function parseStoreZip(buffer) {
   return files;
 }
 
+function normalizeBackgroundArgs(key, packId = null) {
+  if (String(key || '').startsWith('background:')) {
+    const parts = String(key).split(':');
+    if (parts.length >= 3) return { lookupKey: String(key), bgId: Number(parts.at(-1)), packId: parts[1] || packId };
+    return { lookupKey: String(key), bgId: Number(parts[1]), packId };
+  }
+  const bgId = Number(key);
+  return { lookupKey: Number.isFinite(bgId) && packId ? `background:${packId}:${bgId}` : `background:${key}`, bgId, packId };
+}
+
 export class SemanticAssetProvider {
   constructor(options = {}) {
     this.indexRoot = options.indexRoot || DEFAULT_INDEX_ROOT;
@@ -101,24 +94,12 @@ export class SemanticAssetProvider {
     this.actorUiIconUrlCache = new Map();
     this.actorImageUrlCache = new Map();
     this.objectUrls = new Set();
-    this.diagnostics = {
-      mode: this.mode,
-      bundleReads: [],
-      rawOnlyReads: [],
-      blockedRawReads: [],
-      bundleErrors: [],
-      missingBundles: [],
-      rawFallbacks: [],
-      failures: [],
-      inferredIconEntries: []
-    };
+    this.diagnostics = { mode: this.mode, bundleReads: [], rawOnlyReads: [], blockedRawReads: [], bundleErrors: [], missingBundles: [], rawFallbacks: [], failures: [], inferredIconEntries: [], backgroundLookups: [] };
   }
 
   async load() {
     const root = this.indexRoot.replace(/\/$/, '');
-    const readOptional = async (name, fallback) => {
-      try { return await this.fetchJson(`${root}/${name}`); } catch { return fallback; }
-    };
+    const readOptional = async (name, fallback) => { try { return await this.fetchJson(`${root}/${name}`); } catch { return fallback; } };
     this.indexes.bundleManifest = await readOptional('bcu-bundle-manifest.json', { bundles: {} });
     this.indexes.actors = await readOptional('bcu-actor-index.json', { entries: [], byKey: {} });
     this.indexes.stages = await readOptional('bcu-stage-index.json', { entries: [], byKey: {} });
@@ -138,7 +119,24 @@ export class SemanticAssetProvider {
     const matches = (this.indexes.stages?.entries || []).filter((e) => e.stageId === stageKey || e.aliases?.includes(stageKey) || e.legacyStageKey === stageKey);
     return matches.length === 1 ? matches[0] : null;
   }
-  getBackgroundEntry(key) { const k = String(key).startsWith('background:') ? key : `background:${key}`; return this.indexes.backgrounds?.byKey?.[k] || null; }
+  getBackgroundEntry(key, packId = null) {
+    const { lookupKey, bgId } = normalizeBackgroundArgs(key, packId);
+    const byKey = this.indexes.backgrounds?.byKey || {};
+    const exact = byKey[lookupKey] || null;
+    if (exact) {
+      this.diagnostics.backgroundLookups.push({ key, packId, resolvedKey: exact.key, source: 'pack-scoped-or-exact' });
+      this.diagnostics.backgroundLookups.splice(60);
+      return exact;
+    }
+    const legacyKey = String(key || '').startsWith('background:') && String(key).split(':').length === 2 ? String(key) : `background:${bgId}`;
+    const legacy = byKey[legacyKey] || null;
+    if (legacy) {
+      this.diagnostics.backgroundLookups.push({ key, packId, resolvedKey: legacy.key, requestedLegacyKey: legacyKey, source: 'legacy-bgId-fallback' });
+      this.diagnostics.backgroundLookups.splice(60);
+      return legacy;
+    }
+    return null;
+  }
   getCastleEntry(key) { return this.indexes.castles?.byKey?.[key] || this.indexes.castles?.byKey?.[`enemyCastle:${key}`] || null; }
   getCoreEntry(key) { return this.indexes.core?.byKey?.[key] || this.indexes.core?.entries?.find((e) => e.key === key) || null; }
   getIconEntry(actorKey) { return this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || inferAggregateIconEntry(actorKey); }
@@ -147,19 +145,14 @@ export class SemanticAssetProvider {
 
   hasBundleForKey(key) {
     if (!key) return false;
-    const bundleKey = String(key).startsWith('actor:') || String(key).startsWith('stage-map:') ? String(key) : null;
+    const bundleKey = String(key).startsWith('actor:') || String(key).startsWith('stage-map:') || String(key).startsWith('background:') ? String(key) : null;
     const direct = this.indexes.bundleManifest?.bundles?.[key] || (bundleKey ? this.indexes.bundleManifest?.bundles?.[bundleKey] : null);
     if (direct) return true;
     const entry = this.getActorEntry(key) || this.getStageEntry(key) || this.getBackgroundEntry(key) || this.getCastleEntry(key) || this.getCoreEntry(key) || this.getLanguageEntry(key);
     return !!entry?.bundleRef?.bundleKey && !!this.indexes.bundleManifest?.bundles?.[entry.bundleRef.bundleKey];
   }
 
-  assertNoRawForBundledKey(key, rawPath) {
-    if (!this.hasBundleForKey(key)) return;
-    const detail = { type: 'blockedRawReadForBundledKey', semanticKey: key, rawPath };
-    this.diagnostics.blockedRawReads.push(detail);
-    throw new Error(`Raw BCU access blocked for bundled semantic key ${key}: ${rawPath}`);
-  }
+  assertNoRawForBundledKey(key, rawPath) { if (!this.hasBundleForKey(key)) return; const detail = { type: 'blockedRawReadForBundledKey', semanticKey: key, rawPath }; this.diagnostics.blockedRawReads.push(detail); throw new Error(`Raw BCU access blocked for bundled semantic key ${key}: ${rawPath}`); }
 
   async fetchBundle(bundleRef) {
     if (!bundleRef?.bundlePath) throw new Error('Missing bundleRef.bundlePath');
@@ -184,14 +177,7 @@ export class SemanticAssetProvider {
     const url = normalizeFetchPath(bundleRef.bundlePath);
     if (this.bundleArchives.has(url)) return this.bundleArchives.get(url);
     if (!this.bundleArchivePromises.has(url)) {
-      this.bundleArchivePromises.set(url, (async () => {
-        const archive = parseStoreZip(await this.fetchBundle(bundleRef));
-        this.bundleArchives.set(url, archive);
-        return archive;
-      })().catch((error) => {
-        this.bundleArchivePromises.delete(url);
-        throw error;
-      }));
+      this.bundleArchivePromises.set(url, (async () => { const archive = parseStoreZip(await this.fetchBundle(bundleRef)); this.bundleArchives.set(url, archive); return archive; })().catch((error) => { this.bundleArchivePromises.delete(url); throw error; }));
     }
     return await this.bundleArchivePromises.get(url);
   }
@@ -204,204 +190,60 @@ export class SemanticAssetProvider {
     this.diagnostics.bundleReads.push({ bundlePath: bundleRef.bundlePath, internalPath: path, type: 'arrayBuffer' });
     return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
   }
-
-  async readTextByBundleRef(bundleRef, internalPath = bundleRef?.internalPath) {
-    return new TextDecoder().decode(await this.readArrayBufferByBundleRef(bundleRef, internalPath));
-  }
-
-  async readBlobByBundleRef(bundleRef, internalPath = bundleRef?.internalPath, type = 'application/octet-stream') {
-    return new Blob([await this.readArrayBufferByBundleRef(bundleRef, internalPath)], { type });
-  }
-
-  async createObjectUrl(bundleRef, internalPath, type) {
-    const url = URL.createObjectURL(await this.readBlobByBundleRef(bundleRef, internalPath, type));
-    this.objectUrls.add(url);
-    return url;
-  }
-
-  clearObjectUrls() {
-    for (const url of this.objectUrls) URL.revokeObjectURL(url);
-    this.objectUrls.clear();
-    this.actorIconUrlCache.clear();
-    this.actorUiIconUrlCache.clear();
-    this.actorImageUrlCache.clear();
-  }
+  async readTextByBundleRef(bundleRef, internalPath = bundleRef?.internalPath) { return new TextDecoder().decode(await this.readArrayBufferByBundleRef(bundleRef, internalPath)); }
+  async readBlobByBundleRef(bundleRef, internalPath = bundleRef?.internalPath, type = 'application/octet-stream') { return new Blob([await this.readArrayBufferByBundleRef(bundleRef, internalPath)], { type }); }
+  async createObjectUrl(bundleRef, internalPath, type) { const url = URL.createObjectURL(await this.readBlobByBundleRef(bundleRef, internalPath, type)); this.objectUrls.add(url); return url; }
+  clearObjectUrls() { for (const url of this.objectUrls) URL.revokeObjectURL(url); this.objectUrls.clear(); this.actorIconUrlCache.clear(); this.actorUiIconUrlCache.clear(); this.actorImageUrlCache.clear(); }
 
   async readCoreJson(internalPath) {
     const entry = this.getCoreEntry('core:db') || this.getCoreEntry('core:stats');
     if (!entry?.bundleRef) throw new Error('Missing core-db bundle');
     const key = `${entry.bundleRef.bundlePath}:${internalPath}`;
-    if (!this.coreJsonCache.has(key)) {
-      this.coreJsonCache.set(key, JSON.parse(await this.readTextByBundleRef(entry.bundleRef, internalPath)));
-    }
+    if (!this.coreJsonCache.has(key)) this.coreJsonCache.set(key, JSON.parse(await this.readTextByBundleRef(entry.bundleRef, internalPath)));
     return this.coreJsonCache.get(key);
   }
-
   async readCoreDb() {
     if (!this.coreDbPromise) {
       this.coreDbPromise = (async () => {
         const [manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary] = await Promise.all([
-          this.readCoreJson('manifest-lite.json'),
-          this.readCoreJson('units.json'),
-          this.readCoreJson('enemies.json'),
-          this.readCoreJson('names-jp.json'),
-          this.readCoreJson('backgrounds.json'),
-          this.readCoreJson('castles.json'),
-          this.readCoreJson('stages.json'),
-          this.readCoreJson('stage-aliases.json'),
-          this.readCoreJson('asset-keys.json'),
-          this.readCoreJson('diagnostics-summary.json')
+          this.readCoreJson('manifest-lite.json'), this.readCoreJson('units.json'), this.readCoreJson('enemies.json'), this.readCoreJson('names-jp.json'), this.readCoreJson('backgrounds.json'), this.readCoreJson('castles.json'), this.readCoreJson('stages.json'), this.readCoreJson('stage-aliases.json'), this.readCoreJson('asset-keys.json'), this.readCoreJson('diagnostics-summary.json')
         ]);
         return { manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary };
-      })().catch((error) => {
-        this.coreDbPromise = null;
-        throw error;
-      });
+      })().catch((error) => { this.coreDbPromise = null; throw error; });
     }
     return await this.coreDbPromise;
   }
 
-  async readActorBundle(actorKey) {
-    const entry = this.getActorEntry(actorKey);
-    if (!entry?.bundleRef) {
-      this.diagnostics.missingBundles.push({ semanticKey: actorKey, kind: 'actor' });
-      throw new Error(`Unknown actor semantic key: ${actorKey}`);
-    }
-    return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
-  }
-
+  async readActorBundle(actorKey) { const entry = this.getActorEntry(actorKey); if (!entry?.bundleRef) { this.diagnostics.missingBundles.push({ semanticKey: actorKey, kind: 'actor' }); throw new Error(`Unknown actor semantic key: ${actorKey}`); } return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef }; }
   async getActorBundle(actorKey) { return await this.readActorBundle(actorKey); }
-
-  async getActorIconUrl(actorKey) {
-    if (this.actorIconUrlCache.has(actorKey)) return this.actorIconUrlCache.get(actorKey);
-    const { bundleRef, archive } = await this.readActorBundle(actorKey);
-    const internalPath = archive.has('icon.png') ? 'icon.png' : (archive.has('image.png') ? 'image.png' : null);
-    if (!internalPath) throw new Error(`Actor bundle has no icon or image: ${actorKey}`);
-    const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
-    this.actorIconUrlCache.set(actorKey, url);
-    return url;
-  }
+  async getActorIconUrl(actorKey) { if (this.actorIconUrlCache.has(actorKey)) return this.actorIconUrlCache.get(actorKey); const { bundleRef, archive } = await this.readActorBundle(actorKey); const internalPath = archive.has('icon.png') ? 'icon.png' : (archive.has('image.png') ? 'image.png' : null); if (!internalPath) throw new Error(`Actor bundle has no icon or image: ${actorKey}`); const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png'); this.actorIconUrlCache.set(actorKey, url); return url; }
 
   async readIconBundle(actorKey) {
     const entry = this.getIconEntry(actorKey);
     const inferred = entry?.sourceStatus === 'inferred-aggregate-icon-entry';
     const bundleRef = entry?.bundleRef;
     const internalPath = entry?.internalPath || bundleRef?.internalPath;
-    if (!entry || !bundleRef?.bundlePath || !internalPath) {
-      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, sourcePath: entry?.sourcePath || null, reason: 'missing-index-entry', missingEntries: internalPath ? [internalPath] : [], invalidEntries: [], message: `Unknown icon semantic key: ${actorKey}` };
-      this.diagnostics.missingBundles.push(detail);
-      const error = new Error(detail.message);
-      error.detail = detail;
-      throw error;
-    }
-    if (inferred) {
-      this.diagnostics.inferredIconEntries.push({ semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath });
-      this.diagnostics.inferredIconEntries.splice(80);
-    }
+    if (!entry || !bundleRef?.bundlePath || !internalPath) { const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, sourcePath: entry?.sourcePath || null, reason: 'missing-index-entry', missingEntries: internalPath ? [internalPath] : [], invalidEntries: [], message: `Unknown icon semantic key: ${actorKey}` }; this.diagnostics.missingBundles.push(detail); const error = new Error(detail.message); error.detail = detail; throw error; }
+    if (inferred) { this.diagnostics.inferredIconEntries.push({ semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath }); this.diagnostics.inferredIconEntries.splice(80); }
     try {
       const archive = await this.archive(bundleRef);
-      if (!archive.has(internalPath)) {
-        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: inferred ? 'missing-inferred-zip-entry' : 'missing-zip-entry', missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` };
-        this.diagnostics.bundleErrors.push(detail);
-        const error = new Error(detail.message);
-        error.detail = detail;
-        throw error;
-      }
+      if (!archive.has(internalPath)) { const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: inferred ? 'missing-inferred-zip-entry' : 'missing-zip-entry', missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` }; this.diagnostics.bundleErrors.push(detail); const error = new Error(detail.message); error.detail = detail; throw error; }
       return { entry, archive, bundleRef, internalPath };
     } catch (error) {
-      const detail = {
-        kind: 'icon',
-        semanticKey: actorKey,
-        bundlePath: bundleRef.bundlePath,
-        internalPath,
-        sourcePath: entry.sourcePath || null,
-        reason: error?.detail?.reason || 'zip-read-failed',
-        missingEntries: [internalPath],
-        invalidEntries: [],
-        originalErrorName: error?.name,
-        originalErrorMessage: error?.message,
-        message: error?.message || String(error)
-      };
+      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: error?.detail?.reason || 'zip-read-failed', missingEntries: [internalPath], invalidEntries: [], originalErrorName: error?.name, originalErrorMessage: error?.message, message: error?.message || String(error) };
       this.diagnostics.bundleErrors.push(detail);
       throw error;
     }
   }
 
-  async getActorUiIconUrl(actorKey) {
-    if (this.actorUiIconUrlCache.has(actorKey)) return this.actorUiIconUrlCache.get(actorKey);
-    try {
-      const { bundleRef, internalPath } = await this.readIconBundle(actorKey);
-      const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
-      this.actorUiIconUrlCache.set(actorKey, url);
-      return url;
-    } catch (error) {
-      this.actorUiIconUrlCache.delete(actorKey);
-      throw error;
-    }
-  }
-
-  async getActorImageUrl(actorKey) {
-    if (this.actorImageUrlCache.has(actorKey)) return this.actorImageUrlCache.get(actorKey);
-    const { bundleRef } = await this.readActorBundle(actorKey);
-    const url = await this.createObjectUrl(bundleRef, 'image.png', 'image/png');
-    this.actorImageUrlCache.set(actorKey, url);
-    return url;
-  }
-
-  async readActorText(actorKey, internalPath) {
-    const { bundleRef } = await this.readActorBundle(actorKey);
-    return await this.readTextByBundleRef(bundleRef, internalPath);
-  }
-
-  async readStageCsv(stageKey) {
-    const entry = this.getStageEntry(stageKey);
-    if (!entry?.bundleRef) {
-      this.diagnostics.missingBundles.push({ semanticKey: stageKey, kind: 'stage' });
-      throw new Error(`Unknown stage semantic key: ${stageKey}`);
-    }
-    return { entry, text: await this.readTextByBundleRef(entry.bundleRef, entry.bundleRef.internalPath), logicalPath: entry.key };
-  }
-
-  async readBackgroundBundle(backgroundKey) {
-    const entry = this.getBackgroundEntry(backgroundKey);
-    if (!entry?.bundleRef) {
-      this.diagnostics.missingBundles.push({ semanticKey: backgroundKey, kind: 'background' });
-      throw new Error(`Unknown background semantic key: ${backgroundKey}`);
-    }
-    return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
-  }
-
-  async readCastleBundle(castleKey) {
-    const entry = this.getCastleEntry(castleKey);
-    if (!entry?.bundleRef) {
-      this.diagnostics.missingBundles.push({ semanticKey: castleKey, kind: 'castle' });
-      throw new Error(`Unknown castle semantic key: ${castleKey}`);
-    }
-    return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef };
-  }
-
+  async getActorUiIconUrl(actorKey) { if (this.actorUiIconUrlCache.has(actorKey)) return this.actorUiIconUrlCache.get(actorKey); try { const { bundleRef, internalPath } = await this.readIconBundle(actorKey); const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png'); this.actorUiIconUrlCache.set(actorKey, url); return url; } catch (error) { this.actorUiIconUrlCache.delete(actorKey); throw error; } }
+  async getActorImageUrl(actorKey) { if (this.actorImageUrlCache.has(actorKey)) return this.actorImageUrlCache.get(actorKey); const { bundleRef } = await this.readActorBundle(actorKey); const url = await this.createObjectUrl(bundleRef, 'image.png', 'image/png'); this.actorImageUrlCache.set(actorKey, url); return url; }
+  async readActorText(actorKey, internalPath) { const { bundleRef } = await this.readActorBundle(actorKey); return await this.readTextByBundleRef(bundleRef, internalPath); }
+  async readStageCsv(stageKey) { const entry = this.getStageEntry(stageKey); if (!entry?.bundleRef) { this.diagnostics.missingBundles.push({ semanticKey: stageKey, kind: 'stage' }); throw new Error(`Unknown stage semantic key: ${stageKey}`); } return { entry, text: await this.readTextByBundleRef(entry.bundleRef, entry.bundleRef.internalPath), logicalPath: entry.key }; }
+  async readBackgroundBundle(backgroundKey, packId = null) { const entry = this.getBackgroundEntry(backgroundKey, packId); if (!entry?.bundleRef) { this.diagnostics.missingBundles.push({ semanticKey: backgroundKey, packId, kind: 'background' }); throw new Error(`Unknown background semantic key: ${backgroundKey}`); } return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef }; }
+  async readCastleBundle(castleKey) { const entry = this.getCastleEntry(castleKey); if (!entry?.bundleRef) { this.diagnostics.missingBundles.push({ semanticKey: castleKey, kind: 'castle' }); throw new Error(`Unknown castle semantic key: ${castleKey}`); } return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef }; }
   async readLanguageJson(locale, internalPath) { return JSON.parse(await this.readLanguageFile(locale, internalPath)); }
-
-  async readLanguageFile(locale, internalPath) {
-    if (locale !== 'jp') throw new Error(`Unsupported BCU language locale: ${locale}`);
-    const entry = this.getLanguageEntry('lang:jp');
-    if (!entry?.bundleRef) throw new Error('Missing lang:jp bundle');
-    return await this.readTextByBundleRef(entry.bundleRef, internalPath);
-  }
-
-  assertNoRawBcuUrl(url, context = 'runtime') {
-    const raw = /(?:^|\/|\.)public\/assets\/bcu(?:\/|-manifest\.json)|public\/assets\/bcu-manifest\.json/.test(String(url || '').replace(/\\/g, '/'));
-    if (!raw) return;
-    const detail = { type: 'blockedRawBcuUrl', url: String(url), context };
-    this.diagnostics.blockedRawReads.push(detail);
-    if (!this.allowRawFallback) throw new Error(`Raw BCU URL blocked in ${context}: ${url}`);
-    this.diagnostics.rawOnlyReads.push(detail);
-  }
-
-  recordRawFallback(reason, detail = {}) {
-    if (!this.allowRawFallback) throw new Error(`Raw fallback disabled: ${reason}`);
-    const item = { reason, ...detail };
-    this.diagnostics.rawFallbacks.push(item);
-    this.diagnostics.rawOnlyReads.push(item);
-  }
+  async readLanguageFile(locale, internalPath) { if (locale !== 'jp') throw new Error(`Unsupported BCU language locale: ${locale}`); const entry = this.getLanguageEntry('lang:jp'); if (!entry?.bundleRef) throw new Error('Missing lang:jp bundle'); return await this.readTextByBundleRef(entry.bundleRef, internalPath); }
+  assertNoRawBcuUrl(url, context = 'runtime') { const raw = /(?:^|\/|\.)public\/assets\/bcu(?:\/|-manifest\.json)|public\/assets\/bcu-manifest\.json/.test(String(url || '').replace(/\\/g, '/')); if (!raw) return; const detail = { type: 'blockedRawBcuUrl', url: String(url), context }; this.diagnostics.blockedRawReads.push(detail); if (!this.allowRawFallback) throw new Error(`Raw BCU URL blocked in ${context}: ${url}`); this.diagnostics.rawOnlyReads.push(detail); }
+  recordRawFallback(reason, detail = {}) { if (!this.allowRawFallback) throw new Error(`Raw fallback disabled: ${reason}`); const item = { reason, ...detail }; this.diagnostics.rawFallbacks.push(item); this.diagnostics.rawOnlyReads.push(item); }
 }

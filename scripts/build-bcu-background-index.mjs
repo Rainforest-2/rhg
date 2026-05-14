@@ -69,11 +69,10 @@ for (const file of files) {
   if (m) pushMap(imgcutByPackId, `${packId}:${Number(m[1])}`, file);
 }
 
-const packBgKeys = new Set([
-  ...metadataRowsByPackBg.keys(),
-  ...imageByPackId.keys(),
-  ...imgcutByPackId.keys()
-]);
+// Only bg.csv rows are semantic backgrounds. Image/imgcut files are candidates,
+// not standalone background entries. Including them here creates thousands of
+// phantom background bundles.
+const packBgKeys = new Set(metadataRowsByPackBg.keys());
 
 const entries = [...packBgKeys]
   .map((key) => {
@@ -102,12 +101,12 @@ const entries = [...packBgKeys]
       packId,
       sourcePack: packId,
       metadataSources: rows.map((r) => r.sourceFile),
-      csv: csv || { skyTop: null, skyBottom: null, groundTop: null, groundBottom: null, imgcutId: null, showUpper: null, imageReferenceId: null, raw: null, sourceFile: null },
+      csv,
       selected: { image: images[0] || null, imgcut: imgcuts[0] || null },
       candidates: { images, imgcuts },
       bundleRef: { bundleKey: `background:${packId}:${bgId}`, bundlePath: `public/assets/bundles/background/${packId}/${bgId}.zip`, readMode: 'zip' },
       missing,
-      warnings: rows.length ? [] : ['filename-fallback-no-bg-metadata'],
+      warnings: [],
       diagnostics: { sourceRawPaths: [...rows.map((r) => r.sourceFile), ...images, ...imgcuts].filter(Boolean).sort() }
     };
   })
@@ -115,12 +114,14 @@ const entries = [...packBgKeys]
   .sort((a, b) => comparePackId(a.packId, b.packId) || a.bgId - b.bgId);
 
 const byKey = Object.fromEntries(entries.map((e) => [e.key, e]));
-const newestByBg = new Map();
+const legacyByBg = new Map();
 for (const entry of entries) {
-  const prev = newestByBg.get(entry.bgId);
-  if (!prev || comparePackId(entry.packId, prev.packId) > 0) newestByBg.set(entry.bgId, entry);
+  const prev = legacyByBg.get(entry.bgId);
+  if (!prev || entry.packId === '000001' || (prev.packId !== '000001' && comparePackId(entry.packId, prev.packId) < 0)) {
+    legacyByBg.set(entry.bgId, entry);
+  }
 }
-for (const entry of newestByBg.values()) byKey[entry.legacyKey] = entry;
+for (const entry of legacyByBg.values()) byKey[entry.legacyKey] = entry;
 
 const index = { schemaVersion: 2, generatedAt: FIXED_DATE, keyMode: 'pack-scoped-backgrounds', entries, byKey };
 await writeJson('public/assets/generated/bcu-background-index.json', index);

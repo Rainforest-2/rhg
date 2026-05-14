@@ -1,62 +1,26 @@
-# AGENTS.md — Fix Formation Virtual Icon Loading, Battle Spawn Failures, and BCU Actor Rendering Corruption
+# AGENTS.md — BCU準拠の戦闘表示・背景・生産アイコン修正タスク
 
 Repository: `rhgrive2/game`  
 Target branch: `main`
 
-This file is the task contract for Codex. Treat it as a concrete repair checklist, not a vague instruction. The current symptoms are not one bug. Fix them by tracing the exact runtime/data path, adding diagnostics, strengthening generated bundle checks, and comparing battle rendering behavior against BCU.
+このファイルは Codex に渡す修正タスクです。Codex は **現在の `rhgrive2/game` のコード**を読み、BCU準拠が必要な箇所では下記の BCU 公式リポジトリを clone して比較してください。過去の会話や古い分析メモに依存せず、現在のコードと実際の BCU 実装を根拠に修正してください。
 
----
-
-## 0. User-visible failures to solve
-
-After the recent icon bundle fixes:
-
-1. Formation/catalog icons now load from aggregate icon ZIPs, but the catalog can still show blank/text-only cards near the visible range. Example: `dog-enemy-033` through `dog-enemy-038` can appear without icons while later cards show icons. This looks like the virtual DOM / IntersectionObserver starts image loading too late, or the rendered visible window is not eagerly enqueued.
-2. In battle, pressing a production card sometimes does not spawn a character.
-3. In battle, spawned characters can render as broken large sprite fragments, for example a huge cropped cat face rectangle near the player base instead of a coherent animated actor.
-
-The third issue is almost certainly not an icon issue. Treat it as a battle actor asset/runtime issue until disproven: actor bundle generation, image/imgcut/model/maanim compatibility, animation initialization, model transform, side flip, or renderer scale/projection.
-
----
-
-## 1. Non-negotiable constraints
-
-Do not ship any final fix that does any of the following:
+現在、Formation 側の DOM/仮想リスト問題は改善済みですが、戦闘画面で以下の問題が残っています。
 
 ```text
-Disable semantic strict mode.
-Disable RuntimeAssetGuard.
-Restore runtime raw reads from public/assets/bcu/**.
-Use actor sprite sheet image.png as a silent Formation/Production icon fallback.
-Generate one ZIP per icon.
-Hardcode actor scale/offset until it looks right.
-Mark actor templates spawn-ready when required runtime assets are missing or incompatible.
-Swallow preload/template/animation/render errors.
-Set sceneReady=true after failed BattleScene.init.
-Let a production click spend cooldown/money if actor creation actually failed, unless explicitly documented and diagnosed.
+1. 背景の描画がBCU本家と一致していない。
+2. 生産カードでアイコンが出ないキャラがいる。
+3. キャラモデルが巨大な切り抜き画像・顔の断片のように崩れて表示される。
+4. 味方キャラの登場位置・見た目のアンカーが不自然に見える。
 ```
 
-Required failure diagnostics must include, where applicable:
-
-```text
-semanticKey
-characterId
-side
-bundlePath
-internalPath
-sourcePack
-sourceRawPaths
-role: move|idle|attack|kb
-original error name/message/stack
-```
+これらは同一原因とは限りません。背景、アイコン、モデル描画、spawn/anchor を分けて原因を特定し、それぞれに診断ログと検査スクリプトを追加してください。
 
 ---
 
-## 2. Required BCU reference workflow
+## 1. 参照するBCUリポジトリ
 
-For BCU parity work, clone the reference repositories locally. Do not rely on partial snippets, GitHub previews, or memory.
-
-Run something equivalent to:
+BCU準拠が必要な箇所では、Codex 側で以下を clone して実装を確認してください。
 
 ```bash
 mkdir -p /tmp/bcu-reference
@@ -65,389 +29,282 @@ git clone https://github.com/battlecatsultimate/BCU_java_util_common.git
 git clone https://github.com/battlecatsultimate/BCU-java-PC.git
 ```
 
-Then inspect the relevant files/classes. If paths differ, locate the moved equivalent by repository search.
+主に確認する対象は以下です。パスが変わっている場合は検索して同等クラスを見つけてください。
 
 ```text
 BCU_java_util_common:
+  util/pack/Background.java
   util/anim/ImgCut.java
   util/anim/MaModel.java
   util/anim/MaAnim.java
   util/anim/Part.java
   util/anim/EPart.java
   util/anim/EAnimD.java
-  util/stage/Stage.java
-  util/stage/SCDef.java
-  util/stage/EStage.java
+  util/ImgCore.java
   battle/StageBasis.java
   battle/entity/Entity.java
   battle/entity/EUnit.java
   battle/entity/EEnemy.java
-  battle/attack/*
 
 BCU-java-PC:
-  BattleBox / BBPainter / entity draw path
-  any draw methods that call EAnimD / EPart rendering
+  src/main/java/page/battle/BattleBox.java
 ```
 
-Document exact class/method names used for:
+特に以下の仕様を確認し、JS側と差分があれば BCU に合わせてください。
 
 ```text
-imgcut coordinate parsing and draw bounds
-mamodel part fields and parent transform
-maanim track application and interpolation
-initial animation frame application before first draw
-entity draw x/y, layer/depth, road baseline, camera pos/siz/ratio
-player-vs-enemy direction/flip rules
-unit/enemy spawn side and base coordinate rules
-base/castle draw anchors
-background draw/tile formula
-attack timing vs target capture vs damage application order
+Background:
+  背景本体のimgcut partは BG = 0。
+  上部背景は TOP = 20。
+  bg.csv の column 13 が imgcut id。
+  bg.csv の column 14 が上部背景フラグ。
+  bg.csv の column 15 が image reference id。
+  draw() の背景X位置は pos + 200 * siz - backgroundWidth。
+  地面グラデーション、空/上部背景、本体背景タイルの描画順を確認する。
+
+ImgCut:
+  cut rectangle は画像サイズ内に clamp される。
+  x/y が負なら 0。
+  w/h <= 0 は 1。
+  画像外にはみ出す w/h は画像境界まで縮める。
+
+MaModel:
+  parts column:
+    0 parent
+    1 id
+    2 img / imgcut part index
+    3 z
+    4 posX
+    5 posY
+    6 pivotX
+    7 pivotY
+    8 scaleX
+    9 scaleY
+    10 angle
+    11 opacity
+    12 glow
+    13 extendX
+  ints[0] は scale denominator。
+  ints[1] は angle denominator。
+  ints[2] は opacity denominator。
+  check() は imgcut範囲外参照や parent loop をBCU仕様で補正する。
+
+MaAnim / Part:
+  frame 0 では model part を setValue() で初期化する。
+  loop, offset, fir/max, ensureLast の扱いをBCU通りにする。
+  modification 2 の画像index補間、modification 13/14 の step 処理、easing 2/3/4 をBCU通りにする。
+
+EPart / ImgCore:
+  parent transform を再帰的に適用する。
+  draw image は part 中心ではなく pivot 基準。
+  draw位置は -pivot * size * sizer。
+  drawサイズは cut image の width/height * size * sizer。
+  opacity は親子で乗算する。
+  z は zValue * partCount + partIndex。
+
+BattleBox / StageBasis:
+  getX(x) = (x * ratio + off) * siz + sb.pos。
+  drawEntity() のYは midh - (road_h - currentLayer * DEP) * siz。
+  entity sprite scale は siz * sprite。
+  enemy base は 800。
+  player base は stageLen - 800。
+  player unit spawn は stageLen - 700。
+  enemy normal spawn は 700。
 ```
 
-Any transform, scale, anchor, spawn, or camera change must cite the BCU class/method in a code comment or in `docs/bcu-migration-status.md`.
+注意: BCU が行っている補正、たとえば imgcut範囲外の画像indexを 0 に補正する挙動は、単純に禁止しないでください。巨大な顔断片の原因は、補正そのものではなく、その後の transform / pivot / draw anchor の解釈がBCUと違うことの可能性が高いです。
 
 ---
 
-## 3. Current code facts to re-check before editing
-
-These are starting observations. Re-read the files before changing them.
-
-### 3.1 Formation/catalog icon loading
-
-`js/ui/FormationEditor.js` currently appears to:
+## 2. 現在コードで必ず確認するファイル
 
 ```text
-render icons as <img ... data-semantic-icon="...">
-load selected slot icons immediately via resolveSelectedSlotIconsImmediately(provider)
-load catalog grid icons through IntersectionObserver
-use .formation-catalog-scroll as observer root
-use rootMargin: '160px'
-use virtual rows with rowHeight: 176, dynamic columns, overscanRows: 3
-call renderCatalogWindow() and then resolveSemanticIcons() during scroll/rerender
-```
-
-The screenshot indicates the first visible/near-visible catalog icons are not being requested aggressively enough, or observer state is being lost/reused after virtual DOM replacement.
-
-### 3.2 Semantic icon provider
-
-`js/bcu/SemanticAssetProvider.js` caches icon object URLs by semantic key in `actorUiIconUrlCache`. `getActorUiIconUrl()` should read from:
-
-```text
-public/assets/generated/bcu-icon-index.json
-public/assets/bundles/icon/enemy.zip
-public/assets/bundles/icon/unit-f.zip
-public/assets/bundles/icon/unit-c.zip
-public/assets/bundles/icon/unit-s.zip
-public/assets/bundles/icon/unit-u.zip
-```
-
-Do not replace this with actor bundle image fallback.
-
-### 3.3 Actor runtime loading
-
-`js/bcu/BcuAssetLoader.js` currently loads semantic actor bundles as:
-
-```text
-image.png
-imgcut.imgcut
-model.mamodel
-move.maanim
-idle.maanim
-attack.maanim
-kb.maanim
-```
-
-`js/battle/BattleActorFactory.js` then creates:
-
-```text
-BcuSpriteSheet(set.image, set.imgcut)
-BcuModelInstance(set.model)
-```
-
-and should only claim higher readiness levels when required animations are present and compatible.
-
-### 3.4 Actor bundle generation
-
-`scripts/build-bcu-semantic-bundles.mjs` builds actor bundles from `entry.selected.files` in `bcu-actor-index.json` and writes:
-
-```text
-bundle.json
-image.png
-imgcut.imgcut
-model.mamodel
-move.maanim
-idle.maanim
-attack.maanim
-kb.maanim
-icon.png
-```
-
-Current generation must be audited. It must not silently drop missing files with filters such as:
-
-```js
-entries.filter((e) => e && e.data != null)
-```
-
-if the corresponding actor remains battle-loadable.
-
-### 3.5 Playable dog/cat registry
-
-`js/battle/PlayableCharacterRegistry.js` intentionally treats `enemy:0..777` as playable dog-side candidates and `unit:0..859:f` as cat-side candidates. A dog-side card with `semanticKey: enemy:<id>` is intentional. However, the produced actor still must spawn and render coherently on the player side.
-
----
-
-## 4. P0 — Fix Formation virtual icon loading
-
-### 4.1 Required diagnosis
-
-Expose:
-
-```js
-globalThis.__FORMATION_ICON_DEBUG__ = {
-  lastRender: {
-    catalogItemCount,
-    renderedDomCardCount,
-    columns,
-    rowHeight,
-    overscanRows,
-    start,
-    end,
-    scrollerClientHeight,
-    scrollTop,
-    firstVisibleRow,
-    lastVisibleRow,
-    eagerIconCount,
-    observedIconCount,
-    queuedIconCount,
-    activeIconCount,
-    resolvedIconCount,
-    failedIconCount
-  },
-  recentIconFailures: []
-};
-```
-
-Every failure should include:
-
-```js
-{
-  semanticKey,
-  bundlePath,
-  internalPath,
-  errorName,
-  errorMessage
-}
-```
-
-### 4.2 Required behavior
-
-Fix `FormationEditor` so the first visible viewport and overscan are loaded immediately after each virtual render.
-
-Required behavior:
-
-```text
-1. Selected 10 slot icons load immediately.
-2. Currently rendered catalog icons in the visible viewport plus generous overscan load immediately.
-3. IntersectionObserver remains only as backup for newly approaching items.
-4. Overscan is large enough for iPad/Safari/touch scroll: start with at least 6-8 rows or roughly 2 viewport heights.
-5. On every virtual window replacement, old pending DOM nodes are ignored safely and new visible nodes are enqueued.
-6. Failed icon promises are not cached forever. Re-render can retry.
-7. A DOM image is marked resolved only after load/decode succeeds, not immediately after assigning src.
-```
-
-Likely edits:
-
-```text
-Increase catalogVirtual.overscanRows from 3 or compute it from viewport height.
-Increase IntersectionObserver rootMargin from '160px' to a larger value, e.g. '600px 0px 900px 0px', or compute from viewport height.
-Add resolveVisibleCatalogIconsImmediately(provider).
-Call resolveVisibleCatalogIconsImmediately(provider) after renderCatalogWindow().
-Avoid duplicate queue entries for the same connected img.
-Clear iconPending and allow retry on failure.
-Rebuild iconObserver if the scroll root changes.
-```
-
-### 4.3 Required static check
-
-Add or update:
-
-```text
-scripts/check-formation-virtual-icon-loading.mjs
-```
-
-It must verify:
-
-```text
-selected slot icons are loaded immediately
-visible catalog icons are eagerly enqueued without relying only on IntersectionObserver
-rootMargin is not the old small 160px
-overscan is not the old 3-row-only value unless dynamic viewport overscan exists
-failed icon state clears iconPending
-rejected icon promises are not cached forever
-```
-
----
-
-## 5. P0 — Diagnose and fix battle production spawn failures
-
-### 5.1 Required browser diagnostic
-
-Expose:
-
-```js
-globalThis.__BATTLE_PRODUCTION_DEBUG__ = {
-  lastClick: null,
-  lastSpawnAttempt: null,
-  failures: []
-};
-```
-
-Each production card click must record:
-
-```js
-{
-  characterId,
-  slotId,
-  semanticKey,
-  unitDef,
-  cost,
-  cooldownRemaining,
-  money,
-  canAfford,
-  canSpawn,
-  factoryTemplateLevel,
-  preloadError,
-  spawnError,
-  actorCountBefore,
-  actorCountAfter
-}
-```
-
-### 5.2 Required behavior
-
-When a production card is pressed:
-
-```text
-If it cannot spawn, explain why in debug state and UI/logs.
-If it can spawn, actor count must increase and the actor must have a valid template.
-Do not silently swallow preload/template/animation errors.
-Do not mark cooldown spent if spawn fails before actor creation, unless explicitly intended and documented.
-```
-
-Inspect and fix at least:
-
-```text
-js/ui/PlayerProductionBar.js
-js/battle/BattleEconomy.js
+js/battle/StageBackgroundLoader.js
+js/battle/StageBackgroundResolver.js
+js/battle/StageDefinitionLoader.js
+js/battle/StageRuntime.js
+js/battle/BattleSpawnResolver.js
 js/battle/BattleScene.js
+js/battle/BattleSceneRenderer.js
+js/battle/BattleActor.js
 js/battle/BattleActorFactory.js
-js/battle/CharacterCatalog.js
 js/battle/PlayableCharacterRegistry.js
+js/ui/PlayerProductionBar.js
+js/bcu/SemanticAssetProvider.js
+js/bcu/BcuAssetLoader.js
+js/bcu/BcuImgcutParser.js
+js/bcu/BcuModelParser.js
+js/bcu/BcuAnimParser.js
+js/bcu/BcuAnimator.js
+js/bcu/BcuModelInstance.js
+js/bcu/BcuSpriteSheet.js
+scripts/build-bcu-background-index.mjs
+scripts/build-bcu-semantic-bundles.mjs
+scripts/check-actor-bundles-complete.mjs
 ```
+
+必要に応じて新しい検査スクリプトを追加してください。
 
 ---
 
-## 6. P0 — Diagnose and fix corrupted actor rendering
+## 3. P0: キャラモデル崩れを最優先で修正する
 
-The giant cropped cat-face screenshot is the highest-priority battle rendering failure. Treat it as an actor asset compatibility/render bug until disproven.
+巨大な猫顔・画像断片が表示される問題は最優先です。scale や x/y の見た目調整で隠さず、BCU の `EPart + MaAnim + ImgCore.drawImg` と一致するように直してください。
 
-### 6.1 Strong hypotheses to test in order
-
-```text
-1. Actor bundle source mismatch: image.png, imgcut.imgcut, model.mamodel, and role .maanim files are not all from a compatible BCU source pack/directory.
-2. bcu-actor-index.json selected candidate is too permissive: partial/mixed candidate is treated as runtime-ready.
-3. build-bcu-semantic-bundles.mjs silently drops missing entries and creates internally incomplete bundles.
-4. check-actor-bundles-complete.mjs verifies existence but not compatibility.
-5. BcuModelInstance does not apply an initial animation frame before first draw.
-6. JS model transform differs from BCU EPart / EAnimD: parent scale, gsca, pivot, flip, opacity, z-order, coordinate sign.
-7. Player-side use of enemy actor applies additional flip/scale incorrectly or double-flips.
-8. Renderer applies camera scale or actor scale twice.
-9. Actor is spawned before template reaches SPAWN_READY or FULL_VISUAL.
-```
-
-### 6.2 Required generation-side fixes
-
-Update `scripts/build-bcu-semantic-bundles.mjs` and related utilities so actor bundles are all-or-fail for runtime actors.
-
-For every selected battle-runtime actor:
+### 3.1 現在の強い疑い
 
 ```text
-image.png source path exists
-imgcut.imgcut source path exists
-model.mamodel source path exists
-move.maanim source path exists
-idle.maanim source path exists
-attack.maanim source path exists
-kb.maanim source path exists
-all runtime files are from the same candidate directory/sourcePack unless a documented BCU exception exists
-no required entry is dropped by null filtering
-bundle.json records sourcePack and exact sourceRawPaths per internal entry
+BcuModelParser は mamodel を読めているが、BcuModelInstance / BcuAnimator / BattleSceneRenderer.drawActor が BCU の EPart / MaAnim / ImgCore と一致していない可能性が高い。
+特に、JS側が part を中心基準の矩形として扱っている箇所があるなら、BCU の pivot基準描画とズレる。
+初期frame適用、parent transform、pivot、scale、opacity、z順、hf/vf、gsca の処理差が巨大な切り抜き表示につながる。
 ```
 
-If any required actor file is missing or incompatible:
+### 3.2 `BcuModelInstance.js` の要求
 
-```text
-A. exclude the actor from playable battle rosters and mark it non-spawnable with a reason, or
-B. fail generation/checks clearly
-```
+`js/bcu/BcuModelInstance.js` を BCU `EPart` 準拠に修正してください。
 
-Do not create a battle-loadable actor bundle that is internally partial.
+各 part の current state は少なくとも以下を持つようにしてください。
 
-### 6.3 Required compatibility checks
-
-Add or strengthen:
-
-```text
-scripts/check-actor-bundles-complete.mjs
-scripts/check-actor-bundle-compatibility.mjs
-scripts/check-playable-roster-actor-readiness.mjs
-```
-
-`check-actor-bundle-compatibility.mjs` must open every actor bundle used by playable dog/cat rosters and verify at minimum:
-
-```text
-ZIP contains required entries.
-PNG signature/IHDR/CRC/IEND validates. Do not blindly apply icon-only trailing-byte policy to actor sprites unless proven safe.
-imgcut.imgcut parses.
-Every imgcut rectangle is inside image.png dimensions.
-model.mamodel parses.
-Every model part's imgcutIndex/partIndex is within parsed imgcut range, or documented as invisible/sentinel according to BCU.
-Every .maanim parses.
-Every animation track references valid model part ids, or follows documented BCU sentinel semantics.
-Applying frame 0 of idle/move/attack/kb does not produce NaN/Infinity transforms.
-Generated draw list has sane local bounds. Report outliers where width/height is far larger than the source image or expected viewport.
-```
-
-Failure output shape:
-
-```json
+```js
 {
-  "semanticKey": "enemy:39",
-  "bundlePath": "public/assets/bundles/actor/enemy/039.zip",
-  "sourcePack": "...",
-  "internalPath": "model.mamodel",
-  "sourceRawPaths": [],
-  "reason": "imgcut-rect-out-of-image | model-part-index-out-of-range | animation-part-id-out-of-range | initial-draw-bounds-outlier | missing-entry"
+  index,
+  parent,
+  id,
+  img,
+  z,
+  pos: { x, y },
+  piv: { x, y },
+  sca: { x, y },
+  angle,
+  opacity,
+  glow,
+  extendX,
+  extendY,
+  extType,
+  hf,
+  vf,
+  gsca
 }
 ```
 
-### 6.4 Required runtime fixes
-
-Update runtime so corrupted rendering is impossible or diagnosed:
+必要な挙動:
 
 ```text
-In BcuAssetLoader.tryLoadSemanticActor(), validate bundle internals before returning the set. Include structured diagnostics.
-In BattleActorFactory, do not return a template as render-ready/spawn-ready if sprite/model/required animations are incompatible.
-In BattleActor or factory initialization, apply the correct initial idle frame before first render. Compare with BCU EAnimD / EPart initialization.
-In BcuModelInstance, compare transform math against BCU. Fix parent transform, pivot, global scale, flip, opacity, z-order, coordinate sign only with BCU reference evidence.
-In BattleSceneRenderer.drawActor, add a temporary diagnostic guard for impossible bounds. If bounds are absurd, log and skip drawing that actor rather than rendering a huge broken face rectangle.
+setValue() 相当で全partをmamodel初期値に戻せる。
+base scale / angle / opacity denominator を mamodel ints から使う。
+parent が不正・自分自身・loop の場合は BCU と同じ補正にする。
+img index が負なら非表示、範囲外ならBCU仕様で補正する。
+z = zValue * partCount + index。
+opacity は parent chain で乗算する。
+size は parent size と current scale/gsca を再帰的に反映する。
+root transform は model.confs[0] と root pivot をBCU通りに扱う。
+child transform は parent.getSize() * sizer * pos → scale(hf, vf) → rotate の順序をBCUに合わせる。
+draw params は pivot 基準:
+  drawX = -pivotX * sizeX * baseScale
+  drawY = -pivotY * sizeY * baseScale
+  drawW = cutWidth * sizeX * baseScale
+  drawH = cutHeight * sizeY * baseScale
 ```
 
-The draw guard is not the final fix by itself. It exists to prevent broken rendering while surfacing the root cause.
+part を中心基準で描かないでください。
 
-### 6.5 Required browser diagnostic
+追加するメソッド例:
 
-Expose:
+```js
+getBcuDrawList({ parentMatrix = null, sizer = 1, imgcut = null } = {})
+```
+
+戻り値例:
+
+```js
+{
+  index,
+  img,
+  id,
+  z,
+  opacity,
+  glow,
+  matrix,
+  drawX,
+  drawY,
+  drawW,
+  drawH,
+  cut,
+  pivot: { x, y },
+  size: { x, y },
+  transformDebug
+}
+```
+
+既存コードが `getBattleDrawList()` を使っているなら、互換 wrapper として残し、中身は BCU準拠 draw list にしてください。
+
+### 3.3 `BcuAnimator.js` の要求
+
+`js/bcu/BcuAnimator.js` を BCU `MaAnim.update()` / `Part.update()` に近づけてください。
+
+必須:
+
+```text
+frame 0 では model を setValue() で初期化。
+loop = -1, loop > 0, ensureLast をBCU通りに扱う。
+Part.validate 相当の offset/fir/max/doff を実装。
+keyframe完全一致はその値を適用。
+modification 0 は step。
+easing 1 は補間なし。
+modification 13/14 は step。
+modification 2 の減少方向補間は ceil。
+easing 2/3/4 は BCU の式に合わせる。
+```
+
+対応すべき modification:
+
+```text
+0 parent
+1 id
+2 img
+3 z
+4 posX
+5 posY
+6 pivotX
+7 pivotY
+8 scale both
+9 scaleX
+10 scaleY
+11 angle
+12 opacity
+13 hf
+14 vf
+50 extendX slow
+51 extendX curse
+52 extendY slow
+53 gsca
+```
+
+### 3.4 `BattleSceneRenderer.drawActor()` の要求
+
+`BattleSceneRenderer.drawActor()` は BCU準拠 draw list を使って描画してください。
+
+要求:
+
+```text
+描画前に現在フレームの animation が actor.model に反映されている。
+draw list は BcuModelInstance の BCU準拠 draw list。
+各partごとに:
+  cut = actor.sprite.imgcut.parts[entry.img]
+  ctx.save()
+  world/screen transform と entry.matrix を適用
+  ctx.globalAlpha = entry.opacity
+  ctx.drawImage(
+    actor.sprite.image,
+    cut.x, cut.y, cut.w, cut.h,
+    entry.drawX, entry.drawY, entry.drawW, entry.drawH
+  )
+  ctx.restore()
+```
+
+無効な matrix、非finite draw値、無効cut、異常bounds は、その part だけ skip して診断に出してください。巨大な壊れ画像を描かないでください。
+
+追加診断:
 
 ```js
 globalThis.__LAST_ACTOR_RENDER_DEBUG__ = {
@@ -462,56 +319,264 @@ globalThis.__LAST_ACTOR_RENDER_DEBUG__ = {
   animations: { loadedRoles, missingRoles, invalidTrackRefs },
   firstFrameBounds,
   lastFrameBounds,
+  skippedParts,
   transformExamples,
-  skippedReason
+  source: 'BattleSceneRenderer.drawActor BCU EPart parity'
 };
 ```
 
----
+### 3.5 actor bundle互換性チェック
 
-## 7. P1 — Battle render parity with BCU
-
-After compatibility is fixed, compare JS rendering against BCU. Do not guess.
-
-Clone and inspect BCU, then document and enforce:
+追加:
 
 ```text
-BCU model coordinate origin and parent matrix order
-BCU scale units, including baseScale, gsca, and per-part scale
-BCU angle units and sign
-BCU horizontal/vertical flip handling
-BCU opacity multiplication
-BCU part draw anchor/pivot behavior
-BCU actor baseline and road depth/layer handling
-BCU camera pos/siz/ratio/off behavior
-BCU base/castle anchor behavior
+scripts/check-actor-bundle-compatibility.mjs
 ```
 
-If JS intentionally differs for preview/game-design reasons, document the intentional deviation in `docs/bcu-migration-status.md`.
-
----
-
-## 8. P1 — UI layout and virtualization
-
-Fix catalog layout if cards overlap toolbar/search or if virtual spacer causes visible blank rows.
-
-Add or update:
+検査内容:
 
 ```text
-scripts/check-formation-catalog-grid-layout.mjs
+playable roster で使う actor bundle をすべて開く。
+image.png が存在し PNG として読める。
+imgcut.imgcut が parse でき、BCU ImgCut.cut と同じ clamp 後の矩形が作れる。
+model.mamodel が parse できる。
+move/idle/attack/kb maanim が parse できる。
+frame 0, 1, 2, max/2, max などで finite な draw list を作れる。
+draw bounds が画像サイズや想定画面に対して極端に巨大にならない。
 ```
 
-It should verify constants/classes used by `FormationEditor` and CSS. Also record browser/manual verification notes in `docs/bcu-migration-status.md`.
+失敗形式:
+
+```json
+{
+  "semanticKey": "enemy:39",
+  "bundlePath": "public/assets/bundles/actor/enemy/039.zip",
+  "sourcePack": "000002",
+  "internalPath": "model.mamodel",
+  "reason": "nonfinite-transform | draw-bounds-outlier | missing-entry | invalid-maanim | invalid-imgcut"
+}
+```
 
 ---
 
-## 9. Required verification commands
+## 4. P0: 生産カードのアイコン欠けを修正
 
-Run at minimum after fixes:
+疑い:
+
+```text
+SemanticAssetProvider.getActorUiIconUrl() は失敗時に provider 側 cache を消して retry 可能にしている。
+しかし PlayerProductionBar.ensureCardAssets() 側が失敗結果を this.iconCache に永久保存している可能性がある。
+その場合、一度 icon load に失敗したカードは再描画しても blank のままになる。
+```
+
+修正対象:
+
+```text
+js/ui/PlayerProductionBar.js
+```
+
+要求:
+
+```text
+semantic icon load 失敗時は this.iconCache.delete(key) する。
+{ icon: null, failed: true } の promise を永続キャッシュしない。
+次回 update で retry できるようにする。
+missing icon は blank ではなく明示 placeholder を描く。
+失敗理由を構造化して記録する。
+```
+
+実装例:
+
+```js
+catch (error) {
+  this.iconCache.delete(key);
+  const detail = { semanticKey, bundlePath, internalPath, reason, errorMessage: error?.message };
+  ...
+  return { icon: null, failed: true, errorDetail: detail };
+}
+```
+
+追加診断:
+
+```js
+globalThis.__PRODUCTION_ICON_DEBUG__ = {
+  failures: [],
+  lastUpdate: {
+    requested,
+    loaded,
+    failed,
+    cacheHits,
+    retryableFailures
+  }
+};
+```
+
+検査:
+
+```text
+scripts/check-production-icons-use-icon-bundles.mjs
+```
+
+確認すること:
+
+```text
+PlayerProductionBar が provider.getActorUiIconUrl() を使う。
+生産アイコンに actor bundle image.png fallback を使わない。
+失敗 icon load が永久 cache されない。
+```
+
+---
+
+## 5. P0: 背景描画をBCU準拠に修正
+
+注意: `parts[0]` は BCU の `Background.BG` なので、`parts[0]` を使うこと自体は間違いではありません。確認すべきは、**その imgcut と image が bg.csv の指定に合っているか**です。
+
+修正・検証対象:
+
+```text
+scripts/build-bcu-background-index.mjs
+scripts/bcu-semantic-utils.mjs の background index 生成部
+js/battle/StageBackgroundLoader.js
+js/battle/BattleSceneRenderer.js
+```
+
+BCU準拠要件:
+
+```text
+bg.csv column 13 から imgcut id を選ぶ。
+bg.csv column 14 から top flag を選ぶ。id 110 の特殊処理も確認。
+bg.csv column 15 が存在し -1 でなければ image reference id として使う。id 185 の特殊処理も確認。
+background bundle の image.png は bg<imageReferenceId or bgId>.png 由来。
+background bundle の imgcut.imgcut は bg<imgcutId>.imgcut 由来。
+BG part index は 0。
+TOP part index は 20。
+BattleSceneRenderer.drawBackgroundBcuStage0 は BCU Background.draw の式に合わせる。
+```
+
+追加診断:
+
+```js
+globalThis.__LAST_BACKGROUND_DEBUG__ = {
+  bgId,
+  imgcutId,
+  imageReferenceId,
+  imagePath,
+  imgcutPath,
+  partCount,
+  crop: { index: 0, w, h },
+  upperCrop: { index: 20, w, h } | null,
+  draw: { pos, siz, ratio, off, fw, fh, dx, groundY },
+  source: 'BCU Background.draw parity'
+};
+```
+
+検査:
+
+```text
+scripts/check-stage-background-asset-parity.mjs
+```
+
+確認:
+
+```text
+各 background entry の selected image が bg.csv column 15/reference に一致する。
+selected imgcut が bg.csv column 13 に一致する。
+bundle に image.png / imgcut.imgcut がある。
+part 0 がある。
+top flag が true の場合 part 20 がある、または理由付きで診断される。
+```
+
+---
+
+## 6. P0: spawn座標とvisual anchorを分けて修正
+
+BCU上、player-side spawn が `stageLen - 700` なのは正しい可能性が高いです。見た目が変な位置に出る原因は、spawn座標そのものより **actor model bounds / visual anchor** の可能性があります。
+
+まずモデル描画を直し、その後で座標を検証してください。
+
+BCU準拠として維持すべき座標:
+
+```text
+enemy base = 800
+enemy normal spawn = 700
+player base = stageLen - 800
+player spawn = stageLen - 700
+boss/enemy-base entity spawn = boss_spawn or 700
+```
+
+追加診断:
+
+```js
+globalThis.__LAST_SPAWN_DEBUG__ = {
+  side,
+  stageLen,
+  spawnWorldX,
+  expectedBcuSpawnWorldX,
+  basePos,
+  expectedBcuBasePos,
+  source,
+  actorSemanticKey,
+  renderBoundsBeforeAnchor,
+  renderBoundsAfterAnchor
+};
+```
+
+検査:
+
+```text
+scripts/check-battle-spawn-resolver.mjs
+```
+
+確認:
+
+```text
+dog-player spawn = stageLen - 700。
+cat-enemy normal spawn = 700。
+dog-player base = stageLen - 800。
+cat-enemy base = 800。
+boss/enemy-base entity spawn は boss_spawn があればそれを使う。
+```
+
+---
+
+## 7. P1: actor bundle metadata を強化
+
+`scripts/build-bcu-semantic-bundles.mjs` で actor bundle の `bundle.json` に source を明記してください。
+
+例:
+
+```json
+{
+  "bundleKey": "actor:enemy:39",
+  "semanticKey": "enemy:39",
+  "kind": "actor",
+  "sourcePack": "000002",
+  "sourceRawPaths": {
+    "image.png": ".../039_e.png",
+    "imgcut.imgcut": ".../039_e.imgcut",
+    "model.mamodel": ".../039_e.mamodel",
+    "move.maanim": ".../039_e00.maanim",
+    "idle.maanim": ".../039_e01.maanim",
+    "attack.maanim": ".../039_e02.maanim",
+    "kb.maanim": ".../039_e03.maanim"
+  }
+}
+```
+
+required runtime file を黙って落とさないでください。欠けるなら generation/check を失敗させるか、playable roster から理由付きで除外してください。
+
+---
+
+## 8. 必須実行コマンド
+
+修正後に最低限以下を通してください。
 
 ```bash
 node scripts/build-bcu-manifest.mjs
 node scripts/build-bcu-actor-index.mjs
+node scripts/build-bcu-background-index.mjs
+node scripts/build-bcu-castle-index.mjs
+node scripts/build-bcu-stage-index.mjs
 node scripts/audit-bcu-icon-sources.mjs
 node scripts/build-bcu-icon-index.mjs
 node scripts/build-bcu-icon-bundles.mjs
@@ -522,118 +587,75 @@ node scripts/build-bcu-core-db-bundle.mjs
 node scripts/build-bcu-core-index.mjs
 node scripts/build-bcu-canonical-index.mjs
 
-node scripts/check-bcu-database.mjs
-node scripts/check-core-db-runtime.mjs
+node scripts/check-stage-background-asset-parity.mjs
+node scripts/check-production-icons-use-icon-bundles.mjs
+node scripts/check-battle-spawn-resolver.mjs
 node scripts/check-actor-bundles-complete.mjs
 node scripts/check-actor-bundle-compatibility.mjs
 node scripts/check-playable-roster-actor-readiness.mjs
-node scripts/check-formation-virtual-icon-loading.mjs
 node scripts/check-bundled-assets-never-load-raw.mjs
 node scripts/check-no-raw-runtime-paths.mjs
 ```
 
-If a listed check does not exist, implement it.
+存在しない検査スクリプトは実装してください。
 
 ---
 
-## 10. Browser acceptance checklist
+## 9. ブラウザ確認
 
-Run in a real browser, preferably the same iPad/Safari-like environment where the screenshots were taken.
+同じ iPad/Safari 系の環境で確認してください。
 
-### Before Apply Battle
-
-```text
-Formation selected slots show icons immediately.
-First visible catalog row shows icons without extra scroll/re-render.
-Catalog blank cards do not appear for entries that have icon index entries.
-Scrolling remains responsive.
-No actor bundle ZIPs are loaded before Apply Battle.
-No raw public/assets/bcu/** resources are loaded.
-Icon resources are aggregate ZIPs only.
-```
-
-Use:
+戦闘前:
 
 ```js
-performance.getEntriesByType('resource')
-  .filter(e => e.name.includes('/bundles/actor/'))
-  .map(e => e.name);
-
-performance.getEntriesByType('resource')
-  .filter(e => e.name.includes('/bundles/icon/'))
-  .map(e => e.name);
-
-performance.getEntriesByType('resource')
-  .filter(e => e.name.includes('/public/assets/bcu/') || e.name.includes('/assets/bcu/'))
-  .map(e => e.name);
-
 console.log(globalThis.__FORMATION_ICON_DEBUG__);
+console.log(globalThis.__PRODUCTION_ICON_DEBUG__);
+performance.getEntriesByType('resource')
+  .filter(e => e.name.includes('/assets/bcu/'))
+  .map(e => e.name);
 ```
 
-Expected:
+期待:
 
 ```text
-actor bundle resources before Apply: []
-raw BCU resources: []
-icon bundles: aggregate ZIPs only
+raw /assets/bcu/ runtime read がない。
+icon failure が retry 可能で診断される。
 ```
 
-### After Apply Battle
-
-```text
-Production cards appear and display images.
-Pressing a production card either spawns a character or records actionable reason in __BATTLE_PRODUCTION_DEBUG__.
-Spawned actors render as coherent animated characters, not giant sprite fragments.
-No actor with impossible draw bounds is drawn without a diagnostic.
-__LAST_ACTOR_RENDER_DEBUG__ shows valid image/imgcut/model/animation compatibility for spawned actors.
-Zoom/pan still work.
-semanticProvider.diagnostics.blockedRawReads and rawFallbacks are empty.
-```
-
-Use:
+戦闘中:
 
 ```js
-const app = globalThis.__APP__ || globalThis.app;
-const p = globalThis.__BCU_DB__?.semanticProvider;
-
+console.log(globalThis.__LAST_BACKGROUND_DEBUG__);
 console.log(globalThis.__BATTLE_PRODUCTION_DEBUG__);
 console.log(globalThis.__LAST_ACTOR_RENDER_DEBUG__);
-console.log(globalThis.__LAST_APPLY_BATTLE_REPORT__);
-console.log(app?.battleScene?.camera?.getState?.());
-console.log(p?.diagnostics?.blockedRawReads);
-console.log(p?.diagnostics?.rawFallbacks);
-console.log(p?.diagnostics?.bundleErrors);
+console.log(globalThis.__LAST_SPAWN_DEBUG__);
+console.log(globalThis.__BCU_DB__?.semanticProvider?.diagnostics);
+```
+
+期待:
+
+```text
+背景 debug に bgId / imgcutId / imageReferenceId / part 0 / part 20 が出る。
+生産カード icon は出るか、理由付き placeholder になる。
+有効な生産カードを押すと actor count が増える。
+actor は巨大な切り抜き断片ではなく、まともなアニメキャラとして描画される。
+spawn debug は dog-player spawn = stageLen - 700、base = stageLen - 800 を示す。
+rawFallbacks / blockedRawReads は空。
 ```
 
 ---
 
-## 11. Definition of done
-
-The task is complete only when all are true:
+## 10. 完了条件
 
 ```text
-1. Formation visible-range icon loading is fixed and instrumented.
-2. First visible catalog row is eagerly loaded, not dependent on late observer callbacks.
-3. Production click failures are explained and valid clicks spawn actors.
-4. Actor bundles used by playable rosters are complete and compatibility-checked.
-5. Corrupted giant sprite-fragment actor rendering is fixed at its root cause.
-6. Runtime refuses or diagnoses incompatible actor bundles instead of drawing broken actors.
-7. BCU rendering differences are either corrected or documented with exact BCU references.
-8. All new and existing checks pass.
-9. Browser acceptance checklist is recorded in docs/bcu-migration-status.md.
-10. No final fix weakens semantic strict mode or reintroduces raw BCU runtime reads.
+1. BcuModelInstance / BcuAnimator / BattleSceneRenderer が BCU EPart/MaAnim/ImgCore に準拠する。
+2. 巨大な画像断片・顔だけの描画が消える。
+3. 無効な actor draw data は描かず、構造化診断される。
+4. 生産カード icon 失敗が永久キャッシュされず retry 可能。
+5. 背景が BCU Background.draw と同じ source/image/imgcut/crop/draw式になる。
+6. spawn座標は BCU StageBasis 準拠で debug に出る。
+7. actor/background/icon bundle に source 追跡用 metadata がある。
+8. 追加・既存の検査スクリプトが通る。
+9. docs/bcu-migration-status.md にブラウザ確認結果を書く。
+10. semantic strict mode を弱めず、raw BCU runtime read を復活させない。
 ```
-
-If anything cannot be completed, leave a blocker with:
-
-```text
-file
-function
-semanticKey
-bundlePath
-internalPath
-reason
-next required action
-```
-
-Do not claim the issue is fixed unless the browser acceptance checklist has been run.

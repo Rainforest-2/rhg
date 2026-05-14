@@ -5,9 +5,15 @@ import { BcuKbeffRuntime } from './BcuKbeffRuntime.js';
 import { verifyAssetPath } from './BcuAssetVerifier.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
-export const BCU_KBEFF_LOADER_VERSION = '0.11.9';
+export const BCU_KBEFF_LOADER_VERSION = '0.12.0-disabled-unverified-parent-runtime';
 export const BCU_KBEFF_TYPE_TO_FILE = { INT_HB: 'kb_hb.maanim', INT_SW: 'kb_sw.maanim', INT_ASS: 'kb_ass.maanim' };
 const TYPE_TO_ENUM = { INT_HB: 'KB', INT_SW: 'SW', INT_ASS: 'ASS' };
+
+// BCU BattleBox draws entity effects through EAnimCont/drawEff at layer-specific points.
+// The current JS KBEff path instead uses kb.mamodel as a parent matrix for normal actors.
+// On real play this produces black/purple oversized overlays and anchor drift, so runtime
+// use is disabled until the effect is rendered as its own BCU EffAnim/EAnimCont layer.
+const DISABLE_UNVERIFIED_KBEFF_RUNTIME = true;
 
 async function readText(path) {
   if (typeof window === 'undefined') {
@@ -28,7 +34,7 @@ export async function verifyKbeffAssetPaths(baseDir = './public/assets/bcu/00000
 }
 
 export class BcuKbeffLoader {
-  constructor(config = null, options = {}) { this.config = config || BATTLE_CONFIG.tuning?.knockback?.kbEffect || {}; this.provider = options.semanticProvider || null; this.bundleRef = { bundleKey: 'effect:kbeff', bundlePath: 'public/assets/bundles/effect/kbeff.zip' }; this.baseDir = this.config.baseDir || './public/assets/bcu/000001/org/battle/a/'; this.definitions = new Map(); this.shared = null; }
+  constructor(config = null, options = {}) { this.config = config || BATTLE_CONFIG.tuning?.knockback?.kbEffect || {}; this.provider = options.semanticProvider || null; this.bundleRef = { bundleKey: 'effect:kbeff', bundlePath: 'public/assets/bundles/effect/kbeff.zip' }; this.baseDir = this.config.baseDir || './public/assets/bcu/000001/org/battle/a/'; this.definitions = new Map(); this.shared = null; this.disabledReason = DISABLE_UNVERIFIED_KBEFF_RUNTIME ? 'disabled-until-bcu-effanim-layer-renderer' : null; }
   async readBundleText(internalPath) {
     if (!this.provider) return null;
     try {
@@ -55,12 +61,18 @@ export class BcuKbeffLoader {
     return await readText(`${this.baseDir}${rawFile}`);
   }
   async loadAll() {
+    if (DISABLE_UNVERIFIED_KBEFF_RUNTIME) {
+      globalThis.__KBEFF_DEBUG__ = { enabled: false, reason: this.disabledReason, source: 'BcuKbeffLoader.loadAll' };
+      this.definitions.clear();
+      return { ok: true, loaded: [], disabled: true, reason: this.disabledReason };
+    }
     const imagePath = `${this.baseDir}${this.config.image || '000_a.png'}`;
     this.shared = { imagePath: this.provider ? `${this.bundleRef.bundlePath}:image.png` : imagePath, imgcut: parseImgcut(await this.readKbeffText('imgcut.imgcut', this.config.imgcut || '000_a.imgcut')), model: parseModel(await this.readKbeffText('model.mamodel', this.config.model || 'kb.mamodel')), image: null };
     for (const t of Object.keys(BCU_KBEFF_TYPE_TO_FILE)) await this.loadType(t);
     return { ok: true, loaded: [...this.definitions.keys()] };
   }
   async loadType(bcuType) {
+    if (DISABLE_UNVERIFIED_KBEFF_RUNTIME) return null;
     const animFile = this.config.animations?.[bcuType] || BCU_KBEFF_TYPE_TO_FILE[bcuType];
     if (!animFile) throw new Error(`Unknown kbeff type: ${bcuType}`);
     if (!this.shared) await this.loadAll();
@@ -72,12 +84,13 @@ export class BcuKbeffLoader {
   getDefinition(bcuType) { return this.definitions.get(bcuType) || null; }
 
   isRuntimeAllowed() {
+    if (DISABLE_UNVERIFIED_KBEFF_RUNTIME) return false;
     if (this.config?.enabled === false) return false;
     if (this.config?.failClosed === true && this.config?.allowRuntime !== true) return false;
     if (this.config?.requireExactMaanim === true && this.config?.exactMaanimVerified !== true) return false;
     if (this.config?.requireParentMatrix === true && this.config?.parentMatrixVerified !== true) return false;
     return true;
   }
-  createRuntime(bcuType) { if (!this.isRuntimeAllowed()) throw new Error('KBEff runtime is gated until exact verification passes'); const d = this.getDefinition(bcuType); if (!d) throw new Error(`kbeff definition not loaded: ${bcuType}`); return new BcuKbeffRuntime(d); }
-  createVerifiedRuntime(bcuType) { const d = this.getDefinition(bcuType); if (!d) throw new Error(`kbeff definition not loaded: ${bcuType}`); return new BcuKbeffRuntime(d); }
+  createRuntime(bcuType) { if (!this.isRuntimeAllowed()) throw new Error(this.disabledReason || 'KBEff runtime is gated until exact verification passes'); const d = this.getDefinition(bcuType); if (!d) throw new Error(`kbeff definition not loaded: ${bcuType}`); return new BcuKbeffRuntime(d); }
+  createVerifiedRuntime(bcuType) { if (!this.isRuntimeAllowed()) throw new Error(this.disabledReason || 'KBEff runtime is gated until exact verification passes'); const d = this.getDefinition(bcuType); if (!d) throw new Error(`kbeff definition not loaded: ${bcuType}`); return new BcuKbeffRuntime(d); }
 }

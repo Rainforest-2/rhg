@@ -8,6 +8,42 @@ export class AnimationRuntime {
     };
   }
 
+  static getExpectedAnimationForState(actor) {
+    if (!actor) return null;
+    if (actor.state === 'attack') return { animId: actor.attackAnimId, role: 'attack', loop: false };
+    if (actor.state === 'attack-wait') return { animId: actor.idleAnimId || actor.moveAnimId, role: 'attack-wait', loop: true };
+    if (actor.state === 'move') return { animId: actor.moveAnimId || actor.idleAnimId, role: 'move', loop: true };
+    if (actor.state === 'knockback') {
+      const useUnitKb = typeof actor.isUnitKnockbackAnimType === 'function' && actor.isUnitKnockbackAnimType(actor.kbBcuType);
+      if (useUnitKb) return { animId: actor.knockbackAnimId, role: 'knockback', loop: true };
+      if (actor.kbeffEnabled) return { animId: actor.currentAnimId || actor.idleAnimId || actor.moveAnimId, role: actor.activeAnimRole || 'knockback-kbeff-base', loop: true };
+      return null;
+    }
+    return null;
+  }
+
+  static syncActorAnimationForState(actor, { restart = false } = {}) {
+    const expected = this.getExpectedAnimationForState(actor);
+    if (!expected?.animId || typeof actor?.setAnimation !== 'function') return { changed: false, expected };
+    const currentAnimId = actor.currentAnimId;
+    const currentRole = actor.activeAnimRole;
+    const needsSwitch = currentAnimId !== expected.animId || currentRole !== expected.role;
+    if (!needsSwitch && !restart) return { changed: false, expected };
+    actor.setAnimation(expected.animId, expected.role, restart || currentAnimId !== expected.animId);
+    if (expected.role === 'attack' && actor.animator?.setLoop) actor.animator.setLoop(false);
+    else if (actor.animator?.setLoop) actor.animator.setLoop(expected.loop !== false);
+    actor.lastAnimationStateSyncDebug = {
+      state: actor.state,
+      previousAnimId: currentAnimId,
+      previousRole: currentRole,
+      expectedAnimId: expected.animId,
+      expectedRole: expected.role,
+      changed: true,
+      source: 'AnimationRuntime.syncActorAnimationForState'
+    };
+    return { changed: true, expected };
+  }
+
   static getActorAnimationState(actor) {
     const animatorState = actor?.animator?.getState?.() || null;
     const modelState = actor?.model?.getState?.() || null;
@@ -21,10 +57,12 @@ export class AnimationRuntime {
       loop: animatorState?.loop ?? actor?.animator?.loop ?? null,
       playing: animatorState?.playing ?? actor?.animator?.playing ?? null,
       maxFrame: animatorState?.maxFrame ?? actor?.animator?.anim?.maxFrame ?? 0,
+      frameCount: animatorState?.frameCount ?? null,
       modelPartCount: modelState?.partCount ?? actor?.model?.parts?.length ?? 0,
       hasModel: !!actor?.model,
       hasAnimator: !!actor?.animator,
       lastAnimationRuntimeDebug: actor?.lastAnimationRuntimeDebug ?? null,
+      lastAnimationStateSyncDebug: actor?.lastAnimationStateSyncDebug ?? null,
       lastAnimatorDebug: animatorState || actor?.animator?.lastApplyDebug || actor?.animator?.lastValuesDebug || null,
       lastModelDebug: modelState || actor?.model?.lastDrawListDebug || actor?.model?.lastAppliedTrackDebug || null
     };
@@ -32,13 +70,14 @@ export class AnimationRuntime {
 
   static tickActor(actor, dtMs = 0) {
     const before = this.getActorAnimationState(actor);
+    const sync = this.syncActorAnimationForState(actor, { restart: false });
     let advanced = false;
     if (actor?.animator?.tick) {
       actor.animator.tick(dtMs);
       advanced = true;
     }
     const after = this.getActorAnimationState(actor);
-    return { advanced, before, after, dtMs, source: 'AnimationRuntime.tickActor' };
+    return { advanced, sync, before, after, dtMs, source: 'AnimationRuntime.tickActor' };
   }
 
   static applyActorModel(actor) {

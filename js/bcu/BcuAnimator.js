@@ -20,16 +20,42 @@ const MOD_MAP = {
   53: 'globalScale'
 };
 const BASE_FPS = 30;
-const DISCRETE_MODIFICATIONS = new Set([0, 1, 2, 13, 14]);
+const STEP_MODIFICATIONS = new Set([0, 1, 13, 14]);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const i = (v) => Math.trunc(v);
+function ease3(track, idx, frame) {
+  const k = track.keyframes || [];
+  let low = idx;
+  let high = idx;
+  for (let j = idx - 1; j >= 0; j -= 1) {
+    if (k[j]?.easing === 3) low = j;
+    else break;
+  }
+  for (let j = idx + 1; j < k.length; j += 1) {
+    high = j;
+    if (k[j]?.easing !== 3) break;
+  }
+  let sum = 0;
+  for (let j = low; j <= high; j += 1) {
+    const kj = k[j];
+    let val = (kj?.value || 0) * 4096;
+    for (let m = low; m <= high; m += 1) {
+      if (j === m) continue;
+      const km = k[m];
+      const denom = (kj?.frame || 0) - (km?.frame || 0);
+      if (denom === 0) continue;
+      val *= (frame - (km?.frame || 0)) / denom;
+    }
+    sum += val;
+  }
+  return i(sum / 4096);
+}
 function easeVal(e, p, t) {
   if (e === 1) return 0;
   if (e === 2) {
     if (p >= 0) return 1 - Math.sqrt(Math.max(0, 1 - Math.pow(t, p || 1)));
     return Math.sqrt(Math.max(0, 1 - Math.pow(1 - t, -p)));
   }
-  if (e === 3) return t * t * (3 - 2 * t);
   if (e === 4) {
     if (p > 0) return 1 - Math.cos(t * Math.PI / 2);
     if (p < 0) return Math.sin(t * Math.PI / 2);
@@ -41,17 +67,21 @@ function valueAtBcu(track, frame) {
   const k = track.keyframes || [];
   if (!k.length) return 0;
   if (frame <= k[0].frame) return i(k[0].value);
-  for (let idx = 0; idx < k.length - 1; idx += 1) {
+  for (let idx = 0; idx < k.length; idx += 1) {
     const a = k[idx];
-    const b = k[idx + 1];
     if (frame === a.frame) return i(a.value);
+    const b = k[idx + 1];
+    if (!b) break;
     if (frame > a.frame && frame < b.frame) {
-      if (DISCRETE_MODIFICATIONS.has(track.modification) || a.easing === 1) return i(a.value);
+      if (STEP_MODIFICATIONS.has(track.modification) || a.easing === 1) return i(a.value);
       const span = b.frame - a.frame;
       if (span <= 0) return i(a.value);
-      const t = clamp((frame - a.frame) / span, 0, 1);
-      const ti = easeVal(a.easing, a.parameter || 0, t);
-      return i(a.value + (b.value - a.value) * ti);
+      const realFrame = span === 1 ? Math.trunc(frame) : frame;
+      if (a.easing === 3) return ease3(track, idx, realFrame);
+      const ti = easeVal(a.easing, a.parameter || 0, clamp((realFrame - a.frame) / span, 0, 1));
+      const raw = (b.value - a.value) * ti + a.value;
+      if (track.modification === 2) return (b.value - a.value) < 0 ? Math.ceil(raw) : i(raw);
+      return i(raw);
     }
   }
   return i(k[k.length - 1].value);

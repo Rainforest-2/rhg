@@ -3,7 +3,7 @@ import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v2');
 const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v1');
 const BCU_HIT_SOURCE = 'bcu-effanim-hit-explosion-000_a';
 const ACTOR_SMOKE_Y_OFFSET = 75;
@@ -28,6 +28,9 @@ function getEffectWorldX(scene, attacker, target, targetType) {
   const hit = typeof scene?.getHitEffectPosition === 'function'
     ? scene.getHitEffectPosition(attacker, target, targetType)
     : null;
+  if (targetType === 'base') {
+    return finiteNumber(hit?.x, target?.frontX, target?.x, attacker?.x, 0) ?? 0;
+  }
   return finiteNumber(hit?.x, target?.x, attacker?.x, 0) ?? 0;
 }
 
@@ -35,16 +38,110 @@ function getEffectYOffset(targetType) {
   return targetType === 'base' ? BASE_SMOKE_Y_OFFSET : ACTOR_SMOKE_Y_OFFSET;
 }
 
-function getFrameDurationMs(effect) {
+function getFrameDurationMs() {
   const fps = Number(BATTLE_CONFIG.tuning?.fps || 30);
   // BCU effect animation updates once per battle frame. The hit explosion has 5 frames.
   return 1000 / Math.max(1, fps);
+}
+
+function getEntityKey(entity, fallbackPrefix, fallbackIndex) {
+  return entity?.instanceId || entity?.id || entity?.label || `${fallbackPrefix}-${fallbackIndex}`;
+}
+
+function snapshotHp(scene) {
+  const actors = new Map();
+  const bases = new Map();
+  for (const [index, actor] of (scene?.actors || []).entries()) {
+    const hp = Number(actor?.hp);
+    if (!Number.isFinite(hp)) continue;
+    actors.set(actor, { key: getEntityKey(actor, 'actor', index), hp, side: actor?.side || null, x: actor?.x ?? null, currentLayer: actor?.currentLayer ?? null });
+  }
+  for (const [index, base] of (scene?.bases || []).entries()) {
+    const hp = Number(base?.hp);
+    if (!Number.isFinite(hp)) continue;
+    bases.set(base, { key: getEntityKey(base, 'base', index), hp, side: base?.side || null, x: base?.frontX ?? base?.x ?? null, currentLayer: base?.currentLayer ?? null });
+  }
+  return { actors, bases };
+}
+
+function findLikelyAttacker(scene, target) {
+  const side = target?.side;
+  const opponents = (scene?.actors || []).filter((actor) => actor && actor.side && actor.side !== side && actor.isAlive?.());
+  const attacking = opponents.filter((actor) => actor.state === 'attack' || actor.activeAnimRole === 'attack');
+  const candidates = attacking.length ? attacking : opponents;
+  const tx = Number(target?.x ?? target?.frontX ?? 0);
+  candidates.sort((a, b) => Math.abs(Number(a?.x ?? 0) - tx) - Math.abs(Number(b?.x ?? 0) - tx));
+  return candidates[0] || null;
+}
+
+function spawnEffectsForHpDrops(scene, before) {
+  if (!scene || !before) return { spawned: 0, drops: [] };
+  let spawned = 0;
+  const drops = [];
+
+  for (const [actor, prev] of before.actors || []) {
+    if (!(scene.actors || []).includes(actor)) continue;
+    const hp = Number(actor?.hp);
+    if (!Number.isFinite(hp) || hp >= prev.hp) continue;
+    const damage = prev.hp - hp;
+    const attacker = findLikelyAttacker(scene, actor);
+    const effect = scene.spawnHitEffect?.(attacker, actor, 'actor');
+    if (effect) spawned += 1;
+    drops.push({ targetType: 'actor', target: actor.instanceId || actor.label || prev.key, previousHp: prev.hp, hp, damage, spawned: !!effect, reason: effect ? 'spawned' : scene.lastHitEffectSpawnDebug?.reason || 'not-spawned' });
+  }
+
+  for (const [base, prev] of before.bases || []) {
+    if (!(scene.bases || []).includes(base)) continue;
+    const hp = Number(base?.hp);
+    if (!Number.isFinite(hp) || hp >= prev.hp) continue;
+    const damage = prev.hp - hp;
+    const attacker = findLikelyAttacker(scene, base);
+    const effect = scene.spawnHitEffect?.(attacker, base, 'base');
+    if (effect) spawned += 1;
+    drops.push({ targetType: 'base', target: base.id || base.label || prev.key, previousHp: prev.hp, hp, damage, spawned: !!effect, reason: effect ? 'spawned' : scene.lastHitEffectSpawnDebug?.reason || 'not-spawned' });
+  }
+
+  scene.lastBcuHitEffectDamageScanDebug = {
+    source: 'BattleSceneAttackEffectPatch.spawnEffectsForHpDrops',
+    frame: scene.logicFrame,
+    timeMs: scene.timeMs,
+    spawned,
+    drops
+  };
+  globalThis.__BATTLE_HIT_EFFECT_DAMAGE_SCAN__ = scene.lastBcuHitEffectDamageScanDebug;
+  return { spawned, drops };
 }
 
 export function installBattleSceneAttackEffectPatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
+
+  const originalInit = proto.init;
+  if (typeof originalInit === 'function') {
+    proto.init = async function initWithBcuHitEffect(...args) {
+      const result = await originalInit.apply(this, args);
+      await this.ensureHitEffectLoading?.();
+      this.lastHitEffectInitDebug = {
+        source: 'BattleSceneAttackEffectPatch.initWithBcuHitEffect',
+        loaded: !!this.hitEffectAsset?.loaded,
+        partCount: this.hitEffectAsset?.parts?.length || 0,
+        reason: this.hitEffectAsset?.reason || null
+      };
+      return result;
+    };
+  }
+
+  const originalTick = proto.tick;
+  if (typeof originalTick === 'function') {
+    proto.tick = function tickWithBcuHitEffects(...args) {
+      if (!this.hitEffectAsset && !this._hitEffectPromise) this.ensureHitEffectLoading?.();
+      const before = snapshotHp(this);
+      const result = originalTick.apply(this, args);
+      spawnEffectsForHpDrops(this, before);
+      return result;
+    };
+  }
 
   const originalEnsure = proto.ensureHitEffectLoading;
   proto.ensureHitEffectLoading = function ensureHitEffectLoadingBcu() {
@@ -59,6 +156,7 @@ export function installBattleSceneAttackEffectPatch() {
           reason: asset?.reason || null,
           image: !!asset?.image
         };
+        globalThis.__BATTLE_HIT_EFFECT_LOAD_DEBUG__ = this.lastHitEffectLoadDebug;
         return asset;
       })
       .catch((error) => {
@@ -68,6 +166,7 @@ export function installBattleSceneAttackEffectPatch() {
           loaded: false,
           message: String(error?.message || error)
         };
+        globalThis.__BATTLE_HIT_EFFECT_LOAD_DEBUG__ = this.lastHitEffectLoadDebug;
         if (typeof originalEnsure === 'function') return originalEnsure.call(this);
         return null;
       });
@@ -81,8 +180,10 @@ export function installBattleSceneAttackEffectPatch() {
       this.lastHitEffectSpawnDebug = {
         source: 'BattleSceneAttackEffectPatch.spawnHitEffect',
         spawned: false,
-        reason: 'asset-not-ready'
+        reason: 'asset-not-ready',
+        loadDebug: this.lastHitEffectLoadDebug || null
       };
+      globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
       return null;
     }
 
@@ -90,8 +191,10 @@ export function installBattleSceneAttackEffectPatch() {
       this.lastHitEffectSpawnDebug = {
         source: 'BattleSceneAttackEffectPatch.spawnHitEffect',
         spawned: false,
-        reason: 'max-effects'
+        reason: 'max-effects',
+        effects: this.effects.length
       };
+      globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
       return null;
     }
 
@@ -125,7 +228,8 @@ export function installBattleSceneAttackEffectPatch() {
     effect.durationMs = durationMs;
     effect.frameDurationMs = frameDurationMs;
     this.effects.push(effect);
-    this.lastHitEffectSpawnDebug = effect.effectRuntimeDebug;
+    this.lastHitEffectSpawnDebug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id };
+    globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
     this.pushEvent?.({
       type: 'bcuHitEffectSpawned',
       actor: attacker?.instanceId || attacker?.label || null,

@@ -9,6 +9,11 @@ function num(cols, i, fallback = null) { const n = Number(cols[i]); return Numbe
 function rgb(cols, start) { return { r: num(cols, start, 0), g: num(cols, start + 1, 0), b: num(cols, start + 2, 0) }; }
 function pushMap(map, key, value) { if (!map.has(key)) map.set(key, []); map.get(key).push(value); }
 function firstUniqueSorted(values) { return [...new Set((values || []).filter(Boolean))].sort(); }
+function explicitImageReferenceId(cols) {
+  if (!Array.isArray(cols) || cols.length <= 15 || cols[15] === '') return null;
+  const n = Number(cols[15]);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
 
 function parseBgCsvRows(text, sourceFile) {
   const packId = packIdFromPath(sourceFile);
@@ -19,7 +24,7 @@ function parseBgCsvRows(text, sourceFile) {
     const cols = clean.split(',').map((x) => x.trim());
     const bgId = Number(cols[0]);
     if (!Number.isFinite(bgId)) continue;
-    let imageReferenceId = num(cols, 15, null);
+    let imageReferenceId = explicitImageReferenceId(cols);
     let imgcutId = bgId === 110 ? 1 : num(cols, 13, 1);
     const skyBottom = rgb(cols, 4);
     if (bgId === 185) {
@@ -36,7 +41,7 @@ function parseBgCsvRows(text, sourceFile) {
       groundBottom: rgb(cols, 10),
       imgcutId,
       showUpper: bgId === 110 || num(cols, 14, 0) === 1,
-      imageReferenceId: Number.isFinite(imageReferenceId) && imageReferenceId >= 0 ? imageReferenceId : null,
+      imageReferenceId,
       raw: cols,
       sourceFile
     });
@@ -82,12 +87,14 @@ const entries = [...packBgKeys]
     const csv = rows[rows.length - 1] || null;
     const imageReferenceId = Number.isFinite(Number(csv?.imageReferenceId)) && Number(csv.imageReferenceId) >= 0 ? Number(csv.imageReferenceId) : null;
     const imgcutId = Number.isFinite(Number(csv?.imgcutId)) ? Number(csv.imgcutId) : null;
+    const imageId = imageReferenceId ?? bgId;
+    const imgcutLookupId = imgcutId ?? bgId;
     const images = firstUniqueSorted([
-      ...(imageByPackId.get(`${packId}:${imageReferenceId ?? bgId}`) || []),
+      ...(imageByPackId.get(`${packId}:${imageId}`) || []),
       ...(imageByPackId.get(`${packId}:${bgId}`) || [])
     ]);
     const imgcuts = firstUniqueSorted([
-      ...(imgcutByPackId.get(`${packId}:${imgcutId ?? bgId}`) || []),
+      ...(imgcutByPackId.get(`${packId}:${imgcutLookupId}`) || []),
       ...(imgcutByPackId.get(`${packId}:${bgId}`) || [])
     ]);
     const missing = [];
@@ -107,7 +114,7 @@ const entries = [...packBgKeys]
       bundleRef: { bundleKey: `background:${packId}:${bgId}`, bundlePath: `public/assets/bundles/background/${packId}/${bgId}.zip`, readMode: 'zip' },
       missing,
       warnings: [],
-      diagnostics: { sourceRawPaths: [...rows.map((r) => r.sourceFile), ...images, ...imgcuts].filter(Boolean).sort() }
+      diagnostics: { sourceRawPaths: [...rows.map((r) => r.sourceFile), ...images, ...imgcuts].filter(Boolean).sort(), imageLookupId: imageId, imgcutLookupId }
     };
   })
   .filter((entry) => Number.isFinite(entry.bgId) && entry.packId)

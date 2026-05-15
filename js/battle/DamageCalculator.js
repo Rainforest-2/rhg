@@ -51,8 +51,11 @@ export class DamageCalculator {
       metal: 1,
       resistant: 1,
       massiveDamage: 1,
+      insaneDamage: 1,
+      strong: 1,
       tough: 1,
       baseDestroyer: 1,
+      metalKiller: 1,
       stage: 1,
       notes: [],
       abilities,
@@ -70,10 +73,11 @@ export class DamageCalculator {
     }
 
     const abilityResult = DamageAbilityResolver.resolve({ attacker, target, targetType, event, baseDamage, context });
-    modifiers.critical = abilityResult.modifiers?.critical ?? 1;
-    modifiers.baseDestroyer = abilityResult.modifiers?.baseDestroyer ?? 1;
-    modifiers.metal = abilityResult.modifiers?.metal ?? 1;
+    for (const key of Object.keys(abilityResult.modifiers || {})) {
+      if (Object.hasOwn(modifiers, key)) modifiers[key] = abilityResult.modifiers[key] ?? 1;
+    }
     modifiers.notes.push(...(abilityResult.notes || []));
+    modifiers.bcuAppliedDetails = abilityResult.appliedDetails || [];
 
     const multiplier =
       modifiers.base *
@@ -83,8 +87,11 @@ export class DamageCalculator {
       modifiers.metal *
       modifiers.resistant *
       modifiers.massiveDamage *
+      modifiers.insaneDamage *
+      modifiers.strong *
       modifiers.tough *
       modifiers.baseDestroyer *
+      modifiers.metalKiller *
       modifiers.stage;
 
     const finalDamage = this.normalizeDamage(baseDamage * multiplier, baseDamage);
@@ -105,13 +112,15 @@ export class DamageCalculator {
       targetType,
       hitIndex: event?.hitIndex ?? null,
       attackEventKey: context?.attackEventKey ?? null,
-      source: 'DamageCalculator.v1-default-preserve-existing',
+      source: 'DamageCalculator.v2-bcu-trait-ability-modifiers',
       abilityDebug: {
         eventRawAbi: event?.rawAbi ?? null,
         eventAbilityMappingStatus: event?.abilityMappingStatus || null,
         eventAbilityEnabledBits: Array.isArray(event?.abilityEnabledBits) ? event.abilityEnabledBits : [],
         attackerAbilityMappingStatus: attacker?.abilityModel?.mappingStatus || attacker?.abilities?.mappingStatus || null,
-        targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null
+        attackerBcuAbi: attacker?.bcuAbi ?? attacker?.rawStats?.bcuAbi ?? null,
+        targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null,
+        targetTraits: this.getTargetTraits(target)
       },
       abilityResolver: abilityResult,
       proc,
@@ -120,12 +129,15 @@ export class DamageCalculator {
       applied: {
         stageMagnification: false,
         baseDestroyer: !!abilityResult.applied?.baseDestroyer,
-        trait: false,
+        trait: !!(abilityResult.applied?.strong || abilityResult.applied?.massiveDamage || abilityResult.applied?.insaneDamage),
         critical: !!abilityResult.applied?.critical,
         metal: !!abilityResult.applied?.metal,
-        resistant: false,
-        massiveDamage: false,
-        tough: false
+        resistant: !!abilityResult.applied?.resistant,
+        massiveDamage: !!abilityResult.applied?.massiveDamage,
+        insaneDamage: !!abilityResult.applied?.insaneDamage,
+        strong: !!abilityResult.applied?.strong,
+        tough: !!abilityResult.applied?.tough,
+        metalKiller: !!abilityResult.applied?.metalKiller
       }
     };
   }

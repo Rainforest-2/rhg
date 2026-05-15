@@ -75,13 +75,14 @@ for (const group of byStageBundle.values()) {
 
 const backgrounds = all ? (background.entries || []) : (background.entries || []).filter((e) => [0, 1, 97, 110].includes(e.bgId)).slice(0, 4);
 for (const entry of backgrounds) {
+  const backgroundStatus = entry.missing?.length ? 'partial' : 'full';
   const files = [
-    { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.missing.length ? 'partial' : 'full', missing: entry.missing }, null, 2)) },
-    { name: 'metadata.json', data: Buffer.from(JSON.stringify(entry.csv || {}, null, 2)) },
-    { name: 'image.png', data: await fileBufferOrNull(entry.selected.image) },
-    { name: 'imgcut.imgcut', data: await fileBufferOrNull(entry.selected.imgcut) }
+    { name: 'bundle.json', required: true, data: Buffer.from(JSON.stringify({ key: entry.key, legacyKey: entry.legacyKey, status: backgroundStatus, missing: entry.missing || [], sourcePack: entry.sourcePack || entry.packId || null, selected: entry.selected, candidates: entry.candidates, diagnostics: entry.diagnostics || {} }, null, 2)) },
+    { name: 'metadata.json', required: true, data: Buffer.from(JSON.stringify(entry.csv || {}, null, 2)) },
+    { name: 'image.png', required: true, data: await fileBufferOrNull(entry.selected?.image) },
+    { name: 'imgcut.imgcut', required: true, data: await fileBufferOrNull(entry.selected?.imgcut) }
   ];
-  await addBundle(entry.bundleRef.bundleKey, 'background', entry.key, entry.bundleRef.bundlePath, entry.missing.length ? 'partial' : 'full', files);
+  await addBundle(entry.bundleRef.bundleKey, 'background', entry.key, entry.bundleRef.bundlePath, backgroundStatus, files);
 }
 
 const enemyCastles = all ? (castle.enemy || []) : (castle.enemy || []).slice(0, 4);

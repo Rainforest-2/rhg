@@ -29,19 +29,29 @@ function parseStageBgId(text) {
   const bgId = Number(metaRow[4]);
   return Number.isFinite(bgId) ? bgId : null;
 }
-function assetsFor(map, packId, primaryId, bgId) {
+function sortedRows(rows) {
+  return [...(rows || [])].sort((a, b) => comparePackId(a.packId, b.packId) || String(a.sourceFile).localeCompare(String(b.sourceFile)));
+}
+function chooseBackgroundRow(rows) {
+  const sorted = sortedRows(rows);
+  return sorted.find((r) => r.packId === BASE_PACK_ID) || sorted[0] || null;
+}
+function assetsForPack(map, packId, primaryId, bgId) {
   return firstUniqueSorted([
     ...(map.get(`${packId}:${primaryId}`) || []),
     ...(primaryId === bgId ? [] : (map.get(`${packId}:${bgId}`) || []))
   ]);
 }
-function assetsForWithBaseFallback(map, packId, primaryId, bgId) {
-  const own = assetsFor(map, packId, primaryId, bgId);
-  if (own.length || packId === BASE_PACK_ID) {
-    return { files: own, sourcePack: own.length ? packId : null, usedFallback: false };
+function chooseAssets(map, preferredPackId, primaryId, bgId) {
+  const tries = firstUniqueSorted([preferredPackId, BASE_PACK_ID, ...[...map.keys()].map((key) => key.split(':')[0])]);
+  const attempts = [];
+  for (const packId of tries) {
+    if (!packId) continue;
+    const files = assetsForPack(map, packId, primaryId, bgId);
+    attempts.push({ packId, count: files.length });
+    if (files.length) return { files, sourcePack: packId, attempts };
   }
-  const base = assetsFor(map, BASE_PACK_ID, primaryId, bgId);
-  return { files: base, sourcePack: base.length ? BASE_PACK_ID : null, usedFallback: base.length > 0 };
+  return { files: [], sourcePack: null, attempts };
 }
 
 function parseBgCsvRows(text, sourceFile) {
@@ -77,10 +87,12 @@ function parseBgCsvRows(text, sourceFile) {
 
 const manifest = await loadManifest();
 const files = manifest.files || [];
-const metadataRowsByPackBg = new Map();
+const metadataRowsByBg = new Map();
 const imageByPackId = new Map();
 const imgcutByPackId = new Map();
+const usedStageBgIds = new Set();
 const usedStagePackBgKeys = new Set();
+const stageReferencesByBg = new Map();
 
 const bgCsvFiles = files
   .filter((f) => /\/org\/(battle\/bg\/bg\.csv|battle\/bg\.csv|data\/bg\.csv)$/i.test(f))
@@ -89,7 +101,7 @@ const bgCsvFiles = files
 for (const file of bgCsvFiles) {
   let text = '';
   try { text = await fs.readFile(file, 'utf8'); } catch { continue; }
-  for (const row of parseBgCsvRows(text, file)) pushMap(metadataRowsByPackBg, `${row.packId}:${row.bgId}`, row);
+  for (const row of parseBgCsvRows(text, file)) pushMap(metadataRowsByBg, String(row.bgId), row);
 }
 
 const stageCsvFiles = files
@@ -101,7 +113,11 @@ for (const file of stageCsvFiles) {
   let text = '';
   try { text = await fs.readFile(file, 'utf8'); } catch { continue; }
   const bgId = parseStageBgId(text);
-  if (packId && Number.isFinite(bgId)) usedStagePackBgKeys.add(`${packId}:${bgId}`);
+  if (packId && Number.isFinite(bgId)) {
+    usedStageBgIds.add(bgId);
+    usedStagePackBgKeys.add(`${packId}:${bgId}`);
+    pushMap(stageReferencesByBg, String(bgId), { packId, stagePath: file });
+  }
 }
 
 for (const file of files) {
@@ -113,63 +129,77 @@ for (const file of files) {
   if (m) pushMap(imgcutByPackId, `${packId}:${Number(m[1])}`, file);
 }
 
-// Semantic background bundles are runtime assets for stages, not an exhaustive
-// catalogue of every bg.csv row in every pack. Building all pack/bg rows creates
-// thousands of unused zips because many packs carry full bg.csv tables.
-const packBgKeys = new Set([...usedStagePackBgKeys].filter((key) => metadataRowsByPackBg.has(key)));
+// BCU Stage uses Identifier.rawParseInt(bgId, Background.class), which points
+// to the default/raw background id, not to a stage-pack-scoped background.
+// Therefore the semantic runtime bundle must be canonical by bgId. Pack-scoped
+// keys are aliases only, kept for callers that still pass the stage pack.
+const bgIds = [...usedStageBgIds]
+  .filter((bgId) => metadataRowsByBg.has(String(bgId)))
+  .sort((a, b) => a - b);
 
-const entries = [...packBgKeys]
-  .map((key) => {
-    const [packId, idText] = key.split(':');
-    const bgId = Number(idText);
-    const rows = metadataRowsByPackBg.get(key) || [];
-    const csv = rows[rows.length - 1] || null;
+const entries = bgIds
+  .map((bgId) => {
+    const rows = metadataRowsByBg.get(String(bgId)) || [];
+    const csv = chooseBackgroundRow(rows);
     const imageReferenceId = nonNegativeOptionalNum(csv?.imageReferenceId);
     const imgcutId = optionalNum(csv?.imgcutId);
     const imageId = imageReferenceId ?? bgId;
     const imgcutLookupId = imgcutId ?? bgId;
-    const imageResult = assetsForWithBaseFallback(imageByPackId, packId, imageId, bgId);
-    const imgcutResult = assetsForWithBaseFallback(imgcutByPackId, packId, imgcutLookupId, bgId);
+    const preferredPackId = csv?.packId || BASE_PACK_ID;
+    const imageResult = chooseAssets(imageByPackId, preferredPackId, imageId, bgId);
+    const imgcutResult = chooseAssets(imgcutByPackId, preferredPackId, imgcutLookupId, bgId);
     const images = imageResult.files;
     const imgcuts = imgcutResult.files;
+    const references = stageReferencesByBg.get(String(bgId)) || [];
+    const referencePacks = firstUniqueSorted(references.map((r) => r.packId));
     const missing = [];
     if (!images[0]) missing.push('image');
     if (!imgcuts[0]) missing.push('imgcut');
-    const assetFallbacks = [];
-    if (imageResult.usedFallback) assetFallbacks.push({ kind: 'image', fromPack: packId, toPack: BASE_PACK_ID, lookupId: imageId });
-    if (imgcutResult.usedFallback) assetFallbacks.push({ kind: 'imgcut', fromPack: packId, toPack: BASE_PACK_ID, lookupId: imgcutLookupId });
     return {
-      key: `background:${packId}:${bgId}`,
-      legacyKey: `background:${bgId}`,
+      key: `background:${bgId}`,
       bgId,
       bgId3: pad3(bgId),
-      packId,
-      sourcePack: packId,
-      metadataSources: rows.map((r) => r.sourceFile),
-      stageReferenceCount: [...usedStagePackBgKeys].filter((x) => x === key).length || 1,
+      sourcePack: preferredPackId,
+      referencePacks,
+      metadataSources: sortedRows(rows).map((r) => r.sourceFile),
+      stageReferenceCount: references.length,
       csv,
       selected: { image: images[0] || null, imgcut: imgcuts[0] || null },
       selectedSourcePacks: { image: imageResult.sourcePack, imgcut: imgcutResult.sourcePack },
       candidates: { images, imgcuts },
-      bundleRef: { bundleKey: `background:${packId}:${bgId}`, bundlePath: `public/assets/bundles/background/${packId}/${bgId}.zip`, readMode: 'zip' },
+      bundleRef: { bundleKey: `background:${bgId}`, bundlePath: `public/assets/bundles/background/${bgId}.zip`, readMode: 'zip' },
       missing,
-      warnings: assetFallbacks.length ? ['used-base-pack-background-assets'] : [],
-      diagnostics: { sourceRawPaths: [...rows.map((r) => r.sourceFile), ...images, ...imgcuts].filter(Boolean).sort(), imageLookupId: imageId, imgcutLookupId, assetFallbacks }
+      warnings: [],
+      diagnostics: {
+        sourceRawPaths: [...sortedRows(rows).map((r) => r.sourceFile), ...images, ...imgcuts].filter(Boolean).sort(),
+        imageLookupId: imageId,
+        imgcutLookupId,
+        imageSearchAttempts: imageResult.attempts,
+        imgcutSearchAttempts: imgcutResult.attempts
+      }
     };
   })
-  .filter((entry) => Number.isFinite(entry.bgId) && entry.packId)
-  .sort((a, b) => comparePackId(a.packId, b.packId) || a.bgId - b.bgId);
+  .filter((entry) => Number.isFinite(entry.bgId))
+  .sort((a, b) => a.bgId - b.bgId);
 
 const byKey = Object.fromEntries(entries.map((e) => [e.key, e]));
-const legacyByBg = new Map();
 for (const entry of entries) {
-  const prev = legacyByBg.get(entry.bgId);
-  if (!prev || entry.packId === BASE_PACK_ID || (prev.packId !== BASE_PACK_ID && comparePackId(entry.packId, prev.packId) < 0)) {
-    legacyByBg.set(entry.bgId, entry);
-  }
+  byKey[`background:${entry.bgId}`] = entry;
 }
-for (const entry of legacyByBg.values()) byKey[entry.legacyKey] = entry;
+for (const key of usedStagePackBgKeys) {
+  const bgId = Number(key.split(':')[1]);
+  const entry = byKey[`background:${bgId}`];
+  if (entry) byKey[`background:${key}`] = { ...entry, aliasKey: `background:${key}`, canonicalKey: entry.key };
+}
 
-const index = { schemaVersion: 2, generatedAt: FIXED_DATE, keyMode: 'stage-referenced-pack-scoped-backgrounds', stageReferencedPairs: usedStagePackBgKeys.size, entries, byKey };
+const index = {
+  schemaVersion: 3,
+  generatedAt: FIXED_DATE,
+  keyMode: 'bcu-raw-background-id-canonical',
+  stageReferencedBgIds: usedStageBgIds.size,
+  stageReferencedPackPairs: usedStagePackBgKeys.size,
+  entries,
+  byKey
+};
 await writeJson('public/assets/generated/bcu-background-index.json', index);
-console.log(`wrote bcu-background-index entries=${entries.length} stageRefs=${usedStagePackBgKeys.size} keyMode=${index.keyMode}`);
+console.log(`wrote bcu-background-index entries=${entries.length} bgRefs=${usedStageBgIds.size} stagePackAliases=${usedStagePackBgKeys.size} keyMode=${index.keyMode}`);

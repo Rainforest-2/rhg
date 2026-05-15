@@ -14,14 +14,23 @@ function explicitImageReferenceId(cols) {
   const n = Number(cols[15]);
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
+function parseCsvRows(text) {
+  return String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)
+    .map((line) => String(line || '').split('//')[0].trim())
+    .filter(Boolean)
+    .map((line) => line.split(',').map((x) => x.trim()));
+}
+function parseStageBgId(text) {
+  const rows = parseCsvRows(text);
+  const metaRow = rows[1] || [];
+  const bgId = Number(metaRow[4]);
+  return Number.isFinite(bgId) ? bgId : null;
+}
 
 function parseBgCsvRows(text, sourceFile) {
   const packId = packIdFromPath(sourceFile);
   const rows = [];
-  for (const line of String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)) {
-    const clean = line.replace(/\/\/.*$/, '').trim();
-    if (!clean) continue;
-    const cols = clean.split(',').map((x) => x.trim());
+  for (const cols of parseCsvRows(text)) {
     const bgId = Number(cols[0]);
     if (!Number.isFinite(bgId)) continue;
     let imageReferenceId = explicitImageReferenceId(cols);
@@ -54,6 +63,7 @@ const files = manifest.files || [];
 const metadataRowsByPackBg = new Map();
 const imageByPackId = new Map();
 const imgcutByPackId = new Map();
+const usedStagePackBgKeys = new Set();
 
 const bgCsvFiles = files
   .filter((f) => /\/org\/(battle\/bg\/bg\.csv|battle\/bg\.csv|data\/bg\.csv)$/i.test(f))
@@ -65,6 +75,18 @@ for (const file of bgCsvFiles) {
   for (const row of parseBgCsvRows(text, file)) pushMap(metadataRowsByPackBg, `${row.packId}:${row.bgId}`, row);
 }
 
+const stageCsvFiles = files
+  .filter((f) => /^public\/assets\/bcu\/[^/]+\/org\/stage\/.+\.csv$/i.test(f))
+  .sort((a, b) => comparePackId(packIdFromPath(a), packIdFromPath(b)) || a.localeCompare(b));
+
+for (const file of stageCsvFiles) {
+  const packId = packIdFromPath(file);
+  let text = '';
+  try { text = await fs.readFile(file, 'utf8'); } catch { continue; }
+  const bgId = parseStageBgId(text);
+  if (packId && Number.isFinite(bgId)) usedStagePackBgKeys.add(`${packId}:${bgId}`);
+}
+
 for (const file of files) {
   const packId = packIdFromPath(file);
   if (!packId) continue;
@@ -74,10 +96,10 @@ for (const file of files) {
   if (m) pushMap(imgcutByPackId, `${packId}:${Number(m[1])}`, file);
 }
 
-// Only bg.csv rows are semantic backgrounds. Image/imgcut files are candidates,
-// not standalone background entries. Including them here creates thousands of
-// phantom background bundles.
-const packBgKeys = new Set(metadataRowsByPackBg.keys());
+// Semantic background bundles are runtime assets for stages, not an exhaustive
+// catalogue of every bg.csv row in every pack. Building all pack/bg rows creates
+// thousands of unused zips because many packs carry full bg.csv tables.
+const packBgKeys = new Set([...usedStagePackBgKeys].filter((key) => metadataRowsByPackBg.has(key)));
 
 const entries = [...packBgKeys]
   .map((key) => {
@@ -108,6 +130,7 @@ const entries = [...packBgKeys]
       packId,
       sourcePack: packId,
       metadataSources: rows.map((r) => r.sourceFile),
+      stageReferenceCount: [...usedStagePackBgKeys].filter((x) => x === key).length || 1,
       csv,
       selected: { image: images[0] || null, imgcut: imgcuts[0] || null },
       candidates: { images, imgcuts },
@@ -130,6 +153,6 @@ for (const entry of entries) {
 }
 for (const entry of legacyByBg.values()) byKey[entry.legacyKey] = entry;
 
-const index = { schemaVersion: 2, generatedAt: FIXED_DATE, keyMode: 'pack-scoped-backgrounds', entries, byKey };
+const index = { schemaVersion: 2, generatedAt: FIXED_DATE, keyMode: 'stage-referenced-pack-scoped-backgrounds', stageReferencedPairs: usedStagePackBgKeys.size, entries, byKey };
 await writeJson('public/assets/generated/bcu-background-index.json', index);
-console.log(`wrote bcu-background-index entries=${entries.length} keyMode=pack-scoped-backgrounds`);
+console.log(`wrote bcu-background-index entries=${entries.length} stageRefs=${usedStagePackBgKeys.size} keyMode=${index.keyMode}`);

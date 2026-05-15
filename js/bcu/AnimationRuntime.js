@@ -55,9 +55,11 @@ export class AnimationRuntime {
       frame: animatorState?.frame ?? actor?.animator?.frame ?? null,
       speed: animatorState?.speed ?? actor?.animator?.speed ?? null,
       loop: animatorState?.loop ?? actor?.animator?.loop ?? null,
+      rotate: animatorState?.rotate ?? actor?.animator?.rotate ?? null,
       playing: animatorState?.playing ?? actor?.animator?.playing ?? null,
       maxFrame: animatorState?.maxFrame ?? actor?.animator?.anim?.maxFrame ?? 0,
       frameCount: animatorState?.frameCount ?? null,
+      needsSetupReset: animatorState?.needsSetupReset ?? null,
       modelPartCount: modelState?.partCount ?? actor?.model?.parts?.length ?? 0,
       hasModel: !!actor?.model,
       hasAnimator: !!actor?.animator,
@@ -82,7 +84,9 @@ export class AnimationRuntime {
 
   static applyActorModel(actor) {
     if (!actor?.model || !actor?.animator) return { appliedTrackCount: 0, failedTrackCount: 0, trackCount: 0, source: 'AnimationRuntime.applyActorModel' };
-    if (typeof actor.model.reset === 'function') actor.model.reset();
+    // BCU MaAnim.update() does not reset every part every frame. It resets on setup/frame 0,
+    // then applies only the track changes due for the current frame. Resetting here every frame
+    // erases step-held values such as walking part-image frames and makes units slide.
     const results = typeof actor.animator.apply === 'function' ? actor.animator.apply(actor.model) : [];
     const arr = Array.isArray(results) ? results : [];
     const appliedTrackCount = arr.filter((r) => r?.applied !== false).length;
@@ -91,7 +95,8 @@ export class AnimationRuntime {
       source: 'AnimationRuntime.applyActorModel',
       trackCount: arr.length,
       appliedTrackCount,
-      failedTrackCount
+      failedTrackCount,
+      animatorResetApplied: actor.animator?.lastApplyDebug?.resetApplied === true
     };
     return { appliedTrackCount, failedTrackCount, trackCount: arr.length, results: arr, source: 'AnimationRuntime.applyActorModel' };
   }

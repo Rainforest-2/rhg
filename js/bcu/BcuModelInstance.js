@@ -4,11 +4,16 @@ export class BcuModelInstance {
     this.baseScale = model.baseScale || 1000;
     this.baseAngle = model.baseAngle || 3600;
     this.baseOpacity = model.baseOpacity || 255;
-    this.parts = model.parts.map((p) => ({
-      ...p,
-      base: { ...p, hf: 1, vf: 1, gsca: this.baseScale, extendX: 0, extendY: 0, extType: 0 },
-      current: { ...p, hf: 1, vf: 1, gsca: this.baseScale, extendX: 0, extendY: 0, extType: 0 }
-    }));
+    const partCount = model.parts.length;
+    this.parts = model.parts.map((p) => {
+      const parent = Number.isFinite(Number(p.parent)) && Number(p.parent) >= partCount ? 0 : p.parent;
+      const normalized = { ...p, parent };
+      return {
+        ...normalized,
+        base: { ...normalized, hf: 1, vf: 1, gsca: this.baseScale, extendX: 0, extendY: 0, extType: 0 },
+        current: { ...normalized, hf: 1, vf: 1, gsca: this.baseScale, extendX: 0, extendY: 0, extType: 0 }
+      };
+    });
   }
   identityMatrix() { return [1, 0, 0, 1, 0, 0]; }
   multiplyMatrix(a, b) { return [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]]; }

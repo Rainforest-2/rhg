@@ -96,15 +96,21 @@ export class BcuAnimator {
     this.lastApplyDebug = null;
     this.lastValuesDebug = null;
   }
+  getMaxFrame() {
+    const n = Number(this.anim?.maxFrame);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+  getFrameCount() {
+    return Math.max(1, this.getMaxFrame() + 1);
+  }
   restart() { this.frame = 0; }
   step(v) { this.frame = Math.max(0, this.frame + v); }
   setSpeed(s) { this.speed = s; }
   setLoop(loop) { this.loop = loop !== false; }
   tick(dt) {
     if (!this.playing) return;
-    const max = Math.max(1, this.anim?.maxFrame || 1);
     const next = this.frame + (dt * BASE_FPS * this.speed) / 1000;
-    this.frame = this.loop ? (next % max) : Math.min(max - 0.0001, next);
+    this.frame = this.loop ? (next % this.getFrameCount()) : Math.min(this.getMaxFrame(), next);
   }
   getState() {
     return {
@@ -114,6 +120,7 @@ export class BcuAnimator {
       loop: this.loop,
       playing: this.playing,
       maxFrame: this.anim?.maxFrame || 0,
+      frameCount: this.getFrameCount(),
       trackCount: this.anim?.tracks?.length || 0,
       lastApplyDebug: this.lastApplyDebug || null,
       lastValuesDebug: this.lastValuesDebug || null

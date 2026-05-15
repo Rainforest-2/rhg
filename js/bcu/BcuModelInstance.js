@@ -19,13 +19,30 @@ export class BcuModelInstance {
   getState() { return { source: 'BcuModelInstance', partCount: this.parts?.length || 0, baseScale: this.baseScale, baseAngle: this.baseAngle, baseOpacity: this.baseOpacity, lastAppliedTrackDebug: this.lastAppliedTrackDebug || null, lastDrawListDebug: this.lastDrawListDebug || null }; }
   getPartCurrent(part) { return part.current || part.base || part; }
   getPartParent(part) { return this.parts.find((x) => x.index === (this.getPartCurrent(part).parent)); }
+  isParentValid(partIndex, parentIndex, visited = new Set()) {
+    if (!Number.isInteger(parentIndex) || parentIndex < 0 || parentIndex >= this.parts.length) return false;
+    if (parentIndex === partIndex) return false;
+    if (parentIndex === 0) return true;
+    if (visited.has(parentIndex)) return false;
+    visited.add(parentIndex);
+    const parent = this.parts[parentIndex];
+    if (!parent) return false;
+    const nextParent = Math.trunc(this.getPartCurrent(parent).parent ?? 0);
+    if (nextParent === parentIndex) return false;
+    if (nextParent <= 0) return true;
+    return this.isParentValid(partIndex, nextParent, visited);
+  }
+  resolveBcuParent(partIndex, value) {
+    const parentIndex = Math.trunc(value);
+    return this.isParentValid(partIndex, parentIndex) ? parentIndex : 0;
+  }
   applyTrack(partId, prop, v, modification = null) {
     const p = this.parts[partId];
     if (!p) { this.lastAppliedTrackDebug = { partId, prop, modification, applied: false, value: v }; return { applied: false }; }
     const b = p.base, c = p.current;
     const bs = this.baseScale, bo = this.baseOpacity;
     switch (modification) {
-      case 0: c.parent = Math.trunc(v); break;
+      case 0: c.parent = this.resolveBcuParent(partId, v); break;
       case 1: c.imgcutIndex = Math.trunc(v); break;
       case 2: c.partIndex = Math.trunc(v); break;
       case 3: c.zOrder = Math.trunc(v); break;
@@ -68,7 +85,14 @@ export class BcuModelInstance {
     const key = `${part.index}:${parentMode}`; if (cache.has(key)) return cache.get(key);
     const base = { x: (part.scaleX ?? this.baseScale) / this.baseScale, y: (part.scaleY ?? this.baseScale) / this.baseScale };
     const conf = this.model?.confs?.[0]?.values;
-    if (parentMode) { const parent = this.getPartParent(part); if (!parent) { cache.set(key, base); return base; } const ps = this.getPartBaseSize(parent, true, cache); const sx = Math.sign(parent.scaleX || 1) || 1; const sy = Math.sign(parent.scaleY || 1) || 1; const r = { x: ps.x * sx, y: ps.y * sy }; cache.set(key, r); return r; }
+    if (parentMode) {
+      const selfSign = { x: Math.sign(part.scaleX || 1) || 1, y: Math.sign(part.scaleY || 1) || 1 };
+      const parent = this.getPartParent(part);
+      if (!parent) { cache.set(key, selfSign); return selfSign; }
+      const ps = this.getPartBaseSize(parent, true, cache);
+      const r = { x: ps.x * selfSign.x, y: ps.y * selfSign.y };
+      cache.set(key, r); return r;
+    }
     if (!conf) { cache.set(key, base); return base; }
     const target = Math.trunc(conf[0] ?? -1); let r = base;
     if (target === -1 || target === part.index) r = base; else { const t = this.parts.find((p) => p.index === target); const pb = t ? this.getPartBaseSize(t, true, cache) : { x: 1, y: 1 }; r = { x: pb.x * base.x, y: pb.y * base.y }; }

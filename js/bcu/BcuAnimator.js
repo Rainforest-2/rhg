@@ -20,9 +20,16 @@ const MOD_MAP = {
   53: 'globalScale'
 };
 const BASE_FPS = 30;
-const STEP_MODIFICATIONS = new Set([0, 1, 13, 14]);
+const EPSILON = 1e-6;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const i = (v) => Math.trunc(v);
+const isClose = (a, b) => Math.abs(a - b) <= EPSILON;
+const snapFrame = (v) => { const r = Math.round(v); return isClose(v, r) ? r : v; };
+const positiveModulo = (v, m) => {
+  if (!Number.isFinite(m) || m === 0) return 0;
+  const r = v % m;
+  return r < 0 ? r + m : r;
+};
 function ease3(track, idx, frame) {
   const k = track.keyframes || [];
   let low = idx;
@@ -63,28 +70,63 @@ function easeVal(e, p, t) {
   }
   return t;
 }
-function valueAtBcu(track, frame) {
+function getTrackFrame(track, globalFrame, animMaxFrame, rotate = false) {
+  const loop = Number.isFinite(track?.loop) ? Math.trunc(track.loop) : 0;
+  const first = Number.isFinite(track?.firstFrame) ? track.firstFrame : (track?.keyframes?.[0]?.frame ?? 0);
+  const last = Number.isFinite(track?.lastFrame) ? track.lastFrame : (track?.keyframes?.[track.keyframes.length - 1]?.frame ?? 0);
+  const off = Number.isFinite(track?.off) ? track.off : 0;
+  const lmax = last - first;
+  const prot = rotate || loop === -1;
+  let frame;
+  if (prot) {
+    const mf = loop === -1 ? last : (Number.isFinite(animMaxFrame) ? animMaxFrame + 1 : last);
+    frame = mf === 0 ? 0 : positiveModulo(globalFrame + off, mf);
+  } else {
+    frame = globalFrame + off;
+  }
+  if (loop > 0 && lmax !== 0) {
+    if (frame > first + loop * lmax) return { frame: snapFrame(frame), ensureLast: true, first, last, loop, off };
+    if (frame <= first) {
+      // BCU leaves the frame as-is.
+    } else if (frame < first + loop * lmax) {
+      frame = first + positiveModulo(frame - first, lmax);
+    } else {
+      frame = last;
+    }
+  }
+  return { frame: snapFrame(frame), ensureLast: false, first, last, loop, off };
+}
+function valueAtBcu(track, globalFrame, animMaxFrame, rotate = false) {
   const k = track.keyframes || [];
-  if (!k.length) return 0;
-  if (frame <= k[0].frame) return i(k[0].value);
+  if (!k.length) return { applied: false, reason: 'empty-keyframes' };
+  const tf = getTrackFrame(track, globalFrame, animMaxFrame, rotate);
+  const frame = tf.frame;
+  const last = k[k.length - 1];
+  if (tf.ensureLast) return { applied: true, value: i(last.value), localFrame: frame, frameInfo: tf, reason: 'ensure-last' };
   for (let idx = 0; idx < k.length; idx += 1) {
     const a = k[idx];
-    if (frame === a.frame) return i(a.value);
+    if (isClose(frame, a.frame)) return { applied: true, value: i(a.value), localFrame: frame, frameInfo: tf, reason: 'exact' };
     const b = k[idx + 1];
     if (!b) break;
     if (frame > a.frame && frame < b.frame) {
-      if (STEP_MODIFICATIONS.has(track.modification) || a.easing === 1) return i(a.value);
+      if (track.modification <= 1) {
+        if (track.modification === 0) return { applied: true, value: i(a.value), localFrame: frame, frameInfo: tf, reason: 'parent-step' };
+        return { applied: false, localFrame: frame, frameInfo: tf, reason: 'no-between-update' };
+      }
       const span = b.frame - a.frame;
-      if (span <= 0) return i(a.value);
+      if (span <= 0) return { applied: true, value: i(a.value), localFrame: frame, frameInfo: tf, reason: 'zero-span' };
       const realFrame = span === 1 ? Math.trunc(frame) : frame;
-      if (a.easing === 3) return ease3(track, idx, realFrame);
-      const ti = easeVal(a.easing, a.parameter || 0, clamp((realFrame - a.frame) / span, 0, 1));
+      let ti = clamp((realFrame - a.frame) / span, 0, 1);
+      if (a.easing === 1 || track.modification === 13 || track.modification === 14) ti = 0;
+      else if (a.easing === 3) return { applied: true, value: ease3(track, idx, realFrame), localFrame: frame, frameInfo: tf, reason: 'ease3' };
+      else ti = easeVal(a.easing, a.parameter || 0, ti);
       const raw = (b.value - a.value) * ti + a.value;
-      if (track.modification === 2) return (b.value - a.value) < 0 ? Math.ceil(raw) : i(raw);
-      return i(raw);
+      const value = track.modification === 2 && (b.value - a.value) < 0 ? Math.ceil(raw) : i(raw);
+      return { applied: true, value, localFrame: frame, frameInfo: tf, reason: 'interpolated' };
     }
   }
-  return i(k[k.length - 1].value);
+  if (frame > last.frame) return { applied: true, value: i(last.value), localFrame: frame, frameInfo: tf, reason: 'after-last' };
+  return { applied: false, localFrame: frame, frameInfo: tf, reason: 'before-first' };
 }
 export class BcuAnimator {
   constructor(anim) {
@@ -93,6 +135,8 @@ export class BcuAnimator {
     this.playing = true;
     this.speed = 1;
     this.loop = true;
+    this.rotate = false;
+    this.needsSetupReset = true;
     this.lastApplyDebug = null;
     this.lastValuesDebug = null;
   }
@@ -103,14 +147,17 @@ export class BcuAnimator {
   getFrameCount() {
     return Math.max(1, this.getMaxFrame() + 1);
   }
-  restart() { this.frame = 0; }
-  step(v) { this.frame = Math.max(0, this.frame + v); }
+  restart() { this.frame = 0; this.needsSetupReset = true; }
+  step(v) { this.frame = Math.max(0, snapFrame(this.frame + v)); }
   setSpeed(s) { this.speed = s; }
   setLoop(loop) { this.loop = loop !== false; }
+  setRotate(rotate) { this.rotate = rotate === true; }
   tick(dt) {
     if (!this.playing) return;
-    const next = this.frame + (dt * BASE_FPS * this.speed) / 1000;
-    this.frame = this.loop ? (next % this.getFrameCount()) : Math.min(this.getMaxFrame(), next);
+    const rawDelta = (dt * BASE_FPS * this.speed) / 1000;
+    const roundedDelta = Math.round(rawDelta);
+    const delta = isClose(rawDelta, roundedDelta) ? roundedDelta : rawDelta;
+    this.frame = Math.max(0, snapFrame(this.frame + delta));
   }
   getState() {
     return {
@@ -118,10 +165,12 @@ export class BcuAnimator {
       frame: this.frame,
       speed: this.speed,
       loop: this.loop,
+      rotate: this.rotate,
       playing: this.playing,
       maxFrame: this.anim?.maxFrame || 0,
       frameCount: this.getFrameCount(),
       trackCount: this.anim?.tracks?.length || 0,
+      needsSetupReset: this.needsSetupReset,
       lastApplyDebug: this.lastApplyDebug || null,
       lastValuesDebug: this.lastValuesDebug || null
     };
@@ -129,19 +178,25 @@ export class BcuAnimator {
   getValuesAtFrame(frame = this.frame) {
     const values = [];
     const skipped = [];
+    const animMaxFrame = this.getMaxFrame();
     for (const t of this.anim?.tracks || []) {
       const prop = MOD_MAP[t.modification];
       if (!prop || !t.keyframes?.length) {
         skipped.push({ partId: t.partId, modification: t.modification, reason: prop ? 'empty-keyframes' : 'unknown-modification' });
         continue;
       }
+      const resolved = valueAtBcu(t, frame, animMaxFrame, this.rotate);
+      if (!resolved.applied) {
+        skipped.push({ partId: t.partId, modification: t.modification, prop, reason: resolved.reason, localFrame: resolved.localFrame });
+        continue;
+      }
       values.push({
         partId: t.partId,
         modification: t.modification,
         prop,
-        value: valueAtBcu(t, frame),
+        value: resolved.value,
         track: t,
-        rawInterpolationDebug: { frame, easing: t.keyframes?.[0]?.easing }
+        rawInterpolationDebug: { frame, localFrame: resolved.localFrame, reason: resolved.reason, loop: resolved.frameInfo?.loop, off: resolved.frameInfo?.off }
       });
     }
     this.lastValuesDebug = {
@@ -150,16 +205,19 @@ export class BcuAnimator {
       skippedCount: skipped.length,
       trackCount: this.anim?.tracks?.length || 0,
       skippedExamples: skipped.slice(0, 5),
-      examples: values.slice(0, 5).map((v) => ({ partId: v.partId, modification: v.modification, prop: v.prop, value: v.value, easing: v.rawInterpolationDebug?.easing ?? null }))
+      examples: values.slice(0, 5).map((v) => ({ partId: v.partId, modification: v.modification, prop: v.prop, value: v.value, localFrame: v.rawInterpolationDebug?.localFrame ?? null, reason: v.rawInterpolationDebug?.reason ?? null }))
     };
     return values;
   }
   apply(model) {
     if (!model) return [];
+    const resetApplied = !!this.needsSetupReset;
+    if (resetApplied && typeof model.reset === 'function') model.reset();
+    this.needsSetupReset = false;
     const values = this.getValuesAtFrame(this.frame);
     const results = values.map((v) => model.applyTrack(v.partId, v.prop, v.value, v.modification));
     const appliedCount = results.filter((r) => r?.applied !== false).length;
-    this.lastApplyDebug = { frame: this.frame, trackCount: values.length, appliedCount, failedCount: Math.max(0, values.length - appliedCount), examples: results.slice(0, 5) };
+    this.lastApplyDebug = { frame: this.frame, trackCount: values.length, appliedCount, failedCount: Math.max(0, values.length - appliedCount), resetApplied, examples: results.slice(0, 5) };
     return results;
   }
 }

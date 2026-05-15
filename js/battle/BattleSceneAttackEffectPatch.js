@@ -2,13 +2,15 @@ import { BattleScene } from './BattleScene.js';
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
+import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
+import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v4');
-const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v3');
-const BCU_HIT_SOURCE = 'bcu-effanim-hit-explosion-000_a';
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v5');
+const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v4');
+const BCU_HIT_SOURCE = 'bcu-effanim-attack-smoke';
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BASE_SMOKE_Y_OFFSET = 100;
-const DEFAULT_HIT_SCALE = 2.0;
+const BCU_SMOKE_SCALE = 1.2;
 
 function finiteNumber(...values) {
   for (const value of values) {
@@ -19,24 +21,38 @@ function finiteNumber(...values) {
 }
 
 function describeAsset(asset) {
+  const smokeDefinitions = Object.fromEntries(Object.entries(asset?.smokeDefinitions || {}).map(([key, def]) => [key, {
+    source: def?.source || null,
+    maxFrame: def?.maxFrame ?? null,
+    frameCount: def?.frameCount ?? null
+  }]));
   return {
     loaded: !!asset?.loaded,
     image: !!asset?.image,
     partCount: asset?.parts?.length || 0,
     partNames: (asset?.parts || []).slice(0, 5).map((p) => p?.name || null),
+    smokeDefinitions,
     reason: asset?.reason || null
   };
 }
 
-function getEffectLayer(attacker, target, targetType) {
+function getBaseSmokeLayer(attacker, target, targetType) {
   if (targetType === 'base') return finiteNumber(attacker?.currentLayer, target?.currentLayer, 0) ?? 0;
   return finiteNumber(target?.currentLayer, attacker?.currentLayer, 0) ?? 0;
 }
 
-function getEffectWorldX(scene, attacker, target, targetType) {
+function getBcuSmokeLayer(attacker, target, targetType) {
+  // BCU Entity.damage(): smokeLayer = (int) (currentLayer + 3 - random * -6)
+  return Math.floor(getBaseSmokeLayer(attacker, target, targetType) + 3 + Math.random() * 6);
+}
+
+function getBcuSmokeWorldX(scene, attacker, target, targetType) {
   const hit = typeof scene?.getHitEffectPosition === 'function' ? scene.getHitEffectPosition(attacker, target, targetType) : null;
-  if (targetType === 'base') return finiteNumber(hit?.x, target?.frontX, target?.x, attacker?.x, 0) ?? 0;
-  return finiteNumber(hit?.x, target?.x, attacker?.x, 0) ?? 0;
+  const baseX = targetType === 'base'
+    ? finiteNumber(target?.frontX, target?.x, hit?.x, attacker?.x, 0)
+    : finiteNumber(target?.x, hit?.x, attacker?.x, 0);
+  // BCU Entity.damage(): smokeX = (int) (pos + 25 - random * -50)
+  return Math.floor((baseX ?? 0) + 25 + Math.random() * 50);
 }
 
 function getEffectYOffset(targetType) {
@@ -49,7 +65,19 @@ function getFrameDurationMs() {
 }
 
 function isHitEffectReady(asset) {
-  return !!(asset?.loaded && asset?.image && Array.isArray(asset?.parts) && asset.parts.length > 0);
+  const def = asset?.smokeDefinitions?.attack;
+  return !!(asset?.loaded && asset?.image && asset?.imgcut?.parts?.length && def?.model && def?.anim);
+}
+
+function createBcuSmokeRuntime(asset, smokeKind = 'attack') {
+  const def = asset?.smokeDefinitions?.[smokeKind] || asset?.smokeDefinitions?.attack;
+  if (!def?.model || !def?.anim) return null;
+  const model = new BcuModelInstance(def.model);
+  const animator = new BcuAnimator(def.anim);
+  animator.setLoop?.(false);
+  animator.restart?.();
+  const frameCount = Math.max(1, (Number(def.anim?.maxFrame) || 0) + 1);
+  return { model, animator, frameCount, maxFrame: Number(def.anim?.maxFrame) || 0, source: def.source || smokeKind };
 }
 
 export function installBattleSceneAttackEffectPatch() {
@@ -99,10 +127,10 @@ export function installBattleSceneAttackEffectPatch() {
     return this._hitEffectPromise;
   };
 
-  // BattleScene.queueAttackDamage already calls this.spawnHitEffect() after accepted
-  // actor/base damage. Do not patch queueAttackDamage again; doing so risks double
-  // spawn and can alter damage timing. This method is now intentionally side-effect
-  // free when the BCU asset is missing, rather than queuing recursive async retries.
+  // BCU normal hit smoke is not the simple 5-frame imgcut-only explosion. It is
+  // EffAnim A_ATK_SMOKE = attack_smoke.mamodel + attack_smoke.maanim using 000_a.
+  // Entity.damage() sets smoke, smokeLayer and smokeX, and BattleBox draws it with
+  // psiz * 1.2 at layer-specific Y with +75/+100 vertical offset.
   proto.spawnHitEffect = function spawnHitEffectBcu(attacker, target, targetType) {
     const asset = this.hitEffectAsset;
     if (!isHitEffectReady(asset)) {
@@ -129,35 +157,55 @@ export function installBattleSceneAttackEffectPatch() {
       return null;
     }
 
-    const layer = getEffectLayer(attacker, target, targetType);
-    const worldX = getEffectWorldX(this, attacker, target, targetType);
+    const smokeRuntime = createBcuSmokeRuntime(asset, 'attack');
+    if (!smokeRuntime) {
+      this.lastHitEffectSpawnDebug = {
+        source: 'BattleSceneAttackEffectPatch.spawnHitEffect',
+        spawned: false,
+        reason: 'smoke-runtime-missing',
+        loadDebug: this.lastHitEffectLoadDebug || describeAsset(asset)
+      };
+      globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
+      return null;
+    }
+
+    const layer = getBcuSmokeLayer(attacker, target, targetType);
+    const worldX = getBcuSmokeWorldX(this, attacker, target, targetType);
     const bcuSmokeYOffset = getEffectYOffset(targetType);
     const frameDurationMs = getFrameDurationMs();
-    const durationMs = Math.max(frameDurationMs * 2, frameDurationMs * asset.parts.length);
+    const durationMs = smokeRuntime.frameCount * frameDurationMs;
     const effect = EffectRuntime.createHitEffect({
       id: `bcu-hit-${this.logicFrame || 0}-${this.effects.length}-${Math.random().toString(36).slice(2)}`,
       x: worldX,
       y: 0,
       asset,
-      scale: DEFAULT_HIT_SCALE,
+      imgcut: asset.imgcut,
+      model: smokeRuntime.model,
+      animator: smokeRuntime.animator,
+      scale: BCU_SMOKE_SCALE,
       source: BCU_HIT_SOURCE,
       createdAtMs: this.timeMs,
       layer,
       bcuSmokeYOffset,
       debug: {
         source: BCU_HIT_SOURCE,
-        bcuReference: 'BCU BattleBox.drawEntity smokeLayer + 75/100 y offset, 000_a hit explosion parts',
+        bcuReference: 'BCU Entity.damage A_ATK_SMOKE + BattleBox smoke draw psiz*1.2',
         targetType,
         attacker: attacker?.instanceId || attacker?.label || null,
         target: target?.instanceId || target?.label || target?.side || null,
         worldX,
         layer,
         bcuSmokeYOffset,
-        partCount: asset.parts.length
+        frameCount: smokeRuntime.frameCount,
+        maxFrame: smokeRuntime.maxFrame,
+        smokeDefinitionSource: smokeRuntime.source
       }
     });
     effect.durationMs = durationMs;
     effect.frameDurationMs = frameDurationMs;
+    // Scene ticks effects after damage and before rendering. Start one frame behind
+    // so the first visible render is BCU frame 0, not frame 1.
+    effect.elapsedMs = -frameDurationMs;
     this.effects.push(effect);
     this.lastHitEffectSpawnDebug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id };
     globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
@@ -169,22 +217,58 @@ export function installBattleSceneAttackEffectPatch() {
       worldX: Math.round(worldX),
       layer,
       bcuSmokeYOffset,
-      partCount: asset.parts.length,
+      frameCount: smokeRuntime.frameCount,
       source: BCU_HIT_SOURCE
     });
     return effect;
   };
 }
 
+function drawBcuModelEffect(renderer, ctx, effect, x, y, scale) {
+  if (!effect?.model || !effect?.animator || !effect?.imgcut?.parts || !effect?.image) return false;
+  if (effect.model.reset && effect.animator?.needsSetupReset) effect.model.reset();
+  effect.animator.apply?.(effect.model);
+  const drawList = effect.model.getBattleDrawList?.() || [];
+  let drawn = 0;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  for (const p of drawList) {
+    const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
+    if (!Number.isInteger(partIndex) || partIndex < 0) continue;
+    const opacity = Number.isFinite(p.opacity) ? p.opacity : 1;
+    if (opacity <= 0) continue;
+    const part = effect.imgcut.parts[partIndex];
+    if (!part || part.w <= 0 || part.h <= 0) continue;
+    const m = Array.isArray(p.matrix) && p.matrix.length === 6 ? p.matrix : null;
+    if (!m) continue;
+    ctx.save();
+    ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+    ctx.globalAlpha = opacity;
+    const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
+    const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
+    ctx.drawImage(effect.image, part.x, part.y, part.w, part.h, -pivotX, -pivotY, part.w, part.h);
+    ctx.restore();
+    drawn += 1;
+  }
+  ctx.restore();
+  effect.lastModelDrawDebug = {
+    source: 'BattleSceneAttackEffectPatch.drawBcuModelEffect',
+    drawListCount: drawList.length,
+    drawn,
+    animatorFrame: effect.animator.frame,
+    animatorMaxFrame: effect.animator.anim?.maxFrame ?? null
+  };
+  return drawn > 0;
+}
+
 function drawOneBcuEffect(renderer, ctx, effect) {
-  if (!effect?.image || !effect?.currentPart) return false;
+  if (!effect?.image) return false;
   const scene = renderer._scene;
-  const part = effect.currentPart;
-  if (!(part.w > 0) || !(part.h > 0)) return false;
   const cameraScale = typeof renderer.getCameraScale === 'function' ? renderer.getCameraScale(scene) : 1;
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
-  const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : 1);
+  const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
   const x = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
   const layer = finiteNumber(effect.currentLayer, effect.bcuRenderLayer, 0) ?? 0;
   const baseY = typeof renderer.getBcuLayerScreenY === 'function'
@@ -192,9 +276,20 @@ function drawOneBcuEffect(renderer, ctx, effect) {
     : (effect.worldY ?? effect.y ?? 0);
   const yOffset = finiteNumber(effect.bcuSmokeYOffset, ACTOR_SMOKE_Y_OFFSET) ?? ACTOR_SMOKE_Y_OFFSET;
   const y = baseY - yOffset * cameraScale;
-  const drawW = part.w * scale;
-  const drawH = part.h * scale;
-  ctx.drawImage(effect.image, part.x, part.y, part.w, part.h, x - drawW * 0.5, y - drawH * 0.5, drawW, drawH);
+
+  let drawn = false;
+  if (effect.model && effect.animator) {
+    drawn = drawBcuModelEffect(renderer, ctx, effect, x, y, scale);
+  } else if (effect.currentPart) {
+    const part = effect.currentPart;
+    if (part.w > 0 && part.h > 0) {
+      const drawW = part.w * scale;
+      const drawH = part.h * scale;
+      ctx.drawImage(effect.image, part.x, part.y, part.w, part.h, x - drawW * 0.5, y - drawH * 0.5, drawW, drawH);
+      drawn = true;
+    }
+  }
+
   effect.lastRenderDebug = {
     source: 'BattleSceneAttackEffectPatch.drawEffects',
     x,
@@ -204,9 +299,11 @@ function drawOneBcuEffect(renderer, ctx, effect) {
     baseY,
     yOffset,
     scale,
-    partName: part.name || null
+    mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback',
+    partName: effect.currentPart?.name || null,
+    modelDraw: effect.lastModelDrawDebug || null
   };
-  return true;
+  return drawn;
 }
 
 export function installBattleSceneRendererAttackEffectPatch() {
@@ -243,6 +340,7 @@ export function installBattleSceneRendererAttackEffectPatch() {
         id: effect.id,
         source: effect.source,
         layer: effect.currentLayer,
+        mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback',
         part: effect.currentPart?.name || null,
         debug: effect.lastRenderDebug || null
       }))

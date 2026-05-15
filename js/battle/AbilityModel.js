@@ -7,17 +7,17 @@ export const ABILITY_STATUS = Object.freeze({
 });
 
 const ABILITY_KEYS = [
-  'critical','savageBlow','baseDestroyer','wave','miniWave','surge','miniSurge','freeze','slow','weaken','knockbackProc','warp','curse','toxic','barrierBreaker','shieldPierce','zombieKiller','soulstrike','resistant','massiveDamage','insaneDamage','tough','insanelyTough','metal','traitTarget'
+  'critical','savageBlow','baseDestroyer','wave','miniWave','surge','miniSurge','freeze','slow','weaken','knockbackProc','warp','curse','toxic','barrierBreaker','shieldPierce','zombieKiller','soulstrike','resistant','massiveDamage','insaneDamage','tough','insanelyTough','metal','traitTarget','strong','targetOnly','witchKiller','evaKiller','baronKiller','sageSlayer','metalKiller'
 ];
 
 export const ABILITY_CATALOG = Object.freeze(Object.fromEntries(ABILITY_KEYS.map((key) => {
   const base = { key, category: 'other', implemented: false, partial: false, resolver: null, notes: 'not-implemented' };
-  if (['critical', 'baseDestroyer', 'metal'].includes(key)) {
-    return [key, { ...base, category: 'damage', partial: true, resolver: 'DamageAbilityResolver', notes: 'debug opt-in only' }];
+  if (['critical', 'baseDestroyer', 'metal', 'strong', 'massiveDamage', 'insaneDamage', 'resistant', 'insanelyTough', 'metalKiller'].includes(key)) {
+    return [key, { ...base, category: 'damage', implemented: true, partial: false, resolver: 'DamageCalculator/BcuDamageResolver', notes: 'BCU CSV mapped' }];
   }
   const category = ['freeze','slow','weaken','knockbackProc','warp','curse','toxic','wave','miniWave','surge','miniSurge','barrierBreaker','shieldPierce','zombieKiller','soulstrike'].includes(key)
     ? 'proc'
-    : (['resistant','massiveDamage','insaneDamage','tough','insanelyTough','traitTarget'].includes(key) ? 'trait' : 'damage');
+    : (['resistant','massiveDamage','insaneDamage','tough','insanelyTough','traitTarget','targetOnly'].includes(key) ? 'trait' : 'damage');
   return [key, { ...base, category }];
 })));
 
@@ -65,10 +65,38 @@ export class AbilityModel {
     return { list: [], flags: {}, source: 'none', mappingStatus: 'unmapped' };
   }
 
-  static buildStatsAbilityModel({ stats = null, rawValues = null, kind = 'unknown' } = {}) {
+  static buildStatsAbilityModel({ stats = null, rawValues = null, kind = 'unknown', bcuCombatModel = null } = {}) {
     const attackAbilities = this.buildAttackAbilities(Array.isArray(stats?.attackHits) ? stats.attackHits : []);
-    const traits = this.normalizeTraits(stats?.traits || stats?.traitFlags || null);
-    return { version: 'AbilityModel.v2-status-catalog', kind, source: 'bcu-raw-stats', mappingStatus: ABILITY_STATUS.RAW_ONLY_UNVERIFIED, traits, attackAbilities, rawValuesLength: Array.isArray(rawValues) ? rawValues.length : null, hasRawAbi: attackAbilities.some((a) => a.rawAbi > 0), notes: ['semantic-ability-effects-disabled', 'raw-abi-preserved-for-future-proc-resolver'] };
+    const traits = bcuCombatModel?.traits
+      ? { ...bcuCombatModel.traits, source: bcuCombatModel.source, mappingStatus: 'bcu-csv-mapped' }
+      : this.normalizeTraits(stats?.traits || stats?.traitFlags || null);
+    const semantic = {
+      ...this.createEmptySemantic(),
+      ...(bcuCombatModel?.ability?.flags || {}),
+      critical: (bcuCombatModel?.proc?.critical?.prob || 0) > 0,
+      baseDestroyer: (bcuCombatModel?.proc?.baseDestroyer?.mult || 0) > 0,
+      metalKiller: (bcuCombatModel?.proc?.metalKiller?.mult || 0) > 0,
+      metal: !!bcuCombatModel?.traits?.flags?.metal
+    };
+    for (const ability of attackAbilities) {
+      ability.semantic = { ...ability.semantic, ...semantic };
+      ability.mappingStatus = bcuCombatModel ? ABILITY_STATUS.SEMANTIC_MAPPED : ability.mappingStatus;
+      ability.notes = bcuCombatModel ? ['bcu-combat-model-semantic-mapped'] : ability.notes;
+    }
+    return {
+      version: 'AbilityModel.v3-bcu-combat-model',
+      kind,
+      source: bcuCombatModel ? 'bcu-combat-model' : 'bcu-raw-stats',
+      mappingStatus: bcuCombatModel ? ABILITY_STATUS.SEMANTIC_MAPPED : ABILITY_STATUS.RAW_ONLY_UNVERIFIED,
+      traits,
+      attackAbilities,
+      rawValuesLength: Array.isArray(rawValues) ? rawValues.length : null,
+      hasRawAbi: attackAbilities.some((a) => a.rawAbi > 0),
+      bcuAbi: bcuCombatModel?.ability?.abi ?? null,
+      bcuAbilityFlags: bcuCombatModel?.ability?.flags || {},
+      bcuProc: bcuCombatModel?.proc || null,
+      notes: bcuCombatModel ? ['BCU DataUnit/DataEnemy trait and ability columns mapped'] : ['semantic-ability-effects-disabled', 'raw-abi-preserved-for-future-proc-resolver']
+    };
   }
 
   static getAbilityCatalog() { return ABILITY_CATALOG; }
@@ -88,7 +116,7 @@ export class AbilityModel {
       const cat = ABILITY_CATALOG[key];
       if (cat?.implemented) implemented.push(key); else if (cat?.partial) partial.push(key); else notImplemented.push(key);
     }
-    return { version: 'AbilityModel.describe.v1', mappingStatus: model?.mappingStatus || ABILITY_STATUS.NONE, hasRawAbi: !!model?.hasRawAbi, implemented, partial, notImplemented, rawOnlyUnverified, notes: rawOnlyUnverified.length > 0 ? ['raw-abi-present-semantic-mapping-not-yet-verified'] : [] };
+    return { version: 'AbilityModel.describe.v2-bcu', mappingStatus: model?.mappingStatus || ABILITY_STATUS.NONE, hasRawAbi: !!model?.hasRawAbi, implemented, partial, notImplemented, rawOnlyUnverified, notes: rawOnlyUnverified.length > 0 ? ['raw-abi-present-semantic-mapping-not-yet-verified'] : [] };
   }
 
   static getHitAbility(model, hitIndex = 0) { const list = Array.isArray(model?.attackAbilities) ? model.attackAbilities : []; return list.find((a) => a.hitIndex === hitIndex) || list[hitIndex] || null; }

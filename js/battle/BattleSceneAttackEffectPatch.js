@@ -3,8 +3,8 @@ import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v3');
-const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v2');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v4');
+const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v3');
 const BCU_HIT_SOURCE = 'bcu-effanim-hit-explosion-000_a';
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BASE_SMOKE_Y_OFFSET = 100;
@@ -16,6 +16,16 @@ function finiteNumber(...values) {
     if (Number.isFinite(n)) return n;
   }
   return null;
+}
+
+function describeAsset(asset) {
+  return {
+    loaded: !!asset?.loaded,
+    image: !!asset?.image,
+    partCount: asset?.parts?.length || 0,
+    partNames: (asset?.parts || []).slice(0, 5).map((p) => p?.name || null),
+    reason: asset?.reason || null
+  };
 }
 
 function getEffectLayer(attacker, target, targetType) {
@@ -38,61 +48,14 @@ function getFrameDurationMs() {
   return 1000 / Math.max(1, fps);
 }
 
-function describeAsset(asset) {
-  return {
-    loaded: !!asset?.loaded,
-    image: !!asset?.image,
-    partCount: asset?.parts?.length || 0,
-    partNames: (asset?.parts || []).slice(0, 5).map((p) => p?.name || null),
-    reason: asset?.reason || null
-  };
-}
-
-function shouldUseHitEffectForDamageResult(result) {
-  if (!result) return false;
-  if (result.accepted === false) return false;
-  if (result.skipped === true) return false;
-  return true;
-}
-
-function patchDamagePath(proto) {
-  const original = proto.queueAttackDamage;
-  if (typeof original !== 'function') return;
-  proto.queueAttackDamage = function queueAttackDamageWithBcuHitEffect(attacker, target, targetType, event, meta = {}) {
-    const beforeCount = this.effects?.length || 0;
-    const result = original.call(this, attacker, target, targetType, event, meta);
-    const afterCount = this.effects?.length || 0;
-
-    // Some BattleScene versions already call spawnHitEffect inside queueAttackDamage.
-    // If the original path already spawned one, do not duplicate. If it did not, spawn
-    // here from the accepted damage result.
-    if (afterCount === beforeCount && shouldUseHitEffectForDamageResult(result)) {
-      this.spawnHitEffect?.(attacker, target, targetType);
-    }
-
-    this.lastBcuHitEffectDamagePathDebug = {
-      source: 'BattleSceneAttackEffectPatch.queueAttackDamageWithBcuHitEffect',
-      frame: this.logicFrame,
-      attacker: attacker?.instanceId || attacker?.label || null,
-      target: target?.instanceId || target?.label || target?.id || target?.side || null,
-      targetType,
-      accepted: !!result?.accepted,
-      beforeCount,
-      afterCount: this.effects?.length || 0,
-      originalSpawned: afterCount > beforeCount,
-      fallbackSpawned: (this.effects?.length || 0) > afterCount
-    };
-    globalThis.__BATTLE_HIT_EFFECT_DAMAGE_PATH__ = this.lastBcuHitEffectDamagePathDebug;
-    return result;
-  };
+function isHitEffectReady(asset) {
+  return !!(asset?.loaded && asset?.image && Array.isArray(asset?.parts) && asset.parts.length > 0);
 }
 
 export function installBattleSceneAttackEffectPatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
-
-  patchDamagePath(proto);
 
   const originalInit = proto.init;
   if (typeof originalInit === 'function') {
@@ -136,23 +99,20 @@ export function installBattleSceneAttackEffectPatch() {
     return this._hitEffectPromise;
   };
 
+  // BattleScene.queueAttackDamage already calls this.spawnHitEffect() after accepted
+  // actor/base damage. Do not patch queueAttackDamage again; doing so risks double
+  // spawn and can alter damage timing. This method is now intentionally side-effect
+  // free when the BCU asset is missing, rather than queuing recursive async retries.
   proto.spawnHitEffect = function spawnHitEffectBcu(attacker, target, targetType) {
     const asset = this.hitEffectAsset;
-    if (!asset?.image || !Array.isArray(asset?.parts) || asset.parts.length === 0) {
-      const payload = { attacker, target, targetType, timeMs: this.timeMs, logicFrame: this.logicFrame };
-      this.pendingBcuHitEffects = this.pendingBcuHitEffects || [];
-      this.pendingBcuHitEffects.push(payload);
-      this.ensureHitEffectLoading?.()?.then(() => {
-        const pending = this.pendingBcuHitEffects || [];
-        this.pendingBcuHitEffects = [];
-        for (const p of pending.slice(-8)) this.spawnHitEffect?.(p.attacker, p.target, p.targetType);
-      });
+    if (!isHitEffectReady(asset)) {
+      if (!this._hitEffectPromise) this.ensureHitEffectLoading?.();
       this.lastHitEffectSpawnDebug = {
         source: 'BattleSceneAttackEffectPatch.spawnHitEffect',
         spawned: false,
-        queued: true,
-        reason: 'asset-not-ready',
-        loadDebug: this.lastHitEffectLoadDebug || null
+        reason: 'asset-not-ready-or-load-failed',
+        queued: false,
+        loadDebug: this.lastHitEffectLoadDebug || describeAsset(asset)
       };
       globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
       return null;
@@ -162,7 +122,6 @@ export function installBattleSceneAttackEffectPatch() {
       this.lastHitEffectSpawnDebug = {
         source: 'BattleSceneAttackEffectPatch.spawnHitEffect',
         spawned: false,
-        queued: false,
         reason: 'max-effects',
         effects: this.effects.length
       };
@@ -200,7 +159,7 @@ export function installBattleSceneAttackEffectPatch() {
     effect.durationMs = durationMs;
     effect.frameDurationMs = frameDurationMs;
     this.effects.push(effect);
-    this.lastHitEffectSpawnDebug = { ...effect.effectRuntimeDebug, spawned: true, queued: false, effectId: effect.id };
+    this.lastHitEffectSpawnDebug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id };
     globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
     this.pushEvent?.({
       type: 'bcuHitEffectSpawned',
@@ -266,14 +225,20 @@ export function installBattleSceneRendererAttackEffectPatch() {
         return (a.createdAtMs || 0) - (b.createdAtMs || 0);
       });
     let drawn = 0;
+    const errors = [];
     for (const effect of active) {
-      if (drawOneBcuEffect(this, ctx, effect)) drawn += 1;
+      try {
+        if (drawOneBcuEffect(this, ctx, effect)) drawn += 1;
+      } catch (error) {
+        errors.push({ id: effect?.id || null, message: String(error?.message || error) });
+      }
     }
     globalThis.__BATTLE_EFFECT_RENDER_DEBUG__ = {
       source: 'BattleSceneAttackEffectPatch.drawEffects',
       input: list.length,
       active: active.length,
       drawn,
+      errors,
       examples: active.slice(0, 5).map((effect) => ({
         id: effect.id,
         source: effect.source,

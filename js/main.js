@@ -28,6 +28,7 @@ async function boot() {
     await import('./battle/BattleSceneStageRuntimeWiring.js');
     await import('./battle/BattleSceneRendererOrderPatch.js');
     await import('./battle/BattleSceneUnitLayerPatch.js');
+    await import('./battle/BattleSceneAttackEffectPatch.js');
     const { BcuBootLoader, setBcuAssetDatabase } = await import('./bcu/BcuBootLoader.js');
     const db = await BcuBootLoader.loadGame({
       assetRoot: './public/assets',

@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import { FIXED_DATE, comparePackId, loadManifest, writeJson } from './bcu-semantic-utils.mjs';
 
+const BASE_PACK_ID = '000001';
+
 function packIdFromPath(file) {
   return String(file || '').match(/^public\/assets\/bcu\/([^/]+)\//)?.[1] || null;
 }
@@ -26,6 +28,20 @@ function parseStageBgId(text) {
   const metaRow = rows[1] || [];
   const bgId = Number(metaRow[4]);
   return Number.isFinite(bgId) ? bgId : null;
+}
+function assetsFor(map, packId, primaryId, bgId) {
+  return firstUniqueSorted([
+    ...(map.get(`${packId}:${primaryId}`) || []),
+    ...(primaryId === bgId ? [] : (map.get(`${packId}:${bgId}`) || []))
+  ]);
+}
+function assetsForWithBaseFallback(map, packId, primaryId, bgId) {
+  const own = assetsFor(map, packId, primaryId, bgId);
+  if (own.length || packId === BASE_PACK_ID) {
+    return { files: own, sourcePack: own.length ? packId : null, usedFallback: false };
+  }
+  const base = assetsFor(map, BASE_PACK_ID, primaryId, bgId);
+  return { files: base, sourcePack: base.length ? BASE_PACK_ID : null, usedFallback: base.length > 0 };
 }
 
 function parseBgCsvRows(text, sourceFile) {
@@ -112,17 +128,16 @@ const entries = [...packBgKeys]
     const imgcutId = optionalNum(csv?.imgcutId);
     const imageId = imageReferenceId ?? bgId;
     const imgcutLookupId = imgcutId ?? bgId;
-    const images = firstUniqueSorted([
-      ...(imageByPackId.get(`${packId}:${imageId}`) || []),
-      ...(imageByPackId.get(`${packId}:${bgId}`) || [])
-    ]);
-    const imgcuts = firstUniqueSorted([
-      ...(imgcutByPackId.get(`${packId}:${imgcutLookupId}`) || []),
-      ...(imgcutByPackId.get(`${packId}:${bgId}`) || [])
-    ]);
+    const imageResult = assetsForWithBaseFallback(imageByPackId, packId, imageId, bgId);
+    const imgcutResult = assetsForWithBaseFallback(imgcutByPackId, packId, imgcutLookupId, bgId);
+    const images = imageResult.files;
+    const imgcuts = imgcutResult.files;
     const missing = [];
     if (!images[0]) missing.push('image');
     if (!imgcuts[0]) missing.push('imgcut');
+    const assetFallbacks = [];
+    if (imageResult.usedFallback) assetFallbacks.push({ kind: 'image', fromPack: packId, toPack: BASE_PACK_ID, lookupId: imageId });
+    if (imgcutResult.usedFallback) assetFallbacks.push({ kind: 'imgcut', fromPack: packId, toPack: BASE_PACK_ID, lookupId: imgcutLookupId });
     return {
       key: `background:${packId}:${bgId}`,
       legacyKey: `background:${bgId}`,
@@ -134,11 +149,12 @@ const entries = [...packBgKeys]
       stageReferenceCount: [...usedStagePackBgKeys].filter((x) => x === key).length || 1,
       csv,
       selected: { image: images[0] || null, imgcut: imgcuts[0] || null },
+      selectedSourcePacks: { image: imageResult.sourcePack, imgcut: imgcutResult.sourcePack },
       candidates: { images, imgcuts },
       bundleRef: { bundleKey: `background:${packId}:${bgId}`, bundlePath: `public/assets/bundles/background/${packId}/${bgId}.zip`, readMode: 'zip' },
       missing,
-      warnings: [],
-      diagnostics: { sourceRawPaths: [...rows.map((r) => r.sourceFile), ...images, ...imgcuts].filter(Boolean).sort(), imageLookupId: imageId, imgcutLookupId }
+      warnings: assetFallbacks.length ? ['used-base-pack-background-assets'] : [],
+      diagnostics: { sourceRawPaths: [...rows.map((r) => r.sourceFile), ...images, ...imgcuts].filter(Boolean).sort(), imageLookupId: imageId, imgcutLookupId, assetFallbacks }
     };
   })
   .filter((entry) => Number.isFinite(entry.bgId) && entry.packId)
@@ -148,7 +164,7 @@ const byKey = Object.fromEntries(entries.map((e) => [e.key, e]));
 const legacyByBg = new Map();
 for (const entry of entries) {
   const prev = legacyByBg.get(entry.bgId);
-  if (!prev || entry.packId === '000001' || (prev.packId !== '000001' && comparePackId(entry.packId, prev.packId) < 0)) {
+  if (!prev || entry.packId === BASE_PACK_ID || (prev.packId !== BASE_PACK_ID && comparePackId(entry.packId, prev.packId) < 0)) {
     legacyByBg.set(entry.bgId, entry);
   }
 }

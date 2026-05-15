@@ -6,13 +6,14 @@ function packIdFromPath(file) {
 }
 function pad3(v) { return String(Math.max(0, Number(v) || 0)).padStart(3, '0'); }
 function num(cols, i, fallback = null) { const n = Number(cols[i]); return Number.isFinite(n) ? n : fallback; }
+function optionalNum(value) { if (value == null || value === '') return null; const n = Number(value); return Number.isFinite(n) ? n : null; }
+function nonNegativeOptionalNum(value) { const n = optionalNum(value); return n != null && n >= 0 ? n : null; }
 function rgb(cols, start) { return { r: num(cols, start, 0), g: num(cols, start + 1, 0), b: num(cols, start + 2, 0) }; }
 function pushMap(map, key, value) { if (!map.has(key)) map.set(key, []); map.get(key).push(value); }
 function firstUniqueSorted(values) { return [...new Set((values || []).filter(Boolean))].sort(); }
 function explicitImageReferenceId(cols) {
   if (!Array.isArray(cols) || cols.length <= 15 || cols[15] === '') return null;
-  const n = Number(cols[15]);
-  return Number.isFinite(n) && n >= 0 ? n : null;
+  return nonNegativeOptionalNum(cols[15]);
 }
 function parseCsvRows(text) {
   return String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)
@@ -107,8 +108,8 @@ const entries = [...packBgKeys]
     const bgId = Number(idText);
     const rows = metadataRowsByPackBg.get(key) || [];
     const csv = rows[rows.length - 1] || null;
-    const imageReferenceId = Number.isFinite(Number(csv?.imageReferenceId)) && Number(csv.imageReferenceId) >= 0 ? Number(csv.imageReferenceId) : null;
-    const imgcutId = Number.isFinite(Number(csv?.imgcutId)) ? Number(csv.imgcutId) : null;
+    const imageReferenceId = nonNegativeOptionalNum(csv?.imageReferenceId);
+    const imgcutId = optionalNum(csv?.imgcutId);
     const imageId = imageReferenceId ?? bgId;
     const imgcutLookupId = imgcutId ?? bgId;
     const images = firstUniqueSorted([

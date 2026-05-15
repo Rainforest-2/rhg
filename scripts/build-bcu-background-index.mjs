@@ -53,6 +53,21 @@ function chooseAssets(map, preferredPackId, primaryId, bgId) {
   }
   return { files: [], sourcePack: null, attempts };
 }
+function imgcutListForPack(map, packId) {
+  return firstUniqueSorted(map.get(packId) || []);
+}
+function chooseImgcutByBcuIndex(imgcutListByPack, preferredPackId, imgcutIndex) {
+  const tries = firstUniqueSorted([preferredPackId, BASE_PACK_ID, ...imgcutListByPack.keys()]);
+  const attempts = [];
+  for (const packId of tries) {
+    if (!packId) continue;
+    const list = imgcutListForPack(imgcutListByPack, packId);
+    const file = Number.isInteger(imgcutIndex) && imgcutIndex >= 0 ? list[imgcutIndex] : null;
+    attempts.push({ packId, listLength: list.length, index: imgcutIndex, file: file || null });
+    if (file) return { files: [file], sourcePack: packId, attempts };
+  }
+  return { files: [], sourcePack: null, attempts };
+}
 
 function parseBgCsvRows(text, sourceFile) {
   const packId = packIdFromPath(sourceFile);
@@ -90,6 +105,7 @@ const files = manifest.files || [];
 const metadataRowsByBg = new Map();
 const imageByPackId = new Map();
 const imgcutByPackId = new Map();
+const imgcutListByPack = new Map();
 const usedStageBgIds = new Set();
 const usedStagePackBgKeys = new Set();
 const stageReferencesByBg = new Map();
@@ -126,13 +142,16 @@ for (const file of files) {
   let m = file.match(/\/org\/img\/bg\/bg(\d+)\.png$/i);
   if (m) pushMap(imageByPackId, `${packId}:${Number(m[1])}`, file);
   m = file.match(/\/org\/battle\/bg\/bg(\d+)\.imgcut$/i);
-  if (m) pushMap(imgcutByPackId, `${packId}:${Number(m[1])}`, file);
+  if (m) {
+    pushMap(imgcutByPackId, `${packId}:${Number(m[1])}`, file);
+    pushMap(imgcutListByPack, packId, file);
+  }
 }
 
 // BCU Stage uses Identifier.rawParseInt(bgId, Background.class), which points
 // to the default/raw background id, not to a stage-pack-scoped background.
-// Therefore the semantic runtime bundle must be canonical by bgId. Pack-scoped
-// keys are aliases only, kept for callers that still pass the stage pack.
+// Background.ic is also an index into CommonStatic.getBCAssets().iclist, which
+// is populated from the ordered bg*.imgcut list, not a bgXX filename number.
 const bgIds = [...usedStageBgIds]
   .filter((bgId) => metadataRowsByBg.has(String(bgId)))
   .sort((a, b) => a - b);
@@ -147,7 +166,7 @@ const entries = bgIds
     const imgcutLookupId = imgcutId ?? bgId;
     const preferredPackId = csv?.packId || BASE_PACK_ID;
     const imageResult = chooseAssets(imageByPackId, preferredPackId, imageId, bgId);
-    const imgcutResult = chooseAssets(imgcutByPackId, preferredPackId, imgcutLookupId, bgId);
+    const imgcutResult = chooseImgcutByBcuIndex(imgcutListByPack, preferredPackId, imgcutLookupId);
     const images = imageResult.files;
     const imgcuts = imgcutResult.files;
     const references = stageReferencesByBg.get(String(bgId)) || [];
@@ -193,13 +212,14 @@ for (const key of usedStagePackBgKeys) {
 }
 
 const index = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   generatedAt: FIXED_DATE,
   keyMode: 'bcu-raw-background-id-canonical',
+  imgcutMode: 'bcu-iclist-index',
   stageReferencedBgIds: usedStageBgIds.size,
   stageReferencedPackPairs: usedStagePackBgKeys.size,
   entries,
   byKey
 };
 await writeJson('public/assets/generated/bcu-background-index.json', index);
-console.log(`wrote bcu-background-index entries=${entries.length} bgRefs=${usedStageBgIds.size} stagePackAliases=${usedStagePackBgKeys.size} keyMode=${index.keyMode}`);
+console.log(`wrote bcu-background-index entries=${entries.length} bgRefs=${usedStageBgIds.size} stagePackAliases=${usedStagePackBgKeys.size} keyMode=${index.keyMode} imgcutMode=${index.imgcutMode}`);

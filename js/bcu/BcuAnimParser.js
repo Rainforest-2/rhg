@@ -1,5 +1,21 @@
 import { normalizeBcuText } from './BcuText.js';
 
+function validateTrackFrames(track) {
+  const keyframes = track.keyframes || [];
+  let off = 0;
+  if (keyframes.length && (keyframes[0].frame - off < 0 || track.loop !== 1)) {
+    const doff = -keyframes[0].frame;
+    for (const key of keyframes) key.frame += doff;
+    off += doff;
+  }
+  const firstFrame = keyframes.length ? keyframes[0].frame : 0;
+  const lastFrame = keyframes.length ? keyframes[keyframes.length - 1].frame : 0;
+  let effectiveMax = 0;
+  if (track.loop !== -1) effectiveMax = track.loop > 1 ? firstFrame + (lastFrame - firstFrame) * track.loop - off : lastFrame - off;
+  else effectiveMax = lastFrame - Math.min(off, 0);
+  return { ...track, keyframes, off, firstFrame, lastFrame, effectiveMax };
+}
+
 export function parseAnim(text) {
   const lines = normalizeBcuText(text).split('\n');
   if (!['[modelanim:animation]', '[modelanim:animation2]', '[maanim]'].includes(lines[0]?.trim())) throw new Error('Invalid animation header');
@@ -9,7 +25,7 @@ export function parseAnim(text) {
   const warnings = [];
   const tracks = [];
   const modificationHistogram = {};
-  let maxFrame = 0;
+  let maxFrame = 1;
   let cursor = 3;
 
   const readTrack = () => {
@@ -17,7 +33,8 @@ export function parseAnim(text) {
     if (!rawHeader) return null;
     const hc = rawHeader.split(',');
     const partId = parseInt(hc[0] || '0', 10) || 0;
-    const modification = parseInt(hc[1] || '0', 10) || 0;
+    const rawModification = parseInt(hc[1] || '0', 10) || 0;
+    const modification = rawModification === 8 && version < 0 ? 53 : rawModification;
     const loop = parseInt(hc[2] || '0', 10) || 0;
     const unknownA = parseInt(hc[3] || '0', 10) || 0;
     const unknownB = parseInt(hc[4] || '0', 10) || 0;
@@ -33,11 +50,12 @@ export function parseAnim(text) {
       const easing = +cc[2] || 0;
       const parameter = +cc[3] || 0;
       keyframes.push({ frame, value, easing, parameter });
-      if (frame > maxFrame) maxFrame = frame;
     }
 
+    const track = validateTrackFrames({ partId, modification, rawModification, loop, unknownA, unknownB, name, keyframes, rawHeader });
     modificationHistogram[String(modification)] = (modificationHistogram[String(modification)] || 0) + 1;
-    return { partId, modification, loop, unknownA, unknownB, name, keyframes, rawHeader };
+    if (track.effectiveMax > maxFrame) maxFrame = track.effectiveMax;
+    return track;
   };
 
   if (declaredTrackCount > 0) {

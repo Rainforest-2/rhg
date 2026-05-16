@@ -1,4 +1,7 @@
 import { BcuImgCut } from './BcuImgCut.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+
+const BCU_BATTLE_UI_BUNDLE_REF = Object.freeze({ bundleKey: 'ui:battle', bundlePath: 'public/assets/bundles/ui/battle-ui.zip' });
 
 const loadImage = (src) => new Promise((res, rej) => {
   const i = new Image();
@@ -32,6 +35,22 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
 
 const samePart = (a, b) => a && b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 
+function getSemanticProvider() {
+  try { return getBcuAssetDatabase()?.semanticProvider || null; } catch { return null; }
+}
+
+async function loadBundleImage(provider, internalPath) {
+  const url = await provider.createObjectUrl(BCU_BATTLE_UI_BUNDLE_REF, internalPath, 'image/png');
+  try {
+    const image = await loadImage(url);
+    image.bcuObjectUrl = url;
+    return image;
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
+
 export class ProductionCardSkin {
   constructor({ spriteText, log = console } = {}) {
     this.spriteText = spriteText;
@@ -40,20 +59,30 @@ export class ProductionCardSkin {
     this.imgcut = null;
     this.cardPart = BCU_UNI_CARD_PART;
     this.warnedFallbackKeys = new Set();
+    this.source = null;
   }
 
   async preload() {
-    if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') return;
-    const tasks = [
-      BcuImgCut.load(BCU_UNI_IMGCUT_PATH).then((cut) => {
-        this.imgcut = cut;
-        const part = cut.getByIndex(0);
-        if (!samePart(part, BCU_UNI_CARD_PART)) this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
-        else this.cardPart = part;
-      }).catch((e) => this.log.warn?.('[ProductionCardSkin] uni.imgcut load failed', e)),
-      loadImage(BCU_SLOT_FRAME_PATH).then((img) => { this.slotFrame = img; }).catch((e) => this.log.warn?.('[ProductionCardSkin] slot frame load failed', BCU_SLOT_FRAME_PATH, e))
-    ];
-    await Promise.all(tasks);
+    try {
+      const provider = getSemanticProvider();
+      if (provider) {
+        this.slotFrame = await loadBundleImage(provider, 'uni.png');
+        this.imgcut = BcuImgCut.parse(await provider.readTextByBundleRef(BCU_BATTLE_UI_BUNDLE_REF, 'uni.imgcut'));
+        this.source = 'semantic-bundle:ui:battle';
+      } else {
+        if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') throw new Error('semantic provider missing for ui:battle');
+        this.imgcut = await BcuImgCut.load(BCU_UNI_IMGCUT_PATH);
+        this.slotFrame = await loadImage(BCU_SLOT_FRAME_PATH);
+        this.source = 'raw-diagnostics:public/assets/bcu/page';
+      }
+      const part = this.imgcut.getByIndex(0);
+      if (!samePart(part, BCU_UNI_CARD_PART)) this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
+      else this.cardPart = part;
+      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = { ready: true, source: this.source, cardPart: this.cardPart, hasSlotFrame: !!this.slotFrame };
+    } catch (error) {
+      this.log.warn?.('[ProductionCardSkin] BCU production card skin unavailable', error);
+      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = { ready: false, source: this.source, reason: error?.message || String(error) };
+    }
   }
 
   drawCard(ctx, { unitDef, icon, cost, cooldownProgressRatio = 1, affordable = true, cooldownReady = true, interactive = true, isBack = false, isEmpty = false, iconLoadFailed = false }) {
@@ -66,7 +95,7 @@ export class ProductionCardSkin {
     }
 
     if (unitDef.faction === 'cat') this.drawCatCard(ctx, icon, state);
-    else this.drawDogCard(ctx, icon);
+    else this.drawDogCard(ctx, icon, state);
 
     if (!cooldownReady) {
       this.drawCooldown(ctx, cooldownProgressRatio, state);
@@ -97,7 +126,7 @@ export class ProductionCardSkin {
     const key = state.unitDef?.slotId || state.unitDef?.assetDef?.semanticKey || state.unitDef?.uiIcon?.semanticKey || 'unknown-cat-card';
     if (this.warnedFallbackKeys.has(key)) return;
     this.warnedFallbackKeys.add(key);
-    this.log.warn?.('[ProductionCardSkin] cat card image unavailable; drawing slot frame fallback', key, reason);
+    this.log.warn?.('[ProductionCardSkin] cat card image unavailable; drawing BCU uni frame fallback', key, reason);
   }
 
   drawCatCard(ctx, icon, state) {
@@ -107,9 +136,15 @@ export class ProductionCardSkin {
     this.drawSlotFrame(ctx);
   }
 
-  drawDogCard(ctx, icon) {
-    this.drawDogLikeCatCardFrame(ctx);
+  drawDogCard(ctx, icon, state) {
+    this.drawSlotFrame(ctx);
     this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect);
+    if (!state?.iconLoadFailed) return;
+    const key = state.unitDef?.slotId || state.unitDef?.assetDef?.semanticKey || state.unitDef?.uiIcon?.semanticKey || 'unknown-dog-card';
+    if (!this.warnedFallbackKeys.has(key)) {
+      this.warnedFallbackKeys.add(key);
+      this.log.warn?.('[ProductionCardSkin] dog card uses BCU uni frame but icon unavailable', key);
+    }
   }
 
   drawEmptyCard(ctx) { this.drawSlotFrame(ctx); }
@@ -117,31 +152,6 @@ export class ProductionCardSkin {
   drawSlotFrame(ctx) {
     if (this.drawBcuCardPart(ctx, this.slotFrame)) return;
     this.drawManualFrameFallback(ctx);
-  }
-
-  drawDogLikeCatCardFrame(ctx) {
-    const { w, h } = PRODUCTION_CARD_CANVAS;
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#fff7ed');
-    g.addColorStop(0.55, '#fed7aa');
-    g.addColorStop(1, '#fdba74');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = '#fff7ed';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(2, 2, w - 4, h - 4);
-    ctx.strokeStyle = '#9a3412';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(4, 4, w - 8, h - 8);
-    ctx.fillStyle = 'rgba(255,255,255,.42)';
-    ctx.fillRect(7, 7, w - 14, 51);
-    ctx.strokeStyle = 'rgba(154,52,18,.18)';
-    ctx.strokeRect(7, 7, w - 14, 51);
-    ctx.fillStyle = 'rgba(255,247,237,.88)';
-    ctx.beginPath();
-    ctx.roundRect?.(9, 63, w - 18, 17, 5);
-    if (typeof ctx.roundRect === 'function') ctx.fill();
-    else ctx.fillRect(9, 63, w - 18, 17);
   }
 
   drawManualFrameFallback(ctx) {
@@ -184,9 +194,9 @@ export class ProductionCardSkin {
     const disabled = !state.interactive || !state.affordable || state.isBack;
     const value = Number(cost || 0);
     if (this.spriteText?.drawCostRight) return this.spriteText.drawCostRight(ctx, value, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY, { disabled, scale: 0.9 });
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#fff7ed';
-    ctx.fillStyle = disabled ? '#64748b' : '#92400e';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#000';
+    ctx.fillStyle = disabled ? '#999' : '#ffd400';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'right';
     const text = `${Math.floor(value)}円`;

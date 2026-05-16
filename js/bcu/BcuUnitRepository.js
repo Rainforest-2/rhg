@@ -11,12 +11,30 @@ function getRawStatsForCoreRecord(record) {
   return [];
 }
 
-function ensureCoreUnitStatsCombatModel(record, loader, unitId, index, code) {
+function markMissingCombatModel(record, unitId, index, code, reason) {
+  const stats = record?.stats || null;
+  return {
+    ...(stats || {}),
+    __bcuCombatModelMissing: true,
+    __bcuCombatModelMissingReason: reason,
+    source: {
+      ...(stats?.source || {}),
+      mappingStatus: 'missing-bcu-raw-stats',
+      unitId,
+      form: code,
+      formRow: index
+    }
+  };
+}
+
+function ensureCoreUnitStatsCombatModel(record, loader, unitId, index, code, diagnostics) {
   const stats = record?.stats || null;
   if (stats?.abilityModel?.mappingStatus === 'semantic-mapped' && stats?.bcuCombatModel) return stats;
   const raw = getRawStatsForCoreRecord(record);
   if (!raw.length) {
-    throw new Error(`CoreDB unit stats missing raw stats needed for BCU combat model: unit=${unitId} form=${code}`);
+    const reason = `CoreDB unit stats missing raw stats needed for BCU combat model: unit=${unitId} form=${code}`;
+    diagnostics?.units?.missingStats?.push?.({ unitId, formIndex: index, form: code, file: 'core-db', reason });
+    return markMissingCombatModel(record, unitId, index, code, reason);
   }
   const normalized = loader.normalizeUnitStats(raw, {
     file: record?.sourceFile || stats?.source?.file || 'core-db',
@@ -71,7 +89,7 @@ export class BcuUnitRepository {
       const unit = byUnit.get(unitId);
       const index = normalizeFormIndex(record.formIndex ?? record.form);
       const code = record.form || formCodeFromIndex(index);
-      const stats = ensureCoreUnitStatsCombatModel(record, repo.statsLoader, unitId, index, code);
+      const stats = ensureCoreUnitStatsCombatModel(record, repo.statsLoader, unitId, index, code, diagnostics);
       unit.forms[index] = { index, code, key: record.key || unitFormKey(unitId, index), name: record.name || names.unitForm(unitId, index, locale), stats, rawStats: getRawStatsForCoreRecord(record), asset: record.asset || null };
     }
     for (const [unitId, unit] of byUnit) { unit.forms = unit.forms.filter(Boolean); repo.units.set(unitId, unit); }
@@ -80,6 +98,11 @@ export class BcuUnitRepository {
 
   get(unitId) { return this.units.get(toInt(unitId, -1)) || null; }
   getForm(unitId, formIndexOrCode = 0) { const index = normalizeFormIndex(formIndexOrCode); const unit = this.get(unitId); return unit?.forms?.[index] || unit?.forms?.[0] || null; }
-  getFormStats(unitId, formIndexOrCode = 0) { const form = this.getForm(unitId, formIndexOrCode); if (!form?.stats) throw new Error(`BCU unit stats missing: unit=${unitId} form=${formIndexOrCode}`); return form.stats; }
+  getFormStats(unitId, formIndexOrCode = 0) {
+    const form = this.getForm(unitId, formIndexOrCode);
+    if (!form?.stats) throw new Error(`BCU unit stats missing: unit=${unitId} form=${formIndexOrCode}`);
+    if (form.stats.__bcuCombatModelMissing) throw new Error(form.stats.__bcuCombatModelMissingReason || `BCU unit combat model missing: unit=${unitId} form=${formIndexOrCode}`);
+    return form.stats;
+  }
   list() { return [...this.units.values()].sort((a, b) => a.id - b.id); }
 }

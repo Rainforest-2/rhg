@@ -1,5 +1,5 @@
 export const BCU_WORLD_UNITS = {
-  fps: 30,
+  fps: 1000 / 33,
   rangeToWorld: 1,
   widthToWorld: 1,
   knockbackDistanceToWorld: 1,

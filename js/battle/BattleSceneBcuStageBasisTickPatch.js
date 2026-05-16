@@ -5,7 +5,7 @@ import { KBRuntime } from './KBRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v4');
+const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v5');
 
 function shouldTickActor(actor) {
   if (!actor) return false;
@@ -56,7 +56,11 @@ function sortForBcuLayer(actors = []) {
 }
 
 function moveActor(scene, actor, dt) {
-  actor.x += actor.direction * actor.moveSpeed * (dt / 1000);
+  const defaultDistance = actor.moveSpeed * (dt / 1000);
+  const distance = typeof actor.getBcuMoveDistanceForDt === 'function'
+    ? actor.getBcuMoveDistanceForDt(defaultDistance, dt, scene.timeMs)
+    : defaultDistance;
+  actor.x += actor.direction * distance;
   actor.posBcu = actor.x;
 }
 
@@ -108,6 +112,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     this.runTickPhase('actor-state-update', () => {
       sortForBcuUpdate(this.actors || []);
       for (const actor of this.actors) {
+        actor.lastSceneTimeMs = this.timeMs;
         if (!shouldTickActor(actor)) continue;
         actor.tick(scaledDt);
         if (actor.state === 'dead') continue;
@@ -121,6 +126,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
 
     this.runTickPhase('movement', () => {
       for (const actor of this.actors) {
+        actor.lastSceneTimeMs = this.timeMs;
         if (!isActorActive(actor)) continue;
         if (actor.state === 'knockback' || actor.state === 'attack') continue;
         const selection = this.findTargetForActor(actor);
@@ -152,6 +158,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
 
     this.runTickPhase('target-search', () => {
       for (const actor of this.actors) {
+        actor.lastSceneTimeMs = this.timeMs;
         if (!isActorActive(actor)) continue;
         if (actor.state === 'knockback' || actor.state === 'attack') continue;
         if (this.__bcuTargetSelections.has(actor)) continue;
@@ -162,6 +169,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
 
     this.runTickPhase('attack-start', () => {
       for (const actor of this.actors) {
+        actor.lastSceneTimeMs = this.timeMs;
         if (!isActorActive(actor)) continue;
         if (actor.state === 'knockback' || actor.state === 'attack') continue;
         const selection = getSelection(this, actor);
@@ -189,6 +197,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     this.runTickPhase('attack-timeline', () => {
       this.__bcuDueAttackHits = [];
       for (const actor of this.actors) {
+        actor.lastSceneTimeMs = this.timeMs;
         if (!actor || actor.state !== 'attack') continue;
         actor.attackElapsedMs = BattleAttackTimeline.getElapsedMs(actor, this.timeMs);
         const dueHits = BattleAttackTimeline.getDueHitEvents(actor, this.timeMs) || [];
@@ -200,6 +209,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
       const dueHits = Array.isArray(this.__bcuDueAttackHits) ? this.__bcuDueAttackHits : [];
       for (const item of dueHits) this.resolveAttackHitEvent(item.actor, item.due);
       for (const actor of this.actors) {
+        actor.lastSceneTimeMs = this.timeMs;
         if (!actor || actor.state !== 'attack') continue;
         if (BattleAttackTimeline.isAttackComplete(actor, this.timeMs)) {
           this.enterAttackWait(actor, 'attack-complete');
@@ -214,6 +224,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
 
     this.runTickPhase('knockback-death', () => {
       for (const actor of this.actors) {
+        actor.lastSceneTimeMs = this.timeMs;
         const res = KBRuntime.resolvePostDamage(actor, { nowMs: this.timeMs, tuning: BATTLE_CONFIG.tuning });
         if (res?.damaged) {
           this.pushEvent({

@@ -21,6 +21,7 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   cardPart: BCU_UNI_CARD_PART,
   cardCanvasSize: PRODUCTION_CARD_CANVAS,
   contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
+  dogContentRect: Object.freeze({ x: 7, y: 7, w: 96, h: 54 }),
   costRightX: 108,
   costY: 68,
   cooldownTrackRect: Object.freeze({ x: 10, y: 61, w: 90, h: 12 }),
@@ -47,31 +48,15 @@ export class ProductionCardSkin {
       BcuImgCut.load(BCU_UNI_IMGCUT_PATH).then((cut) => {
         this.imgcut = cut;
         const part = cut.getByIndex(0);
-        if (!samePart(part, BCU_UNI_CARD_PART)) {
-          this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
-        } else {
-          this.cardPart = part;
-        }
+        if (!samePart(part, BCU_UNI_CARD_PART)) this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
+        else this.cardPart = part;
       }).catch((e) => this.log.warn?.('[ProductionCardSkin] uni.imgcut load failed', e)),
-      loadImage(BCU_SLOT_FRAME_PATH).then((img) => {
-        this.slotFrame = img;
-      }).catch((e) => this.log.warn?.('[ProductionCardSkin] slot frame load failed', BCU_SLOT_FRAME_PATH, e))
+      loadImage(BCU_SLOT_FRAME_PATH).then((img) => { this.slotFrame = img; }).catch((e) => this.log.warn?.('[ProductionCardSkin] slot frame load failed', BCU_SLOT_FRAME_PATH, e))
     ];
     await Promise.all(tasks);
   }
 
-  drawCard(ctx, {
-    unitDef,
-    icon,
-    cost,
-    cooldownProgressRatio = 1,
-    affordable = true,
-    cooldownReady = true,
-    interactive = true,
-    isBack = false,
-    isEmpty = false,
-    iconLoadFailed = false
-  }) {
+  drawCard(ctx, { unitDef, icon, cost, cooldownProgressRatio = 1, affordable = true, cooldownReady = true, interactive = true, isBack = false, isEmpty = false, iconLoadFailed = false }) {
     const state = { unitDef, affordable, cooldownReady, interactive, isBack, isEmpty, iconLoadFailed };
     ctx.clearRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
 
@@ -104,9 +89,6 @@ export class ProductionCardSkin {
     const sw = imageWidth(icon);
     const sh = imageHeight(icon);
     if (!icon || sw <= 0 || sh <= 0) return false;
-    // Semantic icon bundles store already-extracted unit card PNGs such as
-    // unit/000-f.png. Those are not the raw BCU uni.png sheet, so cropping by
-    // uni.imgcut part[0] is invalid. Draw the bundled card image directly.
     ctx.drawImage(icon, 0, 0, sw, sh, 0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
     return true;
   }
@@ -126,27 +108,51 @@ export class ProductionCardSkin {
   }
 
   drawDogCard(ctx, icon) {
-    this.drawSlotFrame(ctx);
-    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect);
+    this.drawDogLikeCatCardFrame(ctx);
+    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect);
   }
 
-  drawEmptyCard(ctx) {
-    this.drawSlotFrame(ctx);
-  }
+  drawEmptyCard(ctx) { this.drawSlotFrame(ctx); }
 
   drawSlotFrame(ctx) {
     if (this.drawBcuCardPart(ctx, this.slotFrame)) return;
     this.drawManualFrameFallback(ctx);
   }
 
+  drawDogLikeCatCardFrame(ctx) {
+    const { w, h } = PRODUCTION_CARD_CANVAS;
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#fff7ed');
+    g.addColorStop(0.55, '#fed7aa');
+    g.addColorStop(1, '#fdba74');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#fff7ed';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(2, 2, w - 4, h - 4);
+    ctx.strokeStyle = '#9a3412';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(4, 4, w - 8, h - 8);
+    ctx.fillStyle = 'rgba(255,255,255,.42)';
+    ctx.fillRect(7, 7, w - 14, 51);
+    ctx.strokeStyle = 'rgba(154,52,18,.18)';
+    ctx.strokeRect(7, 7, w - 14, 51);
+    ctx.fillStyle = 'rgba(255,247,237,.88)';
+    ctx.beginPath();
+    ctx.roundRect?.(9, 63, w - 18, 17, 5);
+    if (typeof ctx.roundRect === 'function') ctx.fill();
+    else ctx.fillRect(9, 63, w - 18, 17);
+  }
+
   drawManualFrameFallback(ctx) {
     const { w, h } = PRODUCTION_CARD_CANVAS;
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = '#f8fafc';
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#e2e8f0';
     ctx.fillRect(3, 3, w - 6, h - 6);
-    ctx.fillStyle = '#050505';
-    ctx.fillRect(0, 61, w, h - 61);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(2, 2, w - 4, h - 4);
   }
 
   drawContainedIcon(ctx, icon, rect) {
@@ -177,12 +183,10 @@ export class ProductionCardSkin {
   drawCost(ctx, cost, state) {
     const disabled = !state.interactive || !state.affordable || state.isBack;
     const value = Number(cost || 0);
-    if (this.spriteText?.drawCostRight) {
-      return this.spriteText.drawCostRight(ctx, value, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY, { disabled, scale: 0.9 });
-    }
+    if (this.spriteText?.drawCostRight) return this.spriteText.drawCostRight(ctx, value, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY, { disabled, scale: 0.9 });
     ctx.lineWidth = 3;
-    ctx.strokeStyle = '#000';
-    ctx.fillStyle = disabled ? '#999' : '#ffd400';
+    ctx.strokeStyle = '#fff7ed';
+    ctx.fillStyle = disabled ? '#64748b' : '#92400e';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'right';
     const text = `${Math.floor(value)}円`;

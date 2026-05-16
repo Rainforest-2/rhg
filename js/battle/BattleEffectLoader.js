@@ -41,10 +41,8 @@ async function readOptionalBundleText(provider, bundleRef, internalPath) {
   try { return await provider.readTextByBundleRef(bundleRef, internalPath); } catch { return null; }
 }
 
-async function readRequiredBundleText(provider, bundleRef, internalPath) {
-  const text = await readOptionalBundleText(provider, bundleRef, internalPath);
-  if (!text) throw new Error(`BCU effect bundle missing ${internalPath}`);
-  return text;
+async function readOptionalRawText(path) {
+  try { return await fetchText(path); } catch { return null; }
 }
 
 function parseEffectDefinition({ modelText, animText, source }) {
@@ -56,6 +54,23 @@ function parseEffectDefinition({ modelText, animText, source }) {
     anim,
     frameCount: Math.max(1, (Number(anim.maxFrame) || 0) + 1),
     maxFrame: Number(anim.maxFrame) || 0
+  };
+}
+
+function maybeParseEffectDefinition({ modelText, animText, source }) {
+  if (!modelText || !animText) return null;
+  return parseEffectDefinition({ modelText, animText, source });
+}
+
+function attachCompatibilityDefinitions(asset, attackDef, whiteDef, criticalDef, criticalMissingReason = null) {
+  const effectDefinitions = { attack: attackDef, white: whiteDef };
+  if (criticalDef) effectDefinitions.critical = criticalDef;
+  return {
+    ...asset,
+    effectDefinitions,
+    smokeDefinitions: { attack: attackDef, white: whiteDef },
+    criticalEffectDefinition: criticalDef || null,
+    criticalEffectMissingReason: criticalDef ? null : criticalMissingReason
   };
 }
 
@@ -81,25 +96,23 @@ export class BattleEffectLoader {
     const attackAnimText = await readOptionalBundleText(provider, this.bundleRef, 'attack_smoke.maanim') || EMBEDDED_ATTACK_SMOKE_ANIM;
     const whiteModelText = await readOptionalBundleText(provider, this.bundleRef, 'white_smoke.mamodel') || EMBEDDED_WHITE_SMOKE_MODEL;
     const whiteAnimText = await readOptionalBundleText(provider, this.bundleRef, 'white_smoke.maanim') || EMBEDDED_WHITE_SMOKE_ANIM;
-    const criticalModelText = await readRequiredBundleText(provider, this.bundleRef, 'critical.mamodel');
-    const criticalAnimText = await readRequiredBundleText(provider, this.bundleRef, 'critical.maanim');
-    return {
+    const criticalModelText = await readOptionalBundleText(provider, this.bundleRef, 'critical.mamodel');
+    const criticalAnimText = await readOptionalBundleText(provider, this.bundleRef, 'critical.maanim');
+    const attackDef = parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: attackModelText === EMBEDDED_ATTACK_SMOKE_MODEL ? 'embedded-bcu-attack_smoke' : 'bundle:attack_smoke' });
+    const whiteDef = parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: whiteModelText === EMBEDDED_WHITE_SMOKE_MODEL ? 'embedded-bcu-white_smoke' : 'bundle:white_smoke' });
+    const criticalDef = maybeParseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'bundle:critical' });
+    return attachCompatibilityDefinitions({
       image,
       imgcut,
       parts,
       model: parseModel(attackModelText),
       anim: parseAnim(attackAnimText),
-      effectDefinitions: {
-        attack: parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: attackModelText === EMBEDDED_ATTACK_SMOKE_MODEL ? 'embedded-bcu-attack_smoke' : 'bundle:attack_smoke' }),
-        white: parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: whiteModelText === EMBEDDED_WHITE_SMOKE_MODEL ? 'embedded-bcu-white_smoke' : 'bundle:white_smoke' }),
-        critical: parseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'bundle:critical' })
-      },
       loaded: true,
       reason: '',
       source: 'semantic-bundle:effect:kbeff',
       bundleRef: this.bundleRef,
       imgcutPartCount: imgcut.parts?.length || 0
-    };
+    }, attackDef, whiteDef, criticalDef, criticalDef ? null : 'effect:kbeff bundle has no critical.mamodel/critical.maanim');
   }
 
   async loadHitEffectFromRawForDiagnostics() {
@@ -107,33 +120,27 @@ export class BattleEffectLoader {
     const imgcut = parseImgcut(await fetchText(`${this.rawBaseDir}000_a.imgcut`));
     const parts = selectBcuHitExplosionParts(imgcut);
     if (!parts.length) throw new Error('hit effect parts missing in raw BCU asset');
-    let attackModelText = EMBEDDED_ATTACK_SMOKE_MODEL;
-    let attackAnimText = EMBEDDED_ATTACK_SMOKE_ANIM;
-    let whiteModelText = EMBEDDED_WHITE_SMOKE_MODEL;
-    let whiteAnimText = EMBEDDED_WHITE_SMOKE_ANIM;
-    try { attackModelText = await fetchText(`${this.rawBaseDir}attack_smoke.mamodel`); } catch {}
-    try { attackAnimText = await fetchText(`${this.rawBaseDir}attack_smoke.maanim`); } catch {}
-    try { whiteModelText = await fetchText(`${this.rawBaseDir}white_smoke.mamodel`); } catch {}
-    try { whiteAnimText = await fetchText(`${this.rawBaseDir}white_smoke.maanim`); } catch {}
-    const criticalModelText = await fetchText(`${this.rawBaseDir}critical.mamodel`);
-    const criticalAnimText = await fetchText(`${this.rawBaseDir}critical.maanim`);
-    return {
+    const attackModelText = await readOptionalRawText(`${this.rawBaseDir}attack_smoke.mamodel`) || EMBEDDED_ATTACK_SMOKE_MODEL;
+    const attackAnimText = await readOptionalRawText(`${this.rawBaseDir}attack_smoke.maanim`) || EMBEDDED_ATTACK_SMOKE_ANIM;
+    const whiteModelText = await readOptionalRawText(`${this.rawBaseDir}white_smoke.mamodel`) || EMBEDDED_WHITE_SMOKE_MODEL;
+    const whiteAnimText = await readOptionalRawText(`${this.rawBaseDir}white_smoke.maanim`) || EMBEDDED_WHITE_SMOKE_ANIM;
+    const criticalModelText = await readOptionalRawText(`${this.rawBaseDir}critical.mamodel`);
+    const criticalAnimText = await readOptionalRawText(`${this.rawBaseDir}critical.maanim`);
+    const attackDef = parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: 'raw-or-embedded:attack_smoke' });
+    const whiteDef = parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: 'raw-or-embedded:white_smoke' });
+    const criticalDef = maybeParseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'raw:critical' });
+    return attachCompatibilityDefinitions({
       image,
       imgcut,
       parts,
       model: parseModel(attackModelText),
       anim: parseAnim(attackAnimText),
-      effectDefinitions: {
-        attack: parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: 'raw-or-embedded:attack_smoke' }),
-        white: parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: 'raw-or-embedded:white_smoke' }),
-        critical: parseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'raw:critical' })
-      },
       loaded: true,
       reason: '',
       source: 'raw-diagnostics:public/assets/bcu/000001/org/battle/a',
       bundleRef: null,
       imgcutPartCount: imgcut.parts?.length || 0
-    };
+    }, attackDef, whiteDef, criticalDef, criticalDef ? null : 'raw critical.mamodel/critical.maanim missing');
   }
 
   async loadHitEffect(){
@@ -149,7 +156,8 @@ export class BattleEffectLoader {
           partCount: asset.parts.length,
           partNames: asset.parts.map((p) => p.name),
           imgcutPartCount: asset.imgcutPartCount,
-          effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }]))
+          effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }])),
+          criticalEffectMissingReason: asset.criticalEffectMissingReason || null
         };
         globalThis.__BATTLE_HIT_EFFECT_LOADER_DEBUG__ = this.lastLoadDebug;
         return asset;
@@ -163,7 +171,8 @@ export class BattleEffectLoader {
         partCount: asset.parts.length,
         partNames: asset.parts.map((p) => p.name),
         imgcutPartCount: asset.imgcutPartCount,
-        effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }]))
+        effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }])),
+        criticalEffectMissingReason: asset.criticalEffectMissingReason || null
       };
       globalThis.__BATTLE_HIT_EFFECT_LOADER_DEBUG__ = this.lastLoadDebug;
       return asset;

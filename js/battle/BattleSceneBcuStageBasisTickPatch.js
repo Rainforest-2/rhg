@@ -1,0 +1,190 @@
+import { BattleScene } from './BattleScene.js';
+import { BATTLE_CONFIG } from './BattleConfig.js';
+import { BattleAttackTimeline } from './BattleAttackTimeline.js';
+import { KBRuntime } from './KBRuntime.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+
+const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v1');
+
+function shouldTickActor(actor) {
+  if (!actor) return false;
+  if (actor.needsLifecycleTick) return !!actor.needsLifecycleTick();
+  return !!actor.isAlive?.();
+}
+
+function isActorActive(actor) {
+  return !!actor && actor.state !== 'dead' && !!actor.isAlive?.();
+}
+
+function moveActor(scene, actor, dt) {
+  actor.x += actor.direction * actor.moveSpeed * (dt / 1000);
+  actor.posBcu = actor.x;
+}
+
+function clearBcuTickScratch(scene) {
+  scene.__bcuTargetSelections = new Map();
+  scene.__bcuDueAttackHits = [];
+}
+
+function getSelection(scene, actor) {
+  return scene.__bcuTargetSelections?.get(actor) || null;
+}
+
+export function installBattleSceneBcuStageBasisTickPatch() {
+  const proto = BattleScene?.prototype;
+  if (!proto || proto[PATCH_FLAG]) return;
+  proto[PATCH_FLAG] = true;
+
+  proto.tick = function tickStageBasisPhased(dt = BCU_BATTLE_TIMER_PERIOD_MS) {
+    if (this.battleState !== 'running') return;
+    clearBcuTickScratch(this);
+
+    const rawDt = Number.isFinite(dt) ? dt : (this.frameClock?.fixedStepMs || BCU_BATTLE_TIMER_PERIOD_MS);
+    const scaledDt = rawDt * (BATTLE_CONFIG.tuning?.battleTimeScale ?? 1);
+
+    this.runTickPhase('advance-clock', () => {
+      const frame = this.frameClock.step(scaledDt);
+      this.logicFrame = frame.logicFrame;
+      this.timeMs = frame.timeMs;
+    });
+
+    this.runTickPhase('player-production-requests', () => { this.tickPlayerProductionRequests(); });
+    this.runTickPhase('enemy-spawn', () => { this.tickStageEnemySpawn(); });
+    this.runTickPhase('economy', () => { this.economy?.tick?.(scaledDt); });
+    this.runTickPhase('lineup-change', () => { this.tickLineupChange(scaledDt); });
+
+    this.runTickPhase('actor-state-update', () => {
+      for (const actor of this.actors) {
+        if (!shouldTickActor(actor)) continue;
+        actor.tick(scaledDt);
+        if (actor.state === 'dead') continue;
+        if (actor.state === 'knockback') {
+          const kbTarget = actor.attackTarget && this.isTargetAliveForAttack(actor.attackTarget, actor.attackTargetType) ? actor.attackTarget : null;
+          const kbDt = (BATTLE_CONFIG.tuning?.knockback?.parity?.useBattleTimeScale === false) ? rawDt : scaledDt;
+          this.tickKnockback(actor, kbDt, kbTarget);
+        }
+      }
+    });
+
+    this.runTickPhase('movement', () => {
+      for (const actor of this.actors) {
+        if (!isActorActive(actor)) continue;
+        if (actor.state === 'knockback' || actor.state === 'attack') continue;
+        const selection = this.findTargetForActor(actor);
+        this.__bcuTargetSelections.set(actor, selection);
+        if (!selection) {
+          if (actor.state === 'attack-wait') {
+            actor.setState('move');
+            actor.setAnimation(actor.moveAnimId, 'move', true);
+          }
+          if (actor.state === 'move') moveActor(this, actor, scaledDt);
+          continue;
+        }
+        const { target, targetType } = selection;
+        if (!this.canAttack(actor, target)) {
+          if (actor.state === 'attack-wait') {
+            actor.setState('move');
+            actor.setAnimation(actor.moveAnimId, 'move', false);
+          } else if (actor.state !== 'move') {
+            actor.setState('move');
+            actor.setAnimation(actor.moveAnimId, 'move');
+          }
+          moveActor(this, actor, scaledDt);
+          this.__bcuTargetSelections.set(actor, { target, targetType, canAttack: false });
+        } else {
+          this.__bcuTargetSelections.set(actor, { target, targetType, canAttack: true });
+        }
+      }
+    });
+
+    this.runTickPhase('target-search', () => {
+      for (const actor of this.actors) {
+        if (!isActorActive(actor)) continue;
+        if (actor.state === 'knockback' || actor.state === 'attack') continue;
+        if (this.__bcuTargetSelections.has(actor)) continue;
+        const selection = this.findTargetForActor(actor);
+        this.__bcuTargetSelections.set(actor, selection ? { ...selection, canAttack: this.canAttack(actor, selection.target) } : null);
+      }
+    });
+
+    this.runTickPhase('attack-start', () => {
+      for (const actor of this.actors) {
+        if (!isActorActive(actor)) continue;
+        if (actor.state === 'knockback' || actor.state === 'attack') continue;
+        const selection = getSelection(this, actor);
+        if (!selection?.target) continue;
+        const { target, targetType } = selection;
+        const canAttack = selection.canAttack !== false && this.canAttack(actor, target);
+        if (actor.state === 'attack-wait') {
+          actor.attackWaitElapsedMs += scaledDt;
+          const cooldownReady = this.isActorAttackCooldownReady(actor);
+          if (cooldownReady && actor.attackWaitElapsedMs >= actor.nextAttackReadyMs && canAttack) {
+            this.startActorAttack(actor, target, targetType);
+            continue;
+          }
+          if (canAttack && !cooldownReady) {
+            this.enterAttackWait(actor, 'cooldown-target-in-range');
+          }
+          continue;
+        }
+        if (actor.state === 'move' && canAttack) {
+          if (this.isActorAttackCooldownReady(actor)) this.startActorAttack(actor, target, targetType);
+          else this.enterAttackWait(actor, 'cooldown-target-in-range');
+        }
+      }
+    });
+
+    this.runTickPhase('attack-timeline', () => {
+      this.__bcuDueAttackHits = [];
+      for (const actor of this.actors) {
+        if (!actor || actor.state !== 'attack') continue;
+        actor.attackElapsedMs = BattleAttackTimeline.getElapsedMs(actor, this.timeMs);
+        const dueHits = BattleAttackTimeline.getDueHitEvents(actor, this.timeMs) || [];
+        for (const due of dueHits) this.__bcuDueAttackHits.push({ actor, due });
+      }
+    });
+
+    this.runTickPhase('hit-target-capture', () => {
+      const dueHits = Array.isArray(this.__bcuDueAttackHits) ? this.__bcuDueAttackHits : [];
+      for (const item of dueHits) this.resolveAttackHitEvent(item.actor, item.due);
+      for (const actor of this.actors) {
+        if (!actor || actor.state !== 'attack') continue;
+        if (BattleAttackTimeline.isAttackComplete(actor, this.timeMs)) {
+          this.enterAttackWait(actor, 'attack-complete');
+          actor.attackTarget = null;
+          actor.attackTargetType = null;
+        }
+      }
+    });
+
+    this.runTickPhase('damage-resolve', () => {});
+    this.runTickPhase('proc-resolve', () => {});
+
+    this.runTickPhase('knockback-death', () => {
+      for (const actor of this.actors) {
+        const res = KBRuntime.resolvePostDamage(actor, { nowMs: this.timeMs, tuning: BATTLE_CONFIG.tuning });
+        if (res?.damaged) {
+          this.pushEvent({
+            type: 'kbRuntimePostDamage',
+            actor: res.actorId,
+            damaged: res.damaged,
+            dead: res.dead,
+            knockedBack: res.knockedBack,
+            kbType: res.kbState?.knockbackType || null,
+            kbReason: res.kbState?.knockbackReason || null,
+            hp: res.hp,
+            maxHp: res.maxHp
+          });
+        }
+      }
+    });
+
+    this.runTickPhase('base-post-update', () => {});
+    this.runTickPhase('effect-spawn', () => {});
+    this.runTickPhase('effect-tick', () => { this.tickEffects(scaledDt); });
+    this.runTickPhase('cleanup', () => { this.cleanupEffects(); this.cleanupDead(); this.updateBattleState(); });
+    this.runTickPhase('camera-update', () => {});
+  };
+}
+
+installBattleSceneBcuStageBasisTickPatch();

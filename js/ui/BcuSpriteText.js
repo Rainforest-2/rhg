@@ -1,4 +1,7 @@
 import { BcuImgCut } from './BcuImgCut.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+
+const BCU_BATTLE_UI_BUNDLE_REF = Object.freeze({ bundleKey: 'ui:battle', bundlePath: 'public/assets/bundles/ui/battle-ui.zip' });
 
 const loadImage = (src) => new Promise((res, rej) => {
   const i = new Image();
@@ -7,12 +10,29 @@ const loadImage = (src) => new Promise((res, rej) => {
   i.src = src;
 });
 
+function getSemanticProvider() {
+  try { return getBcuAssetDatabase()?.semanticProvider || null; } catch { return null; }
+}
+
+async function loadBundleImage(provider, internalPath) {
+  const url = await provider.createObjectUrl(BCU_BATTLE_UI_BUNDLE_REF, internalPath, 'image/png');
+  try {
+    const image = await loadImage(url);
+    image.bcuObjectUrl = url;
+    return image;
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
+
 export class BcuSpriteText {
   constructor(log = console, resolveAssetPath = (v) => v) {
     this.log = log;
     this.resolveAssetPath = resolveAssetPath;
     this.ready = false;
     this.map = null;
+    this.source = null;
   }
   normalizeLabel(label) { return String(label || '').normalize('NFKC').replace(/\s+/g, '').trim(); }
   findByNormExact(imgcut, norm) { return imgcut.parts.find((p) => this.normalizeLabel(p.label) === norm) || null; }
@@ -24,18 +44,30 @@ export class BcuSpriteText {
   }
 
   async init() {
-    if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') {
-      this.ready = false;
-      return;
-    }
     try {
-      this.img = await loadImage(this.resolveAssetPath('./public/assets/bcu/000001/org/page/img001.png'));
-      this.imgcut = await BcuImgCut.load(this.resolveAssetPath('./public/assets/bcu/000001/org/page/img001.imgcut'));
-      this.sign = await loadImage(this.resolveAssetPath('./public/assets/bcu/110504/org/page/moneySign.png'));
-      this.signcut = await BcuImgCut.load(this.resolveAssetPath('./public/assets/bcu/110504/org/page/moneySign.imgcut'));
+      const provider = getSemanticProvider();
+      if (provider) {
+        this.img = await loadBundleImage(provider, 'img001.png');
+        this.imgcut = BcuImgCut.parse(await provider.readTextByBundleRef(BCU_BATTLE_UI_BUNDLE_REF, 'img001.imgcut'));
+        this.sign = await loadBundleImage(provider, 'moneySign.png');
+        this.signcut = BcuImgCut.parse(await provider.readTextByBundleRef(BCU_BATTLE_UI_BUNDLE_REF, 'moneySign.imgcut'));
+        this.source = 'semantic-bundle:ui:battle';
+      } else {
+        if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') throw new Error('semantic provider missing for ui:battle');
+        this.img = await loadImage(this.resolveAssetPath('./public/assets/bcu/000001/org/page/img001.png'));
+        this.imgcut = await BcuImgCut.load(this.resolveAssetPath('./public/assets/bcu/000001/org/page/img001.imgcut'));
+        this.sign = await loadImage(this.resolveAssetPath('./public/assets/bcu/110504/org/page/moneySign.png'));
+        this.signcut = await BcuImgCut.load(this.resolveAssetPath('./public/assets/bcu/110504/org/page/moneySign.imgcut'));
+        this.source = 'raw-diagnostics:public/assets/bcu/page';
+      }
       this.map = this.buildSemanticMap();
       this.ready = true;
-    } catch (e) { this.ready = false; this.log.warn?.('[BcuSpriteText] fallback', e); }
+      globalThis.__BCU_SPRITE_TEXT_DEBUG__ = { ready: true, source: this.source, missing: this.getMissingMapParts() };
+    } catch (e) {
+      this.ready = false;
+      this.log.warn?.('[BcuSpriteText] fallback', e);
+      globalThis.__BCU_SPRITE_TEXT_DEBUG__ = { ready: false, source: this.source, reason: e?.message || String(e) };
+    }
   }
 
   buildSemanticMap() {
@@ -52,6 +84,13 @@ export class BcuSpriteText {
       smallYenOff: this.findByNormIncludes(this.imgcut, ['金額数字小', '暗転', '円']),
       moneySignOnJp: this.signcut.getByLabel('money_jp_on')
     };
+  }
+  getMissingMapParts() {
+    if (!this.map) return ['map'];
+    const missing = [];
+    for (const key of ['bigSlash', 'bigYen', 'smallYenOn', 'smallYenOff', 'moneySignOnJp']) if (!this.map[key]) missing.push(key);
+    for (const key of ['bigDigits', 'smallDigitsOn', 'smallDigitsOff']) this.map[key].forEach((p, i) => { if (!p) missing.push(`${key}[${i}]`); });
+    return missing;
   }
   measureParts(parts, scale = 1) { return (parts || []).reduce((sum, p) => sum + ((p?.w || 0) * scale), 0); }
   measurePartBounds(parts, scale = 1) {

@@ -30,6 +30,7 @@ async function boot() {
     await import('./battle/BattleSceneRendererOrderPatch.js');
     await import('./battle/BattleSceneUnitLayerPatch.js');
     await import('./battle/BattleSceneBcuTimerPatch.js');
+    await import('./battle/BattleSceneBcuLineupPatch.js');
     await import('./battle/BattleSceneBcuStageSpawnPatch.js');
     await import('./battle/BattleSceneStageSpawnHeaderPatch.js');
     await import('./battle/BattleSceneBcuAttackPhasePatch.js');

@@ -5,7 +5,7 @@ import { KBRuntime } from './KBRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v3');
+const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v4');
 
 function shouldTickActor(actor) {
   if (!actor) return false;
@@ -67,6 +67,20 @@ function clearBcuTickScratch(scene) {
 
 function getSelection(scene, actor) {
   return scene.__bcuTargetSelections?.get(actor) || null;
+}
+
+function attackWaitReady(actor, nowMs) {
+  const state = BattleAttackTimeline.getAttackWaitState(actor, nowMs);
+  actor.lastStageBasisAttackWaitDebug = {
+    source: 'BCU StageBasisTickPatch attack-start uses BattleAttackTimeline wait state',
+    nowMs,
+    ready: state.ready,
+    remainingMs: state.remainingMs,
+    readyAtMs: state.readyAtMs,
+    active: state.active,
+    reason: state.reason
+  };
+  return state.ready;
 }
 
 export function installBattleSceneBcuStageBasisTickPatch() {
@@ -155,19 +169,18 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         const { target, targetType } = selection;
         const canAttack = selection.canAttack !== false && this.canAttack(actor, target);
         if (actor.state === 'attack-wait') {
-          actor.attackWaitElapsedMs += scaledDt;
-          const cooldownReady = this.isActorAttackCooldownReady(actor);
-          if (cooldownReady && actor.attackWaitElapsedMs >= actor.nextAttackReadyMs && canAttack) {
+          const ready = attackWaitReady(actor, this.timeMs);
+          if (ready && canAttack) {
             this.startActorAttack(actor, target, targetType);
             continue;
           }
-          if (canAttack && !cooldownReady) {
+          if (canAttack && !ready) {
             this.enterAttackWait(actor, 'cooldown-target-in-range');
           }
           continue;
         }
         if (actor.state === 'move' && canAttack) {
-          if (this.isActorAttackCooldownReady(actor)) this.startActorAttack(actor, target, targetType);
+          if (attackWaitReady(actor, this.timeMs)) this.startActorAttack(actor, target, targetType);
           else this.enterAttackWait(actor, 'cooldown-target-in-range');
         }
       }

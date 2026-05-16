@@ -8,10 +8,12 @@ import {
 import { AbilityModel } from './AbilityModel.js';
 import { ActorStatsModel } from './ActorStatsModel.js';
 import { BcuCombatModel } from './BcuCombatModel.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
 const val = (v, i, fallback = 0) => Number.isFinite(v?.[i]) ? v[i] : fallback;
 const parseCsvRows = (text) => text.split(/\r?\n/).map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean).map((line) => line.split(',').map((x) => x.trim()));
 const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number(v) : 0));
+const framesToSeconds = (frames) => Math.max(0, Number(frames) || 0) * BCU_BATTLE_TIMER_PERIOD_MS / 1000;
 
 function attachBcuCombatModel(stats, rawValues, kind) {
   const combatModel = BcuCombatModel.parseStats({ rawValues, kind });
@@ -73,7 +75,7 @@ export class BattleStatsLoader {
     const price = Math.max(0, val(v, UNIT.price, 0));
     const respawnFrames = Math.max(0, val(v, UNIT.respawn, 0) * 2);
     const attackHits = buildBcuAttackHits({ rawValues: v, kind: 'unit' });
-    const stats = { hp: Math.max(1, val(v, UNIT.hp, 1)), knockbacks: Math.max(1, val(v, UNIT.knockbacks, 1)), speed: Math.max(0, val(v, UNIT.speed, 0)), damage: Math.max(0, val(v, UNIT.atk0, 0)), rawTbaFrames, tbaFrames, attackWaitFrames: tbaFrames, detectionRange: Math.max(0, val(v, UNIT.range, 0)), range: Math.max(0, val(v, UNIT.range, 0)), price, costOrReward: price, respawnFrames, respawnSeconds: respawnFrames / (Number.isFinite(fps) && fps > 0 ? fps : 30), width: Math.max(0, val(v, UNIT.width, 0)), attackType: val(v, UNIT.attackType, 0) === 1 ? 1 : 0, isRange: val(v, UNIT.attackType, 0) === 1, attackStartupFrames: Math.max(0, val(v, UNIT.pre0, 0)), longPreFrames: Math.max(0, val(v, UNIT.pre2, 0) > 0 ? val(v, UNIT.pre2, 0) : (val(v, UNIT.pre1, 0) > 0 ? val(v, UNIT.pre1, 0) : val(v, UNIT.pre0, 0))), front: val(v, UNIT.front, 0), back: val(v, UNIT.back, 0), ldStartRaw: val(v, UNIT.ldStart, 0), ldRangeRaw: val(v, UNIT.ldRange, 0), loop: val(v, UNIT.loop, 0), attackCount: attackHits.length, attackHits, rawValues: v, source: { ...sourceInfo, type: 'unit', bcuAssetKind: 'unit', bcuRole: 'ally-unit', mapping: 'bcu-dataunit-v0111', assetSource: 'org/unit/{unit}/unit{unit}.csv', csvKind: 'unit-form-row', mappingStatus: sourceInfo.mappingStatus || 'valid', schemaVersion: BCU_STATS_SCHEMA_VERSION, fieldSchemaSummary: summarizeBcuRawFields({ rawValues: v, kind: 'unit' }) } };
+    const stats = { hp: Math.max(1, val(v, UNIT.hp, 1)), knockbacks: Math.max(1, val(v, UNIT.knockbacks, 1)), speed: Math.max(0, val(v, UNIT.speed, 0)), damage: Math.max(0, val(v, UNIT.atk0, 0)), rawTbaFrames, tbaFrames, attackWaitFrames: tbaFrames, detectionRange: Math.max(0, val(v, UNIT.range, 0)), range: Math.max(0, val(v, UNIT.range, 0)), price, costOrReward: price, respawnFrames, respawnSeconds: framesToSeconds(respawnFrames), width: Math.max(0, val(v, UNIT.width, 0)), attackType: val(v, UNIT.attackType, 0) === 1 ? 1 : 0, isRange: val(v, UNIT.attackType, 0) === 1, attackStartupFrames: Math.max(0, val(v, UNIT.pre0, 0)), longPreFrames: Math.max(0, val(v, UNIT.pre2, 0) > 0 ? val(v, UNIT.pre2, 0) : (val(v, UNIT.pre1, 0) > 0 ? val(v, UNIT.pre1, 0) : val(v, UNIT.pre0, 0))), front: val(v, UNIT.front, 0), back: val(v, UNIT.back, 0), ldStartRaw: val(v, UNIT.ldStart, 0), ldRangeRaw: val(v, UNIT.ldRange, 0), loop: val(v, UNIT.loop, 0), attackCount: attackHits.length, attackHits, rawValues: v, source: { ...sourceInfo, type: 'unit', bcuAssetKind: 'unit', bcuRole: 'ally-unit', mapping: 'bcu-dataunit-v0111', assetSource: 'org/unit/{unit}/unit{unit}.csv', csvKind: 'unit-form-row', mappingStatus: sourceInfo.mappingStatus || 'valid', schemaVersion: BCU_STATS_SCHEMA_VERSION, fieldSchemaSummary: summarizeBcuRawFields({ rawValues: v, kind: 'unit' }) } };
     const r = this.validateBcuStats(stats);
     stats.source.invalidFields = r.invalidFields;
     stats.source.suspiciousFields = r.suspiciousFields;

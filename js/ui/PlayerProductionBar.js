@@ -27,7 +27,7 @@ function productionIconDebug() {
 
 function productionPageDebug() {
   if (!globalThis.__PRODUCTION_PAGE_DEBUG__) {
-    globalThis.__PRODUCTION_PAGE_DEBUG__ = { lastAction: null, lastRender: null, failures: [] };
+    globalThis.__PRODUCTION_PAGE_DEBUG__ = { lastAction: null, lastRender: null, failures: [], lastMoneyDraw: null };
   }
   return globalThis.__PRODUCTION_PAGE_DEBUG__;
 }
@@ -349,6 +349,29 @@ export class PlayerProductionBar {
       isEmpty: !entry.unitDef
     });
   }
+  drawMoney(scene = this.scene) {
+    if (!this.moneyCtx || !this.moneyCanvas) return;
+    const ctx = this.moneyCtx;
+    const w = this.moneyCanvas.width || 360;
+    const h = this.moneyCanvas.height || 48;
+    ctx.clearRect(0, 0, w, h);
+    const economy = scene?.economy || null;
+    const money = Math.floor(Number(economy?.money ?? 0));
+    const maxMoney = Math.floor(Number(economy?.maxMoney ?? 0));
+    if (!Number.isFinite(money) || !Number.isFinite(maxMoney) || maxMoney <= 0) return;
+    if (this.spriteText?.drawMoneyRight) this.spriteText.drawMoneyRight(ctx, money, maxMoney, w - 2, 4);
+    else {
+      ctx.textAlign = 'right';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#000';
+      ctx.fillStyle = '#ffd400';
+      ctx.font = 'bold 28px sans-serif';
+      const text = `${money}/${maxMoney}円`;
+      ctx.strokeText(text, w - 2, 34);
+      ctx.fillText(text, w - 2, 34);
+    }
+    productionPageDebug().lastMoneyDraw = { money, maxMoney, ready: !!this.spriteText?.ready, timestamp: Date.now() };
+  }
   updateLineupSwipeDebug(scene) {
     const hasBack = scene?.hasBackLineup?.() === true;
     const changing = !!scene?.lineupChanging;
@@ -370,6 +393,7 @@ export class PlayerProductionBar {
     this.scene = scene;
     if (!scene) return;
     this.updateLineupSwipeDebug(scene);
+    this.drawMoney(scene);
     const iconDebug = productionIconDebug();
     const stats = { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 };
     const model = getLineupRenderModel(scene);

@@ -15,8 +15,6 @@ function hideBootStatus() {
 
 async function boot() {
   try {
-    const { installGameTouchGuard } = await import('./ui/GameTouchGuard.js');
-    installGameTouchGuard(document);
     showBootStatus('BCU asset database loading...');
     await import('./battle/BattleBcuStrictConfigPatch.js');
     await import('./battle/StageDefinitionNegativeSpawnPatch.js');
@@ -41,6 +39,8 @@ async function boot() {
     await import('./battle/BattleSceneBcuStageBasisTickPatch.js');
     await import('./battle/BattleSceneAttackEffectPatch.js');
     await import('./battle/BattleSceneRendererBcuOriginPatch.js');
+    const { installBattleTouchGuard } = await import('./ui/BattleTouchGuard.js');
+    installBattleTouchGuard(document);
     const { BcuBootLoader, setBcuAssetDatabase } = await import('./bcu/BcuBootLoader.js');
     const db = await BcuBootLoader.loadGame({ assetRoot: './public/assets', bcuRoot: './public/assets/bcu', locale: 'jp', preloadMode: 'metadata-and-current-battle' });
     setBcuAssetDatabase(db);

@@ -1,4 +1,11 @@
 import { BattleAttackProfile } from './BattleAttackProfile.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+
+function msToBcuFrame(ms) {
+  const n = Number(ms);
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n / BCU_BATTLE_TIMER_PERIOD_MS);
+}
 
 export class BattleAttackTimeline {
   static getProfile(actor) {
@@ -18,6 +25,13 @@ export class BattleAttackTimeline {
     return BattleAttackProfile.getBcuAttackIntervalMs(actor);
   }
 
+  static getBcuAttackIntervalFrames(actor) {
+    const profile = this.getProfile(actor);
+    const frames = profile?.bcuAttackIntervalFrames ?? profile?.bcuTiming?.bcuAttackIntervalFrames;
+    if (Number.isFinite(frames)) return frames;
+    return msToBcuFrame(this.getBcuAttackIntervalMs(actor));
+  }
+
   static isAttackCompleteReason(reason) {
     const r = String(reason || 'attack-complete');
     return r === 'attack-complete' || r === 'attack-ended' || r === 'timeline-complete' || r === 'attack-finished';
@@ -34,9 +48,14 @@ export class BattleAttackTimeline {
       active: actor?.attackWaitActive === true && remainingMs > 0,
       ready: remainingMs <= 0,
       readyAtMs: readyAt,
+      readyAtFrame: msToBcuFrame(readyAt),
+      nowFrame: msToBcuFrame(nowMs),
       remainingMs,
+      remainingFrames: msToBcuFrame(remainingMs),
       startedAtMs: Number.isFinite(actor?.attackWaitStartedAtMs) ? actor.attackWaitStartedAtMs : null,
-      reason: actor?.attackWaitReason || null
+      startedAtFrame: Number.isFinite(actor?.attackWaitStartedAtMs) ? msToBcuFrame(actor.attackWaitStartedAtMs) : null,
+      reason: actor?.attackWaitReason || null,
+      source: 'BattleAttackTimeline.bcu-33ms-frame-debug'
     };
   }
 
@@ -52,6 +71,7 @@ export class BattleAttackTimeline {
   static beginAttack(actor, { target = null, targetType = null, nowMs = 0 } = {}) {
     const profile = this.getProfile(actor);
     const intervalMs = this.getBcuAttackIntervalMs(actor);
+    const intervalFrames = this.getBcuAttackIntervalFrames(actor);
     const readyAtMs = nowMs + intervalMs;
     this.clearAttackWait(actor, nowMs);
     actor.setState?.('attack');
@@ -59,34 +79,43 @@ export class BattleAttackTimeline {
     actor.attackTarget = target;
     actor.attackTargetType = targetType;
     actor.attackStartedAtMs = nowMs;
+    actor.attackStartedAtFrame = msToBcuFrame(nowMs);
     actor.attackElapsedMs = 0;
     actor.hasHitInCurrentAttack = false;
     actor.resolvedAttackEventKeys = new Set();
     actor.attackWaitStartedAtMs = nowMs;
+    actor.attackWaitStartedAtFrame = msToBcuFrame(nowMs);
     actor.attackWaitReadyAtMs = readyAtMs;
+    actor.attackWaitReadyAtFrame = msToBcuFrame(readyAtMs);
     actor.attackCooldownUntilMs = readyAtMs;
     actor.attackWaitActive = intervalMs > 0;
     actor.attackWaitReason = 'bcu-attack-interval-from-attack-start';
     actor.attackIntervalSetCount = (actor.attackIntervalSetCount || 0) + 1;
     actor.lastAttackTimelineDebug = {
       startedAtMs: nowMs,
+      startedAtFrame: actor.attackStartedAtFrame,
       target: target?.instanceId || target?.label || null,
       targetType,
       events: Array.isArray(profile?.events) ? profile.events.length : 0,
       source: profile?.source || null,
       bcuTiming: profile?.bcuTiming || null,
       bcuAttackIntervalMs: intervalMs,
+      bcuAttackIntervalFrames: intervalFrames,
       readyAtMs,
+      readyAtFrame: actor.attackWaitReadyAtFrame,
       cooldownSource: 'attack-start+bcu-getItv'
     };
     actor.lastAttackWaitDebug = {
       nowMs,
+      nowFrame: msToBcuFrame(nowMs),
       reason: 'attack-start',
       waitMs: profile?.waitMs ?? this.getWaitDurationMs(actor),
       preserveExistingWait: false,
       canSetNewTba: true,
       readyAtMs,
+      readyAtFrame: actor.attackWaitReadyAtFrame,
       remainingMs: intervalMs,
+      remainingFrames: intervalFrames,
       active: actor.attackWaitActive,
       ready: intervalMs <= 0,
       setCount: actor.attackWaitSetCount || 0,
@@ -113,7 +142,7 @@ export class BattleAttackTimeline {
       const key = this.getEventKey(event, index);
       if (actor.resolvedAttackEventKeys.has(key)) return;
       const atMs = Number.isFinite(event?.atMs) ? event.atMs : 0;
-      if (elapsedMs >= atMs) due.push({ event, index, key, elapsedMs, atMs });
+      if (elapsedMs >= atMs) due.push({ event, index, key, elapsedMs, elapsedFrame: msToBcuFrame(elapsedMs), atMs, atFrame: msToBcuFrame(atMs) });
     });
     return due;
   }
@@ -129,6 +158,10 @@ export class BattleAttackTimeline {
     return BattleAttackProfile.getAttackEndMs(actor);
   }
 
+  static getAttackEndFrame(actor) {
+    return msToBcuFrame(this.getAttackEndMs(actor));
+  }
+
   static isAttackComplete(actor, nowMs = 0) {
     return this.getElapsedMs(actor, nowMs) >= this.getAttackEndMs(actor);
   }
@@ -142,8 +175,11 @@ export class BattleAttackTimeline {
     return {
       state: actor?.state || null,
       attackStartedAtMs: Number.isFinite(actor?.attackStartedAtMs) ? actor.attackStartedAtMs : null,
+      attackStartedAtFrame: Number.isFinite(actor?.attackStartedAtFrame) ? actor.attackStartedAtFrame : null,
       attackElapsedMs: this.getElapsedMs(actor, nowMs),
+      attackElapsedFrame: msToBcuFrame(this.getElapsedMs(actor, nowMs)),
       attackEndMs: this.getAttackEndMs(actor),
+      attackEndFrame: this.getAttackEndFrame(actor),
       attackComplete: this.isAttackComplete(actor, nowMs),
       dueHitCount: due.length,
       resolvedHitCount: resolvedKeys.length,
@@ -155,7 +191,7 @@ export class BattleAttackTimeline {
       lastAttackWaitDebug: actor?.lastAttackWaitDebug || null,
       waitState,
       bcuAttackIntervalMs: this.getBcuAttackIntervalMs(actor),
-      bcuAttackIntervalFrames: profile?.bcuAttackIntervalFrames ?? profile?.bcuTiming?.bcuAttackIntervalFrames ?? null,
+      bcuAttackIntervalFrames: this.getBcuAttackIntervalFrames(actor),
       source: profile?.source || null
     };
   }
@@ -180,12 +216,16 @@ export class BattleAttackTimeline {
       actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
     } else if (Number.isFinite(attackStartReadyAt)) {
       actor.attackWaitStartedAtMs = actor.attackStartedAtMs;
+      actor.attackWaitStartedAtFrame = msToBcuFrame(actor.attackStartedAtMs);
       actor.attackWaitReadyAtMs = attackStartReadyAt;
+      actor.attackWaitReadyAtFrame = msToBcuFrame(attackStartReadyAt);
       actor.attackCooldownUntilMs = attackStartReadyAt;
       actor.attackWaitActive = attackStartReadyAt > nowMs;
     } else if (canSetNewTba) {
       actor.attackWaitStartedAtMs = nowMs;
+      actor.attackWaitStartedAtFrame = msToBcuFrame(nowMs);
       actor.attackWaitReadyAtMs = nowMs + waitMs;
+      actor.attackWaitReadyAtFrame = msToBcuFrame(actor.attackWaitReadyAtMs);
       actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
       actor.attackWaitActive = waitMs > 0;
       actor.attackWaitSetCount = (actor.attackWaitSetCount || 0) + 1;
@@ -196,6 +236,7 @@ export class BattleAttackTimeline {
           ? actor.attackCooldownUntilMs
           : nowMs;
       actor.attackWaitReadyAtMs = Math.min(readyAt, nowMs);
+      actor.attackWaitReadyAtFrame = msToBcuFrame(actor.attackWaitReadyAtMs);
       actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
       actor.attackWaitActive = false;
     }
@@ -204,12 +245,16 @@ export class BattleAttackTimeline {
     actor.attackWaitRemainingMs = next.remainingMs;
     actor.lastAttackWaitDebug = {
       nowMs,
+      nowFrame: msToBcuFrame(nowMs),
       reason,
       waitMs,
+      waitFrames: msToBcuFrame(waitMs),
       preserveExistingWait,
       canSetNewTba,
       readyAtMs: next.readyAtMs,
+      readyAtFrame: next.readyAtFrame,
       remainingMs: next.remainingMs,
+      remainingFrames: next.remainingFrames,
       active: next.active,
       ready: next.ready,
       setCount: actor.attackWaitSetCount || 0,

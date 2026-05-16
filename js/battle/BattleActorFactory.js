@@ -10,6 +10,7 @@ import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 export const TEMPLATE_LOAD_LEVEL = { STATS:'stats', RENDER_CORE:'render-core', SPAWN_READY:'spawn-ready', FULL_VISUAL:'full-visual' };
 const LEVEL_RANK = { 'stats':1, 'render-core':2, 'spawn-ready':3, 'full-visual':4 };
+const BCU_TIMER_FPS = 1000 / 33;
 
 export class BattleActorFactory {
   constructor(statsLoader, tuning) { this.loader = new BcuAssetLoader(); this.statsLoader = statsLoader; this.tuning = tuning || {}; this.templates = new Map(); this.upgradePromises = new Map(); }
@@ -120,7 +121,7 @@ export class BattleActorFactory {
     const attackAnimationSpeedMultiplier = parity.disableAttackAnimationSpeedMultiplier ? 1 : (this.tuning.attackAnimationSpeedMultiplier ?? 1);
     const minAttackWaitMs = parity.disableMinAttackWait ? 0 : (this.tuning.minAttackWaitMs ?? 0);
     const postAttackIdleHoldMs = parity.disablePostAttackIdleHold ? 0 : (this.tuning.postAttackIdleHoldMs ?? 0);
-    const a = new BattleActor({ assetDef:t.assetDef,sprite:t.sprite,model:t.modelData?new BcuModelInstance(t.modelData):null,stats:t.stats,animations:t.animations,attackAnimId:u.attackAnimId,moveAnimId:u.moveAnimId,idleAnimId:u.idleAnimId,knockbackAnimId:u.knockbackAnimId,fps:this.tuning.fps,collisionRadius:u.collisionRadius,attackWaitMultiplier,attackPhaseTimeMultiplier,attackAnimationSpeedMultiplier,minAttackWaitMs,postAttackIdleHoldMs,combatBodyWidthPx:bodyWidth,combatBodyHeightPx:bodyHeight,combatBodyYOffsetPx:this.tuning.combatBodyYOffsetPx ?? 0,combatPositionOffsetPx:Number.isFinite(u.combatPositionOffsetPx)?u.combatPositionOffsetPx:0,combatPositionSource:u.combatPositionSource||'screen-combat-point',combatEdgeInsetPx:Number.isFinite(u.combatEdgeInsetPx)?u.combatEdgeInsetPx:0,combatPositionMode:u.combatPositionMode||this.tuning.combatPositionMode||'screen-combat-point', ...overrides });
+    const a = new BattleActor({ assetDef:t.assetDef,sprite:t.sprite,model:t.modelData?new BcuModelInstance(t.modelData):null,stats:t.stats,animations:t.animations,attackAnimId:u.attackAnimId,moveAnimId:u.moveAnimId,idleAnimId:u.idleAnimId,knockbackAnimId:u.knockbackAnimId,fps:BCU_TIMER_FPS,collisionRadius:u.collisionRadius,attackWaitMultiplier,attackPhaseTimeMultiplier,attackAnimationSpeedMultiplier,minAttackWaitMs,postAttackIdleHoldMs,combatBodyWidthPx:bodyWidth,combatBodyHeightPx:bodyHeight,combatBodyYOffsetPx:this.tuning.combatBodyYOffsetPx ?? 0,combatPositionOffsetPx:Number.isFinite(u.combatPositionOffsetPx)?u.combatPositionOffsetPx:0,combatPositionSource:u.combatPositionSource||'screen-combat-point',combatEdgeInsetPx:Number.isFinite(u.combatEdgeInsetPx)?u.combatEdgeInsetPx:0,combatPositionMode:u.combatPositionMode||this.tuning.combatPositionMode||'screen-combat-point', ...overrides });
     a.semanticKey=t.assetDef?.semanticKey || (u.statsType === 'enemy' ? `enemy:${u.statsId}` : u.statsType === 'unit' ? `unit:${u.statsId}:f` : null);
     a.sourcePack=t.assetSetSemantic?.sourcePack || null;
     a.bundlePath=t.assetSetSemantic?.bundleRef?.bundlePath || null;

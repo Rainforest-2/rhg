@@ -3,16 +3,7 @@ function showBootStatus(message) {
   if (!el) {
     el = document.createElement('section');
     el.id = 'boot-status-panel';
-    el.style.cssText = [
-      'position:fixed',
-      'inset:0',
-      'z-index:999999',
-      'display:grid',
-      'place-items:center',
-      'background:#05070d',
-      'color:#d8e2f0',
-      'font:16px/1.5 system-ui,sans-serif'
-    ].join(';');
+    el.style.cssText = 'position:fixed;inset:0;z-index:999999;display:grid;place-items:center;background:#05070d;color:#d8e2f0;font:16px/1.5 system-ui,sans-serif';
     document.body.appendChild(el);
   }
   el.textContent = message;
@@ -32,6 +23,8 @@ async function boot() {
     await import('./battle/BattleActorBarrierShieldPatch.js');
     await import('./battle/BattleActorZombieRevivePatch.js');
     await import('./battle/BattleSoulstrikePatch.js');
+    await import('./battle/DamageAbilityResolverMetalAbiPatch.js');
+    await import('./battle/BattleDeterministicRandomPatch.js');
     await import('./battle/BattleWaveRuntimePatch.js');
     await import('./battle/BattleSurgeRuntimePatch.js');
     await import('./battle/BattleSceneStageRuntimeWiring.js');
@@ -47,12 +40,7 @@ async function boot() {
     await import('./battle/BattleSceneAttackEffectPatch.js');
     await import('./battle/BattleSceneRendererBcuOriginPatch.js');
     const { BcuBootLoader, setBcuAssetDatabase } = await import('./bcu/BcuBootLoader.js');
-    const db = await BcuBootLoader.loadGame({
-      assetRoot: './public/assets',
-      bcuRoot: './public/assets/bcu',
-      locale: 'jp',
-      preloadMode: 'metadata-and-current-battle'
-    });
+    const db = await BcuBootLoader.loadGame({ assetRoot: './public/assets', bcuRoot: './public/assets/bcu', locale: 'jp', preloadMode: 'metadata-and-current-battle' });
     setBcuAssetDatabase(db);
     showBootStatus('Starting preview...');
     const { PreviewApp } = await import('./preview/PreviewApp.js');

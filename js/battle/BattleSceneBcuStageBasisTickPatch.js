@@ -3,8 +3,9 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { KBRuntime } from './KBRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v2');
+const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v3');
 
 function shouldTickActor(actor) {
   if (!actor) return false;
@@ -14,6 +15,44 @@ function shouldTickActor(actor) {
 
 function isActorActive(actor) {
   return !!actor && actor.state !== 'dead' && !!actor.isAlive?.();
+}
+
+function getPos(actor) {
+  const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
+  return Number.isFinite(n) ? n : (Number.isFinite(actor?.x) ? actor.x : 0);
+}
+
+function getDire(actor) {
+  if (Number.isFinite(actor?.direction)) return actor.direction;
+  return actor?.side === 'dog-player' ? -1 : 1;
+}
+
+function getLayer(actor) {
+  return Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0;
+}
+
+function sortForBcuUpdate(actors = []) {
+  actors.sort((a, b) => {
+    const ad = getDire(a);
+    const bd = getDire(b);
+    if (ad !== bd) return ad - bd;
+    const ap = getPos(a);
+    const bp = getPos(b);
+    if (ap !== bp) return ap - bp;
+    return String(a?.instanceId || '').localeCompare(String(b?.instanceId || ''));
+  });
+}
+
+function sortForBcuLayer(actors = []) {
+  actors.sort((a, b) => {
+    const al = getLayer(a);
+    const bl = getLayer(b);
+    if (al !== bl) return al - bl;
+    const ap = getPos(a);
+    const bp = getPos(b);
+    if (ap !== bp) return ap - bp;
+    return String(a?.instanceId || '').localeCompare(String(b?.instanceId || ''));
+  });
 }
 
 function moveActor(scene, actor, dt) {
@@ -53,6 +92,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     this.runTickPhase('economy', () => { this.economy?.tick?.(scaledDt); });
 
     this.runTickPhase('actor-state-update', () => {
+      sortForBcuUpdate(this.actors || []);
       for (const actor of this.actors) {
         if (!shouldTickActor(actor)) continue;
         actor.tick(scaledDt);
@@ -185,7 +225,9 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     this.runTickPhase('lineup-change', () => {
       if (this.battleState === 'running') this.tickLineupChange(scaledDt);
     });
-    this.runTickPhase('camera-update', () => {});
+    this.runTickPhase('camera-update', () => {
+      sortForBcuLayer(this.actors || []);
+    });
   };
 }
 

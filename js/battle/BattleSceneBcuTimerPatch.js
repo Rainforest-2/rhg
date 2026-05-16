@@ -3,7 +3,7 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { ProductionRuntime } from './ProductionRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-timer-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-timer-patch.v2');
 
 function finiteNonNegative(value, fallback = BCU_BATTLE_TIMER_PERIOD_MS) {
   const n = Number(value);
@@ -12,6 +12,29 @@ function finiteNonNegative(value, fallback = BCU_BATTLE_TIMER_PERIOD_MS) {
 
 function respawnFramesToMs(frames) {
   return Math.max(0, Number(frames) || 0) * BCU_BATTLE_TIMER_PERIOD_MS;
+}
+
+function applyLineupChangeAtStageBasisTail(scene, dt) {
+  if (!scene.lineupChanging) return;
+  const stepDt = finiteNonNegative(dt, BCU_BATTLE_TIMER_PERIOD_MS);
+  scene.lineupChangeElapsedMs += stepDt;
+  scene.lineupChangeFrameAccumulatorMs += stepDt;
+  while (scene.lineupChangeFrameAccumulatorMs >= BCU_BATTLE_TIMER_PERIOD_MS && scene.lineupChangeFrameRemaining > 0) {
+    scene.lineupChangeFrameAccumulatorMs -= BCU_BATTLE_TIMER_PERIOD_MS;
+    scene.lineupChangeFrameRemaining -= 1;
+    if (!scene.lineupChangeSwapped && scene.lineupChangeFrameRemaining === 2) {
+      scene.frontLineup = scene.lineupChangeNewFront;
+      scene.lineupChangeSwapped = true;
+    }
+  }
+  if (scene.lineupChangeFrameRemaining <= 0) {
+    scene.lineupChanging = false;
+    scene.lineupChangeElapsedMs = 0;
+    scene.lineupChangeFrameAccumulatorMs = 0;
+    scene.lineupChangeSwapped = false;
+    scene.lineupChangeOldFront = scene.frontLineup;
+    scene.lineupChangeNewFront = scene.frontLineup === 0 ? 1 : 0;
+  }
 }
 
 export function installBattleSceneBcuTimerPatch() {
@@ -25,7 +48,26 @@ export function installBattleSceneBcuTimerPatch() {
   }
 
   proto.tick = function tickBcuTimer(dt = BCU_BATTLE_TIMER_PERIOD_MS) {
-    return originalTick.call(this, finiteNonNegative(dt));
+    const stepDt = finiteNonNegative(dt);
+    this.__bcuLineupChangeDeferred = true;
+    this.__bcuLineupChangeDeferredDt = null;
+    try {
+      return originalTick.call(this, stepDt);
+    } finally {
+      const deferredDt = this.__bcuLineupChangeDeferredDt;
+      this.__bcuLineupChangeDeferred = false;
+      this.__bcuLineupChangeDeferredDt = null;
+      if (deferredDt !== null && this.battleState === 'running') {
+        applyLineupChangeAtStageBasisTail(this, deferredDt);
+        this.pushEvent?.({
+          type: 'bcuLineupChangeTickAtStageBasisTail',
+          source: 'BCU StageBasis.update lines 989-999',
+          dtMs: deferredDt,
+          frontLineup: this.frontLineup,
+          lineupChanging: this.lineupChanging
+        });
+      }
+    }
   };
 
   proto.applyBcuProductionStatsFromTemplates = function applyBcuProductionStatsFromTemplatesBcuTimer(roster = []) {
@@ -51,26 +93,11 @@ export function installBattleSceneBcuTimerPatch() {
   };
 
   proto.tickLineupChange = function tickLineupChangeBcuTimer(dt) {
-    if (!this.lineupChanging) return;
-    const stepDt = finiteNonNegative(dt, BCU_BATTLE_TIMER_PERIOD_MS);
-    this.lineupChangeElapsedMs += stepDt;
-    this.lineupChangeFrameAccumulatorMs += stepDt;
-    while (this.lineupChangeFrameAccumulatorMs >= BCU_BATTLE_TIMER_PERIOD_MS && this.lineupChangeFrameRemaining > 0) {
-      this.lineupChangeFrameAccumulatorMs -= BCU_BATTLE_TIMER_PERIOD_MS;
-      this.lineupChangeFrameRemaining -= 1;
-      if (!this.lineupChangeSwapped && this.lineupChangeFrameRemaining === 2) {
-        this.frontLineup = this.lineupChangeNewFront;
-        this.lineupChangeSwapped = true;
-      }
+    if (this.__bcuLineupChangeDeferred) {
+      this.__bcuLineupChangeDeferredDt = finiteNonNegative(dt, BCU_BATTLE_TIMER_PERIOD_MS);
+      return;
     }
-    if (this.lineupChangeFrameRemaining <= 0) {
-      this.lineupChanging = false;
-      this.lineupChangeElapsedMs = 0;
-      this.lineupChangeFrameAccumulatorMs = 0;
-      this.lineupChangeSwapped = false;
-      this.lineupChangeOldFront = this.frontLineup;
-      this.lineupChangeNewFront = this.frontLineup === 0 ? 1 : 0;
-    }
+    applyLineupChangeAtStageBasisTail(this, dt);
   };
 
   proto.tickKnockback = function tickKnockbackBcuTimer(actor, dt, target) {

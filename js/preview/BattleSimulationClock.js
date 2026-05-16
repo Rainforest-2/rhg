@@ -1,7 +1,7 @@
 export class BattleSimulationClock {
   constructor({
-    fixedStepMs = 1000 / 30,
-    maxSubStepsPerFrame = 5,
+    fixedStepMs = 33,
+    maxSubStepsPerFrame = 1,
     maxFrameDtMs = 100,
     catchUpMode = 'bcu-no-catchup',
     dropRemainderOnStepLimit = true
@@ -11,6 +11,7 @@ export class BattleSimulationClock {
     this.maxFrameDtMs = maxFrameDtMs;
     this.catchUpMode = catchUpMode;
     this.dropRemainderOnStepLimit = dropRemainderOnStepLimit !== false;
+    this.source = 'BCU-java-PC main.Timer.p = 33ms, no multi-step catch-up';
     this.lastFrameTime = null;
     this.accumulatorMs = 0;
     this.paused = false;
@@ -44,7 +45,7 @@ export class BattleSimulationClock {
   step(now, speedMultiplier = 1, tickFn = () => {}) {
     if (this.lastFrameTime == null) {
       this.lastFrameTime = now;
-      this.lastStepDebug = { rawDt: 0, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: this.paused, catchUpMode: this.catchUpMode };
+      this.lastStepDebug = { rawDt: 0, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: this.paused, catchUpMode: this.catchUpMode, fixedStepMs: this.fixedStepMs, source: this.source };
       return this.lastStepDebug;
     }
 
@@ -52,7 +53,7 @@ export class BattleSimulationClock {
     this.lastFrameTime = now;
 
     if (this.paused) {
-      this.lastStepDebug = { rawDt, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: true, catchUpMode: this.catchUpMode };
+      this.lastStepDebug = { rawDt, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: true, catchUpMode: this.catchUpMode, fixedStepMs: this.fixedStepMs, source: this.source };
       return this.lastStepDebug;
     }
 
@@ -85,7 +86,9 @@ export class BattleSimulationClock {
       paused: false,
       catchUpMode: this.catchUpMode,
       maxSteps,
-      accumulatorMs: this.accumulatorMs
+      accumulatorMs: this.accumulatorMs,
+      fixedStepMs: this.fixedStepMs,
+      source: this.source
     };
 
     return this.lastStepDebug;

@@ -1,6 +1,7 @@
+import '../battle/BattleUnifiedDamageDebugPatch.js';
 import { BattleDebugHud } from './BattleDebugHud.js';
 
-const INSTALL_FLAG = Symbol.for('wanko-battle.debug-hud.installed.v1');
+const INSTALL_FLAG = Symbol.for('wanko-battle.debug-hud.installed.v2');
 
 function install() {
   if (globalThis[INSTALL_FLAG]) return;

@@ -1,30 +1,53 @@
-.canvas-panel,
-#preview-canvas,
-.prod-ui .cards,
-.prod-ui .lineup-cards,
-.prod-card-stack,
-.prod-ui .prod-card {
-  touch-action: none !important;
-  overscroll-behavior: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.prod-ui .cards *,
-.canvas-panel *,
-#preview-canvas {
-  touch-action: none !important;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
+/*
+ * Browser-only input scoping for BCU mobile battle gestures.
+ * BCU Android receives gestures inside BattleView; browser scroll/selection must be
+ * suppressed only for active battle canvas/card targets, never for formation or overlays.
+ */
+.formation-ui,
+.formation-panel,
+.formation-catalog-section,
+.formation-catalog-scroll,
+.formation-stage-overlay,
+.formation-stage-overlay *,
+.app-loading-overlay,
+.app-loading-card,
+.stage-selector,
+.modal,
+[data-scrollable]{
+  touch-action:pan-y!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
 }
 
 .formation-ui,
-.formation-ui *,
 .formation-stage-overlay,
-.formation-stage-overlay * {
-  touch-action: pan-x pan-y;
+.app-loading-overlay{
+  overflow:auto;
+}
+
+.formation-catalog-scroll,
+.app-loading-error,
+.stage-selector [data-scrollable],
+.modal [data-scrollable]{
+  overflow:auto;
+}
+
+.canvas-panel:has(.prod-ui:not(.is-hidden)) #preview-canvas,
+.prod-ui:not(.is-hidden) .cards,
+.prod-ui:not(.is-hidden) .lineup-cards,
+.prod-ui:not(.is-hidden) .prod-card-stack,
+.prod-ui:not(.is-hidden) .prod-card{
+  touch-action:none!important;
+  overscroll-behavior:contain;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.prod-ui:not(.is-hidden) .cards *{
+  touch-action:none!important;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
 }

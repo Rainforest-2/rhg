@@ -114,13 +114,15 @@ for (const entry of language.entries || []) {
 }
 
 await addBundle('effect:kbeff', 'effect', 'effect:kbeff', 'public/assets/bundles/effect/kbeff.zip', 'full', [
-  { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: 'effect:kbeff', source: 'public/assets/bcu/000001/org/battle/a', entries: ['image.png', 'imgcut.imgcut', 'model.mamodel', 'kb_hb.maanim', 'kb_sw.maanim', 'kb_ass.maanim'] }, null, 2)) },
+  { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: 'effect:kbeff', source: 'public/assets/bcu/000001/org/battle/a', entries: ['image.png', 'imgcut.imgcut', 'model.mamodel', 'kb_hb.maanim', 'kb_sw.maanim', 'kb_ass.maanim', 'critical.mamodel', 'critical.maanim'] }, null, 2)) },
   { name: 'image.png', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/000_a.png') },
   { name: 'imgcut.imgcut', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/000_a.imgcut') },
   { name: 'model.mamodel', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb.mamodel') },
   { name: 'kb_hb.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb_hb.maanim') },
   { name: 'kb_sw.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb_sw.maanim') },
-  { name: 'kb_ass.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb_ass.maanim') }
+  { name: 'kb_ass.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb_ass.maanim') },
+  { name: 'critical.mamodel', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/critical.mamodel') },
+  { name: 'critical.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/critical.maanim') }
 ]);
 
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);

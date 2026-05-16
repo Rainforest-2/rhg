@@ -11,12 +11,19 @@ export async function verifyVisibilityPauseDoesNotAdvanceBattle() {
 }
 
 export async function verifyLargeDeltaIsClampedOrSubstepped() {
-  const clock = new BattleSimulationClock({ fixedStepMs: 1000/30, maxSubStepsPerFrame: 5, maxFrameDtMs: 100 });
+  const clock = new BattleSimulationClock();
   const dts = [];
   clock.resume(0);
   const r = clock.step(5000, 1, (dt) => dts.push(dt));
-  const ok = dts.length <= 5 && dts.every((v) => v <= (1000/30)+0.0001) && r.rawDt === 5000;
-  return { ok, errors: ok ? [] : ['large delta not clamped/substepped correctly'] };
+  const ok = dts.length === 1
+    && dts[0] === 33
+    && r.rawDt === 5000
+    && r.fixedStepMs === 33
+    && r.maxSteps === 1
+    && r.catchUpMode === 'bcu-no-catchup'
+    && r.dropped === true
+    && r.accumulatorMs === 0;
+  return { ok, errors: ok ? [] : ['large delta did not follow BCU 33ms/no-catchup clock'] };
 }
 
 export async function verifyFocusResumeDropsHiddenElapsedTime() {

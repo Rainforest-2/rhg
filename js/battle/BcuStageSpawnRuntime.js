@@ -31,6 +31,14 @@ function bcuRandomRange(min, max, random = Math.random) {
   return a;
 }
 
+function bcuStageRespawnTime(stageRuntime = {}, random = Math.random) {
+  const min = toFiniteNumber(stageRuntime.minSpawnFrame ?? stageRuntime.minSpawn, 1);
+  const max = toFiniteNumber(stageRuntime.maxSpawnFrame ?? stageRuntime.maxSpawn, min);
+  if (min <= 0 || max <= 0) return 1;
+  if (min === max) return Math.floor(min);
+  return bcuRandomRange(min, max, random);
+}
+
 function resolveKillCounter(rowState, context) {
   const rowIndex = rowState?.rowIndex;
   if (context?.killCounterByRowIndex && Number.isFinite(Number(context.killCounterByRowIndex[rowIndex]))) {
@@ -162,11 +170,14 @@ export class BcuStageSpawnRuntime {
     this.warningFlags = new Set();
     this.stageRuntime = stageRuntime || {};
     this.lastTickFrame = 0;
+    this.spawnGateSource = 'BCU StageBasis.respawnTime / EStage.allow single-spawn gate';
+    const rand = typeof this.options?.random === 'function' ? this.options.random : (typeof this.stageRuntime?.random === 'function' ? this.stageRuntime.random : Math.random);
+    this.globalRespawnTime = bcuStageRespawnTime(this.stageRuntime, rand) - 1;
+    this.lastGlobalRespawnDebug = { source: this.spawnGateSource, initialized: this.globalRespawnTime };
     const map = new Map(stageEnemyUnitDefs.map((u) => [u?.stageSpawn?.rowIndex, u]));
     this.rows = (this.stageRuntime.enemyRows || []).map((r) => {
       const firstFrameMin = Number.isFinite(r?.firstFrameMin) ? Math.floor(r.firstFrameMin) : (Number.isFinite(r?.firstFrame) ? Math.floor(r.firstFrame) : 0);
       const firstFrameMax = Number.isFinite(r?.firstFrameMax) ? Math.floor(r.firstFrameMax) : firstFrameMin;
-      const rand = typeof this.options?.random === 'function' ? this.options.random : (typeof this.stageRuntime?.random === 'function' ? this.stageRuntime.random : Math.random);
       const firstResolved = bcuRandomRange(firstFrameMin, firstFrameMax, rand);
       const negativeFirstDelayFrames = firstResolved < 0 ? Math.abs(firstResolved) : 0;
       return {
@@ -206,6 +217,12 @@ export class BcuStageSpawnRuntime {
     const killCounterByRowIndex = context.killCounterByRowIndex || this.stageRuntime.killCounterByRowIndex || {};
     context = { ...context, killCounterByRowIndex };
     const out = [];
+
+    if (this.globalRespawnTime > 0) {
+      this.globalRespawnTime -= 1;
+      this.lastGlobalRespawnDebug = { source: this.spawnGateSource, frame, blocked: true, remaining: this.globalRespawnTime };
+      return out;
+    }
 
     for (const s of this.rows) {
       s.done = !!s.exhausted;
@@ -266,7 +283,7 @@ export class BcuStageSpawnRuntime {
         continue;
       }
 
-      if (alive + out.length >= max) {
+      if (alive >= max) {
         s.waitingForMaxEnemySlot = true;
         s.lastBlockedReason = 'max-enemy-count';
         continue;
@@ -306,6 +323,8 @@ export class BcuStageSpawnRuntime {
         baseHpTrigger: s.row?.baseHpTrigger,
         baseHpTriggerPercent: trigger,
         baseHpTriggerUpperPercent: upperTrigger,
+        globalRespawnTimeBeforeSpawn: this.globalRespawnTime,
+        globalSpawnGateSource: this.spawnGateSource,
         healthWindowDebug: {
           source: 'BCU EStage.inHealth parity',
           enemyBaseHpPercent: hp,
@@ -323,8 +342,10 @@ export class BcuStageSpawnRuntime {
       s.pendingSpawnEvent = spawnEvent;
       s.waitingForSpawnCommit = true;
       out.push(spawnEvent);
+      break;
     }
 
+    this.lastGlobalRespawnDebug = { source: this.spawnGateSource, frame, blocked: false, emitted: out.length, remaining: this.globalRespawnTime };
     return out;
   }
 
@@ -343,6 +364,10 @@ export class BcuStageSpawnRuntime {
     rowState.waitingForMaxEnemySlot = false;
     rowState.lastBlockedReason = null;
 
+    const nextGlobal = bcuStageRespawnTime(this.stageRuntime, random);
+    this.globalRespawnTime = nextGlobal - 1;
+    this.lastGlobalRespawnDebug = { source: this.spawnGateSource, spawnFrame, nextGlobalRespawnTimeRaw: nextGlobal, nextGlobalRespawnTimeAfterCurrentTickDecrement: this.globalRespawnTime };
+
     const isInfinite = rowState.row?.isInfinite === true || toFiniteNumber(rowState.row?.count, 0) === 0;
     const count = Math.max(0, toFiniteNumber(rowState.row?.count, 0));
     if (!isInfinite && rowState.spawnedCount >= count) {
@@ -356,7 +381,7 @@ export class BcuStageSpawnRuntime {
     const min = Math.max(0, toFiniteNumber(rowState.row?.respawnMinFrame, 0));
     const max = Math.max(min, toFiniteNumber(rowState.row?.respawnMaxFrame, min));
     const interval = min >= max ? min : Math.floor(min + Math.max(0, Math.min(0.999999999, random())) * (max - min));
-    rowState.nextFrame = spawnFrame + interval;
+    rowState.nextFrame = spawnFrame + interval + 1;
     rowState.nextAtFrame = rowState.nextFrame;
     rowState.exhausted = false;
     rowState.done = false;

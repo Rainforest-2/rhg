@@ -61,14 +61,12 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock(); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.fixedStepMs=1000/30; this.maxSubStepsPerFrame=5; this.cameraInputController=null; }
+  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; }
 
   async start() {
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
     this.bindVisibilityHandlers();
     this.simulationClock.maxFrameDtMs = this.maxFrameDtMs;
-    this.simulationClock.fixedStepMs = this.fixedStepMs;
-    this.simulationClock.maxSubStepsPerFrame = this.maxSubStepsPerFrame;
     try {
       this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
       const devUiEnabled = new URLSearchParams(location.search).get('debugUi') === '1' || localStorage.getItem('debugUi') === '1';

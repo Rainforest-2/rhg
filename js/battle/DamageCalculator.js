@@ -54,123 +54,59 @@ export class DamageCalculator {
     };
   }
 
-  static buildSafeFallback({ attacker = null, target = null, targetType = 'actor', event = null, context = {}, error = null, baseDamage = null } = {}) {
-    const safeBaseDamage = this.normalizeDamage(baseDamage ?? this.getBaseDamage({ attacker, event }), 0);
+  static calculate({ attacker = null, target = null, targetType = 'actor', event = null, context = {} } = {}) {
+    const baseDamage = this.getBaseDamage({ attacker, event });
     const modifiers = this.buildDefaultModifiers({ attacker, target, targetType, event });
-    const errorDebug = {
-      source: 'DamageCalculator.safeFallback',
-      message: String(error?.message || error || 'unknown'),
-      stack: String(error?.stack || ''),
-      attacker: attacker?.instanceId || attacker?.label || null,
-      target: target?.instanceId || target?.label || target?.id || target?.side || null,
-      targetType,
-      hitIndex: event?.hitIndex ?? context?.hitIndex ?? null,
-      attackEventKey: context?.attackEventKey ?? null
-    };
-    globalThis.__BATTLE_DAMAGE_ERROR__ = errorDebug;
-    console.error('[DamageCalculator] BCU damage calculation failed; using base damage fallback', errorDebug);
-    modifiers.notes.push('bcu-damage-calculation-error-base-damage-fallback');
+    if (attacker?.stageMagnification || attacker?.rawStats?.stageMagnification) modifiers.notes.push('stage-magnification-already-applied-to-stats');
+
+    const abilityResult = DamageAbilityResolver.resolve({ attacker, target, targetType, event, baseDamage, context });
+    for (const key of Object.keys(abilityResult.modifiers || {})) {
+      if (hasOwn(modifiers, key)) modifiers[key] = abilityResult.modifiers[key] ?? 1;
+    }
+    modifiers.notes.push(...(abilityResult.notes || []));
+    modifiers.bcuAppliedDetails = abilityResult.appliedDetails || [];
+
+    const finalDamage = this.normalizeDamage(abilityResult.finalDamage ?? baseDamage, baseDamage);
+    const multiplier = baseDamage === 0 ? 1 : finalDamage / baseDamage;
+    const proc = ProcResolver.resolve({ attacker, target, targetType, event, damageResult: { baseDamage, finalDamage, multiplier, modifiers, applied: abilityResult.applied || {} }, context });
+
     return {
-      baseDamage: safeBaseDamage,
-      finalDamage: safeBaseDamage,
-      multiplier: 1,
+      baseDamage,
+      finalDamage,
+      multiplier,
       modifiers,
       targetType,
       hitIndex: event?.hitIndex ?? null,
       attackEventKey: context?.attackEventKey ?? null,
-      source: 'DamageCalculator.safe-fallback-after-error',
+      source: 'DamageCalculator.v5-bcu-integer-getDamage-result-fail-fast',
       abilityDebug: {
-        error: errorDebug,
         eventRawAbi: event?.rawAbi ?? null,
+        eventAbilityMappingStatus: event?.abilityMappingStatus || null,
+        eventAbilityEnabledBits: Array.isArray(event?.abilityEnabledBits) ? event.abilityEnabledBits : [],
+        attackerAbilityMappingStatus: attacker?.abilityModel?.mappingStatus || attacker?.abilities?.mappingStatus || null,
         attackerBcuAbi: attacker?.bcuAbi ?? attacker?.rawStats?.bcuAbi ?? null,
+        targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null,
         targetTraits: this.getTargetTraits(target)
       },
-      abilityResolver: {
-        enabled: false,
-        source: 'DamageCalculator.safeFallback',
-        applied: {},
-        multiplier: 1,
-        notes: ['resolver-error-fallback'],
-        error: errorDebug
-      },
-      proc: { source: 'ProcResolver.skipped-due-damage-error', pending: [], skipped: [], applied: [], notes: ['damage-calculation-error'] },
-      procPendingCount: 0,
-      procSkippedCount: 0,
+      abilityResolver: abilityResult,
+      proc,
+      procPendingCount: Array.isArray(proc?.pending) ? proc.pending.length : 0,
+      procSkippedCount: Array.isArray(proc?.skipped) ? proc.skipped.length : 0,
       applied: {
         stageMagnification: false,
-        baseDestroyer: false,
-        trait: false,
-        critical: false,
-        metal: false,
-        resistant: false,
-        massiveDamage: false,
-        insaneDamage: false,
-        strong: false,
-        tough: false,
-        metalKiller: false,
-        strongAttack: false,
-        baronKiller: false
+        baseDestroyer: !!abilityResult.applied?.baseDestroyer,
+        trait: !!(abilityResult.applied?.strong || abilityResult.applied?.massiveDamage || abilityResult.applied?.insaneDamage || abilityResult.applied?.resistant),
+        critical: !!abilityResult.applied?.critical,
+        metal: !!abilityResult.applied?.metal,
+        resistant: !!abilityResult.applied?.resistant,
+        massiveDamage: !!abilityResult.applied?.massiveDamage,
+        insaneDamage: !!abilityResult.applied?.insaneDamage,
+        strong: !!abilityResult.applied?.strong,
+        tough: !!abilityResult.applied?.tough,
+        metalKiller: !!abilityResult.applied?.metalKiller,
+        strongAttack: !!abilityResult.applied?.strongAttack,
+        baronKiller: !!abilityResult.applied?.baronKiller
       }
     };
-  }
-
-  static calculate({ attacker = null, target = null, targetType = 'actor', event = null, context = {} } = {}) {
-    const baseDamage = this.getBaseDamage({ attacker, event });
-    try {
-      const modifiers = this.buildDefaultModifiers({ attacker, target, targetType, event });
-      if (attacker?.stageMagnification || attacker?.rawStats?.stageMagnification) modifiers.notes.push('stage-magnification-already-applied-to-stats');
-
-      const abilityResult = DamageAbilityResolver.resolve({ attacker, target, targetType, event, baseDamage, context });
-      for (const key of Object.keys(abilityResult.modifiers || {})) {
-        if (hasOwn(modifiers, key)) modifiers[key] = abilityResult.modifiers[key] ?? 1;
-      }
-      modifiers.notes.push(...(abilityResult.notes || []));
-      modifiers.bcuAppliedDetails = abilityResult.appliedDetails || [];
-
-      const finalDamage = this.normalizeDamage(abilityResult.finalDamage ?? baseDamage, baseDamage);
-      const multiplier = baseDamage === 0 ? 1 : finalDamage / baseDamage;
-      const proc = ProcResolver.resolve({ attacker, target, targetType, event, damageResult: { baseDamage, finalDamage, multiplier, modifiers, applied: abilityResult.applied || {} }, context });
-
-      return {
-        baseDamage,
-        finalDamage,
-        multiplier,
-        modifiers,
-        targetType,
-        hitIndex: event?.hitIndex ?? null,
-        attackEventKey: context?.attackEventKey ?? null,
-        source: 'DamageCalculator.v4-bcu-integer-getDamage-result-guarded',
-        abilityDebug: {
-          eventRawAbi: event?.rawAbi ?? null,
-          eventAbilityMappingStatus: event?.abilityMappingStatus || null,
-          eventAbilityEnabledBits: Array.isArray(event?.abilityEnabledBits) ? event.abilityEnabledBits : [],
-          attackerAbilityMappingStatus: attacker?.abilityModel?.mappingStatus || attacker?.abilities?.mappingStatus || null,
-          attackerBcuAbi: attacker?.bcuAbi ?? attacker?.rawStats?.bcuAbi ?? null,
-          targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null,
-          targetTraits: this.getTargetTraits(target)
-        },
-        abilityResolver: abilityResult,
-        proc,
-        procPendingCount: Array.isArray(proc?.pending) ? proc.pending.length : 0,
-        procSkippedCount: Array.isArray(proc?.skipped) ? proc.skipped.length : 0,
-        applied: {
-          stageMagnification: false,
-          baseDestroyer: !!abilityResult.applied?.baseDestroyer,
-          trait: !!(abilityResult.applied?.strong || abilityResult.applied?.massiveDamage || abilityResult.applied?.insaneDamage || abilityResult.applied?.resistant),
-          critical: !!abilityResult.applied?.critical,
-          metal: !!abilityResult.applied?.metal,
-          resistant: !!abilityResult.applied?.resistant,
-          massiveDamage: !!abilityResult.applied?.massiveDamage,
-          insaneDamage: !!abilityResult.applied?.insaneDamage,
-          strong: !!abilityResult.applied?.strong,
-          tough: !!abilityResult.applied?.tough,
-          metalKiller: !!abilityResult.applied?.metalKiller,
-          strongAttack: !!abilityResult.applied?.strongAttack,
-          baronKiller: !!abilityResult.applied?.baronKiller
-        }
-      };
-    } catch (error) {
-      return this.buildSafeFallback({ attacker, target, targetType, event, context, error, baseDamage });
-    }
   }
 }

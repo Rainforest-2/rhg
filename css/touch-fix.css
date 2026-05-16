@@ -1,0 +1,2 @@
+.prod-ui .cards,.prod-ui .lineup-cards,.prod-card-stack,.prod-ui .prod-card{touch-action:none!important;overscroll-behavior:contain;user-select:none}
+.prod-ui .cards *{touch-action:none!important}

@@ -1,11 +1,16 @@
+export const BCU_BATTLE_TIMER_PERIOD_MS = 33;
+
 export class BattleFrameClock {
-  constructor({ fps = 30 } = {}) {
+  constructor({ fixedStepMs = BCU_BATTLE_TIMER_PERIOD_MS, fps = 30 } = {}) {
     this.fps = Number.isFinite(fps) && fps > 0 ? fps : 30;
-    this.fixedStepMs = 1000 / this.fps;
+    this.fixedStepMs = Number.isFinite(fixedStepMs) && fixedStepMs > 0
+      ? fixedStepMs
+      : BCU_BATTLE_TIMER_PERIOD_MS;
     this.logicFrame = 0;
     this.timeMs = 0;
     this.stepCount = 0;
     this.lastStep = null;
+    this.source = 'BCU-java-PC main.Timer.p = 33ms';
   }
 
   reset() {
@@ -30,7 +35,8 @@ export class BattleFrameClock {
       dtMs: dt,
       fps: this.fps,
       fixedStepMs: this.fixedStepMs,
-      stepCount: this.stepCount
+      stepCount: this.stepCount,
+      source: this.source
     };
 
     return this.lastStep;

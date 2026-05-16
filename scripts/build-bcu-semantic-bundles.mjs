@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
+import { EFFECT_KBEFF_BUNDLE_KEY, EFFECT_KBEFF_BUNDLE_PATH, rebuildKbeffEffectBundle } from './build-bcu-effect-bundle.mjs';
 
 const all = process.argv.includes('--all') || !process.argv.includes('--sample');
 const actor = await readJson('public/assets/generated/bcu-actor-index.json', { entries: [] });
@@ -113,17 +114,9 @@ for (const entry of language.entries || []) {
   await addBundle(entry.bundleRef.bundleKey, 'language', entry.key, entry.bundleRef.bundlePath, entry.status, files);
 }
 
-await addBundle('effect:kbeff', 'effect', 'effect:kbeff', 'public/assets/bundles/effect/kbeff.zip', 'full', [
-  { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: 'effect:kbeff', source: 'public/assets/bcu/000001/org/battle/a', entries: ['image.png', 'imgcut.imgcut', 'model.mamodel', 'kb_hb.maanim', 'kb_sw.maanim', 'kb_ass.maanim', 'critical.mamodel', 'critical.maanim'] }, null, 2)) },
-  { name: 'image.png', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/000_a.png') },
-  { name: 'imgcut.imgcut', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/000_a.imgcut') },
-  { name: 'model.mamodel', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb.mamodel') },
-  { name: 'kb_hb.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb_hb.maanim') },
-  { name: 'kb_sw.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb_sw.maanim') },
-  { name: 'kb_ass.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/kb_ass.maanim') },
-  { name: 'critical.mamodel', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/critical.mamodel') },
-  { name: 'critical.maanim', data: await fileBufferOrNull('public/assets/bcu/000001/org/battle/a/critical.maanim') }
-]);
+const effectBundle = await rebuildKbeffEffectBundle();
+manifest.bundles[EFFECT_KBEFF_BUNDLE_KEY] = { kind: 'effect', key: EFFECT_KBEFF_BUNDLE_KEY, bundlePath: EFFECT_KBEFF_BUNDLE_PATH, status: 'full', sizeBytes: effectBundle.sizeBytes, hash: effectBundle.hash };
+diagnostics.summary.generated += 1;
 
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);
 await writeJson('public/assets/generated/bcu-diagnostics.json', diagnostics);

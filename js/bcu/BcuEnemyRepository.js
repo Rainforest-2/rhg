@@ -11,11 +11,25 @@ function getRawStatsForCoreRecord(record) {
   return [];
 }
 
-function ensureCoreEnemyStatsCombatModel(record, loader, enemyId) {
+function markMissingCombatModel(record, enemyId, reason) {
+  const stats = record?.stats || null;
+  return {
+    ...(stats || {}),
+    __bcuCombatModelMissing: true,
+    __bcuCombatModelMissingReason: reason,
+    source: { ...(stats?.source || {}), mappingStatus: 'missing-bcu-raw-stats', enemyId }
+  };
+}
+
+function ensureCoreEnemyStatsCombatModel(record, loader, enemyId, diagnostics) {
   const stats = record?.stats || null;
   if (stats?.abilityModel?.mappingStatus === 'semantic-mapped' && stats?.bcuCombatModel) return stats;
   const raw = getRawStatsForCoreRecord(record);
-  if (!raw.length) throw new Error(`CoreDB enemy stats missing raw stats needed for BCU combat model: enemy=${enemyId}`);
+  if (!raw.length) {
+    const reason = `CoreDB enemy stats missing raw stats needed for BCU combat model: enemy=${enemyId}`;
+    diagnostics?.enemies?.missingStats?.push?.({ enemyId, file: 'core-db', reason });
+    return markMissingCombatModel(record, enemyId, reason);
+  }
   const row = Number.isFinite(record?.row) ? record.row : (Number.isFinite(stats?.source?.row) ? stats.source.row : enemyId + 2);
   const normalized = loader.normalizeEnemyStats(raw, { file: record?.sourceFile || stats?.source?.file || 'core-db', row, enemyId, type: 'enemy', mappingStatus: 'valid-coredb-normalized' });
   return { ...normalized, ...(stats || {}), rawValues: normalized.rawValues, bcuCombatModel: normalized.bcuCombatModel, traits: normalized.traits, traitFlags: normalized.traitFlags, bcuAbi: normalized.bcuAbi, bcuAbilityFlags: normalized.bcuAbilityFlags, bcuProc: normalized.bcuProc, abilityModel: normalized.abilityModel, abilities: normalized.abilities };
@@ -51,14 +65,19 @@ export class BcuEnemyRepository {
     const repo = new BcuEnemyRepository({ manifest, names, diagnostics, readText: null, locale });
     for (const record of Object.values(coreDb?.enemies?.enemies || {})) {
       const enemyId = toInt(record.enemyId ?? record.id, null); if (!Number.isFinite(enemyId)) continue;
-      const stats = ensureCoreEnemyStatsCombatModel(record, repo.statsLoader, enemyId);
+      const stats = ensureCoreEnemyStatsCombatModel(record, repo.statsLoader, enemyId, diagnostics);
       repo.enemies.set(enemyId, { id: enemyId, id3: record.id3 || pad3(enemyId), key: record.key || enemyKey(enemyId), sourcePack: record.sourcePack || 'core-db', name: record.name || names.enemy(enemyId, locale), stats, rawStats: getRawStatsForCoreRecord(record), asset: record.asset || null });
     }
     return repo;
   }
 
   get(enemyId) { return this.enemies.get(toInt(enemyId, -1)) || null; }
-  getStats(enemyId) { const enemy = this.get(enemyId); if (!enemy?.stats) throw new Error(`BCU enemy stats missing: enemy=${enemyId}`); return enemy.stats; }
+  getStats(enemyId) {
+    const enemy = this.get(enemyId);
+    if (!enemy?.stats) throw new Error(`BCU enemy stats missing: enemy=${enemyId}`);
+    if (enemy.stats.__bcuCombatModelMissing) throw new Error(enemy.stats.__bcuCombatModelMissingReason || `BCU enemy combat model missing: enemy=${enemyId}`);
+    return enemy.stats;
+  }
   fromStageRawId(rawEnemyId) { const raw = toInt(rawEnemyId, null); const enemyId = Number.isFinite(raw) ? raw - 2 : null; const enemy = Number.isFinite(enemyId) ? this.get(enemyId) : null; return { rawEnemyId: raw, enemyId, enemy, ok: !!enemy }; }
   list() { return [...this.enemies.values()].sort((a, b) => a.id - b.id); }
 }

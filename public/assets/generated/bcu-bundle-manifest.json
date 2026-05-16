@@ -32633,8 +32633,8 @@
       "key": "effect:kbeff",
       "bundlePath": "public/assets/bundles/effect/kbeff.zip",
       "status": "full",
-      "sizeBytes": 18231,
-      "hash": "6a106caf9e55540b29e89e8bea05ab20c1729a71d566f49bbd9291bc4603c27f"
+      "sizeBytes": 63388,
+      "hash": "333dd361ed31a6dc6b3ed5277f40da25490f0202e862cb11db7524fa2cdeb064"
     },
     "core:db": {
       "kind": "core",

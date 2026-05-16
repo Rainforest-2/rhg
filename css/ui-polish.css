@@ -1,0 +1,312 @@
+/*
+ * Presentation polish for browser-only UI surfaces.
+ * BCU-derived production card canvases and sprite digits are not replaced here.
+ */
+:root{
+  --ui-glass:rgba(8,13,24,.78);
+  --ui-glass-strong:rgba(10,16,30,.94);
+  --ui-border:rgba(226,232,240,.16);
+  --ui-border-hot:rgba(250,204,21,.55);
+  --ui-text:#eef5ff;
+  --ui-soft:#aab7ca;
+  --ui-blue:#7dd3fc;
+  --ui-warn:#facc15;
+}
+
+body{
+  background:#020617;
+}
+
+.canvas-panel::before{
+  content:"";
+  position:absolute;
+  inset:auto 0 0 0;
+  height:min(36dvh,320px);
+  z-index:12;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(2,6,23,0),rgba(2,6,23,.26) 38%,rgba(2,6,23,.72));
+}
+
+.prod-ui{
+  z-index:24;
+}
+
+.prod-ui .cards{
+  bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  padding:10px 12px 12px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(15,23,42,.42),rgba(3,7,18,.72));
+  box-shadow:0 18px 48px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.12);
+  backdrop-filter:blur(4px) saturate(1.08);
+}
+
+.prod-card-stack{
+  filter:drop-shadow(0 8px 12px rgba(0,0,0,.44));
+}
+
+.prod-ui .prod-card{
+  border-radius:4px;
+  image-rendering:auto;
+}
+
+.prod-card.is-back{
+  opacity:.68;
+  filter:brightness(.78) saturate(.84);
+}
+
+.prod-card.is-front{
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.9));
+}
+
+.prod-ui .battle-money{
+  top:calc(12px + env(safe-area-inset-top,0px));
+  right:calc(14px + env(safe-area-inset-right,0px));
+  padding:4px 8px;
+  border-radius:12px;
+  background:rgba(2,6,23,.38);
+  box-shadow:0 10px 26px rgba(0,0,0,.32);
+  backdrop-filter:blur(3px);
+}
+
+.formation-ui{
+  background:
+    radial-gradient(circle at 18% 8%,rgba(125,211,252,.14),transparent 32%),
+    radial-gradient(circle at 80% 0%,rgba(250,204,21,.12),transparent 30%),
+    linear-gradient(180deg,rgba(2,6,23,.84),rgba(2,6,23,.95));
+}
+
+.formation-panel{
+  gap:clamp(12px,1.4vw,22px);
+  border:1px solid var(--ui-border);
+  border-radius:clamp(18px,2.2vw,30px);
+  background:
+    linear-gradient(180deg,rgba(15,23,42,.94),rgba(4,8,18,.97)),
+    radial-gradient(circle at 12% 0%,rgba(59,130,246,.12),transparent 40%);
+  box-shadow:0 28px 90px rgba(0,0,0,.56),inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.formation-header{
+  min-height:88px;
+  align-items:center;
+  border-color:rgba(255,255,255,.13);
+  background:linear-gradient(135deg,rgba(30,41,59,.74),rgba(15,23,42,.32));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.formation-header::before{
+  content:"DECK";
+  top:auto;
+  bottom:-7px;
+  right:18px;
+  color:rgba(255,255,255,.055);
+  font-size:clamp(42px,6.8vw,92px);
+  letter-spacing:.02em;
+}
+
+.formation-header h3{
+  letter-spacing:.03em;
+}
+
+.formation-header h3::before{
+  content:"BCU DATA";
+  background:linear-gradient(180deg,#fde68a,#f59e0b);
+  box-shadow:0 3px 0 rgba(120,53,15,.58),0 0 24px rgba(250,204,21,.16);
+}
+
+.formation-header p{
+  max-width:58ch;
+  color:#b6c4d8;
+}
+
+.formation-active-page-label,
+.formation-catalog-summary,
+.formation-current-stage{
+  border-color:rgba(255,255,255,.12);
+  background:rgba(2,6,23,.58);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.formation-slots-wrap,
+.formation-catalog-section{
+  border-color:rgba(255,255,255,.11);
+  background:linear-gradient(180deg,rgba(15,23,42,.52),rgba(2,6,23,.42));
+}
+
+.formation-page-tab,
+.secondary-action{
+  border-color:rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(30,41,59,.92),rgba(15,23,42,.94));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 8px 18px rgba(0,0,0,.18);
+}
+
+.formation-page-tab.is-active{
+  border-color:var(--ui-border-hot);
+  background:linear-gradient(180deg,rgba(92,68,18,.92),rgba(30,41,59,.86));
+  box-shadow:0 0 0 2px rgba(250,204,21,.13),inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+.formation-slots{
+  align-items:stretch;
+}
+
+.formation-slot{
+  border-radius:15px;
+  border-color:rgba(255,255,255,.16);
+  background:linear-gradient(180deg,rgba(30,41,59,.96),rgba(6,10,20,.98));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px rgba(0,0,0,.26);
+}
+
+.formation-slot.is-active{
+  border-color:rgba(250,204,21,.92);
+  box-shadow:0 0 0 2px rgba(250,204,21,.24),0 18px 34px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+.formation-catalog-tabs button{
+  border-color:rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(30,41,59,.9),rgba(2,6,23,.82));
+}
+
+.formation-search-input{
+  border-color:rgba(255,255,255,.13);
+  background:rgba(2,6,23,.64);
+}
+
+.formation-catalog-scroll{
+  padding:4px 6px 4px 2px;
+}
+
+.formation-character-card{
+  border-radius:16px;
+  border-color:rgba(255,255,255,.85);
+  background:linear-gradient(180deg,#fff 0%,#eef6ff 52%,#d7e4f7 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.88),0 12px 24px rgba(0,0,0,.24);
+}
+
+.formation-character-card[data-faction="dog"]{
+  background:linear-gradient(180deg,#fff 0%,#fff7ed 48%,#fed7aa 100%);
+}
+
+.formation-character-card::before{
+  inset:6px;
+  border-color:rgba(15,23,42,.1);
+}
+
+.formation-character-card:hover,
+.formation-character-card:focus-visible{
+  transform:translateY(-2px);
+  border-color:rgba(250,204,21,.95);
+  box-shadow:0 18px 34px rgba(0,0,0,.32),0 0 0 2px rgba(250,204,21,.18);
+  outline:0;
+}
+
+.formation-card-meta span{
+  border-color:rgba(15,23,42,.12);
+  background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(226,232,240,.9));
+}
+
+.formation-action-rail{
+  gap:12px;
+  padding-left:clamp(12px,1.3vw,20px);
+}
+
+.apply-battle-button{
+  border-radius:20px;
+  background:linear-gradient(180deg,#fff4b8 0%,#facc15 32%,#f59e0b 68%,#b45309 100%);
+  box-shadow:0 7px 0 #713f12,0 20px 42px rgba(245,158,11,.25),inset 0 2px 0 rgba(255,255,255,.58);
+}
+
+.stage-select-button{
+  color:#e0f2fe;
+  border-color:rgba(125,211,252,.26);
+}
+
+.formation-current-stage{
+  min-height:48px;
+  color:#e0f2fe;
+  font-weight:800;
+}
+
+.formation-action-hint{
+  border-color:rgba(255,255,255,.11);
+  color:#b6c4d8;
+}
+
+.formation-stage-overlay{
+  z-index:120;
+  background:rgba(2,6,23,.76);
+}
+
+.formation-stage-dialog{
+  border-radius:22px;
+  border-color:rgba(255,255,255,.16);
+  background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(2,6,23,.98));
+  box-shadow:0 30px 90px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.formation-stage-dialog header{
+  padding:2px 2px 10px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+.formation-stage-dialog header strong{
+  color:#fff;
+  letter-spacing:.04em;
+}
+
+.formation-stage-list{
+  padding:8px 4px 4px;
+}
+
+.formation-stage-card{
+  min-height:112px;
+  border-radius:14px;
+  border-color:rgba(255,255,255,.13);
+  background:linear-gradient(180deg,rgba(30,41,59,.82),rgba(8,13,24,.96));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 22px rgba(0,0,0,.2);
+}
+
+.formation-stage-card.is-active{
+  border-color:rgba(250,204,21,.85);
+  background:linear-gradient(180deg,rgba(92,68,18,.78),rgba(15,23,42,.94));
+}
+
+.formation-stage-card strong{
+  color:#fff;
+}
+
+@media (max-width: 760px){
+  :root{
+    --prod-card-w:76px;
+    --prod-card-gap:4px;
+    --prod-card-back-offset-x:3px;
+    --prod-card-back-offset-y:5px;
+  }
+  .prod-ui .cards{
+    padding:7px 8px 9px;
+    border-radius:14px;
+    bottom:calc(8px + env(safe-area-inset-bottom,0px));
+  }
+  .formation-panel{
+    border-radius:16px;
+  }
+  .formation-header{
+    min-height:64px;
+  }
+  .formation-header::before{
+    display:none;
+  }
+  .formation-action-rail{
+    gap:8px;
+  }
+}
+
+@media (max-width: 420px){
+  :root{
+    --prod-card-w:66px;
+    --prod-card-gap:3px;
+  }
+  .prod-ui .cards{
+    padding:6px;
+  }
+}

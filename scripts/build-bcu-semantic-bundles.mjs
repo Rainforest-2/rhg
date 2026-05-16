@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
 import { EFFECT_KBEFF_BUNDLE_KEY, EFFECT_KBEFF_BUNDLE_PATH, rebuildKbeffEffectBundle } from './build-bcu-effect-bundle.mjs';
+import { BCU_BATTLE_UI_BUNDLE_KEY, BCU_BATTLE_UI_BUNDLE_PATH, rebuildBcuBattleUiBundle } from './build-bcu-ui-bundle.mjs';
 
 const all = process.argv.includes('--all') || !process.argv.includes('--sample');
 const actor = await readJson('public/assets/generated/bcu-actor-index.json', { entries: [] });
@@ -116,6 +117,10 @@ for (const entry of language.entries || []) {
 
 const effectBundle = await rebuildKbeffEffectBundle();
 manifest.bundles[EFFECT_KBEFF_BUNDLE_KEY] = { kind: 'effect', key: EFFECT_KBEFF_BUNDLE_KEY, bundlePath: EFFECT_KBEFF_BUNDLE_PATH, status: 'full', sizeBytes: effectBundle.sizeBytes, hash: effectBundle.hash };
+diagnostics.summary.generated += 1;
+
+const uiBundle = await rebuildBcuBattleUiBundle();
+manifest.bundles[BCU_BATTLE_UI_BUNDLE_KEY] = { kind: 'ui', key: BCU_BATTLE_UI_BUNDLE_KEY, bundlePath: BCU_BATTLE_UI_BUNDLE_PATH, status: 'full', sizeBytes: uiBundle.sizeBytes, hash: uiBundle.hash };
 diagnostics.summary.generated += 1;
 
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);

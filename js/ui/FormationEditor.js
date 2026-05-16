@@ -56,6 +56,7 @@ export class FormationEditor {
     this.root = document.createElement('div');
     this.root.className = 'formation-ui';
     this.mount.appendChild(this.root);
+    this.root.addEventListener('pointerup', (e) => this.onPointerUpCapture(e), true);
     this.root.addEventListener('click', (e) => this.onClick(e));
     this.root.addEventListener('input', (e) => this.onInput(e));
     this.root.addEventListener('scroll', (e) => this.onScroll(e), true);
@@ -67,6 +68,32 @@ export class FormationEditor {
   setHint(text) {
     const hint = this.root.querySelector('.formation-action-hint');
     if (hint) hint.textContent = text;
+  }
+
+  switchPage(page, reason = 'ui') {
+    const nextPage = clampPage(page);
+    const previousPage = this.activePage;
+    this.activePage = nextPage;
+    this.activeSlot = nextPage * LINEUP_COLS;
+    this.setHint(`${pageLabel(nextPage)} selected`);
+    globalThis.__FORMATION_PAGE_DEBUG__ = {
+      reason,
+      previousPage,
+      activePage: this.activePage,
+      activeSlot: this.activeSlot,
+      rows: LINEUP_ROWS,
+      cols: LINEUP_COLS,
+      timestamp: Date.now()
+    };
+    this.renderDynamic();
+  }
+
+  onPointerUpCapture(e) {
+    const page = e.target.closest?.('[data-page]');
+    if (!page || !this.root.contains(page)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.switchPage(page.dataset.page, 'pointerup-capture');
   }
 
   onInput(e) {
@@ -88,6 +115,13 @@ export class FormationEditor {
 
   async onClick(e) {
     if (e.target.closest('[data-search-input]')) return;
+    const page = e.target.closest('[data-page]');
+    if (page) {
+      e.preventDefault();
+      e.stopPropagation();
+      return this.switchPage(page.dataset.page, 'click');
+    }
+
     const action = e.target.closest('[data-action]');
     if (action) {
       const type = action.dataset.action;
@@ -121,13 +155,6 @@ export class FormationEditor {
         this.setHint('Formation reset to default');
         return this.renderDynamic();
       }
-    }
-
-    const page = e.target.closest('[data-page]');
-    if (page) {
-      this.activePage = clampPage(page.dataset.page);
-      this.activeSlot = this.activePage * LINEUP_COLS;
-      return this.renderDynamic();
     }
 
     const slot = e.target.closest('[data-slot]');
@@ -381,7 +408,7 @@ export class FormationEditor {
     if (pageTabs) {
       pageTabs.innerHTML = Array.from({ length: LINEUP_ROWS }, (_, page) => {
         const filled = (pages?.[page] || []).filter(Boolean).length;
-        return `<button type='button' class='formation-page-tab ${this.activePage === page ? 'is-active' : ''}' data-page='${page}'><strong>${pageLabel(page)}</strong><span>${filled}/${LINEUP_COLS}</span></button>`;
+        return `<button type='button' class='formation-page-tab ${this.activePage === page ? 'is-active' : ''}' data-page='${page}' aria-pressed='${this.activePage === page ? 'true' : 'false'}'><strong>${pageLabel(page)}</strong><span>${filled}/${LINEUP_COLS}</span></button>`;
       }).join('');
     }
 

@@ -1,6 +1,7 @@
 import { BattleSpawnResolver } from './BattleSpawnResolver.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
-const DEFAULT_FPS = 30;
+const DEFAULT_FPS = 1000 / BCU_BATTLE_TIMER_PERIOD_MS;
 const DEFAULT_BCU_ENEMY_SPAWN_X = 700;
 
 function toFiniteNumber(value, fallback = 0) {
@@ -18,6 +19,16 @@ function normalizeTickFrame(frameOrMs, context = {}, fps = DEFAULT_FPS) {
 function pushUniqueWarning(rowState, warning) {
   if (!rowState?.warnings) return;
   if (!rowState.warnings.includes(warning)) rowState.warnings.push(warning);
+}
+
+function bcuRandomRange(min, max, random = Math.random) {
+  const a = Math.floor(toFiniteNumber(min, 0));
+  const b = Math.floor(toFiniteNumber(max, a));
+  if (Math.abs(a) < Math.abs(b)) {
+    const rv = Math.max(0, Math.min(0.999999999, Number(random?.()) || 0));
+    return a + Math.floor((b - a) * rv);
+  }
+  return a;
 }
 
 function resolveKillCounter(rowState, context) {
@@ -81,6 +92,23 @@ function isGroupBlocked(rowState, context) {
   return false;
 }
 
+function getCastle0(row = {}) {
+  const raw = toFiniteNumber(row.baseHpTriggerPercent ?? row.baseHpTriggerLowerPercent ?? row.baseHpTrigger, 100);
+  return Math.min(raw, 100);
+}
+
+function getCastle1(row = {}) {
+  const raw = toFiniteNumber(row.baseHpTriggerUpperPercent ?? row.baseHpTriggerUpper ?? 0, 0);
+  return raw > 0 ? raw : 0;
+}
+
+function isInBcuHealthWindow(row = {}, hpPercent = 100) {
+  const c0 = getCastle0(row);
+  const c1 = getCastle1(row);
+  const hp = toFiniteNumber(hpPercent, 100);
+  return c0 >= c1 ? hp <= c0 : (hp > c0 && hp <= c1);
+}
+
 function findRowState(rows, eventOrRowIndex) {
   if (!Array.isArray(rows)) return null;
   if (eventOrRowIndex && typeof eventOrRowIndex === 'object') {
@@ -138,17 +166,19 @@ export class BcuStageSpawnRuntime {
     this.rows = (this.stageRuntime.enemyRows || []).map((r) => {
       const firstFrameMin = Number.isFinite(r?.firstFrameMin) ? Math.floor(r.firstFrameMin) : (Number.isFinite(r?.firstFrame) ? Math.floor(r.firstFrame) : 0);
       const firstFrameMax = Number.isFinite(r?.firstFrameMax) ? Math.floor(r.firstFrameMax) : firstFrameMin;
-      const rand = typeof this.options?.random === "function" ? this.options.random : (typeof this.stageRuntime?.random === "function" ? this.stageRuntime.random : Math.random);
-      const rv = Math.max(0, Math.min(1, Number(rand?.()) || 0));
-      const nextFrame = firstFrameMax <= firstFrameMin ? firstFrameMin : Math.floor(firstFrameMin + ((firstFrameMax-firstFrameMin) * rv));
+      const rand = typeof this.options?.random === 'function' ? this.options.random : (typeof this.stageRuntime?.random === 'function' ? this.stageRuntime.random : Math.random);
+      const firstResolved = bcuRandomRange(firstFrameMin, firstFrameMax, rand);
+      const negativeFirstDelayFrames = firstResolved < 0 ? Math.abs(firstResolved) : 0;
       return {
         rowIndex: r?.rowIndex,
         def: r,
         row: r,
         unitDef: map.get(r?.rowIndex) || null,
         spawnedCount: 0,
-        nextFrame,
-        nextAtFrame: nextFrame,
+        nextFrame: firstResolved,
+        nextAtFrame: firstResolved,
+        negativeFirstDelayFrames,
+        negativeFirstActivated: firstResolved >= 0,
         waitingForMaxEnemySlot: false,
         waitingForSpawnCommit: false,
         pendingSpawnEvent: null,
@@ -161,7 +191,7 @@ export class BcuStageSpawnRuntime {
         lastAttemptFrame: null,
         lastBlockedReason: null,
         lastSpawnResolveDebug: null,
-        firstFrameResolvedDebug: { firstFrameMin, firstFrameMax, firstFrameResolved: nextFrame },
+        firstFrameResolvedDebug: { firstFrameMin, firstFrameMax, firstFrameResolved: firstResolved, negativeFirstDelayFrames },
         warnings: []
       };
     });
@@ -186,6 +216,27 @@ export class BcuStageSpawnRuntime {
         continue;
       }
 
+      const inHealth = isInBcuHealthWindow(s.row, hp);
+      const trigger = getCastle0(s.row);
+      const upperTrigger = getCastle1(s.row) || null;
+
+      if (!Number.isFinite(context.enemyBaseHpPercent)) {
+        pushUniqueWarning(s, 'enemyBaseHpPercent-missing-default-100');
+      }
+
+      if (!s.negativeFirstActivated && s.negativeFirstDelayFrames > 0) {
+        if (!inHealth) {
+          s.waitingForMaxEnemySlot = false;
+          s.lastBlockedReason = 'base-hp-trigger-negative-first';
+          continue;
+        }
+        s.negativeFirstActivated = true;
+        s.nextFrame = frame + Math.max(1, s.negativeFirstDelayFrames - 1);
+        s.nextAtFrame = s.nextFrame;
+        s.lastBlockedReason = 'negative-first-delay-activated';
+        continue;
+      }
+
       if (frame < s.nextFrame) continue;
 
       s.lastAttemptFrame = frame;
@@ -199,25 +250,9 @@ export class BcuStageSpawnRuntime {
         continue;
       }
 
-      const trigger = Number.isFinite(s.row?.baseHpTriggerPercent)
-        ? s.row.baseHpTriggerPercent
-        : (Number.isFinite(s.row?.baseHpTrigger) ? s.row.baseHpTrigger : 100);
-      const upperTrigger = Number.isFinite(s.row?.baseHpTriggerUpperPercent)
-        ? s.row.baseHpTriggerUpperPercent
-        : null;
-
-      if (!Number.isFinite(context.enemyBaseHpPercent)) {
-        pushUniqueWarning(s, 'enemyBaseHpPercent-missing-default-100');
-      }
-
-      if (!(hp <= trigger)) {
+      if (!inHealth) {
         s.waitingForMaxEnemySlot = false;
         s.lastBlockedReason = 'base-hp-trigger';
-        continue;
-      }
-      if (Number.isFinite(upperTrigger) && hp > upperTrigger) {
-        s.waitingForMaxEnemySlot = false;
-        s.lastBlockedReason = 'base-hp-upper-trigger';
         continue;
       }
 
@@ -272,12 +307,12 @@ export class BcuStageSpawnRuntime {
         baseHpTriggerPercent: trigger,
         baseHpTriggerUpperPercent: upperTrigger,
         healthWindowDebug: {
-          source: 'BcuStageSpawnRuntime.health-window-partial-parity',
+          source: 'BCU EStage.inHealth parity',
           enemyBaseHpPercent: hp,
-          lowerPercent: trigger,
-          upperPercent: upperTrigger,
-          lowerRule: 'spawn-when-enemy-base-hp-percent-is-at-or-below-C0',
-          upperRule: Number.isFinite(upperTrigger) ? 'C1 upper hook enforced as hp <= C1 pending full source verification' : 'not-present'
+          castle0: trigger,
+          castle1: upperTrigger || 0,
+          rule: trigger >= (upperTrigger || 0) ? 'hp <= castle_0' : 'hp > castle_0 && hp <= castle_1',
+          inHealth
         },
         firstFrame: s.row?.firstFrame,
         respawnMinFrame: s.row?.respawnMinFrame,
@@ -320,10 +355,8 @@ export class BcuStageSpawnRuntime {
 
     const min = Math.max(0, toFiniteNumber(rowState.row?.respawnMinFrame, 0));
     const max = Math.max(min, toFiniteNumber(rowState.row?.respawnMaxFrame, min));
-    const interval = min >= max ? min : Math.round(min + random() * (max - min));
-    const addOne = rowState.row?.respawnAddsOneFrame === true
-      || this.stageRuntime?.respawnAddsOneFrame === true;
-    rowState.nextFrame = spawnFrame + interval + (addOne ? 1 : 0);
+    const interval = min >= max ? min : Math.floor(min + Math.max(0, Math.min(0.999999999, random())) * (max - min));
+    rowState.nextFrame = spawnFrame + interval;
     rowState.nextAtFrame = rowState.nextFrame;
     rowState.exhausted = false;
     rowState.done = false;

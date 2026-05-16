@@ -4,7 +4,7 @@ import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { KBRuntime } from './KBRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v2');
 
 function shouldTickActor(actor) {
   if (!actor) return false;
@@ -51,7 +51,6 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     this.runTickPhase('player-production-requests', () => { this.tickPlayerProductionRequests(); });
     this.runTickPhase('enemy-spawn', () => { this.tickStageEnemySpawn(); });
     this.runTickPhase('economy', () => { this.economy?.tick?.(scaledDt); });
-    this.runTickPhase('lineup-change', () => { this.tickLineupChange(scaledDt); });
 
     this.runTickPhase('actor-state-update', () => {
       for (const actor of this.actors) {
@@ -183,6 +182,9 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     this.runTickPhase('effect-spawn', () => {});
     this.runTickPhase('effect-tick', () => { this.tickEffects(scaledDt); });
     this.runTickPhase('cleanup', () => { this.cleanupEffects(); this.cleanupDead(); this.updateBattleState(); });
+    this.runTickPhase('lineup-change', () => {
+      if (this.battleState === 'running') this.tickLineupChange(scaledDt);
+    });
     this.runTickPhase('camera-update', () => {});
   };
 }

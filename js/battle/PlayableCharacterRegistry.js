@@ -1,5 +1,8 @@
-export const PLAYABLE_REGISTRY_VERSION = '0.14.0';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+
+export const PLAYABLE_REGISTRY_VERSION = '0.14.1';
 export const DOG_DEFAULT_COST = 100;
+export const DOG_DEFAULT_COOLDOWN_MS = 3500;
 export const DOG_ENEMY_ID_RANGE = Object.freeze({ start: 0, end: 777 });
 export const CAT_UNIT_ID_RANGE = Object.freeze({ start: 0, end: 859 });
 
@@ -42,18 +45,82 @@ function resolveName({ db, kind, id, locale = 'jp' }) {
   return { label: key, labelSource: 'fallback-id', labelLocale: locale, labelKey: key, labelWarnings: ['bcu-db-not-loaded'] };
 }
 
+function getCatStats(db, unitId, form = 'f') {
+  if (!db?.units?.getFormStats) return null;
+  try { return db.units.getFormStats(unitId, form); }
+  catch (error) {
+    return { __statsError: error?.message || String(error) };
+  }
+}
+
+function getCatEconomyFromStats(stats) {
+  if (!stats || stats.__statsError) {
+    return {
+      cost: null,
+      defaultCost: null,
+      cooldownMs: null,
+      defaultCooldownMs: null,
+      bcuPrice: null,
+      bcuRespawnFrames: null,
+      bcuRespawnMs: null,
+      productionCostSource: stats?.__statsError ? 'bcu-unit-stats-error' : 'bcu-db-not-loaded',
+      productionCooldownSource: stats?.__statsError ? 'bcu-unit-stats-error' : 'bcu-db-not-loaded',
+      productionSourceDebug: stats?.__statsError ? { source: 'PlayableCharacterRegistry.getCatEconomyFromStats', error: stats.__statsError } : { source: 'PlayableCharacterRegistry.getCatEconomyFromStats', reason: 'bcu-db-not-loaded' }
+    };
+  }
+  const price = Number.isFinite(stats.price) ? Math.max(0, Math.floor(stats.price)) : null;
+  const respawnFrames = Number.isFinite(stats.respawnFrames) ? Math.max(0, Math.floor(stats.respawnFrames)) : null;
+  const respawnMs = Number.isFinite(respawnFrames) ? respawnFrames * BCU_BATTLE_TIMER_PERIOD_MS : null;
+  return {
+    cost: price,
+    defaultCost: price,
+    cooldownMs: respawnMs,
+    defaultCooldownMs: respawnMs,
+    bcuPrice: price,
+    bcuRespawnFrames: respawnFrames,
+    bcuRespawnMs: respawnMs,
+    productionCostSource: 'BCU DataUnit.price raw[6]',
+    productionCooldownSource: 'BCU DataUnit.respawn raw[7] * 2 frames',
+    productionSourceDebug: {
+      source: 'PlayableCharacterRegistry.getCatEconomyFromStats',
+      bcuReference: 'DataUnit.java: price=ints[6]; respawn=ints[7]*2',
+      price,
+      respawnFrames,
+      respawnMs,
+      statsSource: stats.source || null
+    }
+  };
+}
+
+function getCatEconomy({ db, unitId, form = 'f' }) {
+  return getCatEconomyFromStats(getCatStats(db, unitId, form));
+}
+
 export function buildDogSpecs(options = {}) {
   const excluded = excludedEnemyAssetIds(options.bcuDb || globalThis.__BCU_DB__ || null);
   return range(DOG_ENEMY_ID_RANGE.start, DOG_ENEMY_ID_RANGE.end)
     .filter((id) => !excluded.has(id))
-    .map((id) => ({ id, characterId: `dog-enemy-${formatBcuId(id)}`, nameKey: `enemy:${id}`, cooldownMs: 3500 }));
+    .map((id) => ({ id, characterId: `dog-enemy-${formatBcuId(id)}`, nameKey: `enemy:${id}`, cooldownMs: DOG_DEFAULT_COOLDOWN_MS }));
 }
 
 export function buildCatSpecs(options = {}) {
-  const excluded = excludedAllyAssetIds(options.bcuDb || globalThis.__BCU_DB__ || null);
+  const db = options.bcuDb || globalThis.__BCU_DB__ || null;
+  const excluded = excludedAllyAssetIds(db);
   return range(CAT_UNIT_ID_RANGE.start, CAT_UNIT_ID_RANGE.end)
     .filter((unitId) => !excluded.has(unitId))
-    .map((unitId) => ({ unitId, characterId: `cat-unit-${formatBcuId(unitId)}-f`, nameKey: `unit:${unitId}:form:0`, baseCharacterId: `cat-unit-${formatBcuId(unitId)}`, form: 'f', defaultCost: 2000, defaultCooldownMs: 7000, collisionRadius: 44, scale: 1.12 }));
+    .map((unitId) => {
+      const form = 'f';
+      return {
+        unitId,
+        characterId: `cat-unit-${formatBcuId(unitId)}-${form}`,
+        nameKey: `unit:${unitId}:form:0`,
+        baseCharacterId: `cat-unit-${formatBcuId(unitId)}`,
+        form,
+        ...getCatEconomy({ db, unitId, form }),
+        collisionRadius: 44,
+        scale: 1.12
+      };
+    });
 }
 
 export const DOG_PLAYABLE_SPECS = Object.freeze(buildDogSpecs());
@@ -70,29 +137,9 @@ function unitAssetDef({ id, bcuId, kind, form = 'f' }) {
   const semanticKey = kind === 'enemy' ? `enemy:${Number(id)}` : `unit:${Number(id)}:${form}`;
   const entry = globalThis.__BCU_DB__?.semanticProvider?.getActorEntry?.(semanticKey) || null;
   if (kind === 'enemy') {
-    return {
-      id: `enemy-${bcuId}`,
-      kind: 'enemy',
-      semanticKey,
-      bundleRef: entry?.bundleRef || null,
-      renderMode: 'animated-unit',
-      image: 'image.png',
-      imgcut: 'imgcut.imgcut',
-      model: 'model.mamodel',
-      animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` }))
-    };
+    return { id: `enemy-${bcuId}`, kind: 'enemy', semanticKey, bundleRef: entry?.bundleRef || null, renderMode: 'animated-unit', image: 'image.png', imgcut: 'imgcut.imgcut', model: 'model.mamodel', animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` })) };
   }
-  return {
-    id: `unit-${bcuId}-${form}`,
-    kind: 'unit',
-    semanticKey,
-    bundleRef: entry?.bundleRef || null,
-    renderMode: 'animated-unit',
-    image: 'image.png',
-    imgcut: 'imgcut.imgcut',
-    model: 'model.mamodel',
-    animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` }))
-  };
+  return { id: `unit-${bcuId}-${form}`, kind: 'unit', semanticKey, bundleRef: entry?.bundleRef || null, renderMode: 'animated-unit', image: 'image.png', imgcut: 'imgcut.imgcut', model: 'model.mamodel', animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` })) };
 }
 
 export function buildDogRosterEntry(spec, options = {}) {
@@ -100,7 +147,7 @@ export function buildDogRosterEntry(spec, options = {}) {
   const locale = options.locale || db?.locale || 'jp';
   const bcuId = formatBcuId(spec.id);
   const name = resolveName({ db, kind: 'enemy', id: spec.id, locale });
-  const cooldownMs = spec.cooldownMs ?? 3500;
+  const cooldownMs = spec.cooldownMs ?? DOG_DEFAULT_COOLDOWN_MS;
   return {
     slotId: spec.characterId,
     baseCharacterId: spec.characterId,
@@ -118,8 +165,8 @@ export function buildDogRosterEntry(spec, options = {}) {
     defaultCost: DOG_DEFAULT_COST,
     cooldownMs,
     defaultCooldownMs: cooldownMs,
-    productionCostSource: 'catalog',
-    productionCooldownSource: 'catalog',
+    productionCostSource: 'dog-provisional-not-bcu',
+    productionCooldownSource: 'dog-provisional-not-bcu',
     side: 'dog-player',
     direction: -1,
     facing: -1,
@@ -130,7 +177,8 @@ export function buildDogRosterEntry(spec, options = {}) {
     moveAnimId: 'anim00',
     attackAnimId: 'anim02',
     knockbackAnimId: 'anim03',
-    economySource: 'provisional-design',
+    economySource: 'provisional-design-not-bcu',
+    productionSourceDebug: { source: 'PlayableCharacterRegistry.buildDogRosterEntry', reason: 'dogs are enemy assets used as playable; no Battle Cats/BCU DataUnit price/respawn exists' },
     uiIcon: { kind: 'enemy', bcuId, semanticKey: `enemy:${spec.id}`, preferredInternalPaths: ['icon.png', 'image.png'] }
   };
 }
@@ -141,6 +189,7 @@ export function buildCatRosterEntry(spec, options = {}) {
   const bcuId = formatBcuId(spec.unitId);
   const form = spec.form ?? 'f';
   const name = resolveName({ db, kind: 'unit', id: spec.unitId, locale });
+  const economy = getCatEconomy({ db, unitId: spec.unitId, form });
   return {
     slotId: spec.characterId,
     baseCharacterId: spec.baseCharacterId,
@@ -155,10 +204,16 @@ export function buildCatRosterEntry(spec, options = {}) {
     sourceKind: 'unit',
     sourceRoster: 'catUnits',
     sourceSlotId: spec.characterId,
-    defaultCost: spec.defaultCost,
-    defaultCooldownMs: spec.defaultCooldownMs,
-    productionCostSource: 'bcu-unit-stats',
-    productionCooldownSource: 'bcu-unit-stats',
+    cost: economy.cost,
+    defaultCost: economy.defaultCost,
+    cooldownMs: economy.cooldownMs,
+    defaultCooldownMs: economy.defaultCooldownMs,
+    bcuPrice: economy.bcuPrice,
+    bcuRespawnFrames: economy.bcuRespawnFrames,
+    bcuRespawnMs: economy.bcuRespawnMs,
+    productionCostSource: economy.productionCostSource,
+    productionCooldownSource: economy.productionCooldownSource,
+    productionSourceDebug: economy.productionSourceDebug,
     side: 'cat-enemy',
     direction: 1,
     facing: 1,
@@ -176,12 +231,12 @@ export function buildCatRosterEntry(spec, options = {}) {
 
 export const buildDogCatalogEntry = (spec, options = {}) => {
   const e = buildDogRosterEntry(spec, options);
-  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, defaultCost: e.defaultCost, defaultCooldownMs: e.defaultCooldownMs, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionOverrides: { side: e.side, direction: e.direction, facing: e.facing, renderFlipX: e.renderFlipX }, uiIcon: e.uiIcon };
+  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: { side: e.side, direction: e.direction, facing: e.facing, renderFlipX: e.renderFlipX }, uiIcon: e.uiIcon };
 };
 
 export const buildCatCatalogEntry = (spec, options = {}) => {
   const e = buildCatRosterEntry(spec, options);
-  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, defaultCost: e.defaultCost, defaultCooldownMs: e.defaultCooldownMs, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
+  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, bcuPrice: e.bcuPrice, bcuRespawnFrames: e.bcuRespawnFrames, bcuRespawnMs: e.bcuRespawnMs, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
 };
 
 export const buildDogPreviewAsset = (spec, ANIM4_E, options = {}) => {

@@ -1,5 +1,8 @@
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+
 export const BCU_WORLD_UNITS = {
-  fps: 1000 / 33,
+  fps: 1000 / BCU_BATTLE_TIMER_PERIOD_MS,
+  timerPeriodMs: BCU_BATTLE_TIMER_PERIOD_MS,
   rangeToWorld: 1,
   widthToWorld: 1,
   knockbackDistanceToWorld: 1,

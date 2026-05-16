@@ -21,6 +21,40 @@ export const ABILITY_CATALOG = Object.freeze(Object.fromEntries(ABILITY_KEYS.map
   return [key, { ...base, category }];
 })));
 
+function procProb(proc, key) {
+  const n = Number(proc?.[key]?.prob || 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function procValue(proc, key, field) {
+  const n = Number(proc?.[key]?.[field] || 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function buildBcuProcSemantic(proc = {}, abilityFlags = {}) {
+  return {
+    freeze: procProb(proc, 'freeze') > 0,
+    slow: procProb(proc, 'slow') > 0,
+    weaken: procProb(proc, 'weaken') > 0,
+    knockbackProc: procProb(proc, 'knockback') > 0,
+    wave: procProb(proc, 'wave') > 0,
+    miniWave: procProb(proc, 'miniWave') > 0,
+    surge: procProb(proc, 'volcano') > 0 || procProb(proc, 'deathSurge') > 0,
+    miniSurge: procProb(proc, 'miniVolcano') > 0,
+    warp: procProb(proc, 'warp') > 0,
+    curse: procProb(proc, 'curse') > 0,
+    toxic: procProb(proc, 'toxic') > 0,
+    barrierBreaker: procProb(proc, 'barrierBreaker') > 0,
+    shieldPierce: procProb(proc, 'shieldBreaker') > 0,
+    zombieKiller: !!abilityFlags.zombieKiller,
+    soulstrike: !!abilityFlags.soulstrike,
+    savageBlow: procProb(proc, 'strongAttack') > 0,
+    baseDestroyer: procValue(proc, 'baseDestroyer', 'mult') > 0,
+    critical: procProb(proc, 'critical') > 0,
+    metalKiller: procValue(proc, 'metalKiller', 'mult') > 0
+  };
+}
+
 export class AbilityModel {
   static normalizeRawAbi(value) {
     const n = Number(value);
@@ -70,12 +104,11 @@ export class AbilityModel {
     const traits = bcuCombatModel?.traits
       ? { ...bcuCombatModel.traits, source: bcuCombatModel.source, mappingStatus: 'bcu-csv-mapped' }
       : this.normalizeTraits(stats?.traits || stats?.traitFlags || null);
+    const procSemantic = buildBcuProcSemantic(bcuCombatModel?.proc || {}, bcuCombatModel?.ability?.flags || {});
     const semantic = {
       ...this.createEmptySemantic(),
       ...(bcuCombatModel?.ability?.flags || {}),
-      critical: (bcuCombatModel?.proc?.critical?.prob || 0) > 0,
-      baseDestroyer: (bcuCombatModel?.proc?.baseDestroyer?.mult || 0) > 0,
-      metalKiller: (bcuCombatModel?.proc?.metalKiller?.mult || 0) > 0,
+      ...procSemantic,
       metal: !!bcuCombatModel?.traits?.flags?.metal
     };
     for (const ability of attackAbilities) {
@@ -84,7 +117,7 @@ export class AbilityModel {
       ability.notes = bcuCombatModel ? ['bcu-combat-model-semantic-mapped'] : ability.notes;
     }
     return {
-      version: 'AbilityModel.v3-bcu-combat-model',
+      version: 'AbilityModel.v4-bcu-proc-semantic',
       kind,
       source: bcuCombatModel ? 'bcu-combat-model' : 'bcu-raw-stats',
       mappingStatus: bcuCombatModel ? ABILITY_STATUS.SEMANTIC_MAPPED : ABILITY_STATUS.RAW_ONLY_UNVERIFIED,
@@ -95,7 +128,8 @@ export class AbilityModel {
       bcuAbi: bcuCombatModel?.ability?.abi ?? null,
       bcuAbilityFlags: bcuCombatModel?.ability?.flags || {},
       bcuProc: bcuCombatModel?.proc || null,
-      notes: bcuCombatModel ? ['BCU DataUnit/DataEnemy trait and ability columns mapped'] : ['semantic-ability-effects-disabled', 'raw-abi-preserved-for-future-proc-resolver']
+      bcuProcSemantic: procSemantic,
+      notes: bcuCombatModel ? ['BCU DataUnit/DataEnemy trait, ability, and proc columns mapped'] : ['semantic-ability-effects-disabled', 'raw-abi-preserved-for-future-proc-resolver']
     };
   }
 
@@ -116,7 +150,7 @@ export class AbilityModel {
       const cat = ABILITY_CATALOG[key];
       if (cat?.implemented) implemented.push(key); else if (cat?.partial) partial.push(key); else notImplemented.push(key);
     }
-    return { version: 'AbilityModel.describe.v2-bcu', mappingStatus: model?.mappingStatus || ABILITY_STATUS.NONE, hasRawAbi: !!model?.hasRawAbi, implemented, partial, notImplemented, rawOnlyUnverified, notes: rawOnlyUnverified.length > 0 ? ['raw-abi-present-semantic-mapping-not-yet-verified'] : [] };
+    return { version: 'AbilityModel.describe.v3-bcu-proc-semantic', mappingStatus: model?.mappingStatus || ABILITY_STATUS.NONE, hasRawAbi: !!model?.hasRawAbi, implemented, partial, notImplemented, rawOnlyUnverified, notes: rawOnlyUnverified.length > 0 ? ['raw-abi-present-semantic-mapping-not-yet-verified'] : [] };
   }
 
   static getHitAbility(model, hitIndex = 0) { const list = Array.isArray(model?.attackAbilities) ? model.attackAbilities : []; return list.find((a) => a.hitIndex === hitIndex) || list[hitIndex] || null; }

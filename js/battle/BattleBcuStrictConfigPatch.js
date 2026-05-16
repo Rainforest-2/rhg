@@ -1,7 +1,7 @@
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-strict-config-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-strict-config-patch.v2');
 const BCU_TIMER_FPS = 1000 / BCU_BATTLE_TIMER_PERIOD_MS;
 
 export function installBattleBcuStrictConfigPatch() {
@@ -12,6 +12,17 @@ export function installBattleBcuStrictConfigPatch() {
   tuning.fps = BCU_TIMER_FPS;
   tuning.speedToPxPerSecond = BCU_TIMER_FPS;
   tuning.battleTimeScale = 1;
+  tuning.combatPositionMode = 'bcu-pos';
+  tuning.coordinateContract = {
+    ...(tuning.coordinateContract || {}),
+    mode: 'bcu-pos',
+    source: 'BCU strict: Entity.pos / range / width capture',
+    combatSource: 'actor.getBattlePosBcu',
+    rangeSource: 'detectionRangeBcu',
+    widthSource: 'attackWidthBcu',
+    targetSource: 'target.getBattlePosBcu',
+    bcuPosEnabled: true
+  };
 
   // BCU attack timing comes from DataUnit/DataEnemy pre/TBA/anim frames.
   // Browser-preview smoothing multipliers and minimum waits must not re-enter runtime timing.
@@ -63,9 +74,10 @@ export function installBattleBcuStrictConfigPatch() {
 
   BATTLE_CONFIG.bcuStrictConfig = {
     enabled: true,
-    source: 'BCU-java-PC Timer.p = 33ms; no preview-only timing multipliers',
+    source: 'BCU-java-PC Timer.p = 33ms; Entity.pos capture; no preview-only timing multipliers',
     timerPeriodMs: BCU_BATTLE_TIMER_PERIOD_MS,
     fps: BCU_TIMER_FPS,
+    combatPositionMode: tuning.combatPositionMode,
     appliedAt: Date.now()
   };
 }

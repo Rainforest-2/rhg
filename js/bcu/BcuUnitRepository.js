@@ -5,6 +5,25 @@ import { resolveUnitAsset, toFetchPath } from './BcuPathResolver.js';
 const parseCsvRows = (text) => String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean).map((line) => line.split(',').map((x) => x.trim()));
 const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number(v) : 0));
 
+function ensureCoreUnitStatsCombatModel(record, loader, unitId, index, code) {
+  const stats = record?.stats || null;
+  if (stats?.abilityModel?.mappingStatus === 'semantic-mapped' && stats?.bcuCombatModel) return stats;
+  const raw = Array.isArray(record?.rawStats) ? record.rawStats : [];
+  if (!raw.length) {
+    throw new Error(`CoreDB unit stats missing rawStats needed for BCU combat model: unit=${unitId} form=${code}`);
+  }
+  const normalized = loader.normalizeUnitStats(raw, {
+    file: record?.sourceFile || 'core-db',
+    row: index,
+    unitId,
+    form: code,
+    formRow: index,
+    type: 'unit',
+    mappingStatus: 'valid-coredb-normalized'
+  });
+  return { ...normalized, ...(stats || {}), bcuCombatModel: normalized.bcuCombatModel, traits: normalized.traits, traitFlags: normalized.traitFlags, bcuAbi: normalized.bcuAbi, bcuAbilityFlags: normalized.bcuAbilityFlags, bcuProc: normalized.bcuProc, abilityModel: normalized.abilityModel, abilities: normalized.abilities };
+}
+
 export class BcuUnitRepository {
   constructor({ manifest, names, diagnostics, readText, locale = 'jp' }) {
     this.manifest = manifest;
@@ -22,14 +41,10 @@ export class BcuUnitRepository {
       const unitId = toInt(id, null);
       if (!Number.isFinite(unitId)) return;
       const id3 = pad3(unitId);
-      // raw-only-diagnostics: default semantic boot uses fromCoreDb instead of per-unit CSV paths.
       const statsPath = (this.manifest.files || []).find((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`)) || `public/assets/bcu/000004/org/unit/${id3}/unit${id3}.csv`;
       let rows = [];
-      try {
-        rows = parseCsvRows(await this.readText(statsPath)).map(toNumbers);
-      } catch (error) {
-        this.diagnostics.units.missingStats.push({ unitId, file: statsPath, reason: error?.message || String(error) });
-      }
+      try { rows = parseCsvRows(await this.readText(statsPath)).map(toNumbers); }
+      catch (error) { this.diagnostics.units.missingStats.push({ unitId, file: statsPath, reason: error?.message || String(error) }); }
       const forms = [];
       const formCount = Math.max(1, rows.length);
       for (let index = 0; index < formCount; index += 1) {
@@ -40,24 +55,12 @@ export class BcuUnitRepository {
         const asset = resolveUnitAsset(files, unitId, code);
         const semanticKey = `unit:${unitId}:${code}`;
         const semanticEntry = this.manifest.semanticIndexes?.actors?.byKey?.[semanticKey] || null;
-        if (semanticEntry) {
-          asset.semanticKey = semanticKey;
-          asset.bundleRef = semanticEntry.bundleRef;
-          asset.semanticStatus = semanticEntry.status;
-        }
+        if (semanticEntry) { asset.semanticKey = semanticKey; asset.bundleRef = semanticEntry.bundleRef; asset.semanticStatus = semanticEntry.status; }
         if (!asset?.imagePath || !asset?.imgcutPath) this.diagnostics.units.missingAssets.push({ unitId, formIndex: index, asset });
-        const stats = raw.length ? this.statsLoader.normalizeUnitStats(raw, {
-          file: toFetchPath(statsPath),
-          row: index,
-          unitId,
-          form: code,
-          formRow: index,
-          type: 'unit',
-          mappingStatus: 'valid'
-        }) : null;
+        const stats = raw.length ? this.statsLoader.normalizeUnitStats(raw, { file: toFetchPath(statsPath), row: index, unitId, form: code, formRow: index, type: 'unit', mappingStatus: 'valid' }) : null;
         forms.push({ index, code, key: unitFormKey(unitId, index), name, stats, rawStats: raw, asset });
       }
-      this.units.set(unitId, { id: unitId, id3, key: unitKey(unitId), sourcePack: '000004', folder: toFetchPath(`public/assets/bcu/000004/org/unit/${id3}/`), forms }); // raw-only-diagnostics folder provenance
+      this.units.set(unitId, { id: unitId, id3, key: unitKey(unitId), sourcePack: '000004', folder: toFetchPath(`public/assets/bcu/000004/org/unit/${id3}/`), forms });
     }));
     return this;
   }
@@ -71,33 +74,16 @@ export class BcuUnitRepository {
       if (!byUnit.has(unitId)) byUnit.set(unitId, { id: unitId, id3: record.id3 || pad3(unitId), key: unitKey(unitId), sourcePack: record.sourcePack || 'core-db', folder: null, forms: [] });
       const unit = byUnit.get(unitId);
       const index = normalizeFormIndex(record.formIndex ?? record.form);
-      unit.forms[index] = {
-        index,
-        code: record.form || formCodeFromIndex(index),
-        key: record.key || unitFormKey(unitId, index),
-        name: record.name || names.unitForm(unitId, index, locale),
-        stats: record.stats || null,
-        rawStats: record.rawStats || [],
-        asset: record.asset || null
-      };
+      const code = record.form || formCodeFromIndex(index);
+      const stats = ensureCoreUnitStatsCombatModel(record, repo.statsLoader, unitId, index, code);
+      unit.forms[index] = { index, code, key: record.key || unitFormKey(unitId, index), name: record.name || names.unitForm(unitId, index, locale), stats, rawStats: record.rawStats || [], asset: record.asset || null };
     }
-    for (const [unitId, unit] of byUnit) {
-      unit.forms = unit.forms.filter(Boolean);
-      repo.units.set(unitId, unit);
-    }
+    for (const [unitId, unit] of byUnit) { unit.forms = unit.forms.filter(Boolean); repo.units.set(unitId, unit); }
     return repo;
   }
 
   get(unitId) { return this.units.get(toInt(unitId, -1)) || null; }
-  getForm(unitId, formIndexOrCode = 0) {
-    const index = normalizeFormIndex(formIndexOrCode);
-    const unit = this.get(unitId);
-    return unit?.forms?.[index] || unit?.forms?.[0] || null;
-  }
-  getFormStats(unitId, formIndexOrCode = 0) {
-    const form = this.getForm(unitId, formIndexOrCode);
-    if (!form?.stats) throw new Error(`BCU unit stats missing: unit=${unitId} form=${formIndexOrCode}`);
-    return form.stats;
-  }
+  getForm(unitId, formIndexOrCode = 0) { const index = normalizeFormIndex(formIndexOrCode); const unit = this.get(unitId); return unit?.forms?.[index] || unit?.forms?.[0] || null; }
+  getFormStats(unitId, formIndexOrCode = 0) { const form = this.getForm(unitId, formIndexOrCode); if (!form?.stats) throw new Error(`BCU unit stats missing: unit=${unitId} form=${formIndexOrCode}`); return form.stats; }
   list() { return [...this.units.values()].sort((a, b) => a.id - b.id); }
 }

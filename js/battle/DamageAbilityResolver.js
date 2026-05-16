@@ -37,7 +37,7 @@ function getTargetTraitListFromStats(entity) {
 }
 
 function getSharedTraits(attackTraits = [], targetTraits = []) {
-  const targetFlags = flagsFromList(targetTraits);
+  const targetFlags = getFlagsFromList(targetTraits);
   return [...new Set((attackTraits || []).filter((trait) => targetFlags[trait]))];
 }
 

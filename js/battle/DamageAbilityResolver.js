@@ -60,6 +60,19 @@ function hasAbiValue(abi, bit) { return (Number(abi) & bit) !== 0; }
 function hasAttackerAbi(attacker, bit) { return hasAbiValue(getAttackerAbi(attacker), bit); }
 function hasTargetAbi(target, bit) { return hasAbiValue(getTargetAbi(target), bit); }
 
+function isTargetMetalForDamage(attacker, target, targetType = 'actor') {
+  if (targetType !== 'actor') return false;
+  const targetTraitFlags = getTraitFlags(target);
+  const attackerSide = getSide(attacker);
+  if (attackerSide === 'dog-player') {
+    return targetTraitFlags?.metal === true;
+  }
+  if (attackerSide && attackerSide !== 'dog-player') {
+    return hasTargetAbi(target, BCU_ABI.AB_METALIC) || targetTraitFlags?.metal === true;
+  }
+  return targetTraitFlags?.metal === true || hasTargetAbi(target, BCU_ABI.AB_METALIC);
+}
+
 function performProbability(prob, rng = Math.random) {
   const p = Number(prob) || 0;
   if (p <= 0) return false;
@@ -160,7 +173,7 @@ export class DamageAbilityResolver {
     let ans = bcuInt(baseDamage);
     const result = {
       enabled: true,
-      source: 'DamageAbilityResolver.v3-bcu-getDamage-order',
+      source: 'DamageAbilityResolver.v4-bcu-metal-abi-getDamage-order',
       baseDamage: ans,
       finalDamage: ans,
       multiplier: 1,
@@ -182,6 +195,7 @@ export class DamageAbilityResolver {
         targetSide: getSide(target),
         attackerAbi: getAttackerAbi(attacker),
         targetAbi: getTargetAbi(target),
+        targetIsMetalForDamage: isTargetMetalForDamage(attacker, target, targetType),
         abilityMappingStatus: event?.abilityMappingStatus || attacker?.abilityModel?.mappingStatus || null,
         semantic,
         targetTraits: getTraitList(target),
@@ -251,19 +265,18 @@ export class DamageAbilityResolver {
       pushStep(result, 'strongAttack', before, ans, 'BCU Entity.critCalc SATK before critical', { prob: strongAttackProb, mult: proc.strongAttack.mult });
     }
 
-    const targetTraitFlags = getTraitFlags(target);
-    const targetIsMetal = targetType === 'actor' && targetTraitFlags?.metal === true;
+    const targetIsMetal = isTargetMetalForDamage(attacker, target, targetType);
     const criticalProb = Number(proc?.critical?.prob || 0);
     const criticalApplied = performProbability(criticalProb, rng);
     if (targetIsMetal) {
       if (criticalApplied) {
         const before = ans; ans = bcuInt(ans * 0.01 * 200);
         result.modifiers.critical *= before === 0 ? 1 : ans / before;
-        pushStep(result, 'critical', before, ans, 'BCU critCalc metal critical CRIT.mult=200', { prob: criticalProb });
+        pushStep(result, 'critical', before, ans, 'BCU critCalc metal/AB_METALIC critical CRIT.mult=200', { prob: criticalProb });
       } else {
         const before = ans; ans = ans > 0 ? 1 : 0;
         result.modifiers.metal = before === 0 ? 1 : ans / before;
-        pushStep(result, 'metal', before, ans, 'BCU critCalc metal non-critical damage to 1');
+        pushStep(result, 'metal', before, ans, 'BCU critCalc metal/AB_METALIC non-critical damage to 1');
       }
     } else if (criticalApplied) {
       const before = ans; ans = bcuInt(ans * 0.01 * 200);

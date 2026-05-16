@@ -19,35 +19,7 @@
       <div id="log-list" class="log-list"></div>
     </section>
   </div>
-  <script>
-    globalThis.__WAN_BOOT_ERROR__ = function showWanBootError(error) {
-      const existing = document.getElementById('boot-error-panel');
-      if (existing) existing.remove();
-      const panel = document.createElement('section');
-      panel.id = 'boot-error-panel';
-      panel.setAttribute('role', 'alert');
-      panel.style.cssText = [
-        'position:fixed',
-        'inset:16px',
-        'z-index:2147483647',
-        'box-sizing:border-box',
-        'max-width:960px',
-        'max-height:calc(100vh - 32px)',
-        'overflow:auto',
-        'padding:16px',
-        'border:1px solid #f87171',
-        'border-radius:8px',
-        'background:#111827',
-        'color:#fee2e2',
-        'font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',
-        'box-shadow:0 20px 60px rgba(0,0,0,.45)',
-        'white-space:pre-wrap'
-      ].join(';');
-      const message = error && error.stack ? error.stack : String(error || 'Unknown boot error');
-      panel.textContent = 'Boot failed\n\n' + message;
-      document.body.appendChild(panel);
-    };
-  </script>
+  <script type="module" src="./js/debug/InstallBattleDebugHud.js"></script>
   <script type="module" src="./js/main.js"></script>
 </body>
 </html>

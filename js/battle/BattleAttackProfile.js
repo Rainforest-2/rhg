@@ -1,10 +1,14 @@
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import { AbilityModel } from './AbilityModel.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
 export class BattleAttackProfile {
-  static getFrameMs(fps = 30) {
-    const f = Number.isFinite(fps) && fps > 0 ? fps : 30;
-    return 1000 / f;
+  static getFrameMs(_fps = 30) {
+    return BCU_BATTLE_TIMER_PERIOD_MS;
+  }
+
+  static framesToMs(frames = 0) {
+    return Math.max(0, Number(frames) || 0) * this.getFrameMs();
   }
 
   static getTimingParity(actor = null) {
@@ -50,6 +54,7 @@ export class BattleAttackProfile {
   static fromActor(actor) {
     const stats = actor?.rawStats || {};
     const fps = actor?.fps || BATTLE_CONFIG.tuning?.fps || 30;
+    const frameMs = this.getFrameMs(fps);
     const timingParity = this.getTimingParity(actor);
     const phaseMultiplier = timingParity.disableAttackPhaseMultiplier ? 1 : (actor?.attackPhaseTimeMultiplier ?? 1);
     // screen-x mode uses these px projected fields; BCU mode fields remain reserved for later migration.
@@ -57,7 +62,7 @@ export class BattleAttackProfile {
     if (Array.isArray(stats.attackHits) && stats.attackHits.length) {
       const hits = stats.attackHits;
       const minStartup = timingParity.disableMinAttackStartup ? 0 : (BATTLE_CONFIG.tuning?.minAttackStartupMs ?? 0);
-      const firstRawAtMs = (Math.max(0, hits[0]?.preFrames || 0) / fps) * 1000 * phaseMultiplier;
+      const firstRawAtMs = Math.max(0, hits[0]?.preFrames || 0) * frameMs * phaseMultiplier;
       const shiftMs = Math.max(0, minStartup - firstRawAtMs);
       const attackBackBcu = Math.max(0, Number.isFinite(stats.width) ? stats.width : 0);
       const targetMode = stats.isRange ? 'range' : 'single';
@@ -67,7 +72,7 @@ export class BattleAttackProfile {
         const longPointBcu = ldStartRaw + ldRangeRaw;
         const attackKind = hit?.isOmni ? 'omni' : (hit?.isLd ? 'ld' : 'normal');
         const ability = stats?.abilityModel ? AbilityModel.getHitAbility(stats.abilityModel, hit?.hitIndex ?? index) : null;
-        return { key:`hit-${hit?.hitIndex ?? index}`, hitIndex:hit?.hitIndex ?? index, atMs:Math.max(0, (Math.max(0, hit?.preFrames || 0) / fps) * 1000 * phaseMultiplier + shiftMs), damage:Number.isFinite(hit?.damage)?hit.damage:(actor?.damage??0), targetMode, allowBaseHit:true, attackKind, rawAbi:Number.isFinite(hit?.abi)?hit.abi:0, ability, abilities:ability?.semantic||{}, abilityFlags:ability?.flags||{}, abilityMappingStatus:ability?.mappingStatus||'none', abilityEnabledBits:Array.isArray(ability?.enabledBits)?ability.enabledBits:[], rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu, shortPointBcu:ldStartRaw, longPointBcu, rangeEndPxDebug:toPx(actor?.detectionRangeBcu ?? stats.detectionRange ?? 0), attackBackPxDebug:toPx(attackBackBcu), shortPointPxDebug:toPx(ldStartRaw), longPointPxDebug:toPx(longPointBcu), raw:{ldStartRaw,ldRangeRaw,attackKind,isRange:!!stats.isRange} };
+        return { key:`hit-${hit?.hitIndex ?? index}`, hitIndex:hit?.hitIndex ?? index, atMs:Math.max(0, Math.max(0, hit?.preFrames || 0) * frameMs * phaseMultiplier + shiftMs), damage:Number.isFinite(hit?.damage)?hit.damage:(actor?.damage??0), targetMode, allowBaseHit:true, attackKind, rawAbi:Number.isFinite(hit?.abi)?hit.abi:0, ability, abilities:ability?.semantic||{}, abilityFlags:ability?.flags||{}, abilityMappingStatus:ability?.mappingStatus||'none', abilityEnabledBits:Array.isArray(ability?.enabledBits)?ability.enabledBits:[], rangeStartBcu:0, rangeEndBcu:actor?.detectionRangeBcu ?? stats.detectionRange ?? 0, attackBackBcu, shortPointBcu:ldStartRaw, longPointBcu, rangeEndPxDebug:toPx(actor?.detectionRangeBcu ?? stats.detectionRange ?? 0), attackBackPxDebug:toPx(attackBackBcu), shortPointPxDebug:toPx(ldStartRaw), longPointPxDebug:toPx(longPointBcu), raw:{ldStartRaw,ldRangeRaw,attackKind,isRange:!!stats.isRange} };
       });
       const maxEventAtMs = Math.max(...events.map(e=>e.atMs));
       const minAnim = timingParity.disableMinAttackAnim ? 0 : (BATTLE_CONFIG.tuning?.minAttackAnimMs ?? 0);

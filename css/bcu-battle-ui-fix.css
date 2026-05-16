@@ -1,0 +1,63 @@
+/*
+ * Battle UI correction layer.
+ * Keep BCU-derived card canvases/sprite digits visible without browser glass-panel decoration.
+ */
+.canvas-panel::before{
+  display:none!important;
+}
+
+.prod-ui{
+  z-index:24;
+}
+
+.prod-ui .cards,
+.prod-ui:not(.is-hidden) .cards{
+  bottom:calc(6px + env(safe-area-inset-bottom,0px))!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+.prod-card-stack,
+.prod-card.is-front,
+.prod-card.is-back{
+  filter:none!important;
+}
+
+.prod-ui .prod-card{
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  image-rendering:auto;
+}
+
+.prod-card.is-back{
+  opacity:.82!important;
+}
+
+.prod-ui .battle-money{
+  top:calc(8px + env(safe-area-inset-top,0px))!important;
+  right:calc(10px + env(safe-area-inset-right,0px))!important;
+  width:min(360px,38vw)!important;
+  height:auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  overflow:visible!important;
+}
+
+@media (max-width: 760px){
+  .prod-ui .cards,
+  .prod-ui:not(.is-hidden) .cards{
+    bottom:calc(4px + env(safe-area-inset-bottom,0px))!important;
+    padding:0!important;
+  }
+}

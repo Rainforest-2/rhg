@@ -38,6 +38,7 @@ export class ProductionCardSkin {
     this.slotFrame = null;
     this.imgcut = null;
     this.cardPart = BCU_UNI_CARD_PART;
+    this.warnedFallbackKeys = new Set();
   }
 
   async preload() {
@@ -99,11 +100,29 @@ export class ProductionCardSkin {
     return true;
   }
 
+  drawBundledCatCardImage(ctx, icon) {
+    const sw = imageWidth(icon);
+    const sh = imageHeight(icon);
+    if (!icon || sw <= 0 || sh <= 0) return false;
+    // Semantic icon bundles store already-extracted unit card PNGs such as
+    // unit/000-f.png. Those are not the raw BCU uni.png sheet, so cropping by
+    // uni.imgcut part[0] is invalid. Draw the bundled card image directly.
+    ctx.drawImage(icon, 0, 0, sw, sh, 0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+    return true;
+  }
+
+  warnCatFallbackOnce(state, reason) {
+    const key = state.unitDef?.slotId || state.unitDef?.assetDef?.semanticKey || state.unitDef?.uiIcon?.semanticKey || 'unknown-cat-card';
+    if (this.warnedFallbackKeys.has(key)) return;
+    this.warnedFallbackKeys.add(key);
+    this.log.warn?.('[ProductionCardSkin] cat card image unavailable; drawing slot frame fallback', key, reason);
+  }
+
   drawCatCard(ctx, icon, state) {
-    if (state.iconLoadFailed || !this.drawBcuCardPart(ctx, icon)) {
-      this.log.warn?.('[ProductionCardSkin] cat card image missing or incompatible; drawing slot frame fallback', state.unitDef?.slotId);
-      this.drawSlotFrame(ctx);
-    }
+    if (this.drawBcuCardPart(ctx, icon)) return;
+    if (this.drawBundledCatCardImage(ctx, icon)) return;
+    this.warnCatFallbackOnce(state, state.iconLoadFailed ? 'icon-load-failed' : 'icon-missing');
+    this.drawSlotFrame(ctx);
   }
 
   drawDogCard(ctx, icon) {

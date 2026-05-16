@@ -1,3 +1,5 @@
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+
 export class StageSpawnPreviewBuilder {
   constructor(config = {}) {
     this.config = config || {};
@@ -7,8 +9,8 @@ export class StageSpawnPreviewBuilder {
     if (!this.config.enabled || !definition?.ok) {
       return this.createFallback('disabled-or-no-definition');
     }
-    const fps = Number.isFinite(this.config.fps) ? this.config.fps : 30;
-    const toMs = (frames) => (Number.isFinite(frames) ? Math.round((frames / fps) * 1000) : null);
+    const timerPeriodMs = BCU_BATTLE_TIMER_PERIOD_MS;
+    const toMs = (frames) => (Number.isFinite(frames) ? frames * timerPeriodMs : null);
     const sourceRows =
       Array.isArray(definition?.activeEnemies) ? definition.activeEnemies :
       Array.isArray(definition?.enemyRows) ? definition.enemyRows :
@@ -50,9 +52,11 @@ export class StageSpawnPreviewBuilder {
         kind: 'stage-spawn-preview',
         from: definition.source?.path || '-',
         runtimeApplied: false,
-        applyToRuntimeSpawn: false
+        applyToRuntimeSpawn: false,
+        timer: 'BCU-java-PC main.Timer.p = 33ms'
       },
-      fps,
+      fps: 30,
+      timerPeriodMs,
       rows,
       visibleRows: rows.slice(0, maxRows),
       summary: {
@@ -100,9 +104,11 @@ export class StageSpawnPreviewBuilder {
         kind: 'stage-spawn-preview',
         runtimeApplied: false,
         applyToRuntimeSpawn: false,
-        reason
+        reason,
+        timer: 'BCU-java-PC main.Timer.p = 33ms'
       },
-      fps: Number.isFinite(this.config.fps) ? this.config.fps : 30,
+      fps: 30,
+      timerPeriodMs: BCU_BATTLE_TIMER_PERIOD_MS,
       rows: [],
       visibleRows: [],
       summary: {

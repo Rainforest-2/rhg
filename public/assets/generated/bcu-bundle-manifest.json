@@ -32688,6 +32688,14 @@
       "iconCount": 18,
       "sizeBytes": 101061,
       "hash": "b754aa2a253343692f7164be8d5c3865224aa31c449f9eb7b6e6dcc9259faa5b"
+    },
+    "ui:battle": {
+      "kind": "ui",
+      "key": "ui:battle",
+      "bundlePath": "public/assets/bundles/ui/battle-ui.zip",
+      "status": "full",
+      "sizeBytes": 95749,
+      "hash": "fb64c6d009010a153ea2d705c55ef5686aed0e9e68648fbfd0d7d3159b590ae1"
     }
   }
 }

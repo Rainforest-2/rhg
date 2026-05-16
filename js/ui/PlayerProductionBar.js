@@ -1,4 +1,3 @@
-import { BATTLE_CONFIG } from '../battle/BattleConfig.js';
 import { LINEUP_COLS } from '../battle/FormationStore.js';
 import { ProductionRuntime } from '../battle/ProductionRuntime.js';
 import { BcuSpriteText } from './BcuSpriteText.js';
@@ -11,6 +10,10 @@ const loadImage = (src) => new Promise((res, rej) => {
   i.onerror = () => rej(new Error(`image load failed:${src}`));
   i.src = src;
 });
+
+const ANDROID_LINEUP_SLIDE_ANGLE_DEG = 50;
+const ANDROID_LINEUP_SLIDE_DISTANCE_RATIO = 0.15;
+const ANDROID_LINEUP_SLIDE_TAN = Math.tan(ANDROID_LINEUP_SLIDE_ANGLE_DEG * Math.PI / 180);
 
 function productionIconDebug() {
   if (!globalThis.__PRODUCTION_ICON_DEBUG__) {
@@ -39,6 +42,12 @@ function recordProductionPageFailure(detail) {
   const debug = productionPageDebug();
   debug.failures.unshift(detail);
   debug.failures.splice(20);
+}
+
+function scenePlayerBaseAlive(scene) {
+  const base = scene?.bases?.find?.((b) => b?.side === 'dog-player');
+  if (!base || !Number.isFinite(base.health)) return true;
+  return base.health !== 0;
 }
 
 export function getCardStackRenderModel(scene, col) {
@@ -93,37 +102,47 @@ export class PlayerProductionBar {
     this.iconCache = new Map();
     this.spriteText = new BcuSpriteText();
     this.cardSkin = new ProductionCardSkin({ spriteText: this.spriteText, log: console });
+    this.slide = this.createSlideState();
     this.setup();
     this.initAssets();
   }
   async initAssets() { await this.spriteText.init?.(); await this.cardSkin.preload(); if (this.scene) await this.update(this.scene); }
   setVisible(v) { this.root?.classList.toggle('is-hidden', !v); }
+  createSlideState() {
+    return { pointerId: null, initX: 0, initY: 0, endX: 0, endY: 0, dragFrame: 0, isSliding: false, performed: false, horizontal: false, vertical: false };
+  }
+  resetSlideState() { this.slide = this.createSlideState(); }
   setup() {
     this.root = document.createElement('div');
     this.root.className = 'prod-ui is-hidden';
-    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='lineup-change-controls' aria-label='BCU lineup change controls'><button type='button' class='lineup-change-button lineup-change-up' data-lineup-change='up' aria-label='BCU lineup change up'>▲</button><button type='button' class='lineup-change-button lineup-change-down' data-lineup-change='down' aria-label='BCU lineup change down'>▼</button></div><div class='cards lineup-cards'></div>";
+    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='cards lineup-cards'></div>";
     this.mount.appendChild(this.root);
     this.cardsWrap = this.root.querySelector('.cards');
     this.moneyCanvas = this.root.querySelector('.battle-money');
     this.moneyCtx = this.moneyCanvas.getContext('2d');
-    this.lineupControls = this.root.querySelector('.lineup-change-controls');
     this.rebuildStacks();
-    this.root.addEventListener('pointerup', (e) => {
-      const btn = e.target.closest('[data-lineup-change]');
-      if (!btn || !this.root.contains(btn)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      this.requestLineupChange(btn.dataset.lineupChange);
-    }, true);
+
+    this.cardsWrap.addEventListener('pointerdown', (e) => this.onPointerDown(e), true);
+    this.cardsWrap.addEventListener('pointermove', (e) => this.onPointerMove(e), true);
+    this.cardsWrap.addEventListener('pointercancel', () => this.resetSlideState(), true);
+    this.cardsWrap.addEventListener('pointerleave', (e) => this.onPointerLeave(e), true);
+
     this.cardsWrap.addEventListener('pointerup', (e) => {
+      const wasPerformed = this.slide.performed;
+      this.resetSlideState();
+      if (wasPerformed || this.scene?.lineupChanging) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       const t = e.target.closest('.prod-card.is-front[data-col]');
-      if (!t || this.scene?.lineupChanging) return;
+      if (!t) return;
       const col = Number(t.dataset.col);
       const model = getCardStackRenderModel(this.scene, col);
       const unit = model.front.unitDef;
       const dbg = this.scene?.getProductionDebug?.() || (globalThis.__BATTLE_PRODUCTION_DEBUG__ || (globalThis.__BATTLE_PRODUCTION_DEBUG__ = { lastClick: null, lastSpawnAttempt: null, failures: [] }));
       dbg.lastClick = {
-        bcuReference: 'BCU SBCtrl.actions non-twoRow: manual production uses sb.frontLineup visible row',
+        bcuReference: 'BCU Android BBCtrl.click ACTION_UP + common SBCtrl.actions: non-twoRow manual production uses sb.frontLineup visible row',
         characterId: unit?.characterId || unit?.assetId || null,
         slotId: unit?.slotId || null,
         semanticKey: unit?.assetDef?.semanticKey || unit?.uiIcon?.semanticKey || null,
@@ -147,7 +166,76 @@ export class PlayerProductionBar {
     });
   }
 
-  requestLineupChange(direction) {
+  onPointerDown(e) {
+    if (!e.isPrimary) return;
+    this.slide = { ...this.createSlideState(), pointerId: e.pointerId, initX: e.clientX, initY: e.clientY, endX: e.clientX, endY: e.clientY, dragFrame: 1, isSliding: true };
+    this.cardsWrap.setPointerCapture?.(e.pointerId);
+  }
+
+  onPointerLeave(e) {
+    if (this.slide.pointerId !== e.pointerId) return;
+    if (!this.slide.performed) return;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  onPointerMove(e) {
+    const st = this.slide;
+    if (!st.isSliding || st.pointerId !== e.pointerId || !e.isPrimary) return;
+    st.endX = e.clientX;
+    st.endY = e.clientY;
+    st.dragFrame += 1;
+    const result = this.checkSlideUpDown(st);
+    if (result?.performed || st.vertical) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+
+  isInSlideRange(st) {
+    const dx = st.endX - st.initX;
+    const dy = st.endY - st.initY;
+    if (dy === 0) return false;
+    return ANDROID_LINEUP_SLIDE_TAN >= Math.abs(dx) / Math.abs(dy);
+  }
+
+  checkSlideUpDown(st) {
+    const debug = productionPageDebug();
+    const dy = st.endY - st.initY;
+    const dx = st.endX - st.initX;
+    const minDistance = (this.root?.clientHeight || window.innerHeight || 0) * ANDROID_LINEUP_SLIDE_DISTANCE_RATIO;
+    const inRange = this.isInSlideRange(st);
+    const base = {
+      source: 'PlayerProductionBar.checkSlideUpDown',
+      bcuAndroidReference: 'BattleView.checkSlideUpDown: minDistance=height*0.15; v=dy/dragFrame; v<0 => BBCtrl.ACTION_LINEUP_CHANGE_UP, else DOWN; isInSlideRange uses tan(50deg) >= abs(dx)/abs(dy)',
+      dx,
+      dy,
+      dragFrame: st.dragFrame,
+      minDistance,
+      inSlideRange: inRange,
+      frontLineup: this.scene?.frontLineup ?? null,
+      lineupChanging: !!this.scene?.lineupChanging,
+      hasBackLineup: this.scene?.hasBackLineup?.() ?? null,
+      battleState: this.scene?.battleState || null,
+      playerBaseAlive: scenePlayerBaseAlive(this.scene)
+    };
+    debug.lastGesture = base;
+    if (st.performed || !st.isSliding || st.dragFrame === 0) return { performed: false, reason: 'already-performed-or-not-sliding', ...base };
+    if (!inRange) return { performed: false, reason: 'outside-android-slide-angle', ...base };
+    if (Math.abs(dy) < minDistance) return { performed: false, reason: 'below-android-slide-distance', ...base };
+    if (this.scene?.battleState !== 'running' || this.scene?.lineupChanging || !this.scene?.hasBackLineup?.() || !scenePlayerBaseAlive(this.scene)) {
+      const detail = { performed: false, reason: 'bcu-guard-rejected', ...base };
+      recordProductionPageFailure(detail);
+      return detail;
+    }
+    st.performed = true;
+    st.vertical = true;
+    const requestedDirection = (dy / st.dragFrame) < 0 ? 'up' : 'down';
+    const result = this.requestLineupChange(requestedDirection, { gesture: base });
+    return { performed: result, requestedDirection, ...base };
+  }
+
+  requestLineupChange(direction, extra = {}) {
     const scene = this.scene;
     const debug = productionPageDebug();
     const requestedDirection = direction === 'down' ? 'down' : 'up';
@@ -155,12 +243,14 @@ export class PlayerProductionBar {
       frontLineup: scene?.frontLineup ?? null,
       lineupChanging: !!scene?.lineupChanging,
       battleState: scene?.battleState || null,
-      hasBackLineup: scene?.hasBackLineup?.() ?? null
+      hasBackLineup: scene?.hasBackLineup?.() ?? null,
+      playerBaseAlive: scenePlayerBaseAlive(scene)
     };
     const ok = scene?.requestLineupChange?.(requestedDirection) === true;
     const action = {
       source: 'PlayerProductionBar.requestLineupChange',
-      bcuReference: requestedDirection === 'up' ? 'BCU StageBasis.act_change_up' : 'BCU StageBasis.act_change_down',
+      bcuAndroidReference: requestedDirection === 'up' ? 'BBCtrl.perform(ACTION_LINEUP_CHANGE_UP) -> SBCtrl.action.add(-4)' : 'BBCtrl.perform(ACTION_LINEUP_CHANGE_DOWN) -> SBCtrl.action.add(-5)',
+      bcuCommonReference: requestedDirection === 'up' ? 'SBCtrl.actions action.contains(-4) -> StageBasis.act_change_up' : 'SBCtrl.actions action.contains(-5) -> StageBasis.act_change_down',
       requestedDirection,
       ok,
       before,
@@ -169,11 +259,12 @@ export class PlayerProductionBar {
         lineupChanging: !!scene?.lineupChanging,
         lineupChangeDirection: scene?.lineupChangeDirection || null,
         lineupChangeFrameRemaining: scene?.lineupChangeFrameRemaining ?? null
-      }
+      },
+      ...extra
     };
     debug.lastAction = action;
     if (!ok) recordProductionPageFailure(action);
-    scene?.pushEvent?.({ type: ok ? 'bcuLineupChangeRequested' : 'bcuLineupChangeRejected', ...action });
+    scene?.pushEvent?.({ type: ok ? 'bcuAndroidLineupSlideRequested' : 'bcuAndroidLineupSlideRejected', ...action });
     return ok;
   }
 
@@ -258,24 +349,19 @@ export class PlayerProductionBar {
       isEmpty: !entry.unitDef
     });
   }
-  updateLineupControls(scene) {
-    if (!this.lineupControls) return;
+  updateLineupSwipeDebug(scene) {
     const hasBack = scene?.hasBackLineup?.() === true;
     const changing = !!scene?.lineupChanging;
-    const disabled = !hasBack || changing || scene?.battleState !== 'running';
-    this.lineupControls.classList.toggle('is-disabled', disabled);
-    this.lineupControls.dataset.frontLineup = String(scene?.frontLineup ?? 0);
-    this.lineupControls.dataset.lineupChanging = changing ? '1' : '0';
-    for (const btn of this.lineupControls.querySelectorAll('[data-lineup-change]')) btn.disabled = disabled;
     const debug = productionPageDebug();
     debug.lastRender = {
-      source: 'PlayerProductionBar.updateLineupControls',
-      bcuReference: 'BCU SBCtrl.actions + StageBasis.act_change_up/down; manual production uses sb.frontLineup only when twoRow=false',
+      source: 'PlayerProductionBar.updateLineupSwipeDebug',
+      bcuAndroidReference: 'BattleSimulation touch listener + BattleView.checkSlideUpDown + BBCtrl.perform; no explicit battle lineup UI button is rendered on Android',
+      bcuCommonReference: 'SBCtrl.actions non-twoRow: action -4/-5 calls StageBasis.act_change_up/down; manual production uses sb.frontLineup visible row',
       frontLineup: scene?.frontLineup ?? null,
       backLineup: (scene?.frontLineup ?? 0) === 0 ? 1 : 0,
       lineupChanging: changing,
       hasBackLineup: hasBack,
-      disabled,
+      disabled: !hasBack || changing || scene?.battleState !== 'running',
       lineupChangeDirection: scene?.lineupChangeDirection || null,
       lineupChangeFrameRemaining: scene?.lineupChangeFrameRemaining ?? null
     };
@@ -283,7 +369,7 @@ export class PlayerProductionBar {
   async update(scene = this.scene) {
     this.scene = scene;
     if (!scene) return;
-    this.updateLineupControls(scene);
+    this.updateLineupSwipeDebug(scene);
     const iconDebug = productionIconDebug();
     const stats = { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 };
     const model = getLineupRenderModel(scene);

@@ -1,9 +1,10 @@
 import { formatBcuId } from './BcuStageEnemyResolver.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { assertRuntimeUrlAllowed } from '../bcu/RuntimeAssetGuard.js';
 
 const FRAME_MUL = 2;
-const FPS = 30;
+const FPS = 1000 / BCU_BATTLE_TIMER_PERIOD_MS;
 
 export const BCU_STAGE_ENEMY_COLUMNS = Object.freeze({
   E: 0, N: 1, S0: 2, R0: 3, R1: 4, C0: 5, L0: 6, L1: 7, B: 8, M: 9, S1: 10, SCORE: 10, C1: 11, G: 12, M1: 13, KC: 14, SC: 15
@@ -46,7 +47,7 @@ async function fetchText(path) {
 }
 
 function toMs(frames) {
-  return Number.isFinite(frames) ? Math.round((frames / FPS) * 1000) : null;
+  return Number.isFinite(frames) ? Math.round(frames * BCU_BATTLE_TIMER_PERIOD_MS) : null;
 }
 
 function semanticStageError(stageKey, bundleRef, err) {
@@ -98,6 +99,7 @@ export class StageDefinitionLoader {
         cannonId: null,
         animBaseId: null,
         fps: FPS,
+        timerPeriodMs: BCU_BATTLE_TIMER_PERIOD_MS,
         frameMultiplier: FRAME_MUL,
         enemyRows: [],
         sourceEnemyRows: [],
@@ -215,6 +217,7 @@ export class StageDefinitionLoader {
       bossGuard: out.bossGuard,
       castleRowSource: castle.source,
       fps: FPS,
+      timerPeriodMs: BCU_BATTLE_TIMER_PERIOD_MS,
       frameMultiplier: FRAME_MUL,
       enemyRows,
       sourceEnemyRows: parsedRows,

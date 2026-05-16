@@ -5,51 +5,48 @@ import { resolveUnitAsset, toFetchPath } from './BcuPathResolver.js';
 const parseCsvRows = (text) => String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean).map((line) => line.split(',').map((x) => x.trim()));
 const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number(v) : 0));
 
+function getRawStatsForCoreRecord(record) {
+  if (Array.isArray(record?.rawStats) && record.rawStats.length) return record.rawStats;
+  if (Array.isArray(record?.stats?.rawValues) && record.stats.rawValues.length) return record.stats.rawValues;
+  return [];
+}
+
 function ensureCoreUnitStatsCombatModel(record, loader, unitId, index, code) {
   const stats = record?.stats || null;
   if (stats?.abilityModel?.mappingStatus === 'semantic-mapped' && stats?.bcuCombatModel) return stats;
-  const raw = Array.isArray(record?.rawStats) ? record.rawStats : [];
+  const raw = getRawStatsForCoreRecord(record);
   if (!raw.length) {
-    throw new Error(`CoreDB unit stats missing rawStats needed for BCU combat model: unit=${unitId} form=${code}`);
+    throw new Error(`CoreDB unit stats missing raw stats needed for BCU combat model: unit=${unitId} form=${code}`);
   }
   const normalized = loader.normalizeUnitStats(raw, {
-    file: record?.sourceFile || 'core-db',
-    row: index,
+    file: record?.sourceFile || stats?.source?.file || 'core-db',
+    row: Number.isFinite(stats?.source?.row) ? stats.source.row : index,
     unitId,
     form: code,
     formRow: index,
     type: 'unit',
     mappingStatus: 'valid-coredb-normalized'
   });
-  return { ...normalized, ...(stats || {}), bcuCombatModel: normalized.bcuCombatModel, traits: normalized.traits, traitFlags: normalized.traitFlags, bcuAbi: normalized.bcuAbi, bcuAbilityFlags: normalized.bcuAbilityFlags, bcuProc: normalized.bcuProc, abilityModel: normalized.abilityModel, abilities: normalized.abilities };
+  return { ...normalized, ...(stats || {}), rawValues: normalized.rawValues, bcuCombatModel: normalized.bcuCombatModel, traits: normalized.traits, traitFlags: normalized.traitFlags, bcuAbi: normalized.bcuAbi, bcuAbilityFlags: normalized.bcuAbilityFlags, bcuProc: normalized.bcuProc, abilityModel: normalized.abilityModel, abilities: normalized.abilities };
 }
 
 export class BcuUnitRepository {
   constructor({ manifest, names, diagnostics, readText, locale = 'jp' }) {
-    this.manifest = manifest;
-    this.names = names;
-    this.diagnostics = diagnostics;
-    this.readText = readText;
-    this.locale = locale;
-    this.units = new Map();
-    this.statsLoader = new BattleStatsLoader({ bcuDb: null });
+    this.manifest = manifest; this.names = names; this.diagnostics = diagnostics; this.readText = readText; this.locale = locale; this.units = new Map(); this.statsLoader = new BattleStatsLoader({ bcuDb: null });
   }
 
   async build() {
     const files = new Set(this.manifest.files || []);
     await Promise.all((this.manifest.indexes?.unitIds || []).map(async (id) => {
-      const unitId = toInt(id, null);
-      if (!Number.isFinite(unitId)) return;
+      const unitId = toInt(id, null); if (!Number.isFinite(unitId)) return;
       const id3 = pad3(unitId);
       const statsPath = (this.manifest.files || []).find((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`)) || `public/assets/bcu/000004/org/unit/${id3}/unit${id3}.csv`;
       let rows = [];
-      try { rows = parseCsvRows(await this.readText(statsPath)).map(toNumbers); }
-      catch (error) { this.diagnostics.units.missingStats.push({ unitId, file: statsPath, reason: error?.message || String(error) }); }
+      try { rows = parseCsvRows(await this.readText(statsPath)).map(toNumbers); } catch (error) { this.diagnostics.units.missingStats.push({ unitId, file: statsPath, reason: error?.message || String(error) }); }
       const forms = [];
       const formCount = Math.max(1, rows.length);
       for (let index = 0; index < formCount; index += 1) {
-        const code = formCodeFromIndex(index);
-        const raw = rows[index] || rows[0] || [];
+        const code = formCodeFromIndex(index); const raw = rows[index] || rows[0] || [];
         const name = this.names.unitForm(unitId, index, this.locale);
         if (name.source !== 'lang') this.diagnostics.units.missingNames.push({ unitId, formIndex: index, key: unitFormKey(unitId, index), source: name.source });
         const asset = resolveUnitAsset(files, unitId, code);
@@ -69,14 +66,13 @@ export class BcuUnitRepository {
     const repo = new BcuUnitRepository({ manifest, names, diagnostics, readText: null, locale });
     const byUnit = new Map();
     for (const record of Object.values(coreDb?.units?.forms || {})) {
-      const unitId = toInt(record.unitId, null);
-      if (!Number.isFinite(unitId)) continue;
+      const unitId = toInt(record.unitId, null); if (!Number.isFinite(unitId)) continue;
       if (!byUnit.has(unitId)) byUnit.set(unitId, { id: unitId, id3: record.id3 || pad3(unitId), key: unitKey(unitId), sourcePack: record.sourcePack || 'core-db', folder: null, forms: [] });
       const unit = byUnit.get(unitId);
       const index = normalizeFormIndex(record.formIndex ?? record.form);
       const code = record.form || formCodeFromIndex(index);
       const stats = ensureCoreUnitStatsCombatModel(record, repo.statsLoader, unitId, index, code);
-      unit.forms[index] = { index, code, key: record.key || unitFormKey(unitId, index), name: record.name || names.unitForm(unitId, index, locale), stats, rawStats: record.rawStats || [], asset: record.asset || null };
+      unit.forms[index] = { index, code, key: record.key || unitFormKey(unitId, index), name: record.name || names.unitForm(unitId, index, locale), stats, rawStats: getRawStatsForCoreRecord(record), asset: record.asset || null };
     }
     for (const [unitId, unit] of byUnit) { unit.forms = unit.forms.filter(Boolean); repo.units.set(unitId, unit); }
     return repo;

@@ -26,6 +26,7 @@ async function boot() {
   try {
     showBootStatus('BCU asset database loading...');
     await import('./battle/BattleBcuStrictConfigPatch.js');
+    await import('./battle/StageDefinitionNegativeSpawnPatch.js');
     await import('./battle/BattleSceneStageRuntimeWiring.js');
     await import('./battle/BattleSceneRendererOrderPatch.js');
     await import('./battle/BattleSceneUnitLayerPatch.js');

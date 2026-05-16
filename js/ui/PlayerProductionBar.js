@@ -22,10 +22,23 @@ function productionIconDebug() {
   return globalThis.__PRODUCTION_ICON_DEBUG__;
 }
 
+function productionPageDebug() {
+  if (!globalThis.__PRODUCTION_PAGE_DEBUG__) {
+    globalThis.__PRODUCTION_PAGE_DEBUG__ = { lastAction: null, lastRender: null, failures: [] };
+  }
+  return globalThis.__PRODUCTION_PAGE_DEBUG__;
+}
+
 function recordProductionIconFailure(detail) {
   const debug = productionIconDebug();
   debug.failures.unshift(detail);
   debug.failures.splice(40);
+}
+
+function recordProductionPageFailure(detail) {
+  const debug = productionPageDebug();
+  debug.failures.unshift(detail);
+  debug.failures.splice(20);
 }
 
 export function getCardStackRenderModel(scene, col) {
@@ -39,6 +52,9 @@ export function getCardStackRenderModel(scene, col) {
   const backStatus = ProductionRuntime.getUnitStatus(backUnit, econ);
   return {
     col,
+    frontLineup: front,
+    backLineup: back,
+    lineupChanging: !!scene?.lineupChanging,
     back: {
       unitDef: backUnit,
       interactive: false,
@@ -85,12 +101,20 @@ export class PlayerProductionBar {
   setup() {
     this.root = document.createElement('div');
     this.root.className = 'prod-ui is-hidden';
-    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='cards lineup-cards'></div>";
+    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='lineup-change-controls' aria-label='BCU lineup change controls'><button type='button' class='lineup-change-button lineup-change-up' data-lineup-change='up' aria-label='BCU lineup change up'>▲</button><button type='button' class='lineup-change-button lineup-change-down' data-lineup-change='down' aria-label='BCU lineup change down'>▼</button></div><div class='cards lineup-cards'></div>";
     this.mount.appendChild(this.root);
     this.cardsWrap = this.root.querySelector('.cards');
     this.moneyCanvas = this.root.querySelector('.battle-money');
     this.moneyCtx = this.moneyCanvas.getContext('2d');
+    this.lineupControls = this.root.querySelector('.lineup-change-controls');
     this.rebuildStacks();
+    this.root.addEventListener('pointerup', (e) => {
+      const btn = e.target.closest('[data-lineup-change]');
+      if (!btn || !this.root.contains(btn)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.requestLineupChange(btn.dataset.lineupChange);
+    }, true);
     this.cardsWrap.addEventListener('pointerup', (e) => {
       const t = e.target.closest('.prod-card.is-front[data-col]');
       if (!t || this.scene?.lineupChanging) return;
@@ -99,10 +123,14 @@ export class PlayerProductionBar {
       const unit = model.front.unitDef;
       const dbg = this.scene?.getProductionDebug?.() || (globalThis.__BATTLE_PRODUCTION_DEBUG__ || (globalThis.__BATTLE_PRODUCTION_DEBUG__ = { lastClick: null, lastSpawnAttempt: null, failures: [] }));
       dbg.lastClick = {
+        bcuReference: 'BCU SBCtrl.actions non-twoRow: manual production uses sb.frontLineup visible row',
         characterId: unit?.characterId || unit?.assetId || null,
         slotId: unit?.slotId || null,
         semanticKey: unit?.assetDef?.semanticKey || unit?.uiIcon?.semanticKey || null,
         unitDef: unit || null,
+        row: model.front.row,
+        col,
+        frontLineup: this.scene?.frontLineup ?? null,
         cost: model.front.cost,
         cooldownRemaining: model.front.cooldownRemainingMs,
         money: this.scene?.economy?.money ?? 0,
@@ -118,6 +146,37 @@ export class PlayerProductionBar {
       this.scene?.requestPlayerSpawn?.(null, model.front.row, col);
     });
   }
+
+  requestLineupChange(direction) {
+    const scene = this.scene;
+    const debug = productionPageDebug();
+    const requestedDirection = direction === 'down' ? 'down' : 'up';
+    const before = {
+      frontLineup: scene?.frontLineup ?? null,
+      lineupChanging: !!scene?.lineupChanging,
+      battleState: scene?.battleState || null,
+      hasBackLineup: scene?.hasBackLineup?.() ?? null
+    };
+    const ok = scene?.requestLineupChange?.(requestedDirection) === true;
+    const action = {
+      source: 'PlayerProductionBar.requestLineupChange',
+      bcuReference: requestedDirection === 'up' ? 'BCU StageBasis.act_change_up' : 'BCU StageBasis.act_change_down',
+      requestedDirection,
+      ok,
+      before,
+      after: {
+        frontLineup: scene?.frontLineup ?? null,
+        lineupChanging: !!scene?.lineupChanging,
+        lineupChangeDirection: scene?.lineupChangeDirection || null,
+        lineupChangeFrameRemaining: scene?.lineupChangeFrameRemaining ?? null
+      }
+    };
+    debug.lastAction = action;
+    if (!ok) recordProductionPageFailure(action);
+    scene?.pushEvent?.({ type: ok ? 'bcuLineupChangeRequested' : 'bcuLineupChangeRejected', ...action });
+    return ok;
+  }
+
   rebuildStacks() {
     this.cardsWrap.innerHTML = '';
     this.cardStacks = [];
@@ -199,9 +258,32 @@ export class PlayerProductionBar {
       isEmpty: !entry.unitDef
     });
   }
+  updateLineupControls(scene) {
+    if (!this.lineupControls) return;
+    const hasBack = scene?.hasBackLineup?.() === true;
+    const changing = !!scene?.lineupChanging;
+    const disabled = !hasBack || changing || scene?.battleState !== 'running';
+    this.lineupControls.classList.toggle('is-disabled', disabled);
+    this.lineupControls.dataset.frontLineup = String(scene?.frontLineup ?? 0);
+    this.lineupControls.dataset.lineupChanging = changing ? '1' : '0';
+    for (const btn of this.lineupControls.querySelectorAll('[data-lineup-change]')) btn.disabled = disabled;
+    const debug = productionPageDebug();
+    debug.lastRender = {
+      source: 'PlayerProductionBar.updateLineupControls',
+      bcuReference: 'BCU SBCtrl.actions + StageBasis.act_change_up/down; manual production uses sb.frontLineup only when twoRow=false',
+      frontLineup: scene?.frontLineup ?? null,
+      backLineup: (scene?.frontLineup ?? 0) === 0 ? 1 : 0,
+      lineupChanging: changing,
+      hasBackLineup: hasBack,
+      disabled,
+      lineupChangeDirection: scene?.lineupChangeDirection || null,
+      lineupChangeFrameRemaining: scene?.lineupChangeFrameRemaining ?? null
+    };
+  }
   async update(scene = this.scene) {
     this.scene = scene;
     if (!scene) return;
+    this.updateLineupControls(scene);
     const iconDebug = productionIconDebug();
     const stats = { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 };
     const model = getLineupRenderModel(scene);

@@ -2,6 +2,7 @@ import { BattleScene } from './BattleScene.js';
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
@@ -60,8 +61,7 @@ function getEffectYOffset(targetType) {
 }
 
 function getFrameDurationMs() {
-  const fps = Number(BATTLE_CONFIG.tuning?.fps || 30);
-  return 1000 / Math.max(1, fps);
+  return BCU_BATTLE_TIMER_PERIOD_MS;
 }
 
 function isHitEffectReady(asset) {

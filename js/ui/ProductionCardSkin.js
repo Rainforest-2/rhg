@@ -24,10 +24,12 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   cardPart: BCU_UNI_CARD_PART,
   cardCanvasSize: PRODUCTION_CARD_CANVAS,
   contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
-  dogContentRect: Object.freeze({ x: 7, y: 7, w: 96, h: 54 }),
-  dogContentBackgroundRect: Object.freeze({ x: 5, y: 5, w: 100, h: 56 }),
-  costRightX: 108,
-  costY: 68,
+  dogContentRect: Object.freeze({ x: 6, y: 4, w: 98, h: 58 }),
+  // Dog cards are a project extension, not a BC unit card. Keep the BCU uni frame,
+  // but repaint the whole icon window so the source frame's gray placeholder cannot leak through.
+  dogContentBackgroundRect: Object.freeze({ x: 4, y: 4, w: 102, h: 61 }),
+  costRightX: 106,
+  costY: 64,
   cooldownTrackRect: Object.freeze({ x: 10, y: 61, w: 90, h: 12 }),
   cooldownFillRect: Object.freeze({ x: 12, y: 63, w: 86, h: 8 }),
   cooldownTrackColor: '#050505',
@@ -81,7 +83,15 @@ export class ProductionCardSkin {
       if (!samePart(part, BCU_UNI_CARD_PART)) this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
       else this.cardPart = part;
       this.loadError = null;
-      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = { ready: true, source: this.source, cardPart: this.cardPart, hasSlotFrame: !!this.slotFrame, dogContentBackground: 'white-inner-rect-bcu-extension' };
+      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+        ready: true,
+        source: this.source,
+        cardPart: this.cardPart,
+        dogContentBackground: PRODUCTION_CARD_SKIN.dogContentBackgroundRect,
+        costRightX: PRODUCTION_CARD_SKIN.costRightX,
+        costY: PRODUCTION_CARD_SKIN.costY,
+        costScale: 1
+      };
     } catch (error) {
       this.loadError = error;
       this.log.warn?.('[ProductionCardSkin] BCU production card skin unavailable', error);
@@ -215,7 +225,7 @@ export class ProductionCardSkin {
   drawCost(ctx, cost, state) {
     const disabled = !state.interactive || !state.affordable || state.isBack;
     const value = Number(cost || 0);
-    if (this.spriteText?.drawCostRight) return this.spriteText.drawCostRight(ctx, value, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY, { disabled, scale: 0.9 });
+    if (this.spriteText?.drawCostRight) return this.spriteText.drawCostRight(ctx, value, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY, { disabled, scale: 1 });
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#000';
     ctx.fillStyle = disabled ? '#999' : '#ffd400';

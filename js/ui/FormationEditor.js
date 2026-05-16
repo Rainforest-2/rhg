@@ -1,6 +1,36 @@
 import { CHARACTER_FACTIONS, getAvailableCharacters, getCharactersByFaction, getCharacterById } from '../battle/CharacterCatalog.js';
-import { FormationStore } from '../battle/FormationStore.js';
+import { FormationStore, LINEUP_COLS, LINEUP_ROWS, LINEUP_TOTAL } from '../battle/FormationStore.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+
+function clampPage(page) {
+  const p = Math.floor(Number(page) || 0);
+  return Math.max(0, Math.min(LINEUP_ROWS - 1, p));
+}
+
+function formatCost(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return '---';
+  return `${Math.floor(n).toLocaleString('ja-JP')}円`;
+}
+
+function formatCooldown(ms) {
+  const n = Number(ms);
+  if (!Number.isFinite(n) || n <= 0) return '---';
+  const sec = n / 1000;
+  return sec >= 10 ? `${Math.round(sec)}s` : `${sec.toFixed(1)}s`;
+}
+
+function characterCost(c) {
+  return c?.cost ?? c?.defaultCost ?? c?.productionCost ?? null;
+}
+
+function characterCooldown(c) {
+  return c?.cooldownMs ?? c?.defaultCooldownMs ?? c?.productionCooldownMs ?? null;
+}
+
+function pageLabel(page) {
+  return `PAGE ${page + 1}`;
+}
 
 export class FormationEditor {
   constructor({ mount, onFormationChanged, onApplyBattle }) {
@@ -10,6 +40,7 @@ export class FormationEditor {
     this.filter = CHARACTER_FACTIONS.all;
     this.searchText = '';
     this.formation = FormationStore.load();
+    this.activePage = 0;
     this.activeSlot = 0;
     this.applying = false;
     this.iconWork = new Map();
@@ -20,7 +51,7 @@ export class FormationEditor {
     this.iconObserverRoot = null;
     this.iconDebug = { resolvedIconCount: 0, failedIconCount: 0, observedIconCount: 0, eagerIconCount: 0, queuedIconCount: 0 };
     this.catalogItems = [];
-    this.catalogVirtual = { rowHeight: 176, columns: 4, overscanRows: 8, start: 0, end: 0, firstVisibleRow: 0, lastVisibleRow: 0 };
+    this.catalogVirtual = { rowHeight: 194, columns: 4, overscanRows: 8, start: 0, end: 0, firstVisibleRow: 0, lastVisibleRow: 0 };
     this.renderFrame = null;
     this.root = document.createElement('div');
     this.root.className = 'formation-ui';
@@ -68,13 +99,7 @@ export class FormationEditor {
         if (btn) { btn.disabled = true; btn.textContent = 'Applying...'; }
         try { await this.onApplyBattle(this.formation); }
         catch (err) {
-          console.error('[FormationEditor] apply failed detail', {
-            name: err?.name,
-            message: err?.message,
-            stack: err?.stack,
-            cause: err?.cause,
-            error: err
-          });
+          console.error('[FormationEditor] apply failed detail', { name: err?.name, message: err?.message, stack: err?.stack, cause: err?.cause, error: err });
           this.setHint(`Apply failed: ${err?.message || String(err)}`);
         }
         finally { this.applying = false; if (btn) { btn.disabled = false; btn.textContent = 'Apply Battle'; } }
@@ -84,22 +109,35 @@ export class FormationEditor {
         FormationStore.setSlot(this.activeSlot, null);
         this.formation = FormationStore.load();
         this.onFormationChanged(this.formation);
-        this.setHint('Selected slot cleared');
+        this.setHint(`${pageLabel(this.activePage)} slot cleared`);
         return this.renderDynamic();
       }
       if (type === 'reset') {
         FormationStore.reset();
         this.formation = FormationStore.load();
+        this.activePage = 0;
+        this.activeSlot = 0;
         this.onFormationChanged(this.formation);
         this.setHint('Formation reset to default');
         return this.renderDynamic();
       }
     }
 
+    const page = e.target.closest('[data-page]');
+    if (page) {
+      this.activePage = clampPage(page.dataset.page);
+      this.activeSlot = this.activePage * LINEUP_COLS;
+      return this.renderDynamic();
+    }
+
     const slot = e.target.closest('[data-slot]');
     const filter = e.target.closest('[data-filter]');
     const character = e.target.closest('[data-character]');
-    if (slot) { this.activeSlot = Number(slot.dataset.slot); return this.renderDynamic(); }
+    if (slot) {
+      this.activeSlot = Number(slot.dataset.slot);
+      this.activePage = clampPage(Math.floor(this.activeSlot / LINEUP_COLS));
+      return this.renderDynamic();
+    }
     if (filter) { this.filter = filter.dataset.filter; return this.renderDynamic(); }
     if (character) {
       const characterId = character.dataset.character;
@@ -108,7 +146,7 @@ export class FormationEditor {
       FormationStore.setSlot(this.activeSlot, characterId);
       this.formation = FormationStore.load();
       this.onFormationChanged(this.formation);
-      this.setHint(`Selected: ${characterId}`);
+      this.setHint(`${pageLabel(this.activePage)} selected: ${selected.label || characterId}`);
       return this.renderDynamic();
     }
   }
@@ -117,7 +155,7 @@ export class FormationEditor {
     const baseChars = this.filter === CHARACTER_FACTIONS.all ? getAvailableCharacters() : getCharactersByFaction(this.filter);
     const q = this.searchText.trim().toLowerCase();
     if (!q) return baseChars;
-    return baseChars.filter((c) => [c.characterId, c.baseCharacterId, c.label, c.sourceSlotId, c.statsSummary].some((v) => String(v || '').toLowerCase().includes(q)));
+    return baseChars.filter((c) => [c.characterId, c.baseCharacterId, c.label, c.sourceSlotId, c.statsSummary, c.defaultCost, c.defaultCooldownMs].some((v) => String(v || '').toLowerCase().includes(q)));
   }
 
   renderIconMarkup(c, extraClass = '') {
@@ -126,22 +164,18 @@ export class FormationEditor {
     return `<img class='${extraClass} image-missing' data-semantic-icon='${semanticKey}' alt=''>`;
   }
 
+  renderCardMeta(c) {
+    return `<div class='formation-card-meta'><span class='formation-card-cost'>${formatCost(characterCost(c))}</span><span class='formation-card-cooldown'>${formatCooldown(characterCooldown(c))}</span></div>`;
+  }
+
   getFormationIconDebug() {
-    if (!globalThis.__FORMATION_ICON_DEBUG__) {
-      globalThis.__FORMATION_ICON_DEBUG__ = { lastRender: {}, recentIconFailures: [] };
-    }
+    if (!globalThis.__FORMATION_ICON_DEBUG__) globalThis.__FORMATION_ICON_DEBUG__ = { lastRender: {}, recentIconFailures: [] };
     return globalThis.__FORMATION_ICON_DEBUG__;
   }
 
   recordIconFailure(semanticKey, err, detail = {}) {
     const debug = this.getFormationIconDebug();
-    const failure = {
-      semanticKey,
-      bundlePath: detail.bundlePath || err?.detail?.bundlePath || null,
-      internalPath: detail.internalPath || err?.detail?.internalPath || null,
-      errorName: err?.name || 'Error',
-      errorMessage: err?.message || String(err)
-    };
+    const failure = { semanticKey, bundlePath: detail.bundlePath || err?.detail?.bundlePath || null, internalPath: detail.internalPath || err?.detail?.internalPath || null, errorName: err?.name || 'Error', errorMessage: err?.message || String(err) };
     debug.recentIconFailures.unshift(failure);
     debug.recentIconFailures.splice(20);
     this.iconDebug.failedIconCount += 1;
@@ -177,16 +211,7 @@ export class FormationEditor {
       delete img.dataset.iconPending;
       this.iconDebug.resolvedIconCount += 1;
     }).catch((err) => {
-      console.error('[FormationEditor] icon load failed detail', {
-        key,
-        bundlePath: err?.detail?.bundlePath || null,
-        internalPath: err?.detail?.internalPath || null,
-        name: err?.name,
-        message: err?.message,
-        stack: err?.stack,
-        cause: err?.cause,
-        error: err
-      });
+      console.error('[FormationEditor] icon load failed detail', { key, bundlePath: err?.detail?.bundlePath || null, internalPath: err?.detail?.internalPath || null, name: err?.name, message: err?.message, stack: err?.stack, cause: err?.cause, error: err });
       img.classList.add('image-missing');
       delete img.dataset.iconPending;
       delete img.dataset.iconResolved;
@@ -258,7 +283,7 @@ export class FormationEditor {
 
   resolveVisibleCatalogIconsImmediately(provider) {
     const scroller = this.root.querySelector('.formation-catalog-scroll');
-    const rowHeight = this.catalogVirtual.rowHeight || 176;
+    const rowHeight = this.catalogVirtual.rowHeight || 194;
     const columns = this.catalogVirtual.columns || 1;
     const viewportRows = Math.max(1, Math.ceil((scroller?.clientHeight || 480) / rowHeight));
     const firstVisibleRow = Math.max(0, Math.floor((scroller?.scrollTop || 0) / rowHeight));
@@ -277,7 +302,7 @@ export class FormationEditor {
 
   estimateCatalogColumns(scroller) {
     const width = Math.max(1, scroller?.clientWidth || 1);
-    return Math.max(1, Math.floor(width / 168));
+    return Math.max(1, Math.floor(width / 166));
   }
 
   renderCatalogWindow() {
@@ -303,7 +328,7 @@ export class FormationEditor {
     grid.innerHTML = `<div class='formation-catalog-spacer' style='height:${top}px'></div>${chars.slice(start, end).map((c, offset) => {
       const baseId = c.baseCharacterId || c.characterId;
       const catalogIndex = start + offset;
-      return `<button type='button' class='formation-character-card ${usedBaseIds.has(baseId) ? 'is-used' : ''}' data-character='${c.characterId}' data-catalog-index='${catalogIndex}' data-faction='${c.faction}' data-base-character-id='${baseId || ''}'>${this.renderIconMarkup(c)}<span>${c.factionLabel || c.faction}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small><small class='base-id'>base:${baseId || '-'}</small><small>${c.sourceSlotId || '-'}</small><small>${c.statsSummary || ''}</small></button>`;
+      return `<button type='button' class='formation-character-card ${usedBaseIds.has(baseId) ? 'is-used' : ''}' data-character='${c.characterId}' data-catalog-index='${catalogIndex}' data-faction='${c.faction}' data-base-character-id='${baseId || ''}'>${this.renderIconMarkup(c)}<span>${c.faction === 'dog' ? 'DOG' : 'CAT'}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small>${this.renderCardMeta(c)}</button>`;
     }).join('')}<div class='formation-catalog-spacer' style='height:${bottom}px'></div>`;
   }
 
@@ -328,7 +353,9 @@ export class FormationEditor {
       queuedIconCount: this.iconDebug.queuedIconCount,
       activeIconCount: this.iconActive,
       resolvedIconCount: this.iconDebug.resolvedIconCount,
-      failedIconCount: this.iconDebug.failedIconCount
+      failedIconCount: this.iconDebug.failedIconCount,
+      activePage: this.activePage,
+      activeSlot: this.activeSlot
     };
     debug.lastRender.renderedIconCount = catalogImgs.length;
   }
@@ -338,7 +365,8 @@ export class FormationEditor {
     const chars = this.getFilteredCharacters();
     const dogCount = getCharactersByFaction('dog').length;
     const catCount = getCharactersByFaction('cat').length;
-    const flat = (this.formation?.pages || []).flat();
+    const pages = this.formation?.pages || [];
+    const flat = pages.flat();
     const usedBaseIds = new Set(flat.filter(Boolean).map((id) => {
       const c = getCharacterById(id);
       return c?.baseCharacterId || c?.characterId || id;
@@ -346,12 +374,30 @@ export class FormationEditor {
     this.currentUsedBaseIds = usedBaseIds;
     this.catalogItems = chars;
 
-    this.root.querySelector('.formation-catalog-summary').textContent = `Catalog: ${chars.length} / dog ${dogCount} / cat ${catCount}`;
+    const summary = this.root.querySelector('.formation-catalog-summary');
+    if (summary) summary.textContent = `Catalog ${chars.length} / DOG ${dogCount} / CAT ${catCount}`;
 
-    this.root.querySelector('.formation-slots').innerHTML = flat.map((id, i) => {
-      const c = id ? getCharacterById(id) : null;
-      return `<button type='button' class='formation-slot ${this.activeSlot === i ? 'is-active' : ''}' data-slot='${i}'>${c ? `${this.renderIconMarkup(c)}<span>${c.label}</span><small class='character-id'>${c.characterId}</small>` : '<span>EMPTY</span>'}</button>`;
-    }).join('');
+    const pageTabs = this.root.querySelector('.formation-page-tabs');
+    if (pageTabs) {
+      pageTabs.innerHTML = Array.from({ length: LINEUP_ROWS }, (_, page) => {
+        const filled = (pages?.[page] || []).filter(Boolean).length;
+        return `<button type='button' class='formation-page-tab ${this.activePage === page ? 'is-active' : ''}' data-page='${page}'><strong>${pageLabel(page)}</strong><span>${filled}/${LINEUP_COLS}</span></button>`;
+      }).join('');
+    }
+
+    const activeLabel = this.root.querySelector('.formation-active-page-label');
+    if (activeLabel) activeLabel.textContent = `${pageLabel(this.activePage)} / ${LINEUP_TOTAL} SLOT DECK`;
+
+    const visibleSlots = pages?.[this.activePage] || Array(LINEUP_COLS).fill(null);
+    const slotsEl = this.root.querySelector('.formation-slots');
+    if (slotsEl) {
+      slotsEl.innerHTML = visibleSlots.map((id, col) => {
+        const i = this.activePage * LINEUP_COLS + col;
+        const c = id ? getCharacterById(id) : null;
+        return `<button type='button' class='formation-slot ${this.activeSlot === i ? 'is-active' : ''}' data-slot='${i}' data-page-slot='${col + 1}'>${c ? `${this.renderIconMarkup(c)}<span>${c.label}</span><small class='character-id'>${formatCost(characterCost(c))} / ${formatCooldown(characterCooldown(c))}</small>` : `<span>EMPTY</span><small>${pageLabel(this.activePage)}-${col + 1}</small>`}</button>`;
+      }).join('');
+    }
+
     const scroller = this.root.querySelector('.formation-catalog-scroll');
     if (scroller) scroller.scrollTop = 0;
     this.renderCatalogWindow();
@@ -363,12 +409,14 @@ export class FormationEditor {
       catalogItemCount: chars.length,
       renderedDomCardCount: Math.max(0, (this.catalogVirtual.end || 0) - (this.catalogVirtual.start || 0)),
       iconQueueSize: this.iconQueue.length,
-      visibleIconCount: this.root.querySelectorAll('.formation-catalog-grid img[data-semantic-icon]').length
+      visibleIconCount: this.root.querySelectorAll('.formation-catalog-grid img[data-semantic-icon]').length,
+      activePage: this.activePage,
+      activeSlot: this.activeSlot
     });
   }
 
   refresh() {
-    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><h3>編成</h3><p>キャラを選び、右の Apply Battle で開始</p></header><section class='formation-slots-wrap'><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>Apply Battleで戦闘開始</p></aside></div>`;
+    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside></div>`;
     this.renderDynamic();
   }
 }

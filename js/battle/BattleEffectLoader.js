@@ -41,7 +41,13 @@ async function readOptionalBundleText(provider, bundleRef, internalPath) {
   try { return await provider.readTextByBundleRef(bundleRef, internalPath); } catch { return null; }
 }
 
-function parseSmokeDefinition({ modelText, animText, source }) {
+async function readRequiredBundleText(provider, bundleRef, internalPath) {
+  const text = await readOptionalBundleText(provider, bundleRef, internalPath);
+  if (!text) throw new Error(`BCU effect bundle missing ${internalPath}`);
+  return text;
+}
+
+function parseEffectDefinition({ modelText, animText, source }) {
   const model = parseModel(modelText);
   const anim = parseAnim(animText);
   return {
@@ -75,15 +81,18 @@ export class BattleEffectLoader {
     const attackAnimText = await readOptionalBundleText(provider, this.bundleRef, 'attack_smoke.maanim') || EMBEDDED_ATTACK_SMOKE_ANIM;
     const whiteModelText = await readOptionalBundleText(provider, this.bundleRef, 'white_smoke.mamodel') || EMBEDDED_WHITE_SMOKE_MODEL;
     const whiteAnimText = await readOptionalBundleText(provider, this.bundleRef, 'white_smoke.maanim') || EMBEDDED_WHITE_SMOKE_ANIM;
+    const criticalModelText = await readRequiredBundleText(provider, this.bundleRef, 'critical.mamodel');
+    const criticalAnimText = await readRequiredBundleText(provider, this.bundleRef, 'critical.maanim');
     return {
       image,
       imgcut,
       parts,
       model: parseModel(attackModelText),
       anim: parseAnim(attackAnimText),
-      smokeDefinitions: {
-        attack: parseSmokeDefinition({ modelText: attackModelText, animText: attackAnimText, source: attackModelText === EMBEDDED_ATTACK_SMOKE_MODEL ? 'embedded-bcu-attack_smoke' : 'bundle:attack_smoke' }),
-        white: parseSmokeDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: whiteModelText === EMBEDDED_WHITE_SMOKE_MODEL ? 'embedded-bcu-white_smoke' : 'bundle:white_smoke' })
+      effectDefinitions: {
+        attack: parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: attackModelText === EMBEDDED_ATTACK_SMOKE_MODEL ? 'embedded-bcu-attack_smoke' : 'bundle:attack_smoke' }),
+        white: parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: whiteModelText === EMBEDDED_WHITE_SMOKE_MODEL ? 'embedded-bcu-white_smoke' : 'bundle:white_smoke' }),
+        critical: parseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'bundle:critical' })
       },
       loaded: true,
       reason: '',
@@ -106,15 +115,18 @@ export class BattleEffectLoader {
     try { attackAnimText = await fetchText(`${this.rawBaseDir}attack_smoke.maanim`); } catch {}
     try { whiteModelText = await fetchText(`${this.rawBaseDir}white_smoke.mamodel`); } catch {}
     try { whiteAnimText = await fetchText(`${this.rawBaseDir}white_smoke.maanim`); } catch {}
+    const criticalModelText = await fetchText(`${this.rawBaseDir}critical.mamodel`);
+    const criticalAnimText = await fetchText(`${this.rawBaseDir}critical.maanim`);
     return {
       image,
       imgcut,
       parts,
       model: parseModel(attackModelText),
       anim: parseAnim(attackAnimText),
-      smokeDefinitions: {
-        attack: parseSmokeDefinition({ modelText: attackModelText, animText: attackAnimText, source: 'raw-or-embedded:attack_smoke' }),
-        white: parseSmokeDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: 'raw-or-embedded:white_smoke' })
+      effectDefinitions: {
+        attack: parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: 'raw-or-embedded:attack_smoke' }),
+        white: parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: 'raw-or-embedded:white_smoke' }),
+        critical: parseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'raw:critical' })
       },
       loaded: true,
       reason: '',
@@ -137,7 +149,7 @@ export class BattleEffectLoader {
           partCount: asset.parts.length,
           partNames: asset.parts.map((p) => p.name),
           imgcutPartCount: asset.imgcutPartCount,
-          smokeDefinitions: Object.fromEntries(Object.entries(asset.smokeDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }]))
+          effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }]))
         };
         globalThis.__BATTLE_HIT_EFFECT_LOADER_DEBUG__ = this.lastLoadDebug;
         return asset;
@@ -151,7 +163,7 @@ export class BattleEffectLoader {
         partCount: asset.parts.length,
         partNames: asset.parts.map((p) => p.name),
         imgcutPartCount: asset.imgcutPartCount,
-        smokeDefinitions: Object.fromEntries(Object.entries(asset.smokeDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }]))
+        effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }]))
       };
       globalThis.__BATTLE_HIT_EFFECT_LOADER_DEBUG__ = this.lastLoadDebug;
       return asset;

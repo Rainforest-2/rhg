@@ -1,7 +1,8 @@
 import { BattleScene } from './BattleScene.js';
 import { BattleAttackTimeline } from './BattleAttackTimeline.js';
+import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-phase-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-phase-patch.v2');
 
 function ensureQueue(scene) {
   if (!Array.isArray(scene.pendingBcuAttackDamageQueue)) scene.pendingBcuAttackDamageQueue = [];
@@ -12,11 +13,40 @@ function describeTarget(hit) {
   return hit?.target?.instanceId || hit?.target?.label || hit?.target?.side || hit?.target?.id || null;
 }
 
-function processDeferredAttackDamage(scene) {
+function actorPos(actor) {
+  const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function sideOrder(actor) {
+  // BCU StageBasis processes the two sides in fixed passes. Keep this stable so
+  // simultaneous browser captures are no longer dependent on JS insertion order.
+  return actor?.side === 'dog-player' ? 0 : 1;
+}
+
+function sortDamageBatch(batch) {
+  return batch.slice().sort((a, b) => {
+    const af = Number.isFinite(a?.capturedAtFrame) ? a.capturedAtFrame : 0;
+    const bf = Number.isFinite(b?.capturedAtFrame) ? b.capturedAtFrame : 0;
+    if (af !== bf) return af - bf;
+    const as = sideOrder(a?.attacker);
+    const bs = sideOrder(b?.attacker);
+    if (as !== bs) return as - bs;
+    const ax = actorPos(a?.attacker);
+    const bx = actorPos(b?.attacker);
+    if (ax !== bx) return ax - bx;
+    const ah = Number.isFinite(a?.hitIndex) ? a.hitIndex : 0;
+    const bh = Number.isFinite(b?.hitIndex) ? b.hitIndex : 0;
+    if (ah !== bh) return ah - bh;
+    return String(a?.key || '').localeCompare(String(b?.key || ''));
+  });
+}
+
+function processDeferredAttackDamage(scene, reason = 'damage-resolve') {
   const queue = ensureQueue(scene);
   if (!queue.length) return { processed: 0, applied: 0, skipped: 0 };
 
-  const batch = queue.splice(0, queue.length);
+  const batch = sortDamageBatch(queue.splice(0, queue.length));
   let applied = 0;
   let skipped = 0;
 
@@ -32,7 +62,8 @@ function processDeferredAttackDamage(scene) {
         reason: 'missing-attacker-or-target',
         target: describeTarget(hit),
         targetType: hit?.targetType || null,
-        source: 'BCU AttackAb.capture queued / excuse phase'
+        source: 'BCU AttackAb.capture queued / excuse phase',
+        flushReason: reason
       });
       continue;
     }
@@ -48,7 +79,8 @@ function processDeferredAttackDamage(scene) {
         target: describeTarget(hit),
         targetType: hit.targetType,
         applied: false,
-        source: 'BCU AttackAb.capture queued / excuse phase'
+        source: 'BCU AttackAb.capture queued / excuse phase',
+        flushReason: reason
       });
       continue;
     }
@@ -65,16 +97,19 @@ function processDeferredAttackDamage(scene) {
       applied: !!result?.accepted,
       skipped: !result?.accepted,
       reason: result?.reason || null,
-      source: 'BCU AttackAb.capture queued / excuse phase'
+      source: 'BCU AttackAb.capture queued / excuse phase',
+      flushReason: reason
     });
   }
 
   scene.pushEvent?.({
     type: 'bcuAttackDamageQueueFlushed',
     source: 'BCU StageBasis AttackAb.capture then AttackAb.excuse separation',
+    flushReason: reason,
     processed: batch.length,
     applied,
-    skipped
+    skipped,
+    sort: 'capturedAtFrame, side, attacker.posBcu, hitIndex, key'
   });
 
   return { processed: batch.length, applied, skipped };
@@ -91,12 +126,26 @@ export function installBattleSceneBcuAttackPhasePatch() {
   }
 
   proto.runTickPhase = function runTickPhaseWithBcuDamageExcuse(phase, fn = () => {}) {
-    if (phase !== 'damage-resolve') return originalRunTickPhase.call(this, phase, fn);
-    return originalRunTickPhase.call(this, phase, () => {
-      const result = fn();
-      processDeferredAttackDamage(this);
-      return result;
-    });
+    if (phase === 'damage-resolve') {
+      return originalRunTickPhase.call(this, phase, () => {
+        const result = fn();
+        processDeferredAttackDamage(this, 'damage-resolve');
+        return result;
+      });
+    }
+    if (phase === 'knockback-death') {
+      return originalRunTickPhase.call(this, phase, () => {
+        processDeferredAttackDamage(this, 'pre-knockback-death-safety-flush');
+        return fn();
+      });
+    }
+    if (phase === 'cleanup') {
+      return originalRunTickPhase.call(this, phase, () => {
+        processDeferredAttackDamage(this, 'pre-cleanup-safety-flush');
+        return fn();
+      });
+    }
+    return originalRunTickPhase.call(this, phase, fn);
   };
 
   proto.resolveAttackHitEvent = function resolveAttackHitEventBcuCapture(attacker, dueHit) {

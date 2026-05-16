@@ -45,7 +45,7 @@ Primary goal: **ブラウザ版の戦闘体験を、スマホ版BCU / BCU common
 
 ## 1. 参照すべきBCUソース
 
-Codex は作業開始時に以下を取得すること。取得できない場合は、推測実装せず停止して報告する。
+Codex は作業開始時に以下をcloneして取得すること。取得できない場合は、推測実装せず停止して報告する。
 
 ```text
 battlecatsultimate/BCU_Android

@@ -15,6 +15,8 @@ function hideBootStatus() {
 
 async function boot() {
   try {
+    const { installGameTouchGuard } = await import('./ui/GameTouchGuard.js');
+    installGameTouchGuard(document);
     showBootStatus('BCU asset database loading...');
     await import('./battle/BattleBcuStrictConfigPatch.js');
     await import('./battle/StageDefinitionNegativeSpawnPatch.js');

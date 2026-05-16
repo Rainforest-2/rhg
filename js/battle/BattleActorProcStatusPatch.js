@@ -18,6 +18,10 @@ function expireStatuses(actor, nowMs) {
   if (!actor?.bcuProcStatuses || !Number.isFinite(nowMs)) return;
   for (const key of Object.keys(actor.bcuProcStatuses)) {
     const st = actor.bcuProcStatuses[key];
+    if (Number.isFinite(st?.framesRemaining)) {
+      if (st.framesRemaining <= 0) delete actor.bcuProcStatuses[key];
+      continue;
+    }
     if (Number.isFinite(st?.untilMs) && nowMs >= st.untilMs) delete actor.bcuProcStatuses[key];
   }
 }
@@ -25,7 +29,21 @@ function expireStatuses(actor, nowMs) {
 function isActive(actor, key, nowMs) {
   expireStatuses(actor, nowMs);
   const st = actor?.bcuProcStatuses?.[key];
+  if (Number.isFinite(st?.framesRemaining)) return st.framesRemaining > 0;
   return !!st && Number.isFinite(st.untilMs) && (!Number.isFinite(nowMs) || nowMs < st.untilMs);
+}
+
+function decrementStatusFrames(actor) {
+  if (!actor?.bcuProcStatuses) return;
+  const frame = Number.isFinite(actor.lastSceneLogicFrame) ? actor.lastSceneLogicFrame : null;
+  if (frame !== null && actor.__lastBcuProcStatusFrame === frame) return;
+  actor.__lastBcuProcStatusFrame = frame;
+  for (const key of Object.keys(actor.bcuProcStatuses)) {
+    const st = actor.bcuProcStatuses[key];
+    if (!Number.isFinite(st?.framesRemaining)) continue;
+    if (st.framesRemaining > 0) st.framesRemaining -= 1;
+    if (st.framesRemaining <= 0) delete actor.bcuProcStatuses[key];
+  }
 }
 
 function applyToxic(actor, payload = {}, meta = {}) {
@@ -49,27 +67,28 @@ function applyToxic(actor, payload = {}, meta = {}) {
 function applyStatus(actor, key, payload = {}, meta = {}) {
   const statuses = ensureStatuses(actor);
   const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
-  const durationMs = framesToMs(payload.timeFrames ?? payload.time ?? 0);
+  const durationFrames = Math.max(0, Math.floor(Number(payload.timeFrames ?? payload.time ?? 0) || 0));
+  const durationMs = framesToMs(durationFrames);
   if (durationMs <= 0 && key !== 'knockbackProc' && key !== 'toxic') return { applied: false, reason: 'zero-duration' };
   if (key === 'freeze') {
-    statuses.freeze = { key, untilMs: Math.max(statuses.freeze?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_STOP]' };
+    statuses.freeze = { key, framesRemaining: Math.max(statuses.freeze?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.freeze?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_STOP]' };
     actor.freezeUntilMs = statuses.freeze.untilMs;
     return { applied: true, status: statuses.freeze };
   }
   if (key === 'slow') {
-    statuses.slow = { key, untilMs: Math.max(statuses.slow?.untilMs || 0, nowMs + durationMs), durationMs, movePerFrame: BCU_SLOW_MOVE_PER_FRAME, payload, source: 'BCU Entity.updateMove status[P_SLOW]' };
+    statuses.slow = { key, framesRemaining: Math.max(statuses.slow?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.slow?.untilMs || 0, nowMs + durationMs), durationMs, movePerFrame: BCU_SLOW_MOVE_PER_FRAME, payload, source: 'BCU Entity.updateMove status[P_SLOW]' };
     actor.slowUntilMs = statuses.slow.untilMs;
     return { applied: true, status: statuses.slow };
   }
   if (key === 'weaken') {
     const mult = Number(payload.mult || 0);
-    statuses.weaken = { key, untilMs: Math.max(statuses.weaken?.untilMs || 0, nowMs + durationMs), durationMs, mult, payload, source: 'BCU WeakToken/status[P_WEAK][1]' };
+    statuses.weaken = { key, framesRemaining: Math.max(statuses.weaken?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.weaken?.untilMs || 0, nowMs + durationMs), durationMs, mult, payload, source: 'BCU WeakToken/status[P_WEAK][1]' };
     actor.weakenUntilMs = statuses.weaken.untilMs;
     actor.weakenMultiplier = statuses.weaken.mult;
     return { applied: true, status: statuses.weaken };
   }
   if (key === 'curse') {
-    statuses.curse = { key, untilMs: Math.max(statuses.curse?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_CURSE]' };
+    statuses.curse = { key, framesRemaining: Math.max(statuses.curse?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.curse?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_CURSE]' };
     actor.curseUntilMs = statuses.curse.untilMs;
     return { applied: true, status: statuses.curse };
   }
@@ -133,9 +152,10 @@ export function installBattleActorProcStatusPatch() {
   const originalTick = proto.tick;
   proto.tick = function tickWithBcuProcStatuses(dt) {
     const nowMs = Number.isFinite(this.lastSceneTimeMs) ? this.lastSceneTimeMs : null;
+    decrementStatusFrames(this);
     expireStatuses(this, nowMs);
     if (this.bcuProcStatuses?.freeze && Number.isFinite(nowMs) && nowMs < this.bcuProcStatuses.freeze.untilMs) {
-      this.lastBcuProcTickDebug = { frozen: true, untilMs: this.bcuProcStatuses.freeze.untilMs, nowMs, source: 'BCU status[P_STOP] prevents actor animation/update tick' };
+      this.lastBcuProcTickDebug = { frozen: true, framesRemaining: this.bcuProcStatuses.freeze.framesRemaining ?? null, untilMs: this.bcuProcStatuses.freeze.untilMs, nowMs, source: 'BCU status[P_STOP] prevents actor animation/update tick' };
       return;
     }
     return originalTick.call(this, dt);

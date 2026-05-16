@@ -2,9 +2,13 @@ import { BattleScene } from './BattleScene.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v1');
-const WAVE_STEP_RANGE = 200;
-const WAVE_BASE_RANGE = 467;
-const WAVE_HIT_WIDTH = 532;
+const W_PROG = 200;
+const W_E_INI = -32.75;
+const W_U_INI = -67.5;
+const W_E_WID = 500;
+const W_U_WID = 400;
+const W_TIME = 3;
+const W_MINI_TIME = 1;
 
 function pos(actor) {
   const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
@@ -41,16 +45,19 @@ function cloneEvent(event = {}, damage, kind) {
 }
 
 function enqueue(scene, item) {
-  if (!scene.__bcuWaveQueue) scene.__bcuWaveQueue = [];
-  scene.__bcuWaveQueue.push(item);
+  if (!scene.__bcuWaveContainers) scene.__bcuWaveContainers = [];
+  scene.__bcuWaveContainers.push(item);
   scene.pushEvent?.({
-    type: 'bcuWaveQueued',
+    type: 'bcuWaveContainerCreated',
     kind: item.kind,
-    dueFrame: item.dueFrame,
+    t: item.t,
+    attackFrame: item.attackFrame,
+    maxt: item.maxt,
     attacker: item.attacker?.instanceId || item.attacker?.label || null,
-    startX: item.startX,
-    endX: item.endX,
+    pos: item.pos,
+    width: item.width,
     damage: item.damage,
+    remainingLevel: item.remainingLevel,
     source: item.source
   });
 }
@@ -60,10 +67,9 @@ function buildWave(attacker, proc, finalDamage, key, scene, event, hitIndex, tar
   const level = Math.max(1, Math.trunc(Number(payload.level || 1)));
   const d = dire(attacker);
   const origin = pos(attacker);
-  const reach = WAVE_BASE_RANGE + WAVE_STEP_RANGE * Math.max(0, level - 1);
-  const center = origin + d * reach;
-  const start = Math.min(origin + d * WAVE_BASE_RANGE, center) - WAVE_HIT_WIDTH / 2;
-  const end = Math.max(origin + d * WAVE_BASE_RANGE, center) + WAVE_HIT_WIDTH / 2;
+  const width = d === 1 ? W_E_WID : W_U_WID;
+  const addp = (d === 1 ? W_E_INI : W_U_INI) + width / 2;
+  const p0 = origin + d * addp;
   const isMini = proc.key === 'miniWave';
   const mult = isMini ? Math.max(0, Number(payload.mult || 20)) / 100 : 1;
   return {
@@ -73,11 +79,16 @@ function buildWave(attacker, proc, finalDamage, key, scene, event, hitIndex, tar
     target,
     event,
     hitIndex,
-    startX: start,
-    endX: end,
+    pos: p0,
+    width,
+    direction: d,
+    t: -3,
+    maxt: isMini ? W_MINI_TIME + 6 : W_TIME + 8,
+    attackFrame: isMini ? 4 : 6,
+    spawnFrame: isMini ? W_MINI_TIME : W_TIME,
+    remainingLevel: Math.max(0, level - 1),
     damage: Math.max(1, Math.trunc(finalDamage * mult)),
-    dueFrame: scene.logicFrame + 1,
-    source: isMini ? 'BCU MINIWAVE after captured hit' : 'BCU WAVE after captured hit'
+    source: isMini ? 'BCU ContWaveDef MINIWAVE state machine' : 'BCU ContWaveDef WAVE state machine'
   };
 }
 
@@ -94,28 +105,39 @@ function targetsInRange(scene, attacker, startX, endX) {
 }
 
 function process(scene) {
-  const q = Array.isArray(scene.__bcuWaveQueue) ? scene.__bcuWaveQueue : [];
+  const q = Array.isArray(scene.__bcuWaveContainers) ? scene.__bcuWaveContainers : [];
   if (!q.length) return;
   const rest = [];
   for (const item of q) {
-    if (item.dueFrame > scene.logicFrame) {
-      rest.push(item);
+    if (item.t === item.spawnFrame && item.remainingLevel > 0) {
+      const next = { ...item, id: `${item.id}:next${item.remainingLevel}`, pos: item.pos + W_PROG * item.direction, t: 0, remainingLevel: item.remainingLevel - 1 };
+      rest.push(next);
+      scene.pushEvent?.({ type: 'bcuWaveNextWave', id: item.id, nextId: next.id, pos: next.pos, remainingLevel: next.remainingLevel, source: 'ContWaveDef.nextWave W_PROG=200' });
+    }
+    if (item.t === item.attackFrame) {
+      const event = cloneEvent(item.event, item.damage, item.kind);
+      const startX = item.pos - item.width / 2;
+      const endX = item.pos + item.width / 2;
+      const targets = targetsInRange(scene, item.attacker, startX, endX);
+      let applied = 0;
+      for (const target of targets) {
+        const res = scene.queueAttackDamage(item.attacker, target, 'actor', event, {
+          key: `${item.id}:${target.instanceId || target.label || 'target'}`,
+          hitIndex: item.hitIndex,
+          bcuWave: item.kind
+        });
+        if (res?.accepted) applied += 1;
+      }
+      scene.pushEvent?.({ type: 'bcuWaveAttackFrame', id: item.id, kind: item.kind, t: item.t, targetCount: targets.length, appliedCount: applied, source: 'ContWaveDef.update t == attack' });
+    }
+    if (item.t >= item.maxt) {
+      scene.pushEvent?.({ type: 'bcuWaveDeactivated', id: item.id, kind: item.kind, reason: 'maxt', t: item.t });
       continue;
     }
-    const event = cloneEvent(item.event, item.damage, item.kind);
-    const targets = targetsInRange(scene, item.attacker, item.startX, item.endX);
-    let applied = 0;
-    for (const target of targets) {
-      const res = scene.queueAttackDamage(item.attacker, target, 'actor', event, {
-        key: `${item.id}:${target.instanceId || target.label || 'target'}`,
-        hitIndex: item.hitIndex,
-        bcuWave: item.kind
-      });
-      if (res?.accepted) applied += 1;
-    }
-    scene.pushEvent?.({ type: 'bcuWaveResolved', id: item.id, kind: item.kind, targetCount: targets.length, appliedCount: applied });
+    item.t += 1;
+    rest.push(item);
   }
-  scene.__bcuWaveQueue = rest;
+  scene.__bcuWaveContainers = rest;
 }
 
 function enqueueFromResult(scene, attacker, target, event, calc, result, meta = {}) {

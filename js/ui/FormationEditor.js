@@ -1,5 +1,8 @@
 import { CHARACTER_FACTIONS, getAvailableCharacters, getCharactersByFaction, getCharacterById } from '../battle/CharacterCatalog.js';
 import { FormationStore, LINEUP_COLS, LINEUP_ROWS, LINEUP_TOTAL } from '../battle/FormationStore.js';
+import { getAvailableStages, getDefaultStage } from '../battle/StageRegistry.js';
+import { StageDefinitionLoader } from '../battle/StageDefinitionLoader.js';
+import { stageKey as makeStageKey, stageMapKey } from '../bcu/BcuIdentifier.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 function clampPage(page) {
@@ -33,10 +36,17 @@ function pageLabel(page) {
 }
 
 export class FormationEditor {
-  constructor({ mount, onFormationChanged, onApplyBattle }) {
+  constructor({ mount, onFormationChanged, onApplyBattle, onStageChanged, selectedStageId } = {}) {
     this.mount = mount || document.body;
     this.onFormationChanged = onFormationChanged || (() => {});
     this.onApplyBattle = onApplyBattle || (() => {});
+    this.onStageChanged = onStageChanged || (() => {});
+    this.selectedStageId = selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null;
+    this.stageLoader = new StageDefinitionLoader((level, message) => console[level === 'error' ? 'error' : 'warn']?.(message));
+    this.stageOptions = [];
+    this.stageMeta = new Map();
+    this.stageLoading = false;
+    this.stageOverlayOpen = false;
     this.filter = CHARACTER_FACTIONS.all;
     this.searchText = '';
     this.formation = FormationStore.load();
@@ -61,6 +71,7 @@ export class FormationEditor {
     this.root.addEventListener('input', (e) => this.onInput(e));
     this.root.addEventListener('scroll', (e) => this.onScroll(e), true);
     this.refresh();
+    this.loadStageOptions();
   }
 
   setVisible(v) { this.root.classList.toggle('is-visible', !!v); }
@@ -123,8 +134,29 @@ export class FormationEditor {
     }
 
     const action = e.target.closest('[data-action]');
+    const stage = e.target.closest('[data-stage-id]');
+    if (stage) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.selectStage(stage.dataset.stageId);
+      return;
+    }
     if (action) {
       const type = action.dataset.action;
+      if (type === 'stage-open') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.stageOverlayOpen = true;
+        this.renderStageSelector();
+        return;
+      }
+      if (type === 'stage-close') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.stageOverlayOpen = false;
+        this.renderStageSelector();
+        return;
+      }
       if (type === 'apply' && !this.applying) {
         e.preventDefault();
         e.stopPropagation();
@@ -176,6 +208,134 @@ export class FormationEditor {
       this.setHint(`${pageLabel(this.activePage)} selected: ${selected.label || characterId}`);
       return this.renderDynamic();
     }
+  }
+
+  selectStage(stageId) {
+    this.selectedStageId = stageId || null;
+    this.onStageChanged(this.selectedStageId);
+    this.stageOverlayOpen = false;
+    globalThis.__BCU_STAGE_SELECT_DEBUG__ = {
+      selectedStageId: this.selectedStageId,
+      meta: this.stageMeta.get(this.selectedStageId) || null,
+      source: 'FormationEditor stage selector -> PreviewApp.selectedStageId',
+      timestamp: Date.now()
+    };
+    this.renderStageSelector();
+  }
+
+  async loadStageOptions() {
+    if (this.stageLoading) return;
+    this.stageLoading = true;
+    try {
+      const stages = getAvailableStages()
+        .filter((s) => s?.bundleRef?.bundlePath || s?.semanticEntry?.bundleRef?.bundlePath || s?.enabled !== false)
+        .slice(0, 80);
+      this.stageOptions = stages;
+      this.renderStageSelector();
+      const limit = stages.slice(0, 30);
+      for (const stage of limit) {
+        try {
+          const def = await this.stageLoader.load(stage);
+          const rows = def?.runtime?.enemyRows || [];
+          this.stageMeta.set(stage.stageKey || stage.stageId, {
+            ok: !!def?.ok,
+            displayName: null,
+            unresolvedNameReason: 'name bundle resolver not connected for formation stage selector',
+            bgId: def?.bgId ?? def?.meta?.bgId ?? null,
+            enemyBaseHp: def?.enemyBaseHp ?? def?.meta?.enemyBaseHp ?? null,
+            enemyRowCount: rows.length,
+            unresolvedEnemyCount: rows.filter((r) => r?.unresolved || r?.enemyId == null).length,
+            stageLen: def?.stageLen ?? def?.meta?.stageLen ?? null,
+            bundleAvailability: stage?.bundleRef?.bundlePath ? 'available' : 'missing',
+            bundlePath: stage?.bundleRef?.bundlePath || null
+          });
+        } catch (error) {
+          this.stageMeta.set(stage.stageKey || stage.stageId, {
+            ok: false,
+            displayName: null,
+            unresolvedNameReason: 'stage definition load failed',
+            errorMessage: error?.message || String(error),
+            bundleAvailability: stage?.bundleRef?.bundlePath ? 'available-load-failed' : 'missing',
+            bundlePath: stage?.bundleRef?.bundlePath || null
+          });
+        }
+      }
+      this.renderStageSelector();
+    } finally {
+      this.stageLoading = false;
+    }
+  }
+
+  parseStageTripletFromEntry(stage) {
+    const basename = stage?.stageId || stage?.basename || stage?.semanticEntry?.basename || '';
+    let m = basename.match(/^stageRN(\d{3})_(\d{2})$/i);
+    if (m) return { mapColcId: 0, mapId: Number(m[1]), stageId: Number(m[2]), source: 'BCU filename stageRN -> legend triplet' };
+    m = basename.match(/^stageRNA(\d{3})_(\d{2})$/i);
+    if (m) return { mapColcId: 1, mapId: Number(m[1]), stageId: Number(m[2]), source: 'BCU filename stageRNA -> event triplet' };
+    m = basename.match(/^stageEX(\d{3})_(\d{2})$/i);
+    if (m) return { mapColcId: 4, mapId: Number(m[1]), stageId: Number(m[2]), source: 'BCU filename stageEX -> EX triplet' };
+    return null;
+  }
+
+  resolveStageDisplay(stage, meta = {}) {
+    const db = getBcuAssetDatabase();
+    const direct = db?.stages?.get?.(stage?.stageKey || stage?.key);
+    if (direct?.name?.source === 'lang' && direct.name.value) {
+      return { displayName: direct.name.value, source: direct.name.file || 'BcuStageRepository.name', unresolvedNameReason: null };
+    }
+    const triplet = this.parseStageTripletFromEntry(stage);
+    if (triplet && db?.names) {
+      const map = db.names.resolve('stageMap', stageMapKey(triplet.mapColcId, triplet.mapId), db.locale);
+      const st = db.names.resolve('stage', makeStageKey(triplet.mapColcId, triplet.mapId, triplet.stageId), db.locale);
+      const mapOk = map?.source === 'lang' && map.value;
+      const stageOk = st?.source === 'lang' && st.value;
+      if (mapOk && stageOk) return {
+        displayName: `${map.value} - ${st.value}`,
+        source: `${map.file}; ${st.file}`,
+        unresolvedNameReason: null,
+        nameTriplet: triplet
+      };
+      if (stageOk) return {
+        displayName: st.value,
+        source: st.file,
+        unresolvedNameReason: mapOk ? null : `map name missing for ${stageMapKey(triplet.mapColcId, triplet.mapId)}`,
+        nameTriplet: triplet
+      };
+      return {
+        displayName: null,
+        source: triplet.source,
+        unresolvedNameReason: `lang missing for ${makeStageKey(triplet.mapColcId, triplet.mapId, triplet.stageId)}`,
+        nameTriplet: triplet
+      };
+    }
+    const fallback = meta.displayName || stage?.name?.value || stage?.label || null;
+    return {
+      displayName: fallback,
+      source: stage?.name?.source || 'stage-index',
+      unresolvedNameReason: fallback ? null : 'stage filename cannot be mapped to BCU StageName triplet'
+    };
+  }
+
+  renderStageSelector() {
+    const overlay = this.root.querySelector('.formation-stage-overlay');
+    if (overlay) overlay.classList.toggle('is-open', this.stageOverlayOpen);
+    const current = this.root.querySelector('.formation-current-stage');
+    const selectedStage = (this.stageOptions || []).find((s) => (s.stageKey || s.stageId) === this.selectedStageId || s.stageId === this.selectedStageId);
+    const selectedMeta = selectedStage ? this.stageMeta.get(selectedStage.stageKey || selectedStage.stageId) || {} : {};
+    const selectedName = selectedStage ? this.resolveStageDisplay(selectedStage, selectedMeta).displayName || selectedStage.stageId : '未選択';
+    if (current) current.textContent = selectedName;
+    const list = this.root.querySelector('.formation-stage-list');
+    if (!list) return;
+    const stages = this.stageOptions || [];
+    list.innerHTML = stages.map((s) => {
+      const id = s.stageKey || s.stageId;
+      const meta = this.stageMeta.get(id) || {};
+      const active = id === this.selectedStageId || s.stageId === this.selectedStageId;
+      const resolved = this.resolveStageDisplay(s, meta);
+      const name = resolved.displayName || s.stageId || s.stageKey || 'name unresolved';
+      const reason = resolved.unresolvedNameReason || '';
+      return `<button type='button' class='formation-stage-card ${active ? 'is-active' : ''}' data-stage-id='${id}'><strong>${name}</strong><small>${s.stageKey || id}</small><span>BG ${meta.bgId ?? '---'} / HP ${meta.enemyBaseHp ?? '---'} / rows ${meta.enemyRowCount ?? '---'}</span><span>unresolved enemies ${meta.unresolvedEnemyCount ?? '---'} / bundle ${meta.bundleAvailability || (s.bundleRef?.bundlePath ? 'available' : 'missing')}</span>${reason ? `<em>${reason}</em>` : ''}</button>`;
+    }).join('') || `<p class='formation-stage-empty'>No stage bundle entries available</p>`;
   }
 
   getFilteredCharacters() {
@@ -443,7 +603,8 @@ export class FormationEditor {
   }
 
   refresh() {
-    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside></div>`;
+    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section></div>`;
     this.renderDynamic();
+    this.renderStageSelector();
   }
 }

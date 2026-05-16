@@ -1,2 +1,30 @@
-.prod-ui .cards,.prod-ui .lineup-cards,.prod-card-stack,.prod-ui .prod-card{touch-action:none!important;overscroll-behavior:contain;user-select:none}
-.prod-ui .cards *{touch-action:none!important}
+.canvas-panel,
+#preview-canvas,
+.prod-ui .cards,
+.prod-ui .lineup-cards,
+.prod-card-stack,
+.prod-ui .prod-card {
+  touch-action: none !important;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.prod-ui .cards *,
+.canvas-panel *,
+#preview-canvas {
+  touch-action: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.formation-ui,
+.formation-ui *,
+.formation-stage-overlay,
+.formation-stage-overlay * {
+  touch-action: pan-x pan-y;
+}

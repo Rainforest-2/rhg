@@ -60,6 +60,7 @@ export class ProductionCardSkin {
     this.cardPart = BCU_UNI_CARD_PART;
     this.warnedFallbackKeys = new Set();
     this.source = null;
+    this.loadError = null;
   }
 
   async preload() {
@@ -78,8 +79,10 @@ export class ProductionCardSkin {
       const part = this.imgcut.getByIndex(0);
       if (!samePart(part, BCU_UNI_CARD_PART)) this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
       else this.cardPart = part;
+      this.loadError = null;
       globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = { ready: true, source: this.source, cardPart: this.cardPart, hasSlotFrame: !!this.slotFrame };
     } catch (error) {
+      this.loadError = error;
       this.log.warn?.('[ProductionCardSkin] BCU production card skin unavailable', error);
       globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = { ready: false, source: this.source, reason: error?.message || String(error) };
     }
@@ -151,6 +154,17 @@ export class ProductionCardSkin {
 
   drawSlotFrame(ctx) {
     if (this.drawBcuCardPart(ctx, this.slotFrame)) return;
+    if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') {
+      const reason = this.loadError?.message || 'missing ui:battle uni.png/uni.imgcut part[0]';
+      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+        ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
+        ready: false,
+        strictFailure: true,
+        source: this.source,
+        reason
+      };
+      throw new Error(`BCU production card skin unavailable in semantic-strict: ${reason}`);
+    }
     this.drawManualFrameFallback(ctx);
   }
 
@@ -158,8 +172,6 @@ export class ProductionCardSkin {
     const { w, h } = PRODUCTION_CARD_CANVAS;
     ctx.fillStyle = '#f8fafc';
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#e2e8f0';
-    ctx.fillRect(3, 3, w - 6, h - 6);
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 2;
     ctx.strokeRect(2, 2, w - 4, h - 4);

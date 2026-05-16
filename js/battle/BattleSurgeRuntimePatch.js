@@ -2,7 +2,11 @@ import { BattleScene } from './BattleScene.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v1');
-const SURGE_HALF_WIDTH = 250;
+const W_VOLC_INNER = 250;
+const W_VOLC_PIERCE = 125;
+const VOLC_PRE = 15;
+const VOLC_POST = 10;
+const VOLC_SE = 30;
 
 function pos(actor) {
   const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
@@ -39,9 +43,9 @@ function cloneEvent(event = {}, damage, kind) {
 }
 
 function enqueue(scene, item) {
-  if (!scene.__bcuSurgeQueue) scene.__bcuSurgeQueue = [];
-  scene.__bcuSurgeQueue.push(item);
-  scene.pushEvent?.({ type: 'bcuSurgeQueued', kind: item.kind, dueFrame: item.dueFrame, repeatRemaining: item.repeatRemaining, startX: item.startX, endX: item.endX, damage: item.damage, source: item.source });
+  if (!scene.__bcuSurgeContainers) scene.__bcuSurgeContainers = [];
+  scene.__bcuSurgeContainers.push(item);
+  scene.pushEvent?.({ type: 'bcuSurgeContainerCreated', kind: item.kind, t: item.t, aliveTime: item.aliveTime, startX: item.startX, endX: item.endX, damage: item.damage, animType: item.animType, soundEffect: 'SE_VOLC_START', source: item.source });
 }
 
 function extractVolc(payload = {}, isMini = false) {
@@ -68,8 +72,13 @@ function buildSurge(attacker, proc, finalDamage, key, scene, event, hitIndex, ta
   const max = Math.max(d0, d1);
   const rolled = min + Math.floor(Math.random() * Math.max(1, max - min + 1));
   const center = origin + d * rolled;
+  const sta = center + (d === 1 ? W_VOLC_PIERCE : W_VOLC_INNER);
+  const end = center - (d === 1 ? W_VOLC_INNER : W_VOLC_PIERCE);
   const mult = isMini ? Math.max(0, Number(volc.mult ?? payload.mult ?? 20)) / 100 : 1;
-  const timeFrames = Math.max(1, Math.trunc(Number(volc.time || 1)));
+  const minTime = Math.max(1, Math.trunc(Number(volc.time || 1)));
+  const maxTime = Math.max(minTime, Math.trunc(Number(volc.maxtime || volc.maxTime || minTime)));
+  const rolledTime = minTime + Math.floor(Math.random() * Math.max(1, maxTime - minTime + 1));
+  const aliveTime = Math.max(1, Math.floor(rolledTime / 20) * 20 || rolledTime);
   return {
     id: `${key}:${proc.key}`,
     kind: proc.key,
@@ -77,13 +86,13 @@ function buildSurge(attacker, proc, finalDamage, key, scene, event, hitIndex, ta
     target,
     event,
     hitIndex,
-    startX: center - SURGE_HALF_WIDTH,
-    endX: center + SURGE_HALF_WIDTH,
+    startX: Math.min(sta, end),
+    endX: Math.max(sta, end),
     damage: Math.max(1, Math.trunc(finalDamage * mult)),
-    dueFrame: scene.logicFrame + 1,
-    repeatRemaining: Math.max(0, Math.trunc(timeFrames / 20) - 1),
-    repeatIntervalFrames: 20,
-    source: isMini ? 'BCU MINIVOLC after captured hit' : 'BCU VOLC after captured hit'
+    t: 0,
+    aliveTime,
+    animType: 'START',
+    source: isMini ? 'BCU ContVolcano MINIVOLC state machine' : 'BCU ContVolcano VOLC state machine'
   };
 }
 
@@ -100,25 +109,38 @@ function targetsInRange(scene, attacker, startX, endX) {
 }
 
 function process(scene) {
-  const q = Array.isArray(scene.__bcuSurgeQueue) ? scene.__bcuSurgeQueue : [];
+  const q = Array.isArray(scene.__bcuSurgeContainers) ? scene.__bcuSurgeContainers : [];
   if (!q.length) return;
   const rest = [];
   for (const item of q) {
-    if (item.dueFrame > scene.logicFrame) {
-      rest.push(item);
+    if (item.t >= VOLC_PRE && item.t <= VOLC_PRE + item.aliveTime && item.animType !== 'DURING') {
+      item.animType = 'DURING';
+      scene.pushEvent?.({ type: 'bcuSurgeAnimChanged', id: item.id, animType: item.animType, soundEffect: 'SE_VOLC_LOOP', t: item.t });
+    } else if (item.t > VOLC_PRE + item.aliveTime && item.animType !== 'END') {
+      item.animType = 'END';
+      scene.pushEvent?.({ type: 'bcuSurgeAnimChanged', id: item.id, animType: item.animType, t: item.t });
+    }
+    if (item.t >= VOLC_PRE && item.t < VOLC_PRE + item.aliveTime && (item.t - VOLC_PRE) % VOLC_SE === 0) {
+      scene.pushEvent?.({ type: 'bcuSurgeSound', id: item.id, soundEffect: 'SE_VOLC_LOOP', t: item.t });
+    }
+    if (item.t >= item.aliveTime + VOLC_POST + VOLC_PRE) {
+      scene.pushEvent?.({ type: 'bcuSurgeDeactivated', id: item.id, kind: item.kind, t: item.t, reason: 'aliveTime+VOLC_POST+VOLC_PRE' });
       continue;
     }
-    const event = cloneEvent(item.event, item.damage, item.kind);
-    const targets = targetsInRange(scene, item.attacker, item.startX, item.endX);
-    let applied = 0;
-    for (const target of targets) {
-      const res = scene.queueAttackDamage(item.attacker, target, 'actor', event, { key: `${item.id}:${target.instanceId || target.label || 'target'}`, hitIndex: item.hitIndex, bcuSurge: item.kind });
-      if (res?.accepted) applied += 1;
+    item.t += 1;
+    if (item.t > VOLC_PRE && item.t < VOLC_POST + item.aliveTime) {
+      const event = cloneEvent(item.event, item.damage, item.kind);
+      const targets = targetsInRange(scene, item.attacker, item.startX, item.endX);
+      let applied = 0;
+      for (const target of targets) {
+        const res = scene.queueAttackDamage(item.attacker, target, 'actor', event, { key: `${item.id}:${item.t}:${target.instanceId || target.label || 'target'}`, hitIndex: item.hitIndex, bcuSurge: item.kind });
+        if (res?.accepted) applied += 1;
+      }
+      scene.pushEvent?.({ type: 'bcuSurgeAttackTick', id: item.id, kind: item.kind, t: item.t, targetCount: targets.length, appliedCount: applied, source: 'ContVolcano.update t > VOLC_PRE && t < VOLC_POST + aliveTime' });
     }
-    scene.pushEvent?.({ type: 'bcuSurgeResolved', id: item.id, kind: item.kind, targetCount: targets.length, appliedCount: applied, repeatRemaining: item.repeatRemaining });
-    if (item.repeatRemaining > 0) rest.push({ ...item, dueFrame: scene.logicFrame + item.repeatIntervalFrames, repeatRemaining: item.repeatRemaining - 1 });
+    rest.push(item);
   }
-  scene.__bcuSurgeQueue = rest;
+  scene.__bcuSurgeContainers = rest;
 }
 
 function enqueueFromResult(scene, attacker, target, event, calc, result, meta = {}) {

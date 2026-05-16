@@ -26,8 +26,9 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
   dogContentRect: Object.freeze({ x: 6, y: 4, w: 98, h: 58 }),
   // Dog cards are a project extension, not a BC unit card. Keep the BCU uni frame,
-  // but repaint the whole icon window so the source frame's gray placeholder cannot leak through.
-  dogContentBackgroundRect: Object.freeze({ x: 4, y: 4, w: 102, h: 61 }),
+  // but repaint the full inner card face, including the cost area, so the source
+  // frame's gray placeholder cannot leak under dog icons.
+  dogContentBackgroundRect: Object.freeze({ x: 4, y: 4, w: 102, h: 77 }),
   costRightX: 106,
   costY: 64,
   cooldownTrackRect: Object.freeze({ x: 10, y: 61, w: 90, h: 12 }),

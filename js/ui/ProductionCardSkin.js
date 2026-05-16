@@ -25,6 +25,7 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   cardCanvasSize: PRODUCTION_CARD_CANVAS,
   contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
   dogContentRect: Object.freeze({ x: 7, y: 7, w: 96, h: 54 }),
+  dogContentBackgroundRect: Object.freeze({ x: 5, y: 5, w: 100, h: 56 }),
   costRightX: 108,
   costY: 68,
   cooldownTrackRect: Object.freeze({ x: 10, y: 61, w: 90, h: 12 }),
@@ -80,7 +81,7 @@ export class ProductionCardSkin {
       if (!samePart(part, BCU_UNI_CARD_PART)) this.log.warn?.('[ProductionCardSkin] unexpected uni.imgcut part[0]', part, 'expected', BCU_UNI_CARD_PART);
       else this.cardPart = part;
       this.loadError = null;
-      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = { ready: true, source: this.source, cardPart: this.cardPart, hasSlotFrame: !!this.slotFrame };
+      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = { ready: true, source: this.source, cardPart: this.cardPart, hasSlotFrame: !!this.slotFrame, dogContentBackground: 'white-inner-rect-bcu-extension' };
     } catch (error) {
       this.loadError = error;
       this.log.warn?.('[ProductionCardSkin] BCU production card skin unavailable', error);
@@ -141,6 +142,7 @@ export class ProductionCardSkin {
 
   drawDogCard(ctx, icon, state) {
     this.drawSlotFrame(ctx);
+    this.drawDogIconBackground(ctx);
     this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect);
     if (!state?.iconLoadFailed) return;
     const key = state.unitDef?.slotId || state.unitDef?.assetDef?.semanticKey || state.unitDef?.uiIcon?.semanticKey || 'unknown-dog-card';
@@ -148,6 +150,14 @@ export class ProductionCardSkin {
       this.warnedFallbackKeys.add(key);
       this.log.warn?.('[ProductionCardSkin] dog card uses BCU uni frame but icon unavailable', key);
     }
+  }
+
+  drawDogIconBackground(ctx) {
+    const r = PRODUCTION_CARD_SKIN.dogContentBackgroundRect;
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.restore();
   }
 
   drawEmptyCard(ctx) { this.drawSlotFrame(ctx); }

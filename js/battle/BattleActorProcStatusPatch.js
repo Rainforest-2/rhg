@@ -1,7 +1,7 @@
 import { BattleActor } from './BattleActor.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v2');
+const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v3');
 const BCU_SLOW_MOVE_PER_FRAME = 0.25;
 
 function framesToMs(frames) {
@@ -28,11 +28,29 @@ function isActive(actor, key, nowMs) {
   return !!st && Number.isFinite(st.untilMs) && (!Number.isFinite(nowMs) || nowMs < st.untilMs);
 }
 
+function applyToxic(actor, payload = {}, meta = {}) {
+  const mult = Number(payload.mult ?? payload.damage ?? 0);
+  if (!Number.isFinite(mult) || mult <= 0) return { applied: false, reason: 'zero-toxic-mult' };
+  const damage = Math.max(1, Math.trunc((actor.maxHp || actor.maxH || 0) * mult / 100));
+  if (damage <= 0) return { applied: false, reason: 'zero-toxic-damage' };
+  actor.pendingDamage = Math.max(0, (actor.pendingDamage || 0) + damage);
+  actor.pendingHits = Array.isArray(actor.pendingHits) ? actor.pendingHits : [];
+  actor.pendingHits.push({
+    amount: damage,
+    attacker: meta.attacker?.instanceId || meta.attacker || null,
+    timeMs: meta.nowMs ?? null,
+    toxic: true,
+    source: 'BCU POIATK/POISON maxHP-percent toxic damage'
+  });
+  actor.lastBcuToxicDebug = { source: 'BCU processProcs POIATK/toxic maxH percent', mult, damage, nowMs: meta.nowMs ?? null };
+  return { applied: true, damage, mult };
+}
+
 function applyStatus(actor, key, payload = {}, meta = {}) {
   const statuses = ensureStatuses(actor);
   const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
   const durationMs = framesToMs(payload.timeFrames ?? payload.time ?? 0);
-  if (durationMs <= 0 && key !== 'knockbackProc') return { applied: false, reason: 'zero-duration' };
+  if (durationMs <= 0 && key !== 'knockbackProc' && key !== 'toxic') return { applied: false, reason: 'zero-duration' };
   if (key === 'freeze') {
     statuses.freeze = { key, untilMs: Math.max(statuses.freeze?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_STOP]' };
     actor.freezeUntilMs = statuses.freeze.untilMs;
@@ -50,6 +68,14 @@ function applyStatus(actor, key, payload = {}, meta = {}) {
     actor.weakenMultiplier = statuses.weaken.mult;
     return { applied: true, status: statuses.weaken };
   }
+  if (key === 'curse') {
+    statuses.curse = { key, untilMs: Math.max(statuses.curse?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_CURSE]' };
+    actor.curseUntilMs = statuses.curse.untilMs;
+    return { applied: true, status: statuses.curse };
+  }
+  if (key === 'toxic') {
+    return applyToxic(actor, payload, meta);
+  }
   return { applied: false, reason: 'unsupported-status' };
 }
 
@@ -61,7 +87,7 @@ function applyProc(actor, item, meta = {}) {
     actor.startKnockback?.({ type: 'proc', reason: 'proc-kb', tuning: meta.tuning || {}, nowMs: meta.nowMs });
     return { applied: actor.state === 'knockback', reason: 'proc-kb', proc: item };
   }
-  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken') {
+  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken' || item.key === 'curse' || item.key === 'toxic') {
     return applyStatus(actor, item.key, item.payload || {}, meta);
   }
   return { applied: false, reason: 'proc-not-runtime-applied' };

@@ -31,6 +31,7 @@ async function boot() {
     await import('./battle/BattleActorProcStatusPatch.js');
     await import('./battle/BattleActorBarrierShieldPatch.js');
     await import('./battle/BattleActorZombieRevivePatch.js');
+    await import('./battle/BattleSoulstrikePatch.js');
     await import('./battle/BattleSceneStageRuntimeWiring.js');
     await import('./battle/BattleSceneRendererOrderPatch.js');
     await import('./battle/BattleSceneUnitLayerPatch.js');

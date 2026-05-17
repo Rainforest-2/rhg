@@ -1,1657 +1,918 @@
-# AGENTS.md — BCU完全準拠化 実装指示書
+# AGENTS.md — BCU妨害アイコン・状態異常表示 完全実装指示書（リスク潰し込み版）
 
 Repository: `rhgrive2/game`  
 Target branch: `main`  
-Goal: ブラウザ版にゃんこ/BCU準拠ゲームを、BCU common / Android / PC / 本家assetに照合しながら、戦闘ロジック・描画・状態異常・波動/烈波・スマホ入力を段階的に完成させる。
+Baseline: `b66889b4f5aff0e8be7b7a142908432ae13bb1a5` 以降
 
-この文書はCodexに渡す作業指示書である。Codexは過去会話を参照できない前提で、ここに書かれた順序・禁止事項・検証手順を必ず守ること。
-
----
-
-## 0. ファクトチェック済み事項
-
-このAGENTS.mdは以下のBCU実コードと現repo実コードに基づく。
-
-### 0.1 BCU参照ファイルのパス
-
-以下のパスは存在確認済み。
+目的:  
+既存のBCU runtime / trace / skeletonを、**妨害アイコン・状態異常effect animation・状態異常中actor挙動の実描画/実反映** まで完成させる。  
+この版では、前版で残っていたリスクを以下のように実装仕様へ落とし込んで潰す。
 
 ```text
-battlecatsultimate/BCU_java_util_common/battle/StageBasis.java
-battlecatsultimate/BCU_java_util_common/battle/SBCtrl.java
-battlecatsultimate/BCU_java_util_common/battle/entity/Entity.java
-battlecatsultimate/BCU_java_util_common/battle/entity/EUnit.java
-battlecatsultimate/BCU_java_util_common/battle/entity/EEnemy.java
-battlecatsultimate/BCU_java_util_common/battle/attack/AttackWave.java
-battlecatsultimate/BCU_java_util_common/battle/attack/AttackVolcano.java
-battlecatsultimate/BCU_java_util_common/battle/attack/ContWaveAb.java
-battlecatsultimate/BCU_java_util_common/battle/attack/ContWaveDef.java
-battlecatsultimate/BCU_java_util_common/battle/attack/ContVolcano.java
-battlecatsultimate/BCU_java_util_common/util/anim/AnimU.java
-battlecatsultimate/BCU_java_util_common/util/anim/EAnimD.java
-battlecatsultimate/BCU_java_util_common/util/anim/EPart.java
-battlecatsultimate/BCU_java_util_common/util/ImgCore.java
-battlecatsultimate/BCU_java_util_common/util/pack/EffAnim.java
-battlecatsultimate/BCU_java_util_common/util/Data.java
-battlecatsultimate/BCU_Android/app/src/main/java/com/mandarin/bcu/BattleSimulation.kt
-battlecatsultimate/BCU_Android/app/src/main/java/com/mandarin/bcu/androidutil/battle/BattleView.kt
-battlecatsultimate/BCU-java-PC/src/main/java/main/Timer.java
-```
+RISK 1: BCU effect assetがpack分散している
+  -> suffix match algorithm / 優先順位 / ambiguity error / inventory schemaを固定
 
-注意: 旧案にあった `EAnimU.java` は誤り。正しくは `util/anim/AnimU.java`。
+RISK 2: bundle reader APIをCodexが読み違える
+  -> SemanticAssetProvider の実API名を固定
 
-### 0.2 BCU `UType.HB` とKBアニメ
+RISK 3: actor status保持形式が複数ある
+  -> status snapshot normalizer の入力候補と正規化形式を固定
 
-`AnimU.UType` は `WALK, IDLE, ATK, HB, ENTER, ...` を持ち、`TYPE4` は `{ WALK, IDLE, ATK, HB }`。つまりunitの4番目アニメがBCUのHB/KBアニメである。現repoではsemantic bundleの `kb.maanim` がこの役割を担う。
+RISK 4: actor head/top座標がrenderer依存
+  -> BattleSceneRendererの既存bounds APIとscreen座標変換式を固定
 
-### 0.3 BCU波動
-
-`ContWaveDef.update()` は、通常波動attack frameを6、mini wave attack frameを4として扱う。`t <= attack` の間にwave stopperをcaptureし、stopperがあれば停止effectを出して関連waveをdeactivateする。`t == attack` で `sb.getAttack(atk)`、`t == W_TIME / W_MINI_TIME` で次waveを作る。
-
-`AttackWave` は `incl` setを持ち、同一wave chainで同じEntityを重複hitしない。
-
-### 0.4 BCU烈波
-
-`ContVolcano.update()` は `START -> DURING -> END` のEffAnim状態を持つ。`t >= VOLC_PRE` でDURING、`t > VOLC_PRE + aliveTime` でENDへ移行し、alive期間中に `sb.getAttack(v)` を呼ぶ。`updateProc()` はattackerのCURSE/SEAL状態を見て烈波中のprocを消す/復元する。
-
-`AttackVolcano` は `vcapt` と `VOLC_ITV` を持ち、同一対象への再hit間隔を制御する。
-
-### 0.5 状態異常アイコン
-
-`Entity.AnimManager.getEff()` は STOP/SLOW/WEAK/CURSE/SEAL/POISON/WARP/BARRIER/SHIELD/COUNTER/DMGCUT/DMGCAP などに対応するEffAnimを `effs[]` にセットする。状態アイコンは本体modelのpartではなく、Entity animation managerのeffectとして扱う。
-
-### 0.6 EPart / ImgCore / glow
-
-`EPart.drawPart()` は親transformを再帰適用し、`opa()` で親opacityを含めた不透明度を計算し、`ImgCore.drawImg()` に `opa, glow, extendX, extendY` を渡す。`ImgCore.drawImg()` は `glow` が `1/2/3/-1` の場合だけBLENDを使い、それ以外は通常合成/透過合成を使う。描画後は必ずDEFへ戻す。
-
-024の黒塊バグは、glow=0の通常パーツまでglow合成経路へ流し、caller側alphaを壊した副作用だった。現mainでは `BcuSpriteSheet.js` / `BcuCanvasComposite.js` の最小修正で直っているはず。今後renderer全体置換で再発させないこと。
-
-### 0.7 Androidスマホ入力
-
-`BattleView.checkSlideUpDown()` は、lineupChanging / isOneLineup / 自城HP0 / dragFrame0 / performed済みなら何もしない。`abs(dy) >= height * 0.15` かつ縦判定で、`dy / dragFrame < 0` なら上、そうでなければ下のlineup change actionへ送る。`isInSlideRange()` は `tan(50°) >= abs(dx) / abs(dy)`。
-
----
-
-## 1. 絶対ルール
-
-### 1.1 推測実装禁止
-
-BCU準拠と主張する変更は、必ずBCU実コードまたは現repo実コードを読んでから行う。古いtxt解析、会話ログ、曖昧な記憶を証拠にしない。
-
-### 1.2 fallback禁止
-
-assetが無い、bundleが無い、parserが失敗した場合に、通常effect・空描画・仮assetへ黙って逃がすのは禁止。必要assetが無いなら明示debugまたは明示エラーにする。
-
-### 1.3 巨大置換禁止
-
-以下を丸ごと置換・大幅短縮しない。
-
-```text
-js/battle/BattleScene.js
-js/battle/BattleSceneRenderer.js
-js/battle/BattleActor.js
-js/main.js
-index.html
-css/style.css
-```
-
-特に `BattleSceneRenderer.js` は過去に大幅置換で戦闘不能になった。renderer全体の書き換えは禁止。必要なら小さなadapter/patched methodだけにする。
-
-### 1.4 1機能1patch
-
-新規実装は原則として新規runtime/adapter/patchに分離する。
-
-```text
-js/battle/bcu-runtime/*.js
-js/bcu-render/*.js
-js/input/*.js
-```
-
-### 1.5 trace必須
-
-BCU準拠作業には必ずdebug traceを付ける。
-
-```js
-globalThis.__BCU_FRAME_TRACE__
-globalThis.__BCU_ENTITY_TRACE__
-globalThis.__BCU_ATTACK_TRACE__
-globalThis.__BCU_PROC_TRACE__
-globalThis.__BCU_RENDER_TRACE__
-globalThis.__BCU_WAVE_TRACE__
-globalThis.__BCU_SURGE_TRACE__
-globalThis.__BCU_STATUS_ICON_TRACE__
-globalThis.__BCU_STAGEBASIS_TRACE__
-globalThis.__BCU_INPUT_TRACE__
-globalThis.__BCU_BLEND_TRACE__
-globalThis.__BCU_EPART_MATRIX_TRACE__
-```
-
-### 1.6 報告テンプレ
-
-各commit後、必ず以下を報告する。
-
-```text
-原因:
-BCU根拠:
-JS対象コード:
-修正:
-commit:
-確認方法:
-残る未解決:
-rollback方法:
-```
-
-「100%準拠」と言えるのは、BCUコード根拠とtrace一致がある範囲だけ。
-
----
-
-## 2. 作業開始時の必須手順
-
-### 2.1 現main確認
-
-```bash
-git fetch origin
-git checkout main
-git pull --ff-only origin main
-git log --oneline -20
-```
-
-必ず読むファイル:
-
-```text
-AGENTS.md
-index.html
-js/main.js
-js/battle/BattleScene.js
-js/battle/BattleSceneRenderer.js
-js/battle/BattleActor.js
-js/battle/BcuKnockbackRuntimePatch.js
-js/battle/BcuKnockbackProcPriorityPatch.js
-js/battle/BcuKnockbackEffectLayerPatch.js
-js/battle/BcuKnockbackAnimationPatch.js
-js/battle/BcuProcImmunityPatch.js
-js/bcu/BcuSpriteSheet.js
-js/bcu/BcuCanvasComposite.js
-css/touch-fix.css
-```
-
-### 2.2 BCU repo取得
-
-```bash
-mkdir -p ../bcu-ref
-cd ../bcu-ref
-
-git clone https://github.com/battlecatsultimate/BCU_java_util_common.git || true
-git clone https://github.com/battlecatsultimate/BCU_Android.git || true
-git clone https://github.com/battlecatsultimate/BCU-java-PC.git || true
-```
-
-取得できない場合、推測実装せず停止して報告する。
-
-### 2.3 実装前に必ずgrepする語
-
-```bash
-grep -R "class ContWaveDef\|class AttackWave" ../bcu-ref/BCU_java_util_common/battle/attack -n
-grep -R "class ContVolcano\|class AttackVolcano" ../bcu-ref/BCU_java_util_common/battle/attack -n
-grep -R "void update()" ../bcu-ref/BCU_java_util_common/battle/StageBasis.java -n
-grep -R "getEff\|drawEff\|checkEff" ../bcu-ref/BCU_java_util_common/battle/entity/Entity.java -n
-grep -R "drawImg\|drawRandom" ../bcu-ref/BCU_java_util_common/util/ImgCore.java -n
-grep -R "checkSlideUpDown\|isInSlideRange" ../bcu-ref/BCU_Android/app/src/main/java -n
+RISK 5: POISON/WARP/BARRIER/SHIELD/COUNTER/DMGCUT/DMGCAPが難しい
+  -> Phase A/B/Cに分け、STOP/SLOW/WEAK/CURSE/SEALを完了ゲート、残りをasset-resolved実装/未解決分類へ分離
 ```
 
 ---
 
-## 3. 推奨実装順
+## 0. 最重要ゲート
 
-この順番を守る。
+今回の作業は、少なくとも以下が実際に戦闘画面で確認できるまで完了ではない。
 
 ```text
-Phase 0: Trace基盤
-Phase 1: FakeGraphics / EPart / EffAnim / Blend互換層
-Phase 2: 状態異常アイコン
-Phase 3: Proc / 免疫 / 耐性 / 妨害完全化
-Phase 4: 波動 ContWaveDef 完全化
-Phase 5: 烈波 ContVolcano 完全化
-Phase 6: Barrier / Shield / Zombie / Warp / Revenge / Soulstrike
-Phase 7: StageBasis.update順序一致
-Phase 8: スマホ版BCU入力完全化
+STOP / SLOW / WEAK / CURSE / SEAL のBCU状態effect iconがactor上に実描画される
+STOP+SLOW ではSLOW iconがBCU通り抑制される
+CURSE+SEAL ではCURSE iconがBCU通り抑制される
+statusが消えたらeffectも消える
+status継続中はeffect animationが更新される
+STOP/SLOW/WEAK/CURSE/SEAL procが実際のactor状態へ反映される
 ```
 
-理由:
+以下は禁止。
 
-- 描画互換層が曖昧なままwave/surge/status iconを入れると、黒塊・巨大化・ズレが再発する。
-- Proc完全化前にwave/surgeを完成扱いすると、免疫・耐性・curse/sealで再修正になる。
-- StageBasis.updateを先に置換すると全戦闘が壊れやすい。
-- DOM touch policyをAndroid入力と分離しないとoverlay/scrollが死ぬ。
+```text
+traceOnly:true のまま完了
+resolverだけ作って完了
+CSS/文字/emoji/仮画像で代用
+asset missingを黙って無視
+通常effectへfallback
+wave/surge/StageBasisへ先に進み、妨害アイコンを後回し
+```
+
+**妨害アイコン・状態異常effect・状態中actor挙動が完成するまで、wave/surge/StageBasisの実置換へ進まないこと。**
 
 ---
 
-# Phase 0: Trace基盤
+## 1. BCU根拠ファイル
 
-## 目的
-
-ロジック変更前に観測基盤を作る。このphaseでは戦闘挙動を変えない。
-
-## 新規作成ファイル
-
-```text
-js/battle/bcu-runtime/BcuTraceRuntime.js
-js/battle/bcu-runtime/BcuFrameTrace.js
-js/battle/bcu-runtime/BcuEntityTrace.js
-js/battle/bcu-runtime/BcuAttackTrace.js
-js/battle/bcu-runtime/BcuProcTrace.js
-js/battle/bcu-runtime/BcuRenderTrace.js
-```
-
-## API
-
-`BcuTraceRuntime.js`:
-
-```js
-const MAX_TRACE = 200;
-
-export const BcuTraceRuntime = {
-  enabled: true,
-  frame: 0,
-  channels: new Map(),
-  resetFrame(frame) {},
-  push(channel, entry) {},
-  get(channel) {},
-  expose() {}
-};
-```
-
-仕様:
-
-- 各channelはring buffer最大200件。
-- actor/model/imageなど巨大objectを入れない。
-- entryには `frame`, `source`, `bcuReference` を入れる。
-
-## main.js接続
-
-`js/main.js` の早い段階で追加。
-
-```js
-await import('./battle/bcu-runtime/BcuTraceRuntime.js');
-```
-
-既存patch順を壊さないこと。
-
-## 確認
-
-```js
-globalThis.__BCU_FRAME_TRACE__
-globalThis.__BCU_ENTITY_TRACE__
-```
-
-戦闘が今まで通り起動し、traceが見えること。
-
-## rollback
-
-`main.js` のimportと新規ファイル削除。
-
----
-
-# Phase 1: FakeGraphics / EPart / EffAnim / Blend互換層
-
-## 目的
-
-024黒塊、KBEff巨大化、wave/surge/status icon描画ズレを防ぐ描画基盤を作る。renderer全体を触らない。
-
-## BCU根拠
-
-- `EPart.drawPart()` は `transform()`, `getSize()`, `opa()`, `glow`, `extendX/Y` を使って `drawImg()` / `drawRandom()` へ渡す。
-- `EPart.opa()` は親opacityを掛ける。
-- `EPart.setPara()` は親partを差し替える。KBEff paraToもここに関係する。
-- `ImgCore.drawImg()` は `glow=1/2/3/-1` だけBLEND。それ以外は通常/透過合成。描画後DEFへ戻す。
-
-## 新規作成ファイル
-
-```text
-js/bcu-render/BcuBlendRuntime.js
-js/bcu-render/BcuFakeGraphicsCanvas2D.js
-js/bcu-render/BcuEPartTransformRuntime.js
-js/bcu-render/BcuEffAnimRuntime.js
-js/bcu-render/BcuRenderTrace.js
-```
-
-## 1. BcuBlendRuntime
-
-### API
-
-```js
-export function isBcuBlendGlow(glow) {
-  return glow === 1 || glow === 2 || glow === 3 || glow === -1;
-}
-
-export function drawBcuImage(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, options = {}) {}
-```
-
-### 必須仕様
-
-- `glow=0` の通常描画ではcallerの `ctx.globalAlpha` を壊さない。
-- `glow=1/2/3/-1` のときだけblend経路。
-- 描画後に `globalCompositeOperation` と `globalAlpha` を必ず戻す。
-- `extendX/Y` は最初はtraceだけでよい。実装するときは `ImgCore.drawImg()` の分割描画を参照する。
-
-### debug
-
-```js
-globalThis.__BCU_BLEND_TRACE__
-```
-
-entry例:
-
-```js
-{
-  frame,
-  partIndex,
-  glow,
-  opacity,
-  callerAlpha,
-  compositeBefore,
-  compositeAfter,
-  path: 'normal' | 'blend' | 'pixel-fallback',
-  bcuReference: 'ImgCore.drawImg'
-}
-```
-
-## 2. BcuEPartTransformRuntime
-
-### API
-
-```js
-export function computeBcuPartDrawEntry({ model, anim, frame, partIndex, parentMatrix }) {}
-export function computeBcuDrawList({ model, anim, frame, parentMatrix }) {}
-```
-
-### 出力
-
-```js
-{
-  partIndex,
-  parentIndex,
-  matrix,
-  graphicsMatrix,
-  opacity,
-  glow,
-  pivotX,
-  pivotY,
-  scaleX,
-  scaleY,
-  angle,
-  extendX,
-  extendY,
-  source: 'BcuEPartTransformRuntime'
-}
-```
-
-### 実装上の注意
-
-最初は既存 `BcuModelInstance.getBattleDrawList()` と比較traceだけにする。rendererへ直接接続しない。
-
-### debug
-
-```js
-globalThis.__BCU_EPART_MATRIX_TRACE__
-```
-
-## 3. BcuEffAnimRuntime
-
-### API
-
-```js
-export class BcuEffAnimRuntime {
-  constructor({ model, anim, imgcut, image, type }) {}
-  setFrame(frame) {}
-  update() {}
-  done() {}
-  getDrawList({ parentMatrix } = {}) {}
-}
-```
-
-### 検証fixture
-
-```text
-024 attack glow
-KBEff KB
-wave effect
-surge effect
-status icon effect
-```
-
-## 既存コードへの接続
-
-初回commitでは接続しない。traceだけ。  
-次commitで `BcuSpriteSheet` / `BcuCanvasComposite` の内部から `BcuBlendRuntime` を呼ぶ。
-
-禁止:
-
-```text
-BattleSceneRenderer.js全体置換
-actor renderer全体置換
-glow=0をblend処理へ流す
-```
-
-## 検証
-
-```js
-globalThis.__BCU_BLEND_TRACE__
-globalThis.__BCU_EPART_MATRIX_TRACE__
-globalThis.__BCU_RENDER_TRACE__
-```
-
-手動確認:
-
-```text
-024攻撃で黒塊再発なし
-KBEff巨大化なし
-通常actorの透明度が壊れない
-戦闘起動不能にならない
-```
-
----
-
-# Phase 2: 状態異常アイコン
-
-## 目的
-
-BCU `Entity.AnimManager.effs[]` 相当の状態アイコン表示を実装する。
-
-## BCU根拠
-
-参照:
+必ず読む。
 
 ```text
 BCU_java_util_common/battle/entity/Entity.java
-- AnimManager.effs[]
-- AnimManager.getEff(int t)
-- AnimManager.drawEff(...)
-- AnimManager.checkEff()
+  - AnimManager.effs[]
+  - AnimManager.getEff(int t)
+  - AnimManager.checkEff()
+  - AnimManager.drawEff(...)
+  - Entity.processProcs(...)
+  - Entity.damaged(...)
+
+BCU_java_util_common/util/pack/EffAnim.java
+  - EffAnimStore
+  - EffAnim.read()
+  - readCustom()
+  - WarpEff / BarrierEff / ShieldEff / WeakUpEff / SpeedEff / ArmorEff / DmgCap
+
+BCU_java_util_common/util/Data.java
+  - A_PATH
+  - P_STOP / P_SLOW / P_WEAK / P_CURSE / P_SEAL / P_POISON
+  - REMOVABLE_PROC
 ```
 
-主な対応:
+古いtxt解析や推測を根拠にしない。
+
+---
+
+## 2. 現repoの実API固定
+
+### 2.1 SemanticAssetProvider のbundle reader API
+
+現repoには `js/bcu/SemanticAssetProvider.js` があり、STORE zipを読むための実APIは以下である。Codexはこれを使うこと。
+
+```js
+provider.archive(bundleRef)
+provider.readArrayBufferByBundleRef(bundleRef, internalPath)
+provider.readTextByBundleRef(bundleRef, internalPath)
+provider.readBlobByBundleRef(bundleRef, internalPath, mimeType)
+provider.createObjectUrl(bundleRef, internalPath, mimeType)
+```
+
+`bundleRef` は最低限これを持つ。
+
+```js
+{
+  bundleKey: "effect:status",
+  bundlePath: "public/assets/bundles/effect/status-effects.zip"
+}
+```
+
+`readTextByBundleRef` は内部で `readArrayBufferByBundleRef` を呼び、zip内 `internalPath` を読む。  
+`archive(bundleRef)` はzip内ファイルMapを返す。  
+Codexは未知の `readZipFile` / `loadBundleFile` / `JSZip` APIを新規に仮定しないこと。
+
+### 2.2 既存renderer座標API
+
+現repo `BattleSceneRenderer` には以下がある。status icon位置はこれを使う。
+
+```js
+renderer.projectBattleX(scene, actor.x)
+renderer.getEntityRenderY(scene, actor, actor.y)
+renderer.getEntityRenderScale(scene, actor, actor.scale)
+renderer.getBattleDrawListLocalBounds(actor, drawList)
+renderer.getBattlePartLocalBounds(actor, drawEntry)
+renderer.getActorGroundAnchorLocalY(actor, drawList)
+```
+
+`drawActor()` 内では、BCU drawListから `bounds = getBattleDrawListLocalBounds(actor, drawList)` を既に計算している。  
+Codexはstatus effect positionerで同じ計算を使うこと。固定y値で完了扱いしない。
+
+### 2.3 現actor status API
+
+既存 `BattleActorProcStatusPatch.js` は `actor.bcuProcStatuses` を作成し、以下のkeyを使う。
 
 ```text
-P_STOP  -> A_STOP / A_E_STOP
-P_SLOW  -> A_SLOW / A_E_SLOW
-P_WEAK  -> A_DOWN / A_E_DOWN or A_WEAK_UP / A_E_WEAK_UP
-P_CURSE -> A_CURSE / A_E_CURSE
-P_SEAL  -> A_SEAL / A_E_SEAL
-P_POISON -> A_POI*
-P_WARP -> WaprCont / A_W enter/exit
-BREAK_* -> A_B / A_E_B
-SHIELD_* -> A_DEMON_SHIELD / A_E_DEMON_SHIELD
-P_ARMOR / P_SPEED / P_LETHARGY / P_COUNTER / P_DMGCUT / P_DMGCAP
+freeze
+slow
+weaken
+curse
+toxic
 ```
 
-表示抑制:
+各statusは概ね以下を持つ。
+
+```js
+{
+  key,
+  framesRemaining,
+  untilMs,
+  durationMs,
+  payload,
+  source
+}
+```
+
+既存patchには `actor.isBcuProcStatusActive(key, nowMs)` がある。  
+Codexはstatus判定でこれを優先すること。
+
+不足している `seal` は今回必ず追加する。  
+既存 `applyStatus()` が `seal` 未対応なら、`BcuProcRuntime` か `BattleActorProcStatusPatch.js` にBCU根拠付きで追加する。
+
+---
+
+## 3. BCU effect asset mapping（確定）
+
+### 3.1 共通ルール
+
+BCU `EffAnim.load()` は `str + ".mamodel"` と `str + type.path() + ".maanim"` を読む。  
+bundleには以下を正規化して入れる。
 
 ```text
-dead中は描かない
-warp中は描かない
-STOP中はSLOWアイコンを出さない
-WEAK中はUPアイコンを出さない
-SEAL中はCURSEアイコンを出さない
-EWID = 36
-scale = siz * 0.75
+image.png
+imgcut.imgcut
+model.mamodel
+<VARIANT>.maanim
 ```
 
-## 新規作成ファイル
+### 3.2 A_PATH系 status icon
+
+BCU `Data.A_PATH` は以下。
 
 ```text
-js/battle/bcu-runtime/BcuStatusIconResolver.js
-js/battle/bcu-runtime/BcuEntityEffectIconRuntime.js
-js/battle/BattleSceneBcuStatusIconPatch.js
+["down", "up", "slow", "stop", "shield", "farattack", "wave_invalid", "wave_stop", "waveguard"]
 ```
 
-## 実装手順
+`EffAnim.read()` は `org/battle/s0/<name>/skill_<name>` とenemy版 `..._e` を作る。
 
-### 1. BcuStatusIconResolver
+| BCU effect | source prefix | image | imgcut | model | anim variant |
+|---|---|---|---|---|---|
+| `A_DOWN` | `org/battle/s0/down/skill_down` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/down/skill_down.mamodel` | `org/battle/s0/down/skill_down.maanim` |
+| `A_E_DOWN` | `org/battle/s0/down/skill_down_e` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/down/skill_down_e.mamodel` | `org/battle/s0/down/skill_down_e.maanim` |
+| `A_UP` | `org/battle/s0/up/skill_up` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/up/skill_up.mamodel` | `org/battle/s0/up/skill_up.maanim` |
+| `A_E_UP` | `org/battle/s0/up/skill_up_e` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/up/skill_up_e.mamodel` | `org/battle/s0/up/skill_up_e.maanim` |
+| `A_SLOW` | `org/battle/s0/slow/skill_slow` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/slow/skill_slow.mamodel` | `org/battle/s0/slow/skill_slow.maanim` |
+| `A_E_SLOW` | `org/battle/s0/slow/skill_slow_e` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/slow/skill_slow_e.mamodel` | `org/battle/s0/slow/skill_slow_e.maanim` |
+| `A_STOP` | `org/battle/s0/stop/skill_stop` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/stop/skill_stop.mamodel` | `org/battle/s0/stop/skill_stop.maanim` |
+| `A_E_STOP` | `org/battle/s0/stop/skill_stop_e` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/stop/skill_stop_e.mamodel` | `org/battle/s0/stop/skill_stop_e.maanim` |
+| `A_SHIELD` | `org/battle/s0/shield/skill_shield` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/shield/skill_shield.mamodel` | `org/battle/s0/shield/skill_shield.maanim` |
+| `A_E_SHIELD` | `org/battle/s0/shield/skill_shield_e` | `org/battle/s0/skill000.png` | `org/battle/s0/skill000.imgcut` | `org/battle/s0/shield/skill_shield_e.mamodel` | `org/battle/s0/shield/skill_shield_e.maanim` |
+
+### 3.3 curse / seal
+
+| BCU effect | source prefix | image | imgcut | model | anim variant |
+|---|---|---|---|---|---|
+| `A_CURSE` | `org/battle/s3/skill_curse` | `org/battle/s3/skill003.png` | `org/battle/s3/skill003.imgcut` | `org/battle/s3/skill_curse.mamodel` | `org/battle/s3/skill_curse.maanim` |
+| `A_E_CURSE` | `org/battle/s11/skill_curse_e` | `org/battle/s11/skill011.png` | `org/battle/s11/skill011.imgcut` | `org/battle/s11/skill_curse_e.mamodel` | `org/battle/s11/skill_curse_e.maanim` |
+| `A_SEAL` | `org/battle/s3/seal/seal` | `org/battle/s3/seal/seal.png` | `org/battle/s3/seal/seal.imgcut` | `org/battle/s3/seal/seal.mamodel` | `org/battle/s3/seal/seal.maanim` |
+| `A_E_SEAL` | `org/battle/s3/seal_e/seal_e` | `org/battle/s3/seal_e/seal_e.png` | `org/battle/s3/seal_e/seal_e.imgcut` | `org/battle/s3/seal_e/seal_e.mamodel` | `org/battle/s3/seal_e/seal_e.maanim` |
+
+`A_SEAL / A_E_SEAL` は `000001` 固定では見つからない場合がある。suffix match必須。
+
+### 3.4 Phase B以降のeffect
+
+STOP/SLOW/WEAK/CURSE/SEAL完了後、以下を実装する。これらはPhase B/Cとして扱い、Phase A完了の足止めにしない。
+
+| group | effects |
+|---|---|
+| poison/toxic | `A_POI0`, `A_POI1`, `A_POI1_E`, `A_POI2..A_POI7`, `A_POISON` |
+| warp | `A_W`, `A_W_C` with `ENTER`, `EXIT` |
+| barrier | `A_B`, `A_E_B` with `NONE`, `BREAK`, `DESTR` |
+| demon shield | `A_DEMON_SHIELD`, `A_E_DEMON_SHIELD` with `FULL`, `HALF`, `BROKEN`, `BREAKER`, `REGENERATION` |
+| counter/dmgcut/dmgcap | `A_COUNTER`, `A_E_COUNTER`, `A_DMGCUT`, `A_E_DMGCUT`, `A_DMGCAP`, `A_E_DMGCAP` |
+| speed/armor/lethargy | `A_SPEED`, `A_E_SPEED`, `A_ARMOR`, `A_E_ARMOR`, `A_LETHARGY` |
+
+---
+
+## 4. RISK 1対策: suffix match algorithm固定
+
+### 4.1 新規script
+
+作成:
+
+```text
+scripts/build-bcu-status-effect-bundle.mjs
+```
+
+### 4.2 source scan
+
+scan root:
+
+```text
+public/assets/bcu
+```
+
+対象拡張子:
+
+```text
+.png
+.imgcut
+.mamodel
+.maanim
+```
+
+### 4.3 suffix normalize
+
+```js
+function normalizeAssetPath(p) {
+  return String(p || '').replace(/\\/g, '/').replace(/^\.?\//, '').replace(/^public\/assets\/bcu\/[^/]+\//, '');
+}
+```
+
+ただし候補比較では、full pathから `org/battle/...` 以降を抽出して比較すること。
+
+```js
+function extractOrgBattleSuffix(fullPath) {
+  const s = normalizeAssetPath(fullPath);
+  const i = s.indexOf('org/battle/');
+  return i >= 0 ? s.slice(i) : s;
+}
+```
+
+### 4.4 findBySuffix
+
+```js
+function findBySuffix(allFiles, suffix) {
+  const want = suffix.replace(/\\/g, '/').replace(/^\.?\//, '');
+  const candidates = allFiles
+    .filter((file) => extractOrgBattleSuffix(file) === want)
+    .map((file) => ({
+      file,
+      packId: String(file).match(/public\/assets\/bcu\/([^/]+)\//)?.[1] || '',
+      suffix: extractOrgBattleSuffix(file)
+    }));
+
+  candidates.sort((a, b) => {
+    const ap = a.packId === '000001' ? 0 : 1;
+    const bp = b.packId === '000001' ? 0 : 1;
+    if (ap !== bp) return ap - bp;
+    return a.packId.localeCompare(b.packId) || a.file.localeCompare(b.file);
+  });
+
+  return {
+    selected: candidates[0] || null,
+    candidates,
+    ambiguous: candidates.length > 1 && candidates[0].packId !== '000001'
+  };
+}
+```
+
+### 4.5 ambiguity policy
+
+- 候補に `000001` がある場合は `000001` を選ぶ。
+- `000001` がなく、候補が複数ある場合はpack id昇順で選ぶが、`ambiguous:true` をinventoryへ出す。
+- Phase A必須effectで `ambiguous:true` の場合は完了禁止。AGENTS報告で候補一覧を出す。
+- Phase B/C effectでambiguousなら未解決に分類してよい。
+
+### 4.6 bundle internal path
+
+zip内はこの形式に固定。
+
+```text
+A_STOP/image.png
+A_STOP/imgcut.imgcut
+A_STOP/model.mamodel
+A_STOP/DEF.maanim
+
+A_W/ENTER.maanim
+A_W/EXIT.maanim
+
+A_DEMON_SHIELD/FULL.maanim
+A_DEMON_SHIELD/HALF.maanim
+A_DEMON_SHIELD/BROKEN.maanim
+A_DEMON_SHIELD/BREAKER.maanim
+A_DEMON_SHIELD/REGENERATION.maanim
+```
+
+---
+
+## 5. RISK 2対策: bundle reader実装固定
+
+### 5.1 manifest更新
+
+`public/assets/generated/bcu-bundle-manifest.json` に追加。
+
+```json
+{
+  "bundles": {
+    "effect:status": {
+      "kind": "effect",
+      "key": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip",
+      "status": "full"
+    }
+  }
+}
+```
+
+### 5.2 inventory出力
+
+作成:
+
+```text
+public/assets/generated/bcu-status-effect-inventory.json
+```
+
+形式:
+
+```json
+{
+  "A_STOP": {
+    "resolved": true,
+    "ambiguous": false,
+    "bundleRef": {
+      "bundleKey": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip"
+    },
+    "internal": {
+      "image": "A_STOP/image.png",
+      "imgcut": "A_STOP/imgcut.imgcut",
+      "model": "A_STOP/model.mamodel",
+      "DEF": "A_STOP/DEF.maanim"
+    },
+    "sources": {
+      "image": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+      "imgcut": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+      "model": "public/assets/bcu/000001/org/battle/s0/stop/skill_stop.mamodel",
+      "DEF": "public/assets/bcu/000001/org/battle/s0/stop/skill_stop.maanim"
+    },
+    "candidates": {}
+  }
+}
+```
+
+### 5.3 runtime loader
+
+作成/更新:
+
+```text
+js/battle/bcu-runtime/BcuStatusEffectAssetInventory.js
+```
+
+API固定:
+
+```js
+export async function loadBcuStatusEffectInventory(provider) {
+  const root = provider.indexRoot?.replace(/\/$/, '') || './public/assets/generated';
+  const inventory = await provider.fetchJson(`${root}/bcu-status-effect-inventory.json`);
+  return inventory;
+}
+
+export function getStatusEffectBundleRef(provider) {
+  const entry = provider.indexes?.bundleManifest?.bundles?.['effect:status'];
+  if (!entry?.bundlePath) throw new Error('Missing effect:status bundle in bcu-bundle-manifest.json');
+  return { bundleKey: 'effect:status', bundlePath: entry.bundlePath };
+}
+
+export async function readStatusEffectText(provider, effectKey, internalPath) {
+  const bundleRef = getStatusEffectBundleRef(provider);
+  return await provider.readTextByBundleRef(bundleRef, internalPath);
+}
+
+export async function readStatusEffectImageBlob(provider, effectKey, internalPath) {
+  const bundleRef = getStatusEffectBundleRef(provider);
+  return await provider.readBlobByBundleRef(bundleRef, internalPath, 'image/png');
+}
+```
+
+CodexはこのAPI以外を仮定しない。
+
+---
+
+## 6. RISK 3対策: status snapshot normalizer固定
+
+作成:
+
+```text
+js/battle/bcu-runtime/BcuStatusSnapshot.js
+```
+
+### 6.1 正規化出力
+
+```js
+{
+  STOP: { active, framesRemaining, untilMs, sourceKeys: ['freeze'] },
+  SLOW: { active, framesRemaining, untilMs, sourceKeys: ['slow'] },
+  WEAK: { active, framesRemaining, untilMs, mult, sourceKeys: ['weaken'] },
+  CURSE: { active, framesRemaining, untilMs, sourceKeys: ['curse'] },
+  SEAL: { active, framesRemaining, untilMs, sourceKeys: ['seal'] },
+  POISON: { active, framesRemaining, untilMs, sourceKeys: ['toxic', 'poison'] },
+  WARP: { active, framesRemaining, untilMs, sourceKeys: ['warp'] },
+  DEAD: { active, sourceKeys: ['state'] }
+}
+```
+
+### 6.2 入力候補
+
+優先順:
+
+```text
+1. actor.isBcuProcStatusActive(key, scene.timeMs)
+2. actor.bcuProcStatuses[key]
+3. actor.status[key]
+4. actor.<key>UntilMs
+5. actor.state / actor.bcuWarpState
+```
+
+key mapping:
+
+```js
+const STATUS_KEY_ALIASES = {
+  STOP: ['freeze', 'stop', 'P_STOP'],
+  SLOW: ['slow', 'P_SLOW'],
+  WEAK: ['weaken', 'weak', 'P_WEAK'],
+  CURSE: ['curse', 'P_CURSE'],
+  SEAL: ['seal', 'P_SEAL'],
+  POISON: ['toxic', 'poison', 'P_POISON', 'P_POIATK'],
+  WARP: ['warp', 'P_WARP']
+};
+```
+
+### 6.3 active判定
+
+```js
+function isActiveStatusValue(st, nowMs) {
+  if (!st) return false;
+  if (typeof st === 'boolean') return st;
+  if (Number.isFinite(st.framesRemaining)) return st.framesRemaining > 0;
+  if (Number.isFinite(st.untilMs)) return !Number.isFinite(nowMs) || nowMs < st.untilMs;
+  if (Number.isFinite(st.remaining)) return st.remaining > 0;
+  if (Number.isFinite(st.time)) return st.time > 0;
+  return true;
+}
+```
+
+### 6.4 resolverはnormalizerだけを見る
+
+`BcuStatusIconResolver.js` は `actor.bcuProcStatuses` を直接読まず、必ず `getBcuStatusSnapshot(actor, scene)` を読む。
+
+---
+
+## 7. RISK 4対策: icon position algorithm固定
+
+作成:
+
+```text
+js/battle/bcu-runtime/BcuStatusEffectPositioner.js
+```
+
+### 7.1 既存rendererからdrawList/boundsを取る
+
+```js
+function getActorBattleDrawList(actor) {
+  if (!actor?.model) return null;
+  if (typeof actor.model.getBattleDrawList === 'function') {
+    return actor.model.getBattleDrawList({ parentMatrix: actor.kbeffEnabled ? actor.kbeffParentMatrix : null });
+  }
+  if (typeof actor.model.getDrawList === 'function') return actor.model.getDrawList();
+  return null;
+}
+```
+
+### 7.2 local bounds
+
+既存renderer methodを使う。
+
+```js
+const drawList = getActorBattleDrawList(actor);
+const bounds = renderer.getBattleDrawListLocalBounds(actor, drawList);
+```
+
+boundsが無い場合:
+
+```text
+positionSource: "missing-bounds"
+rendered:false
+完了扱いしない
+```
+
+### 7.3 screen position式
+
+`drawActor()` の変換に合わせる。
+
+```js
+const modelAlignOffsetX = Number.isFinite(actor.visualRenderOffsetWorldPx) ? actor.visualRenderOffsetWorldPx : 0;
+const crowdOffsetX = Number.isFinite(actor.visualCrowdFanoutPx) ? actor.visualCrowdFanoutPx : 0;
+const crowdOffsetY = Number.isFinite(actor.visualCrowdYOffsetPx) ? actor.visualCrowdYOffsetPx : 0;
+const kbOffsetX = Number.isFinite(actor.kbVisualOffsetX) ? actor.kbVisualOffsetX : 0;
+const kbOffsetY = Number.isFinite(actor.kbVisualOffsetY) ? actor.kbVisualOffsetY : 0;
+
+const worldX = actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX;
+const baseScreenX = renderer.projectBattleX(scene, worldX);
+const baseScreenY = renderer.getEntityRenderY(scene, actor, actor.y) + crowdOffsetY + kbOffsetY;
+
+const renderScale = renderer.getEntityRenderScale(scene, actor, actor.scale || 1);
+const anchorY = renderer.getActorGroundAnchorLocalY(actor, drawList);
+
+const topScreenY = baseScreenY + (bounds.top - anchorY) * renderScale;
+const centerScreenX = baseScreenX + ((bounds.left + bounds.right) * 0.5) * renderScale;
+```
+
+### 7.4 BCU drawEff icon row
+
+```js
+const EWID = 36;
+const iconScale = renderScale * 0.75;
+const direction = actor.renderFlipX ? -1 : 1;
+const startX = centerScreenX;
+const y = topScreenY - 12 * renderer.getCameraScale(scene);
+
+x = startX - iconIndex * EWID * direction * iconScale;
+```
+
+`positionSource` は `battle-draw-list-bounds` とする。  
+この式で画面外/NaNならrenderせずtraceに出す。
+
+---
+
+## 8. RISK 5対策: Phase分割
+
+### Phase A: 必須・完了ゲート
+
+必ず実装完了。
+
+```text
+A_STOP
+A_E_STOP
+A_SLOW
+A_E_SLOW
+A_DOWN
+A_E_DOWN
+A_CURSE
+A_E_CURSE
+A_SEAL
+A_E_SEAL
+```
+
+Phase A完了条件:
+
+```text
+inventory resolved:true
+runtime load success
+rendered:true
+STOP/SLOW/WEAK/CURSE/SEAL proc applied:true
+抑制条件一致
+```
+
+### Phase B: asset-resolvedなら実装
+
+```text
+A_POISON
+A_POI0..A_POI7
+A_W / A_W_C
+A_B / A_E_B
+A_DEMON_SHIELD / A_E_DEMON_SHIELD
+A_COUNTER / A_E_COUNTER
+A_DMGCUT / A_E_DMGCUT
+A_DMGCAP / A_E_DMGCAP
+```
+
+Phase Bは `resolved:true` のものだけ実描画。missing/ambiguousは未解決に分類。
+
+### Phase C: lifecycle完全統合
+
+Barrier / Shield / Warp / Poisonは表示だけでなく、lifecycle runtimeと完全統合する。  
+これはPhase Aの完了条件ではない。
+
+---
+
+## 9. Runtime実装ファイル
+
+### 9.1 追加/更新
+
+```text
+scripts/build-bcu-status-effect-bundle.mjs
+scripts/inventory-bcu-status-effects.mjs
+scripts/smoke-bcu-status-effects.mjs
+
+js/battle/bcu-runtime/BcuStatusEffectSpec.js
+js/battle/bcu-runtime/BcuStatusEffectAssetInventory.js
+js/battle/bcu-runtime/BcuStatusSnapshot.js
+js/battle/bcu-runtime/BcuStatusEffectManager.js
+js/battle/bcu-runtime/BcuStatusEffectPositioner.js
+js/battle/BattleSceneBcuStatusEffectRenderPatch.js
+```
+
+### 9.2 BcuEntityEffectIconRuntime 完成条件
+
+```text
+image/imgcut/model/maanimをeffect:status bundleから読む
+BcuModelInstance + BcuAnimator + BcuSpriteSheetでEffAnimを再生
+update()でframe進行
+isDone()で終了判定
+draw(ctx, {x,y,scale,direction}) で実描画
+```
+
+CSS/文字/仮画像は禁止。
+
+### 9.3 BcuStatusEffectManager
+
+actorに保持:
+
+```js
+actor.bcuStatusEffectManager
+```
 
 API:
 
 ```js
-export function resolveStatusIcons(actor, scene) {}
+updateStatusSnapshot()
+resolveEffects()
+ensureEffect(effectKey, variant, slot)
+removeEffect(slot)
+updateEffects()
+getRenderableEffects()
 ```
 
-戻り値:
+BCU `checkEff()` 相当として、statusが切れたらeffectを消す。
 
-```js
-[
-  {
-    id: 'A_STOP',
-    bcuStatus: 'P_STOP',
-    variant: 'unit' | 'enemy',
-    effectKey: 'A_STOP',
-    suppressed: false,
-    suppressedReason: null,
-    xSlot: 0,
-    yOffset: 0,
-    scale: 0.75
-  }
-]
-```
+### 9.4 Render patch
 
-actorから読む候補:
+`BattleSceneRenderer.render()` はactor描画後にHP barを描く。  
+status iconはactor本体描画後、HP bar前に入れる。
+
+patch方針:
 
 ```text
-actor.bcuProcStatuses
-actor.status
-actor.side
-actor.direction / dire
-actor.hp / health
-actor.state
-actor.kbBcuType
-actor.bcuWarpState
+BattleSceneRenderer.prototype.render を薄くpatchして、
+actorsForRender のdrawActor直後または全actor描画後かつdrawHpBar前に drawBcuStatusEffects を呼ぶ。
+全体置換禁止。
 ```
 
-### 2. BcuEntityEffectIconRuntime
+既存 `drawActor()` 本体は変更しない。
 
-EffAnim bundleからstatus iconを読む。assetがない場合はfallbackしない。
+---
 
-### 3. BattleSceneBcuStatusIconPatch
+## 10. Proc実反映
 
-renderer本体を大きく変更しない。`scene.effects` にstatus icon effectとして追加するか、専用小patchで描画する。
-
-禁止:
+`BcuProcRuntime.js` が `traceOnly:true` の場合、少なくとも以下は実反映へ変える。
 
 ```text
-CSS/emoji/文字で代用
-actor本体modelへ混ぜる
-missing assetを空描画で握りつぶす
+STOP / freeze
+SLOW
+WEAK
+CURSE
+SEAL
+KB immunity gate
+WARP immunity gate
 ```
 
-## debug
-
-```js
-globalThis.__BCU_STATUS_ICON_TRACE__
-```
-
-entry:
+二重適用防止:
 
 ```js
 {
-  frame,
-  actorId,
-  statusSnapshot,
-  icons,
-  suppressed,
-  source: 'BcuStatusIconResolver',
-  bcuReference: 'Entity.AnimManager.getEff/drawEff'
+  applied: true,
+  handledBy: "BcuProcRuntime",
+  legacyShouldSkip: true
 }
 ```
 
-## 検証
+既存へ委譲:
+
+```js
+{
+  applied: false,
+  delegatedToLegacy: true,
+  reason: "not-yet-ported"
+}
+```
+
+statusが入ったら、同frameまたは次frameでstatus effectが生成されること。
+
+---
+
+## 11. 状態異常中actor挙動
+
+### 11.1 STOP
+
+必須:
 
 ```text
-STOPだけ -> STOP表示
-SLOWだけ -> SLOW表示
-STOP+SLOW -> SLOW抑制
-WEAK down -> DOWN表示
-WEAK up -> WEAK_UP表示
-CURSE+SEAL -> CURSE抑制
-WARP中 -> 状態アイコン非表示
-dead中 -> 状態アイコン非表示
+移動停止
+攻撃timeline停止
+本体animation停止
+STOP icon表示
+SLOW icon抑制
+```
+
+既存 `BattleActorProcStatusPatch.js` はfreeze中にactor.tickをreturnしているが、BattleScene側で直接 `a.x += ...` していないか必ず再確認する。  
+直接移動がある場合、STOP時は移動させない。
+
+### 11.2 SLOW
+
+最低限、移動速度/進行速度へ反映し、traceに倍率とdurationを出す。
+
+### 11.3 WEAK
+
+与ダメ/被ダメ補正へ反映。BCU `processProcs()` / `damaged()` を読んでどちらに効くか明記する。
+
+### 11.4 CURSE / SEAL
+
+攻撃proc生成時点とwave/surge proc再評価時点でBCU条件通りに能力を抑制する。
+
+---
+
+## 12. Debug helper
+
+手動検証用に必ず追加。
+
+```js
+globalThis.__BCU_TEST_APPLY_STATUS__ = function(actorOrSelector, statusKey, frames = 180) {}
+globalThis.__BCU_TEST_CLEAR_STATUS__ = function(actorOrSelector, statusKey) {}
+globalThis.__BCU_TEST_LIST_STATUS_EFFECTS__ = function() {}
+```
+
+使用例:
+
+```js
+const a = globalThis.__APP__.scene.actors.find(a => a.side === 'cat-enemy');
+globalThis.__BCU_TEST_APPLY_STATUS__(a, 'STOP', 180);
+globalThis.__BCU_TEST_APPLY_STATUS__(a, 'SLOW', 180);
+globalThis.__BCU_TEST_LIST_STATUS_EFFECTS__();
 ```
 
 ---
 
-# Phase 3: Proc / 免疫 / 耐性 / 妨害完全化
+## 13. smoke test
 
-## 目的
-
-full immunityだけでなく、BCUの `processProcs()` / `damaged()` / `getResistValue()` を分解して移植する。
-
-## BCU根拠
-
-参照:
+追加:
 
 ```text
-BCU_java_util_common/battle/entity/Entity.java
-- damaged(AttackAb atk)
-- processProcs(AttackAb atk)
-- getResistValue(...)
-BCU_java_util_common/battle/entity/EUnit.java
-- getResistValue(...)
-BCU_java_util_common/battle/entity/EEnemy.java
-- getResistValue(...)
+scripts/smoke-bcu-status-effects.mjs
 ```
 
-重要:
+必須test:
 
 ```text
-time = cannon攻撃なら1、それ以外は 1 + fruit * 0.2 / 3
-dist = 1 + fruit * 0.1
-STOP/SLOW/WEAK/CURSE/KB/WARP/SEAL/POISON/ARMOR/SPEED/LETHARGYは耐性を通す
-IMUWAVE/IMUVOLCなどはdamaged側でdamage無効/減衰
-無効ならINV effect
-EUnitとEEnemyでgetResistValue実装が違う
+inventory resolves Phase A required effects
+suffix match selects 000001 when present
+suffix match reports ambiguous when no 000001 and multiple candidates
+SemanticAssetProvider API readTextByBundleRef/readBlobByBundleRef used
+StatusSnapshot normalizes freeze/slow/weaken/curse/seal/toxic/warp
+StatusIconResolver STOP only
+StatusIconResolver SLOW only
+StatusIconResolver STOP+SLOW
+StatusIconResolver CURSE+SEAL
+StatusIconResolver dead
+StatusIconResolver warp
+BcuStatusEffectManager ensure/remove/update
+BcuProcRuntime STOP applied true
+BcuProcRuntime SLOW applied true
+BcuProcRuntime CURSE applied true
+Positioner returns finite x/y for actor with bounds
 ```
 
-## 現状
-
-`BcuProcImmunityPatch.js` はfull immunity `mult >= 100` の入口だけ。完全化では `BcuProcRuntime` へ統合する。
-
-## 新規作成ファイル
-
-```text
-js/battle/bcu-runtime/BcuProcRuntime.js
-js/battle/bcu-runtime/BcuImmunityRuntime.js
-js/battle/bcu-runtime/BcuResistRuntime.js
-js/battle/bcu-runtime/BcuProcRandomRuntime.js
-js/battle/bcu-runtime/BcuDamageGuardRuntime.js
-js/battle/BattleSceneBcuProcRuntimePatch.js
-```
-
-## 実装手順
-
-### 1. BcuProcRuntime skeleton
-
-```js
-export class BcuProcRuntime {
-  performProc({ attacker, target, attack, proc, rng }) {}
-  applyStop(ctx) {}
-  applySlow(ctx) {}
-  applyWeak(ctx) {}
-  applyCurse(ctx) {}
-  applyKb(ctx) {}
-  applyWarp(ctx) {}
-  applySeal(ctx) {}
-  applyPoison(ctx) {}
-  applyArmor(ctx) {}
-  applySpeed(ctx) {}
-  applyLethargy(ctx) {}
-}
-```
-
-### 2. BcuResistRuntime
-
-```js
-export function getBcuResistValue({ target, attack, procName, procResist }) {}
-export function applyBcuProcDuration({ rawTime, fruit, attack, resist }) {}
-export function applyBcuProcDistance({ rawDistance, fruit, resist }) {}
-```
-
-EUnit/EEnemyで分岐する。
-
-### 3. BcuDamageGuardRuntime
-
-`damaged()` 前処理を分離。
-
-対象:
-
-```text
-IMUCANNON
-IMUWAVE
-IMUMOVING
-IMUVOLC
-IMUBLAST
-IMUATK / IMUATKANY
-DMGCUT
-DMGCAP
-BARRIER
-DEMONSHIELD
-```
-
-### 4. 接続
-
-`BattleActor.applyBcuProc()` を肥大化させない。`BattleSceneBcuProcRuntimePatch.js` で入口だけ差し替える。
-
-## debug
-
-```js
-globalThis.__BCU_PROC_TRACE__
-globalThis.__BCU_DAMAGE_GUARD_TRACE__
-```
-
-entry:
-
-```js
-{
-  frame,
-  attacker,
-  target,
-  procName,
-  rawTime,
-  rawDistance,
-  fruit,
-  resist,
-  finalTime,
-  finalDistance,
-  blocked,
-  blockedReason,
-  invEffect,
-  statusBefore,
-  statusAfter
-}
-```
-
-## 検証
-
-```text
-full immunity 100% -> statusなし + INV effect
-resist 50% -> duration/distance減衰
-KB resist -> KB距離減衰
-wave immune -> damage無効/減衰
-surge immune -> damage無効/減衰
-curse/seal中のproc制限
-```
-
----
-
-# Phase 4: 波動 ContWaveDef完全化
-
-## BCU根拠
-
-参照:
-
-```text
-BCU_java_util_common/battle/attack/ContWaveAb.java
-BCU_java_util_common/battle/attack/ContWaveDef.java
-BCU_java_util_common/battle/attack/AttackWave.java
-```
-
-仕様:
-
-```text
-ContWaveDef:
-- mini attack frame = 4
-- normal attack frame = 6
-- t==0でSE
-- t<=attackでwave stopper判定
-- stopperならSTPWAVE effect, deactivate
-- t==attackでsb.getAttack(atk)
-- t==W_TIME/W_MINI_TIMEでnextWave
-- nextWaveはW_PROG進む
-
-AttackWave:
-- incl Set<Entity>を共有
-- captureでincl済みを除外
-- excuseでdamage後inclへ追加
-```
-
-## 新規作成ファイル
-
-```text
-js/battle/bcu-runtime/BcuAttackWaveRuntime.js
-js/battle/bcu-runtime/BcuContWaveDefRuntime.js
-js/battle/bcu-runtime/BcuWaveStopperRuntime.js
-js/battle/BattleSceneBcuWaveRuntimePatch.js
-```
-
-## 実装手順
-
-### 1. BcuAttackWaveRuntime
-
-保持:
-
-```js
-{
-  attacker,
-  sourceAttack,
-  pos,
-  sta,
-  end,
-  waveType,
-  incl: new Set(),
-  proc,
-  rawAtk
-}
-```
-
-`capture(scene)`:
-
-- BCU `model.b.inRange()` 相当を既存hit adapterで行う。
-- `incl` 済みactorは除外。
-- `AB_ONLY` / traitCompatible相当が未実装ならdebugへ出し、推測しない。
-
-`excuse(scene)`:
-
-- damage/proc処理。
-- damagedしたtargetをinclへ追加。
-
-### 2. BcuContWaveDefRuntime
-
-保持:
-
-```js
-{
-  atk,
-  anim,
-  waves,
-  t,
-  maxt,
-  layer,
-  pos,
-  activate,
-  tempAtk
-}
-```
-
-update順:
-
-```js
-const attackFrame = atk.waveType === WT_MINI ? 4 : 6;
-
-if (t === 0) playSE(SE_WAVE);
-
-if (t <= attackFrame) {
-  atk.capture();
-  if (hasWaveStopper(atk.capt)) {
-    spawnStopWaveEffect();
-    deactivateAllRelatedWaves();
-    return;
-  }
-}
-
-if (!activate) return;
-
-if (t === waveLifeTime) maybeNextWave();
-if (t === attackFrame) scene.bcuAttackRuntime.getAttack(atk);
-if (maxt === t) activate = false;
-if (t >= 0) anim.update(false);
-t++;
-```
-
-### 3. 既存簡易waveを排他
-
-`BattleWaveRuntimePatch.js` のqueueと二重発火しないようにfeature flag。
-
-```js
-BATTLE_CONFIG.bcuRuntime.waveMode = 'cont-wave-def';
-```
-
-## debug
-
-```js
-globalThis.__BCU_WAVE_TRACE__
-```
-
-entry:
-
-```js
-{
-  frame,
-  waveId,
-  t,
-  attackFrame,
-  pos,
-  waveType,
-  levelRemaining,
-  blocked,
-  blockerActor,
-  hitTargets,
-  nextWaveCreated,
-  active
-}
-```
-
-## 検証
-
-```text
-通常波動 attackFrame=6
-mini波動 attackFrame=4
-同一chainで同target重複hitなし
-wave stopperで停止effect
-W_PROGで次wave生成
-既存queueと二重hitしない
-```
-
----
-
-# Phase 5: 烈波 ContVolcano完全化
-
-## BCU根拠
-
-参照:
-
-```text
-BCU_java_util_common/battle/attack/ContVolcano.java
-BCU_java_util_common/battle/attack/AttackVolcano.java
-```
-
-仕様:
-
-```text
-ContVolcano:
-- START animationで生成
-- t>=VOLC_PRE でDURING
-- t>VOLC_PRE+aliveTime でEND
-- aliveTime中に毎frame sb.getAttack(v)
-- VOLC_SE周期でloop SE
-- updateProcでattackerのCURSE/SEALを見てproc消去/復元
-- reflected counter surgeあり
-
-AttackVolcano:
-- vcaptでhit済み対象管理
-- VOLC_ITV周期でvcapt.clear()
-- excuseでdamage後vcapt.add(target)
-```
-
-## 新規作成ファイル
-
-```text
-js/battle/bcu-runtime/BcuAttackVolcanoRuntime.js
-js/battle/bcu-runtime/BcuContVolcanoRuntime.js
-js/battle/bcu-runtime/BcuCounterSurgeRuntime.js
-js/battle/BattleSceneBcuSurgeRuntimePatch.js
-```
-
-## 実装手順
-
-### 1. BcuAttackVolcanoRuntime
-
-保持:
-
-```js
-{
-  attacker,
-  sta,
-  end,
-  waveType,
-  handler,
-  vcapt: new Set(),
-  volcTime: VOLC_ITV,
-  attacked: false
-}
-```
-
-`capture()` は `vcapt` にいるtargetを除外。
-
-`excuse()`:
-
-```js
-processProc();
-volcTime--;
-if (volcTime === 0) {
-  volcTime = VOLC_ITV;
-  vcapt.clear();
-}
-applyDamage();
-vcapt.add(target);
-attacked = true;
-```
-
-### 2. BcuContVolcanoRuntime
-
-保持:
-
-```js
-{
-  v,
-  anim,
-  t,
-  aliveTime,
-  startPoint,
-  endPoint,
-  reflected,
-  surgeSummoned,
-  activate
-}
-```
-
-update順:
-
-```js
-updateProc();
-if (t >= VOLC_PRE && t <= VOLC_PRE + aliveTime && phase !== DURING) change DURING;
-else if (t > VOLC_PRE + aliveTime && phase !== END) change END;
-
-if (t >= VOLC_PRE && t < VOLC_PRE + aliveTime && (t - VOLC_PRE) % VOLC_SE === 0) play loop SE;
-
-if (t >= aliveTime + VOLC_POST + VOLC_PRE) activate = false;
-else {
-  t++;
-  if (t > VOLC_PRE && t < VOLC_POST + aliveTime) scene.getAttack(v);
-  updateAnimation();
-}
-```
-
-### 3. updateProc
-
-BCU `ContVolcano.updateProc()` 通りに、curse/sealでprocを消す/復元する。文字列配列もBCUからそのまま写す。
-
-## debug
-
-```js
-globalThis.__BCU_SURGE_TRACE__
-```
-
-entry:
-
-```js
-{
-  frame,
-  surgeId,
-  t,
-  phase,
-  aliveTime,
-  startPoint,
-  endPoint,
-  attackIssued,
-  vcaptSize,
-  procCleared,
-  procRestored,
-  reflected
-}
-```
-
-## 検証
-
-```text
-START/DURING/END切替
-aliveTime中だけhit
-VOLC_ITVで同target再hit可能
-curse/sealでproc消去/復元
-counter surge二重発火なし
-```
-
----
-
-# Phase 6: Barrier / Shield / Zombie / Warp / Revenge / Soulstrike
-
-## BCU根拠
-
-参照:
-
-```text
-BCU_java_util_common/battle/entity/Entity.java
-- Barrier
-- ZombX
-- KBManager
-- damaged()
-- preKill()
-- kill()
-- updateRevive()
-```
-
-## 実装順
-
-### 6.1 Barrier
-
-新規:
-
-```text
-js/battle/bcu-runtime/BcuBarrierRuntime.js
-```
-
-仕様:
-
-```text
-barrierありなら本体damage前に処理
-breakBarrier(true) -> BREAK_ABI
-breakBarrier(false) -> BREAK_ATK
-breakしないhit -> BREAK_NON
-regen timerでbarrier復帰
-```
-
-trace:
-
-```js
-globalThis.__BCU_BARRIER_TRACE__
-```
-
-### 6.2 Demon Shield
-
-新規:
-
-```text
-js/battle/bcu-runtime/BcuDemonShieldRuntime.js
-```
-
-仕様:
-
-```text
-currentShield > 0 なら本体damage前にshield処理
-SHIELDBREAKならcurrentShield=0
-damage>=shieldならSHIELD_BROKEN
-damage<shieldならSHIELD_HIT
-INT_HB終了時にSHIELD_REGEN
-```
-
-trace:
-
-```js
-globalThis.__BCU_SHIELD_TRACE__
-```
-
-### 6.3 Zombie revive
-
-新規:
-
-```text
-js/battle/bcu-runtime/BcuZombieReviveRuntime.js
-```
-
-仕様:
-
-```text
-zombie killerでなければrevive可能判定
-reviveする場合はSTOP/SLOW/WEAK/CURSE/SEAL/STRONG/LETHAL/POISONをクリア
-corpse DOWN / REVIVE animation
-revive攻撃タイミング
-```
-
-trace:
-
-```js
-globalThis.__BCU_ZOMBIE_TRACE__
-```
-
-### 6.4 Warp
-
-新規:
-
-```text
-js/battle/bcu-runtime/BcuWarpRuntime.js
-```
-
-仕様:
-
-```text
-INT_WARPはKBの一種
-P_WARP enter/exit effect
-status[P_WARP][2]でenter/exit状態
-exit animation長に達した時にkbmove(kbDis)
-```
-
-trace:
-
-```js
-globalThis.__BCU_WARP_TRACE__
-```
-
-### 6.5 Revenge / Soulstrike
-
-新規:
-
-```text
-js/battle/bcu-runtime/BcuRevengeRuntime.js
-js/battle/bcu-runtime/BcuSoulstrikeRuntime.js
-```
-
-既存 `BattleSoulstrikePatch.js` を必ず読み、二重処理にしない。
-
-統合trace:
-
-```js
-globalThis.__BCU_LIFECYCLE_TRACE__
-```
-
----
-
-# Phase 7: StageBasis.update順序一致
-
-## BCU根拠
-
-参照:
-
-```text
-BCU_java_util_common/battle/StageBasis.java
-- update()
-- updateAnimation()
-- updateEntities()
-- act_spawn()
-- act_change_up()
-- act_change_down()
-```
-
-重要順序:
-
-```text
-deployDupe
-le.sort(layer)
-buttonDelay
-tempe add
-s_stop / inten
-enemy spawn
-respawnTime / unitRespawnTime
-elu.update()
-spirit cooldown
-cannon / money
-est.update()
-sniper.update()
-tempe.update()
-shake
-updateEntities
-canon.update()
-lea/effects update
-lw.addAll(tlw)
-attack capture
-attack excuse
-base postUpdate
-entity postUpdate
-delay反映
-boss shockwave
-dead remove
-lw inactive remove
-lea done remove
-lineupChanging update
-```
-
-## 新規作成ファイル
-
-```text
-js/battle/bcu-runtime/BcuStageBasisShadow.js
-js/battle/bcu-runtime/BcuStageBasisScheduler.js
-js/battle/BattleSceneBcuStageBasisOrderPatch.js
-```
-
-## 実装段階
-
-### A. Shadow traceだけ
-
-既存tickは変えない。BCU順序なら何が起きるかtraceだけ出す。
-
-```js
-globalThis.__BCU_STAGEBASIS_TRACE__
-```
-
-### B. attack capture/excuse順序一致
-
-攻撃capture/excuseをBCU順へ寄せる。
-
-### C. postUpdate順序一致
-
-damage/proc/KB/death後処理をBCU順へ寄せる。
-
-### D. cont list統合
-
-wave/surgeを `lw/tlw` 相当で管理。
-
-### E. BattleScene.tick thin wrapper化
-
-最後にのみ実施。一気に全置換しない。
-
-## 検証
-
-```js
-globalThis.__BCU_STAGEBASIS_TRACE__
-```
-
-確認:
-
-```text
-attack capture/excuseがentity update後
-postUpdateがattack excuse後
-boss shockwaveがpostUpdate後
-lineupChanging反転タイミング
-money/cannon clamp
-```
-
----
-
-# Phase 8: スマホ版BCU入力完全化
-
-## BCU根拠
-
-参照:
-
-```text
-BCU_Android/app/src/main/java/com/mandarin/bcu/androidutil/battle/BattleView.kt
-- checkSlideUpDown()
-- isInSlideRange()
-BCU_Android/app/src/main/java/com/mandarin/bcu/BattleSimulation.kt
-- MotionEvent handling
-BCU_java_util_common/battle/SBCtrl.java
-- actions()
-- act_change_up()
-- act_change_down()
-```
-
-Android条件:
-
-```text
-battleEndでない
-lineupChangingでない
-isOneLineupでない
-自城HPが0でない
-dragFrame != 0
-performedでない
-abs(dy) >= height * 0.15
-v = dy / dragFrame
-v < 0 -> ACTION_LINEUP_CHANGE_UP
-v >= 0 -> ACTION_LINEUP_CHANGE_DOWN
-isInSlideRange: tan(50°) >= abs(dx) / abs(dy)
-```
-
-## 新規作成ファイル
-
-```text
-js/input/BcuMobileGestureRuntime.js
-js/input/BcuBattleInputAdapter.js
-js/input/BcuDomTouchPolicy.js
-js/battle/BattleSceneBcuMobileInputPatch.js
-```
-
-## 1. BcuMobileGestureRuntime
-
-```js
-export class BcuMobileGestureRuntime {
-  pointerDown(x, y, time) {}
-  pointerMove(x, y, time) {}
-  pointerUp(x, y, time) {}
-  isInSlideRange() {}
-  checkSlideUpDown({ height, battleState }) {}
-}
-```
-
-保持:
-
-```text
-initPoint
-endPoint
-dragFrame
-performed
-isSliding
-horizontal
-vertical
-velocity
-```
-
-## 2. BcuBattleInputAdapter
-
-```text
-ACTION_LINEUP_CHANGE_UP -> -4
-ACTION_LINEUP_CHANGE_DOWN -> -5
-spawn card -> frontLineup * 5 + slot
-```
-
-## 3. BcuDomTouchPolicy
-
-Web固有。Android logicと混ぜない。
-
-絶対条件:
-
-```text
-body/htmlにtouch-action:noneを入れない
-battle canvasとproduction cardだけpreventDefault
-formation/stage selector/overlayはpan-y許可
-```
-
-preventDefault対象:
-
-```text
-#preview-canvas
-.canvas-panel
-.prod-ui
-.prod-ui .cards
-.prod-card
-```
-
-scroll許可対象:
-
-```text
-.formation-ui
-.formation-catalog-scroll
-.stage-selector
-.stage-selector-panel
-.app-loading-overlay
-.error-overlay
-modal
-```
-
-## debug
-
-```js
-globalThis.__BCU_INPUT_TRACE__
-```
-
-entry:
-
-```js
-{
-  type,
-  initPoint,
-  endPoint,
-  dx,
-  dy,
-  dragFrame,
-  isInSlideRange,
-  action,
-  preventDefaultTarget
-}
-```
-
-## 検証
-
-```text
-戦闘中カード上下スライドでページが動かない
-段切替がBCU条件で発火
-stage selector / formation / overlayはスクロール可能
-長押し選択 / ダブルタップ拡大 / iOS calloutは戦闘中だけ抑止
-```
-
----
-
-## 9. 手動確認コマンド
-
-### 起動
+実行:
 
 ```bash
-npm install
-npm run build || true
-npm run dev
+node scripts/build-bcu-status-effect-bundle.mjs
+node scripts/inventory-bcu-status-effects.mjs
+node scripts/smoke-bcu-status-effects.mjs
+find js -name "*.js" -print0 | xargs -0 -n1 node --check
 ```
 
-### boot
+`package.json` が無い場合、`npm run build` 失敗を理由に作業を止めない。
 
-```js
-globalThis.__APP__
-globalThis.__BCU_FRAME_TRACE__
-```
+---
 
-### KB
+## 14. 完了条件
 
-```js
-const a = globalThis.__APP__?.scene?.actors?.find(a => a.state === 'knockback')
-a?.lastBcuKnockbackAnimationDebug
-a?.lastBcuKbeffParaToDebug
-a?.lastBcuHbAnimLoadDebug
-```
+以下を全部満たすまで完了禁止。
 
-### 024 glow
-
-```js
-globalThis.__BCU_SPRITE_DRAW_DEBUG__
-globalThis.__BCU_CANVAS_COMPOSITE_DEBUG__
-globalThis.__BCU_BLEND_TRACE__
-```
-
-### status icon
-
-```js
-globalThis.__BCU_STATUS_ICON_TRACE__
-```
-
-### proc
-
-```js
-globalThis.__BCU_PROC_TRACE__
-globalThis.__BCU_DAMAGE_GUARD_TRACE__
-```
-
-### wave / surge
-
-```js
-globalThis.__BCU_WAVE_TRACE__
-globalThis.__BCU_SURGE_TRACE__
-```
-
-### stage basis
-
-```js
-globalThis.__BCU_STAGEBASIS_TRACE__
-```
-
-### input
-
-```js
-globalThis.__BCU_INPUT_TRACE__
+```text
+1. effect:status bundleが生成される
+2. bcu-status-effect-inventory.json が生成される
+3. Phase A必須10 effectが resolved:true かつ ambiguous:false
+4. STOP iconが画面表示される
+5. SLOW iconが画面表示される
+6. STOP+SLOWでSLOWが抑制される
+7. WEAK系iconがBCU条件で表示される
+8. CURSE iconが表示される
+9. SEAL iconが表示される
+10. CURSE+SEALでCURSEが抑制される
+11. STOP/SLOW/WEAK/CURSE/SEAL procが実反映される
+12. STOP中のactor本体animation/attack/moveがBCU準拠で止まる
+13. 状態effect animationがBCU準拠で更新される
+14. __BCU_STATUS_ICON_RENDER_TRACE__ に rendered:true が出る
+15. traceOnly:true のまま完了扱いしていない
+16. 戦闘起動・ステージ選択・カードUI・KBが壊れていない
 ```
 
 ---
 
-## 10. 禁止する修正例
+## 15. 今回後回しにするもの
+
+妨害アイコンと状態異常表示が完了するまでは、以下を主作業にしない。
 
 ```text
-BattleSceneRenderer.jsを丸ごと書き換える
-BattleScene.jsを一気にBCU StageBasisへ置換する
-wave/surgeを dueFrame + damage queue で完成扱いする
-状態異常アイコンをCSS/emoji/文字で代用する
-missing asset時に通常effectへ逃がす
-body/html全体にtouch-action:noneを入れる
-stage selectorやoverlayのscrollを殺す
-lineup changeボタンを標準UIとして追加する
-anim03がKBだと決め打ちしてkb.maanimを確認しない
-glow=0までblend処理に流す
-try/catchで戦闘継続だけ優先してエラーを握りつぶす
+wave/surge完全置換
+StageBasis.update完全置換
+スマホ入力完全置換
+UIデザイン調整
+glow再調査
 ```
 
 ---
 
-## 11. commit粒度
+## 16. commit message
 
-良い例:
+`update` 禁止。
 
-```text
-Add BCU trace runtime
-Add BCU blend trace without renderer replacement
-Resolve BCU status icons from entity statuses
-Add BCU ContWaveDef runtime
-Add BCU ContVolcano runtime
-Apply BCU proc resist values
-```
-
-悪い例:
+推奨:
 
 ```text
-Fix battle
-Improve UI
-BCU complete
-Renderer rewrite
-Many fixes
+Render BCU status effect icons and apply status proc runtime
 ```
 
 ---
 
-## 12. Codexが最初にやるタスク
-
-### Task 1: Trace基盤
-
-作成:
-
-```text
-js/battle/bcu-runtime/BcuTraceRuntime.js
-js/battle/bcu-runtime/BcuFrameTrace.js
-js/battle/bcu-runtime/BcuEntityTrace.js
-js/battle/bcu-runtime/BcuAttackTrace.js
-js/battle/bcu-runtime/BcuProcTrace.js
-js/battle/bcu-runtime/BcuRenderTrace.js
-```
-
-接続:
-
-```text
-js/main.js
-```
-
-確認:
-
-```js
-globalThis.__BCU_FRAME_TRACE__
-```
-
-### Task 2: BCU render trace
-
-作成:
-
-```text
-js/bcu-render/BcuBlendRuntime.js
-js/bcu-render/BcuEPartTransformRuntime.js
-js/bcu-render/BcuRenderTrace.js
-```
-
-renderer本体は置換しない。
-
-確認:
-
-```js
-globalThis.__BCU_BLEND_TRACE__
-globalThis.__BCU_EPART_MATRIX_TRACE__
-```
-
-### Task 3: 024攻撃glow fixture
-
-024攻撃中に以下をtrace:
-
-```text
-partIndex
-modelPartIndex
-glow
-opacity
-ctx.globalAlpha
-composite mode
-```
-
-黒塊を再発させない。
-
-### Task 4: 状態異常アイコンskeleton
-
-作成:
-
-```text
-js/battle/bcu-runtime/BcuStatusIconResolver.js
-js/battle/bcu-runtime/BcuEntityEffectIconRuntime.js
-```
-
-まだ描画接続しなくてよい。resolve結果だけtrace。
-
-確認:
-
-```js
-globalThis.__BCU_STATUS_ICON_TRACE__
-```
-
----
-
-## 13. 完了条件
-
-```text
-mainが起動する
-戦闘が開始できる
-既存KB / KBEff / 024 glowが壊れていない
-新debug traceが存在する
-追加runtimeはfeature flagで切れる
-変更対象とBCU根拠が報告されている
-未実装範囲を正直に書いている
-```
-
-報告テンプレ:
+## 17. 最終報告テンプレ
 
 ```text
 原因:
-  ...
+  b66889b4時点でtrace-only / skeleton止まりだった箇所
 
 BCU根拠:
-  ...
+  Entity.AnimManager.getEff/drawEff/checkEff
+  EffAnim.read/readCustom
+  Data.A_PATH
+  Entity.processProcs/damaged
 
 JS対象コード:
-  ...
+  変更ファイル一覧
 
 修正:
-  ...
+  effect:status bundle
+  bcu-status-effect-inventory.json
+  suffix match
+  SemanticAssetProvider実API接続
+  StatusSnapshot normalizer
+  positioner
+  妨害アイコン実描画
+  状態effect animation更新
+  Proc実反映
+  STOP/SLOW/WEAK/CURSE/SEAL挙動
 
 commit:
-  ...
+  hash
 
 確認方法:
-  ...
+  __BCU_STATUS_ICON_TRACE__
+  __BCU_STATUS_ICON_RENDER_TRACE__
+  __BCU_PROC_TRACE__
+  node scripts/build-bcu-status-effect-bundle.mjs
+  node scripts/inventory-bcu-status-effects.mjs
+  node scripts/smoke-bcu-status-effects.mjs
+  手動console helper
+
+BCU準拠と言える範囲:
+  表示/抑制/更新/Proc反映がBCU根拠と一致した範囲
 
 残る未解決:
-  ...
+  Phase B/C missing asset
+  未移植status
+  schema未確定
+  BCU完全一致未検証箇所
 
 rollback方法:
-  ...
+  revert commit
 ```

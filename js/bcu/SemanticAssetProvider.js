@@ -240,7 +240,7 @@ export class SemanticAssetProvider {
     const url = normalizeFetchPath(bundleRef.bundlePath);
     if (this.bundleArchives.has(url)) return this.bundleArchives.get(url);
     if (!this.bundleArchivePromises.has(url)) {
-      this.bundleArchivePromises.set(url, (async () => { const archive = parseStoreZip(await this.fetchBundle(bundleRef)); this.bundleArchives.set(url, archive); return archive; })().catch((error) => { this.bundleArchivePromises.delete(url); throw error; }));
+      this.bundleArchivePromises.set(url, (async () => { const archive = await parseStoreZip(await this.fetchBundle(bundleRef)); this.bundleArchives.set(url, archive); return archive; })().catch((error) => { this.bundleArchivePromises.delete(url); throw error; }));
     }
     return await this.bundleArchivePromises.get(url);
   }

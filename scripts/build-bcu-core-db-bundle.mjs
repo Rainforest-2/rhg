@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import zlib from 'node:zlib';
 import { BattleStatsLoader } from '../js/battle/BattleStatsLoader.js';
 import { BcuLangStore } from '../js/bcu/BcuLangStore.js';
 import { createBcuDiagnostics } from '../js/bcu/BcuDiagnostics.js';
@@ -13,7 +14,7 @@ const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number
 const pad3 = (id) => String(Math.max(0, Number(id) || 0)).padStart(3, '0');
 const formCode = (i) => ['f', 'c', 's', 'u'][Math.max(0, Number(i) || 0)] || 'f';
 const readText = async (file) => await fs.readFile(file, 'utf8');
-const jsonEntry = (name, value) => ({ name, data: Buffer.from(`${JSON.stringify(value, null, 2)}\n`) });
+const jsonEntry = (name, value) => ({ name, data: Buffer.from(`${JSON.stringify(value)}\n`) });
 
 function packIdFromBcuPath(file) {
   return String(file || '').match(/^public\/assets\/bcu\/([^/]+)\//)?.[1] || null;
@@ -275,8 +276,104 @@ const entries = [
   })
 ];
 
+
+const crcTable = new Uint32Array(256).map((_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+
+function crc32(buf) {
+  let c = 0xffffffff;
+  for (const b of buf) c = crcTable[(c ^ b) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function u16(v) {
+  const b = Buffer.alloc(2);
+  b.writeUInt16LE(v);
+  return b;
+}
+
+function u32(v) {
+  const b = Buffer.alloc(4);
+  b.writeUInt32LE(v >>> 0);
+  return b;
+}
+
+async function writeDeflateZip(zipPath, entries) {
+  await fs.mkdir(zipPath.split('/').slice(0, -1).join('/'), { recursive: true });
+
+  let offset = 0;
+  const locals = [];
+  const centrals = [];
+
+  for (const entry of entries) {
+    const name = Buffer.from(entry.name.replace(/\\/g, '/'));
+    const data = Buffer.isBuffer(entry.data) ? entry.data : Buffer.from(String(entry.data ?? ''), 'utf8');
+    const compressed = zlib.deflateRawSync(data, { level: 9 });
+    const crc = crc32(data);
+    const method = 8;
+
+    const local = Buffer.concat([
+      u32(0x04034b50),
+      u16(20),
+      u16(0),
+      u16(method),
+      u16(0),
+      u16(0),
+      u32(crc),
+      u32(compressed.length),
+      u32(data.length),
+      u16(name.length),
+      u16(0),
+      name,
+      compressed
+    ]);
+
+    locals.push(local);
+
+    centrals.push(Buffer.concat([
+      u32(0x02014b50),
+      u16(20),
+      u16(20),
+      u16(0),
+      u16(method),
+      u16(0),
+      u16(0),
+      u32(crc),
+      u32(compressed.length),
+      u32(data.length),
+      u16(name.length),
+      u16(0),
+      u16(0),
+      u16(0),
+      u16(0),
+      u32(0),
+      u32(offset),
+      name
+    ]));
+
+    offset += local.length;
+  }
+
+  const central = Buffer.concat(centrals);
+  const eocd = Buffer.concat([
+    u32(0x06054b50),
+    u16(0),
+    u16(0),
+    u16(entries.length),
+    u16(entries.length),
+    u32(central.length),
+    u32(offset),
+    u16(0)
+  ]);
+
+  await fs.writeFile(zipPath, Buffer.concat([...locals, central, eocd]));
+}
+
 const bundlePath = 'public/assets/bundles/core/core-db.zip';
-await writeStoreZip(bundlePath, entries);
+await writeDeflateZip(bundlePath, entries);
 const coreIndex = {
   schemaVersion: 1,
   generatedAt: FIXED_DATE,

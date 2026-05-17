@@ -1,524 +1,499 @@
-# AGENTS.md — BCU parity confirmed-fix instructions
+# AGENTS.md — Codex task guide for enemy assets, stage enemy spawning, and formation UI stability
 
 Repository: `rhgrive2/game`
 Target branch: `main`
 
 ## Purpose
 
-Apply only the confirmed, low-risk fixes listed in this file. This repository is the browser game implementation under `rhgrive2/game`. It is not the upstream Battle Cats Ultimate repository.
+Investigate and fix the following reported issues without changing unrelated systems:
 
-BCU reference repository note:
-When referring to the upstream Battle Cats Ultimate codebase, use the GitHub owner/namespace `battlecatsultimate`. Do not describe `rhgrive2/game` as the BCU upstream repository. Do not imply that BCU is an official PONOS repository.
+1. Some enemy icons/assets are missing, including enemy IDs `388` and `609`–`613`; there are likely more.
+2. Some enemies cannot appear in stages, including enemy `443`; there are likely more.
+3. The formation character catalog changes visual order while scrolling because of the current virtualized DOM/list implementation.
+4. Touching formation slots or selecting characters can reset the character catalog scroll position to the top.
 
-## Ground rules
-
-- Use current source files in `rhgrive2/game@main` as the implementation target.
-- Do not use older txt reports as proof.
-- Do not make speculative BCU behavior changes in this batch.
-- Do not change unrelated gameplay, renderer, asset, stage, camera, touch, or input systems.
-- Keep changes small, explicit, and testable.
-- Preserve existing debug/trace output unless a task explicitly says to update a stale check.
-- Prefer backward-compatible helpers over changing public data shapes.
-
-## Confirmed current facts
-
-The browser app boots through `index.html` -> `js/main.js`. `js/main.js` dynamically imports battle patch modules in a fixed order before creating `PreviewApp`.
-
-Confirmed facts from the current code:
-
-1. `BattleSceneProcApplyPatch.js` sets `result.procApply` to the return value of `applyDamageProc(...)`.
-2. `applyDamageProc(...)` currently returns an array of entries shaped like `{ key, result }`.
-3. `BattleSceneBcuProcRuntimePatch.js` currently reads `result?.procApply?.procs`, which does not match that array shape.
-4. `BattleSceneProcApplyPatch.js` applies actor procs only when `result?.accepted && targetType === 'actor' && damageResult?.proc`.
-5. `BattleSceneBcuProcRuntimePatch.js` performs BCU proc runtime work after `originalQueueAttackDamage(...)` and needs the same accepted actor-hit guard.
-6. `BattleActorZombieRevivePatch.js` wraps `BattleActor.prototype.resolvePostDamage`.
-7. `BcuKnockbackRuntimePatch.js` and `BcuKnockbackProcPriorityPatch.js` later assign `BattleActor.prototype.resolvePostDamage` again.
-8. `js/main.js` currently imports `BattleActorZombieRevivePatch.js` before the later knockback patches, so the zombie revive wrapper can be overwritten by later prototype assignment.
-9. `scripts/check-damage-calculator.mjs` still asserts an old “ProcResolver remains no-apply” contract.
-10. `scripts/check-battle-scene-stage-runtime-wiring.mjs` still checks older ProcResolver v2/no-apply contract strings.
-11. Current `ProcResolver.getProcCatalog()` has implemented runtime procs: `freeze`, `slow`, `weaken`, `knockbackProc`, `curse`, `seal`, and `toxic`.
-12. `BcuSpriteSheet.drawPart(...)` supports BCU glow/opacity metadata through `opt.__bcuDrawEntry` or `sprite.__bcuDrawQueue`.
-13. Actor rendering has `BattleSceneRendererBcuGlowPatch.js`, which populates `actor.sprite.__bcuDrawQueue` before actor drawing.
-14. `BcuStatusEffectManager.js` draws status effect parts directly and does not currently pass `p.glow`, `p.opacity`, or `__bcuDrawEntry` into `BcuSpriteSheet.drawPart(...)`.
+The work must be evidence-driven. Do not guess mappings or patch symptoms without proving the cause in the current repository.
 
 ---
 
-# Task 1 — Fix `procApply` shape mismatch and prevent duplicate proc application
+## Strict scope rules
 
-## Problem
+### Allowed
 
-`BattleSceneProcApplyPatch.js` writes:
+- Add diagnostic scripts under `scripts/`.
+- Add small, focused runtime diagnostics where needed.
+- Fix enemy asset resolution if the resolver is too narrow or ignores semantic bundle metadata.
+- Fix stage enemy spawn only after reproducing the exact rejection path.
+- Fix formation catalog virtualization/scroll preservation in `js/ui/FormationEditor.js` and closely related UI patch files.
+- Add CSS only if needed for the virtual grid/spacer layout.
 
-```js
-result.procApply = procApply;
-```
+### Avoid unless the failing test proves it is necessary
 
-where `procApply` is an array returned by `applyDamageProc(...)`.
+- Changing battle damage, proc, knockback, animation timing, movement, camera, economy, or base logic.
+- Changing CSV stage parsing column semantics.
+- Changing the meaning of BCU enemy IDs or applying global off-by-one transforms.
+- Adding hard-coded one-off enemy remaps for `388`, `443`, `609`–`613` without proving BCU itself uses that mapping.
+- Rewriting `BattleScene`, `BattleActorFactory`, `StageDefinitionLoader`, or `SemanticAssetProvider` wholesale.
 
-But `BattleSceneBcuProcRuntimePatch.js` reads:
+### Never do in this task
 
-```js
-result?.procApply?.procs
-```
-
-That makes the already-applied proc set empty for the current array shape. As a result, a proc already applied by `BattleSceneProcApplyPatch` may be passed to `BcuProcRuntime.performProc(...)` without `alreadyApplied: true`.
-
-## Files
-
-- `js/battle/BattleSceneProcApplyPatch.js`
-- `js/battle/BattleSceneBcuProcRuntimePatch.js`
-
-## Required implementation
-
-### 1. Normalize `procApply` entries in `BattleSceneProcApplyPatch.js`
-
-Keep `result.procApply` backward-compatible as an array, but add explicit top-level fields to each entry.
-
-Change each successful/failed output entry from:
-
-```js
-out.push({ key: item.key, result });
-```
-
-to an entry that includes at least:
-
-```js
-out.push({
-  key: item.key,
-  applied: result?.applied === true,
-  result,
-  hitIndex: meta.hitIndex ?? item.hitIndex ?? null,
-  attackEventKey: meta.key ?? item.attackEventKey ?? null
-});
-```
-
-For missing `applyBcuProc`, include the same fields:
-
-```js
-out.push({
-  key: item.key,
-  applied: false,
-  reason: 'target-applyBcuProc-missing',
-  hitIndex: meta.hitIndex ?? item.hitIndex ?? null,
-  attackEventKey: meta.key ?? item.attackEventKey ?? null
-});
-```
-
-### 2. Read both historical and current shapes in `BattleSceneBcuProcRuntimePatch.js`
-
-Add helpers:
-
-```js
-function getProcApplyEntries(result) {
-  if (Array.isArray(result?.procApply)) return result.procApply;
-  if (Array.isArray(result?.procApply?.procs)) return result.procApply.procs;
-  return [];
-}
-
-function procApplyDedupeKey(item) {
-  const key = item?.key || '';
-  return `${key}:${item?.hitIndex ?? ''}:${item?.attackEventKey ?? ''}`;
-}
-```
-
-Replace the current `appliedKeys` calculation with a set over normalized entries:
-
-```js
-const appliedKeys = new Set(
-  getProcApplyEntries(result)
-    .filter((p) => p?.applied === true || p?.result?.applied === true)
-    .map(procApplyDedupeKey)
-);
-```
-
-When iterating `calc.proc.pending` and `calc.proc.applied`, compute the same dedupe key:
-
-```js
-const dedupeKey = `${key}:${proc?.hitIndex ?? ''}:${proc?.attackEventKey ?? ''}`;
-const alreadyApplied = appliedKeys.has(dedupeKey);
-runtime.performProc({
-  attacker,
-  target,
-  attack: event,
-  proc: alreadyApplied
-    ? { ...proc, alreadyApplied: true, handledBy: 'BattleSceneProcApplyPatch' }
-    : proc
-});
-```
-
-## Acceptance criteria
-
-- `result.procApply` may be either an array or an object with `.procs`; both are accepted.
-- Entries shaped `{ key, result: { applied: true } }` are treated as already applied.
-- Entries shaped `{ key, applied: true }` are treated as already applied.
-- `freeze`, `slow`, `weaken`, `curse`, `seal`, `toxic`, and `knockbackProc` are not applied twice for the same hit.
-- Existing trace/event behavior remains in place.
+- Do not hide failures by silently replacing missing enemies with dummy actors.
+- Do not remove semantic-strict safety checks to make a spawn succeed.
+- Do not disable virtual scrolling entirely unless you prove it is the only viable fix and document the performance cost.
+- Do not make unrelated visual/UI redesigns.
+- Do not touch stage selector category UI unless directly broken by this work.
 
 ---
 
-# Task 2 — Guard `BattleSceneBcuProcRuntimePatch` by accepted actor hit
+## Current code facts to verify before editing
 
-## Problem
+These facts are from the current code and should be rechecked locally before making changes.
 
-`BattleSceneProcApplyPatch.js` applies actor procs only when all of this is true:
+### Enemy asset resolution
 
-```js
-result?.accepted && targetType === 'actor' && damageResult?.proc
-```
+- `BcuEnemyRepository.build()` iterates `manifest.indexes.enemyIds`, computes `enemyId`, uses `resolveEnemyAsset(files, enemyId)`, and records missing assets when image/imgcut are absent.
+- `BcuEnemyRepository.fromCoreDb()` builds enemies from `coreDb.enemies.enemies` and preserves `record.asset` if present.
+- `BcuPathResolver.resolveEnemyAsset(files, enemyId)` currently looks for paths ending in `/org/enemy/${id3}/${id3}_e.png`, then tries base directories such as `000002` and `000010`.
+- `BcuStageEnemyResolver.buildBcuEnemyAssetDef(enemyId)` first tries `db.assets.resolveEnemyAsset(enemyId)`, then semantic actor index `enemy:${enemyId}`, then a raw-path fallback under `000002`.
 
-But `BattleSceneBcuProcRuntimePatch.js` currently calls `BcuProcRuntime.performProc(...)` after `originalQueueAttackDamage(...)` without the same accepted/actor guard.
+### Stage enemy ID resolution and spawning
 
-That allows the patch to inspect stale `target.lastIncomingDamageCalculation` or `attacker.lastDamageCalculation` after a rejected/non-actor hit. It should not run runtime proc handling for a rejected hit or a base hit.
+- `StageDefinitionLoader.parse()` reads stage enemy rows and computes `enemyId = rawEnemyId - 2`.
+- `buildStageEnemyUnitDef(row)` uses `row.enemyId` as `statsId` and builds the actor asset definition through `buildBcuEnemyAssetDef(row.enemyId)`.
+- `BattleScene.spawnStageEnemy()` returns false and emits `stageEnemySpawnDeferred` when the actor template is not `SPAWN_READY` or `FULL_VISUAL`.
+- `BattleActorFactory.preloadTemplate()` can fail because stats are missing, render core assets are missing, or required animations are missing.
 
-## File
+### Formation catalog virtualization and scroll reset
 
-- `js/battle/BattleSceneBcuProcRuntimePatch.js`
-
-## Required implementation
-
-After:
-
-```js
-const result = originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
-```
-
-add:
-
-```js
-if (!result?.accepted || targetType !== 'actor') return result;
-```
-
-Then continue with proc trace/runtime handling. This guard should be applied in addition to the `procApply` shape fix.
-
-## Acceptance criteria
-
-- Rejected hits do not call `BcuProcRuntime.performProc(...)`.
-- Base hits do not call actor proc runtime.
-- Accepted actor hits still call proc runtime.
-- Existing `guardBcuDamage(...)` call before original damage queue remains unchanged.
+- `FormationEditor.renderDynamic()` currently does `scroller.scrollTop = 0` before `renderCatalogWindow()`.
+- `FormationEditor.renderCatalogWindow()` renders a top spacer, a slice of `catalogItems`, and a bottom spacer into `.formation-catalog-grid`.
+- The spacer elements are grid children. If they are not full-width grid rows, they can disturb visual ordering in a CSS grid.
+- `FormationEditorPerformancePatch.js` currently preserves scroll only for some character interactions. Prefer a direct, explicit fix in `FormationEditor.js` if possible.
 
 ---
 
-# Task 3 — Ensure zombie revive wraps the final `resolvePostDamage`
+## Required workflow
 
-## Problem
+Work in small commits. For each issue:
 
-`BattleActorZombieRevivePatch.js` wraps `BattleActor.prototype.resolvePostDamage`.
+1. Reproduce or prove the cause with a script, log, or focused browser check.
+2. Make the smallest targeted fix.
+3. Run syntax checks and the relevant diagnostic script again.
+4. Record what changed and why in the final response.
 
-But `js/main.js` imports it before:
-
-```js
-await import('./battle/BcuKnockbackRuntimePatch.js');
-await import('./battle/BcuKnockbackProcPriorityPatch.js');
-```
-
-Both knockback patches assign `BattleActor.prototype.resolvePostDamage` later. Therefore, the zombie revive wrapper can be overwritten by later patches.
-
-## File
-
-- `js/main.js`
-
-## Required implementation
-
-Move the import of `BattleActorZombieRevivePatch.js` so it runs after the final knockback `resolvePostDamage` patch.
-
-Current early import must be removed from the early actor patch block:
-
-```js
-await import('./battle/BattleActorZombieRevivePatch.js');
-```
-
-Add it after:
-
-```js
-await import('./battle/BcuKnockbackProcPriorityPatch.js');
-```
-
-Recommended order:
-
-```js
-await import('./battle/BcuKnockbackRuntimePatch.js');
-await import('./battle/BcuKnockbackProcPriorityPatch.js');
-await import('./battle/BattleActorZombieRevivePatch.js');
-await import('./battle/BcuKnockbackEffectLayerPatch.js');
-await import('./battle/BcuKnockbackAnimationPatch.js');
-await import('./battle/BcuProcImmunityPatch.js');
-```
-
-Do not import `BattleActorZombieRevivePatch.js` twice. Its patch flag prevents rewrapping once installed.
-
-## Acceptance criteria
-
-- `BattleActorZombieRevivePatch.js` is imported exactly once.
-- It is imported after `BcuKnockbackProcPriorityPatch.js`.
-- A non-zombie actor death still uses current knockback/death behavior.
-- A zombie actor with revive spec and no zombie-killer hit schedules revive.
-- A zombie actor killed by zombie-killer does not schedule revive.
-
----
-
-# Task 4 — Add a guard against future `resolvePostDamage` wrapper loss
-
-## Problem
-
-The repo uses many prototype patch modules. The current bug exists because later assignments replace earlier wrappers silently.
-
-## Files
-
-- `js/battle/BattleActorZombieRevivePatch.js`
-- optionally `js/main.js`
-
-## Required implementation
-
-Add a lightweight final-install marker when the zombie wrapper is installed.
-
-Inside `BattleActorZombieRevivePatch.js`, after capturing `originalResolvePostDamage`, set debug metadata on the prototype:
-
-```js
-proto.__bcuZombieReviveResolvePostDamageWrapped = true;
-proto.__bcuZombieReviveWrappedResolvePostDamageName = originalResolvePostDamage?.name || null;
-```
-
-Inside `resolvePostDamageWithZombieRevive`, set:
-
-```js
-this.lastBcuZombieReviveWrapperDebug = {
-  source: 'BattleActorZombieRevivePatch.resolvePostDamageWithZombieRevive',
-  wrapped: true,
-  wrappedFunctionName: proto.__bcuZombieReviveWrappedResolvePostDamageName
-};
-```
-
-If adding boot-time debug state in `main.js`, do not throw during normal boot. Use debug state only.
-
-## Acceptance criteria
-
-- Runtime debug can confirm that zombie revive wrapper ran after the final knockback patch.
-- No boot-time exception is introduced.
-- No gameplay behavior changes except preserving zombie revive after knockback patches.
-
----
-
-# Task 5 — Pass status-effect draw metadata to `BcuSpriteSheet.drawPart`
-
-## Problem
-
-`BcuSpriteSheet.drawPart(...)` supports BCU glow/opacity metadata through either:
-
-```js
-opt.__bcuDrawEntry
-```
-
-or a queued draw entry consumed from:
-
-```js
-sprite.__bcuDrawQueue
-```
-
-It computes glow like this:
-
-```js
-const queued = opt.__bcuDrawEntry || consumeQueuedDrawPart(this, partIndex);
-const glow = Number(opt.glow ?? queued?.glow ?? 0);
-```
-
-Actor rendering has `BattleSceneRendererBcuGlowPatch.js`, which populates `actor.sprite.__bcuDrawQueue` before drawing actors.
-
-However `BcuStatusEffectManager.js` draws status effect parts directly and calls:
-
-```js
-this.sprite.drawPart(ctx, partIndex, -pivotX, -pivotY, { scaleX: 1, scaleY: 1 });
-```
-
-That means status effect rendering does not pass `p.glow`, `p.opacity`, or `__bcuDrawEntry` into the sprite renderer. Any status-effect model part glow metadata is ignored.
-
-## File
-
-- `js/battle/bcu-runtime/BcuStatusEffectManager.js`
-
-## Required implementation
-
-Inside `BcuEntityEffectIconRuntime.draw(...)`, replace the current `drawPart` call with one that passes the draw entry:
-
-```js
-this.sprite.drawPart(ctx, partIndex, -pivotX, -pivotY, {
-  scaleX: 1,
-  scaleY: 1,
-  __bcuDrawEntry: p,
-  glow: Number.isFinite(Number(p.glow)) ? Number(p.glow) : 0,
-  opacity
-});
-```
-
-Keep the existing `ctx.globalAlpha = opacity` line. This makes normal drawing behavior unchanged while allowing glow path to use the same metadata contract as actor rendering.
-
-## Acceptance criteria
-
-- Status effect normal rendering remains unchanged.
-- If a status-effect draw entry contains glow mode `1`, `2`, `3`, or `-1`, `BcuSpriteSheet.drawPart` receives it.
-- `BcuSpriteSheet.__bcuSpriteDrawDebug` can report glow-composite path for status effects when applicable.
-- No fallback image/CSS/emoji rendering is introduced.
-
----
-
-# Task 6 — Update stale `check-damage-calculator.mjs`
-
-## Problem
-
-`scripts/check-damage-calculator.mjs` still asserts an old contract:
-
-```js
-ok('ProcResolver remains no-apply', procText.includes('applied: []') && !procText.includes('target.hp ='));
-```
-
-Current `ProcResolver.getProcCatalog()` has implemented procs, including:
-
-```js
-freeze
-slow
-weaken
-knockbackProc
-curse
-seal
-toxic
-```
-
-Therefore the check is stale.
-
-## File
-
-- `scripts/check-damage-calculator.mjs`
-
-## Required implementation
-
-Remove the old `ProcResolver remains no-apply` assertion.
-
-Prefer direct import over string matching:
-
-```js
-import { ProcResolver } from '../js/battle/ProcResolver.js';
-
-const catalog = ProcResolver.getProcCatalog();
-
-for (const key of ['freeze', 'slow', 'weaken', 'knockbackProc', 'curse', 'seal', 'toxic']) {
-  assert.equal(catalog[key]?.implemented, true, `${key} must be implemented`);
-  assert.equal(catalog[key]?.pendingSupported, true, `${key} must support pending contract`);
-}
-
-for (const key of ['warp', 'barrierBreaker', 'shieldPierce', 'zombieKiller', 'soulstrike']) {
-  assert.equal(catalog[key]?.pendingSupported, true, `${key} must remain pending-supported`);
-}
-```
-
-## Acceptance criteria
-
-- `node scripts/check-damage-calculator.mjs` passes.
-- The script verifies that core runtime procs are implemented.
-- The script no longer asserts that ProcResolver is no-apply.
-- No production code changes are required for this task.
-
----
-
-# Task 7 — Update stale ProcResolver checks in `check-battle-scene-stage-runtime-wiring.mjs`
-
-## Problem
-
-`scripts/check-battle-scene-stage-runtime-wiring.mjs` still checks older ProcResolver contract strings, including:
-
-```js
-ProcResolver.v2-pending-contract
-semantic-pending-no-apply
-```
-
-Current `ProcResolver.js` returns:
-
-```js
-source: 'ProcResolver.v3-bcu-proc-roll-contract'
-mode: 'bcu-proc-roll-pending-apply-contract'
-```
-
-and current catalog marks several procs as implemented. The script is now stale.
-
-## File
-
-- `scripts/check-battle-scene-stage-runtime-wiring.mjs`
-
-## Required implementation
-
-Replace string assertions tied to the old v2/no-apply contract with direct catalog inspection.
-
-Add:
-
-```js
-const { ProcResolver } = await import('../js/battle/ProcResolver.js');
-const catalog = ProcResolver.getProcCatalog();
-
-for (const key of ['freeze', 'slow', 'weaken', 'knockbackProc', 'curse', 'seal', 'toxic']) {
-  assert.equal(catalog[key]?.implemented, true, `${key} must be implemented`);
-  assert.equal(catalog[key]?.pendingSupported, true, `${key} must support pending contract`);
-}
-
-for (const key of ['wave', 'miniWave', 'surge', 'miniSurge', 'warp', 'barrierBreaker', 'shieldPierce', 'zombieKiller', 'soulstrike']) {
-  assert.equal(catalog[key]?.pendingSupported, true, `${key} must remain pending-supported`);
-}
-```
-
-Update source/mode checks to current strings if the script still wants string coverage:
-
-```js
-assert.ok(procResolverSrc.includes('ProcResolver.v3-bcu-proc-roll-contract'));
-assert.ok(procResolverSrc.includes('bcu-proc-roll-pending-apply-contract'));
-```
-
-Remove or replace checks for:
-
-```js
-ProcResolver.v2-pending-contract
-semantic-pending-no-apply
-ProcResolver remains no-apply
-```
-
-## Acceptance criteria
-
-- `node scripts/check-battle-scene-stage-runtime-wiring.mjs` no longer expects old ProcResolver v2/no-apply strings.
-- The script verifies the current implemented core proc contract.
-- The script still verifies pending support for unported or externally-handled procs.
-- No production code changes are required for this task.
-
----
-
-# Required checks after all tasks
-
-Run at least:
+Recommended branch name:
 
 ```bash
-node scripts/check-damage-calculator.mjs
-node scripts/check-battle-scene-stage-runtime-wiring.mjs
+git checkout -b fix/enemy-assets-stage-spawn-formation-scroll
 ```
 
-Then boot the browser app and verify one battle can start.
+There may be no `package.json`; do not assume npm scripts exist. Prefer direct `node` scripts and `python3 -m http.server 8000` for browser testing.
 
-Manual runtime checks:
+---
 
-1. Trigger or inspect a proc hit with `freeze`, `slow`, `weaken`, `curse`, `seal`, `toxic`, or `knockbackProc`.
-2. Confirm `BattleSceneProcApplyPatch` applies it once.
-3. Confirm `BcuProcRuntime` receives `alreadyApplied: true` for the same proc/hit and does not apply it again.
-4. Confirm rejected hits and base hits do not invoke actor proc runtime.
-5. Kill a zombie actor with revive data using a non-zombie-killer hit. Confirm revive is scheduled.
-6. Kill a zombie actor with zombie-killer. Confirm revive is blocked.
-7. Confirm status effect icons still render.
-8. If status effect draw entries contain glow metadata, confirm `BcuSpriteSheet` receives that metadata.
+## Task 1 — Audit enemy asset coverage before fixing icons
 
-## Explicit non-goals
+### Goal
 
-Do not change these in this batch:
+Find why enemy icons/assets are missing for `388`, `609`, `610`, `611`, `612`, `613`, and discover other enemies with the same failure mode.
 
-- wave/surge hit timing
-- barrier/shield damage semantics
-- warp runtime semantics
-- BCU resist field mapping
-- renderer draw order outside status-effect draw metadata forwarding
-- stage spawn timing
-- asset bundle structure
-- touch/mobile input behavior
-- camera projection behavior
+### Add diagnostic script
+
+Create:
+
+```text
+scripts/audit-bcu-enemy-assets.mjs
+```
+
+The script should inspect whichever sources exist in the repo:
+
+- `public/assets/core-db.json` or the core DB reachable through current project files, if present.
+- `public/assets/bcu/**/org/enemy/**`, if present.
+- `public/assets/bcu-manifest.json`, if present.
+- `public/assets/semantic-index*.json` or semantic provider index files, if present.
+- `asset-files.txt`, if assets are represented only by a file list.
+- Existing generated reports under `tmp/` only as secondary hints, not as source of truth.
+
+The script must output:
+
+```text
+tmp/enemy-asset-audit.json
+tmp/enemy-asset-audit.md
+```
+
+Minimum report fields per enemy:
+
+```js
+{
+  enemyId,
+  id3,
+  hasStats,
+  hasName,
+  hasSemanticActorEntry,
+  semanticKey,
+  bundleRef,
+  hasImage,
+  hasImgcut,
+  hasMamodel,
+  availableAnimations,
+  resolvedByCurrentResolver,
+  currentResolverAsset,
+  candidateAssetFiles,
+  failureReason
+}
+```
+
+The report must include all target IDs:
+
+```text
+388, 443, 609, 610, 611, 612, 613
+```
+
+and a summary of all enemies that are missing image/imgcut/model/required animations.
+
+### What to investigate
+
+Determine whether the failure is caused by one of these:
+
+- The enemy exists in BCU assets but `resolveEnemyAsset()` only checks too few pack locations or filename variants.
+- The enemy exists in semantic actor indexes but `BcuEnemyRepository` or `BcuStageEnemyResolver` does not use the semantic bundle correctly.
+- The enemy exists in stats/name data but does not have visual assets in the current asset set.
+- The enemy has image/imgcut but required `.maanim` or `.mamodel` is missing.
+- The enemy is excluded by an external missing/enemy error config.
+
+### Acceptance criteria
+
+- The audit script can be run with:
+
+```bash
+node scripts/audit-bcu-enemy-assets.mjs
+```
+
+- It explicitly reports the status of `388`, `443`, and `609`–`613`.
+- It identifies other enemies with the same missing-asset pattern.
+- No runtime code is changed until the audit explains the failure class.
+
+---
+
+## Task 2 — Fix enemy asset/icon resolution only after the audit
+
+### Goal
+
+Make enemy icons/assets resolve for enemies that genuinely have BCU assets, including `388` and `609`–`613` if assets exist.
+
+### Likely files
+
+- `js/bcu/BcuPathResolver.js`
+- `js/bcu/BcuEnemyRepository.js`
+- `js/battle/BcuStageEnemyResolver.js`
+- `js/bcu/SemanticAssetProvider.js` only if semantic actor lookup is incomplete
+- `js/bcu/BcuAssetDatabase.js` / asset repository only if `resolveEnemyAsset` is not forwarding data correctly
+
+### Fix rules
+
+- Prefer semantic bundle resolution over raw path guessing.
+- Generalize path resolution by scanning actual manifest/file entries. Do not assume only `000002` or `000010` contain enemy assets.
+- Support real BCU filename variants only if the audit proves they exist.
+- Preserve semantic-strict behavior. Do not use raw fallback for bundled assets unless current architecture explicitly permits it.
+- Keep diagnostics for missing image/imgcut/model/animations.
+
+### Required validation
+
+After fixing, rerun:
+
+```bash
+node scripts/audit-bcu-enemy-assets.mjs
+```
+
+The report must show that previously missing enemies with actual assets now resolve, and enemies without assets still report honest missing reasons.
+
+Also run syntax checks on changed modules:
+
+```bash
+node --check js/bcu/BcuPathResolver.js
+node --check js/bcu/BcuEnemyRepository.js
+node --check js/battle/BcuStageEnemyResolver.js
+```
+
+Only include files that exist and were changed.
+
+---
+
+## Task 3 — Audit why enemy `443` cannot spawn in stages
+
+### Goal
+
+Find the exact failure path for enemy `443` and any similar enemies.
+
+### Add diagnostic script
+
+Create:
+
+```text
+scripts/audit-stage-enemy-spawn.mjs
+```
+
+This script should locate stage rows containing enemy `443`. Remember that current stage parsing computes:
+
+```js
+rawEnemyId = CSV E column
+enemyId = rawEnemyId - 2
+```
+
+Therefore enemy `443` may appear as raw CSV enemy ID `445`.
+
+For each matching row, report:
+
+```js
+{
+  stageKey,
+  stagePath,
+  rawEnemyId,
+  enemyId,
+  rowIndex,
+  stageName,
+  enemyName,
+  hasStats,
+  hasAssetDef,
+  hasSemanticBundle,
+  preloadStatsOk,
+  renderCoreOk,
+  spawnReadyOk,
+  failurePhase,
+  failureMessage
+}
+```
+
+The script should also support arbitrary enemy IDs:
+
+```bash
+node scripts/audit-stage-enemy-spawn.mjs --enemy 443
+node scripts/audit-stage-enemy-spawn.mjs --enemy 388,609,610,611,612,613
+```
+
+### What to investigate
+
+Do not assume the bug is stage parsing. Determine whether failure is from:
+
+- wrong raw ID to enemy ID conversion,
+- missing enemy stats,
+- missing actor asset bundle,
+- missing required animation,
+- `BattleActorFactory.preloadTemplate()` failure,
+- `spawnStageEnemy()` repeatedly returning false because template never reaches `SPAWN_READY`,
+- group/max-enemy/kill-count conditions preventing spawn,
+- stage selector selecting a different stage than expected.
+
+### Acceptance criteria
+
+- The audit script identifies at least one stage row for enemy `443` if present in assets.
+- The script reports the exact failure phase.
+- Do not change `StageDefinitionLoader` or `BattleSceneBcuStageSpawnPatch` until this audit explains the cause.
+
+---
+
+## Task 4 — Fix stage enemy spawning without broad battle changes
+
+### Goal
+
+Enemies that have valid stats and assets should become spawnable in stages. Enemy `443` is the target case.
+
+### Likely files
+
+- `js/battle/BcuStageEnemyResolver.js`
+- `js/battle/BattleActorFactory.js`
+- `js/battle/BattleScene.js`
+- `js/battle/BattleSceneBcuStageSpawnPatch.js`
+- `js/battle/StageDefinitionLoader.js` only if the audit proves stage row interpretation is wrong
+
+### Fix rules
+
+- If the issue is asset/template preload, fix asset/template resolution, not spawn timing.
+- If the issue is missing required animation, confirm whether BCU uses a fallback animation or whether the asset set is incomplete.
+- If `spawnStageEnemy()` defers while template is loading, confirm the runtime retries and eventually spawns. If not, fix retry/commit behavior narrowly.
+- Do not bypass `SPAWN_READY` by spawning incomplete actors.
+- Do not suppress errors by making missing enemies invisible.
+
+### Required validation
+
+- Rerun:
+
+```bash
+node scripts/audit-stage-enemy-spawn.mjs --enemy 443
+```
+
+- In browser, select a stage that contains enemy `443` and confirm the debug events show either:
+  - `stageEnemySpawned` for enemy `443`, or
+  - a clear, correct rejection reason if assets are genuinely absent.
+
+Useful browser console checks:
+
+```js
+globalThis.__APP__?.battle?.debugEvents?.filter(e => String(e.enemyId) === '443' || String(e.rawEnemyId) === '445').slice(-20)
+globalThis.__APP__?.battle?.actorFactory?.templates
+```
+
+---
+
+## Task 5 — Fix formation catalog visual order changes while scrolling
+
+### Goal
+
+The formation character catalog must keep a stable order while virtualized scrolling loads/unloads cards.
+
+### Current suspect
+
+`FormationEditor.renderCatalogWindow()` renders spacer divs inside `.formation-catalog-grid` together with cards. In a CSS grid, spacer elements can participate as grid items unless they span all columns. This can make visible card order/layout appear to change while scrolling.
+
+### Likely files
+
+- `js/ui/FormationEditor.js`
+- `css/ui-polish.css`
+- `css/nyanko-formation-card-fix.css` or other formation CSS only if necessary
+
+### Required investigation
+
+In browser, compare these before and after scrolling:
+
+```js
+[...document.querySelectorAll('.formation-character-card')].map(el => [el.dataset.catalogIndex, el.dataset.character, el.querySelector('strong')?.textContent])
+globalThis.__FORMATION_ICON_DEBUG__?.lastRender
+```
+
+Check whether:
+
+- `catalogIndex` order is stable but visual grid position changes,
+- `catalogItems` itself is being reordered,
+- column estimation changes while scrolling,
+- row height is wrong enough to jump windows,
+- grid spacer elements are not full-width.
+
+### Preferred fixes
+
+Pick the smallest fix that matches the proven cause:
+
+1. If spacer grid items cause visual order changes, ensure spacers span all columns:
+
+```css
+.formation-catalog-spacer { grid-column: 1 / -1; }
+```
+
+or render spacers outside the card grid in a dedicated virtual window structure.
+
+2. If `catalogItems` order changes, make `getFilteredCharacters()` / caller preserve source order and never sort based on used/active state.
+
+3. If dynamic column changes cause window misalignment, stabilize column estimation or recalculate without changing item ordering.
+
+### Acceptance criteria
+
+- Scrolling down/up does not change the relative order of visible cards.
+- `data-catalog-index` increases in visual reading order.
+- Virtualization remains enabled.
+- No character identity changes for already rendered indices unless the search/filter changed.
+
+---
+
+## Task 6 — Fix catalog scroll reset when touching formation slots or selecting characters
+
+### Goal
+
+Interacting with formation slots or selecting a character should not reset the character catalog to the top.
+
+### Current suspect
+
+`FormationEditor.renderDynamic()` does:
+
+```js
+const scroller = this.root.querySelector('.formation-catalog-scroll');
+if (scroller) scroller.scrollTop = 0;
+```
+
+This is too broad.
+
+### Required implementation direction
+
+Prefer a direct change in `FormationEditor.js` over additional global DOM patches.
+
+Introduce an explicit scroll policy, for example:
+
+```js
+renderDynamic({ resetCatalogScroll = false } = {})
+```
+
+Then:
+
+- Search/filter changes may reset to top.
+- Slot focus changes must preserve scroll.
+- Character selection must preserve scroll.
+- Clear/reset formation should preserve scroll unless the catalog content itself changes.
+- Page switching should preserve scroll unless there is a UX reason to reset.
+
+If keeping compatibility with existing calls is easier, default `resetCatalogScroll` should be `false`, and only search/filter calls should pass `true`.
+
+Remove or simplify redundant scroll-preservation logic in `FormationEditorPerformancePatch.js` / `NyankoUiBehaviorPatch.js` after the direct fix, but only if safe.
+
+### Acceptance criteria
+
+Browser checks:
+
+```js
+const s = document.querySelector('.formation-catalog-scroll');
+s.scrollTop = 1200;
+// tap a formation slot
+s.scrollTop > 1000
+// tap a character card
+s.scrollTop > 1000
+```
+
+Search/filter may intentionally reset to top.
+
+---
+
+## Testing checklist
+
+Run syntax checks for every changed JS/MJS file. At minimum, if touched:
+
+```bash
+node --check js/ui/FormationEditor.js
+node --check js/ui/FormationEditorPerformancePatch.js
+node --check js/ui/NyankoUiBehaviorPatch.js
+node --check js/bcu/BcuPathResolver.js
+node --check js/bcu/BcuEnemyRepository.js
+node --check js/battle/BcuStageEnemyResolver.js
+node --check js/battle/BattleActorFactory.js
+node --check js/battle/BattleScene.js
+node --check js/battle/BattleSceneBcuStageSpawnPatch.js
+node --check scripts/audit-bcu-enemy-assets.mjs
+node --check scripts/audit-stage-enemy-spawn.mjs
+```
+
+Start the app in Codespaces:
+
+```bash
+python3 -m http.server 8000
+```
+
+Manual browser checks:
+
+1. Open formation screen.
+2. Scroll character list; verify order remains stable.
+3. Tap formation slots; verify catalog scroll does not jump to top.
+4. Tap character cards; verify catalog scroll does not jump to top.
+5. Open stage selector; verify category -> map -> stage hierarchy still works.
+6. Select a stage containing enemy `443`; run until spawn conditions; inspect debug events.
+7. Confirm target enemy icons/assets render for enemies with actual assets.
+
+---
+
+## Final response required from Codex
+
+When done, summarize:
+
+- Root cause for each issue.
+- Files changed.
+- Diagnostic scripts added and their outputs.
+- Exact tests/commands run.
+- Any remaining enemies that truly lack assets in the current asset set.
+- Any unresolved risks.
+
+Do not claim success for enemy `443` or missing icons unless the audit and runtime/browser checks prove it.

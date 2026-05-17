@@ -1,499 +1,556 @@
-# AGENTS.md — Codex task guide for enemy assets, stage enemy spawning, and formation UI stability
+# AGENTS.md — Codex task guide for complete enemy asset coverage and formation UI stability
 
 Repository: `rhgrive2/game`
 Target branch: `main`
 
 ## Purpose
 
-Investigate and fix the following reported issues without changing unrelated systems:
+Fix the remaining enemy asset/icon/spawn coverage problems across the full enemy set, not only the example IDs. Also keep the formation catalog virtualization and scroll behavior stable.
 
-1. Some enemy icons/assets are missing, including enemy IDs `388` and `609`–`613`; there are likely more.
-2. Some enemies cannot appear in stages, including enemy `443`; there are likely more.
-3. The formation character catalog changes visual order while scrolling because of the current virtualized DOM/list implementation.
-4. Touching formation slots or selecting characters can reset the character catalog scroll position to the top.
+User-reported examples are only examples:
 
-The work must be evidence-driven. Do not guess mappings or patch symptoms without proving the cause in the current repository.
+- `388` and `609`/`613` now work, but they rely on actor-bundle icon fallback rather than `enemy-icon.png` style aggregate icons.
+- `610`, `611`, `612` still fail in the UI with console errors such as:
+  - `Icon bundle file missing: enemy/610.png`
+  - `Icon bundle file missing: enemy/611.png`
+  - `Icon bundle file missing: enemy/612.png`
+- `560` and `699` still do not appear/spawn correctly in some contexts.
+- There are more affected enemies than the examples.
 
----
-
-## Strict scope rules
-
-### Allowed
-
-- Add diagnostic scripts under `scripts/`.
-- Add small, focused runtime diagnostics where needed.
-- Fix enemy asset resolution if the resolver is too narrow or ignores semantic bundle metadata.
-- Fix stage enemy spawn only after reproducing the exact rejection path.
-- Fix formation catalog virtualization/scroll preservation in `js/ui/FormationEditor.js` and closely related UI patch files.
-- Add CSS only if needed for the virtual grid/spacer layout.
-
-### Avoid unless the failing test proves it is necessary
-
-- Changing battle damage, proc, knockback, animation timing, movement, camera, economy, or base logic.
-- Changing CSV stage parsing column semantics.
-- Changing the meaning of BCU enemy IDs or applying global off-by-one transforms.
-- Adding hard-coded one-off enemy remaps for `388`, `443`, `609`–`613` without proving BCU itself uses that mapping.
-- Rewriting `BattleScene`, `BattleActorFactory`, `StageDefinitionLoader`, or `SemanticAssetProvider` wholesale.
-
-### Never do in this task
-
-- Do not hide failures by silently replacing missing enemies with dummy actors.
-- Do not remove semantic-strict safety checks to make a spawn succeed.
-- Do not disable virtual scrolling entirely unless you prove it is the only viable fix and document the performance cost.
-- Do not make unrelated visual/UI redesigns.
-- Do not touch stage selector category UI unless directly broken by this work.
+The goal is complete coverage for every enemy that has real usable data/assets in the current repository. Do not hard-code only the mentioned IDs.
 
 ---
 
-## Current code facts to verify before editing
+## Current evidence from the repository
 
-These facts are from the current code and should be rechecked locally before making changes.
+### Existing audit output
 
-### Enemy asset resolution
+`tmp/enemy-asset-audit.md` currently reports:
 
-- `BcuEnemyRepository.build()` iterates `manifest.indexes.enemyIds`, computes `enemyId`, uses `resolveEnemyAsset(files, enemyId)`, and records missing assets when image/imgcut are absent.
-- `BcuEnemyRepository.fromCoreDb()` builds enemies from `coreDb.enemies.enemies` and preserves `record.asset` if present.
-- `BcuPathResolver.resolveEnemyAsset(files, enemyId)` currently looks for paths ending in `/org/enemy/${id3}/${id3}_e.png`, then tries base directories such as `000002` and `000010`.
-- `BcuStageEnemyResolver.buildBcuEnemyAssetDef(enemyId)` first tries `db.assets.resolveEnemyAsset(enemyId)`, then semantic actor index `enemy:${enemyId}`, then a raw-path fallback under `000002`.
+- `enemiesAudited: 778`
+- `missingStats: 0`
+- `missingSemanticActorEntry: 0`
+- `semanticNotFull: 28`
+- `runtimeBundleUsable: 757`
+- `missingUiIcon: 3`
+- `missingRequiredAnimation: 3`
+- `problemEnemies: 21`
 
-### Stage enemy ID resolution and spawning
+The target table currently says:
 
-- `StageDefinitionLoader.parse()` reads stage enemy rows and computes `enemyId = rawEnemyId - 2`.
-- `buildStageEnemyUnitDef(row)` uses `row.enemyId` as `statsId` and builds the actor asset definition through `buildBcuEnemyAssetDef(row.enemyId)`.
-- `BattleScene.spawnStageEnemy()` returns false and emits `stageEnemySpawnDeferred` when the actor template is not `SPAWN_READY` or `FULL_VISUAL`.
-- `BattleActorFactory.preloadTemplate()` can fail because stats are missing, render core assets are missing, or required animations are missing.
+- `388`: ok, UI icon source `actor-bundle-icon-fallback`
+- `443`: ok
+- `609`: ok
+- `610`: `semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing`
+- `611`: `semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing`
+- `612`: `semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing`
+- `613`: ok, UI icon source `actor-bundle-icon-fallback`
 
-### Formation catalog virtualization and scroll reset
+The report lists these remaining problem enemies at minimum:
 
-- `FormationEditor.renderDynamic()` currently does `scroller.scrollTop = 0` before `renderCatalogWindow()`.
-- `FormationEditor.renderCatalogWindow()` renders a top spacer, a slice of `catalogItems`, and a bottom spacer into `.formation-catalog-grid`.
-- The spacer elements are grid children. If they are not full-width grid rows, they can disturb visual ordering in a CSS grid.
-- `FormationEditorPerformancePatch.js` currently preserves scroll only for some character interactions. Prefer a direct, explicit fix in `FormationEditor.js` if possible.
+```text
+478, 552, 554, 556, 560, 561, 562, 585, 586, 587, 588, 589, 590, 591, 610, 611, 612, 698, 699, 700, 701
+```
+
+Do not assume this list is exhaustive unless the latest audit confirms it.
+
+### Current icon-loading path
+
+`FormationEditor.renderIconMarkup()` emits:
+
+```html
+<img data-semantic-icon="..." class="image-missing">
+```
+
+`FormationEditor.scheduleIconLoad()` calls:
+
+```js
+provider.getActorUiIconUrl(key)
+```
+
+and currently logs every failure as `console.error('[FormationEditor] icon load failed detail', ...)`.
+
+`SemanticAssetProvider.getActorUiIconUrl()` calls `readIconBundle()`. `readIconBundle()` currently tries:
+
+1. explicit icon index entry, if present,
+2. inferred aggregate icon entry, e.g. `public/assets/bundles/icon/enemy.zip` + `enemy/610.png`,
+3. actor-bundle fallback only for some missing inferred entries.
+
+For `610/611/612`, the UI failure shows the aggregate icon entry is inferred but the zip entry is missing.
+
+### Current actor asset-loading path
+
+`BcuStageEnemyResolver.buildBcuEnemyAssetDef(enemyId)` tries:
+
+1. `db.assets.resolveEnemyAsset(enemyId)`
+2. semantic actor entry `enemy:${enemyId}`
+3. raw path fallback under `000002`
+
+`BcuAssetLoader.tryLoadSemanticActor()` requires a semantic actor entry with bundleRef and `provider.hasBundleForKey(def.semanticKey)` unless raw fallback is allowed. It then reads `image.png`, `imgcut.imgcut`, `model.mamodel` and required animation files.
+
+`SemanticAssetProvider.hasBundleForKey()` checks the bundle manifest and has a special tolerance for invalid actor entries only when `isRuntimeUsableActorBundleEntry(entry)` returns true.
+
+---
+
+## Non-negotiable constraints
+
+### Do not make narrow ID hacks
+
+Do not add special cases like:
+
+```js
+if (enemyId === 610) ...
+```
+
+unless the exact same rule is applied generically to all enemies with the same proven asset pattern.
+
+### Do not fake success
+
+- Do not replace broken enemies with dummy actors.
+- Do not make invisible placeholders count as success.
+- Do not hide missing asset errors by returning a random generic icon while the actor cannot render.
+- Do not bypass semantic-strict globally.
+- Do not remove `StageDefinitionLoader` or `BattleActorFactory` safety checks.
+
+### Keep battle logic stable
+
+Avoid battle damage/proc/knockback/timing/camera/economy/base changes unless the audit proves the issue is there. For `560/699`, first prove whether failure is asset/template/spawn-ready related before touching spawn timing.
 
 ---
 
 ## Required workflow
 
-Work in small commits. For each issue:
+Work in small commits.
 
-1. Reproduce or prove the cause with a script, log, or focused browser check.
-2. Make the smallest targeted fix.
-3. Run syntax checks and the relevant diagnostic script again.
-4. Record what changed and why in the final response.
+For each fix:
 
-Recommended branch name:
+1. Run/extend diagnostics.
+2. Prove the failure class.
+3. Implement the smallest general fix.
+4. Rerun diagnostics.
+5. Run syntax checks.
+6. Browser-check at least one representative enemy from each failure class.
+
+Recommended branch:
 
 ```bash
-git checkout -b fix/enemy-assets-stage-spawn-formation-scroll
+git checkout -b fix/complete-enemy-asset-coverage
 ```
-
-There may be no `package.json`; do not assume npm scripts exist. Prefer direct `node` scripts and `python3 -m http.server 8000` for browser testing.
 
 ---
 
-## Task 1 — Audit enemy asset coverage before fixing icons
+## Task 1 — Upgrade the enemy asset audit to classify all remaining failures precisely
 
-### Goal
-
-Find why enemy icons/assets are missing for `388`, `609`, `610`, `611`, `612`, `613`, and discover other enemies with the same failure mode.
-
-### Add diagnostic script
-
-Create:
+### File
 
 ```text
 scripts/audit-bcu-enemy-assets.mjs
 ```
 
-The script should inspect whichever sources exist in the repo:
+### Required improvements
 
-- `public/assets/core-db.json` or the core DB reachable through current project files, if present.
-- `public/assets/bcu/**/org/enemy/**`, if present.
-- `public/assets/bcu-manifest.json`, if present.
-- `public/assets/semantic-index*.json` or semantic provider index files, if present.
-- `asset-files.txt`, if assets are represented only by a file list.
-- Existing generated reports under `tmp/` only as secondary hints, not as source of truth.
+The current audit is useful but not detailed enough for remaining failures. Extend it so every enemy has separated status for these layers:
 
-The script must output:
+```js
+{
+  enemyId,
+  id3,
+
+  // data layer
+  hasStats,
+  hasName,
+  hasSemanticActorEntry,
+  semanticStatus,
+
+  // actor bundle layer
+  actorBundlePath,
+  actorBundleExistsOnDisk,
+  actorBundleInManifest,
+  actorBundleArchiveReadable,
+  actorBundleEntries,
+  actorBundleHasImage,
+  actorBundleHasImgcut,
+  actorBundleHasModel,
+  actorBundleHasMove,
+  actorBundleHasIdle,
+  actorBundleHasAttack,
+  actorBundleHasKb,
+  actorBundleImageDecodeOk,
+  actorBundleImageProblem,
+  actorBundleRuntimeUsable,
+
+  // aggregate UI icon layer
+  aggregateIconBundlePath,
+  aggregateIconInternalPath,
+  aggregateIconZipReadable,
+  aggregateIconEntryExists,
+  aggregateIconDecodeOk,
+
+  // explicit icon-index layer
+  explicitIconEntry,
+  explicitIconBundlePath,
+  explicitIconInternalPath,
+  explicitIconEntryExists,
+  explicitIconDecodeOk,
+
+  // fallback layer
+  actorBundleIconFallbackAvailable,
+  chosenUiIconSource,
+
+  // runtime resolver layer
+  bcuPathResolverResolved,
+  bcuStageEnemyResolverWouldResolve,
+  preloadStatsOk,
+  renderCoreOk,
+  spawnReadyOk,
+
+  failureClass,
+  failureReason
+}
+```
+
+### Failure classes to use
+
+Use deterministic failure classes, not loose strings:
+
+```text
+ok
+ui-icon-aggregate-missing-but-actor-fallback-ok
+ui-icon-missing-no-actor-fallback
+actor-bundle-not-in-manifest-but-file-exists
+actor-bundle-file-missing
+actor-bundle-bad-zip
+actor-image-decode-failed
+actor-image-bad-signature-or-trailing-bytes
+actor-imgcut-missing
+actor-model-missing
+actor-animation-missing
+semantic-invalid-but-runtime-usable
+semantic-invalid-not-runtime-usable
+semantic-partial-not-runtime-usable
+resolver-mismatch
+unknown
+```
+
+### Required output
+
+Continue writing:
 
 ```text
 tmp/enemy-asset-audit.json
 tmp/enemy-asset-audit.md
 ```
 
-Minimum report fields per enemy:
+Add a new summary table grouped by `failureClass`.
 
-```js
-{
-  enemyId,
-  id3,
-  hasStats,
-  hasName,
-  hasSemanticActorEntry,
-  semanticKey,
-  bundleRef,
-  hasImage,
-  hasImgcut,
-  hasMamodel,
-  availableAnimations,
-  resolvedByCurrentResolver,
-  currentResolverAsset,
-  candidateAssetFiles,
-  failureReason
-}
-```
+### Important
 
-The report must include all target IDs:
-
-```text
-388, 443, 609, 610, 611, 612, 613
-```
-
-and a summary of all enemies that are missing image/imgcut/model/required animations.
-
-### What to investigate
-
-Determine whether the failure is caused by one of these:
-
-- The enemy exists in BCU assets but `resolveEnemyAsset()` only checks too few pack locations or filename variants.
-- The enemy exists in semantic actor indexes but `BcuEnemyRepository` or `BcuStageEnemyResolver` does not use the semantic bundle correctly.
-- The enemy exists in stats/name data but does not have visual assets in the current asset set.
-- The enemy has image/imgcut but required `.maanim` or `.mamodel` is missing.
-- The enemy is excluded by an external missing/enemy error config.
-
-### Acceptance criteria
-
-- The audit script can be run with:
-
-```bash
-node scripts/audit-bcu-enemy-assets.mjs
-```
-
-- It explicitly reports the status of `388`, `443`, and `609`–`613`.
-- It identifies other enemies with the same missing-asset pattern.
-- No runtime code is changed until the audit explains the failure class.
+The audit must include all 778 enemies, not just target IDs. The examples `388, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699` must be present in the target section.
 
 ---
 
-## Task 2 — Fix enemy asset/icon resolution only after the audit
+## Task 2 — Determine whether bundle zip files are truly missing or only omitted from the manifest
+
+### Problem
+
+The current report says many enemies are `semantic-status-invalid, bundle-not-in-manifest`, including `560` and `699`. This does not prove the zip file is absent. It may mean:
+
+1. the bundle zip exists but is omitted from `bcu-bundle-manifest.json`,
+2. the zip exists but has bad signatures / decode problems,
+3. the generated actor index rejected it too aggressively,
+4. the raw BCU source files exist but no generated bundle exists,
+5. the source files themselves are absent.
+
+### Required investigation
+
+For every remaining problem enemy, inspect:
+
+- `public/assets/bundles/actor/...` for an actor bundle zip,
+- `public/assets/generated/bcu-actor-index.json`,
+- `public/assets/generated/bcu-bundle-manifest.json`,
+- `public/assets/generated/bcu-icon-index.json`,
+- `public/assets/bundles/icon/enemy.zip`,
+- raw source paths if available in diagnostics/sourceCandidates.
+
+Add a report section:
+
+```text
+Remaining Problem Enemy Root Cause Matrix
+```
+
+with columns:
+
+```text
+enemyId | actor bundle exists | in manifest | archive ok | all runtime files | image decode | icon source possible | root cause | recommended fix
+```
+
+---
+
+## Task 3 — Fix UI icons for every enemy with a valid actor image
 
 ### Goal
 
-Make enemy icons/assets resolve for enemies that genuinely have BCU assets, including `388` and `609`–`613` if assets exist.
+Every enemy with a valid actor image should get a usable formation/catalog UI icon. Do not require `enemy.zip` aggregate icons to contain every enemy if actor-bundle image fallback is available.
 
 ### Likely files
 
-- `js/bcu/BcuPathResolver.js`
-- `js/bcu/BcuEnemyRepository.js`
-- `js/battle/BcuStageEnemyResolver.js`
-- `js/bcu/SemanticAssetProvider.js` only if semantic actor lookup is incomplete
-- `js/bcu/BcuAssetDatabase.js` / asset repository only if `resolveEnemyAsset` is not forwarding data correctly
+- `js/bcu/SemanticAssetProvider.js`
+- `js/ui/FormationEditor.js`
+- generated icon/bundle files only if a generator exists and needs rerun
+
+### Required behavior
+
+`provider.getActorUiIconUrl('enemy:N')` should choose the best available source in this order:
+
+1. explicit icon index entry if valid,
+2. aggregate icon bundle entry if valid,
+3. actor bundle `icon.png` if present,
+4. actor bundle `image.png` if present and decodable,
+5. optionally generated runtime object URL from actor image if valid.
+
+If 1 or 2 is missing, do not immediately log a user-visible error if 3/4 succeeds.
+
+For enemies such as `388`, `613`, `695`, `696`, `697`, using actor-bundle fallback is acceptable if aggregate `enemy.zip` lacks icons. But the chosen fallback should be reported as `actor-bundle-icon-fallback` or `actor-bundle-image-fallback` in diagnostics.
+
+### Console behavior
+
+Formation UI should not spam `console.error` for expected missing aggregate icon entries when a fallback succeeds or when the enemy is known unresolved. Use one of:
+
+- no log for successful fallback,
+- `console.warn` once per semantic key for unresolved but non-fatal icon absence,
+- keep `console.error` only for unexpected exceptions.
+
+### Acceptance criteria
+
+- `610/611/612` no longer produce repeated red console errors merely because `enemy/610.png` etc. are missing from aggregate icon zip.
+- If their actor bundles are not runtime-usable, they should show a clear fallback/missing visual and one diagnostic entry, not repeated errors.
+- All enemies with valid actor-bundle image/icon get visible UI icons.
+- Rerun `node scripts/audit-bcu-enemy-assets.mjs` and reduce `missingUiIcon` to only enemies with truly no usable actor image/icon.
+
+---
+
+## Task 4 — Fix actor bundle manifest/index coverage for enemies with real usable bundles
+
+### Goal
+
+Enemies such as `560` and `699` should not fail just because generated indexes or manifests omitted an otherwise valid actor bundle.
+
+### Required investigation
+
+Find whether a build/generation script exists for:
+
+- `public/assets/generated/bcu-actor-index.json`
+- `public/assets/generated/bcu-bundle-manifest.json`
+- `public/assets/bundles/actor/...`
+- `public/assets/bundles/icon/...`
+
+If there is no generator in this repo, create a focused repair script under `scripts/` that:
+
+1. scans actual actor bundle zip files,
+2. validates required entries,
+3. validates image decode as far as Node/browser tooling permits,
+4. safely adds usable bundles to a generated repair report,
+5. optionally patches generated manifest/index only when invoked with `--apply`.
+
+Suggested script:
+
+```text
+scripts/repair-bcu-actor-bundle-index.mjs
+```
+
+Default mode must be dry-run:
+
+```bash
+node scripts/repair-bcu-actor-bundle-index.mjs
+node scripts/repair-bcu-actor-bundle-index.mjs --apply
+```
 
 ### Fix rules
 
-- Prefer semantic bundle resolution over raw path guessing.
-- Generalize path resolution by scanning actual manifest/file entries. Do not assume only `000002` or `000010` contain enemy assets.
-- Support real BCU filename variants only if the audit proves they exist.
-- Preserve semantic-strict behavior. Do not use raw fallback for bundled assets unless current architecture explicitly permits it.
-- Keep diagnostics for missing image/imgcut/model/animations.
+- If a bundle zip exists and contains all runtime files, but is omitted from the manifest only because of tolerable image warnings such as trailing bytes, add a generic tolerance rule. Do not special-case IDs.
+- If a bundle image cannot decode in browser, do not add it to runtime usable. Instead report it as requiring asset regeneration/decode repair.
+- If source files exist but bundle zip is missing, generate or rebuild the bundle only if existing repo conventions support it. Otherwise report the exact missing generation step.
+- If raw source files are absent, leave the enemy unresolved and report it.
 
-### Required validation
+### Acceptance criteria
 
-After fixing, rerun:
+After fixes:
 
 ```bash
 node scripts/audit-bcu-enemy-assets.mjs
 ```
 
-The report must show that previously missing enemies with actual assets now resolve, and enemies without assets still report honest missing reasons.
+must show:
 
-Also run syntax checks on changed modules:
-
-```bash
-node --check js/bcu/BcuPathResolver.js
-node --check js/bcu/BcuEnemyRepository.js
-node --check js/battle/BcuStageEnemyResolver.js
-```
-
-Only include files that exist and were changed.
+- no enemies in `actor-bundle-not-in-manifest-but-file-exists` if their bundle is otherwise usable,
+- `560` and `699` either become runtime usable, or have a precise non-fixable reason such as `actor-image-decode-failed` or `actor-bundle-file-missing`,
+- no broad semantic-strict bypass.
 
 ---
 
-## Task 3 — Audit why enemy `443` cannot spawn in stages
+## Task 5 — Recheck stage spawning for all remaining problem enemies, not only 443
 
-### Goal
-
-Find the exact failure path for enemy `443` and any similar enemies.
-
-### Add diagnostic script
-
-Create:
+### File
 
 ```text
 scripts/audit-stage-enemy-spawn.mjs
 ```
 
-This script should locate stage rows containing enemy `443`. Remember that current stage parsing computes:
+### Required improvement
 
-```js
-rawEnemyId = CSV E column
-enemyId = rawEnemyId - 2
+The stage-spawn audit must accept:
+
+```bash
+node scripts/audit-stage-enemy-spawn.mjs --enemy all-problem
+node scripts/audit-stage-enemy-spawn.mjs --enemy 560,699,610,611,612
 ```
 
-Therefore enemy `443` may appear as raw CSV enemy ID `445`.
+`all-problem` should read the latest `tmp/enemy-asset-audit.json` and test all enemies whose `failureClass !== 'ok'` plus all user examples.
 
-For each matching row, report:
+For every target enemy, report:
 
 ```js
 {
-  stageKey,
-  stagePath,
-  rawEnemyId,
   enemyId,
-  rowIndex,
-  stageName,
-  enemyName,
-  hasStats,
-  hasAssetDef,
-  hasSemanticBundle,
-  preloadStatsOk,
-  renderCoreOk,
-  spawnReadyOk,
-  failurePhase,
-  failureMessage
+  rawEnemyId,
+  rowsFound,
+  stagesFound,
+  spawnReadyRows,
+  failedRows,
+  failurePhases,
+  representativeRows
 }
 ```
 
-The script should also support arbitrary enemy IDs:
-
-```bash
-node scripts/audit-stage-enemy-spawn.mjs --enemy 443
-node scripts/audit-stage-enemy-spawn.mjs --enemy 388,609,610,611,612,613
-```
-
-### What to investigate
-
-Do not assume the bug is stage parsing. Determine whether failure is from:
-
-- wrong raw ID to enemy ID conversion,
-- missing enemy stats,
-- missing actor asset bundle,
-- missing required animation,
-- `BattleActorFactory.preloadTemplate()` failure,
-- `spawnStageEnemy()` repeatedly returning false because template never reaches `SPAWN_READY`,
-- group/max-enemy/kill-count conditions preventing spawn,
-- stage selector selecting a different stage than expected.
-
 ### Acceptance criteria
 
-- The audit script identifies at least one stage row for enemy `443` if present in assets.
-- The script reports the exact failure phase.
-- Do not change `StageDefinitionLoader` or `BattleSceneBcuStageSpawnPatch` until this audit explains the cause.
+- `443` remains `spawnReadyRows > 0` and `failedRows = 0`.
+- `560` and `699` are explicitly reported with either spawn-ready success or exact failure phase.
+- Any enemies still impossible to spawn have a reason that traces back to data/asset/index state.
 
 ---
 
-## Task 4 — Fix stage enemy spawning without broad battle changes
+## Task 6 — Browser runtime validation for representative enemies
 
-### Goal
+### Required manual checks
 
-Enemies that have valid stats and assets should become spawnable in stages. Enemy `443` is the target case.
-
-### Likely files
-
-- `js/battle/BcuStageEnemyResolver.js`
-- `js/battle/BattleActorFactory.js`
-- `js/battle/BattleScene.js`
-- `js/battle/BattleSceneBcuStageSpawnPatch.js`
-- `js/battle/StageDefinitionLoader.js` only if the audit proves stage row interpretation is wrong
-
-### Fix rules
-
-- If the issue is asset/template preload, fix asset/template resolution, not spawn timing.
-- If the issue is missing required animation, confirm whether BCU uses a fallback animation or whether the asset set is incomplete.
-- If `spawnStageEnemy()` defers while template is loading, confirm the runtime retries and eventually spawns. If not, fix retry/commit behavior narrowly.
-- Do not bypass `SPAWN_READY` by spawning incomplete actors.
-- Do not suppress errors by making missing enemies invisible.
-
-### Required validation
-
-- Rerun:
-
-```bash
-node scripts/audit-stage-enemy-spawn.mjs --enemy 443
-```
-
-- In browser, select a stage that contains enemy `443` and confirm the debug events show either:
-  - `stageEnemySpawned` for enemy `443`, or
-  - a clear, correct rejection reason if assets are genuinely absent.
-
-Useful browser console checks:
-
-```js
-globalThis.__APP__?.battle?.debugEvents?.filter(e => String(e.enemyId) === '443' || String(e.rawEnemyId) === '445').slice(-20)
-globalThis.__APP__?.battle?.actorFactory?.templates
-```
-
----
-
-## Task 5 — Fix formation catalog visual order changes while scrolling
-
-### Goal
-
-The formation character catalog must keep a stable order while virtualized scrolling loads/unloads cards.
-
-### Current suspect
-
-`FormationEditor.renderCatalogWindow()` renders spacer divs inside `.formation-catalog-grid` together with cards. In a CSS grid, spacer elements can participate as grid items unless they span all columns. This can make visible card order/layout appear to change while scrolling.
-
-### Likely files
-
-- `js/ui/FormationEditor.js`
-- `css/ui-polish.css`
-- `css/nyanko-formation-card-fix.css` or other formation CSS only if necessary
-
-### Required investigation
-
-In browser, compare these before and after scrolling:
-
-```js
-[...document.querySelectorAll('.formation-character-card')].map(el => [el.dataset.catalogIndex, el.dataset.character, el.querySelector('strong')?.textContent])
-globalThis.__FORMATION_ICON_DEBUG__?.lastRender
-```
-
-Check whether:
-
-- `catalogIndex` order is stable but visual grid position changes,
-- `catalogItems` itself is being reordered,
-- column estimation changes while scrolling,
-- row height is wrong enough to jump windows,
-- grid spacer elements are not full-width.
-
-### Preferred fixes
-
-Pick the smallest fix that matches the proven cause:
-
-1. If spacer grid items cause visual order changes, ensure spacers span all columns:
-
-```css
-.formation-catalog-spacer { grid-column: 1 / -1; }
-```
-
-or render spacers outside the card grid in a dedicated virtual window structure.
-
-2. If `catalogItems` order changes, make `getFilteredCharacters()` / caller preserve source order and never sort based on used/active state.
-
-3. If dynamic column changes cause window misalignment, stabilize column estimation or recalculate without changing item ordering.
-
-### Acceptance criteria
-
-- Scrolling down/up does not change the relative order of visible cards.
-- `data-catalog-index` increases in visual reading order.
-- Virtualization remains enabled.
-- No character identity changes for already rendered indices unless the search/filter changed.
-
----
-
-## Task 6 — Fix catalog scroll reset when touching formation slots or selecting characters
-
-### Goal
-
-Interacting with formation slots or selecting a character should not reset the character catalog to the top.
-
-### Current suspect
-
-`FormationEditor.renderDynamic()` does:
-
-```js
-const scroller = this.root.querySelector('.formation-catalog-scroll');
-if (scroller) scroller.scrollTop = 0;
-```
-
-This is too broad.
-
-### Required implementation direction
-
-Prefer a direct change in `FormationEditor.js` over additional global DOM patches.
-
-Introduce an explicit scroll policy, for example:
-
-```js
-renderDynamic({ resetCatalogScroll = false } = {})
-```
-
-Then:
-
-- Search/filter changes may reset to top.
-- Slot focus changes must preserve scroll.
-- Character selection must preserve scroll.
-- Clear/reset formation should preserve scroll unless the catalog content itself changes.
-- Page switching should preserve scroll unless there is a UX reason to reset.
-
-If keeping compatibility with existing calls is easier, default `resetCatalogScroll` should be `false`, and only search/filter calls should pass `true`.
-
-Remove or simplify redundant scroll-preservation logic in `FormationEditorPerformancePatch.js` / `NyankoUiBehaviorPatch.js` after the direct fix, but only if safe.
-
-### Acceptance criteria
-
-Browser checks:
-
-```js
-const s = document.querySelector('.formation-catalog-scroll');
-s.scrollTop = 1200;
-// tap a formation slot
-s.scrollTop > 1000
-// tap a character card
-s.scrollTop > 1000
-```
-
-Search/filter may intentionally reset to top.
-
----
-
-## Testing checklist
-
-Run syntax checks for every changed JS/MJS file. At minimum, if touched:
-
-```bash
-node --check js/ui/FormationEditor.js
-node --check js/ui/FormationEditorPerformancePatch.js
-node --check js/ui/NyankoUiBehaviorPatch.js
-node --check js/bcu/BcuPathResolver.js
-node --check js/bcu/BcuEnemyRepository.js
-node --check js/battle/BcuStageEnemyResolver.js
-node --check js/battle/BattleActorFactory.js
-node --check js/battle/BattleScene.js
-node --check js/battle/BattleSceneBcuStageSpawnPatch.js
-node --check scripts/audit-bcu-enemy-assets.mjs
-node --check scripts/audit-stage-enemy-spawn.mjs
-```
-
-Start the app in Codespaces:
+After implementing fixes, run:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Manual browser checks:
+In browser console, check icons and spawn events.
 
-1. Open formation screen.
-2. Scroll character list; verify order remains stable.
-3. Tap formation slots; verify catalog scroll does not jump to top.
-4. Tap character cards; verify catalog scroll does not jump to top.
-5. Open stage selector; verify category -> map -> stage hierarchy still works.
-6. Select a stage containing enemy `443`; run until spawn conditions; inspect debug events.
-7. Confirm target enemy icons/assets render for enemies with actual assets.
+### Icon checks
+
+Open formation screen and inspect:
+
+```js
+globalThis.__FORMATION_ICON_DEBUG__?.recentIconFailures
+globalThis.__BCU_DB__?.semanticProvider?.diagnostics?.inferredIconEntries?.slice(-30)
+```
+
+Confirm these examples:
+
+```text
+388, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699
+```
+
+Each must be one of:
+
+- visible with explicit icon,
+- visible with aggregate icon,
+- visible with actor-bundle fallback,
+- intentionally unresolved with precise reason.
+
+### Spawn checks
+
+For stages containing target enemies, inspect:
+
+```js
+globalThis.__APP__?.battle?.debugEvents
+  ?.filter(e => ['560','699','443','610','611','612'].includes(String(e.enemyId)) || ['562','701','445','612','613','614'].includes(String(e.rawEnemyId)))
+  ?.slice(-50)
+```
+
+Also inspect template failures:
+
+```js
+[...globalThis.__APP__?.battle?.actorFactory?.templates?.entries?.() || []]
+  .filter(([key]) => /enemy-(560|699|443|610|611|612)/.test(key))
+```
+
+Do not claim a live spawn fix unless a `stageEnemySpawned` event or equivalent actor/template state proves it.
+
+---
+
+## Task 7 — Keep formation catalog virtualization stable
+
+The previous work changed `FormationEditor.js` so spacer elements include inline `grid-column:1/-1`. Keep and verify this behavior.
+
+Required checks:
+
+```js
+[...document.querySelectorAll('.formation-character-card')]
+  .map(el => [Number(el.dataset.catalogIndex), el.dataset.character, el.querySelector('strong')?.textContent])
+```
+
+Acceptance:
+
+- Visual order does not change while scrolling.
+- `catalogIndex` increases in visual reading order.
+- Tapping formation slots does not reset `.formation-catalog-scroll.scrollTop` to 0.
+- Tapping character cards does not reset scroll to 0.
+- Search/filter may reset scroll intentionally.
+
+Do not redesign the formation UI in this task.
+
+---
+
+## Testing checklist
+
+Run syntax checks for changed JS/MJS files, for example:
+
+```bash
+node --check scripts/audit-bcu-enemy-assets.mjs
+node --check scripts/audit-stage-enemy-spawn.mjs
+node --check scripts/repair-bcu-actor-bundle-index.mjs
+node --check js/bcu/SemanticAssetProvider.js
+node --check js/bcu/BcuAssetLoader.js
+node --check js/bcu/BcuPathResolver.js
+node --check js/bcu/BcuEnemyRepository.js
+node --check js/battle/BcuStageEnemyResolver.js
+node --check js/battle/BattleActorFactory.js
+node --check js/ui/FormationEditor.js
+```
+
+Only check files that exist and/or were changed.
+
+Run diagnostics:
+
+```bash
+node scripts/audit-bcu-enemy-assets.mjs
+node scripts/audit-stage-enemy-spawn.mjs --enemy 443
+node scripts/audit-stage-enemy-spawn.mjs --enemy 560,699,610,611,612
+node scripts/audit-stage-enemy-spawn.mjs --enemy all-problem
+```
+
+Browser validation is required before claiming live success.
 
 ---
 
 ## Final response required from Codex
 
-When done, summarize:
+When done, report:
 
-- Root cause for each issue.
-- Files changed.
-- Diagnostic scripts added and their outputs.
-- Exact tests/commands run.
-- Any remaining enemies that truly lack assets in the current asset set.
-- Any unresolved risks.
+1. Root cause classes found.
+2. Exact enemy IDs still unresolved and why.
+3. Whether unresolved enemies lack source assets, have bad zips, bad PNG decode, missing animations, or merely missing aggregate icons.
+4. Files changed.
+5. Scripts added/updated.
+6. Commands run.
+7. Browser checks performed.
+8. Whether `560`, `699`, `610`, `611`, `612`, `695`, `696`, `697` are visible/spawnable or intentionally unresolved.
 
-Do not claim success for enemy `443` or missing icons unless the audit and runtime/browser checks prove it.
+Do not say “all fixed” unless the full audit and browser checks prove it.

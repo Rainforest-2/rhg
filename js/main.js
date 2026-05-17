@@ -16,6 +16,7 @@ function hideBootStatus() {
 async function boot() {
   try {
     showBootStatus('BCU asset database loading...');
+    await import('./battle/bcu-runtime/BcuTraceRuntime.js');
     await import('./battle/BattleBcuStrictConfigPatch.js');
     await import('./battle/StageDefinitionNegativeSpawnPatch.js');
     await import('./battle/BattleActorBcuKbTargetPatch.js');
@@ -26,6 +27,9 @@ async function boot() {
     await import('./battle/BattleDeterministicRandomPatch.js');
     await import('./battle/BattleWaveRuntimePatch.js');
     await import('./battle/BattleSurgeRuntimePatch.js');
+    await import('./battle/BattleSceneBcuWaveRuntimePatch.js');
+    await import('./battle/BattleSceneBcuSurgeRuntimePatch.js');
+    await import('./battle/BattleSceneBcuStageBasisOrderPatch.js');
     await import('./battle/BattleSceneStageRuntimeWiring.js');
     await import('./battle/BattleSceneRendererOrderPatch.js');
     await import('./battle/BattleSceneUnitLayerPatch.js');
@@ -35,7 +39,10 @@ async function boot() {
     await import('./battle/BattleSceneStageSpawnHeaderPatch.js');
     await import('./battle/BattleSceneBcuAttackPhasePatch.js');
     await import('./battle/BattleSceneProcApplyPatch.js');
+    await import('./battle/BattleSceneBcuProcRuntimePatch.js');
+    await import('./battle/BattleSceneBcuStatusIconPatch.js');
     await import('./battle/BattleSceneBcuTouchPatch.js');
+    await import('./battle/BattleSceneBcuMobileInputPatch.js');
     await import('./battle/BattleSceneBcuStageBasisTickPatch.js');
     await import('./battle/BcuKnockbackRuntimePatch.js');
     await import('./battle/BcuKnockbackProcPriorityPatch.js');

@@ -48,7 +48,7 @@ export class ProcResolver {
       warp: { key: 'warp', category: 'state', implemented: false, pendingSupported: true, pendingType: 'state', target: 'actor' },
       curse: { key: 'curse', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       seal: { key: 'seal', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
-      toxic: { key: 'toxic', category: 'state', implemented: false, pendingSupported: true, pendingType: 'state', target: 'actor' },
+      toxic: { key: 'toxic', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       wave: { key: 'wave', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
       miniWave: { key: 'miniWave', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
       surge: { key: 'surge', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },

@@ -310,7 +310,7 @@ export class BattleActor {
   resolveKnockbackDistancePx(kb = {}, tuning = {}) {
     if (Number.isFinite(kb.distancePx)) return { distancePx: kb.distancePx, source: 'explicit-distancePx', scale: null };
     if (Number.isFinite(kb.bcuDistance)) return { distancePx: convertBcuDistanceToWorld(kb.bcuDistance, tuning), source: 'bcuDistance(world)', scale: 1 };
-    return { distancePx: this.knockbackPositionDistance, source: 'fallback-knockbackPositionDistance', scale };
+    return { distancePx: this.knockbackPositionDistance, source: 'fallback-knockbackPositionDistance', scale: null };
   }
 
   updateKnockbackVisual(progress) { const t = Math.max(0, Math.min(1, progress)); if (this.kbDisableSyntheticBounce) { this.kbVisualOffsetX = 0; this.kbVisualOffsetY = 0; this.kbVisualScale = 1; this.kbVisualProgress = t; return; } this.kbVisualProgress = t; const sin = Math.sin(Math.PI * t); const settle = 1 - t; const yMax = Number.isFinite(this.kbVisualOffsetYMaxPx) ? this.kbVisualOffsetYMaxPx : -32; const backSwing = Number.isFinite(this.kbVisualBackSwingPx) ? this.kbVisualBackSwingPx : 8; const peak = Number.isFinite(this.kbVisualScalePeak) ? this.kbVisualScalePeak : 1.025; this.kbVisualOffsetY = yMax * sin; this.kbVisualOffsetX = -this.direction * backSwing * sin * settle; this.kbVisualScale = 1 + (peak - 1) * sin; }

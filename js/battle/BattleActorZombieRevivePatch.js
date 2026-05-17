@@ -36,8 +36,7 @@ function hitHasZombieKiller(hit) {
   return semantic?.zombieKiller === true || procItems.some((p) => p?.key === 'zombieKiller');
 }
 
-function killedByZombieKiller(actor) {
-  const hits = Array.isArray(actor?.pendingHits) ? actor.pendingHits : [];
+function killedByZombieKillerHits(hits = []) {
   return hits.some(hitHasZombieKiller);
 }
 
@@ -121,11 +120,12 @@ export function installBattleActorZombieRevivePatch() {
   }
 
   proto.resolvePostDamage = function resolvePostDamageWithZombieRevive(args = {}) {
+    const pendingHitsBeforeResolve = Array.isArray(this.pendingHits) ? this.pendingHits.slice() : [];
     const result = originalResolvePostDamage.call(this, args);
     if (!result?.deathPending && !result?.dead) return result;
     const spec = reviveSpec(this);
     const nowMs = Number.isFinite(args?.nowMs) ? args.nowMs : 0;
-    const zk = killedByZombieKiller(this);
+    const zk = killedByZombieKillerHits(pendingHitsBeforeResolve);
     if (isZombie(this) && spec && !zk) {
       const scheduled = scheduleRevive(this, spec, nowMs);
       if (scheduled) {

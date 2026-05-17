@@ -1,4 +1,14 @@
-import { drawBcuImagePart } from './BcuCanvasComposite.js';
+import { drawBcuImagePart, isBcuGlowSupported } from './BcuCanvasComposite.js';
+
+function consumeQueuedDrawPart(sprite, partIndex) {
+  const q = sprite?.__bcuDrawQueue;
+  if (!Array.isArray(q) || !q.length) return null;
+  while (q.length) {
+    const next = q.shift();
+    if ((next?.partIndex ?? next?.current?.partIndex ?? next?.rawPart?.partIndex) === partIndex) return next;
+  }
+  return null;
+}
 
 export class BcuSpriteSheet {
   constructor(image, imgcut) {
@@ -22,12 +32,22 @@ export class BcuSpriteSheet {
     if (sx + sw > iw) sw = iw - sx;
     if (sy + sh > ih) sh = ih - sy;
     if (sw <= 0 || sh <= 0) return false;
+
+    const queued = opt.__bcuDrawEntry || consumeQueuedDrawPart(this, partIndex);
+    const glow = opt.glow ?? queued?.glow ?? 0;
+    const opacity = opt.opacity ?? (isBcuGlowSupported(glow) ? (queued?.opacity ?? 1) : 1);
     const dw = sw * (opt.scaleX ?? 1);
     const dh = sh * (opt.scaleY ?? 1);
     return drawBcuImagePart(ctx, this.image, sx, sy, sw, sh, dx, dy, dw, dh, {
-      opacity: opt.opacity ?? 1,
-      glow: opt.glow ?? 0,
-      debug: { ...(opt.debug || {}), partIndex, partName: p.name || null }
+      opacity,
+      glow,
+      debug: {
+        ...(opt.debug || {}),
+        partIndex,
+        modelPartIndex: queued?.index ?? null,
+        partName: p.name || null,
+        semanticKey: queued?.semanticKey || null
+      }
     });
   }
 

@@ -1,18 +1,41 @@
-# AGENTS.md — Codex task guide for complete actor coverage, regenerated enemy icons, and formation stability
+# AGENTS.md — Codex task guide for regenerated enemy icons, Wanko player-unit coverage, and formation stability
 
 Repository: `rhgrive2/game`
 Target branch: `main`
 
 ## Mission
 
-Fix actor availability comprehensively:
+Fix the current actor-asset issues with a narrow, evidence-driven scope:
 
 1. Regenerate **all enemy UI icons** from actual enemy actor sprites and imgcuts, then store the result in `public/assets/bundles/icon/enemy.zip`.
-2. Fix every enemy that should be spawnable but is not spawnable.
-3. Fix every selectable player character/form that should be spawnable but is not spawnable.
-4. Preserve formation catalog virtualization and scroll stability.
+2. Fix **Wanko-family player-unit spawn coverage**: enemy characters are usable as player-side actors in this project, so do not audit stage enemy spawning as the primary path.
+3. Preserve formation catalog virtualization and scroll stability.
 
-This is not a narrow fix for example IDs. The examples are regression targets only. The final result must be full-audit driven.
+This is not a narrow fix for a few example IDs. The icon generation must be full-enemy coverage. The spawnability investigation must focus on the Wanko-family actors only.
+
+---
+
+## Scope corrections
+
+### Do not spend effort proving stage enemy spawning
+
+Do not run a broad stage enemy audit merely to prove whether enemies spawn from stage CSV rows. In this project, enemy actors can be used as player-side characters, so the reported “can’t deploy character” class should be validated through the player/formation production path.
+
+Stage enemy spawn checks are optional regression checks only when a change directly touches stage enemy loading. They are not required for this task.
+
+### Spawnability target: Wanko-family only
+
+The spawnability audit must focus on Wanko-family actors only. Do not audit every enemy or every playable character for spawnability unless required to build the Wanko candidate set.
+
+Codex must determine the Wanko-family candidate set from repository data instead of relying only on a hard-coded ID list. Use all available evidence, such as:
+
+- localized enemy names containing `ワンコ`, `わんこ`, or close variants,
+- English/localized names such as `Doge` if available,
+- known Wanko-series naming in BCU language/name files,
+- existing formation/catalog entries that are Wanko enemy-as-player actors,
+- semantic actor metadata that links those actors to enemy IDs.
+
+The script must output the detected Wanko candidate list and explain why each actor was included.
 
 ---
 
@@ -20,16 +43,16 @@ This is not a narrow fix for example IDs. The examples are regression targets on
 
 ### Actor
 
-An actor means either:
+An actor means a renderable battle actor. For this task, two actor groups matter:
 
-- enemy actor, e.g. `enemy:388`, `enemy:560`, `enemy:699`, or
-- player/unit actor, e.g. selectable formation character/form used by `BattleScene` production.
+- all enemy actors for icon generation, e.g. `enemy:388`, `enemy:610`, `enemy:699`,
+- Wanko-family actors for player-side deployability, e.g. Wanko/Doge-like enemy actors exposed in formation/player production.
 
 ### Expected missing actor
 
 An actor may be intentionally unavailable only if the repository explicitly marks it as expected missing/invalid in an error allowlist such as `error.json` or an equivalent project-maintained validation file.
 
-Codex must locate and document the exact allowlist file(s). If no allowlist exists for an unavailable actor, treat the actor as a defect unless the source asset data is genuinely absent.
+Codex must locate and document the exact allowlist file(s). If no allowlist exists for an unavailable Wanko actor, treat the actor as a defect unless the source asset data is genuinely absent.
 
 ### Bug/invalid actor
 
@@ -57,24 +80,24 @@ Do not guess mappings or add ID-specific hacks.
 
 Do not:
 
-- replace broken enemies/player units with dummy actors,
+- replace broken Wanko actors with dummy actors,
 - spawn invisible placeholders,
 - return generic icons and call that fixed,
 - bypass semantic-strict globally,
 - suppress errors without diagnostics,
-- remove `BattleActorFactory`, `StageDefinitionLoader`, or production safety checks.
+- remove `BattleActorFactory`, production, or asset safety checks.
 
 ### Keep battle logic stable
 
 Do not change damage, procs, knockback, animation timing, economy, base HP, camera, stage timing, or spawn scheduling unless a diagnostic proves that exact logic is the failure source.
 
-Most expected fixes should be in asset discovery, generated indexes, icon generation, actor bundle validation, or player/enemy actor mapping.
+Most expected fixes should be in asset discovery, generated indexes, icon generation, actor bundle validation, or player/enemy-as-player actor mapping.
 
 ---
 
 ## Known regression examples
 
-These IDs are examples, not the complete scope:
+These IDs are examples for icon/asset regressions, not a complete spawn audit target:
 
 ```text
 enemy:388
@@ -96,7 +119,7 @@ Known observations:
 - `000010.asset.bcuzip` / `public/assets/bcu/000010` is an enemy icon pack but skips some IDs such as `388`.
 - `enemy:388` has actor source files under `public/assets/bcu/000003/org/enemy/388/`, including `388_e.png` and `388_e.imgcut`.
 - `610`, `611`, and `612` have shown UI icon failures because `public/assets/bundles/icon/enemy.zip` lacks `enemy/610.png`, `enemy/611.png`, and `enemy/612.png`.
-- `560` and `699` have shown spawn/asset availability issues and may involve bundle/index/manifest omissions.
+- `560` and `699` have shown availability issues and may involve bundle/index/manifest omissions.
 
 ---
 
@@ -226,7 +249,7 @@ Report:
 Rules:
 
 - If an actor is missing but listed in the allowlist, classify as `expected-missing`.
-- If an actor is missing and not listed, classify as a defect unless source assets are provably absent.
+- If a Wanko actor is missing and not listed, classify as a defect unless source assets are provably absent.
 - If an allowlist file cannot be parsed, fail loudly in the report.
 
 ---
@@ -239,7 +262,7 @@ Create or update:
 scripts/audit-bcu-enemy-assets.mjs
 ```
 
-The audit must cover all known enemies, not only visible examples.
+The audit must cover all known enemies for icon generation, not only visible examples.
 
 For every enemy, report:
 
@@ -249,11 +272,9 @@ For every enemy, report:
   actorKey: "enemy:N",
   id3,
   name,
-
   hasStats,
   hasName,
   isListedInErrorAllowlist,
-
   rawActorDir,
   rawImagePath,
   rawImgcutPath,
@@ -263,7 +284,6 @@ For every enemy, report:
   rawImgcutExists,
   rawMamodelExists,
   rawRequiredAnimationsPresent,
-
   actorBundlePath,
   actorBundleExists,
   actorBundleInManifest,
@@ -272,26 +292,20 @@ For every enemy, report:
   actorBundleHasImgcut,
   actorBundleHasModel,
   actorBundleRequiredAnimationsPresent,
-
   semanticActorEntry,
   semanticStatus,
   runtimeAssetResolvable,
-  preloadTemplateOk,
-  spawnReadyOk,
-
   currentEnemyZipEntry,
   currentEnemyZipEntryExists,
   regeneratedEnemyZipEntry,
   regeneratedEnemyZipEntryExpected,
   regeneratedEnemyZipEntryExists,
-
   iconGenerationSource,
   iconGenerationPossible,
   iconGenerationFailureClass,
   iconGenerationFailureReason,
-
-  actorFailureClass,
-  actorFailureReason
+  actorAssetFailureClass,
+  actorAssetFailureReason
 }
 ```
 
@@ -304,33 +318,12 @@ tmp/enemy-asset-audit.md
 
 The markdown must include:
 
-- summary by `actorFailureClass`,
+- summary by `actorAssetFailureClass`,
 - summary by `iconGenerationFailureClass`,
 - all enemies not listed in allowlist that cannot generate an icon,
-- all enemies not listed in allowlist that cannot reach spawn-ready,
 - target section for the regression IDs listed above.
 
-Failure classes must distinguish:
-
-```text
-ok
-expected-missing
-source-dir-missing
-source-image-missing
-source-imgcut-missing
-source-model-missing
-source-animation-missing
-imgcut-invalid
-png-decode-failed
-actor-bundle-missing
-actor-bundle-not-in-manifest
-actor-bundle-invalid
-semantic-entry-missing
-semantic-status-invalid
-template-preload-failed
-spawn-ready-failed
-unknown
-```
+This script is for icon/source coverage, not broad stage spawn validation.
 
 ---
 
@@ -444,79 +437,92 @@ Acceptance:
 
 ---
 
-## Task 5 — Full enemy stage-spawn audit
+## Task 5 — Detect Wanko-family player-unit candidates
 
 Create or update:
 
 ```text
-scripts/audit-stage-enemy-spawn.mjs
+scripts/audit-wanko-candidates.mjs
 ```
 
-Required CLI:
+Purpose: build the exact Wanko-family candidate set to use for player-side spawn validation.
 
-```bash
-node scripts/audit-stage-enemy-spawn.mjs --enemy 443
-node scripts/audit-stage-enemy-spawn.mjs --enemy 560,699,610,611,612
-node scripts/audit-stage-enemy-spawn.mjs --enemy all-problem
-node scripts/audit-stage-enemy-spawn.mjs --enemy all
+The script must inspect all relevant available data:
+
+- enemy names from BCU language/name files,
+- semantic actor indexes,
+- formation/catalog entries,
+- generated enemy asset audit,
+- any known player-side enemy-as-unit mapping files,
+- allowlists such as `error.json`.
+
+Detection should include names containing:
+
+```text
+ワンコ
+わんこ
+Doge
 ```
 
-For every target enemy:
+and close Wanko-family variants if repository data clearly indicates them. Do not include unrelated enemies merely because they are enemies.
+
+Output:
+
+```text
+tmp/wanko-candidate-audit.json
+tmp/wanko-candidate-audit.md
+```
+
+Per candidate:
 
 ```js
 {
+  actorKey,
   enemyId,
-  rawEnemyIdCandidates,
-  rowsFound,
-  stagesFound,
-  hasStats,
-  runtimeAssetResolvable,
-  preloadTemplateOk,
-  spawnReadyRows,
-  failedRows,
-  failurePhases,
-  representativeRows,
-  listedInErrorAllowlist
+  name,
+  localizedNames,
+  matchedBy,
+  formationCharacterId,
+  playerActorKey,
+  hasEnemyAssetSource,
+  hasPlayerMapping,
+  listedInErrorAllowlist,
+  inclusionReason
 }
 ```
 
-`all-problem` must include every enemy from `tmp/enemy-asset-audit.json` whose `actorFailureClass !== 'ok'` and not merely expected-missing.
-
 Acceptance:
 
-- `443` remains spawn-ready and has no failed rows.
-- `560` and `699` are explicitly classified.
-- Any unspawnable non-allowlisted enemy has a precise reason.
+- The Wanko candidate set is explicit and reviewable.
+- Every included actor has a documented reason.
+- Non-Wanko enemies are not included in spawnability scope.
 
 ---
 
-## Task 6 — Full player character spawn audit
+## Task 6 — Audit Wanko player-unit spawn coverage
 
 Create or update:
 
 ```text
-scripts/audit-player-character-spawn.mjs
+scripts/audit-wanko-player-spawn.mjs
 ```
 
-Purpose: find selectable formation characters/forms that can appear in catalog/formation UI but cannot spawn in battle.
+Purpose: verify that Wanko-family candidates can be deployed as player-side units through the actual formation/production path.
 
-The audit must inspect the full playable catalog, not only currently selected slots.
+Use the Wanko candidate list from `tmp/wanko-candidate-audit.json`.
 
-For every playable character/form:
+For every Wanko candidate:
 
 ```js
 {
-  characterId,
-  formId,
   actorKey,
-  label,
-  faction,
+  enemyId,
+  enemyName,
+  playerCharacterId,
+  playerActorKey,
   sourceRoster,
-  statsType,
-  statsId,
-  formRow,
-  hasCatalogEntry,
-  hasSourceUnitDef,
+  hasFormationCatalogEntry,
+  hasPlayerMapping,
   hasStats,
   semanticActorEntry,
   semanticStatus,
@@ -537,8 +543,8 @@ For every playable character/form:
 Output:
 
 ```text
-tmp/player-character-spawn-audit.json
-tmp/player-character-spawn-audit.md
+tmp/wanko-player-spawn-audit.json
+tmp/wanko-player-spawn-audit.md
 ```
 
 Failure phases:
@@ -546,7 +552,9 @@ Failure phases:
 ```text
 ok
 expected-missing
+not-wanko
 catalog-missing
+player-mapping-missing
 source-unit-missing
 stats-missing
 semantic-actor-missing
@@ -562,17 +570,17 @@ unknown
 
 Acceptance:
 
-- Every selectable formation character/form is covered.
-- Every non-allowlisted spawn failure has a precise reason.
+- Only Wanko-family candidates are audited for spawnability.
+- Every non-allowlisted Wanko deploy failure has a precise reason.
 - Do not modify battle/production logic before the audit proves the failure phase.
 
 ---
 
-## Task 7 — Fix player character spawn coverage
+## Task 7 — Fix Wanko player-unit spawn coverage
 
-If the player audit finds failures:
+If `scripts/audit-wanko-player-spawn.mjs` finds failures:
 
-- mapping failure: fix catalog/playable roster mapping only,
+- mapping failure: fix enemy-as-player / formation catalog mapping only,
 - stats failure: fix stats lookup/mapping only,
 - semantic/bundle/index failure: fix generic actor bundle/index path,
 - preload failure: fix asset/template resolution,
@@ -593,9 +601,9 @@ Do not change combat formulas, proc logic, or animation timing unless diagnostic
 
 Acceptance:
 
-- Rerun `node scripts/audit-player-character-spawn.mjs`.
-- All selectable characters either reach `spawnReadyOk: true` or are precisely unresolved/expected-missing.
-- Browser confirms at least one previously failing character emits `playerSpawned`.
+- Rerun `node scripts/audit-wanko-player-spawn.mjs`.
+- All Wanko candidates either reach `spawnReadyOk: true` or are precisely unresolved/expected-missing.
+- Browser confirms previously failing Wanko actors can be deployed and emit `playerSpawned`.
 
 ---
 
@@ -669,15 +677,7 @@ Regression targets must be visible or precisely unresolved:
 388, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699
 ```
 
-Enemy spawn checks:
-
-```js
-globalThis.__APP__?.battle?.debugEvents
-  ?.filter(e => ['560','699','443','610','611','612'].includes(String(e.enemyId)) || ['562','701','445','612','613','614'].includes(String(e.rawEnemyId)))
-  ?.slice(-50)
-```
-
-Player spawn checks:
+Wanko player spawn checks:
 
 ```js
 globalThis.__BATTLE_PRODUCTION_DEBUG__?.failures?.slice(0, 20)
@@ -686,7 +686,7 @@ globalThis.__APP__?.battle?.debugEvents
   ?.slice(-50)
 ```
 
-Do not claim live success without `stageEnemySpawned`, `playerSpawned`, or equivalent actor/template state.
+Do not claim live player-unit success without `playerSpawned` or equivalent actor/template state.
 
 ---
 
@@ -698,8 +698,8 @@ Syntax-check changed files:
 node --check scripts/audit-actor-error-allowlist.mjs
 node --check scripts/audit-bcu-enemy-assets.mjs
 node --check scripts/generate-enemy-icons.mjs
-node --check scripts/audit-stage-enemy-spawn.mjs
-node --check scripts/audit-player-character-spawn.mjs
+node --check scripts/audit-wanko-candidates.mjs
+node --check scripts/audit-wanko-player-spawn.mjs
 node --check scripts/repair-bcu-actor-bundle-index.mjs
 node --check js/bcu/SemanticAssetProvider.js
 node --check js/bcu/BcuAssetLoader.js
@@ -723,11 +723,11 @@ node scripts/audit-bcu-enemy-assets.mjs
 node scripts/generate-enemy-icons.mjs --dry-run
 node scripts/generate-enemy-icons.mjs --apply
 node scripts/audit-bcu-enemy-assets.mjs
-node scripts/audit-stage-enemy-spawn.mjs --enemy 443
-node scripts/audit-stage-enemy-spawn.mjs --enemy 560,699,610,611,612
-node scripts/audit-stage-enemy-spawn.mjs --enemy all-problem
-node scripts/audit-player-character-spawn.mjs
+node scripts/audit-wanko-candidates.mjs
+node scripts/audit-wanko-player-spawn.mjs
 ```
+
+Do not run broad stage enemy spawn audits unless a touched file requires a regression check.
 
 ---
 
@@ -736,20 +736,20 @@ node scripts/audit-player-character-spawn.mjs
 Report all of the following:
 
 1. Root cause classes found.
-2. Exact enemy IDs still unresolved and why.
-3. Exact player character IDs/forms still unresolved and why.
-4. Which unresolved actors are listed in `error.json` or equivalent allowlist.
-5. Which unresolved actors have no source asset data and are likely bug/invalid actors.
-6. Whether unresolved actors have bad zips, bad PNG decode, missing imgcut, missing model, missing animations, mapping failures, production validation failures, or spawn-ready failures.
-7. Confirmation that `public/assets/bundles/icon/enemy.zip` was regenerated from actor sprite + imgcut for all possible enemies.
-8. Number of generated 128x128 enemy icons and total zip size.
-9. Confirmation that `edi_*.png` was not used as selected UI icon source.
-10. Confirmation that runtime enemy icon loading uses `enemy.zip` and does not bulk-load actor images/imgcuts.
+2. Exact enemy IDs whose icons still cannot be generated and why.
+3. Which unresolved actors are listed in `error.json` or equivalent allowlist.
+4. Which unresolved actors have no source asset data and are likely bug/invalid actors.
+5. Confirmation that `public/assets/bundles/icon/enemy.zip` was regenerated from actor sprite + imgcut for all possible enemies.
+6. Number of generated 128x128 enemy icons and total zip size.
+7. Confirmation that `edi_*.png` was not used as selected UI icon source.
+8. Confirmation that runtime enemy icon loading uses `enemy.zip` and does not bulk-load actor images/imgcuts.
+9. Exact Wanko-family candidates detected and why.
+10. Exact Wanko candidates still not deployable as player units and why.
 11. Files changed.
 12. Scripts added/updated.
 13. Commands run.
 14. Browser checks performed.
-15. Whether regression targets `388`, `443`, `560`, `609`, `610`, `611`, `612`, `613`, `695`, `696`, `697`, `699` are visible/spawnable or intentionally unresolved.
-16. Whether any selectable player characters still cannot spawn.
+15. Whether regression targets `388`, `443`, `560`, `609`, `610`, `611`, `612`, `613`, `695`, `696`, `697`, `699` are visible or intentionally unresolved.
+16. Whether every non-allowlisted Wanko candidate can be deployed as a player unit.
 
 Do not say “all fixed” unless the full audit, generated reports, and browser checks prove it.

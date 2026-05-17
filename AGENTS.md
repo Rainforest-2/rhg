@@ -7,11 +7,11 @@ Target branch: `main`
 
 Fix the current actor-asset issues with a narrow, evidence-driven scope:
 
-1. Regenerate **all enemy UI icons** from actual enemy actor sprites and imgcuts, then store the result in `public/assets/bundles/icon/enemy.zip`.
-2. Fix **Wanko-family player-unit spawn coverage**: enemy characters are usable as player-side actors in this project, so do not audit stage enemy spawning as the primary path.
+1. Regenerate **all enemy UI icons** from actual enemy actor assets, rendering the actor's **initial/default pose**, then store the result in `public/assets/bundles/icon/enemy.zip`.
+2. Fix **Wanko-family player-unit spawn coverage**. Enemy characters are usable as player-side actors in this project, so do not audit stage enemy spawning as the primary path.
 3. Preserve formation catalog virtualization and scroll stability.
 
-This is not a narrow fix for a few example IDs. The icon generation must be full-enemy coverage. The spawnability investigation must focus on the Wanko-family actors only.
+This is not a narrow fix for a few example IDs. Enemy icon generation must cover the full enemy set. Spawnability investigation must focus on Wanko-family actors only.
 
 ---
 
@@ -83,6 +83,7 @@ Do not:
 - replace broken Wanko actors with dummy actors,
 - spawn invisible placeholders,
 - return generic icons and call that fixed,
+- use `edi_*.png` as a selected icon source,
 - bypass semantic-strict globally,
 - suppress errors without diagnostics,
 - remove `BattleActorFactory`, production, or asset safety checks.
@@ -120,6 +121,7 @@ Known observations:
 - `enemy:388` has actor source files under `public/assets/bcu/000003/org/enemy/388/`, including `388_e.png` and `388_e.imgcut`.
 - `610`, `611`, and `612` have shown UI icon failures because `public/assets/bundles/icon/enemy.zip` lacks `enemy/610.png`, `enemy/611.png`, and `enemy/612.png`.
 - `560` and `699` have shown availability issues and may involve bundle/index/manifest omissions.
+- Combination/assembled enemies, for example enemies whose sprite sheet contains multiple parts, must not be represented by a random single cut.
 
 ---
 
@@ -157,19 +159,25 @@ enemy/699.png
 
 ### Source for all enemy icons
 
-Generate every enemy icon from the actual actor sprite and imgcut:
+Generate every enemy icon from the actual actor assets:
 
 ```text
-{id}_e.png + {id}_e.imgcut
+{id}_e.png
+{id}_e.imgcut
+{id}_e.mamodel
+{id}_e00.maanim / equivalent default or idle animation
 ```
 
 or the equivalent generated actor bundle entries:
 
 ```text
-image.png + imgcut.imgcut
+image.png
+imgcut.imgcut
+model.mamodel
+move.maanim / idle.maanim / default maanim equivalent
 ```
 
-Use raw BCU source paths or generated actor bundles only during generation. Runtime must not perform raw actor/imgcut fallback.
+Use raw BCU source paths or generated actor bundles only during generation. Runtime must not perform raw actor/imgcut/model/animation fallback.
 
 ### Do not use EDI as icon source
 
@@ -190,6 +198,65 @@ centered
 
 Do not use 64x64.
 
+### Icon target pose: initial/default state
+
+The icon must represent the actor's initial/default visual state, not an arbitrary sprite-sheet crop.
+
+For normal single-part enemies, the initial/default visual may be equivalent to a representative rendered part.
+
+For combination/assembled enemies, Codex must render the assembled actor pose using the model and animation data:
+
+```text
+sprite sheet + imgcut + mamodel + initial/default maanim frame
+```
+
+The generated icon should be the composed visible actor at frame 0 of the default/idle/move animation, whichever the repository's animation system uses as the actor's neutral initial state.
+
+Do not use the attack animation, knockback animation, death animation, or an arbitrary frame unless the neutral animation is missing and the fallback is explicitly reported.
+
+### Initial-pose composition requirements
+
+The generator must support assembled/combination enemies. For each enemy, attempt icon generation in this order:
+
+1. **Composed initial pose** from image + imgcut + mamodel + default/idle/move maanim frame 0.
+2. If no default/idle/move animation exists, use a documented neutral candidate only if validated by diagnostics.
+3. If model or animation is genuinely unavailable, fall back to a deterministic single-cut thumbnail only as a degraded fallback.
+4. If no valid cut exists, report failure.
+
+The generated report must record the method:
+
+```text
+composed-initial-pose
+single-cut-degraded-fallback
+failed
+```
+
+For composed icons, report:
+
+```js
+{
+  compositionMethod: "composed-initial-pose",
+  sourceImagePath,
+  sourceImgcutPath,
+  sourceMamodelPath,
+  sourceMaanimPath,
+  frame: 0,
+  composedBounds,
+  partsRendered,
+  partsSkipped
+}
+```
+
+For degraded fallback icons, report:
+
+```js
+{
+  compositionMethod: "single-cut-degraded-fallback",
+  fallbackReason,
+  selectedCut
+}
+```
+
 ### Determinism
 
 The generator must be deterministic:
@@ -200,9 +267,11 @@ The generator must be deterministic:
 - same inputs produce byte-equivalent outputs when feasible,
 - report SHA-256 for every generated PNG.
 
-### Crop selection
+### Single-cut fallback selection
 
-When using `.imgcut`, choose a deterministic representative crop:
+Single-cut fallback is allowed only when composed initial pose generation is impossible and the reason is recorded.
+
+When using `.imgcut` without model/animation composition:
 
 1. parse valid cut rectangles,
 2. ignore zero-area/out-of-bounds cuts,
@@ -279,10 +348,14 @@ For every enemy, report:
   rawImagePath,
   rawImgcutPath,
   rawMamodelPath,
+  rawDefaultMaanimPath,
+  rawMoveMaanimPath,
+  rawIdleMaanimPath,
   rawRequiredAnimations,
   rawImageExists,
   rawImgcutExists,
   rawMamodelExists,
+  rawDefaultOrNeutralAnimationExists,
   rawRequiredAnimationsPresent,
   actorBundlePath,
   actorBundleExists,
@@ -291,6 +364,7 @@ For every enemy, report:
   actorBundleHasImage,
   actorBundleHasImgcut,
   actorBundleHasModel,
+  actorBundleHasDefaultOrNeutralAnimation,
   actorBundleRequiredAnimationsPresent,
   semanticActorEntry,
   semanticStatus,
@@ -302,6 +376,7 @@ For every enemy, report:
   regeneratedEnemyZipEntryExists,
   iconGenerationSource,
   iconGenerationPossible,
+  iconCompositionMethod,
   iconGenerationFailureClass,
   iconGenerationFailureReason,
   actorAssetFailureClass,
@@ -320,7 +395,9 @@ The markdown must include:
 
 - summary by `actorAssetFailureClass`,
 - summary by `iconGenerationFailureClass`,
+- summary by `iconCompositionMethod`,
 - all enemies not listed in allowlist that cannot generate an icon,
+- all enemies requiring degraded single-cut fallback,
 - target section for the regression IDs listed above.
 
 This script is for icon/source coverage, not broad stage spawn validation.
@@ -347,18 +424,20 @@ Default mode must be dry-run.
 The generator must:
 
 1. read the full enemy audit or compute equivalent source discovery,
-2. generate 128x128 PNG icons for every enemy with valid `{id}_e.png + {id}_e.imgcut` or equivalent bundle `image.png + imgcut.imgcut`,
-3. write all generated icons into:
+2. generate 128x128 PNG icons for every enemy with valid actor visual assets,
+3. use composed initial pose generation whenever `image + imgcut + mamodel + neutral maanim` are available,
+4. use deterministic single-cut fallback only when composition is impossible and the reason is documented,
+5. write all generated icons into:
 
 ```text
 public/assets/bundles/icon/enemy.zip
 ```
 
-4. store entries as `enemy/{enemyId}.png`,
-5. replace the previous `enemy.zip` only in `--apply` mode,
-6. create a backup or write a git-friendly report of what changed,
-7. never use `edi_*.png`,
-8. write reports:
+6. store entries as `enemy/{enemyId}.png`,
+7. replace the previous `enemy.zip` only in `--apply` mode,
+8. create a backup or write a git-friendly report of what changed,
+9. never use `edi_*.png`,
+10. write reports:
 
 ```text
 tmp/generated-enemy-icons-report.json
@@ -373,7 +452,15 @@ Per-enemy report:
   actorKey,
   sourceImagePath,
   sourceImgcutPath,
+  sourceMamodelPath,
+  sourceMaanimPath,
+  compositionMethod,
+  frame,
+  composedBounds,
+  partsRendered,
+  partsSkipped,
   selectedCut,
+  fallbackReason,
   outputZipPath: "public/assets/bundles/icon/enemy.zip",
   outputInternalPath: "enemy/N.png",
   width: 128,
@@ -388,10 +475,12 @@ Per-enemy report:
 
 Acceptance:
 
-- All enemies with valid source image/imgcut get `enemy/{id}.png` in `enemy.zip`.
+- All enemies with valid source visual data get `enemy/{id}.png` in `enemy.zip`.
+- Combination/assembled enemies are rendered from initial/default pose, not a random single part.
+- Every `single-cut-degraded-fallback` is listed with a reason.
 - Enemies without source data are listed with exact reasons.
 - Expected missing/error-listed actors are separated from defects.
-- `388`, `610`, `611`, `612`, `695`, `696`, `697`, and `699` are explicitly reported.
+- `388`, `440`, `610`, `611`, `612`, `695`, `696`, `697`, and `699` are explicitly reported.
 
 ---
 
@@ -431,7 +520,7 @@ Console behavior:
 
 Acceptance:
 
-- Formation/catalog UI does not bulk-load actor images/imgcuts.
+- Formation/catalog UI does not bulk-load actor images/imgcuts/model/maanim.
 - `enemy.zip` lookup is the only normal enemy icon path.
 - Missing entries are traceable to generation report/audit.
 
@@ -674,7 +763,7 @@ globalThis.__BCU_DB__?.semanticProvider?.diagnostics
 Regression targets must be visible or precisely unresolved:
 
 ```text
-388, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699
+388, 440, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699
 ```
 
 Wanko player spawn checks:
@@ -739,17 +828,19 @@ Report all of the following:
 2. Exact enemy IDs whose icons still cannot be generated and why.
 3. Which unresolved actors are listed in `error.json` or equivalent allowlist.
 4. Which unresolved actors have no source asset data and are likely bug/invalid actors.
-5. Confirmation that `public/assets/bundles/icon/enemy.zip` was regenerated from actor sprite + imgcut for all possible enemies.
+5. Confirmation that `public/assets/bundles/icon/enemy.zip` was regenerated from actor assets for all possible enemies.
 6. Number of generated 128x128 enemy icons and total zip size.
-7. Confirmation that `edi_*.png` was not used as selected UI icon source.
-8. Confirmation that runtime enemy icon loading uses `enemy.zip` and does not bulk-load actor images/imgcuts.
-9. Exact Wanko-family candidates detected and why.
-10. Exact Wanko candidates still not deployable as player units and why.
-11. Files changed.
-12. Scripts added/updated.
-13. Commands run.
-14. Browser checks performed.
-15. Whether regression targets `388`, `443`, `560`, `609`, `610`, `611`, `612`, `613`, `695`, `696`, `697`, `699` are visible or intentionally unresolved.
-16. Whether every non-allowlisted Wanko candidate can be deployed as a player unit.
+7. Number of icons generated by `composed-initial-pose` vs `single-cut-degraded-fallback`.
+8. Exact enemies that required degraded single-cut fallback and why.
+9. Confirmation that `edi_*.png` was not used as selected UI icon source.
+10. Confirmation that runtime enemy icon loading uses `enemy.zip` and does not bulk-load actor images/imgcuts/model/maanim.
+11. Exact Wanko-family candidates detected and why.
+12. Exact Wanko candidates still not deployable as player units and why.
+13. Files changed.
+14. Scripts added/updated.
+15. Commands run.
+16. Browser checks performed.
+17. Whether regression targets `388`, `440`, `443`, `560`, `609`, `610`, `611`, `612`, `613`, `695`, `696`, `697`, `699` are visible or intentionally unresolved.
+18. Whether every non-allowlisted Wanko candidate can be deployed as a player unit.
 
 Do not say “all fixed” unless the full audit, generated reports, and browser checks prove it.

@@ -1,0 +1,81 @@
+/*
+ * Focused correction for formation character cards.
+ * Removes faction badges/text, keeps names on a light panel, and removes icon drop shadows.
+ */
+body.nyanko-ui-polish .formation-character-card::after{
+  content:none!important;
+  display:none!important;
+}
+
+body.nyanko-ui-polish .formation-character-card > span{
+  display:none!important;
+}
+
+body.nyanko-ui-polish .formation-character-card{
+  min-height:178px;
+  padding:10px 9px 9px;
+  background:linear-gradient(180deg,#fff 0%,#fff 44%,#f4d568 44.5%,#f2c34b 64%,#121212 64.5%,#020202 100%);
+}
+
+body.nyanko-ui-polish .formation-character-card[data-faction="dog"]{
+  background:linear-gradient(180deg,#fff 0%,#fff 44%,#f6cc90 44.5%,#f4a261 64%,#121212 64.5%,#020202 100%);
+}
+
+body.nyanko-ui-polish .formation-character-card::before{
+  box-shadow:none!important;
+}
+
+body.nyanko-ui-polish .formation-character-card img,
+body.nyanko-ui-polish .formation-slot img{
+  filter:none!important;
+}
+
+body.nyanko-ui-polish .formation-character-card strong{
+  position:relative;
+  z-index:1;
+  width:100%;
+  min-height:2.45em;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:4px 0 2px;
+  padding:4px 6px;
+  border:2px solid #111;
+  border-radius:8px;
+  background:#fffdf0;
+  color:#111!important;
+  line-height:1.12;
+  text-shadow:none!important;
+  -webkit-text-stroke:0!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+body.nyanko-ui-polish .formation-character-card small.character-id{
+  color:#fff7cf;
+  text-shadow:0 2px 0 #000;
+}
+
+body.nyanko-ui-polish .formation-character-card:hover,
+body.nyanko-ui-polish .formation-character-card:focus-visible{
+  transform:translateY(-2px);
+}
+
+@media (max-width:640px){
+  body.nyanko-ui-polish .formation-character-card{
+    min-height:154px;
+  }
+  body.nyanko-ui-polish .formation-character-card strong{
+    min-height:2.25em;
+    font-size:.68rem;
+    padding:3px 4px;
+  }
+}
+
+@media (max-height:560px) and (orientation:landscape){
+  body.nyanko-ui-polish .formation-character-card{
+    min-height:140px;
+  }
+  body.nyanko-ui-polish .formation-character-card strong{
+    min-height:2.15em;
+  }
+}

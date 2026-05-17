@@ -8,8 +8,16 @@ function applyDamageProc(scene, attacker, target, damageResult, meta = {}) {
   if (!Array.isArray(procItems) || procItems.length === 0) return [];
   const out = [];
   for (const item of procItems) {
+    const hitIndex = meta.hitIndex ?? item.hitIndex ?? null;
+    const attackEventKey = meta.key ?? item.attackEventKey ?? null;
     if (typeof target?.applyBcuProc !== 'function') {
-      out.push({ key: item.key, applied: false, reason: 'target-applyBcuProc-missing' });
+      out.push({
+        key: item.key,
+        applied: false,
+        reason: 'target-applyBcuProc-missing',
+        hitIndex,
+        attackEventKey
+      });
       continue;
     }
     const result = target.applyBcuProc(item, {
@@ -20,7 +28,13 @@ function applyDamageProc(scene, attacker, target, damageResult, meta = {}) {
       tuning: BATTLE_CONFIG.tuning,
       ...meta
     });
-    out.push({ key: item.key, result });
+    out.push({
+      key: item.key,
+      applied: result?.applied === true,
+      result,
+      hitIndex,
+      attackEventKey
+    });
   }
   if (out.length) {
     scene.pushEvent?.({

@@ -25,7 +25,6 @@ async function boot() {
     await import('./battle/BattleActorBcuKbTargetPatch.js');
     await import('./battle/BattleActorProcStatusPatch.js');
     await import('./battle/BattleActorBarrierShieldPatch.js');
-    await import('./battle/BattleActorZombieRevivePatch.js');
     await import('./battle/BattleSoulstrikePatch.js');
     await import('./battle/BattleDeterministicRandomPatch.js');
     await import('./battle/BattleWaveRuntimePatch.js');
@@ -50,6 +49,7 @@ async function boot() {
     await import('./battle/BattleSceneBcuStageBasisTickPatch.js');
     await import('./battle/BcuKnockbackRuntimePatch.js');
     await import('./battle/BcuKnockbackProcPriorityPatch.js');
+    await import('./battle/BattleActorZombieRevivePatch.js');
     await import('./battle/BcuKnockbackEffectLayerPatch.js');
     await import('./battle/BcuKnockbackAnimationPatch.js');
     await import('./battle/BcuProcImmunityPatch.js');

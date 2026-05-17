@@ -118,8 +118,15 @@ export function installBattleActorZombieRevivePatch() {
   if (typeof originalResolvePostDamage !== 'function') {
     throw new Error('BattleActor.resolvePostDamage is missing; cannot install zombie revive patch');
   }
+  proto.__bcuZombieReviveResolvePostDamageWrapped = true;
+  proto.__bcuZombieReviveWrappedResolvePostDamageName = originalResolvePostDamage?.name || null;
 
   proto.resolvePostDamage = function resolvePostDamageWithZombieRevive(args = {}) {
+    this.lastBcuZombieReviveWrapperDebug = {
+      source: 'BattleActorZombieRevivePatch.resolvePostDamageWithZombieRevive',
+      wrapped: true,
+      wrappedFunctionName: proto.__bcuZombieReviveWrappedResolvePostDamageName
+    };
     const pendingHitsBeforeResolve = Array.isArray(this.pendingHits) ? this.pendingHits.slice() : [];
     const result = originalResolvePostDamage.call(this, args);
     if (!result?.deathPending && !result?.dead) return result;

@@ -126,7 +126,13 @@ export class BcuEntityEffectIconRuntime {
       ctx.globalAlpha = opacity;
       const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
       const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
-      this.sprite.drawPart(ctx, partIndex, -pivotX, -pivotY, { scaleX: 1, scaleY: 1 });
+      this.sprite.drawPart(ctx, partIndex, -pivotX, -pivotY, {
+        scaleX: 1,
+        scaleY: 1,
+        __bcuDrawEntry: p,
+        glow: Number.isFinite(Number(p.glow)) ? Number(p.glow) : 0,
+        opacity
+      });
       ctx.restore();
     }
     ctx.restore();

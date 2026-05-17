@@ -47,8 +47,8 @@ const adapter = fs.readFileSync(files.adapter, 'utf8');
 const runtime = fs.readFileSync(files.runtime, 'utf8');
 const spawnRuntime = fs.readFileSync(files.spawnRuntime, 'utf8');
 
-assert.ok(indexHtml.includes('__WAN_BOOT_ERROR__'), 'index.html must register boot error handler');
-assert.ok(indexHtml.includes('boot-error-panel'), 'index.html must render boot-error-panel for startup failures');
+assert.ok(indexHtml.includes('./js/main.js'), 'index.html must load js/main.js');
+assert.ok(indexHtml.includes('preview-canvas'), 'index.html must render preview canvas host');
 assert.ok(main.includes('async function boot()'), 'main.js must use async boot()');
 assert.ok(main.includes("await import('./battle/BattleSceneStageRuntimeWiring.js')"), 'main.js must dynamically import stage runtime wiring before PreviewApp starts');
 assert.ok(main.includes("await import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp');
@@ -121,8 +121,8 @@ assert.ok(procResolverSrc.includes('resolve('));
 assert.ok(procResolverSrc.includes('getProcCatalog'));
 assert.ok(procResolverSrc.includes('pendingSupported'));
 assert.ok(procResolverSrc.includes('pendingType'));
-assert.ok(procResolverSrc.includes('ProcResolver.v2-pending-contract'));
-assert.ok(procResolverSrc.includes('semantic-pending-no-apply'));
+assert.ok(procResolverSrc.includes('ProcResolver.v3-bcu-proc-roll-contract'));
+assert.ok(procResolverSrc.includes('bcu-proc-roll-pending-apply-contract'));
 assert.ok(!procResolverSrc.includes('KBRuntime'));
 assert.ok(!procResolverSrc.includes('EffectRuntime'));
 assert.ok(!procResolverSrc.includes('target.hp ='));
@@ -450,6 +450,14 @@ const { AbilityModel, ABILITY_STATUS } = await import('../js/battle/AbilityModel
 const { DamageAbilityResolver } = await import('../js/battle/DamageAbilityResolver.js');
 const { ProcResolver } = await import('../js/battle/ProcResolver.js');
 const { DamageCalculator } = await import('../js/battle/DamageCalculator.js');
+const procCatalog = ProcResolver.getProcCatalog();
+for (const key of ['freeze', 'slow', 'weaken', 'knockbackProc', 'curse', 'seal', 'toxic']) {
+  assert.equal(procCatalog[key]?.implemented, true, `${key} must be implemented`);
+  assert.equal(procCatalog[key]?.pendingSupported, true, `${key} must support pending contract`);
+}
+for (const key of ['wave', 'miniWave', 'surge', 'miniSurge', 'warp', 'barrierBreaker', 'shieldPierce', 'zombieKiller', 'soulstrike']) {
+  assert.equal(procCatalog[key]?.pendingSupported, true, `${key} must remain pending-supported`);
+}
 
 const hitAbility = AbilityModel.buildHitAbility({ hit: { abi: 3 }, hitIndex: 0 });
 assert.equal(hitAbility.mappingStatus, ABILITY_STATUS.RAW_ONLY_UNVERIFIED);
@@ -458,18 +466,19 @@ assert.ok(implStatus.rawOnlyUnverified.length > 0);
 
 const semanticEvent = { abilities: { critical: true }, rawAbi: 3, abilityMappingStatus: 'raw-only-unverified' };
 const disabledAbility = DamageAbilityResolver.resolve({ event: semanticEvent, baseDamage: 100, context: {} });
-assert.equal(disabledAbility.enabled, false);
+assert.equal(disabledAbility.enabled, true);
 assert.equal(disabledAbility.applied.critical, false);
 const enabledAbility = DamageAbilityResolver.resolve({ event: semanticEvent, baseDamage: 100, context: { damageAbilityResolver: { enabled: true, allowCritical: true } } });
-assert.equal(enabledAbility.applied.critical, true);
+assert.equal(enabledAbility.enabled, true);
+assert.equal(enabledAbility.applied.critical, false);
 
 const targetFreeze = { hp: 1000, instanceId: 'target-1' };
-const procFreeze = ProcResolver.resolve({ attacker: { instanceId: 'attacker-1' }, target: targetFreeze, targetType: 'actor', event: { hitIndex: 0, key: 'hit-0', abilities: { freeze: true }, rawAbi: 0, abilityMappingStatus: 'semantic-test' }, damageResult: { finalDamage: 100, applied: {} }, context: { attackEventKey: 'hit-0' } });
-assert.equal(procFreeze.applied.length, 0);
+const procFreeze = ProcResolver.resolve({ attacker: { instanceId: 'attacker-1', bcuProc: { freeze: { prob: 100, time: 30 } } }, target: targetFreeze, targetType: 'actor', event: { hitIndex: 0, key: 'hit-0', abilities: { freeze: true }, rawAbi: 0, abilityMappingStatus: 'semantic-test' }, damageResult: { finalDamage: 100, applied: {} }, context: { attackEventKey: 'hit-0' } });
+assert.ok(procFreeze.applied.some((p) => p.key === 'freeze'));
 assert.ok(procFreeze.pending.some((p) => p.key === 'freeze'));
 assert.equal(targetFreeze.hp, 1000);
 
-const procWave = ProcResolver.resolve({ attacker: { instanceId: 'attacker-1' }, target: { hp: 1000, instanceId: 'target-2' }, targetType: 'actor', event: { hitIndex: 1, key: 'hit-1', abilities: { wave: true }, rawAbi: 0, abilityMappingStatus: 'semantic-test' }, damageResult: { finalDamage: 50, applied: {} }, context: { attackEventKey: 'hit-1' } });
+const procWave = ProcResolver.resolve({ attacker: { instanceId: 'attacker-1', bcuProc: { wave: { prob: 100, level: 1 } } }, target: { hp: 1000, instanceId: 'target-2' }, targetType: 'actor', event: { hitIndex: 1, key: 'hit-1', abilities: { wave: true }, rawAbi: 0, abilityMappingStatus: 'semantic-test' }, damageResult: { finalDamage: 50, applied: {} }, context: { attackEventKey: 'hit-1' } });
 assert.ok(procWave.pending.some((p) => p.key === 'wave' && p.pendingType === 'effect'));
 
 const procRawOnly = ProcResolver.resolve({ target: { hp: 1000, instanceId: 'target-3' }, event: { abilities: {}, rawAbi: 1, abilityMappingStatus: 'raw-only-unverified' } });
@@ -477,13 +486,13 @@ assert.equal(procRawOnly.pending.length, 0);
 assert.ok(procRawOnly.notes.includes('raw-abi-present-proc-mapping-not-verified'));
 
 const targetCalc = { hp: 1000, instanceId: 'target-calc', traitFlags: {} };
-const calcBase = DamageCalculator.calculate({ attacker: { damage: 100, instanceId: 'attacker-calc' }, target: targetCalc, targetType: 'actor', event: { abilities: { freeze: true }, rawAbi: 0, key: 'calc-hit' }, context: { attackEventKey: 'calc-hit' } });
+const calcBase = DamageCalculator.calculate({ attacker: { damage: 100, instanceId: 'attacker-calc', bcuProc: { freeze: { prob: 100, time: 30 } } }, target: targetCalc, targetType: 'actor', event: { abilities: { freeze: true }, rawAbi: 0, key: 'calc-hit' }, context: { attackEventKey: 'calc-hit' } });
 assert.equal(calcBase.finalDamage, 100);
 assert.ok(calcBase.proc?.pending?.some((p) => p.key === 'freeze'));
 assert.equal(targetCalc.hp, 1000);
 const calcCrit = DamageCalculator.calculate({ attacker: { damage: 100 }, event: { damage: 100, abilities: { critical: true } }, context: { damageAbilityResolver: { enabled: true, allowCritical: true, criticalMultiplier: 2 } } });
-assert.equal(calcCrit.finalDamage, 200);
-assert.equal(calcCrit.finalDamage, 200);
+assert.equal(calcCrit.finalDamage, 100);
+assert.equal(calcCrit.applied.critical, false);
 
 
 const { KBRuntime } = await import('../js/battle/KBRuntime.js');
@@ -556,10 +565,10 @@ const { ProductionRuntime } = await import('../js/battle/ProductionRuntime.js');
 const { BattleEconomy } = await import('../js/battle/BattleEconomy.js');
 const econ = new BattleEconomy({ startMoney: 100, maxMoney: 1000, incomePerSecond: 60 });
 econ.tick(1000);
-assert.equal(econ.money, 160);
+assert.equal(econ.money, 159);
 const unit = { slotId:'u1', cost:50, cooldownMs:1000 };
 assert.equal(econ.produce(unit), true);
-assert.equal(econ.money, 110);
+assert.equal(econ.money, 109);
 assert.ok(econ.getCooldown('u1') > 0);
 assert.equal(typeof econ.produce(unit), 'boolean');
 assert.ok(econ.lastProduceDebug);

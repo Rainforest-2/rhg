@@ -127,6 +127,7 @@ export class BcuModelInstance {
         partIndex: c.partIndex,
         imgcutIndex: c.imgcutIndex,
         opacity,
+        glow: Number.isFinite(c.glow) ? c.glow : (Number.isFinite(part.glow) ? part.glow : 0),
         matrix: drawMatrix,
         graphicsMatrix,
         bcuSize: size,
@@ -147,11 +148,13 @@ export class BcuModelInstance {
       count: drawList.length,
       visibleCount,
       opacityZeroCount: drawList.filter((d) => d.opacity <= 0).length,
+      glowCount: drawList.filter((d) => [1, 2, 3, -1].includes(Number(d.glow))).length,
+      glowModes: drawList.reduce((acc, d) => { const g = Number(d.glow); if ([1, 2, 3, -1].includes(g)) acc[String(g)] = (acc[String(g)] || 0) + 1; return acc; }, {}),
       extendedCount: drawList.filter((d) => d.extendX || d.extendY).length,
       minZ: zValues.length ? Math.min(...zValues) : null,
       maxZ: zValues.length ? Math.max(...zValues) : null,
       hasMatrix: drawList.some((d) => Array.isArray(d.matrix) && d.matrix.length === 6),
-      examples: drawList.slice(0, 3).map((d) => ({ index: d.index, partIndex: d.partIndex, imgcutIndex: d.imgcutIndex, z: d.z, opacity: d.opacity, extendX: d.extendX, extendY: d.extendY, extType: d.extType, matrix: Array.isArray(d.matrix) ? d.matrix.slice(0, 6) : null }))
+      examples: drawList.slice(0, 3).map((d) => ({ index: d.index, partIndex: d.partIndex, imgcutIndex: d.imgcutIndex, z: d.z, opacity: d.opacity, glow: d.glow, extendX: d.extendX, extendY: d.extendY, extType: d.extType, matrix: Array.isArray(d.matrix) ? d.matrix.slice(0, 6) : null }))
     };
     return drawList;
   }

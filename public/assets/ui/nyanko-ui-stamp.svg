@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220" role="img" aria-label="original cat paw UI motif">
+  <defs>
+    <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="1.5" fill="#ffffff" fill-opacity="0.16"/>
+    </pattern>
+  </defs>
+  <rect width="220" height="220" fill="none"/>
+  <rect width="220" height="220" fill="url(#dots)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-linecap="round" stroke-width="5">
+    <path d="M31 46c18-24 52-24 70 0 15 20 9 50-12 63-18 12-43 12-61-2C8 91 13 70 31 46Z"/>
+    <path d="M66 34l-9-20 28 13"/>
+    <path d="M34 36L18 19l6 28"/>
+    <path d="M118 145c16-22 47-22 63 0 13 18 8 45-11 57-16 11-39 11-55-2-18-14-15-34 3-55Z"/>
+    <path d="M150 134l-8-17 24 11"/>
+    <path d="M122 136l-14-15 5 25"/>
+  </g>
+  <g fill="#ffffff" fill-opacity="0.2">
+    <circle cx="132" cy="52" r="10"/>
+    <circle cx="155" cy="44" r="8"/>
+    <circle cx="175" cy="57" r="8"/>
+    <ellipse cx="155" cy="76" rx="24" ry="18"/>
+    <circle cx="42" cy="154" r="9"/>
+    <circle cx="64" cy="145" r="7"/>
+    <circle cx="82" cy="157" r="7"/>
+    <ellipse cx="62" cy="176" rx="22" ry="16"/>
+  </g>
+</svg>

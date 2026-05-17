@@ -127,6 +127,7 @@ body.nyanko-ui-polish .formation-stage-card::after{
   text-shadow:0 2px 0 #000;
 }
 
+body.nyanko-ui-polish .formation-stage-card-category::after,
 body.nyanko-ui-polish .formation-stage-card-collection::after{
   content:"CATEGORY";
 }

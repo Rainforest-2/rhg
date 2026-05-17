@@ -3,11 +3,54 @@ import { drawBcuImagePart, isBcuGlowSupported } from './BcuCanvasComposite.js';
 function consumeQueuedDrawPart(sprite, partIndex) {
   const q = sprite?.__bcuDrawQueue;
   if (!Array.isArray(q) || !q.length) return null;
+  let skipped = 0;
   while (q.length) {
     const next = q.shift();
-    if ((next?.partIndex ?? next?.current?.partIndex ?? next?.rawPart?.partIndex) === partIndex) return next;
+    const nextPartIndex = next?.partIndex ?? next?.current?.partIndex ?? next?.rawPart?.partIndex;
+    if (nextPartIndex === partIndex) {
+      sprite.__lastBcuDrawQueueDebug = {
+        source: 'BcuSpriteSheet.consumeQueuedDrawPart',
+        matched: true,
+        partIndex,
+        modelPartIndex: next?.index ?? null,
+        glow: next?.glow ?? 0,
+        opacity: next?.opacity ?? null,
+        skipped,
+        remaining: q.length
+      };
+      return next;
+    }
+    skipped += 1;
   }
+  sprite.__lastBcuDrawQueueDebug = {
+    source: 'BcuSpriteSheet.consumeQueuedDrawPart',
+    matched: false,
+    partIndex,
+    skipped,
+    remaining: 0
+  };
   return null;
+}
+
+function registerSpriteDrawDebug(sprite, entry) {
+  const debug = sprite.__bcuSpriteDrawDebug || {
+    source: 'BcuSpriteSheet.drawPart',
+    drawCount: 0,
+    normalCanvasDrawCount: 0,
+    glowCompositeDrawCount: 0,
+    glowModes: {},
+    examples: []
+  };
+  debug.drawCount += 1;
+  if (entry.path === 'normal-canvas-draw') debug.normalCanvasDrawCount += 1;
+  if (entry.path === 'bcu-glow-composite') {
+    debug.glowCompositeDrawCount += 1;
+    debug.glowModes[String(entry.glow)] = (debug.glowModes[String(entry.glow)] || 0) + 1;
+    debug.examples.unshift(entry);
+    debug.examples.splice(12);
+  }
+  sprite.__bcuSpriteDrawDebug = debug;
+  globalThis.__BCU_SPRITE_DRAW_DEBUG__ = debug;
 }
 
 export class BcuSpriteSheet {
@@ -34,21 +77,35 @@ export class BcuSpriteSheet {
     if (sw <= 0 || sh <= 0) return false;
 
     const queued = opt.__bcuDrawEntry || consumeQueuedDrawPart(this, partIndex);
-    const glow = opt.glow ?? queued?.glow ?? 0;
-    const opacity = opt.opacity ?? (isBcuGlowSupported(glow) ? (queued?.opacity ?? 1) : 1);
+    const glow = Number(opt.glow ?? queued?.glow ?? 0);
     const dw = sw * (opt.scaleX ?? 1);
     const dh = sh * (opt.scaleY ?? 1);
-    return drawBcuImagePart(ctx, this.image, sx, sy, sw, sh, dx, dy, dw, dh, {
+    const debug = {
+      ...(opt.debug || {}),
+      partIndex,
+      modelPartIndex: queued?.index ?? null,
+      partName: p.name || null,
+      semanticKey: queued?.semanticKey || null
+    };
+
+    // BCU ImgCore.drawImg only switches to BLEND when glow is 1/2/3/-1.
+    // For normal parts, preserve the caller's current transform/composite/globalAlpha.
+    // Previous code routed glow=0 through drawBcuImagePart(), which reset globalAlpha to 1
+    // and changed non-glow actor rendering as a side effect.
+    if (!isBcuGlowSupported(glow)) {
+      ctx.drawImage(this.image, sx, sy, sw, sh, dx, dy, dw, dh);
+      registerSpriteDrawDebug(this, { path: 'normal-canvas-draw', glow, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
+      return true;
+    }
+
+    const opacity = Number.isFinite(Number(opt.opacity)) ? Number(opt.opacity) : (Number.isFinite(Number(queued?.opacity)) ? Number(queued.opacity) : ctx.globalAlpha);
+    const result = drawBcuImagePart(ctx, this.image, sx, sy, sw, sh, dx, dy, dw, dh, {
       opacity,
       glow,
-      debug: {
-        ...(opt.debug || {}),
-        partIndex,
-        modelPartIndex: queued?.index ?? null,
-        partName: p.name || null,
-        semanticKey: queued?.semanticKey || null
-      }
+      debug
     });
+    registerSpriteDrawDebug(this, { path: 'bcu-glow-composite', glow, opacity, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
+    return result;
   }
 
   drawRawGrid(ctx, x, y, cols = 8, pad = 6) {

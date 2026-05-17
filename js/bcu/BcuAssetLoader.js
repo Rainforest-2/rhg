@@ -95,7 +95,7 @@ async function tryLoadSemanticActor(def) {
   if (!provider) return null;
   try {
     const entry = provider.getActorEntry(def.semanticKey);
-    if (!entry?.bundleRef || entry.status !== 'full' || !provider.hasBundleForKey(def.semanticKey)) {
+    if (!entry?.bundleRef || !provider.hasBundleForKey(def.semanticKey)) {
       if (entry?.status === 'rawOnly' && def.allowRawOnly === true) return null;
       throw new Error(`Missing full actor bundle for semantic key ${def.semanticKey}`);
     }
@@ -239,7 +239,7 @@ export class BcuAssetLoader {
       if (provider && role) {
         try {
           const entry = provider.getActorEntry(def.semanticKey);
-          if (!entry?.bundleRef || entry.status !== 'full' || !provider.hasBundleForKey(def.semanticKey)) throw new Error(`Missing full actor bundle for semantic key ${def.semanticKey}`);
+          if (!entry?.bundleRef || !provider.hasBundleForKey(def.semanticKey)) throw new Error(`Missing full actor bundle for semantic key ${def.semanticKey}`);
           const anim = parseAnim(await provider.readTextByBundleRef(entry.bundleRef, `${role}.maanim`));
           let model = null;
           try { model = parseModel(await provider.readTextByBundleRef(entry.bundleRef, 'model.mamodel')); } catch {}

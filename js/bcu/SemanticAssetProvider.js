@@ -31,6 +31,31 @@ function inferAggregateIconEntry(actorKey) {
   return null;
 }
 
+function hasCompleteActorBundleFiles(entry) {
+  const files = entry?.selected?.files || {};
+  const animations = files.animations || {};
+  return !!entry?.bundleRef?.bundlePath
+    && !!files.image
+    && !!files.imgcut
+    && !!files.model
+    && !!animations.move
+    && !!animations.idle
+    && !!animations.attack
+    && !!animations.kb;
+}
+
+function hasOnlyToleratedActorWarnings(entry) {
+  const warnings = entry?.warnings || [];
+  return warnings.length > 0 && warnings.every((warning) => warning === 'invalid-actor-image:trailing-bytes');
+}
+
+function isRuntimeUsableActorBundleEntry(entry) {
+  if (!entry?.bundleRef?.bundlePath) return false;
+  return entry.status === 'invalid'
+    && hasCompleteActorBundleFiles(entry)
+    && hasOnlyToleratedActorWarnings(entry);
+}
+
 async function fetchJson(path) {
   if (typeof window === 'undefined') {
     const { readFile } = await import('node:fs/promises');
@@ -149,6 +174,7 @@ export class SemanticAssetProvider {
     const direct = this.indexes.bundleManifest?.bundles?.[key] || (bundleKey ? this.indexes.bundleManifest?.bundles?.[bundleKey] : null);
     if (direct) return true;
     const entry = this.getActorEntry(key) || this.getStageEntry(key) || this.getBackgroundEntry(key) || this.getCastleEntry(key) || this.getCoreEntry(key) || this.getLanguageEntry(key);
+    if (isRuntimeUsableActorBundleEntry(entry)) return true;
     return !!entry?.bundleRef?.bundleKey && !!this.indexes.bundleManifest?.bundles?.[entry.bundleRef.bundleKey];
   }
 
@@ -218,16 +244,35 @@ export class SemanticAssetProvider {
   async getActorBundle(actorKey) { return await this.readActorBundle(actorKey); }
   async getActorIconUrl(actorKey) { if (this.actorIconUrlCache.has(actorKey)) return this.actorIconUrlCache.get(actorKey); const { bundleRef, archive } = await this.readActorBundle(actorKey); const internalPath = archive.has('icon.png') ? 'icon.png' : (archive.has('image.png') ? 'image.png' : null); if (!internalPath) throw new Error(`Actor bundle has no icon or image: ${actorKey}`); const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png'); this.actorIconUrlCache.set(actorKey, url); return url; }
 
+  async readActorIconFallback(actorKey, reason) {
+    const entry = this.getActorEntry(actorKey);
+    if (!entry?.bundleRef || !this.hasBundleForKey(actorKey)) return null;
+    const archive = await this.archive(entry.bundleRef);
+    const internalPath = archive.has('icon.png') ? 'icon.png' : (archive.has('image.png') ? 'image.png' : null);
+    if (!internalPath) return null;
+    this.diagnostics.inferredIconEntries.push({ semanticKey: actorKey, bundlePath: entry.bundleRef.bundlePath, internalPath, sourceStatus: 'actor-bundle-icon-fallback', reason });
+    this.diagnostics.inferredIconEntries.splice(80);
+    return { entry, archive, bundleRef: entry.bundleRef, internalPath };
+  }
+
   async readIconBundle(actorKey) {
     const entry = this.getIconEntry(actorKey);
     const inferred = entry?.sourceStatus === 'inferred-aggregate-icon-entry';
     const bundleRef = entry?.bundleRef;
     const internalPath = entry?.internalPath || bundleRef?.internalPath;
-    if (!entry || !bundleRef?.bundlePath || !internalPath) { const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, sourcePath: entry?.sourcePath || null, reason: 'missing-index-entry', missingEntries: internalPath ? [internalPath] : [], invalidEntries: [], message: `Unknown icon semantic key: ${actorKey}` }; this.diagnostics.missingBundles.push(detail); const error = new Error(detail.message); error.detail = detail; throw error; }
+    if (!entry || !bundleRef?.bundlePath || !internalPath) {
+      const fallback = await this.readActorIconFallback(actorKey, 'missing-icon-index-entry');
+      if (fallback) return fallback;
+      const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef?.bundlePath || null, internalPath: internalPath || null, sourcePath: entry?.sourcePath || null, reason: 'missing-index-entry', missingEntries: internalPath ? [internalPath] : [], invalidEntries: [], message: `Unknown icon semantic key: ${actorKey}` }; this.diagnostics.missingBundles.push(detail); const error = new Error(detail.message); error.detail = detail; throw error;
+    }
     if (inferred) { this.diagnostics.inferredIconEntries.push({ semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath }); this.diagnostics.inferredIconEntries.splice(80); }
     try {
       const archive = await this.archive(bundleRef);
-      if (!archive.has(internalPath)) { const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: inferred ? 'missing-inferred-zip-entry' : 'missing-zip-entry', missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` }; this.diagnostics.bundleErrors.push(detail); const error = new Error(detail.message); error.detail = detail; throw error; }
+      if (!archive.has(internalPath)) {
+        const fallback = inferred ? await this.readActorIconFallback(actorKey, 'missing-inferred-aggregate-icon') : null;
+        if (fallback) return fallback;
+        const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: inferred ? 'missing-inferred-zip-entry' : 'missing-zip-entry', missingEntries: [internalPath], invalidEntries: [], message: `Icon bundle file missing: ${internalPath}` }; this.diagnostics.bundleErrors.push(detail); const error = new Error(detail.message); error.detail = detail; throw error;
+      }
       return { entry, archive, bundleRef, internalPath };
     } catch (error) {
       const detail = { kind: 'icon', semanticKey: actorKey, bundlePath: bundleRef.bundlePath, internalPath, sourcePath: entry.sourcePath || null, reason: error?.detail?.reason || 'zip-read-failed', missingEntries: [internalPath], invalidEntries: [], originalErrorName: error?.name, originalErrorMessage: error?.message, message: error?.message || String(error) };

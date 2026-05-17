@@ -111,7 +111,7 @@ export class FormationEditor {
     const input = e.target.closest('[data-search-input]');
     if (!input) return;
     this.searchText = String(input.value || '');
-    this.renderDynamic();
+    this.renderDynamic({ resetCatalogScroll: true });
   }
 
   onScroll(e) {
@@ -197,7 +197,7 @@ export class FormationEditor {
       this.activePage = clampPage(Math.floor(this.activeSlot / LINEUP_COLS));
       return this.renderDynamic();
     }
-    if (filter) { this.filter = filter.dataset.filter; return this.renderDynamic(); }
+    if (filter) { this.filter = filter.dataset.filter; return this.renderDynamic({ resetCatalogScroll: true }); }
     if (character) {
       const characterId = character.dataset.character;
       const selected = getCharacterById(characterId);
@@ -512,11 +512,11 @@ export class FormationEditor {
     const top = firstRow * rowHeight;
     const bottom = Math.max(0, (totalRows - lastRow) * rowHeight);
     const usedBaseIds = this.currentUsedBaseIds || new Set();
-    grid.innerHTML = `<div class='formation-catalog-spacer' style='height:${top}px'></div>${chars.slice(start, end).map((c, offset) => {
+    grid.innerHTML = `<div class='formation-catalog-spacer' aria-hidden='true' style='grid-column:1/-1;height:${top}px'></div>${chars.slice(start, end).map((c, offset) => {
       const baseId = c.baseCharacterId || c.characterId;
       const catalogIndex = start + offset;
       return `<button type='button' class='formation-character-card ${usedBaseIds.has(baseId) ? 'is-used' : ''}' data-character='${c.characterId}' data-catalog-index='${catalogIndex}' data-faction='${c.faction}' data-base-character-id='${baseId || ''}'>${this.renderIconMarkup(c)}<span>${c.faction === 'dog' ? 'DOG' : 'CAT'}</span><strong>${c.label}</strong><small class='character-id'>${c.characterId}</small>${this.renderCardMeta(c)}</button>`;
-    }).join('')}<div class='formation-catalog-spacer' style='height:${bottom}px'></div>`;
+    }).join('')}<div class='formation-catalog-spacer' aria-hidden='true' style='grid-column:1/-1;height:${bottom}px'></div>`;
   }
 
   updateFormationIconDebug() {
@@ -547,7 +547,7 @@ export class FormationEditor {
     debug.lastRender.renderedIconCount = catalogImgs.length;
   }
 
-  renderDynamic() {
+  renderDynamic({ resetCatalogScroll = false } = {}) {
     performance.mark?.('formation-render-start');
     const chars = this.getFilteredCharacters();
     const dogCount = getCharactersByFaction('dog').length;
@@ -586,7 +586,7 @@ export class FormationEditor {
     }
 
     const scroller = this.root.querySelector('.formation-catalog-scroll');
-    if (scroller) scroller.scrollTop = 0;
+    if (scroller && resetCatalogScroll) scroller.scrollTop = 0;
     this.renderCatalogWindow();
     this.resolveSemanticIcons();
     this.updateFormationIconDebug();
@@ -604,7 +604,7 @@ export class FormationEditor {
 
   refresh() {
     this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section></div>`;
-    this.renderDynamic();
+    this.renderDynamic({ resetCatalogScroll: true });
     this.renderStageSelector();
   }
 }

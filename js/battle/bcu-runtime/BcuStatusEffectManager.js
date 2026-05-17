@@ -11,6 +11,7 @@ import { resolveStatusIcons } from './BcuStatusIconResolver.js';
 
 const INVENTORY_PROMISES = new WeakMap();
 const DEFINITION_PROMISES = new WeakMap();
+const BCU_FRAME_MS = 1000 / 30;
 
 function providerForScene(scene) {
   return scene?.bcuDb?.semanticProvider || scene?.semanticProvider || globalThis.__BCU_DB__?.semanticProvider || null;
@@ -79,15 +80,23 @@ export class BcuEntityEffectIconRuntime {
     this.sprite = new BcuSpriteSheet(definition?.image, definition?.imgcut);
     this.model = new BcuModelInstance(definition?.model || { parts: [], baseScale: 1000, baseAngle: 3600, baseOpacity: 255 });
     this.animator = new BcuAnimator(definition?.anim || { tracks: [], maxFrame: 1 });
-    this.animator.setLoop(true);
+    // BCU Entity.AnimManager.update calls EAnimD.update(false). That does NOT rotate the whole
+    // animation by max+1. It advances f once per battle frame and MaAnim holds/loops only according
+    // to each maanim track's own loop values. Status effects are removed by checkEff/status expiry,
+    // not by global animation loop completion.
+    this.animator.setLoop(false);
+    this.animator.setRotate(false);
     this.finished = false;
+    this.lastAdvancedLogicFrame = null;
   }
 
-  update(dt = 1000 / 30) {
+  update(dt = BCU_FRAME_MS, scene = null) {
     if (this.finished) return;
-    this.animator.tick(dt);
-    const maxFrame = this.animator.getMaxFrame();
-    if (this.animator.loop && maxFrame > 0 && this.animator.frame > maxFrame) this.animator.frame %= (maxFrame + 1);
+    const logicFrame = Number.isFinite(scene?.logicFrame) ? scene.logicFrame : null;
+    if (logicFrame !== null && this.lastAdvancedLogicFrame === logicFrame) return;
+    this.lastAdvancedLogicFrame = logicFrame;
+    const stepDt = Number.isFinite(dt) && dt > 0 ? dt : BCU_FRAME_MS;
+    this.animator.tick(stepDt);
     this.animator.apply(this.model);
   }
 
@@ -134,6 +143,7 @@ export class BcuStatusEffectManager {
     this.effects = new Map();
     this.loading = new Map();
     this.lastUpdateMs = null;
+    this.lastUpdateLogicFrame = null;
   }
 
   updateStatusSnapshot(scene = this.scene) {
@@ -180,17 +190,20 @@ export class BcuStatusEffectManager {
     for (const key of [...this.loading.keys()]) if (key === slotOrKey || key.startsWith(prefix)) this.loading.delete(key);
   }
 
-  updateEffects(dt = 1000 / 30, scene = this.scene) {
+  updateEffects(dt = BCU_FRAME_MS, scene = this.scene) {
     this.updateStatusSnapshot(scene);
     const icons = this.resolveEffects(scene).filter((icon) => !icon.suppressed);
     const wanted = new Set();
+    const logicFrame = Number.isFinite(scene?.logicFrame) ? scene.logicFrame : null;
+    const shouldAdvance = logicFrame === null || this.lastUpdateLogicFrame !== logicFrame;
     icons.forEach((icon, slot) => {
       const variant = icon.variantKey || 'DEF';
       const key = `${slot}:${icon.effectKey}:${variant}`;
       wanted.add(key);
       const existing = this.effects.get(key) || this.ensureEffect(icon.effectKey, variant, slot, scene);
-      existing?.update?.(dt);
+      if (shouldAdvance) existing?.update?.(BCU_FRAME_MS, scene);
     });
+    if (shouldAdvance) this.lastUpdateLogicFrame = logicFrame;
     for (const key of [...this.effects.keys()]) {
       if (!wanted.has(key)) this.effects.delete(key);
     }
@@ -204,7 +217,7 @@ export class BcuStatusEffectManager {
       .map((icon, slot) => {
         const variant = icon.variantKey || 'DEF';
         const runtime = this.effects.get(`${slot}:${icon.effectKey}:${variant}`) || null;
-        return { ...icon, slot, variantKey: variant, runtime, loaded: !!runtime };
+        return { ...icon, slot, variantKey: variant, runtime, loaded: !!runtime, animationFrame: runtime?.animator?.frame ?? null };
       });
   }
 }

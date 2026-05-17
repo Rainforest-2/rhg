@@ -48,6 +48,7 @@ function registerCompositeDebug(entry) {
     glowDrawCount: 0,
     fastGlowDrawCount: 0,
     pixelGlowDrawCount: 0,
+    nonGlowDrawCount: 0,
     modes: {},
     fastModes: {},
     pixelModes: {},
@@ -68,6 +69,8 @@ function registerCompositeDebug(entry) {
     }
     debug.examples.unshift(entry);
     debug.examples.splice(12);
+  } else {
+    debug.nonGlowDrawCount = (debug.nonGlowDrawCount || 0) + 1;
   }
   globalThis.__BCU_CANVAS_COMPOSITE_DEBUG__ = debug;
 }
@@ -79,6 +82,7 @@ function registerCompositeFailure(error, entry) {
     glowDrawCount: 0,
     fastGlowDrawCount: 0,
     pixelGlowDrawCount: 0,
+    nonGlowDrawCount: 0,
     modes: {},
     fastModes: {},
     pixelModes: {},
@@ -197,11 +201,16 @@ export function drawBcuImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw = sw, dh
     if (drawFastCanvasGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity, glow, debug: options.debug || null })) return true;
     return drawPixelGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity, glow, debug: options.debug || null });
   }
+
+  // Non-glow draw must not clobber caller alpha. Actor renderer already sets
+  // ctx.globalAlpha from BCU part opacity before calling sprite.drawPart().
+  // Previous fallback reset globalAlpha to options.opacity (default 1), which made
+  // animated translucent parts fully opaque and caused 024-like dark artifacts.
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = opacity;
+  ctx.globalAlpha = clampAlpha((Number.isFinite(Number(ctx.globalAlpha)) ? ctx.globalAlpha : 1) * opacity);
   ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
   ctx.restore();
-  registerCompositeDebug({ source: 'BcuCanvasComposite.drawBcuImagePart', glow, opacity, glowSupported: false, debug: options.debug || null, timestamp: Date.now() });
+  registerCompositeDebug({ source: 'BcuCanvasComposite.drawBcuImagePart', path: 'non-glow-source-over-preserve-alpha', glow, opacity, callerAlphaPreserved: true, glowSupported: false, debug: options.debug || null, timestamp: Date.now() });
   return true;
 }

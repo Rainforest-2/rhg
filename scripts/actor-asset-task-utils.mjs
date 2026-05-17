@@ -22,6 +22,10 @@ export const ROOT = process.cwd();
 export const ENEMY_ICON_ZIP = 'public/assets/bundles/icon/enemy.zip';
 export const REGRESSION_ENEMY_IDS = Object.freeze([388, 440, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699]);
 const PNG_SIG = Buffer.from('89504e470d0a1a0a', 'hex');
+export const ENEMY_ICON_SIZE = 256;
+export const ENEMY_ICON_FRAME = 0;
+const ENEMY_ICON_MARGIN = 10;
+const ENEMY_ICON_DRAW_SIZE = ENEMY_ICON_SIZE - ENEMY_ICON_MARGIN * 2;
 
 export async function exists(file) {
   try { await fs.access(file); return true; } catch { return false; }
@@ -179,8 +183,6 @@ export function selectedActorFiles(entry) {
 export function resolveNeutralAnimation(files = {}) {
   const a = files.animations || {};
   if (a.idle) return { role: 'idle', path: a.idle, internalPath: 'idle.maanim' };
-  if (a.move) return { role: 'move', path: a.move, internalPath: 'move.maanim' };
-  if (a.default) return { role: 'default', path: a.default, internalPath: 'default.maanim' };
   return null;
 }
 
@@ -194,9 +196,7 @@ export async function readActorBundleFiles(entry) {
     modelText: zip.get('model.mamodel') ? Buffer.from(zip.get('model.mamodel')).toString('utf8') : null,
     neutralAnim: zip.get('idle.maanim')
       ? { role: 'idle', internalPath: 'idle.maanim', text: Buffer.from(zip.get('idle.maanim')).toString('utf8') }
-      : zip.get('move.maanim')
-        ? { role: 'move', internalPath: 'move.maanim', text: Buffer.from(zip.get('move.maanim')).toString('utf8') }
-        : null
+      : null
   };
 }
 
@@ -417,7 +417,7 @@ function drawTransformedPart(dst, outW, outH, image, part, matrix, pivotX, pivot
 export function renderComposedInitialPose({ image, imgcut, model, anim }) {
   const inst = new BcuModelInstance(model);
   const animator = new BcuAnimator(anim);
-  animator.frame = 0;
+  animator.frame = ENEMY_ICON_FRAME;
   animator.apply(inst);
   const drawList = inst.getBattleDrawList();
   const boundsList = drawList.map((p) => getPartBounds(imgcut, image, p)).filter(Boolean);
@@ -431,12 +431,12 @@ export function renderComposedInitialPose({ image, imgcut, model, anim }) {
   bounds.width = bounds.right - bounds.left;
   bounds.height = bounds.bottom - bounds.top;
   if (!(bounds.width > 0 && bounds.height > 0)) throw new Error('composed-pose-invalid-bounds');
-  const out = new Uint8ClampedArray(128 * 128 * 4);
-  const scale = Math.min(118 / bounds.width, 118 / bounds.height);
+  const out = new Uint8ClampedArray(ENEMY_ICON_SIZE * ENEMY_ICON_SIZE * 4);
+  const scale = Math.min(ENEMY_ICON_DRAW_SIZE / bounds.width, ENEMY_ICON_DRAW_SIZE / bounds.height);
   const iconTransform = {
     scale,
-    x: (128 - bounds.width * scale) / 2 - bounds.left * scale,
-    y: (128 - bounds.height * scale) / 2 - bounds.top * scale
+    x: (ENEMY_ICON_SIZE - bounds.width * scale) / 2 - bounds.left * scale,
+    y: (ENEMY_ICON_SIZE - bounds.height * scale) / 2 - bounds.top * scale
   };
   let partsRendered = 0;
   const partsSkipped = [];
@@ -446,34 +446,34 @@ export function renderComposedInitialPose({ image, imgcut, model, anim }) {
       partsSkipped.push({ index: p.index ?? null, reason: 'not-visible-or-invalid-cut', partIndex: p.partIndex ?? null });
       continue;
     }
-    const pixels = drawTransformedPart(out, 128, 128, image, b.part, p.matrix, b.pivotX, b.pivotY, b.opacity, iconTransform);
+    const pixels = drawTransformedPart(out, ENEMY_ICON_SIZE, ENEMY_ICON_SIZE, image, b.part, p.matrix, b.pivotX, b.pivotY, b.opacity, iconTransform);
     if (pixels > 0) partsRendered += 1;
     else partsSkipped.push({ index: p.index ?? null, reason: 'outside-output-or-transparent', partIndex: p.partIndex ?? null });
   }
   if (partsRendered <= 0) throw new Error('composed-pose-rendered-zero-parts');
-  return { png: encodePngRgba(128, 128, out), composedBounds: bounds, partsRendered, partsSkipped };
+  return { png: encodePngRgba(ENEMY_ICON_SIZE, ENEMY_ICON_SIZE, out), composedBounds: bounds, partsRendered, partsSkipped, selectedFrame: ENEMY_ICON_FRAME, outputSize: ENEMY_ICON_SIZE };
 }
 
 export function renderSingleCutFallback({ image, imgcut }) {
   const valid = (imgcut.parts || []).map((p) => validCut(p, image)).filter(Boolean).sort((a, b) => (b.w * b.h) - (a.w * a.h) || a.index - b.index);
   if (!valid.length) throw new Error('imgcut-invalid');
   const part = valid[0];
-  const out = new Uint8ClampedArray(128 * 128 * 4);
-  const scale = Math.min(118 / part.w, 118 / part.h);
+  const out = new Uint8ClampedArray(ENEMY_ICON_SIZE * ENEMY_ICON_SIZE * 4);
+  const scale = Math.min(ENEMY_ICON_DRAW_SIZE / part.w, ENEMY_ICON_DRAW_SIZE / part.h);
   const dw = Math.max(1, Math.round(part.w * scale));
   const dh = Math.max(1, Math.round(part.h * scale));
-  const ox = Math.floor((128 - dw) / 2);
-  const oy = Math.floor((128 - dh) / 2);
+  const ox = Math.floor((ENEMY_ICON_SIZE - dw) / 2);
+  const oy = Math.floor((ENEMY_ICON_SIZE - dh) / 2);
   for (let y = 0; y < dh; y += 1) {
     for (let x = 0; x < dw; x += 1) {
       const sx = part.x + Math.min(part.w - 1, Math.floor(x / scale));
       const sy = part.y + Math.min(part.h - 1, Math.floor(y / scale));
       const si = (sy * image.width + sx) * 4;
-      const di = ((oy + y) * 128 + ox + x) * 4;
+      const di = ((oy + y) * ENEMY_ICON_SIZE + ox + x) * 4;
       out[di] = image.rgba[si]; out[di + 1] = image.rgba[si + 1]; out[di + 2] = image.rgba[si + 2]; out[di + 3] = image.rgba[si + 3];
     }
   }
-  return { png: encodePngRgba(128, 128, out), selectedCut: { index: part.index, x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || null } };
+  return { png: encodePngRgba(ENEMY_ICON_SIZE, ENEMY_ICON_SIZE, out), selectedCut: { index: part.index, x: part.x, y: part.y, w: part.w, h: part.h, name: part.name || null }, outputSize: ENEMY_ICON_SIZE };
 }
 
 export async function generateEnemyIconForEntry({ enemyId, entry, allowlisted = false }) {
@@ -507,8 +507,8 @@ export async function generateEnemyIconForEntry({ enemyId, entry, allowlisted = 
     frame: 0,
     outputZipPath: ENEMY_ICON_ZIP,
     outputInternalPath: `enemy/${enemyId}.png`,
-    width: 128,
-    height: 128,
+    width: ENEMY_ICON_SIZE,
+    height: ENEMY_ICON_SIZE,
     listedInErrorAllowlist: allowlisted
   };
 
@@ -530,6 +530,8 @@ export async function generateEnemyIconForEntry({ enemyId, entry, allowlisted = 
       iconGenerationSource: sourceKind,
       compositionMethod: 'composed-initial-pose',
       composedBounds: rendered.composedBounds,
+      selectedFrame: rendered.selectedFrame,
+      outputSize: rendered.outputSize,
       partsRendered: rendered.partsRendered,
       partsSkipped: rendered.partsSkipped,
       png: rendered.png,
@@ -547,6 +549,7 @@ export async function generateEnemyIconForEntry({ enemyId, entry, allowlisted = 
         iconGenerationSource: sourceKind,
         compositionMethod: 'single-cut-degraded-fallback',
         selectedCut: fallback.selectedCut,
+        outputSize: fallback.outputSize,
         fallbackReason: reason,
         partsRendered: null,
         partsSkipped: [],
@@ -583,7 +586,11 @@ export async function buildEnemyIconGenerationReport({ apply = false } = {}) {
     generatedAt: FIXED_DATE,
     generationSource: 'actor-assets-initial-pose',
     iconCount: entries.length,
-    entries: generated.filter((r) => r.status === 'generated').map((r) => ({ key: r.actorKey, internalPath: r.outputInternalPath, compositionMethod: r.compositionMethod, sha256: r.sha256 }))
+    width: ENEMY_ICON_SIZE,
+    height: ENEMY_ICON_SIZE,
+    frame: ENEMY_ICON_FRAME,
+    animationRole: 'idle',
+    entries: generated.filter((r) => r.status === 'generated').map((r) => ({ key: r.actorKey, internalPath: r.outputInternalPath, compositionMethod: r.compositionMethod, width: r.width, height: r.height, frame: r.frame, sha256: r.sha256 }))
   };
   const zipEntries = [{ name: 'bundle.json', data: Buffer.from(JSON.stringify(bundleJson, null, 2)) }, ...entries];
   if (apply) {
@@ -596,6 +603,10 @@ export async function buildEnemyIconGenerationReport({ apply = false } = {}) {
       bundlePath: ENEMY_ICON_ZIP,
       status: 'full',
       iconCount: entries.length,
+      width: ENEMY_ICON_SIZE,
+      height: ENEMY_ICON_SIZE,
+      frame: ENEMY_ICON_FRAME,
+      animationRole: 'idle',
       sizeBytes: (await fs.stat(ENEMY_ICON_ZIP)).size,
       hash: await sha256(await fs.readFile(ENEMY_ICON_ZIP)),
       generationSource: 'actor-assets-initial-pose'

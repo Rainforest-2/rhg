@@ -1,6 +1,6 @@
 # Generated Enemy Icons Report
 
-Generated: 2026-05-17T15:28:17.036Z
+Generated: 2026-05-17T16:15:12.431Z
 Mode: apply
 
 ## Summary
@@ -11,7 +11,7 @@ Mode: apply
 - single-cut degraded fallback: 19
 - failed: 0
 - expected missing: 0
-- zip size bytes: 5920350
+- zip size bytes: 14877886
 
 ## Degraded Fallback
 
@@ -43,16 +43,16 @@ Mode: apply
 
 | enemy | status | method | sha256/failure |
 | --- | --- | --- | --- |
-| 388 | generated | composed-initial-pose | 0a32bb8e1d64eb4156126fc228df9d9533c73756aa36608e6361edc38879f224 |
-| 440 | generated | composed-initial-pose | 9d03fd4cfd02068cf945abfd2987301132d88c08c66bcf70622264d99230ca14 |
-| 443 | generated | composed-initial-pose | faf92f1816d7693055a45c65de50669fe28bb87cf8f1a76210225cb93acf4643 |
-| 560 | generated | composed-initial-pose | 34f6cd7cc3490204a02e23d36178d996b72c30ad42e06319b147d261cab4ac49 |
-| 609 | generated | composed-initial-pose | 242e91ea25fc433909e1edb1666c866753d423a18d748d7fa73398877a72fce5 |
-| 610 | generated | composed-initial-pose | d31e94107be49a491f47383f6c8cb80e10836b7fb02844270c0d94205c9e115b |
-| 611 | generated | composed-initial-pose | b0aa32f3f146bc98a7b52cb6a2d0b7e07780aced595927e96635673983484611 |
-| 612 | generated | composed-initial-pose | 6d48499ef3db64a557989cebddca040c9ace9e0ecfe73027b59843a65162b565 |
-| 613 | generated | composed-initial-pose | b820be2b7de370300273df2ad7adc607ca65b8929031477411b92a581f26dc8c |
-| 695 | generated | composed-initial-pose | 811232f4cd898f3d2682001259472002a07873cae38d9c06e0d51ad6cf34179e |
-| 696 | generated | composed-initial-pose | 3cbe3fd9b026eb9abc775e3e2ae579e06e1475c07f0373768711a7d01f153001 |
-| 697 | generated | composed-initial-pose | 0cbd41fa42452e3e3b3b9e4ef016e4716f6568a601eb2f0b7571e6f1a0df371b |
-| 699 | generated | composed-initial-pose | 0c4761488e413d11a28f62c7c993fc16db2f4bc50828b182414d1ea7292b2b6d |
+| 388 | generated | composed-initial-pose | f621329d528b58e5a0ddb526fb6dd2abf4cfe0a71f9b4087a0f0bdcd8ec6e214 |
+| 440 | generated | composed-initial-pose | 55f006e84f49b8b40c38bb2ffd41bb9e7b14711f6a599f5f888e1e72f975ed80 |
+| 443 | generated | composed-initial-pose | ffedbdae3e0e0341578bfcfe755f512761f4af4b022f0aebac9118ec3a99eac1 |
+| 560 | generated | composed-initial-pose | b071bfa7116668f514abd9494b9aa250cfc94aac8937c788bb326e29678eacb0 |
+| 609 | generated | composed-initial-pose | 0e130c4fb477c68a189b92f516b90bb05a984aafd25784a6c26b71cc07710fc6 |
+| 610 | generated | composed-initial-pose | 1ac2a7310038615a023cca8be27f8dd6e386fc332fb10ec2f272b177af510237 |
+| 611 | generated | composed-initial-pose | b3a412e4a8bcd63bbd9ca80514b21fa146594b8452728f4710575900d1a67051 |
+| 612 | generated | composed-initial-pose | e6af9ca9c9a37268b0e5850b837ff796fa691ae66a22293d5a608dd052341549 |
+| 613 | generated | composed-initial-pose | 4b6b4ebe25d436f20b0e048ceaa2f2c63cabd87a9ad7973d29cd9752a686a6eb |
+| 695 | generated | composed-initial-pose | 62fe13411e020bfa9f8429f27742c00cdb88bfcf98bde0a5aaa03979bbc5a03b |
+| 696 | generated | composed-initial-pose | 3a6ddcd38463bf5a2d1534da92d71269a3c3358626a7f058e25d31c3facd4e7e |
+| 697 | generated | composed-initial-pose | b91be09237f3737b6f6e479e23bb8c8a9c93c01d6d30498fcda4a63a74155e9c |
+| 699 | generated | composed-initial-pose | 8f3287420337568f08599e19e9f22a33bf429c2053b325c96941035f0c43ab68 |

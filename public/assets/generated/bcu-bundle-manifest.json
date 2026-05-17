@@ -33218,8 +33218,12 @@
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
       "iconCount": 778,
-      "sizeBytes": 5920350,
-      "hash": "742cdc58eaafe284e205998917e88fe1183719ff7663e11d8f01a5c443961735",
+      "width": 256,
+      "height": 256,
+      "frame": 0,
+      "animationRole": "idle",
+      "sizeBytes": 14877886,
+      "hash": "09c281c92f872367261c7d946a0f2fcac514bf83bdf4b5f68274cface225eb60",
       "generationSource": "actor-assets-initial-pose"
     },
     "icon:unit:c": {

@@ -42,6 +42,7 @@ async function boot() {
     await import('./battle/BattleSceneRendererHudPatch.js');
     await import('./battle/BattleSceneRendererBcuGlowPatch.js');
     await import('./battle/BattleSceneRendererEffectGlowPatch.js');
+    await import('./ui/FormationStageNameBcuPatch.js');
     const { installBattleTouchGuard } = await import('./ui/BattleTouchGuard.js');
     installBattleTouchGuard(document);
     const { BcuBootLoader, setBcuAssetDatabase } = await import('./bcu/BcuBootLoader.js');

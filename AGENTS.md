@@ -1,11 +1,11 @@
-# AGENTS.md — Codex task guide for complete enemy asset coverage and formation UI stability
+# AGENTS.md — Codex task guide for optimized enemy icon generation, asset coverage, and formation UI stability
 
 Repository: `rhgrive2/game`
 Target branch: `main`
 
 ## Purpose
 
-Fix enemy asset/icon/spawn coverage across the full enemy set, not only example IDs. Keep formation catalog virtualization and scroll behavior stable. Work evidence-first; do not guess mappings.
+Fix enemy asset/icon/spawn coverage across the full enemy set without making the browser load large actor assets just to display formation/catalog icons. Keep formation catalog virtualization and scroll behavior stable. Work evidence-first; do not guess mappings.
 
 Known examples:
 
@@ -18,6 +18,78 @@ Goal: every enemy with valid usable data/assets must be visible in UI and spawna
 
 ---
 
+## Critical performance policy
+
+### Do not do heavy actor fallback generation at runtime
+
+Do **not** make `provider.getActorUiIconUrl()` load actor bundle zips, raw `{id}_e.png`, or raw `{id}_e.imgcut` for many enemies during formation/catalog rendering.
+
+Reason: virtual scrolling would still cause many icon requests over time, and a fallback that opens actor zips or raw actor images in the browser can become heavier than the original missing-icon problem.
+
+Runtime should only:
+
+1. read lightweight icon indexes/manifests,
+2. lazily read small UI icon zip entries for visible cards,
+3. reuse cached object URLs,
+4. return an explicit missing result when no generated icon exists.
+
+### Required optimized design
+
+Use a pre-generation pipeline:
+
+```text
+Audit all enemies
+  -> find enemies missing explicit/aggregate UI icons
+  -> for only those enemies, generate small UI thumbnails from actor sprite + imgcut
+  -> write a generated fallback icon zip and index
+  -> runtime loads that generated icon zip/index like a normal icon source
+```
+
+The generated fallback must be produced before runtime by a script, not by mass runtime fallback.
+
+Recommended generated outputs:
+
+```text
+public/assets/bundles/icon/enemy-fallback.generated.zip
+public/assets/generated/bcu-generated-icon-index.json
+```
+
+If the generated fallback set becomes large, chunk it instead of making one huge zip:
+
+```text
+public/assets/bundles/icon/enemy-fallback-000-099.generated.zip
+public/assets/bundles/icon/enemy-fallback-100-199.generated.zip
+...
+```
+
+Chunk when either threshold is exceeded:
+
+```text
+fallback icons > 100 per zip
+or generated zip > 2 MiB
+```
+
+The index must map each generated icon directly:
+
+```js
+{
+  "enemy:388": {
+    "source": "actor-imgcut-thumbnail-generated",
+    "bundlePath": "public/assets/bundles/icon/enemy-fallback-300-399.generated.zip",
+    "internalPath": "enemy/388.png",
+    "sourceImagePath": "public/assets/bcu/000003/org/enemy/388/388_e.png",
+    "sourceImgcutPath": "public/assets/bcu/000003/org/enemy/388/388_e.imgcut",
+    "width": 64,
+    "height": 64,
+    "sha256": "..."
+  }
+}
+```
+
+Runtime `SemanticAssetProvider.getActorUiIconUrl()` should use this generated index before attempting any expensive fallback.
+
+---
+
 ## Critical icon policy
 
 ### Do not use `edi_*.png` for this web UI fallback
@@ -26,7 +98,7 @@ Even though BCU Java can use `Enemy.getIcon() -> anim.getEdi()` and therefore ca
 
 Reason: the requested UI policy is to avoid `edi.png`. Treat `edi_*.png` as diagnostic evidence only, not as a selected UI icon.
 
-### Required fallback design for missing enemy icons
+### Required fallback source for generated icons
 
 If an enemy lacks an explicit/aggregate enemy icon, generate a UI thumbnail from the battle actor sprite source:
 
@@ -40,37 +112,40 @@ or the equivalent generated actor bundle entries:
 image.png + imgcut.imgcut
 ```
 
-This fallback must be generic and apply to every enemy with the same asset pattern. Do not special-case IDs.
+This must happen in the pre-generation script, not by repeated runtime fallback.
 
-Recommended icon source priority:
+Recommended icon source priority at runtime:
 
 1. Explicit icon index entry, if valid.
 2. Aggregate icon bundle entry, e.g. `public/assets/bundles/icon/enemy.zip` + `enemy/N.png`, if valid.
-3. Existing actor bundle `icon.png`, if present and valid.
-4. Generated actor-sprite thumbnail from `image.png + imgcut.imgcut` or raw `{id}_e.png + {id}_e.imgcut`.
-5. Missing icon placeholder only if no valid actor sprite thumbnail can be generated.
+3. Generated fallback icon index entry, e.g. `enemy-fallback.generated.zip` + `enemy/N.png`, if valid.
+4. Existing actor bundle `icon.png`, only if already indexed as a lightweight UI icon source.
+5. Missing icon placeholder with precise diagnostic reason.
 
 Disallowed as selected UI icon sources:
 
 ```text
 edi_*.png
+raw runtime actor zip scan as normal UI path
 random generic enemy icon as success
 invisible/dummy image as success
 ```
 
 ### Thumbnail generation requirements
 
-When generating a thumbnail from actor sprite + imgcut:
+When the generation script creates a thumbnail from actor sprite + imgcut:
 
-- Parse the `.imgcut` data using existing repo parsing utilities if available. If none exist, implement a minimal parser backed by tests/diagnostics.
+- Parse the `.imgcut` data using existing repo parsing utilities if available. If none exist, implement a minimal parser backed by diagnostics.
 - Do not assume the first cut is always correct unless diagnostics prove it. Prefer a deterministic representative cut:
-  - a valid cut rectangle inside the PNG bounds,
+  - valid cut rectangle inside PNG bounds,
   - non-zero width/height,
-  - preferably the largest or first main-body frame used by the model metadata.
-- Render to a small canvas or generated bundle icon with transparent background.
-- Cache generated object URLs or generated files; do not regenerate on every scroll render.
-- Report icon source as `actor-imgcut-thumbnail-fallback`.
+  - preferably the largest or first main-body frame used by model metadata.
+- Render to a 64x64 transparent PNG unless existing UI requires another size.
+- Preserve aspect ratio and center the crop.
+- Write generated icons into the generated fallback zip.
+- Report icon source as `actor-imgcut-thumbnail-generated`.
 - If imgcut is missing or invalid, report `actor-imgcut-missing` or `actor-imgcut-invalid`, not generic failure.
+- The generator must be deterministic: same inputs produce same zip contents and index order.
 
 ---
 
@@ -129,9 +204,10 @@ Work in small commits.
 1. Run/extend diagnostics.
 2. Prove the failure class.
 3. Implement the smallest general fix.
-4. Rerun diagnostics.
-5. Run syntax checks.
-6. Browser-check representative enemies from each failure class.
+4. Generate fallback icon zip/index if needed.
+5. Rerun diagnostics.
+6. Run syntax checks.
+7. Browser-check representative enemies from each failure class.
 
 Recommended branch:
 
@@ -190,6 +266,12 @@ Extend the audit so every enemy reports separated status for these layers:
   explicitIconEntryExists,
   explicitIconDecodeOk,
 
+  generatedFallbackIconEntry,
+  generatedFallbackBundlePath,
+  generatedFallbackInternalPath,
+  generatedFallbackEntryExists,
+  generatedFallbackDecodeOk,
+
   // EDI is diagnostic only. Do not count as chosen UI icon source.
   ediPath,
   ediExists,
@@ -211,8 +293,9 @@ Required failure classes:
 ok
 ui-icon-explicit-ok
 ui-icon-aggregate-ok
-ui-icon-aggregate-missing-but-actor-thumbnail-fallback-ok
-ui-icon-missing-no-actor-thumbnail-fallback
+ui-icon-generated-fallback-ok
+ui-icon-aggregate-missing-but-generation-possible
+ui-icon-missing-no-generation-source
 actor-bundle-not-in-manifest-but-file-exists
 actor-bundle-file-missing
 actor-bundle-bad-zip
@@ -244,7 +327,88 @@ Add a summary table grouped by `failureClass` and a target section containing at
 
 ---
 
-## Task 2 — Determine whether bundle zip files are missing or only omitted from indexes/manifests
+## Task 2 — Build a generated fallback icon bundle instead of runtime-heavy fallback
+
+Create or update a generator script:
+
+```text
+scripts/generate-enemy-fallback-icons.mjs
+```
+
+Required CLI:
+
+```bash
+node scripts/generate-enemy-fallback-icons.mjs --dry-run
+node scripts/generate-enemy-fallback-icons.mjs --apply
+```
+
+Default must be dry-run if no flag is supplied.
+
+The generator must:
+
+1. Read `tmp/enemy-asset-audit.json` or run equivalent detection.
+2. Select only enemies whose explicit/aggregate icon is missing and whose actor sprite + imgcut source is valid.
+3. Generate deterministic 64x64 PNG thumbnails from `{id}_e.png + {id}_e.imgcut` or `image.png + imgcut.imgcut`.
+4. Write generated icons into one or more fallback zip files under `public/assets/bundles/icon/`.
+5. Write `public/assets/generated/bcu-generated-icon-index.json`.
+6. Update any runtime icon manifest only if the existing architecture requires it; prefer loading the generated index separately to avoid corrupting generated upstream indexes.
+7. Write a report:
+
+```text
+tmp/generated-enemy-fallback-icons-report.json
+tmp/generated-enemy-fallback-icons-report.md
+```
+
+Report fields per generated icon:
+
+```js
+{
+  enemyId,
+  sourceImagePath,
+  sourceImgcutPath,
+  selectedCut,
+  outputBundlePath,
+  outputInternalPath,
+  width,
+  height,
+  sha256,
+  reason
+}
+```
+
+The script must not use `edi_*.png`.
+
+---
+
+## Task 3 — Wire runtime to generated fallback index cheaply
+
+Likely files:
+
+```text
+js/bcu/SemanticAssetProvider.js
+js/bcu/BcuAssetLoader.js
+js/ui/FormationEditor.js
+```
+
+Runtime behavior:
+
+- Load `public/assets/generated/bcu-generated-icon-index.json` as small metadata.
+- When explicit/aggregate icon lookup fails, check generated fallback index.
+- Read the generated fallback zip entry for the requested visible icon only.
+- Cache zip handles and object URLs.
+- Do not open actor bundle zips or raw actor images in the normal UI icon path.
+- Deduplicate expected missing icon diagnostics per semantic key.
+
+Acceptance:
+
+- `610/611/612` no longer spam repeated red console errors merely because `enemy/610.png` etc. are missing from aggregate icon zip.
+- Enemies with generated fallback icons show visible icons.
+- `chosenUiIconSource` reports `actor-imgcut-thumbnail-generated`.
+- Runtime does not batch-load actor assets for all enemies while opening formation/catalog UI.
+
+---
+
+## Task 4 — Determine whether actor bundle zip files are missing or only omitted from indexes/manifests
 
 For every remaining problem enemy, inspect:
 
@@ -264,7 +428,7 @@ Remaining Problem Enemy Root Cause Matrix
 Columns:
 
 ```text
-enemyId | actor bundle exists | in manifest | archive ok | all runtime files | image decode | imgcut ok | thumbnail fallback possible | root cause | recommended fix
+enemyId | actor bundle exists | in manifest | archive ok | all runtime files | image decode | imgcut ok | generated fallback possible | root cause | recommended fix
 ```
 
 For `388`, explicitly verify:
@@ -278,44 +442,7 @@ edi_388.png may exist but must not be chosen as UI icon
 
 ---
 
-## Task 3 — Fix UI icons using actor sprite + imgcut fallback
-
-Likely files:
-
-```text
-js/bcu/SemanticAssetProvider.js
-js/bcu/BcuAssetLoader.js
-js/ui/FormationEditor.js
-scripts/* repair/generation scripts, if needed
-```
-
-Required behavior for `provider.getActorUiIconUrl('enemy:N')`:
-
-1. Use explicit icon index entry if valid.
-2. Use aggregate icon bundle entry if valid.
-3. Use actor bundle `icon.png` if valid.
-4. Generate a thumbnail from actor bundle `image.png + imgcut.imgcut` if valid.
-5. Generate a thumbnail from raw BCU `{id}_e.png + {id}_e.imgcut` if valid and no bundle thumbnail can be used.
-6. Return a clear missing result if none are valid.
-
-Do not use `edi_*.png`.
-
-Console behavior:
-
-- Missing aggregate icon entries should not produce repeated red errors if actor thumbnail fallback succeeds.
-- Repeated failures for the same semantic key should be deduplicated.
-- Use `console.error` only for unexpected exceptions; use diagnostics or one-time warnings for expected missing assets.
-
-Acceptance:
-
-- `610/611/612` no longer spam repeated red console errors only because `enemy/610.png` etc. are missing from aggregate icon zip.
-- All enemies with valid `{id}_e.png + {id}_e.imgcut` or bundle `image.png + imgcut.imgcut` get a visible UI icon.
-- `chosenUiIconSource` reports `actor-imgcut-thumbnail-fallback` for this fallback path.
-- `missingUiIcon` is reduced to only enemies with no valid aggregate icon and no valid actor image/imgcut fallback.
-
----
-
-## Task 4 — Fix actor bundle manifest/index coverage for enemies with real usable bundles
+## Task 5 — Fix actor bundle manifest/index coverage for enemies with real usable bundles
 
 Enemies such as `560` and `699` should not fail just because generated indexes or manifests omitted an otherwise valid actor bundle.
 
@@ -341,7 +468,7 @@ Rules:
 
 ---
 
-## Task 5 — Recheck stage spawning for all remaining problem enemies
+## Task 6 — Recheck stage spawning for all remaining problem enemies
 
 File:
 
@@ -381,7 +508,7 @@ Acceptance:
 
 ---
 
-## Task 6 — Browser runtime validation
+## Task 7 — Browser runtime validation
 
 Run:
 
@@ -394,6 +521,7 @@ Icon checks:
 ```js
 globalThis.__FORMATION_ICON_DEBUG__?.recentIconFailures
 globalThis.__BCU_DB__?.semanticProvider?.diagnostics?.inferredIconEntries?.slice(-30)
+globalThis.__BCU_DB__?.semanticProvider?.diagnostics?.generatedIconFallbacks?.slice(-30)
 ```
 
 Confirm examples:
@@ -406,7 +534,7 @@ Each must be one of:
 
 - visible with explicit icon,
 - visible with aggregate icon,
-- visible with actor-imgcut-thumbnail fallback,
+- visible with generated actor-imgcut-thumbnail icon,
 - intentionally unresolved with precise reason.
 
 Spawn checks:
@@ -421,7 +549,7 @@ Do not claim live spawn success without `stageEnemySpawned` or equivalent actor/
 
 ---
 
-## Task 7 — Keep formation catalog virtualization stable
+## Task 8 — Keep formation catalog virtualization stable
 
 Keep the existing spacer full-width behavior. Verify:
 
@@ -448,6 +576,7 @@ Syntax-check changed files, for example:
 
 ```bash
 node --check scripts/audit-bcu-enemy-assets.mjs
+node --check scripts/generate-enemy-fallback-icons.mjs
 node --check scripts/audit-stage-enemy-spawn.mjs
 node --check scripts/repair-bcu-actor-bundle-index.mjs
 node --check js/bcu/SemanticAssetProvider.js
@@ -459,9 +588,12 @@ node --check js/battle/BattleActorFactory.js
 node --check js/ui/FormationEditor.js
 ```
 
-Run diagnostics:
+Run diagnostics/generation:
 
 ```bash
+node scripts/audit-bcu-enemy-assets.mjs
+node scripts/generate-enemy-fallback-icons.mjs --dry-run
+node scripts/generate-enemy-fallback-icons.mjs --apply
 node scripts/audit-bcu-enemy-assets.mjs
 node scripts/audit-stage-enemy-spawn.mjs --enemy 443
 node scripts/audit-stage-enemy-spawn.mjs --enemy 560,699,610,611,612
@@ -479,11 +611,14 @@ Report:
 1. Root cause classes found.
 2. Exact enemy IDs still unresolved and why.
 3. Whether unresolved enemies lack source assets, have bad zips, bad PNG decode, missing imgcut, missing animations, or merely missing aggregate icons.
-4. Files changed.
-5. Scripts added/updated.
-6. Commands run.
-7. Browser checks performed.
-8. Whether `560`, `699`, `610`, `611`, `612`, `695`, `696`, `697` are visible/spawnable or intentionally unresolved.
-9. Confirm that `edi_*.png` is not used as the selected UI icon fallback.
+4. Generated fallback icon zip/index files produced.
+5. Number of generated fallback icons and total generated zip size.
+6. Files changed.
+7. Scripts added/updated.
+8. Commands run.
+9. Browser checks performed.
+10. Whether `560`, `699`, `610`, `611`, `612`, `695`, `696`, `697` are visible/spawnable or intentionally unresolved.
+11. Confirm that `edi_*.png` is not used as the selected UI icon fallback.
+12. Confirm that runtime does not bulk-load actor images/imgcuts for formation/catalog icons.
 
 Do not say “all fixed” unless the full audit and browser checks prove it.

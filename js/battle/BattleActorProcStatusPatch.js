@@ -92,6 +92,11 @@ function applyStatus(actor, key, payload = {}, meta = {}) {
     actor.curseUntilMs = statuses.curse.untilMs;
     return { applied: true, status: statuses.curse };
   }
+  if (key === 'seal') {
+    statuses.seal = { key, framesRemaining: Math.max(statuses.seal?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.seal?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_SEAL]' };
+    actor.sealUntilMs = statuses.seal.untilMs;
+    return { applied: true, status: statuses.seal };
+  }
   if (key === 'toxic') {
     return applyToxic(actor, payload, meta);
   }
@@ -106,7 +111,7 @@ function applyProc(actor, item, meta = {}) {
     actor.startKnockback?.({ type: 'proc', reason: 'proc-kb', tuning: meta.tuning || {}, nowMs: meta.nowMs });
     return { applied: actor.state === 'knockback', reason: 'proc-kb', proc: item };
   }
-  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken' || item.key === 'curse' || item.key === 'toxic') {
+  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken' || item.key === 'curse' || item.key === 'seal' || item.key === 'toxic') {
     return applyStatus(actor, item.key, item.payload || {}, meta);
   }
   return { applied: false, reason: 'proc-not-runtime-applied' };
@@ -163,3 +168,55 @@ export function installBattleActorProcStatusPatch() {
 }
 
 installBattleActorProcStatusPatch();
+
+const DEBUG_STATUS_MAP = {
+  STOP: 'freeze',
+  SLOW: 'slow',
+  WEAK: 'weaken',
+  CURSE: 'curse',
+  SEAL: 'seal',
+  POISON: 'toxic',
+  freeze: 'freeze',
+  slow: 'slow',
+  weaken: 'weaken',
+  curse: 'curse',
+  seal: 'seal',
+  toxic: 'toxic'
+};
+
+function resolveDebugActor(actorOrSelector) {
+  if (actorOrSelector && typeof actorOrSelector === 'object') return actorOrSelector;
+  const app = globalThis.__APP__ || globalThis.app;
+  const actors = app?.scene?.actors || app?.battleScene?.actors || [];
+  if (typeof actorOrSelector === 'function') return actors.find(actorOrSelector) || null;
+  if (typeof actorOrSelector === 'string') {
+    return actors.find((a) => a.instanceId === actorOrSelector || a.label === actorOrSelector || a.side === actorOrSelector) || null;
+  }
+  return actors.find((a) => a?.isAlive?.()) || null;
+}
+
+globalThis.__BCU_TEST_APPLY_STATUS__ = function __BCU_TEST_APPLY_STATUS__(actorOrSelector, statusKey, frames = 180) {
+  const actor = resolveDebugActor(actorOrSelector);
+  const key = DEBUG_STATUS_MAP[statusKey] || DEBUG_STATUS_MAP[String(statusKey || '').toUpperCase()];
+  if (!actor || !key) return { applied: false, reason: 'actor-or-status-not-found' };
+  return actor.applyBcuProc?.({ key, payload: { timeFrames: frames, time: frames, mult: key === 'weaken' ? 50 : undefined } }, { nowMs: actor.lastSceneTimeMs ?? globalThis.__APP__?.scene?.timeMs ?? 0 }) || { applied: false, reason: 'applyBcuProc-missing' };
+};
+
+globalThis.__BCU_TEST_CLEAR_STATUS__ = function __BCU_TEST_CLEAR_STATUS__(actorOrSelector, statusKey) {
+  const actor = resolveDebugActor(actorOrSelector);
+  const key = DEBUG_STATUS_MAP[statusKey] || DEBUG_STATUS_MAP[String(statusKey || '').toUpperCase()];
+  if (!actor?.bcuProcStatuses || !key) return { cleared: false };
+  delete actor.bcuProcStatuses[key];
+  actor.bcuStatusEffectManager?.removeEffect?.(0);
+  return { cleared: true, key };
+};
+
+globalThis.__BCU_TEST_LIST_STATUS_EFFECTS__ = function __BCU_TEST_LIST_STATUS_EFFECTS__() {
+  const app = globalThis.__APP__ || globalThis.app;
+  const scene = app?.scene || app?.battleScene || null;
+  return (scene?.actors || []).map((actor) => ({
+    actor: actor.instanceId || actor.label || null,
+    statuses: actor.bcuProcStatuses || {},
+    effects: actor.bcuStatusEffectManager?.getRenderableEffects?.() || []
+  }));
+};

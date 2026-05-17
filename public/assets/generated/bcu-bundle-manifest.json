@@ -32696,6 +32696,14 @@
       "status": "full",
       "sizeBytes": 95749,
       "hash": "fb64c6d009010a153ea2d705c55ef5686aed0e9e68648fbfd0d7d3159b590ae1"
+    },
+    "effect:status": {
+      "kind": "effect",
+      "key": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip",
+      "status": "full",
+      "sizeBytes": 270333,
+      "hash": "03755f99b1c6133f595edd93017baf0d0681d16b7aaada9d8878d87f8efb3b58"
     }
   }
 }

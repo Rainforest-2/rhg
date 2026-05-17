@@ -9,6 +9,7 @@ const CHANNEL_GLOBALS = {
   wave: '__BCU_WAVE_TRACE__',
   surge: '__BCU_SURGE_TRACE__',
   statusIcon: '__BCU_STATUS_ICON_TRACE__',
+  statusIconRender: '__BCU_STATUS_ICON_RENDER_TRACE__',
   stagebasis: '__BCU_STAGEBASIS_TRACE__',
   input: '__BCU_INPUT_TRACE__',
   blend: '__BCU_BLEND_TRACE__',
@@ -83,4 +84,3 @@ export const BcuTraceRuntime = {
 };
 
 BcuTraceRuntime.expose();
-

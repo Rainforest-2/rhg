@@ -25,6 +25,7 @@ function payloadFor(key, proc = {}) {
   if (key === 'knockbackProc') return { prob: procNumber(proc, 'knockback', 'prob') };
   if (key === 'warp') return { prob: procNumber(proc, 'warp', 'prob'), time: procNumber(proc, 'warp', 'time'), timeFrames: procNumber(proc, 'warp', 'time'), dis0: procNumber(proc, 'warp', 'dis0'), dis1: procNumber(proc, 'warp', 'dis1') };
   if (key === 'curse') return { prob: procNumber(proc, 'curse', 'prob'), time: procNumber(proc, 'curse', 'time'), timeFrames: procNumber(proc, 'curse', 'time') };
+  if (key === 'seal') return { prob: procNumber(proc, 'seal', 'prob'), time: procNumber(proc, 'seal', 'time'), timeFrames: procNumber(proc, 'seal', 'time') };
   if (key === 'toxic') return { prob: procNumber(proc, 'toxic', 'prob'), mult: procNumber(proc, 'toxic', 'mult') };
   if (key === 'wave') return { prob: procNumber(proc, 'wave', 'prob'), level: procNumber(proc, 'wave', 'level') };
   if (key === 'miniWave') return { prob: procNumber(proc, 'miniWave', 'prob'), level: procNumber(proc, 'miniWave', 'level'), mult: procNumber(proc, 'miniWave', 'mult') };
@@ -45,7 +46,8 @@ export class ProcResolver {
       weaken: { key: 'weaken', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       knockbackProc: { key: 'knockbackProc', category: 'kb', implemented: true, pendingSupported: true, pendingType: 'knockback', target: 'actor' },
       warp: { key: 'warp', category: 'state', implemented: false, pendingSupported: true, pendingType: 'state', target: 'actor' },
-      curse: { key: 'curse', category: 'state', implemented: false, pendingSupported: true, pendingType: 'state', target: 'actor' },
+      curse: { key: 'curse', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
+      seal: { key: 'seal', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       toxic: { key: 'toxic', category: 'state', implemented: false, pendingSupported: true, pendingType: 'state', target: 'actor' },
       wave: { key: 'wave', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
       miniWave: { key: 'miniWave', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },

@@ -47,6 +47,7 @@ function clearReviveStatuses(actor) {
     delete actor.bcuProcStatuses.slow;
     delete actor.bcuProcStatuses.weaken;
     delete actor.bcuProcStatuses.curse;
+    delete actor.bcuProcStatuses.seal;
     delete actor.bcuProcStatuses.toxic;
   }
   actor.freezeUntilMs = null;

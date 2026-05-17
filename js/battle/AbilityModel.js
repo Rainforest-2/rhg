@@ -43,6 +43,7 @@ function buildBcuProcSemantic(proc = {}, abilityFlags = {}) {
     miniSurge: procProb(proc, 'miniVolcano') > 0,
     warp: procProb(proc, 'warp') > 0,
     curse: procProb(proc, 'curse') > 0,
+    seal: procProb(proc, 'seal') > 0,
     toxic: procProb(proc, 'toxic') > 0,
     barrierBreaker: procProb(proc, 'barrierBreaker') > 0,
     shieldPierce: procProb(proc, 'shieldBreaker') > 0,

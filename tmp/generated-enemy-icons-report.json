@@ -1,37 +1,16 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-17T14:10:10.871Z",
+  "generatedAt": "2026-05-17T15:28:17.036Z",
   "mode": "apply",
   "outputZipPath": "public/assets/bundles/icon/enemy.zip",
   "summary": {
     "totalEnemies": 778,
-    "generated": 758,
-    "failed": 20,
+    "generated": 778,
+    "failed": 0,
     "expectedMissing": 0,
-    "composedInitialPose": 739,
+    "composedInitialPose": 759,
     "singleCutDegradedFallback": 19,
-    "failedIds": [
-      552,
-      554,
-      556,
-      560,
-      561,
-      562,
-      585,
-      586,
-      587,
-      588,
-      589,
-      590,
-      591,
-      610,
-      611,
-      612,
-      698,
-      699,
-      700,
-      701
-    ],
+    "failedIds": [],
     "expectedMissingIds": [],
     "degradedFallbackIds": [
       19,
@@ -54,7 +33,7 @@
       512,
       744
     ],
-    "zipSizeBytes": 5779840
+    "zipSizeBytes": 5920350
   },
   "enemies": [
     {
@@ -83957,10 +83936,28 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -100.24000000000001,
+        "top": -102.03,
+        "right": 21.479999999999997,
+        "bottom": 7.16,
+        "width": 121.72,
+        "height": 109.19
+      },
+      "partsRendered": 5,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        }
+      ],
+      "sha256": "6bb5d95975d55035ec3b46bc5c2863a7c587b9974b594563f053e79b241301cf",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 553,
@@ -84016,10 +84013,98 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -80.55000000000001,
+        "top": -84.13,
+        "right": 34.01,
+        "bottom": 5.37,
+        "width": 114.56,
+        "height": 89.5
+      },
+      "partsRendered": 2,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 3,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 6,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 4,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 7,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 5,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 8,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 18
+        },
+        {
+          "index": 9,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 14,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 10,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 11,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 28
+        },
+        {
+          "index": 12,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 29
+        },
+        {
+          "index": 16,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 30
+        },
+        {
+          "index": 13,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 30
+        },
+        {
+          "index": 15,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        }
+      ],
+      "sha256": "f553e2bfbb35ef978915be874e75a6d388df455e83c6c4b49566d8d390edf8fe",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 555,
@@ -84195,10 +84280,198 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -143.21865758424286,
+        "top": -180.79000000000002,
+        "right": 7.159999999999997,
+        "bottom": 17.900000000000002,
+        "width": 150.37865758424286,
+        "height": 198.69000000000003
+      },
+      "partsRendered": 8,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 7,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 6
+        },
+        {
+          "index": 14,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 9
+        },
+        {
+          "index": 16,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 6,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 6
+        },
+        {
+          "index": 10,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 26,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 17,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 15,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 10
+        },
+        {
+          "index": 18,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 11
+        },
+        {
+          "index": 19,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 12
+        },
+        {
+          "index": 20,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 13
+        },
+        {
+          "index": 21,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 14
+        },
+        {
+          "index": 22,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 15
+        },
+        {
+          "index": 27,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 13,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 9
+        },
+        {
+          "index": 25,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 31,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 41,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 28,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 29,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 32,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 30,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 39,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 40,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 38,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 5,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 24,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 42,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        }
+      ],
+      "sha256": "25d715713daa1ed8e14c47fe1916600d721bc28aeb92d1c3c022c6232b14339d",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 557,
@@ -84391,10 +84664,73 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -381.27,
+        "top": -502.99,
+        "right": 220.17000000000002,
+        "bottom": 98.45000000000002,
+        "width": 601.44,
+        "height": 601.44
+      },
+      "partsRendered": 24,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 28,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 29,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 30,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 31,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 23,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 24,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 25,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 26,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        }
+      ],
+      "sha256": "34f6cd7cc3490204a02e23d36178d996b72c30ad42e06319b147d261cab4ac49",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 561,
@@ -84409,10 +84745,33 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -69.17,
+        "top": -89.86,
+        "right": 11.380000000000003,
+        "bottom": -0.20999999999999996,
+        "width": 80.55000000000001,
+        "height": 89.65
+      },
+      "partsRendered": 3,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        }
+      ],
+      "sha256": "5c69c26512fdc4b7f2ee4a1f4de8871e2695c0f635aedee8d9a8188466f8b437",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 562,
@@ -84427,10 +84786,38 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -87.71000000000001,
+        "top": -154.835,
+        "right": 2.1480000000000015,
+        "bottom": 1.79,
+        "width": 89.858,
+        "height": 156.625
+      },
+      "partsRendered": 2,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 3,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        }
+      ],
+      "sha256": "f597ca5d3d0bec28c88bfbd70be14d40954014f6a2643bbb05e0595781b101f7",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 563,
@@ -87392,10 +87779,313 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -245.43901165919044,
+        "top": -400.5439388083096,
+        "right": 89.52537970972459,
+        "bottom": 3.58,
+        "width": 334.964391368915,
+        "height": 404.12393880830956
+      },
+      "partsRendered": 10,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 64,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 1,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 3,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 13,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 19,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 20,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 21,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 22,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 23,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 24,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 25,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 38,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 63,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 10
+        },
+        {
+          "index": 66,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 67,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 28
+        },
+        {
+          "index": 6,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 9
+        },
+        {
+          "index": 60,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 58,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 59,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 62,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 45,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 46,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 47,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 48,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 57,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 61,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 14,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 15,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 49,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 26,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 27,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 28,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 29,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 30,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 31,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 32,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 16,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 17,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 18,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 52,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 12
+        },
+        {
+          "index": 51,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 12
+        },
+        {
+          "index": 50,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 12
+        },
+        {
+          "index": 53,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 54,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 55,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 56,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 39,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 40,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 41,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 42,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 43,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 44,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        }
+      ],
+      "sha256": "38587842bac056295c566d6c14fe2ff86a735789345abfbdd7c3b068845d27e9",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 586,
@@ -87410,10 +88100,78 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -224.87,
+        "top": -245.16814940588569,
+        "right": 18.1437752554788,
+        "bottom": 7.16,
+        "width": 243.0137752554788,
+        "height": 252.32814940588568
+      },
+      "partsRendered": 29,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 3,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 16,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 38,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 39,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        }
+      ],
+      "sha256": "e9dcd4c4c8a01db1a443c729c10ab696a995c571b839b66e42040568983f8948",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 587,
@@ -87428,10 +88186,328 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -136.64000000000001,
+        "top": -161.28000000000003,
+        "right": -22.400000000000006,
+        "bottom": 4.48,
+        "width": 114.24000000000001,
+        "height": 165.76000000000002
+      },
+      "partsRendered": 11,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 22,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 38,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 63,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 1,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 64,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 66,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 47,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 1
+        },
+        {
+          "index": 48,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 1
+        },
+        {
+          "index": 65,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 3,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 23,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 20,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 1
+        },
+        {
+          "index": 67,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 68,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 33
+        },
+        {
+          "index": 30,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 32
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 32
+        },
+        {
+          "index": 28,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 29,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 16,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 17,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 13
+        },
+        {
+          "index": 18,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 15
+        },
+        {
+          "index": 15,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 19,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 55,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 56,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 57,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 58,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 46,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 45,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 14,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 14
+        },
+        {
+          "index": 44,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 42,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 43,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 41,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 18
+        },
+        {
+          "index": 40,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 24,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 31,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 39,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 50,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 51,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 52,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 53,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 54,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 21,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 25,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 31
+        },
+        {
+          "index": 26,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 31
+        },
+        {
+          "index": 32,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 31
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 31
+        },
+        {
+          "index": 27,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 32
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 32
+        },
+        {
+          "index": 49,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 59,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 60,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 61,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 62,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 69,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 39
+        },
+        {
+          "index": 70,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 39
+        },
+        {
+          "index": 71,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        }
+      ],
+      "sha256": "50616ac49051e8cced5b40ed12a12c90e6454aa5507abad102f5a25aa6da15fe",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 588,
@@ -87446,10 +88522,143 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -148.24,
+        "top": -154.71,
+        "right": 78.4,
+        "bottom": 6.109999999999999,
+        "width": 226.64000000000001,
+        "height": 160.82
+      },
+      "partsRendered": 14,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 3,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 25,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 15,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 50
+        },
+        {
+          "index": 16,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 51
+        },
+        {
+          "index": 17,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 50
+        },
+        {
+          "index": 18,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 51
+        },
+        {
+          "index": 21,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 22,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 23,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 26,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 39
+        },
+        {
+          "index": 31,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 39
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 24,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 27,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 40
+        },
+        {
+          "index": 28,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 29,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 30,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 43
+        },
+        {
+          "index": 32,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 40
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 43
+        }
+      ],
+      "sha256": "e2f8167afdbecaf31bf79884cb5f129f1678e1a93555f07fc9c39d4e0923588c",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 589,
@@ -87464,44 +88673,600 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -192.1654459669365,
+        "top": -198.4762085004296,
+        "right": 56.33586698555258,
+        "bottom": 10.453319844391437,
+        "width": 248.50131295248906,
+        "height": 208.92952834482105
+      },
+      "partsRendered": 17,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 74,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 1,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 3,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 4,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 23,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 24,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 25,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 39,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 48,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 50,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 47
+        },
+        {
+          "index": 52,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 64,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 53
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 47
+        },
+        {
+          "index": 49,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 32,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 47,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 28
+        },
+        {
+          "index": 60,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 53
+        },
+        {
+          "index": 67,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 15
+        },
+        {
+          "index": 30,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 32
+        },
+        {
+          "index": 59,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 46,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 68,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 69,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 64
+        },
+        {
+          "index": 70,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 47
+        },
+        {
+          "index": 26,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 31
+        },
+        {
+          "index": 40,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 53,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 65,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 14
+        },
+        {
+          "index": 31,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 33
+        },
+        {
+          "index": 43,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 57,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 61,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 62,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 63,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 47
+        },
+        {
+          "index": 44,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 27
+        },
+        {
+          "index": 28,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 62
+        },
+        {
+          "index": 29,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 30
+        },
+        {
+          "index": 9,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 3
+        },
+        {
+          "index": 55,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 61
+        },
+        {
+          "index": 27,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 24
+        },
+        {
+          "index": 45,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 33
+        },
+        {
+          "index": 54,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 82,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 83,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 99,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 100,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 105,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 106,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 66,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 13
+        },
+        {
+          "index": 42,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 62
+        },
+        {
+          "index": 41,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 24
+        },
+        {
+          "index": 56,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 58,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 18
+        },
+        {
+          "index": 71,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 12
+        },
+        {
+          "index": 91,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 92,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 93,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 94,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 95,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 96,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 97,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 66
+        },
+        {
+          "index": 98,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 66
+        },
+        {
+          "index": 101,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 102,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 103,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 104,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 15,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 84,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 85,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 86,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 87,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 88,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 89,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 90,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 35
+        },
+        {
+          "index": 38,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 35
+        },
+        {
+          "index": 51,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 35
+        },
+        {
+          "index": 72,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 16
+        },
+        {
+          "index": 75,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 54
+        },
+        {
+          "index": 76,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 55
+        },
+        {
+          "index": 77,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 56
+        },
+        {
+          "index": 78,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 57
+        },
+        {
+          "index": 79,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 58
+        },
+        {
+          "index": 80,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 59
+        },
+        {
+          "index": 81,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 60
+        },
+        {
+          "index": 73,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        }
+      ],
+      "sha256": "18d5a172e68a7454b0c6c7bdf2364e190ad19528faa4f5cb559007e37f5b3ded",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 590,
       "actorKey": "enemy:590",
-      "sourceImagePath": "public/assets/bcu/110400/org/enemy/590/590_e.png",
-      "sourceImgcutPath": "public/assets/bcu/110400/org/enemy/590/590_e.imgcut",
-      "sourceMamodelPath": "public/assets/bcu/110400/org/enemy/590/590_e.mamodel",
-      "sourceMaanimPath": null,
+      "sourceImagePath": "public/assets/bcu/110000/org/enemy/590/590_e.png",
+      "sourceImgcutPath": "public/assets/bcu/110000/org/enemy/590/590_e.imgcut",
+      "sourceMamodelPath": "public/assets/bcu/110000/org/enemy/590/590_e.mamodel",
+      "sourceMaanimPath": "public/assets/bcu/110000/org/enemy/590/590_e01.maanim",
       "frame": 0,
       "outputZipPath": "public/assets/bundles/icon/enemy.zip",
       "outputInternalPath": "enemy/590.png",
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "failureClass": "source-missing",
-      "failureReason": "missing image/imgcut/model/neutral animation source"
+      "status": "generated",
+      "iconGenerationSource": "raw-actor-source",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -423.54164322175734,
+        "top": -790.7681330585287,
+        "right": 86.09478065487036,
+        "bottom": 21.48,
+        "width": 509.6364238766277,
+        "height": 812.2481330585288
+      },
+      "partsRendered": 64,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 1,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 3,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 19,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 59,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 63,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 67,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 71,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        }
+      ],
+      "sha256": "4697f1339087906509e7c1b273b16448a50c7771ef9bff53383e85ab60300691",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 591,
       "actorKey": "enemy:591",
-      "sourceImagePath": "public/assets/bcu/110400/org/enemy/591/591_e.png",
-      "sourceImgcutPath": null,
-      "sourceMamodelPath": null,
-      "sourceMaanimPath": null,
+      "sourceImagePath": "public/assets/bcu/110000/org/enemy/591/591_e.png",
+      "sourceImgcutPath": "public/assets/bcu/110000/org/enemy/591/591_e.imgcut",
+      "sourceMamodelPath": "public/assets/bcu/110000/org/enemy/591/591_e.mamodel",
+      "sourceMaanimPath": "public/assets/bcu/110000/org/enemy/591/591_e01.maanim",
       "frame": 0,
       "outputZipPath": "public/assets/bundles/icon/enemy.zip",
       "outputInternalPath": "enemy/591.png",
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "failureClass": "source-missing",
-      "failureReason": "missing image/imgcut/model/neutral animation source"
+      "status": "generated",
+      "iconGenerationSource": "raw-actor-source",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -189.74,
+        "top": -417.07000000000005,
+        "right": 50.120000000000005,
+        "bottom": 0,
+        "width": 239.86,
+        "height": 417.07000000000005
+      },
+      "partsRendered": 10,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 8,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 9
+        },
+        {
+          "index": 4,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 4
+        },
+        {
+          "index": 5,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 6
+        },
+        {
+          "index": 9,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 13
+        }
+      ],
+      "sha256": "37f6244431181c3c02d655ec59375346764852e717cf612b89f2e928445776b3",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 592,
@@ -90434,10 +92199,298 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -453.2873561254144,
+        "top": -133.20034201418895,
+        "right": 4.371817038947441,
+        "bottom": 21.87329023409567,
+        "width": 457.65917316436185,
+        "height": 155.0736322482846
+      },
+      "partsRendered": 22,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 7,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 13,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 43,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 42,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 41,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 37
+        },
+        {
+          "index": 40,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 36
+        },
+        {
+          "index": 39,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 35
+        },
+        {
+          "index": 26,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 27,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 29,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 28,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 24
+        },
+        {
+          "index": 30,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 31,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 27
+        },
+        {
+          "index": 32,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 28
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 29
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 30
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 31
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 32
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 33
+        },
+        {
+          "index": 38,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 44,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 45,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 46,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 55,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 56,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 57,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 66,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 67,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 68,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 47,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 46
+        },
+        {
+          "index": 48,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 46
+        },
+        {
+          "index": 58,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 46
+        },
+        {
+          "index": 69,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 46
+        },
+        {
+          "index": 59,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 60,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 61,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 75,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 76,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 49,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 50,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 64,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 65,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 62,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 1
+        },
+        {
+          "index": 63,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 47
+        },
+        {
+          "index": 51,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 52,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 53,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 54,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 70,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 71,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 72,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 48
+        },
+        {
+          "index": 73,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 48
+        },
+        {
+          "index": 74,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 48
+        }
+      ],
+      "sha256": "d31e94107be49a491f47383f6c8cb80e10836b7fb02844270c0d94205c9e115b",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 611,
@@ -90452,10 +92505,123 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -181.25,
+        "top": -255,
+        "right": 18.75,
+        "bottom": 5,
+        "width": 200,
+        "height": 260
+      },
+      "partsRendered": 18,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 23,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 29,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 17,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 18,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 6,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 7,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 24,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 19
+        },
+        {
+          "index": 14,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 15,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 32,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 24
+        },
+        {
+          "index": 33,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 30,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 23
+        },
+        {
+          "index": 31,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 26,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 28
+        },
+        {
+          "index": 25,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 27,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        },
+        {
+          "index": 28,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 25
+        }
+      ],
+      "sha256": "b0aa32f3f146bc98a7b52cb6a2d0b7e07780aced595927e96635673983484611",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 612,
@@ -90470,10 +92636,113 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -112.5,
+        "top": -136.25,
+        "right": 8.75,
+        "bottom": 5,
+        "width": 121.25,
+        "height": 141.25
+      },
+      "partsRendered": 6,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 14,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 18
+        },
+        {
+          "index": 16,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 8,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 8
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 21,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 12,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 9,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 10,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 11,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 15,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 17
+        },
+        {
+          "index": 23,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 22,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 17,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 18,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 19,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 20,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 20
+        },
+        {
+          "index": 13,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 18
+        }
+      ],
+      "sha256": "6d48499ef3db64a557989cebddca040c9ace9e0ecfe73027b59843a65162b565",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 613,
@@ -111468,10 +113737,58 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -206.25,
+        "top": -332.92989496498103,
+        "right": -2.1893736165335653,
+        "bottom": 1.25,
+        "width": 204.06062638346643,
+        "height": 334.17989496498103
+      },
+      "partsRendered": 28,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 6,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 32,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 9,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 33,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 34,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        }
+      ],
+      "sha256": "8c21c5ec68f5f57faac1fa3db293a220c3d25729e84f5de0db7e79ebc4c22614",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 699,
@@ -111486,10 +113803,528 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -304.2195395530156,
+        "top": -474.35,
+        "right": 73.38999999999999,
+        "bottom": 21.094451346579483,
+        "width": 377.60953955301557,
+        "height": 495.4444513465795
+      },
+      "partsRendered": 66,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 27,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 30,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 42,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 51,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 85,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 111,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 118,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 119,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 135,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 119
+        },
+        {
+          "index": 145,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 119
+        },
+        {
+          "index": 164,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 162,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 160,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 163,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 161,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 159,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 64,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 81,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 70
+        },
+        {
+          "index": 165,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 166,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 81
+        },
+        {
+          "index": 82,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 69
+        },
+        {
+          "index": 105,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 75
+        },
+        {
+          "index": 106,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 73
+        },
+        {
+          "index": 69,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 115
+        },
+        {
+          "index": 70,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 115
+        },
+        {
+          "index": 71,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 113
+        },
+        {
+          "index": 72,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 113
+        },
+        {
+          "index": 83,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 68
+        },
+        {
+          "index": 86,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 104
+        },
+        {
+          "index": 87,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 105
+        },
+        {
+          "index": 88,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 99
+        },
+        {
+          "index": 95,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 94
+        },
+        {
+          "index": 89,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 98
+        },
+        {
+          "index": 96,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 93
+        },
+        {
+          "index": 90,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 97
+        },
+        {
+          "index": 91,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 101
+        },
+        {
+          "index": 92,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 100
+        },
+        {
+          "index": 93,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 102
+        },
+        {
+          "index": 94,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 103
+        },
+        {
+          "index": 97,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 92
+        },
+        {
+          "index": 84,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 67
+        },
+        {
+          "index": 107,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 72
+        },
+        {
+          "index": 101,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 77
+        },
+        {
+          "index": 108,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 80
+        },
+        {
+          "index": 102,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 76
+        },
+        {
+          "index": 104,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 74
+        },
+        {
+          "index": 109,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 79
+        },
+        {
+          "index": 103,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 71
+        },
+        {
+          "index": 110,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 78
+        },
+        {
+          "index": 121,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 91
+        },
+        {
+          "index": 77,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 65
+        },
+        {
+          "index": 79,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 66
+        },
+        {
+          "index": 78,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 64
+        },
+        {
+          "index": 75,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 115
+        },
+        {
+          "index": 76,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 115
+        },
+        {
+          "index": 54,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 85
+        },
+        {
+          "index": 149,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 85
+        },
+        {
+          "index": 151,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 85
+        },
+        {
+          "index": 55,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 86
+        },
+        {
+          "index": 57,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 86
+        },
+        {
+          "index": 150,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 86
+        },
+        {
+          "index": 152,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 86
+        },
+        {
+          "index": 65,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 80,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 98,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 62
+        },
+        {
+          "index": 99,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 61
+        },
+        {
+          "index": 100,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 60
+        },
+        {
+          "index": 147,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 125
+        },
+        {
+          "index": 148,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 125
+        },
+        {
+          "index": 146,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 124
+        },
+        {
+          "index": 112,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 113,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 114,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 115,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 116,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 117,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 89
+        },
+        {
+          "index": 120,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 91
+        },
+        {
+          "index": 136,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 118
+        },
+        {
+          "index": 137,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 118
+        },
+        {
+          "index": 124,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 117
+        },
+        {
+          "index": 125,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 117
+        },
+        {
+          "index": 138,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 120
+        },
+        {
+          "index": 139,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 121
+        },
+        {
+          "index": 140,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 122
+        },
+        {
+          "index": 130,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 95
+        },
+        {
+          "index": 122,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 116
+        },
+        {
+          "index": 123,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 116
+        },
+        {
+          "index": 129,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 95
+        },
+        {
+          "index": 141,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 123
+        },
+        {
+          "index": 142,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 123
+        },
+        {
+          "index": 143,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 123
+        },
+        {
+          "index": 144,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 123
+        },
+        {
+          "index": 127,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 90
+        },
+        {
+          "index": 128,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 90
+        },
+        {
+          "index": 131,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 87
+        },
+        {
+          "index": 132,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 88
+        },
+        {
+          "index": 133,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 87
+        },
+        {
+          "index": 134,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 88
+        },
+        {
+          "index": 126,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 96
+        }
+      ],
+      "sha256": "0c4761488e413d11a28f62c7c993fc16db2f4bc50828b182414d1ea7292b2b6d",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 700,
@@ -111504,10 +114339,783 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -243.2968,
+        "top": -506.57000000000005,
+        "right": 247.02,
+        "bottom": 3.1325000000000003,
+        "width": 490.3168,
+        "height": 509.70250000000004
+      },
+      "partsRendered": 61,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 2,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 30,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 74,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 86,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 146,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 169,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 1
+        },
+        {
+          "index": 1,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 137,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 138,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 147,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 124,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 128,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 39
+        },
+        {
+          "index": 139,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 148,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 160,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 161,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 162,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 163,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 42
+        },
+        {
+          "index": 41,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 45,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 49,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 53,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 34,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 35,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 36,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 37,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 95,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 97,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 27
+        },
+        {
+          "index": 99,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 30
+        },
+        {
+          "index": 101,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 103,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 105,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 107,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 30
+        },
+        {
+          "index": 109,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 34
+        },
+        {
+          "index": 111,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 22
+        },
+        {
+          "index": 113,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 26
+        },
+        {
+          "index": 79,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 82,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 25,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 20
+        },
+        {
+          "index": 27,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 20
+        },
+        {
+          "index": 29,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 20
+        },
+        {
+          "index": 142,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 48
+        },
+        {
+          "index": 143,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 48
+        },
+        {
+          "index": 144,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 48
+        },
+        {
+          "index": 145,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 48
+        },
+        {
+          "index": 150,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 164,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 165,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 166,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 167,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 41
+        },
+        {
+          "index": 201,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 189,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 190,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 192,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 202,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 203,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 204,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 205,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 42,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 46,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 50,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 54,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 75,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 191,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 193,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 84,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 40
+        },
+        {
+          "index": 85,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 40
+        },
+        {
+          "index": 194,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 206,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 87,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 88,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 89,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 90,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 91,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 92,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 93,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 94,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 21
+        },
+        {
+          "index": 198,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 199,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 182,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 183,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 195,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 196,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 200,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 207,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 208,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 209,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 66
+        },
+        {
+          "index": 210,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 211,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 187,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 96,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 98,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 100,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 102,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 104,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 106,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 108,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 110,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 112,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 114,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 38
+        },
+        {
+          "index": 116,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 119,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 121,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 122,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 125,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 61
+        },
+        {
+          "index": 127,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 61
+        },
+        {
+          "index": 131,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 132,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 133,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 134,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 135,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 136,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 140,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 61
+        },
+        {
+          "index": 141,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 61
+        },
+        {
+          "index": 173,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 174,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 175,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 176,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 177,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 178,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 179,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 180,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 181,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 184,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 185,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 186,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 188,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 65
+        },
+        {
+          "index": 115,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 117,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 118,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 120,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 123,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 45
+        },
+        {
+          "index": 76,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 43
+        },
+        {
+          "index": 129,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 130,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 47
+        },
+        {
+          "index": 152,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 77,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 43
+        },
+        {
+          "index": 80,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 83,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 153,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 154,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 155,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 156,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 64
+        },
+        {
+          "index": 157,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 158,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 63
+        },
+        {
+          "index": 159,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 64
+        },
+        {
+          "index": 78,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 81,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 44
+        },
+        {
+          "index": 151,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 126,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 61
+        },
+        {
+          "index": 149,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        }
+      ],
+      "sha256": "b89ef50eb107903b64374f571abe6f42dfd08963718c1f091965377c63b86a3e",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 701,
@@ -111522,10 +115130,158 @@
       "width": 128,
       "height": 128,
       "listedInErrorAllowlist": false,
-      "status": "failed",
-      "compositionMethod": "failed",
-      "failureClass": "image-or-imgcut-invalid",
-      "failureReason": "bad-png-signature"
+      "status": "generated",
+      "iconGenerationSource": "actor-bundle",
+      "compositionMethod": "composed-initial-pose",
+      "composedBounds": {
+        "left": -94.76259090146196,
+        "top": -175.85735771115253,
+        "right": 115.1337094554829,
+        "bottom": 5.37,
+        "width": 209.89630035694486,
+        "height": 181.22735771115254
+      },
+      "partsRendered": 49,
+      "partsSkipped": [
+        {
+          "index": 0,
+          "reason": "not-visible-or-invalid-cut",
+          "partIndex": 0
+        },
+        {
+          "index": 1,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 5,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 18,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 24,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 31,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 55,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 59,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 70,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 62,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 63,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 68,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 66,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 67,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 60,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 64,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 61,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 65,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 69,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 72,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 74,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 71,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 75,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 73,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 56,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 57,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        },
+        {
+          "index": 58,
+          "reason": "outside-output-or-transparent",
+          "partIndex": 0
+        }
+      ],
+      "sha256": "0927431921fc018d548f7db6031cee09368e5c17e604cf72d85be72790ae5881",
+      "failureClass": null,
+      "failureReason": null
     },
     {
       "enemyId": 702,

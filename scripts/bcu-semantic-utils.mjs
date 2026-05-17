@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import zlib from 'node:zlib';
 
 export const GENERATED_DIR = 'public/assets/generated';
 export const BUNDLE_DIR = 'public/assets/bundles';
@@ -424,11 +425,25 @@ export async function readStoreZipEntries(zipPath) {
     const nameStart = offset + 30;
     const dataStart = nameStart + nameLen + extraLen;
     const dataEnd = dataStart + compressedSize;
-    if (method !== 0) throw new Error(`Unsupported ZIP compression method ${method} at ${zipPath}`);
     if (dataEnd > bytes.length) throw new Error(`Truncated ZIP entry at ${zipPath}`);
-    if (compressedSize !== uncompressedSize) throw new Error(`Invalid STORE ZIP sizes at ${zipPath}`);
+
     const name = bytes.subarray(nameStart, nameStart + nameLen).toString('utf8');
-    files.set(name, bytes.subarray(dataStart, dataEnd));
+    const compressed = bytes.subarray(dataStart, dataEnd);
+
+    let data;
+    if (method === 0) {
+      if (compressedSize !== uncompressedSize) throw new Error(`Invalid STORE ZIP sizes at ${zipPath}`);
+      data = compressed;
+    } else if (method === 8) {
+      data = zlib.inflateRawSync(compressed);
+      if (uncompressedSize !== 0 && data.length !== uncompressedSize) {
+        throw new Error(`Invalid DEFLATE ZIP size for ${name} at ${zipPath}: expected ${uncompressedSize}, got ${data.length}`);
+      }
+    } else {
+      throw new Error(`Unsupported ZIP compression method ${method} at ${zipPath}`);
+    }
+
+    files.set(name, data);
     offset = dataEnd;
   }
   return files;

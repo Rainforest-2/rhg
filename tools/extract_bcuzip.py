@@ -11,7 +11,7 @@ except ImportError as e:
 
 
 def pad_len(size: int) -> int:
-    return size + (16 - size % 16)
+    return size if size % 16 == 0 else size + (16 - size % 16)
 
 
 def safe_join(base: Path, rel: str) -> Path:

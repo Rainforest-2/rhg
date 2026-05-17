@@ -33217,9 +33217,9 @@
       "key": "icon:enemy",
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
-      "iconCount": 758,
-      "sizeBytes": 5779840,
-      "hash": "9075f822a65c9a2b24b932f6626904febfe433cd1b4c00f3d86c3aa21fc316f7",
+      "iconCount": 778,
+      "sizeBytes": 5920350,
+      "hash": "742cdc58eaafe284e205998917e88fe1183719ff7663e11d8f01a5c443961735",
       "generationSource": "actor-assets-initial-pose"
     },
     "icon:unit:c": {
@@ -33257,6 +33257,150 @@
       "iconCount": 18,
       "sizeBytes": 101061,
       "hash": "b754aa2a253343692f7164be8d5c3865224aa31c449f9eb7b6e6dcc9259faa5b"
+    },
+    "actor:enemy:552": {
+      "kind": "actor",
+      "key": "enemy:552",
+      "bundlePath": "public/assets/bundles/actor/enemy/552.zip",
+      "status": "full",
+      "sizeBytes": 13537,
+      "hash": "c118af5d49ce1035f214b3a36edee8ac65b30b3edc5b22781215679dd1f6523a"
+    },
+    "actor:enemy:554": {
+      "kind": "actor",
+      "key": "enemy:554",
+      "bundlePath": "public/assets/bundles/actor/enemy/554.zip",
+      "status": "full",
+      "sizeBytes": 74689,
+      "hash": "bc948ed410d97e2a9bb6672e151ed8b2df972fd3543c3a26603b2526a64a378d"
+    },
+    "actor:enemy:556": {
+      "kind": "actor",
+      "key": "enemy:556",
+      "bundlePath": "public/assets/bundles/actor/enemy/556.zip",
+      "status": "full",
+      "sizeBytes": 84743,
+      "hash": "5780287ddfd80a38b8b67f23329886b375bbf4f53f1f14ff25fc4010693fc75f"
+    },
+    "actor:enemy:560": {
+      "kind": "actor",
+      "key": "enemy:560",
+      "bundlePath": "public/assets/bundles/actor/enemy/560.zip",
+      "status": "full",
+      "sizeBytes": 162925,
+      "hash": "8c4029206e26a497aa889f4d18993a1e0f6e57316f2da76295f4464dc02fc66a"
+    },
+    "actor:enemy:561": {
+      "kind": "actor",
+      "key": "enemy:561",
+      "bundlePath": "public/assets/bundles/actor/enemy/561.zip",
+      "status": "full",
+      "sizeBytes": 20415,
+      "hash": "cd4bda5157313db473ef689b0a7f9bdbbc24ab11d013e1c7c1d5c7ef18c18ab0"
+    },
+    "actor:enemy:562": {
+      "kind": "actor",
+      "key": "enemy:562",
+      "bundlePath": "public/assets/bundles/actor/enemy/562.zip",
+      "status": "full",
+      "sizeBytes": 69875,
+      "hash": "e1703641f0a7e9dd2c5d16999646610eff42f1894975eeaea6d4bfc6bdd162f1"
+    },
+    "actor:enemy:610": {
+      "kind": "actor",
+      "key": "enemy:610",
+      "bundlePath": "public/assets/bundles/actor/enemy/610.zip",
+      "status": "full",
+      "sizeBytes": 58169,
+      "hash": "9dfd34273bd233c0d2d85e4eb5734231c28b7b5522b661e039b72530f0688b20"
+    },
+    "actor:enemy:611": {
+      "kind": "actor",
+      "key": "enemy:611",
+      "bundlePath": "public/assets/bundles/actor/enemy/611.zip",
+      "status": "full",
+      "sizeBytes": 49349,
+      "hash": "f759ef8160a062e8d7492a2944662ebe993ef2065263fab4966b150948d15e4a"
+    },
+    "actor:enemy:612": {
+      "kind": "actor",
+      "key": "enemy:612",
+      "bundlePath": "public/assets/bundles/actor/enemy/612.zip",
+      "status": "full",
+      "sizeBytes": 45403,
+      "hash": "000688e95c1320aa82bab1f49895bc2ea81927eacae215ec8e0a35be1d805e1b"
+    },
+    "actor:enemy:698": {
+      "kind": "actor",
+      "key": "enemy:698",
+      "bundlePath": "public/assets/bundles/actor/enemy/698.zip",
+      "status": "full",
+      "sizeBytes": 41738,
+      "hash": "9c5ce49b0ed2b549239900eb5779014e863e999f7711af01b472411a5f9165c0"
+    },
+    "actor:enemy:699": {
+      "kind": "actor",
+      "key": "enemy:699",
+      "bundlePath": "public/assets/bundles/actor/enemy/699.zip",
+      "status": "full",
+      "sizeBytes": 184217,
+      "hash": "d0dd94c0063c67d87ac6e2e0090c77ff8d708bf8e330e0a0bf17c4f45516b00b"
+    },
+    "actor:enemy:700": {
+      "kind": "actor",
+      "key": "enemy:700",
+      "bundlePath": "public/assets/bundles/actor/enemy/700.zip",
+      "status": "full",
+      "sizeBytes": 123452,
+      "hash": "3e59dc3fd6fd7cd3341bd0084ad0d6c6334b2b563091394eb1e959a3e4d244b8"
+    },
+    "actor:enemy:701": {
+      "kind": "actor",
+      "key": "enemy:701",
+      "bundlePath": "public/assets/bundles/actor/enemy/701.zip",
+      "status": "full",
+      "sizeBytes": 46231,
+      "hash": "38c6faa8fe5d796be2e8e285e119f8c76704dcfb1d45162b710adc9258dd098f"
+    },
+    "actor:enemy:585": {
+      "kind": "actor",
+      "key": "enemy:585",
+      "bundlePath": "public/assets/bundles/actor/enemy/585.zip",
+      "status": "full",
+      "sizeBytes": 158661,
+      "hash": "6627b8c5ba846cc20cb69c809704c064a7b05d345d05b09cbd16f58d08a34a5d"
+    },
+    "actor:enemy:586": {
+      "kind": "actor",
+      "key": "enemy:586",
+      "bundlePath": "public/assets/bundles/actor/enemy/586.zip",
+      "status": "full",
+      "sizeBytes": 30539,
+      "hash": "a564a2aa16424b32ab1d705e021d1299cd1d10adfd573f1e46dfb8ec19534bc3"
+    },
+    "actor:enemy:587": {
+      "kind": "actor",
+      "key": "enemy:587",
+      "bundlePath": "public/assets/bundles/actor/enemy/587.zip",
+      "status": "full",
+      "sizeBytes": 54267,
+      "hash": "a8e8856f4c1fd8af281d483b51ff1e7b7a76c6b37317c48d9d0739ffe5592638"
+    },
+    "actor:enemy:588": {
+      "kind": "actor",
+      "key": "enemy:588",
+      "bundlePath": "public/assets/bundles/actor/enemy/588.zip",
+      "status": "full",
+      "sizeBytes": 28093,
+      "hash": "f6e5a485b150f7d9954603f57877df29109f012ff7719ad028a9c5fb9ac77f77"
+    },
+    "actor:enemy:589": {
+      "kind": "actor",
+      "key": "enemy:589",
+      "bundlePath": "public/assets/bundles/actor/enemy/589.zip",
+      "status": "full",
+      "sizeBytes": 88777,
+      "hash": "7679a0fe749967cc9ab05b716fd5d27280c607de3b7e052071526930cd95f62d"
     }
   }
 }

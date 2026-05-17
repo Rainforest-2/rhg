@@ -69,11 +69,27 @@ async function fetchJson(path) {
 function readU16(view, off) { return view.getUint16(off, true); }
 function readU32(view, off) { return view.getUint32(off, true); }
 
-function parseStoreZip(buffer) {
+async function inflateRawBytes(data) {
+  if (typeof DecompressionStream !== 'undefined') {
+    const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  if (typeof window === 'undefined') {
+    const zlib = await import('node:zlib');
+    return new Uint8Array(zlib.inflateRawSync(Buffer.from(data)));
+  }
+
+  throw new Error('ZIP deflate is not supported in this runtime');
+}
+
+async function parseStoreZip(buffer) {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const files = new Map();
+  const decoder = new TextDecoder();
   let offset = 0;
+
   while (offset + 30 <= bytes.length && readU32(view, offset) === 0x04034b50) {
     const method = readU16(view, offset + 8);
     const compressedSize = readU32(view, offset + 18);
@@ -83,12 +99,29 @@ function parseStoreZip(buffer) {
     const nameStart = offset + 30;
     const dataStart = nameStart + nameLen + extraLen;
     const dataEnd = dataStart + compressedSize;
-    const name = new TextDecoder().decode(bytes.slice(nameStart, nameStart + nameLen));
-    if (method !== 0) throw new Error(`Unsupported ZIP compression method ${method} for ${name}`);
-    files.set(name, bytes.slice(dataStart, dataEnd));
+
+    if (dataEnd > bytes.length) throw new Error(`Truncated ZIP entry for ${nameStart}`);
+
+    const name = decoder.decode(bytes.slice(nameStart, nameStart + nameLen));
+    const compressed = bytes.slice(dataStart, dataEnd);
+
+    let data;
+    if (method === 0) {
+      if (compressedSize !== uncompressedSize) throw new Error(`Invalid STORE ZIP sizes for ${name}`);
+      data = compressed;
+    } else if (method === 8) {
+      data = await inflateRawBytes(compressed);
+      if (uncompressedSize !== 0 && data.length !== uncompressedSize) {
+        throw new Error(`Invalid DEFLATE ZIP size for ${name}: expected ${uncompressedSize}, got ${data.length}`);
+      }
+    } else {
+      throw new Error(`Unsupported ZIP compression method ${method} for ${name}`);
+    }
+
+    files.set(name, data);
     offset = dataEnd;
-    if (compressedSize !== uncompressedSize) throw new Error(`Invalid STORE ZIP sizes for ${name}`);
   }
+
   return files;
 }
 

@@ -1,17 +1,17 @@
 # Generated Enemy Icons Report
 
-Generated: 2026-05-17T14:10:10.871Z
+Generated: 2026-05-17T15:28:17.036Z
 Mode: apply
 
 ## Summary
 
 - total enemies: 778
-- generated: 758
-- composed initial pose: 739
+- generated: 778
+- composed initial pose: 759
 - single-cut degraded fallback: 19
-- failed: 20
+- failed: 0
 - expected missing: 0
-- zip size bytes: 5779840
+- zip size bytes: 5920350
 
 ## Degraded Fallback
 
@@ -37,26 +37,7 @@ Mode: apply
 
 ## Failed Or Expected Missing
 
-- enemy:552: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:554: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:556: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:560: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:561: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:562: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:585: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:586: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:587: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:588: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:589: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:590: failed; source-missing; missing image/imgcut/model/neutral animation source
-- enemy:591: failed; source-missing; missing image/imgcut/model/neutral animation source
-- enemy:610: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:611: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:612: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:698: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:699: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:700: failed; image-or-imgcut-invalid; bad-png-signature
-- enemy:701: failed; image-or-imgcut-invalid; bad-png-signature
+- none
 
 ## Regression Targets
 
@@ -65,13 +46,13 @@ Mode: apply
 | 388 | generated | composed-initial-pose | 0a32bb8e1d64eb4156126fc228df9d9533c73756aa36608e6361edc38879f224 |
 | 440 | generated | composed-initial-pose | 9d03fd4cfd02068cf945abfd2987301132d88c08c66bcf70622264d99230ca14 |
 | 443 | generated | composed-initial-pose | faf92f1816d7693055a45c65de50669fe28bb87cf8f1a76210225cb93acf4643 |
-| 560 | failed | failed | bad-png-signature |
+| 560 | generated | composed-initial-pose | 34f6cd7cc3490204a02e23d36178d996b72c30ad42e06319b147d261cab4ac49 |
 | 609 | generated | composed-initial-pose | 242e91ea25fc433909e1edb1666c866753d423a18d748d7fa73398877a72fce5 |
-| 610 | failed | failed | bad-png-signature |
-| 611 | failed | failed | bad-png-signature |
-| 612 | failed | failed | bad-png-signature |
+| 610 | generated | composed-initial-pose | d31e94107be49a491f47383f6c8cb80e10836b7fb02844270c0d94205c9e115b |
+| 611 | generated | composed-initial-pose | b0aa32f3f146bc98a7b52cb6a2d0b7e07780aced595927e96635673983484611 |
+| 612 | generated | composed-initial-pose | 6d48499ef3db64a557989cebddca040c9ace9e0ecfe73027b59843a65162b565 |
 | 613 | generated | composed-initial-pose | b820be2b7de370300273df2ad7adc607ca65b8929031477411b92a581f26dc8c |
 | 695 | generated | composed-initial-pose | 811232f4cd898f3d2682001259472002a07873cae38d9c06e0d51ad6cf34179e |
 | 696 | generated | composed-initial-pose | 3cbe3fd9b026eb9abc775e3e2ae579e06e1475c07f0373768711a7d01f153001 |
 | 697 | generated | composed-initial-pose | 0cbd41fa42452e3e3b3b9e4ef016e4716f6568a601eb2f0b7571e6f1a0df371b |
-| 699 | failed | failed | bad-png-signature |
+| 699 | generated | composed-initial-pose | 0c4761488e413d11a28f62c7c993fc16db2f4bc50828b182414d1ea7292b2b6d |

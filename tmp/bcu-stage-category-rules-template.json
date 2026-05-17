@@ -1,0 +1,58 @@
+{
+  "description": "Review and edit this before implementing the actual UI selector.",
+  "categories": [
+    {
+      "id": "normal",
+      "label": "通常ステージ",
+      "collectionCodes": [
+        "N",
+        "S",
+        "C"
+      ],
+      "confidence": "medium",
+      "note": "Main-story style collection candidates."
+    },
+    {
+      "id": "legend",
+      "label": "レジェンド系ステージ",
+      "collectionCodes": [
+        "R",
+        "RA",
+        "L",
+        "ND",
+        "SR",
+        "G"
+      ],
+      "confidence": "low",
+      "note": "Legend-like candidates. Confirm with map names before implementation."
+    },
+    {
+      "id": "event",
+      "label": "イベントステージ",
+      "collectionCodes": [
+        "A",
+        "B",
+        "E",
+        "T",
+        "V",
+        "M",
+        "H",
+        "CA",
+        "Q"
+      ],
+      "confidence": "medium",
+      "note": "Event/special candidates inferred from BCU collection codes."
+    },
+    {
+      "id": "other",
+      "label": "その他",
+      "collectionCodes": [
+        "CH",
+        "D",
+        "DM"
+      ],
+      "confidence": "fallback",
+      "note": "Fallback or skipped/special collections."
+    }
+  ]
+}

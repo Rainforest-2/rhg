@@ -1,1079 +1,1657 @@
-# AGENTS.md — BCU / スマホ版準拠で戦闘UI・状態異常・波動/烈波・ステージ選択を完成させる指示書
+# AGENTS.md — BCU完全準拠化 実装指示書
 
 Repository: `rhgrive2/game`  
 Target branch: `main`  
-Primary goal: **ブラウザ版の戦闘体験を、スマホ版BCU / BCU common の挙動・表示・入力・asset使用に照合しながら修正する。推測・見た目だけの近似・エラー握りつぶしは禁止。**
+Goal: ブラウザ版にゃんこ/BCU準拠ゲームを、BCU common / Android / PC / 本家assetに照合しながら、戦闘ロジック・描画・状態異常・波動/烈波・スマホ入力を段階的に完成させる。
 
-このファイルは Codex に渡すための作業指示です。Codex 側に過去会話やアップロードzipが無い前提で、必要なBCU参照コード・現在コードの問題・修正方針・検証条件をここに埋め込みます。
-
----
-
-## 0. 最重要ルール
-
-1. **推測で実装しない。**  
-   BCU準拠と書いてあるものは、必ず BCU Android / BCU_java_util_common / BCU-java-PC の実コードと現コードを比較してから修正する。
-
-2. **古いtxt解析メモを根拠にしない。**  
-   `*.txt` の古い解析ファイル、過去レポート、会話ログは証拠として使わない。使ってよい根拠は次だけ。
-   - 現在の `rhgrive2/game` の実コード
-   - BCU 本体コード
-   - BCU 実asset / zip / generated bundle 中身
-   - 実ブラウザでの再現結果
-
-3. **fallbackでエラーを隠さない。**  
-   `try/catch` で通常ダメージ・空描画・代替assetへ逃がして「ゲームが止まらない」ようにする修正は禁止。semantic-strict で必要assetが無い場合は、明示エラーまたは明示debugにする。
-
-4. **「100%準拠」と言う前に証拠を出す。**  
-   修正PR/commit説明には必ず以下を書く。
-   - 原因
-   - BCU参照ファイルと該当メソッド
-   - 現JSの該当ファイル
-   - 変更内容
-   - 手動確認手順
-   - 残る未検証・未準拠
-
-5. **UIでもBCUに存在しないものを足さない。**  
-   戦闘中の段切替に `▲/▼` ボタンを足すような補完は禁止。スマホ版BCUは指スライドで切り替えている。ボタンを出すなら「BCU外拡張」として明示し、標準では無効にする。
-
-6. **CSSだけで本家っぽく作らない。**  
-   生産カード、数字、状態アイコン、波動/烈波エフェクトは BCU / にゃんこ実assetを使う。CSSグラデーションや手描き風UIで置き換えない。
-
-7. **変更は大きくてもよいが、不整合を作らない。**  
-   一箇所だけBCU風にして他の経路が旧仕様のままになるのは禁止。入力→状態→描画→debug→テストまで通す。
+この文書はCodexに渡す作業指示書である。Codexは過去会話を参照できない前提で、ここに書かれた順序・禁止事項・検証手順を必ず守ること。
 
 ---
 
-## 1. 参照すべきBCUソース
+## 0. ファクトチェック済み事項
 
-Codex は作業開始時に以下をcloneして取得すること。取得できない場合は、推測実装せず停止して報告する。
+このAGENTS.mdは以下のBCU実コードと現repo実コードに基づく。
+
+### 0.1 BCU参照ファイルのパス
+
+以下のパスは存在確認済み。
 
 ```text
-battlecatsultimate/BCU_Android
-battlecatsultimate/BCU_java_util_common
-battlecatsultimate/BCU-java-PC
+battlecatsultimate/BCU_java_util_common/battle/StageBasis.java
+battlecatsultimate/BCU_java_util_common/battle/SBCtrl.java
+battlecatsultimate/BCU_java_util_common/battle/entity/Entity.java
+battlecatsultimate/BCU_java_util_common/battle/entity/EUnit.java
+battlecatsultimate/BCU_java_util_common/battle/entity/EEnemy.java
+battlecatsultimate/BCU_java_util_common/battle/attack/AttackWave.java
+battlecatsultimate/BCU_java_util_common/battle/attack/AttackVolcano.java
+battlecatsultimate/BCU_java_util_common/battle/attack/ContWaveAb.java
+battlecatsultimate/BCU_java_util_common/battle/attack/ContWaveDef.java
+battlecatsultimate/BCU_java_util_common/battle/attack/ContVolcano.java
+battlecatsultimate/BCU_java_util_common/util/anim/AnimU.java
+battlecatsultimate/BCU_java_util_common/util/anim/EAnimD.java
+battlecatsultimate/BCU_java_util_common/util/anim/EPart.java
+battlecatsultimate/BCU_java_util_common/util/ImgCore.java
+battlecatsultimate/BCU_java_util_common/util/pack/EffAnim.java
+battlecatsultimate/BCU_java_util_common/util/Data.java
+battlecatsultimate/BCU_Android/app/src/main/java/com/mandarin/bcu/BattleSimulation.kt
+battlecatsultimate/BCU_Android/app/src/main/java/com/mandarin/bcu/androidutil/battle/BattleView.kt
+battlecatsultimate/BCU-java-PC/src/main/java/main/Timer.java
 ```
 
-最低限読むファイル:
+注意: 旧案にあった `EAnimU.java` は誤り。正しくは `util/anim/AnimU.java`。
 
-```text
-# Android / スマホ版入力
-BCU_Android/app/src/main/java/com/mandarin/bcu/BattleSimulation.kt
-BCU_Android/app/src/main/java/com/mandarin/bcu/androidutil/battle/BattleView.kt
+### 0.2 BCU `UType.HB` とKBアニメ
 
-# 共通戦闘制御
-BCU_java_util_common/battle/SBCtrl.java
-BCU_java_util_common/battle/StageBasis.java
-BCU_java_util_common/battle/entity/Entity.java
-BCU_java_util_common/battle/entity/EUnit.java
-BCU_java_util_common/battle/entity/EEnemy.java
+`AnimU.UType` は `WALK, IDLE, ATK, HB, ENTER, ...` を持ち、`TYPE4` は `{ WALK, IDLE, ATK, HB }`。つまりunitの4番目アニメがBCUのHB/KBアニメである。現repoではsemantic bundleの `kb.maanim` がこの役割を担う。
 
-# 波動・烈波・攻撃継続体
-BCU_java_util_common/battle/attack/AttackSimple.java
-BCU_java_util_common/battle/attack/ContWaveAb.java
-BCU_java_util_common/battle/attack/ContWaveDef.java
-BCU_java_util_common/battle/attack/ContVolcano.java
-BCU_java_util_common/battle/attack/AttackWave.java
-BCU_java_util_common/battle/attack/AttackVolcano.java
+### 0.3 BCU波動
 
-# asset/effect定義
-BCU_java_util_common/util/pack/EffAnim.java
-BCU_java_util_common/util/Data.java
-BCU-java-PC/src/main/java/main/Timer.java
-```
+`ContWaveDef.update()` は、通常波動attack frameを6、mini wave attack frameを4として扱う。`t <= attack` の間にwave stopperをcaptureし、stopperがあれば停止effectを出して関連waveをdeactivateする。`t == attack` で `sb.getAttack(atk)`、`t == W_TIME / W_MINI_TIME` で次waveを作る。
+
+`AttackWave` は `incl` setを持ち、同一wave chainで同じEntityを重複hitしない。
+
+### 0.4 BCU烈波
+
+`ContVolcano.update()` は `START -> DURING -> END` のEffAnim状態を持つ。`t >= VOLC_PRE` でDURING、`t > VOLC_PRE + aliveTime` でENDへ移行し、alive期間中に `sb.getAttack(v)` を呼ぶ。`updateProc()` はattackerのCURSE/SEAL状態を見て烈波中のprocを消す/復元する。
+
+`AttackVolcano` は `vcapt` と `VOLC_ITV` を持ち、同一対象への再hit間隔を制御する。
+
+### 0.5 状態異常アイコン
+
+`Entity.AnimManager.getEff()` は STOP/SLOW/WEAK/CURSE/SEAL/POISON/WARP/BARRIER/SHIELD/COUNTER/DMGCUT/DMGCAP などに対応するEffAnimを `effs[]` にセットする。状態アイコンは本体modelのpartではなく、Entity animation managerのeffectとして扱う。
+
+### 0.6 EPart / ImgCore / glow
+
+`EPart.drawPart()` は親transformを再帰適用し、`opa()` で親opacityを含めた不透明度を計算し、`ImgCore.drawImg()` に `opa, glow, extendX, extendY` を渡す。`ImgCore.drawImg()` は `glow` が `1/2/3/-1` の場合だけBLENDを使い、それ以外は通常合成/透過合成を使う。描画後は必ずDEFへ戻す。
+
+024の黒塊バグは、glow=0の通常パーツまでglow合成経路へ流し、caller側alphaを壊した副作用だった。現mainでは `BcuSpriteSheet.js` / `BcuCanvasComposite.js` の最小修正で直っているはず。今後renderer全体置換で再発させないこと。
+
+### 0.7 Androidスマホ入力
+
+`BattleView.checkSlideUpDown()` は、lineupChanging / isOneLineup / 自城HP0 / dragFrame0 / performed済みなら何もしない。`abs(dy) >= height * 0.15` かつ縦判定で、`dy / dragFrame < 0` なら上、そうでなければ下のlineup change actionへ送る。`isInSlideRange()` は `tan(50°) >= abs(dx) / abs(dy)`。
 
 ---
 
-## 2. 現在のrepoで特に読むファイル
+## 1. 絶対ルール
+
+### 1.1 推測実装禁止
+
+BCU準拠と主張する変更は、必ずBCU実コードまたは現repo実コードを読んでから行う。古いtxt解析、会話ログ、曖昧な記憶を証拠にしない。
+
+### 1.2 fallback禁止
+
+assetが無い、bundleが無い、parserが失敗した場合に、通常effect・空描画・仮assetへ黙って逃がすのは禁止。必要assetが無いなら明示debugまたは明示エラーにする。
+
+### 1.3 巨大置換禁止
+
+以下を丸ごと置換・大幅短縮しない。
 
 ```text
-# 起動とpatch順
-js/main.js
-
-# 戦闘シーンとtick順
 js/battle/BattleScene.js
-js/battle/BattleSceneBcuTimerPatch.js
-js/battle/BattleSceneBcuLineupPatch.js
-js/battle/BattleFrameClock.js
-js/preview/BattleSimulationClock.js
-
-# 戦闘中UI / 生産カード
-js/ui/PlayerProductionBar.js
-js/ui/ProductionCardSkin.js
-js/ui/BcuSpriteText.js
-css/style.css
-css/touch-fix.css
-index.html
-
-# 編成画面 / ステージ選択候補
-js/ui/FormationEditor.js
-js/preview/PreviewApp.js
-js/battle/FormationStore.js
-js/battle/StageDefinitionLoader.js
-js/battle/BcuStageSpawnRuntime.js
-public/assets/generated/bcu-stage-index.json
-public/assets/generated/bcu-bundle-manifest.json
-
-# 波動・烈波
-js/battle/BattleWaveRuntimePatch.js
-js/battle/BattleSurgeRuntimePatch.js
-js/battle/BattleSceneAttackEffectPatch.js
-js/battle/BattleEffectLoader.js
-
-# 状態異常・停止・移動
-js/battle/BattleActor.js
-js/battle/BattleActorProcStatusPatch.js
-js/battle/BattleSceneProcApplyPatch.js
-js/battle/BattleActorBarrierShieldPatch.js
-js/battle/BattleActorZombieRevivePatch.js
-
-# renderer / effect描画
 js/battle/BattleSceneRenderer.js
-js/bcu/BcuAnimator.js
-js/bcu/AnimationRuntime.js
-scripts/build-bcu-effect-bundle.mjs
-scripts/build-bcu-ui-bundle.mjs
-scripts/build-bcu-semantic-bundles.mjs
+js/battle/BattleActor.js
+js/main.js
+index.html
+css/style.css
 ```
 
----
+特に `BattleSceneRenderer.js` は過去に大幅置換で戦闘不能になった。renderer全体の書き換えは禁止。必要なら小さなadapter/patched methodだけにする。
 
-## 3. 確定している現状問題
+### 1.4 1機能1patch
 
-### 3.1 ゲーム中の長押し選択・ダブルタップ拡大・ページスクロール抑止が不十分
-
-ユーザー報告: 生産カードを縦スライドするとページ全体が上に動く。  
-現状 `css/touch-fix.css` は追加済みだが、`index.html` で読み込むだけでは、全端末・iOS Safari・Android Chrome の長押し選択/ダブルタップ拡大を完全には潰せない可能性がある。
-
-必須対応:
-
-- `index.html` の viewport をゲーム中に適したものへ変更する。
-  - 候補: `width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover`
-  - ただしこれはWebアクセシビリティ上の副作用があるため、ゲーム画面で必要な理由をcommitに明記する。
-- `html, body, .app-shell, .game-stage, .canvas-panel, #preview-canvas, .prod-ui, .prod-ui .cards, .prod-card-stack, .prod-card` に対して以下を明示する。
-  - `touch-action: none`
-  - `overscroll-behavior: none` または `contain`
-  - `user-select: none`
-  - `-webkit-user-select: none`
-  - `-webkit-touch-callout: none`
-  - `-webkit-tap-highlight-color: transparent`
-- JS側でも保険を入れる。
-  - `.canvas-panel` / `preview-canvas` / `.prod-ui .cards` で `touchstart`, `touchmove`, `gesturestart`, `contextmenu`, `selectstart`, `dragstart` を必要範囲だけ `preventDefault()` する。
-  - イベントは `passive: false` で登録する。
-  - ただし入力イベントを握りつぶして生産クリックやスライド判定が壊れないよう、`PlayerProductionBar` と `BattleCameraInputController` の順序を確認する。
-
-BCU Android側の根拠:
-
-```kotlin
-// BCU_Android BattleSimulation.kt
-if (action == MotionEvent.ACTION_DOWN) {
-    battleView.scaleMode = true
-    battleView.velocity = 0f
-    x = event.x
-    y = event.y
-    if(event.pointerCount == 1) {
-        ...
-        battleView.dragFrame = 1
-        battleView.initPoint?.x = event.x
-        battleView.initPoint?.y = event.y
-        battleView.isSliding = true
-        velocity?.addMovement(event)
-    } else if(event.pointerCount == 2)
-        twoTouched = true
-} else if (action == MotionEvent.ACTION_MOVE) {
-    ...
-    if(!twoTouched && !vertical && (horizontal || (!battleView.isInSlideRange() && abs(velocity?.xVelocity ?: 0f) > abs(velocity?.yVelocity ?: 0f) && abs(velocity?.xVelocity ?: 0f) > six))) {
-        battleView.painter.bf.sb.pos += x2 - preX
-        horizontal = true
-    } else {
-        battleView.checkSlideUpDown()
-        if(battleView.performed)
-            vertical = true
-    }
-}
-```
-
-BCU AndroidはView内でタッチ処理しており、ブラウザページスクロールという概念が無い。Webではページスクロールを明示的に止める必要がある。
-
-検証条件:
-
-- Android Chromeで、生産カード上を上下スライドしてもページ全体が動かない。
-- iOS Safariで、長押しメニュー、画像保存メニュー、テキスト選択、ダブルタップズームがゲーム中に出ない。
-- 生産カードのタップは壊れない。
-- カメラ横スライドと段切替縦スライドが競合しない。
-- `globalThis.__PRODUCTION_PAGE_DEBUG__.lastGesture` が更新される。
-
----
-
-### 3.2 戦闘中の段切替は「ボタン」ではなくスマホ版BCUの縦スライド
-
-絶対条件: `▲/▼` のような戦闘中切替ボタンは出さない。スマホ版BCU準拠ではない。
-
-BCU Android `BattleView.checkSlideUpDown()` の根拠:
-
-```kotlin
-fun checkSlideUpDown() {
-    val e = endPoint ?: return
-    val i = initPoint ?: return
-
-    if(battleEnd || painter.bf.sb.lineupChanging || painter.bf.sb.isOneLineup || painter.bf.sb.ubase.health == 0.toLong() || dragFrame == 0 || performed)
-        return
-
-    val minDistance = height * 0.15
-    val dy = e.y - i.y
-    val v = dy / dragFrame
-
-    if(abs(dy) >= minDistance) {
-        performed = true
-        if(painter is BBCtrl) {
-            if(v < 0) {
-                (painter as BBCtrl).perform(BBCtrl.ACTION_LINEUP_CHANGE_UP)
-            } else {
-                (painter as BBCtrl).perform(BBCtrl.ACTION_LINEUP_CHANGE_DOWN)
-            }
-        } else {
-            painter.bf.sb.lineupChanging = true
-            painter.bf.sb.changeFrame = Data.LINEUP_CHANGE_TIME
-            painter.bf.sb.changeDivision = painter.bf.sb.changeFrame / 2
-            painter.bf.sb.goingUp = v < 0
-        }
-    }
-}
-
-fun isInSlideRange() : Boolean {
-    val e = endPoint ?: return false
-    val i = initPoint ?: return false
-    val dx = e.x - i.x
-    val dy = e.y - i.y
-    return tan(Math.toRadians(50.0)) >= abs(dx) / abs(dy)
-}
-```
-
-BCU common `SBCtrl.actions()` の根拠:
-
-```java
-if (!CommonStatic.getConfig().twoRow && (keys.pressed(-3, 0) || action.contains(-4)) && act_change_up()) {
-    rec |= 1 << 24;
-    keys.remove(-3, 0);
-}
-if (!CommonStatic.getConfig().twoRow && action.contains(-5) && act_change_down()) {
-    rec |= 1 << 25;
-}
-
-// twoRow=false の生産は sb.frontLineup の5枠だけ
-for (int j = 0; j < 5; j++) {
-    boolean b0 = keys.pressed(sb.frontLineup, j);
-    boolean b1 = action.contains(sb.frontLineup * 5 + j);
-    ...
-    for (int i = 0; i < 2; i++) {
-        int row = (i + sb.frontLineup) % 2; // check front row first, then back row
-        if (act_spawn(row, j, (b0 || b1) && row == sb.frontLineup) && (b0 || b1))
-            rec |= 1 << (row * 5 + j + 13);
-    }
-}
-```
-
-BCU common `StageBasis.act_change_up/down()` の根拠:
-
-```java
-protected boolean act_change_up() {
-    if(lineupChanging || isOneLineup || ubase.health == 0)
-        return false;
-    lineupChanging = true;
-    goingUp = true;
-    changeFrame = Data.LINEUP_CHANGE_TIME;
-    changeDivision = changeFrame / 2;
-    return true;
-}
-
-protected boolean act_change_down() {
-    if(lineupChanging || isOneLineup || ubase.health == 0)
-        return false;
-    lineupChanging = true;
-    goingUp = false;
-    changeFrame = Data.LINEUP_CHANGE_TIME;
-    changeDivision = changeFrame / 2;
-    return true;
-}
-```
-
-BCU common `StageBasis.update()` 末尾の入替処理:
-
-```java
-if(changeFrame != -1) {
-    changeFrame--;
-
-    if(changeFrame == 0) {
-        changeFrame = -1;
-        changeDivision = -1;
-        lineupChanging = false;
-    } else if(changeFrame == changeDivision-1) {
-        frontLineup = 1 - frontLineup;
-    }
-}
-```
-
-現JSで見るべきファイル:
+新規実装は原則として新規runtime/adapter/patchに分離する。
 
 ```text
-js/ui/PlayerProductionBar.js
-js/battle/BattleSceneBcuLineupPatch.js
-js/battle/BattleSceneBcuTimerPatch.js
+js/battle/bcu-runtime/*.js
+js/bcu-render/*.js
+js/input/*.js
+```
+
+### 1.5 trace必須
+
+BCU準拠作業には必ずdebug traceを付ける。
+
+```js
+globalThis.__BCU_FRAME_TRACE__
+globalThis.__BCU_ENTITY_TRACE__
+globalThis.__BCU_ATTACK_TRACE__
+globalThis.__BCU_PROC_TRACE__
+globalThis.__BCU_RENDER_TRACE__
+globalThis.__BCU_WAVE_TRACE__
+globalThis.__BCU_SURGE_TRACE__
+globalThis.__BCU_STATUS_ICON_TRACE__
+globalThis.__BCU_STAGEBASIS_TRACE__
+globalThis.__BCU_INPUT_TRACE__
+globalThis.__BCU_BLEND_TRACE__
+globalThis.__BCU_EPART_MATRIX_TRACE__
+```
+
+### 1.6 報告テンプレ
+
+各commit後、必ず以下を報告する。
+
+```text
+原因:
+BCU根拠:
+JS対象コード:
+修正:
+commit:
+確認方法:
+残る未解決:
+rollback方法:
+```
+
+「100%準拠」と言えるのは、BCUコード根拠とtrace一致がある範囲だけ。
+
+---
+
+## 2. 作業開始時の必須手順
+
+### 2.1 現main確認
+
+```bash
+git fetch origin
+git checkout main
+git pull --ff-only origin main
+git log --oneline -20
+```
+
+必ず読むファイル:
+
+```text
+AGENTS.md
+index.html
+js/main.js
 js/battle/BattleScene.js
+js/battle/BattleSceneRenderer.js
+js/battle/BattleActor.js
+js/battle/BcuKnockbackRuntimePatch.js
+js/battle/BcuKnockbackProcPriorityPatch.js
+js/battle/BcuKnockbackEffectLayerPatch.js
+js/battle/BcuKnockbackAnimationPatch.js
+js/battle/BcuProcImmunityPatch.js
+js/bcu/BcuSpriteSheet.js
+js/bcu/BcuCanvasComposite.js
 css/touch-fix.css
 ```
 
-修正条件:
+### 2.2 BCU repo取得
 
-- `PlayerProductionBar` はボタンを出さない。
-- `pointerdown/move/up` は Androidの `ACTION_DOWN/MOVE/UP` に相当させる。
-- 判定は `height * 0.15`、角度は `tan(50°) >= abs(dx)/abs(dy)`。
-- `dy / dragFrame < 0` で up、そうでなければ down。
-- `lineupChanging`, one-lineup相当, 自城HP0, battleEnd相当, dragFrame 0, performed は拒否。
-- `SBCtrl` と同じく、生産は `frontLineup` の5枠だけを手動入力対象にする。
-- 入替は `Data.LINEUP_CHANGE_TIME` と `changeDivision = changeFrame / 2` に合わせる。
-- `frontLineup` の切替は `changeFrame == changeDivision - 1` の時点。
-- `lineupChanging=false` は `changeFrame == 0`。
+```bash
+mkdir -p ../bcu-ref
+cd ../bcu-ref
 
-検証条件:
+git clone https://github.com/battlecatsultimate/BCU_java_util_common.git || true
+git clone https://github.com/battlecatsultimate/BCU_Android.git || true
+git clone https://github.com/battlecatsultimate/BCU-java-PC.git || true
+```
+
+取得できない場合、推測実装せず停止して報告する。
+
+### 2.3 実装前に必ずgrepする語
+
+```bash
+grep -R "class ContWaveDef\|class AttackWave" ../bcu-ref/BCU_java_util_common/battle/attack -n
+grep -R "class ContVolcano\|class AttackVolcano" ../bcu-ref/BCU_java_util_common/battle/attack -n
+grep -R "void update()" ../bcu-ref/BCU_java_util_common/battle/StageBasis.java -n
+grep -R "getEff\|drawEff\|checkEff" ../bcu-ref/BCU_java_util_common/battle/entity/Entity.java -n
+grep -R "drawImg\|drawRandom" ../bcu-ref/BCU_java_util_common/util/ImgCore.java -n
+grep -R "checkSlideUpDown\|isInSlideRange" ../bcu-ref/BCU_Android/app/src/main/java -n
+```
+
+---
+
+## 3. 推奨実装順
+
+この順番を守る。
+
+```text
+Phase 0: Trace基盤
+Phase 1: FakeGraphics / EPart / EffAnim / Blend互換層
+Phase 2: 状態異常アイコン
+Phase 3: Proc / 免疫 / 耐性 / 妨害完全化
+Phase 4: 波動 ContWaveDef 完全化
+Phase 5: 烈波 ContVolcano 完全化
+Phase 6: Barrier / Shield / Zombie / Warp / Revenge / Soulstrike
+Phase 7: StageBasis.update順序一致
+Phase 8: スマホ版BCU入力完全化
+```
+
+理由:
+
+- 描画互換層が曖昧なままwave/surge/status iconを入れると、黒塊・巨大化・ズレが再発する。
+- Proc完全化前にwave/surgeを完成扱いすると、免疫・耐性・curse/sealで再修正になる。
+- StageBasis.updateを先に置換すると全戦闘が壊れやすい。
+- DOM touch policyをAndroid入力と分離しないとoverlay/scrollが死ぬ。
+
+---
+
+# Phase 0: Trace基盤
+
+## 目的
+
+ロジック変更前に観測基盤を作る。このphaseでは戦闘挙動を変えない。
+
+## 新規作成ファイル
+
+```text
+js/battle/bcu-runtime/BcuTraceRuntime.js
+js/battle/bcu-runtime/BcuFrameTrace.js
+js/battle/bcu-runtime/BcuEntityTrace.js
+js/battle/bcu-runtime/BcuAttackTrace.js
+js/battle/bcu-runtime/BcuProcTrace.js
+js/battle/bcu-runtime/BcuRenderTrace.js
+```
+
+## API
+
+`BcuTraceRuntime.js`:
 
 ```js
-const s = globalThis.__APP__?.battleScene || globalThis.__APP__?.scene;
-s.frontLineup;
-s.lineupChanging;
-s.debugEvents?.slice(-20);
-globalThis.__PRODUCTION_PAGE_DEBUG__;
+const MAX_TRACE = 200;
+
+export const BcuTraceRuntime = {
+  enabled: true,
+  frame: 0,
+  channels: new Map(),
+  resetFrame(frame) {},
+  push(channel, entry) {},
+  get(channel) {},
+  expose() {}
+};
 ```
 
-成功時に以下の流れが確認できること。
+仕様:
 
-```text
-bcuLineupChangeStarted
-bcuLineupFrontSwapped
-bcuLineupChangeEnded
-```
+- 各channelはring buffer最大200件。
+- actor/model/imageなど巨大objectを入れない。
+- entryには `frame`, `source`, `bcuReference` を入れる。
 
-また、カード上の縦スライドでページスクロールが起きないこと。
+## main.js接続
 
----
-
-### 3.3 ワンコの生産カード背景が灰色になっている
-
-ユーザー要求: ワンコカードの背景を白にする。  
-注意: ワンコは本家に存在しないプレイヤー生産カードなので、カード「内容」はBCU本家そのものではない。ただし枠・数字・寸法・描画手順はBCUの猫カードassetを流用すること。
-
-参照asset:
-
-```text
-public/assets/bcu/000001/org/page/uni.png
-public/assets/bcu/000001/org/data/uni.imgcut
-```
-
-現runtimeでは semantic-strict にするため、以下bundle経由で読む。
-
-```text
-public/assets/bundles/ui/battle-ui.zip
-scripts/build-bcu-ui-bundle.mjs
-```
-
-修正条件:
-
-- `ProductionCardSkin.drawDogCard()` は手描き灰色フレームを使わない。
-- `drawSlotFrame()` が BCU `uni.png` + `uni.imgcut` part[0] を確実に描いているか確認する。
-- もしdog iconを中に配置するための背景が灰色になっているなら、その灰色矩形を削除するか、BCUカード内の白地をそのまま使う。
-- semantic-strictで `ui:battle` bundleが無い場合、灰色fallbackに逃げず、エラーまたは明示debugにする。
-- コスト文字は `BcuSpriteText` の `img001.png/img001.imgcut/moneySign` によるBCU sprite textを使う。canvas font fallbackはdiagnostics用途だけ。
-
-検証条件:
+`js/main.js` の早い段階で追加。
 
 ```js
-globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__
-globalThis.__BCU_SPRITE_TEXT_DEBUG__
+await import('./battle/bcu-runtime/BcuTraceRuntime.js');
 ```
 
-- `source` が `semantic-bundle:ui:battle`。
-- ワンコカードに灰色の背景矩形が無い。
-- missing asset時に灰色fallbackでごまかさない。
+既存patch順を壊さないこと。
 
----
-
-### 3.4 ステージを選択できるようにする
-
-現状 `PreviewApp.resetBattle()` は `new BattleScene(... { selectedStageId: this.selectedStageId || undefined })` を渡せる構造になっている。つまり `selectedStageId` をUIで設定する入口が不足している。
-
-現JSで読む箇所:
-
-```text
-js/preview/PreviewApp.js
-js/battle/StageDefinitionLoader.js
-js/battle/BcuStageSpawnRuntime.js
-public/assets/generated/bcu-stage-index.json
-public/assets/bundles/stage/*.zip
-public/assets/generated/bcu-bundle-manifest.json
-```
-
-実装方針:
-
-- 編成画面または専用のステージ選択画面を作る。
-- `bcu-stage-index.json` と stage bundle manifest を読み、利用可能なステージだけ表示する。
-- ステージ名は言語bundle / BCU name resolver がある場合はそれを使う。無ければ `stageKey` / map id を表示する。ただし「名前が無いから適当に命名」は禁止。
-- 選択値は `PreviewApp.selectedStageId` に入れ、Apply時に `BattleScene` へ渡す。
-- ステージ変更時は spawn schedule, background, castle, base HP, maxEnemyCount, stageLen をすべて再ロードする。
-- 途中で未対応assetが見つかった場合、fallback stageへ勝手に逃がさない。
-
-UI条件:
-
-- ステージ選択は「安いフォーム」ではなく、ゲームUIとして整理する。
-- ただしCSSで勝手に本家風を捏造しない。背景・枠・数字などは可能な限りBCU asset bundle化して使う。
-- ステージカードには最低限以下を表示。
-  - stageKey / map id
-  - 表示名または未解決理由
-  - background id
-  - enemy base HP
-  - enemy row count
-  - unresolved enemy count
-  - bundle availability
-
-検証条件:
-
-- 3つ以上のステージを選択してApplyし、敵出現・背景・城HP・ステージ長が変わる。
-- `globalThis.__LAST_APPLY_BATTLE_REPORT__.selectedStageId` が選択した値になる。
-- stage bundle missing時に silent fallback しない。
-
----
-
-### 3.5 編成画面・ボタン・全体UIをプロ品質にする。ただしBCU/asset根拠なしの飾りは禁止
-
-現在の `css/style.css` には、以前の推測デザインが残っている可能性がある。特に以下はBCU準拠ではない可能性が高い。
-
-```text
-formation-header の BATTLE FORMATION / READY 演出
-formation-character-card の青/橙グラデーション
-apply-battle-button の汎用金色ボタン
-```
-
-修正方針:
-
-- 「プロ品質」と「BCU準拠」を両立する。
-- BCU本家に該当assetがあるUIはassetベースにする。
-- BCU本家に存在しないUI、例えばワンコ側拡張・ステージ選択拡張は、BCUの色/寸法/数字/カード枠に寄せるが、AGENTS/commitで `BCU外拡張` と明記する。
-- 安っぽいCSSグラデーション、影、謎ラベルでごまかさない。
-- UI状態遷移を整理する。
-  - 起動中
-  - 編成中
-  - ステージ選択中
-  - 戦闘ロード中
-  - 戦闘中
-  - エラー表示
-- エラー表示はユーザーが原因を理解できるよう、失敗subsystem / missing bundle / missing internal path / stage key を出す。
-
-受け入れ条件:
-
-- DOM構造が整理され、CSSが「巨大1ファイルに何でも書く」状態から脱していること。
-- UI部品ごとにCSSを分けてもよい。
-- 画面幅/高さがスマホ縦横・PCで破綻しない。
-- BCU asset由来でない装飾は、どこが拡張かコメントで明示する。
-
----
-
-## 4. 波動ロジックとアニメーションをBCU準拠にする
-
-現状 `js/battle/BattleWaveRuntimePatch.js` は、簡易queue方式で範囲ダメージを1フレーム後に入れている。これはBCUの `ContWaveDef` の挙動とは一致していない。
-
-現JSの確定問題:
-
-```text
-BattleWaveRuntimePatch.js:
-- WAVE_STEP_RANGE = 200, WAVE_BASE_RANGE = 467, WAVE_HIT_WIDTH = 532 という固定近似
-- dueFrame = logicFrame + 1
-- animation containerが無い
-- ContWaveDef の t, maxt, attack frame, nextWave chain, wave blocker, invalid/stop effect が無い
-- A_WAVE / A_MINIWAVE / A_E_WAVE / A_E_MINIWAVE の実EffAnimを使っていない
-```
-
-BCU `AttackSimple.excuse()` の根拠:
-
-```java
-if (!capt.isEmpty() && proc.WAVE.exists()) {
-    int dire = model.getDire();
-    int wid = dire == 1 ? W_E_WID : W_U_WID;
-    float addp = (dire == 1 ? W_E_INI : W_U_INI) + wid / 2f;
-    float p0 = model.getPos() + dire * addp;
-
-    if (proc.WAVE.maxlv > proc.WAVE.lv) {
-        proc.WAVE.lv = proc.WAVE.lv + (int)(model.b.r.nextFloat() * ((proc.WAVE.maxlv - proc.WAVE.lv) + 1));
-    }
-
-    if (proc.WAVE.inverted) {
-        p0 = model.getPos() + (dire * addp) + ((200 * (proc.WAVE.lv - 1)) * dire);
-    }
-
-    ContWaveDef wave = new ContWaveDef(new AttackWave(attacker, this, p0, wid, WT_WAVE), p0, layer, -3);
-    if(attacker != null) {
-        attacker.summoned.add(wave);
-    }
-}
-```
-
-BCU `ContWaveDef.update()` の根拠:
-
-```java
-boolean isMini = atk.waveType == WT_MINI;
-int attack = (isMini ? 4 : 6);
-if (t == 0)
-    CommonStatic.setSE(soundEffect);
-if (t <= attack) {
-    atk.capture();
-    for (AbEntity e : atk.capt)
-        if ((e.getAbi() & AB_WAVES) > 0) {
-            if (e instanceof Entity)
-                ((Entity) e).anim.getEff(STPWAVE);
-            if (t < 0)
-                CommonStatic.setSE(soundEffect);
-            deactivate();
-            return;
-        }
-}
-if (!activate)
-    return;
-if (t == (isMini ? W_MINI_TIME : W_TIME)) {
-    if (isMini && atk.proc.MINIWAVE.lv > 0)
-        nextWave();
-    else if (!isMini && atk.getProc().WAVE.lv > 0)
-        nextWave();
-}
-if (t == attack) {
-    sb.getAttack(atk);
-    tempAtk = true;
-}
-if (maxt == t)
-    activate = false;
-if (t >= 0)
-    anim.update(false);
-t++;
-```
-
-修正方針:
-
-- `BcuWaveContainer` を作る。JSの単純queueではなく、BCU `ContWaveDef` 相当の状態機械にする。
-- `t`, `delay`, `maxt`, `attackFrame`, `activate`, `waves set`, `nextWave()` を実装する。
-- wave生成位置は `W_E_INI`, `W_U_INI`, `W_E_WID`, `W_U_WID`, `W_PROG`, `W_TIME`, `W_MINI_TIME` を BCU `Data` から確認して使う。値を推測しない。
-- wave blocker (`AB_WAVES`) をチェックし、該当時は全関連waveを deactivate し、`Entity.anim.getEff(STPWAVE)` 相当のエフェクトを出す。
-- wave invalid / wave stop effect を `EffAnim` からbundle化して描画する。
-- wave damageは `sb.getAttack(atk)` と同じタイミング、つまり `t == attack` で発生させる。
-- miniWaveも同じcontainerで `attack=4`、通常waveは `attack=6`。
-- animationは `A_WAVE`, `A_MINIWAVE`, `A_E_WAVE`, `A_E_MINIWAVE` を使う。
-- `BattleSceneRenderer` に wave/surge/effect layer を追加し、BCU `lea` と同等のeffect list順序に寄せる。
-
-検証条件:
-
-- wave発生時、ダメージだけでなく波動アニメーションが出る。
-- wave blockerで波が停止し、停止エフェクトが出る。
-- miniWaveは通常波動と攻撃frameが異なる。
-- `debugEvents` に生成・攻撃frame・nextWave・deactivate理由が残る。
-
----
-
-## 5. 烈波ロジックとアニメーションをBCU準拠にする
-
-現状 `js/battle/BattleSurgeRuntimePatch.js` は簡易queue方式で、`SURGE_HALF_WIDTH = 250`、`dueFrame = logicFrame + 1`、`repeatIntervalFrames = 20` を使っている。これはBCU `ContVolcano` の状態機械と一致していない。
-
-BCU `AttackSimple.excuse()` の烈波生成根拠:
-
-```java
-if (!capt.isEmpty() && proc.VOLC.exists()) {
-    int dire = model.getDire();
-    VOLC volc = proc.VOLC;
-    int addp = volc.dis_0 + (int) (model.b.r.nextFloat() * (volc.dis_1 - volc.dis_0));
-    float p0 = model.getPos() + dire * addp;
-    float sta = p0 + (dire == 1 ? W_VOLC_PIERCE : W_VOLC_INNER);
-    float end = p0 - (dire == 1 ? W_VOLC_INNER : W_VOLC_PIERCE);
-
-    if (volc.maxtime > volc.time) {
-        volc.time = volc.time + (int)(model.b.r.nextFloat() * ((volc.maxtime - volc.time) + 1));
-        volc.time = (int) (Math.floor(volc.time / 20.0) * 20);
-    }
-
-    ContVolcano volcano = new ContVolcano(new AttackVolcano(attacker, this, sta, end, Data.WT_VOLC), p0, layer, volc.time, volc.dis_0, volc.dis_1, ind);
-    if(attacker != null) {
-        attacker.summoned.add(volcano);
-    }
-}
-```
-
-BCU `ContVolcano.update()` の根拠:
-
-```java
-updateProc();
-if (t >= VOLC_PRE && t <= VOLC_PRE + aliveTime && anim.type != VolcEff.DURING) {
-    anim.changeAnim(VolcEff.DURING, false);
-    CommonStatic.setSE(SE_VOLC_LOOP);
-} else if (t > VOLC_PRE + aliveTime && anim.type != VolcEff.END)
-    anim.changeAnim(VolcEff.END, false);
-
-if (t >= VOLC_PRE && t < VOLC_PRE + aliveTime && (t - VOLC_PRE) % VOLC_SE == 0) {
-    CommonStatic.setSE(SE_VOLC_LOOP);
-}
-
-if (t >= aliveTime + VOLC_POST + VOLC_PRE) {
-    activate = false;
-} else {
-    t++;
-    if (t > VOLC_PRE && t < VOLC_POST + aliveTime)
-        sb.getAttack(v);
-    updateAnimation();
-}
-```
-
-修正方針:
-
-- `BcuVolcanoContainer` を作り、`ContVolcano` 相当の状態機械にする。
-- `VOLC_PRE`, `VOLC_POST`, `VOLC_SE`, `W_VOLC_PIERCE`, `W_VOLC_INNER` は BCU `Data` から取得・固定化する。推測禁止。
-- `VolcEff.START`, `VolcEff.DURING`, `VolcEff.END` の animation切替を実装。
-- `t > VOLC_PRE && t < VOLC_POST + aliveTime` の間、毎tick攻撃処理する。
-- `updateProc()` の curse/seal 再評価を移植する。現JSのsurgeはここを持っていない。
-- `A_VOLC`, `A_E_VOLC`, `A_MINIVOLC`, `A_E_MINIVOLC` をbundle化して描画する。
-- `SE_VOLC_START`, `SE_VOLC_LOOP` は音が未実装でもdebug eventに残す。音を入れる場合もBCU SE参照必須。
-- death surge / mini death surge / counter surge は `Entity.java` / `EUnit.java` を見て同じcontainerで扱う。
-
-検証条件:
-
-- 烈波が START→DURING→END のアニメーションを持つ。
-- 持続中に複数tickの攻撃判定が出る。
-- `aliveTime` が `maxtime` 範囲内ランダム・20丸めに一致する。
-- curse/seal中にprocがBCU通り消える/戻る。
-
----
-
-## 6. 状態異常アイコンとアニメーションをBCUと同じにする
-
-現状 `BattleActorProcStatusPatch.js` は `bcuProcStatuses` を持つが、BCU `Entity.Animation.getEff()` 相当の状態異常アイコン描画が未完成。ユーザー要望は「状態異常中にその状態異常のアイコンとそのアニメーションをBCUと全く同じでキャラに表示」。
-
-BCU `Entity.Animation.getEff(int t)` の根拠:
-
-```java
-} else if (t == P_STOP) {
-    int id = dire == -1 ? A_STOP : A_E_STOP;
-    effs[id] = (dire == -1 ? effas().A_STOP : effas().A_E_STOP).getEAnim(DefEff.DEF);
-} else if (t == P_SLOW) {
-    int id = dire == -1 ? A_SLOW : A_E_SLOW;
-    effs[id] = (dire == -1 ? effas().A_SLOW : effas().A_E_SLOW).getEAnim(DefEff.DEF);
-} else if (t == P_WEAK) {
-    if (status[P_WEAK][1] <= 100) {
-        int id = dire == -1 ? A_DOWN : A_E_DOWN;
-        effs[id] = (dire == -1 ? effas().A_DOWN : effas().A_E_DOWN).getEAnim(DefEff.DEF);
-    } else {
-        int id = dire == -1 ? A_WEAK_UP : A_E_WEAK_UP;
-        effs[id] = (dire == -1 ? effas().A_WEAK_UP : effas().A_E_WEAK_UP).getEAnim(WeakUpEff.UP);
-    }
-} else if (t == P_CURSE) {
-    int id = dire == -1 ? A_CURSE : A_E_CURSE;
-    effs[id] = (dire == -1 ? effas().A_CURSE : effas().A_E_CURSE).getEAnim(DefEff.DEF);
-} else if (t == P_SEAL) {
-    effs[dire == -1 ? A_SEAL : A_E_SEAL] = (dire == -1 ? effas().A_SEAL : effas().A_E_SEAL).getEAnim(DefEff.DEF);
-}
-```
-
-BCU `Entity.Animation.draw()` の配置根拠:
-
-```java
-int EWID = 36;
-float x = p.x;
-...
-eae.draw(g, new P(x, p.y+offset), siz * 0.75f);
-x -= EWID * e.dire * siz;
-```
-
-また一部アイコンは別オフセット:
-
-```java
-if(i == A_B || i == A_E_B || i == A_DEMON_SHIELD || ... ) {
-    float offset = -25f * siz;
-    eae.draw(g, new P(x, p.y + offset), siz * 0.75f);
-}
-```
-
-修正方針:
-
-- `BcuActorStatusEffectRuntime` を作る。
-- `BattleActor` に `bcuEffectIcons` / `bcuEffectIconRuntimes` を持たせる。
-- `applyBcuProc()` で freeze/slow/weaken/curse/seal/poison/barrier/shield/armor/speed/lethargy/dmgcut/dmgcap などを受けたら、BCU `anim.getEff(t)` と同じ effect を生成する。
-- `EffAnim` の `A_STOP/A_E_STOP/A_SLOW/A_E_SLOW/A_DOWN/A_E_DOWN/A_WEAK_UP/A_E_WEAK_UP/A_CURSE/A_E_CURSE/A_SEAL/A_E_SEAL/...` を semantic bundle化する。
-- `draw` 時はキャラの描画位置 `p` に対して `siz * 0.75`、横間隔 `36 * dire * siz` を使用する。
-- `Entity.Animation.update()` と同じく、アイコンeffectは毎tick `update(false)` する。freeze中でも `effs[i].update(false)` は回る点に注意。
-- STOP中は SLOW icon を描かない、WEAK中は UP icon を描かない、SEAL中は CURSE icon を描かない、というBCU条件も再現する。
-
-BCU条件:
-
-```java
-if (((i == A_SLOW || i == A_E_SLOW) && status[P_STOP][0] != 0) ||
-    ((i == A_UP || i == A_E_UP) && status[P_WEAK][0] != 0) ||
-    ((i == A_CURSE || i == A_E_CURSE) && status[P_SEAL][0] != 0))
-    continue;
-```
-
-検証条件:
-
-- freeze中にSTOPアイコンがアニメーションする。
-- slow中にSLOWアイコンがアニメーションする。
-- freeze + slow 併発時にBCUと同じくSLOW表示が抑制される。
-- icon位置がキャラ頭上に横並びし、BCUの `EWID=36`, `scale=0.75` に合う。
-- barrier/shield等の特別offset系は `-25f * siz` を再現する。
-
----
-
-## 7. 動きを止める処理: freeze中に移動が止まらないバグを修正する
-
-ユーザー報告: 「動きを止める処理が、敵のアニメーションは止まるけど移動が止まらない」。これは現コード上も説明できる。
-
-現JSの問題:
-
-- `BattleActorProcStatusPatch.js` は freeze中に `BattleActor.tick()` を return している。
-- しかし `BattleScene.tick()` の `actor-state-update` 内では、`a.tick(scaledDt)` の後に `a.x += a.direction * a.moveSpeed * (scaledDt/1000)` を直接実行している箇所が複数ある。
-- つまり actor animation は止まっても、BattleScene側の直接移動が止まらない。
-
-現JSの該当構造:
+## 確認
 
 ```js
-// BattleScene.tick actor-state-update 内
-for (const a of this.actors) {
-  ...
-  a.tick(scaledDt);
-  ...
-  if(!sel){
-    ...
-    if(a.state==='move') a.x += a.direction*a.moveSpeed*(scaledDt/1000);
-    continue;
-  }
-  ...
-  if(!this.canAttack(a,target)){
-    a.setState('move');
-    a.setAnimation(a.moveAnimId,'move');
-    a.x += a.direction*a.moveSpeed*(scaledDt/1000);
-    continue;
-  }
-}
+globalThis.__BCU_FRAME_TRACE__
+globalThis.__BCU_ENTITY_TRACE__
 ```
 
-BCU `Entity.update()` の根拠:
+戦闘が今まで通り起動し、traceが見えること。
 
-```java
-updateProc();
-barrier.update();
+## rollback
 
-if (kbTime > 0)
-    kb.updateKB();
-else if (status[P_STOP][0] == 0) {
-    if (kbTime < -1)
-        updateBurrow();
-    else if (kbTime == 0 && walking && !checkTouch())
-        updateMove(0);
-}
-```
-
-BCU `Entity.update2()` の根拠:
-
-```java
-boolean nstop = status[P_STOP][0] == 0;
-...
-if (checkTouch()) {
-    walking = false;
-    anim.setAnim(UType.IDLE, true);
-    if(nstop) {
-        ... startAttack();
-    }
-} else {
-    walking = true;
-    anim.setAnim(UType.WALK, true);
-}
-
-if (atkm.atkTime > 0 && nstop)
-    atkm.updateAttack();
-
-anim.update();
-bondTree.update();
-```
-
-BCUの意味:
-
-- STOP中は `updateMove()` を呼ばない。
-- STOP中でも `update2()` の collision / walking readiness / animation state selection は一部行う。
-- STOP中は攻撃進行 `atkm.updateAttack()` も止める。
-- icon/effect animation は `Entity.Animation.update()` 内で `effs[i].update(false)` が回る。
-
-修正方針:
-
-- BattleSceneで直接 `a.x += ...` しない。必ず `actor.updateMoveBcu()` のような関数に寄せる。
-- 移動前に `actor.isBcuProcStatusActive('freeze', this.timeMs)` を確認し、activeなら移動距離0。
-- slow中は `Entity.updateMove()` と同じく `pos += 0.25f * dire` 相当にする。現 `getBcuMoveDistanceForDt()` はあるが、BattleSceneが使っていないため接続する。
-- STOP中でも `walking` / state selection がBCUと同じか確認する。単純に全処理returnすると、BCUと違う。
-- attack中にfreezeされた場合、BCUの `atkm.updateAttack()` が進まないことに合わせ、attack timelineのelapsed/hit resolveも止める。
-
-検証条件:
-
-- freeze付与中、対象の `x` が変わらない。
-- freeze付与中、攻撃hit timelineが進まない。
-- freeze解除フレームにBCUと同じく移動/攻撃が再開する。
-- slow付与中、移動距離が通常速度でなく `0.25 * dire per tick` になる。
-- debugに `lastBcuStopMoveDebug` / `lastBcuSlowMoveDebug` を残す。
+`main.js` のimportと新規ファイル削除。
 
 ---
 
-## 8. 状態異常時間・proc適用の精査
+# Phase 1: FakeGraphics / EPart / EffAnim / Blend互換層
 
-現 `BattleActorProcStatusPatch.js` は msベースで `untilMs` を持っている。しかしBCUは frame count `status[P_*][0]--` で管理している。
+## 目的
 
-BCU `Entity.updateProc()` の根拠:
+024黒塊、KBEff巨大化、wave/surge/status icon描画ズレを防ぐ描画基盤を作る。renderer全体を触らない。
 
-```java
-if (status[P_STOP][0] > 0)
-    status[P_STOP][0]--;
-if (status[P_SLOW][0] > 0)
-    status[P_SLOW][0]--;
-if (status[P_CURSE][0] > 0)
-    status[P_CURSE][0]--;
-if (status[P_SEAL][0] > 0)
-    status[P_SEAL][0]--;
-```
+## BCU根拠
 
-修正方針:
+- `EPart.drawPart()` は `transform()`, `getSize()`, `opa()`, `glow`, `extendX/Y` を使って `drawImg()` / `drawRandom()` へ渡す。
+- `EPart.opa()` は親opacityを掛ける。
+- `EPart.setPara()` は親partを差し替える。KBEff paraToもここに関係する。
+- `ImgCore.drawImg()` は `glow=1/2/3/-1` だけBLEND。それ以外は通常/透過合成。描画後DEFへ戻す。
 
-- ms-based `untilMs` だけに依存しない。BCU互換の `statusFrames` を持つ。
-- 各battle tickで frame decrement する。
-- `BCU_BATTLE_TIMER_PERIOD_MS = 33` を使うが、状態異常は「ms経過」より「tickごとの--」を正とする。
-- debug表示はms換算してよいが、ロジック判定はframeを正とする。
-- Treasure / decoration magnification / resist / immunity は BCU `Entity.processProcs` を参照して不足分を列挙し、未実装なら明示debugにする。
-
----
-
-## 9. AGENTSが指示する実装順序
-
-以下順でやること。順番を飛ばさない。
-
-### Phase A — 入力とページスクロールを修正
-
-1. `index.html` viewportをゲーム向けに変更。
-2. `css/touch-fix.css` または `css/style.css` でゲーム領域のtouch/callout/select/zoomを明示的に禁止。
-3. JSで `touchmove/contextmenu/selectstart/dragstart/gesturestart` をゲーム領域に限定してpreventDefault。
-4. 戦闘中段切替が縦スライドで発火するか確認。
-5. ページスクロールしないことを確認。
-
-### Phase B — freeze/slowをBCU tickに接続
-
-1. `BattleScene.tick()` の直接移動を排除またはラップ。
-2. STOP中の移動0を実装。
-3. SLOW中の `0.25 * dire` per tickを実装。
-4. attack timeline進行もSTOP中に止める。
-5. `Entity.update/update2` の順序に近づける。
-
-### Phase C — 生産カード見た目
-
-1. `ui:battle` bundle中身を確認。
-2. `ProductionCardSkin` でdog card背景の灰色を削除。
-3. BCU `uni.png` frameとsprite textだけで描く。
-4. missing asset時はエラー/debugで止める。
-
-### Phase D — ステージ選択
-
-1. stage index / bundle manifestを読み、利用可能stage一覧を作る。
-2. UIを作る。
-3. `PreviewApp.selectedStageId` に接続。
-4. Applyでstage runtimeが完全に変わることを確認。
-
-### Phase E — 波動/烈波containerとanimation
-
-1. BCU `Data` 定数を抽出。
-2. effect bundleに wave/surge関連EffAnimを追加。
-3. `BcuWaveContainer`, `BcuVolcanoContainer` 実装。
-4. 現簡易queueを置換。
-5. rendererにeffect layerを追加。
-
-### Phase F — 状態異常アイコン
-
-1. effect bundleに状態異常 icon EffAnimを追加。
-2. `Entity.Animation.getEff` 相当を実装。
-3. rendererでキャラ頭上にBCU配置で描画。
-4. STOP/SLOW/WEAK/CURSE/SEALの抑制条件を実装。
-
-### Phase G — UI全体のプロ品質化
-
-1. 推測CSSを整理。
-2. BCU asset-driven UIへ置換。
-3. stage selection / formation / loading / battle overlay の状態遷移を整理。
-4. エラーUIを整備。
-
----
-
-## 10. 絶対に入れてはいけない修正
+## 新規作成ファイル
 
 ```text
-- 戦闘中の明示PAGEボタン / ▲▼ボタンを標準表示すること
-- 波動/烈波を単なる透明な範囲ダメージqueueで済ませること
-- 状態異常アイコンをCSSやemojiで代用すること
-- freeze中に actor.tick だけ止めて BattleScene 側の移動を放置すること
-- BCU assetが無いのに灰色fallbackや仮画像でごまかすこと
-- エラーをcatchして通常攻撃/通常描画に戻すこと
-- 古いtxt解析ファイルを根拠にすること
-- 「多分BCUっぽい」という言葉でcommitすること
+js/bcu-render/BcuBlendRuntime.js
+js/bcu-render/BcuFakeGraphicsCanvas2D.js
+js/bcu-render/BcuEPartTransformRuntime.js
+js/bcu-render/BcuEffAnimRuntime.js
+js/bcu-render/BcuRenderTrace.js
 ```
 
----
+## 1. BcuBlendRuntime
 
-## 11. 必須debug globals
-
-修正後も以下を確認できるようにする。
+### API
 
 ```js
-globalThis.__PRODUCTION_PAGE_DEBUG__
-globalThis.__PRODUCTION_ICON_DEBUG__
-globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__
-globalThis.__BCU_SPRITE_TEXT_DEBUG__
-globalThis.__LAST_APPLY_BATTLE_REPORT__
-globalThis.__BATTLE_HIT_EFFECT_LOADER_DEBUG__
-globalThis.__BCU_STATUS_ICON_DEBUG__
-globalThis.__BCU_WAVE_DEBUG__
-globalThis.__BCU_SURGE_DEBUG__
+export function isBcuBlendGlow(glow) {
+  return glow === 1 || glow === 2 || glow === 3 || glow === -1;
+}
+
+export function drawBcuImage(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, options = {}) {}
 ```
 
-追加するdebugは「成功しました」ではなく、BCUのどの処理に対応するかを含めること。
+### 必須仕様
 
-例:
+- `glow=0` の通常描画ではcallerの `ctx.globalAlpha` を壊さない。
+- `glow=1/2/3/-1` のときだけblend経路。
+- 描画後に `globalCompositeOperation` と `globalAlpha` を必ず戻す。
+- `extendX/Y` は最初はtraceだけでよい。実装するときは `ImgCore.drawImg()` の分割描画を参照する。
+
+### debug
+
+```js
+globalThis.__BCU_BLEND_TRACE__
+```
+
+entry例:
 
 ```js
 {
-  source: 'BcuWaveContainer.update',
-  bcuReference: 'ContWaveDef.update t==attack -> sb.getAttack(atk)',
-  t,
-  attackFrame,
-  waveType,
-  capturedCount,
-  blockedByWaveStopper,
-  effectAnim: 'A_WAVE'
+  frame,
+  partIndex,
+  glow,
+  opacity,
+  callerAlpha,
+  compositeBefore,
+  compositeAfter,
+  path: 'normal' | 'blend' | 'pixel-fallback',
+  bcuReference: 'ImgCore.drawImg'
 }
+```
+
+## 2. BcuEPartTransformRuntime
+
+### API
+
+```js
+export function computeBcuPartDrawEntry({ model, anim, frame, partIndex, parentMatrix }) {}
+export function computeBcuDrawList({ model, anim, frame, parentMatrix }) {}
+```
+
+### 出力
+
+```js
+{
+  partIndex,
+  parentIndex,
+  matrix,
+  graphicsMatrix,
+  opacity,
+  glow,
+  pivotX,
+  pivotY,
+  scaleX,
+  scaleY,
+  angle,
+  extendX,
+  extendY,
+  source: 'BcuEPartTransformRuntime'
+}
+```
+
+### 実装上の注意
+
+最初は既存 `BcuModelInstance.getBattleDrawList()` と比較traceだけにする。rendererへ直接接続しない。
+
+### debug
+
+```js
+globalThis.__BCU_EPART_MATRIX_TRACE__
+```
+
+## 3. BcuEffAnimRuntime
+
+### API
+
+```js
+export class BcuEffAnimRuntime {
+  constructor({ model, anim, imgcut, image, type }) {}
+  setFrame(frame) {}
+  update() {}
+  done() {}
+  getDrawList({ parentMatrix } = {}) {}
+}
+```
+
+### 検証fixture
+
+```text
+024 attack glow
+KBEff KB
+wave effect
+surge effect
+status icon effect
+```
+
+## 既存コードへの接続
+
+初回commitでは接続しない。traceだけ。  
+次commitで `BcuSpriteSheet` / `BcuCanvasComposite` の内部から `BcuBlendRuntime` を呼ぶ。
+
+禁止:
+
+```text
+BattleSceneRenderer.js全体置換
+actor renderer全体置換
+glow=0をblend処理へ流す
+```
+
+## 検証
+
+```js
+globalThis.__BCU_BLEND_TRACE__
+globalThis.__BCU_EPART_MATRIX_TRACE__
+globalThis.__BCU_RENDER_TRACE__
+```
+
+手動確認:
+
+```text
+024攻撃で黒塊再発なし
+KBEff巨大化なし
+通常actorの透明度が壊れない
+戦闘起動不能にならない
 ```
 
 ---
 
-## 12. 検証シナリオ
+# Phase 2: 状態異常アイコン
 
-### Scenario 1: スマホ入力
+## 目的
 
-1. Android Chromeで起動。
-2. 戦闘開始。
-3. 生産カード上で縦スライド。
-4. ページがスクロールしない。
-5. `frontLineup` がBCUタイミングで切り替わる。
-6. `lineupChanging` 中は生産できない。
-7. スライド後のタップで表示中5枠からだけ生産される。
+BCU `Entity.AnimManager.effs[]` 相当の状態アイコン表示を実装する。
 
-### Scenario 2: freeze
+## BCU根拠
 
-1. freezeを持つ敵/味方を編成またはテストステージで出す。
-2. freeze発動。
-3. 対象のアニメーションが止まる。
-4. 対象のx座標も止まる。
-5. 攻撃timelineも止まる。
-6. STOP iconがBCU assetで出る。
-7. freeze解除後に再開。
+参照:
 
-### Scenario 3: slow
+```text
+BCU_java_util_common/battle/entity/Entity.java
+- AnimManager.effs[]
+- AnimManager.getEff(int t)
+- AnimManager.drawEff(...)
+- AnimManager.checkEff()
+```
 
-1. slow発動。
-2. 通常速度ではなく `0.25 * dire per tick` 相当で移動。
-3. SLOW iconが出る。
-4. freeze+slow併発時はBCU条件通りSLOW icon表示が抑制される。
+主な対応:
 
-### Scenario 4: wave
+```text
+P_STOP  -> A_STOP / A_E_STOP
+P_SLOW  -> A_SLOW / A_E_SLOW
+P_WEAK  -> A_DOWN / A_E_DOWN or A_WEAK_UP / A_E_WEAK_UP
+P_CURSE -> A_CURSE / A_E_CURSE
+P_SEAL  -> A_SEAL / A_E_SEAL
+P_POISON -> A_POI*
+P_WARP -> WaprCont / A_W enter/exit
+BREAK_* -> A_B / A_E_B
+SHIELD_* -> A_DEMON_SHIELD / A_E_DEMON_SHIELD
+P_ARMOR / P_SPEED / P_LETHARGY / P_COUNTER / P_DMGCUT / P_DMGCAP
+```
 
-1. wave持ちキャラを出す。
-2. hit後にBCU `ContWaveDef` と同じdelay/t/attackFrameでwaveが進む。
-3. A_WAVE/A_E_WAVE animationが表示される。
-4. wave blockerに当たると停止エフェクト。
+表示抑制:
 
-### Scenario 5: surge
+```text
+dead中は描かない
+warp中は描かない
+STOP中はSLOWアイコンを出さない
+WEAK中はUPアイコンを出さない
+SEAL中はCURSEアイコンを出さない
+EWID = 36
+scale = siz * 0.75
+```
 
-1. surge持ちキャラを出す。
-2. START/DURING/END animationが出る。
-3. 持続中にBCUと同じtick範囲で複数回攻撃する。
-4. curse/seal中のproc消去/復帰が一致する。
+## 新規作成ファイル
 
-### Scenario 6: stage selection
+```text
+js/battle/bcu-runtime/BcuStatusIconResolver.js
+js/battle/bcu-runtime/BcuEntityEffectIconRuntime.js
+js/battle/BattleSceneBcuStatusIconPatch.js
+```
 
-1. ステージ一覧を開く。
-2. 3ステージ以上選ぶ。
-3. Applyごとに背景・敵出現・baseHP・stageLenが変わる。
-4. 未解決assetがあるstageでは明示エラー。
+## 実装手順
+
+### 1. BcuStatusIconResolver
+
+API:
+
+```js
+export function resolveStatusIcons(actor, scene) {}
+```
+
+戻り値:
+
+```js
+[
+  {
+    id: 'A_STOP',
+    bcuStatus: 'P_STOP',
+    variant: 'unit' | 'enemy',
+    effectKey: 'A_STOP',
+    suppressed: false,
+    suppressedReason: null,
+    xSlot: 0,
+    yOffset: 0,
+    scale: 0.75
+  }
+]
+```
+
+actorから読む候補:
+
+```text
+actor.bcuProcStatuses
+actor.status
+actor.side
+actor.direction / dire
+actor.hp / health
+actor.state
+actor.kbBcuType
+actor.bcuWarpState
+```
+
+### 2. BcuEntityEffectIconRuntime
+
+EffAnim bundleからstatus iconを読む。assetがない場合はfallbackしない。
+
+### 3. BattleSceneBcuStatusIconPatch
+
+renderer本体を大きく変更しない。`scene.effects` にstatus icon effectとして追加するか、専用小patchで描画する。
+
+禁止:
+
+```text
+CSS/emoji/文字で代用
+actor本体modelへ混ぜる
+missing assetを空描画で握りつぶす
+```
+
+## debug
+
+```js
+globalThis.__BCU_STATUS_ICON_TRACE__
+```
+
+entry:
+
+```js
+{
+  frame,
+  actorId,
+  statusSnapshot,
+  icons,
+  suppressed,
+  source: 'BcuStatusIconResolver',
+  bcuReference: 'Entity.AnimManager.getEff/drawEff'
+}
+```
+
+## 検証
+
+```text
+STOPだけ -> STOP表示
+SLOWだけ -> SLOW表示
+STOP+SLOW -> SLOW抑制
+WEAK down -> DOWN表示
+WEAK up -> WEAK_UP表示
+CURSE+SEAL -> CURSE抑制
+WARP中 -> 状態アイコン非表示
+dead中 -> 状態アイコン非表示
+```
 
 ---
 
-## 13. 完了報告テンプレート
+# Phase 3: Proc / 免疫 / 耐性 / 妨害完全化
 
-Codex は修正完了時に以下の形で報告する。
+## 目的
+
+full immunityだけでなく、BCUの `processProcs()` / `damaged()` / `getResistValue()` を分解して移植する。
+
+## BCU根拠
+
+参照:
+
+```text
+BCU_java_util_common/battle/entity/Entity.java
+- damaged(AttackAb atk)
+- processProcs(AttackAb atk)
+- getResistValue(...)
+BCU_java_util_common/battle/entity/EUnit.java
+- getResistValue(...)
+BCU_java_util_common/battle/entity/EEnemy.java
+- getResistValue(...)
+```
+
+重要:
+
+```text
+time = cannon攻撃なら1、それ以外は 1 + fruit * 0.2 / 3
+dist = 1 + fruit * 0.1
+STOP/SLOW/WEAK/CURSE/KB/WARP/SEAL/POISON/ARMOR/SPEED/LETHARGYは耐性を通す
+IMUWAVE/IMUVOLCなどはdamaged側でdamage無効/減衰
+無効ならINV effect
+EUnitとEEnemyでgetResistValue実装が違う
+```
+
+## 現状
+
+`BcuProcImmunityPatch.js` はfull immunity `mult >= 100` の入口だけ。完全化では `BcuProcRuntime` へ統合する。
+
+## 新規作成ファイル
+
+```text
+js/battle/bcu-runtime/BcuProcRuntime.js
+js/battle/bcu-runtime/BcuImmunityRuntime.js
+js/battle/bcu-runtime/BcuResistRuntime.js
+js/battle/bcu-runtime/BcuProcRandomRuntime.js
+js/battle/bcu-runtime/BcuDamageGuardRuntime.js
+js/battle/BattleSceneBcuProcRuntimePatch.js
+```
+
+## 実装手順
+
+### 1. BcuProcRuntime skeleton
+
+```js
+export class BcuProcRuntime {
+  performProc({ attacker, target, attack, proc, rng }) {}
+  applyStop(ctx) {}
+  applySlow(ctx) {}
+  applyWeak(ctx) {}
+  applyCurse(ctx) {}
+  applyKb(ctx) {}
+  applyWarp(ctx) {}
+  applySeal(ctx) {}
+  applyPoison(ctx) {}
+  applyArmor(ctx) {}
+  applySpeed(ctx) {}
+  applyLethargy(ctx) {}
+}
+```
+
+### 2. BcuResistRuntime
+
+```js
+export function getBcuResistValue({ target, attack, procName, procResist }) {}
+export function applyBcuProcDuration({ rawTime, fruit, attack, resist }) {}
+export function applyBcuProcDistance({ rawDistance, fruit, resist }) {}
+```
+
+EUnit/EEnemyで分岐する。
+
+### 3. BcuDamageGuardRuntime
+
+`damaged()` 前処理を分離。
+
+対象:
+
+```text
+IMUCANNON
+IMUWAVE
+IMUMOVING
+IMUVOLC
+IMUBLAST
+IMUATK / IMUATKANY
+DMGCUT
+DMGCAP
+BARRIER
+DEMONSHIELD
+```
+
+### 4. 接続
+
+`BattleActor.applyBcuProc()` を肥大化させない。`BattleSceneBcuProcRuntimePatch.js` で入口だけ差し替える。
+
+## debug
+
+```js
+globalThis.__BCU_PROC_TRACE__
+globalThis.__BCU_DAMAGE_GUARD_TRACE__
+```
+
+entry:
+
+```js
+{
+  frame,
+  attacker,
+  target,
+  procName,
+  rawTime,
+  rawDistance,
+  fruit,
+  resist,
+  finalTime,
+  finalDistance,
+  blocked,
+  blockedReason,
+  invEffect,
+  statusBefore,
+  statusAfter
+}
+```
+
+## 検証
+
+```text
+full immunity 100% -> statusなし + INV effect
+resist 50% -> duration/distance減衰
+KB resist -> KB距離減衰
+wave immune -> damage無効/減衰
+surge immune -> damage無効/減衰
+curse/seal中のproc制限
+```
+
+---
+
+# Phase 4: 波動 ContWaveDef完全化
+
+## BCU根拠
+
+参照:
+
+```text
+BCU_java_util_common/battle/attack/ContWaveAb.java
+BCU_java_util_common/battle/attack/ContWaveDef.java
+BCU_java_util_common/battle/attack/AttackWave.java
+```
+
+仕様:
+
+```text
+ContWaveDef:
+- mini attack frame = 4
+- normal attack frame = 6
+- t==0でSE
+- t<=attackでwave stopper判定
+- stopperならSTPWAVE effect, deactivate
+- t==attackでsb.getAttack(atk)
+- t==W_TIME/W_MINI_TIMEでnextWave
+- nextWaveはW_PROG進む
+
+AttackWave:
+- incl Set<Entity>を共有
+- captureでincl済みを除外
+- excuseでdamage後inclへ追加
+```
+
+## 新規作成ファイル
+
+```text
+js/battle/bcu-runtime/BcuAttackWaveRuntime.js
+js/battle/bcu-runtime/BcuContWaveDefRuntime.js
+js/battle/bcu-runtime/BcuWaveStopperRuntime.js
+js/battle/BattleSceneBcuWaveRuntimePatch.js
+```
+
+## 実装手順
+
+### 1. BcuAttackWaveRuntime
+
+保持:
+
+```js
+{
+  attacker,
+  sourceAttack,
+  pos,
+  sta,
+  end,
+  waveType,
+  incl: new Set(),
+  proc,
+  rawAtk
+}
+```
+
+`capture(scene)`:
+
+- BCU `model.b.inRange()` 相当を既存hit adapterで行う。
+- `incl` 済みactorは除外。
+- `AB_ONLY` / traitCompatible相当が未実装ならdebugへ出し、推測しない。
+
+`excuse(scene)`:
+
+- damage/proc処理。
+- damagedしたtargetをinclへ追加。
+
+### 2. BcuContWaveDefRuntime
+
+保持:
+
+```js
+{
+  atk,
+  anim,
+  waves,
+  t,
+  maxt,
+  layer,
+  pos,
+  activate,
+  tempAtk
+}
+```
+
+update順:
+
+```js
+const attackFrame = atk.waveType === WT_MINI ? 4 : 6;
+
+if (t === 0) playSE(SE_WAVE);
+
+if (t <= attackFrame) {
+  atk.capture();
+  if (hasWaveStopper(atk.capt)) {
+    spawnStopWaveEffect();
+    deactivateAllRelatedWaves();
+    return;
+  }
+}
+
+if (!activate) return;
+
+if (t === waveLifeTime) maybeNextWave();
+if (t === attackFrame) scene.bcuAttackRuntime.getAttack(atk);
+if (maxt === t) activate = false;
+if (t >= 0) anim.update(false);
+t++;
+```
+
+### 3. 既存簡易waveを排他
+
+`BattleWaveRuntimePatch.js` のqueueと二重発火しないようにfeature flag。
+
+```js
+BATTLE_CONFIG.bcuRuntime.waveMode = 'cont-wave-def';
+```
+
+## debug
+
+```js
+globalThis.__BCU_WAVE_TRACE__
+```
+
+entry:
+
+```js
+{
+  frame,
+  waveId,
+  t,
+  attackFrame,
+  pos,
+  waveType,
+  levelRemaining,
+  blocked,
+  blockerActor,
+  hitTargets,
+  nextWaveCreated,
+  active
+}
+```
+
+## 検証
+
+```text
+通常波動 attackFrame=6
+mini波動 attackFrame=4
+同一chainで同target重複hitなし
+wave stopperで停止effect
+W_PROGで次wave生成
+既存queueと二重hitしない
+```
+
+---
+
+# Phase 5: 烈波 ContVolcano完全化
+
+## BCU根拠
+
+参照:
+
+```text
+BCU_java_util_common/battle/attack/ContVolcano.java
+BCU_java_util_common/battle/attack/AttackVolcano.java
+```
+
+仕様:
+
+```text
+ContVolcano:
+- START animationで生成
+- t>=VOLC_PRE でDURING
+- t>VOLC_PRE+aliveTime でEND
+- aliveTime中に毎frame sb.getAttack(v)
+- VOLC_SE周期でloop SE
+- updateProcでattackerのCURSE/SEALを見てproc消去/復元
+- reflected counter surgeあり
+
+AttackVolcano:
+- vcaptでhit済み対象管理
+- VOLC_ITV周期でvcapt.clear()
+- excuseでdamage後vcapt.add(target)
+```
+
+## 新規作成ファイル
+
+```text
+js/battle/bcu-runtime/BcuAttackVolcanoRuntime.js
+js/battle/bcu-runtime/BcuContVolcanoRuntime.js
+js/battle/bcu-runtime/BcuCounterSurgeRuntime.js
+js/battle/BattleSceneBcuSurgeRuntimePatch.js
+```
+
+## 実装手順
+
+### 1. BcuAttackVolcanoRuntime
+
+保持:
+
+```js
+{
+  attacker,
+  sta,
+  end,
+  waveType,
+  handler,
+  vcapt: new Set(),
+  volcTime: VOLC_ITV,
+  attacked: false
+}
+```
+
+`capture()` は `vcapt` にいるtargetを除外。
+
+`excuse()`:
+
+```js
+processProc();
+volcTime--;
+if (volcTime === 0) {
+  volcTime = VOLC_ITV;
+  vcapt.clear();
+}
+applyDamage();
+vcapt.add(target);
+attacked = true;
+```
+
+### 2. BcuContVolcanoRuntime
+
+保持:
+
+```js
+{
+  v,
+  anim,
+  t,
+  aliveTime,
+  startPoint,
+  endPoint,
+  reflected,
+  surgeSummoned,
+  activate
+}
+```
+
+update順:
+
+```js
+updateProc();
+if (t >= VOLC_PRE && t <= VOLC_PRE + aliveTime && phase !== DURING) change DURING;
+else if (t > VOLC_PRE + aliveTime && phase !== END) change END;
+
+if (t >= VOLC_PRE && t < VOLC_PRE + aliveTime && (t - VOLC_PRE) % VOLC_SE === 0) play loop SE;
+
+if (t >= aliveTime + VOLC_POST + VOLC_PRE) activate = false;
+else {
+  t++;
+  if (t > VOLC_PRE && t < VOLC_POST + aliveTime) scene.getAttack(v);
+  updateAnimation();
+}
+```
+
+### 3. updateProc
+
+BCU `ContVolcano.updateProc()` 通りに、curse/sealでprocを消す/復元する。文字列配列もBCUからそのまま写す。
+
+## debug
+
+```js
+globalThis.__BCU_SURGE_TRACE__
+```
+
+entry:
+
+```js
+{
+  frame,
+  surgeId,
+  t,
+  phase,
+  aliveTime,
+  startPoint,
+  endPoint,
+  attackIssued,
+  vcaptSize,
+  procCleared,
+  procRestored,
+  reflected
+}
+```
+
+## 検証
+
+```text
+START/DURING/END切替
+aliveTime中だけhit
+VOLC_ITVで同target再hit可能
+curse/sealでproc消去/復元
+counter surge二重発火なし
+```
+
+---
+
+# Phase 6: Barrier / Shield / Zombie / Warp / Revenge / Soulstrike
+
+## BCU根拠
+
+参照:
+
+```text
+BCU_java_util_common/battle/entity/Entity.java
+- Barrier
+- ZombX
+- KBManager
+- damaged()
+- preKill()
+- kill()
+- updateRevive()
+```
+
+## 実装順
+
+### 6.1 Barrier
+
+新規:
+
+```text
+js/battle/bcu-runtime/BcuBarrierRuntime.js
+```
+
+仕様:
+
+```text
+barrierありなら本体damage前に処理
+breakBarrier(true) -> BREAK_ABI
+breakBarrier(false) -> BREAK_ATK
+breakしないhit -> BREAK_NON
+regen timerでbarrier復帰
+```
+
+trace:
+
+```js
+globalThis.__BCU_BARRIER_TRACE__
+```
+
+### 6.2 Demon Shield
+
+新規:
+
+```text
+js/battle/bcu-runtime/BcuDemonShieldRuntime.js
+```
+
+仕様:
+
+```text
+currentShield > 0 なら本体damage前にshield処理
+SHIELDBREAKならcurrentShield=0
+damage>=shieldならSHIELD_BROKEN
+damage<shieldならSHIELD_HIT
+INT_HB終了時にSHIELD_REGEN
+```
+
+trace:
+
+```js
+globalThis.__BCU_SHIELD_TRACE__
+```
+
+### 6.3 Zombie revive
+
+新規:
+
+```text
+js/battle/bcu-runtime/BcuZombieReviveRuntime.js
+```
+
+仕様:
+
+```text
+zombie killerでなければrevive可能判定
+reviveする場合はSTOP/SLOW/WEAK/CURSE/SEAL/STRONG/LETHAL/POISONをクリア
+corpse DOWN / REVIVE animation
+revive攻撃タイミング
+```
+
+trace:
+
+```js
+globalThis.__BCU_ZOMBIE_TRACE__
+```
+
+### 6.4 Warp
+
+新規:
+
+```text
+js/battle/bcu-runtime/BcuWarpRuntime.js
+```
+
+仕様:
+
+```text
+INT_WARPはKBの一種
+P_WARP enter/exit effect
+status[P_WARP][2]でenter/exit状態
+exit animation長に達した時にkbmove(kbDis)
+```
+
+trace:
+
+```js
+globalThis.__BCU_WARP_TRACE__
+```
+
+### 6.5 Revenge / Soulstrike
+
+新規:
+
+```text
+js/battle/bcu-runtime/BcuRevengeRuntime.js
+js/battle/bcu-runtime/BcuSoulstrikeRuntime.js
+```
+
+既存 `BattleSoulstrikePatch.js` を必ず読み、二重処理にしない。
+
+統合trace:
+
+```js
+globalThis.__BCU_LIFECYCLE_TRACE__
+```
+
+---
+
+# Phase 7: StageBasis.update順序一致
+
+## BCU根拠
+
+参照:
+
+```text
+BCU_java_util_common/battle/StageBasis.java
+- update()
+- updateAnimation()
+- updateEntities()
+- act_spawn()
+- act_change_up()
+- act_change_down()
+```
+
+重要順序:
+
+```text
+deployDupe
+le.sort(layer)
+buttonDelay
+tempe add
+s_stop / inten
+enemy spawn
+respawnTime / unitRespawnTime
+elu.update()
+spirit cooldown
+cannon / money
+est.update()
+sniper.update()
+tempe.update()
+shake
+updateEntities
+canon.update()
+lea/effects update
+lw.addAll(tlw)
+attack capture
+attack excuse
+base postUpdate
+entity postUpdate
+delay反映
+boss shockwave
+dead remove
+lw inactive remove
+lea done remove
+lineupChanging update
+```
+
+## 新規作成ファイル
+
+```text
+js/battle/bcu-runtime/BcuStageBasisShadow.js
+js/battle/bcu-runtime/BcuStageBasisScheduler.js
+js/battle/BattleSceneBcuStageBasisOrderPatch.js
+```
+
+## 実装段階
+
+### A. Shadow traceだけ
+
+既存tickは変えない。BCU順序なら何が起きるかtraceだけ出す。
+
+```js
+globalThis.__BCU_STAGEBASIS_TRACE__
+```
+
+### B. attack capture/excuse順序一致
+
+攻撃capture/excuseをBCU順へ寄せる。
+
+### C. postUpdate順序一致
+
+damage/proc/KB/death後処理をBCU順へ寄せる。
+
+### D. cont list統合
+
+wave/surgeを `lw/tlw` 相当で管理。
+
+### E. BattleScene.tick thin wrapper化
+
+最後にのみ実施。一気に全置換しない。
+
+## 検証
+
+```js
+globalThis.__BCU_STAGEBASIS_TRACE__
+```
+
+確認:
+
+```text
+attack capture/excuseがentity update後
+postUpdateがattack excuse後
+boss shockwaveがpostUpdate後
+lineupChanging反転タイミング
+money/cannon clamp
+```
+
+---
+
+# Phase 8: スマホ版BCU入力完全化
+
+## BCU根拠
+
+参照:
+
+```text
+BCU_Android/app/src/main/java/com/mandarin/bcu/androidutil/battle/BattleView.kt
+- checkSlideUpDown()
+- isInSlideRange()
+BCU_Android/app/src/main/java/com/mandarin/bcu/BattleSimulation.kt
+- MotionEvent handling
+BCU_java_util_common/battle/SBCtrl.java
+- actions()
+- act_change_up()
+- act_change_down()
+```
+
+Android条件:
+
+```text
+battleEndでない
+lineupChangingでない
+isOneLineupでない
+自城HPが0でない
+dragFrame != 0
+performedでない
+abs(dy) >= height * 0.15
+v = dy / dragFrame
+v < 0 -> ACTION_LINEUP_CHANGE_UP
+v >= 0 -> ACTION_LINEUP_CHANGE_DOWN
+isInSlideRange: tan(50°) >= abs(dx) / abs(dy)
+```
+
+## 新規作成ファイル
+
+```text
+js/input/BcuMobileGestureRuntime.js
+js/input/BcuBattleInputAdapter.js
+js/input/BcuDomTouchPolicy.js
+js/battle/BattleSceneBcuMobileInputPatch.js
+```
+
+## 1. BcuMobileGestureRuntime
+
+```js
+export class BcuMobileGestureRuntime {
+  pointerDown(x, y, time) {}
+  pointerMove(x, y, time) {}
+  pointerUp(x, y, time) {}
+  isInSlideRange() {}
+  checkSlideUpDown({ height, battleState }) {}
+}
+```
+
+保持:
+
+```text
+initPoint
+endPoint
+dragFrame
+performed
+isSliding
+horizontal
+vertical
+velocity
+```
+
+## 2. BcuBattleInputAdapter
+
+```text
+ACTION_LINEUP_CHANGE_UP -> -4
+ACTION_LINEUP_CHANGE_DOWN -> -5
+spawn card -> frontLineup * 5 + slot
+```
+
+## 3. BcuDomTouchPolicy
+
+Web固有。Android logicと混ぜない。
+
+絶対条件:
+
+```text
+body/htmlにtouch-action:noneを入れない
+battle canvasとproduction cardだけpreventDefault
+formation/stage selector/overlayはpan-y許可
+```
+
+preventDefault対象:
+
+```text
+#preview-canvas
+.canvas-panel
+.prod-ui
+.prod-ui .cards
+.prod-card
+```
+
+scroll許可対象:
+
+```text
+.formation-ui
+.formation-catalog-scroll
+.stage-selector
+.stage-selector-panel
+.app-loading-overlay
+.error-overlay
+modal
+```
+
+## debug
+
+```js
+globalThis.__BCU_INPUT_TRACE__
+```
+
+entry:
+
+```js
+{
+  type,
+  initPoint,
+  endPoint,
+  dx,
+  dy,
+  dragFrame,
+  isInSlideRange,
+  action,
+  preventDefaultTarget
+}
+```
+
+## 検証
+
+```text
+戦闘中カード上下スライドでページが動かない
+段切替がBCU条件で発火
+stage selector / formation / overlayはスクロール可能
+長押し選択 / ダブルタップ拡大 / iOS calloutは戦闘中だけ抑止
+```
+
+---
+
+## 9. 手動確認コマンド
+
+### 起動
+
+```bash
+npm install
+npm run build || true
+npm run dev
+```
+
+### boot
+
+```js
+globalThis.__APP__
+globalThis.__BCU_FRAME_TRACE__
+```
+
+### KB
+
+```js
+const a = globalThis.__APP__?.scene?.actors?.find(a => a.state === 'knockback')
+a?.lastBcuKnockbackAnimationDebug
+a?.lastBcuKbeffParaToDebug
+a?.lastBcuHbAnimLoadDebug
+```
+
+### 024 glow
+
+```js
+globalThis.__BCU_SPRITE_DRAW_DEBUG__
+globalThis.__BCU_CANVAS_COMPOSITE_DEBUG__
+globalThis.__BCU_BLEND_TRACE__
+```
+
+### status icon
+
+```js
+globalThis.__BCU_STATUS_ICON_TRACE__
+```
+
+### proc
+
+```js
+globalThis.__BCU_PROC_TRACE__
+globalThis.__BCU_DAMAGE_GUARD_TRACE__
+```
+
+### wave / surge
+
+```js
+globalThis.__BCU_WAVE_TRACE__
+globalThis.__BCU_SURGE_TRACE__
+```
+
+### stage basis
+
+```js
+globalThis.__BCU_STAGEBASIS_TRACE__
+```
+
+### input
+
+```js
+globalThis.__BCU_INPUT_TRACE__
+```
+
+---
+
+## 10. 禁止する修正例
+
+```text
+BattleSceneRenderer.jsを丸ごと書き換える
+BattleScene.jsを一気にBCU StageBasisへ置換する
+wave/surgeを dueFrame + damage queue で完成扱いする
+状態異常アイコンをCSS/emoji/文字で代用する
+missing asset時に通常effectへ逃がす
+body/html全体にtouch-action:noneを入れる
+stage selectorやoverlayのscrollを殺す
+lineup changeボタンを標準UIとして追加する
+anim03がKBだと決め打ちしてkb.maanimを確認しない
+glow=0までblend処理に流す
+try/catchで戦闘継続だけ優先してエラーを握りつぶす
+```
+
+---
+
+## 11. commit粒度
+
+良い例:
+
+```text
+Add BCU trace runtime
+Add BCU blend trace without renderer replacement
+Resolve BCU status icons from entity statuses
+Add BCU ContWaveDef runtime
+Add BCU ContVolcano runtime
+Apply BCU proc resist values
+```
+
+悪い例:
+
+```text
+Fix battle
+Improve UI
+BCU complete
+Renderer rewrite
+Many fixes
+```
+
+---
+
+## 12. Codexが最初にやるタスク
+
+### Task 1: Trace基盤
+
+作成:
+
+```text
+js/battle/bcu-runtime/BcuTraceRuntime.js
+js/battle/bcu-runtime/BcuFrameTrace.js
+js/battle/bcu-runtime/BcuEntityTrace.js
+js/battle/bcu-runtime/BcuAttackTrace.js
+js/battle/bcu-runtime/BcuProcTrace.js
+js/battle/bcu-runtime/BcuRenderTrace.js
+```
+
+接続:
+
+```text
+js/main.js
+```
+
+確認:
+
+```js
+globalThis.__BCU_FRAME_TRACE__
+```
+
+### Task 2: BCU render trace
+
+作成:
+
+```text
+js/bcu-render/BcuBlendRuntime.js
+js/bcu-render/BcuEPartTransformRuntime.js
+js/bcu-render/BcuRenderTrace.js
+```
+
+renderer本体は置換しない。
+
+確認:
+
+```js
+globalThis.__BCU_BLEND_TRACE__
+globalThis.__BCU_EPART_MATRIX_TRACE__
+```
+
+### Task 3: 024攻撃glow fixture
+
+024攻撃中に以下をtrace:
+
+```text
+partIndex
+modelPartIndex
+glow
+opacity
+ctx.globalAlpha
+composite mode
+```
+
+黒塊を再発させない。
+
+### Task 4: 状態異常アイコンskeleton
+
+作成:
+
+```text
+js/battle/bcu-runtime/BcuStatusIconResolver.js
+js/battle/bcu-runtime/BcuEntityEffectIconRuntime.js
+```
+
+まだ描画接続しなくてよい。resolve結果だけtrace。
+
+確認:
+
+```js
+globalThis.__BCU_STATUS_ICON_TRACE__
+```
+
+---
+
+## 13. 完了条件
+
+```text
+mainが起動する
+戦闘が開始できる
+既存KB / KBEff / 024 glowが壊れていない
+新debug traceが存在する
+追加runtimeはfeature flagで切れる
+変更対象とBCU根拠が報告されている
+未実装範囲を正直に書いている
+```
+
+報告テンプレ:
 
 ```text
 原因:
   ...
 
 BCU根拠:
-  - BCU_Android/.../BattleView.kt checkSlideUpDown
-  - BCU_java_util_common/battle/StageBasis.java act_change_up/down, update changeFrame
-  - ...
+  ...
 
-現JSの問題:
-  - js/battle/BattleScene.js で freeze中も a.x += ... していた
-  - ...
+JS対象コード:
+  ...
 
 修正:
-  - ...
+  ...
 
-確認:
-  - Android Chrome: page scrollなし
-  - __PRODUCTION_PAGE_DEBUG__.lastAction.ok === true
-  - freeze中 x 不変
-  - wave animation visible
+commit:
+  ...
 
-未完了/未検証:
-  - 無い場合のみ「なし」
-```
+確認方法:
+  ...
 
-「100%準拠」は、上記の検証が全て通り、未検証が無い場合だけ書くこと。
+残る未解決:
+  ...
 
----
-
-## 14. 追加で必要な修正候補
-
-以下は今回ユーザー要望から見えている、追加でBCU参照しながら潰すべきもの。
-
-1. **effect bundleの網羅性**  
-   現在 `effect:kbeff` と `ui:battle` はあるが、状態異常・波動・烈波・barrier/shield等のEffAnimを全部semantic bundle化できているとは限らない。`EffAnim.java` の定義から必要assetを列挙し、bundle builderを拡張する。
-
-2. **BattleScene tick順のBCU化**  
-   現 `BattleScene.tick()` は多くのphaseを空で置いている。BCU `Entity.update()` / `update2()` / `updateAnimation()` に合わせて、movement/proc/reaction/attack/effect tick順を再整理する。
-
-3. **状態異常のframe管理**  
-   `untilMs` 方式をBCU `status[P_*][0]--` 方式へ寄せる。
-
-4. **UI asset driven化**  
-   `FormationEditor` の安っぽいCSS装飾をBCU assetベースに置換する。BCUに無いUI拡張は拡張と明記する。
-
-5. **stage metadata UI**  
-   stage選択に名前解決・敵一覧・背景プレビュー・baseHPを表示する。ただし未解決名を勝手に作らない。
-
-6. **debug HUD整理**  
-   debug globalsが散らばっているため、常時表示debug panelを1つに統合する。ユーザーが以前要求した「デバッグモードを一つに統一、常に表示」に沿う。
-
----
-
-## 15. まとめ
-
-このAGENTS.mdの要点:
-
-```text
-- 戦闘中段切替はスマホBCU準拠の縦スライド。ボタン禁止。
-- ブラウザ固有の長押し/ダブルタップ/ページスクロールは明示的に潰す。
-- freezeはアニメーションだけでなく移動と攻撃進行も止める。
-- wave/surgeはダメージqueueではなくBCU container + EffAnimで実装する。
-- 状態異常はBCU Entity.Animation.getEff と同じアイコン/配置/更新にする。
-- ワンコカードは本家に無いが、枠・数字・背景はBCU猫カードasset流用で白にする。
-- ステージ選択UIを作り、selectedStageIdをBattleSceneへ渡す。
-- 推測・fallback・古いtxt参照は禁止。
+rollback方法:
+  ...
 ```

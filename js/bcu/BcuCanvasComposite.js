@@ -1,4 +1,9 @@
 const BCU_GLOW_MODES = new Set([1, 2, 3, -1]);
+const FAST_CANVAS_GLOW = new Map([
+  [1, 'lighter'],
+  [2, 'multiply'],
+  [3, 'screen']
+]);
 
 function clampByte(v) {
   if (v <= 0) return 0;
@@ -41,7 +46,11 @@ function registerCompositeDebug(entry) {
     installed: true,
     drawCount: 0,
     glowDrawCount: 0,
+    fastGlowDrawCount: 0,
+    pixelGlowDrawCount: 0,
     modes: {},
+    fastModes: {},
+    pixelModes: {},
     failures: [],
     examples: []
   };
@@ -49,6 +58,14 @@ function registerCompositeDebug(entry) {
   if (entry.glowSupported) {
     debug.glowDrawCount += 1;
     debug.modes[String(entry.glow)] = (debug.modes[String(entry.glow)] || 0) + 1;
+    if (entry.path === 'canvas-composite') {
+      debug.fastGlowDrawCount += 1;
+      debug.fastModes[String(entry.glow)] = (debug.fastModes[String(entry.glow)] || 0) + 1;
+    }
+    if (entry.path === 'pixel-composite') {
+      debug.pixelGlowDrawCount += 1;
+      debug.pixelModes[String(entry.glow)] = (debug.pixelModes[String(entry.glow)] || 0) + 1;
+    }
     debug.examples.unshift(entry);
     debug.examples.splice(12);
   }
@@ -60,7 +77,11 @@ function registerCompositeFailure(error, entry) {
     installed: true,
     drawCount: 0,
     glowDrawCount: 0,
+    fastGlowDrawCount: 0,
+    pixelGlowDrawCount: 0,
     modes: {},
+    fastModes: {},
+    pixelModes: {},
     failures: [],
     examples: []
   };
@@ -72,31 +93,7 @@ function registerCompositeFailure(error, entry) {
 function applyBcuBlendPixel(dst, src, glow, opacity) {
   const srcAlpha = (src[3] / 255) * opacity;
   if (srcAlpha <= 0) return;
-  const sr = src[0] / 255;
-  const sg = src[1] / 255;
-  const sb = src[2] / 255;
 
-  if (glow === 1) {
-    // BCU GLGraphics: BLEND glow=1 => d + s * a
-    dst[0] = clampByte(dst[0] + src[0] * srcAlpha);
-    dst[1] = clampByte(dst[1] + src[1] * srcAlpha);
-    dst[2] = clampByte(dst[2] + src[2] * srcAlpha);
-    return;
-  }
-  if (glow === 2) {
-    // BCU GLGraphics: BLEND glow=2 => d * (1 - a + s * a)
-    dst[0] = clampByte(dst[0] * (1 - srcAlpha + sr * srcAlpha));
-    dst[1] = clampByte(dst[1] * (1 - srcAlpha + sg * srcAlpha));
-    dst[2] = clampByte(dst[2] * (1 - srcAlpha + sb * srcAlpha));
-    return;
-  }
-  if (glow === 3) {
-    // BCU GLGraphics: BLEND glow=3 => d + (1 - d) * s * a
-    dst[0] = clampByte(dst[0] + (255 - dst[0]) * sr * srcAlpha);
-    dst[1] = clampByte(dst[1] + (255 - dst[1]) * sg * srcAlpha);
-    dst[2] = clampByte(dst[2] + (255 - dst[2]) * sb * srcAlpha);
-    return;
-  }
   if (glow === -1) {
     // BCU GLGraphics: BLEND glow=-1 => d - s * a
     dst[0] = clampByte(dst[0] - src[0] * srcAlpha);
@@ -105,7 +102,35 @@ function applyBcuBlendPixel(dst, src, glow, opacity) {
   }
 }
 
-function drawBcuGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity = 1, glow = 0, debug = null } = {}) {
+function drawFastCanvasGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity = 1, glow = 0, debug = null } = {}) {
+  const operation = FAST_CANVAS_GLOW.get(Number(glow));
+  if (!operation) return false;
+  ctx.save();
+  const before = ctx.globalCompositeOperation;
+  ctx.globalCompositeOperation = operation;
+  const accepted = ctx.globalCompositeOperation === operation;
+  if (!accepted) {
+    ctx.globalCompositeOperation = before;
+    ctx.restore();
+    return false;
+  }
+  ctx.globalAlpha = clampAlpha(opacity);
+  ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+  ctx.restore();
+  registerCompositeDebug({
+    source: 'BcuCanvasComposite.drawFastCanvasGlowImagePart',
+    path: 'canvas-composite',
+    glow,
+    operation,
+    opacity,
+    glowSupported: true,
+    debug,
+    timestamp: Date.now()
+  });
+  return true;
+}
+
+function drawPixelGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity = 1, glow = 0, debug = null } = {}) {
   const transform = ctx.getTransform();
   const bounds = getCanvasBounds(ctx, [
     transformPoint(transform, dx, dy),
@@ -114,7 +139,8 @@ function drawBcuGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opac
     transformPoint(transform, dx, dy + dh)
   ]);
   const entry = {
-    source: 'BcuCanvasComposite.drawBcuGlowImagePart',
+    source: 'BcuCanvasComposite.drawPixelGlowImagePart',
+    path: 'pixel-composite',
     glow,
     opacity,
     glowSupported: true,
@@ -148,7 +174,6 @@ function drawBcuGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opac
       d[i] = dst[0];
       d[i + 1] = dst[1];
       d[i + 2] = dst[2];
-      // BCU draws battle over an opaque back buffer. Preserve destination alpha.
       d[i + 3] = Math.max(d[i + 3], Math.min(255, Math.round(s[i + 3] * op)));
     }
     ctx.putImageData(dstImage, bounds.x, bounds.y);
@@ -169,7 +194,8 @@ export function drawBcuImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw = sw, dh
   const opacity = clampAlpha(options.opacity);
   const glow = Number(options.glow || 0);
   if (isBcuGlowSupported(glow)) {
-    return drawBcuGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity, glow, debug: options.debug || null });
+    if (drawFastCanvasGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity, glow, debug: options.debug || null })) return true;
+    return drawPixelGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity, glow, debug: options.debug || null });
   }
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';

@@ -1,20 +1,21 @@
-# AGENTS.md — Codex task guide for optimized enemy icon generation, asset coverage, and formation UI stability
+# AGENTS.md — Codex task guide for optimized actor icon generation, asset coverage, player spawn coverage, and formation UI stability
 
 Repository: `rhgrive2/game`
 Target branch: `main`
 
 ## Purpose
 
-Fix enemy asset/icon/spawn coverage across the full enemy set without making the browser load large actor assets just to display formation/catalog icons. Keep formation catalog virtualization and scroll behavior stable. Work evidence-first; do not guess mappings.
+Fix enemy asset/icon/spawn coverage and player character spawn coverage across the full available asset set, not only example IDs. Keep formation catalog virtualization and scroll behavior stable. Work evidence-first; do not guess mappings.
 
 Known examples:
 
 - `388` is not present as `000010/org/enemy/388/enemy_icon_388.png`; `000010` skips it. The repo does have battle actor files under `public/assets/bcu/000003/org/enemy/388/`, including `388_e.png`, `388_e.imgcut`, animations, and `edi_388.png`.
 - `610`, `611`, `612` currently fail in formation UI because `public/assets/bundles/icon/enemy.zip` lacks `enemy/610.png`, `enemy/611.png`, `enemy/612.png`.
-- `560` and `699` still fail in some contexts and may be bundle/index/manifest problems.
-- There are more affected enemies than these examples.
+- `560` and `699` still fail in some enemy contexts and may be bundle/index/manifest problems.
+- Some player/formation characters may also be selectable but not spawnable in battle. Treat those as separate player-unit coverage issues, not enemy issues.
+- There are more affected actors than these examples.
 
-Goal: every enemy with valid usable data/assets must be visible in UI and spawnable when stage rules request it. Enemies with genuinely missing/broken assets must remain unresolved with precise reasons.
+Goal: every enemy and every selectable player character with valid usable data/assets must be visible in UI and spawnable when battle rules request it. Actors with genuinely missing/broken assets must remain unresolved with precise reasons.
 
 ---
 
@@ -41,7 +42,7 @@ Use a pre-generation pipeline:
 Audit all enemies
   -> find enemies missing explicit/aggregate UI icons
   -> for only those enemies, generate small UI thumbnails from actor sprite + imgcut
-  -> write a generated fallback icon zip and index
+  -> write generated fallback icon zip(s) and index
   -> runtime loads that generated icon zip/index like a normal icon source
 ```
 
@@ -79,8 +80,8 @@ The index must map each generated icon directly:
     "internalPath": "enemy/388.png",
     "sourceImagePath": "public/assets/bcu/000003/org/enemy/388/388_e.png",
     "sourceImgcutPath": "public/assets/bcu/000003/org/enemy/388/388_e.imgcut",
-    "width": 64,
-    "height": 64,
+    "width": 128,
+    "height": 128,
     "sha256": "..."
   }
 }
@@ -92,13 +93,19 @@ Runtime `SemanticAssetProvider.getActorUiIconUrl()` should use this generated in
 
 ## Critical icon policy
 
+### Generated thumbnail size
+
+Generate fallback thumbnails at **128x128 PNG**, not 64x64.
+
+Reason: 64x64 can look blurry on high-DPI mobile/tablet displays and when cards are scaled. The fallback generator must default to 128x128 and record `{ width: 128, height: 128 }` in the generated index/report.
+
 ### Do not use `edi_*.png` for this web UI fallback
 
 Even though BCU Java can use `Enemy.getIcon() -> anim.getEdi()` and therefore can display `edi_388.png`, this project should **not** use `edi_*.png` as the fallback icon source for this task.
 
 Reason: the requested UI policy is to avoid `edi.png`. Treat `edi_*.png` as diagnostic evidence only, not as a selected UI icon.
 
-### Required fallback source for generated icons
+### Required fallback source for generated enemy icons
 
 If an enemy lacks an explicit/aggregate enemy icon, generate a UI thumbnail from the battle actor sprite source:
 
@@ -114,7 +121,7 @@ image.png + imgcut.imgcut
 
 This must happen in the pre-generation script, not by repeated runtime fallback.
 
-Recommended icon source priority at runtime:
+Recommended enemy icon source priority at runtime:
 
 1. Explicit icon index entry, if valid.
 2. Aggregate icon bundle entry, e.g. `public/assets/bundles/icon/enemy.zip` + `enemy/N.png`, if valid.
@@ -140,7 +147,7 @@ When the generation script creates a thumbnail from actor sprite + imgcut:
   - valid cut rectangle inside PNG bounds,
   - non-zero width/height,
   - preferably the largest or first main-body frame used by model metadata.
-- Render to a 64x64 transparent PNG unless existing UI requires another size.
+- Render to a 128x128 transparent PNG.
 - Preserve aspect ratio and center the crop.
 - Write generated icons into the generated fallback zip.
 - Report icon source as `actor-imgcut-thumbnail-generated`.
@@ -151,7 +158,7 @@ When the generation script creates a thumbnail from actor sprite + imgcut:
 
 ## Current evidence from repository reports
 
-Existing `tmp/enemy-asset-audit.md` currently reported roughly:
+Existing `tmp/enemy-asset-audit.md` previously reported roughly:
 
 ```text
 enemiesAudited: 778
@@ -171,6 +178,29 @@ Do not assume this list is exhaustive. Re-run and improve the audit.
 
 ---
 
+## Current code facts to verify before editing
+
+### Player production / player spawn path
+
+`BattleScene` builds player production from formation data:
+
+```text
+FormationStore.load()
+  -> BattleScene.buildPlayerProductionRoster()
+  -> BattleScene.resolveProductionCharacter(characterId)
+  -> BattleScene.preloadProductionRoster()
+  -> BattleScene.requestPlayerSpawn(slotId,row,col)
+  -> ProductionRuntime.validateRequest(...)
+  -> BattleActorFactory.preloadTemplate(...)
+  -> BattleScene.spawnActor(...)
+```
+
+`requestPlayerSpawn()` emits `playerSpawnRejected` with reasons such as `template-missing`, preload errors, economy/cooldown validation, or `spawn-failed`. It also records `globalThis.__BATTLE_PRODUCTION_DEBUG__` details.
+
+Therefore player/formation characters can fail independently of enemy stage spawns. Do not assume enemy coverage fixes automatically fix player unit coverage.
+
+---
+
 ## Non-negotiable constraints
 
 ### Do not make narrow ID hacks
@@ -181,19 +211,25 @@ Do not add special cases like:
 if (enemyId === 610) ...
 ```
 
-unless the exact same rule is applied generically to all enemies with the same proven pattern.
+or
+
+```js
+if (characterId === '...') ...
+```
+
+unless the exact same rule is applied generically to all actors with the same proven pattern.
 
 ### Do not fake success
 
-- Do not replace broken enemies with dummy actors.
+- Do not replace broken enemies or player units with dummy actors.
 - Do not make invisible placeholders count as success.
 - Do not hide missing actor assets behind a generic icon while the actor cannot render.
 - Do not bypass semantic-strict globally.
-- Do not remove `StageDefinitionLoader` or `BattleActorFactory` safety checks.
+- Do not remove `StageDefinitionLoader`, `BattleActorFactory`, or `ProductionRuntime` safety checks.
 
 ### Keep battle logic stable
 
-Avoid battle damage/proc/knockback/timing/camera/economy/base changes unless diagnostics prove the issue is there. For `560`/`699`, first prove whether failure is data, icon, actor bundle, template preload, or spawn timing.
+Avoid battle damage/proc/knockback/timing/camera/economy/base changes unless diagnostics prove the issue is there. For `560`/`699` or player characters that cannot spawn, first prove whether failure is data, icon, actor bundle, template preload, production validation, or spawn timing.
 
 ---
 
@@ -207,12 +243,12 @@ Work in small commits.
 4. Generate fallback icon zip/index if needed.
 5. Rerun diagnostics.
 6. Run syntax checks.
-7. Browser-check representative enemies from each failure class.
+7. Browser-check representative actors from each failure class.
 
 Recommended branch:
 
 ```bash
-git checkout -b fix/complete-enemy-asset-coverage
+git checkout -b fix/complete-actor-asset-coverage
 ```
 
 ---
@@ -225,111 +261,28 @@ File:
 scripts/audit-bcu-enemy-assets.mjs
 ```
 
-Extend the audit so every enemy reports separated status for these layers:
+Extend the audit so every enemy reports separated status for data, actor bundle, raw actor source, aggregate icon, explicit icon, generated fallback icon, resolver, preload, and spawn readiness.
 
-```js
-{
-  enemyId,
-  id3,
-  hasStats,
-  hasName,
-  hasSemanticActorEntry,
-  semanticStatus,
-
-  actorBundlePath,
-  actorBundleExistsOnDisk,
-  actorBundleInManifest,
-  actorBundleArchiveReadable,
-  actorBundleHasImage,
-  actorBundleHasImgcut,
-  actorBundleHasModel,
-  actorBundleHasMove,
-  actorBundleHasIdle,
-  actorBundleHasAttack,
-  actorBundleHasKb,
-  actorBundleImageDecodeOk,
-  actorBundleRuntimeUsable,
-
-  rawEnemyImagePath,
-  rawEnemyImgcutPath,
-  rawEnemyImageExists,
-  rawEnemyImgcutExists,
-  rawEnemyThumbnailFallbackAvailable,
-
-  aggregateIconBundlePath,
-  aggregateIconInternalPath,
-  aggregateIconZipReadable,
-  aggregateIconEntryExists,
-  aggregateIconDecodeOk,
-
-  explicitIconEntry,
-  explicitIconEntryExists,
-  explicitIconDecodeOk,
-
-  generatedFallbackIconEntry,
-  generatedFallbackBundlePath,
-  generatedFallbackInternalPath,
-  generatedFallbackEntryExists,
-  generatedFallbackDecodeOk,
-
-  // EDI is diagnostic only. Do not count as chosen UI icon source.
-  ediPath,
-  ediExists,
-
-  chosenUiIconSource,
-  bcuPathResolverResolved,
-  bcuStageEnemyResolverWouldResolve,
-  preloadStatsOk,
-  renderCoreOk,
-  spawnReadyOk,
-  failureClass,
-  failureReason
-}
-```
-
-Required failure classes:
-
-```text
-ok
-ui-icon-explicit-ok
-ui-icon-aggregate-ok
-ui-icon-generated-fallback-ok
-ui-icon-aggregate-missing-but-generation-possible
-ui-icon-missing-no-generation-source
-actor-bundle-not-in-manifest-but-file-exists
-actor-bundle-file-missing
-actor-bundle-bad-zip
-actor-image-decode-failed
-actor-image-bad-signature-or-trailing-bytes
-actor-imgcut-missing
-actor-imgcut-invalid
-actor-model-missing
-actor-animation-missing
-semantic-invalid-but-runtime-usable
-semantic-invalid-not-runtime-usable
-semantic-partial-not-runtime-usable
-resolver-mismatch
-unknown
-```
-
-Output:
+Required output:
 
 ```text
 tmp/enemy-asset-audit.json
 tmp/enemy-asset-audit.md
 ```
 
-Add a summary table grouped by `failureClass` and a target section containing at least:
+The target section must contain at least:
 
 ```text
 388, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699
 ```
 
+Failure classes must distinguish generated fallback availability from missing raw/image/imgcut/model/animation/bundle/index failures.
+
 ---
 
 ## Task 2 — Build a generated fallback icon bundle instead of runtime-heavy fallback
 
-Create or update a generator script:
+Create or update:
 
 ```text
 scripts/generate-enemy-fallback-icons.mjs
@@ -348,11 +301,11 @@ The generator must:
 
 1. Read `tmp/enemy-asset-audit.json` or run equivalent detection.
 2. Select only enemies whose explicit/aggregate icon is missing and whose actor sprite + imgcut source is valid.
-3. Generate deterministic 64x64 PNG thumbnails from `{id}_e.png + {id}_e.imgcut` or `image.png + imgcut.imgcut`.
+3. Generate deterministic 128x128 PNG thumbnails from `{id}_e.png + {id}_e.imgcut` or `image.png + imgcut.imgcut`.
 4. Write generated icons into one or more fallback zip files under `public/assets/bundles/icon/`.
 5. Write `public/assets/generated/bcu-generated-icon-index.json`.
-6. Update any runtime icon manifest only if the existing architecture requires it; prefer loading the generated index separately to avoid corrupting generated upstream indexes.
-7. Write a report:
+6. Prefer loading the generated index separately to avoid corrupting generated upstream indexes.
+7. Write reports:
 
 ```text
 tmp/generated-enemy-fallback-icons-report.json
@@ -369,8 +322,8 @@ Report fields per generated icon:
   selectedCut,
   outputBundlePath,
   outputInternalPath,
-  width,
-  height,
+  width: 128,
+  height: 128,
   sha256,
   reason
 }
@@ -408,27 +361,128 @@ Acceptance:
 
 ---
 
-## Task 4 — Determine whether actor bundle zip files are missing or only omitted from indexes/manifests
+## Task 4 — Audit player character spawn coverage
 
-For every remaining problem enemy, inspect:
+Create or update:
+
+```text
+scripts/audit-player-character-spawn.mjs
+```
+
+Purpose: find formation/selectable player characters that can appear in the catalog but cannot be spawned in battle.
+
+The audit must inspect the full playable catalog/formation source, not just currently selected slots. For every playable character/form entry, report:
+
+```js
+{
+  characterId,
+  label,
+  faction,
+  sourceRoster,
+  sourceSlotId,
+  statsType,
+  statsId,
+  formRow,
+  semanticKey,
+  hasCatalogEntry,
+  hasSourceUnitDef,
+  hasStats,
+  hasSemanticActorEntry,
+  actorBundlePath,
+  actorBundleInManifest,
+  requiredAnimationsPresent,
+  preloadTemplateOk,
+  spawnReadyOk,
+  productionValidationOkWithTestMoney,
+  failurePhase,
+  failureReason
+}
+```
+
+Use a high-money diagnostic mode for `productionValidationOkWithTestMoney` so valid units do not fail only because the test economy lacks money. Still report real cost/cooldown data separately.
+
+Output:
+
+```text
+tmp/player-character-spawn-audit.json
+tmp/player-character-spawn-audit.md
+```
+
+Failure phases should distinguish:
+
+```text
+catalog-missing
+source-unit-missing
+stats-missing
+semantic-actor-missing
+actor-bundle-missing
+actor-bundle-not-in-manifest
+required-animation-missing
+template-preload-failed
+production-validation-failed
+spawn-ready-failed
+unknown
+```
+
+Acceptance:
+
+- Every selectable character in formation catalog is covered.
+- The report lists all characters/forms that cannot reach `SPAWN_READY` and why.
+- Do not change production/battle logic until this audit identifies the failure class.
+
+---
+
+## Task 5 — Fix player character spawn coverage with minimal changes
+
+If `scripts/audit-player-character-spawn.mjs` finds failures:
+
+- If the issue is catalog mapping, fix `CharacterCatalog` / playable roster mapping only.
+- If the issue is asset/index/manifest coverage, fix the same generic actor bundle/index path used for enemy coverage, not a character-specific hack.
+- If the issue is production validation, verify whether the rejection is expected cost/cooldown/state behavior before changing logic.
+- If the issue is template preload, fix asset/template resolution, not `requestPlayerSpawn()` safety checks.
+
+Likely files:
+
+```text
+js/battle/PlayableCharacterRegistry.js
+js/battle/CharacterCatalog.js
+js/battle/BattleScene.js
+js/battle/BattleActorFactory.js
+js/bcu/SemanticAssetProvider.js
+js/bcu/BcuAssetLoader.js
+```
+
+Do not change damage/proc/knockback/animation timing unless the audit proves it is required.
+
+Acceptance:
+
+- Rerun `node scripts/audit-player-character-spawn.mjs`.
+- All selectable characters either reach `spawnReadyOk: true` or have precise unresolved reasons.
+- In browser, at least one previously failing character can be spawned and emits `playerSpawned`.
+
+---
+
+## Task 6 — Determine whether actor bundle zip files are missing or only omitted from indexes/manifests
+
+For every remaining problem actor, inspect:
 
 - `public/assets/bundles/actor/...`
 - `public/assets/generated/bcu-actor-index.json`
 - `public/assets/generated/bcu-bundle-manifest.json`
 - `public/assets/generated/bcu-icon-index.json`
 - `public/assets/bundles/icon/enemy.zip`
-- raw source paths under `public/assets/bcu/**/org/enemy/{id3}/`
+- raw source paths under `public/assets/bcu/**/org/enemy/{id3}/` and unit equivalents
 
 Add report section:
 
 ```text
-Remaining Problem Enemy Root Cause Matrix
+Remaining Problem Actor Root Cause Matrix
 ```
 
 Columns:
 
 ```text
-enemyId | actor bundle exists | in manifest | archive ok | all runtime files | image decode | imgcut ok | generated fallback possible | root cause | recommended fix
+actorKey | actor bundle exists | in manifest | archive ok | all runtime files | image decode | imgcut ok | generated fallback possible | root cause | recommended fix
 ```
 
 For `388`, explicitly verify:
@@ -442,9 +496,9 @@ edi_388.png may exist but must not be chosen as UI icon
 
 ---
 
-## Task 5 — Fix actor bundle manifest/index coverage for enemies with real usable bundles
+## Task 7 — Fix actor bundle manifest/index coverage for actors with real usable bundles
 
-Enemies such as `560` and `699` should not fail just because generated indexes or manifests omitted an otherwise valid actor bundle.
+Enemies such as `560` and `699`, and any player units found by the player-character audit, should not fail just because generated indexes or manifests omitted an otherwise valid actor bundle.
 
 If a generator exists, use it. If no generator exists, create a focused dry-run-first repair script:
 
@@ -468,7 +522,7 @@ Rules:
 
 ---
 
-## Task 6 — Recheck stage spawning for all remaining problem enemies
+## Task 8 — Recheck stage enemy spawning for all remaining problem enemies
 
 File:
 
@@ -508,7 +562,7 @@ Acceptance:
 
 ---
 
-## Task 7 — Browser runtime validation
+## Task 9 — Browser runtime validation
 
 Run:
 
@@ -534,10 +588,10 @@ Each must be one of:
 
 - visible with explicit icon,
 - visible with aggregate icon,
-- visible with generated actor-imgcut-thumbnail icon,
+- visible with generated 128x128 actor-imgcut-thumbnail icon,
 - intentionally unresolved with precise reason.
 
-Spawn checks:
+Enemy spawn checks:
 
 ```js
 globalThis.__APP__?.battle?.debugEvents
@@ -545,11 +599,20 @@ globalThis.__APP__?.battle?.debugEvents
   ?.slice(-50)
 ```
 
-Do not claim live spawn success without `stageEnemySpawned` or equivalent actor/template state.
+Player spawn checks:
+
+```js
+globalThis.__BATTLE_PRODUCTION_DEBUG__?.failures?.slice(0, 20)
+globalThis.__APP__?.battle?.debugEvents
+  ?.filter(e => ['playerSpawnRejected','playerSpawned'].includes(e.type))
+  ?.slice(-50)
+```
+
+Do not claim live spawn success without `stageEnemySpawned`, `playerSpawned`, or equivalent actor/template state.
 
 ---
 
-## Task 8 — Keep formation catalog virtualization stable
+## Task 10 — Keep formation catalog virtualization stable
 
 Keep the existing spacer full-width behavior. Verify:
 
@@ -577,6 +640,7 @@ Syntax-check changed files, for example:
 ```bash
 node --check scripts/audit-bcu-enemy-assets.mjs
 node --check scripts/generate-enemy-fallback-icons.mjs
+node --check scripts/audit-player-character-spawn.mjs
 node --check scripts/audit-stage-enemy-spawn.mjs
 node --check scripts/repair-bcu-actor-bundle-index.mjs
 node --check js/bcu/SemanticAssetProvider.js
@@ -585,6 +649,9 @@ node --check js/bcu/BcuPathResolver.js
 node --check js/bcu/BcuEnemyRepository.js
 node --check js/battle/BcuStageEnemyResolver.js
 node --check js/battle/BattleActorFactory.js
+node --check js/battle/BattleScene.js
+node --check js/battle/PlayableCharacterRegistry.js
+node --check js/battle/CharacterCatalog.js
 node --check js/ui/FormationEditor.js
 ```
 
@@ -595,6 +662,7 @@ node scripts/audit-bcu-enemy-assets.mjs
 node scripts/generate-enemy-fallback-icons.mjs --dry-run
 node scripts/generate-enemy-fallback-icons.mjs --apply
 node scripts/audit-bcu-enemy-assets.mjs
+node scripts/audit-player-character-spawn.mjs
 node scripts/audit-stage-enemy-spawn.mjs --enemy 443
 node scripts/audit-stage-enemy-spawn.mjs --enemy 560,699,610,611,612
 node scripts/audit-stage-enemy-spawn.mjs --enemy all-problem
@@ -610,15 +678,17 @@ Report:
 
 1. Root cause classes found.
 2. Exact enemy IDs still unresolved and why.
-3. Whether unresolved enemies lack source assets, have bad zips, bad PNG decode, missing imgcut, missing animations, or merely missing aggregate icons.
-4. Generated fallback icon zip/index files produced.
-5. Number of generated fallback icons and total generated zip size.
-6. Files changed.
-7. Scripts added/updated.
-8. Commands run.
-9. Browser checks performed.
-10. Whether `560`, `699`, `610`, `611`, `612`, `695`, `696`, `697` are visible/spawnable or intentionally unresolved.
-11. Confirm that `edi_*.png` is not used as the selected UI icon fallback.
-12. Confirm that runtime does not bulk-load actor images/imgcuts for formation/catalog icons.
+3. Exact player character IDs/forms still unresolved and why.
+4. Whether unresolved actors lack source assets, have bad zips, bad PNG decode, missing imgcut, missing animations, production validation failures, or merely missing aggregate icons.
+5. Generated fallback icon zip/index files produced.
+6. Number of generated 128x128 fallback icons and total generated zip size.
+7. Files changed.
+8. Scripts added/updated.
+9. Commands run.
+10. Browser checks performed.
+11. Whether `560`, `699`, `610`, `611`, `612`, `695`, `696`, `697` are visible/spawnable or intentionally unresolved.
+12. Whether any selectable player characters still cannot spawn.
+13. Confirm that `edi_*.png` is not used as the selected UI icon fallback.
+14. Confirm that runtime does not bulk-load actor images/imgcuts for formation/catalog icons.
 
 Do not say “all fixed” unless the full audit and browser checks prove it.

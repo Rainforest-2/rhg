@@ -19,31 +19,6 @@ function restoreCatalogScroll(scroller, scrollTop, frames = RESTORE_DELAY_FRAMES
   requestAnimationFrame(() => run(frames));
 }
 
-function polishVisibleStageSelector(root = document) {
-  const dialog = root.querySelector('.formation-stage-dialog');
-  if (!dialog) return;
-  const title = dialog.querySelector('header strong');
-  if (title) title.textContent = 'ステージを選ぶ';
-  const lead = dialog.querySelector('header span');
-  if (lead) lead.textContent = '遊びたいステージをタップ';
-
-  for (const card of dialog.querySelectorAll('.formation-stage-card')) {
-    const code = card.querySelector('small');
-    if (code) code.textContent = card.classList.contains('is-active') ? '選択中' : 'ステージ';
-    const details = card.querySelectorAll('span');
-    if (details[0]) details[0].textContent = card.classList.contains('is-active') ? '選択中' : 'タップして選択';
-    for (let i = 1; i < details.length; i += 1) details[i].hidden = true;
-    const reason = card.querySelector('em');
-    if (reason) reason.hidden = true;
-  }
-}
-
-function scheduleStagePolish(root = document) {
-  requestAnimationFrame(() => polishVisibleStageSelector(root));
-  setTimeout(() => polishVisibleStageSelector(root), 80);
-  setTimeout(() => polishVisibleStageSelector(root), 240);
-}
-
 export function installNyankoUiBehaviorPatch(root = document) {
   if (installed) return;
   installed = true;
@@ -58,22 +33,11 @@ export function installNyankoUiBehaviorPatch(root = document) {
 
   root.addEventListener('click', (event) => {
     const character = event.target.closest?.('[data-character]');
-    if (character) {
-      restoreCatalogScroll(getCatalogScroller(character), lastCatalogScrollTop);
-      return;
-    }
-
-    if (event.target.closest?.('[data-action="stage-open"], [data-stage-id], [data-action="stage-close"]')) {
-      scheduleStagePolish(root);
-    }
+    if (!character) return;
+    restoreCatalogScroll(getCatalogScroller(character), lastCatalogScrollTop);
   }, true);
 
-  root.addEventListener('pointerup', (event) => {
-    if (event.target.closest?.('[data-action="stage-open"], [data-stage-id]')) scheduleStagePolish(root);
-  }, true);
-
-  scheduleStagePolish(root);
-  globalThis.__NYANKO_UI_BEHAVIOR_PATCH__ = { refresh: () => scheduleStagePolish(root) };
+  globalThis.__NYANKO_UI_BEHAVIOR_PATCH__ = { refresh: () => {} };
 }
 
 if (typeof document !== 'undefined') {

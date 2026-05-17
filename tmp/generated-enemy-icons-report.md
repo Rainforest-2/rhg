@@ -1,39 +1,21 @@
 # Generated Enemy Icons Report
 
-Generated: 2026-05-17T16:15:12.431Z
+Generated: 2026-05-17T16:35:14.687Z
 Mode: apply
 
 ## Summary
 
 - total enemies: 778
 - generated: 778
-- composed initial pose: 759
-- single-cut degraded fallback: 19
+- composed initial pose: 777
+- single-cut degraded fallback: 1
 - failed: 0
 - expected missing: 0
-- zip size bytes: 14877886
+- zip size bytes: 29135401
 
 ## Degraded Fallback
 
 - enemy:19: composition unavailable: composed-pose-rendered-zero-parts; selected cut {"index":2,"x":1,"y":1,"w":47,"h":46,"name":"体01"}
-- enemy:284: composition unavailable: composed-pose-rendered-zero-parts; selected cut {"index":2,"x":1,"y":1,"w":47,"h":46,"name":"体01"}
-- enemy:285: composition unavailable: composed-pose-rendered-zero-parts; selected cut {"index":1,"x":1,"y":1,"w":69,"h":61,"name":"本体１"}
-- enemy:286: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":5,"x":340,"y":1,"w":111,"h":101,"name":"part_5"}
-- enemy:287: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":6,"x":223,"y":1,"w":129,"h":105,"name":"part_6"}
-- enemy:288: composition unavailable: composed-pose-rendered-zero-parts; selected cut {"index":20,"x":455,"y":93,"w":52,"h":143,"name":"part_20"}
-- enemy:289: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":8,"x":157,"y":93,"w":102,"h":90,"name":"part_8"}
-- enemy:290: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":6,"x":231,"y":1,"w":118,"h":111,"name":"part_6"}
-- enemy:291: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":14,"x":1,"y":142,"w":130,"h":113,"name":"攻撃１"}
-- enemy:292: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":1,"x":2,"y":2,"w":93,"h":68,"name":"part_1"}
-- enemy:303: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":1,"x":1,"y":1,"w":103,"h":156,"name":"墓石"}
-- enemy:304: composition unavailable: composed-pose-rendered-zero-parts; selected cut {"index":31,"x":201,"y":122,"w":76,"h":133,"name":"エフェクト爆発１"}
-- enemy:425: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":3,"x":1,"y":1,"w":116,"h":140,"name":"003体口あけ１.png"}
-- enemy:427: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":7,"x":1,"y":1,"w":159,"h":184,"name":"007ef.png"}
-- enemy:428: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":6,"x":1,"y":1,"w":87,"h":98,"name":"006攻撃体.png"}
-- enemy:468: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":21,"x":317,"y":1,"w":93,"h":87,"name":"021アヒル　潜り１.png"}
-- enemy:469: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":2,"x":1,"y":1,"w":84,"h":37,"name":"a1"}
-- enemy:512: composition unavailable: composed-pose-rendered-zero-parts; selected cut {"index":11,"x":1,"y":1,"w":136,"h":138,"name":"011モヤ.png"}
-- enemy:744: composition unavailable: composed-pose-no-visible-parts; selected cut {"index":36,"x":1,"y":1,"w":72,"h":141,"name":"036攻撃　骨.png"}
 
 ## Failed Or Expected Missing
 
@@ -43,16 +25,20 @@ Mode: apply
 
 | enemy | status | method | sha256/failure |
 | --- | --- | --- | --- |
-| 388 | generated | composed-initial-pose | f621329d528b58e5a0ddb526fb6dd2abf4cfe0a71f9b4087a0f0bdcd8ec6e214 |
-| 440 | generated | composed-initial-pose | 55f006e84f49b8b40c38bb2ffd41bb9e7b14711f6a599f5f888e1e72f975ed80 |
-| 443 | generated | composed-initial-pose | ffedbdae3e0e0341578bfcfe755f512761f4af4b022f0aebac9118ec3a99eac1 |
-| 560 | generated | composed-initial-pose | b071bfa7116668f514abd9494b9aa250cfc94aac8937c788bb326e29678eacb0 |
-| 609 | generated | composed-initial-pose | 0e130c4fb477c68a189b92f516b90bb05a984aafd25784a6c26b71cc07710fc6 |
-| 610 | generated | composed-initial-pose | 1ac2a7310038615a023cca8be27f8dd6e386fc332fb10ec2f272b177af510237 |
-| 611 | generated | composed-initial-pose | b3a412e4a8bcd63bbd9ca80514b21fa146594b8452728f4710575900d1a67051 |
-| 612 | generated | composed-initial-pose | e6af9ca9c9a37268b0e5850b837ff796fa691ae66a22293d5a608dd052341549 |
-| 613 | generated | composed-initial-pose | 4b6b4ebe25d436f20b0e048ceaa2f2c63cabd87a9ad7973d29cd9752a686a6eb |
-| 695 | generated | composed-initial-pose | 62fe13411e020bfa9f8429f27742c00cdb88bfcf98bde0a5aaa03979bbc5a03b |
-| 696 | generated | composed-initial-pose | 3a6ddcd38463bf5a2d1534da92d71269a3c3358626a7f058e25d31c3facd4e7e |
-| 697 | generated | composed-initial-pose | b91be09237f3737b6f6e479e23bb8c8a9c93c01d6d30498fcda4a63a74155e9c |
-| 699 | generated | composed-initial-pose | 8f3287420337568f08599e19e9f22a33bf429c2053b325c96941035f0c43ab68 |
+| 388 | generated | composed-initial-pose | 7c2d2f1d0f74b6074ec7976f71cdeb23944ec38a94d553503be74876994bc3a7 |
+| 425 | generated | composed-initial-pose | a12c1fdbc6b2261a3fe427aaae13ced120be4600ba72dd24db407fe18bbfa160 |
+| 426 | generated | composed-initial-pose | 1d40691311400162bd584a6475ef0983e65a8379ab273bac75c82f5d94dc343f |
+| 427 | generated | composed-initial-pose | 1eb59b0ec941768cce97ef00dcfc8571323f6ac6802baee5767a9d6a89f180f3 |
+| 428 | generated | composed-initial-pose | 08e24a641e97f6f502ec1b13052a110b220c8e9ddf23960316b68a4248dd6299 |
+| 440 | generated | composed-initial-pose | 4ded445c2e70e71f4f5f8ea34d44865d35b1ceddb8f533806baef58cbb982fcd |
+| 443 | generated | composed-initial-pose | cc75e3a9d8c4e7a1812f87ac086cbcbbc60f7928265103332c0ae7b11a463049 |
+| 560 | generated | composed-initial-pose | fc2a6cb552bb9b07646cf8c153f020b58ae5dd606674b1590baa362a5d66e616 |
+| 609 | generated | composed-initial-pose | 8eb449358308c8dfb6c52c053a4f83c048b9907240b94b5fa1c1fc327a1ffddd |
+| 610 | generated | composed-initial-pose | 8d9070f0830da28ff990958a1be6c2d8b1477ae0f6025f61920317e780197ab4 |
+| 611 | generated | composed-initial-pose | 34d0265d652609d168f27313df26cd6fd785867396317e5a696443477728aa21 |
+| 612 | generated | composed-initial-pose | beb39c3a296cf3d94f368a54b892332906ec1aeb750b8c6645dfbe709bdb62c5 |
+| 613 | generated | composed-initial-pose | 8ff442f936affcc04ae391011eaeeeebeeb7e9c0a5e49430f6ccd6d9698b52f2 |
+| 695 | generated | composed-initial-pose | c692cc96dc6aa09e41b5e1d0d789e67890833660d0873428d07d5c19015729f2 |
+| 696 | generated | composed-initial-pose | 1074a3f3fdb1ff872c72cef472c5d6d6f70c76679b8317a4083a79499b72d26f |
+| 697 | generated | composed-initial-pose | a552818d250c56f66ba0c6e015ec52d36f3456fbe6e58ff6e224ad3667024be4 |
+| 699 | generated | composed-initial-pose | 6ed2ed538e81f90da58730e10ca1e05197431987c554e33f34b8d1ee3067ecd6 |

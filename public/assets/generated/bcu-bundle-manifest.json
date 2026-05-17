@@ -159,10 +159,10 @@
     "actor:enemy:19": {
       "kind": "actor",
       "key": "enemy:19",
-      "bundlePath": "public/assets/bundles/actor/enemy/019.zip",
+      "bundlePath": "public/assets/bundles/actor/enemy/19.zip",
       "status": "full",
-      "sizeBytes": 90864,
-      "hash": "1c0be59f0430235112ee04120860c5d72172b53ef06686992c41a09d0015c193"
+      "sizeBytes": 30405,
+      "hash": "5d0219cc69e3720022bd6eb5bac75c12d50c2b32d2695cab281f5c74434bcbcb"
     },
     "actor:enemy:20": {
       "kind": "actor",
@@ -2281,72 +2281,72 @@
       "key": "enemy:284",
       "bundlePath": "public/assets/bundles/actor/enemy/284.zip",
       "status": "full",
-      "sizeBytes": 40096,
-      "hash": "870accb9a893f0bc6551fb4755878eb143cb0cbb71e60b1f95d6d7a4b4af4fa5"
+      "sizeBytes": 30420,
+      "hash": "af373b4351ef55693092655adc72b3e007ab4cdab4b7130f13c64160463bc228"
     },
     "actor:enemy:285": {
       "kind": "actor",
       "key": "enemy:285",
       "bundlePath": "public/assets/bundles/actor/enemy/285.zip",
       "status": "full",
-      "sizeBytes": 82187,
-      "hash": "959f6b03a91898f18326cb5100643669c0917973567e33eb14ec0afedcb8f4c8"
+      "sizeBytes": 74247,
+      "hash": "8e6ab157663e7f7a629865a7e17e1cc01d3c70062223a7c3c67ca450ac7a6ce3"
     },
     "actor:enemy:286": {
       "kind": "actor",
       "key": "enemy:286",
       "bundlePath": "public/assets/bundles/actor/enemy/286.zip",
       "status": "full",
-      "sizeBytes": 132731,
-      "hash": "80dc77ea83924f5bdfa9c31e706cda5569b56afcd28328c13443fbf79c153916"
+      "sizeBytes": 122700,
+      "hash": "962245673856cc7f7c95ff2b2320e1ef7e036ec133bad3511fb04d3e9fb459f6"
     },
     "actor:enemy:287": {
       "kind": "actor",
       "key": "enemy:287",
       "bundlePath": "public/assets/bundles/actor/enemy/287.zip",
       "status": "full",
-      "sizeBytes": 139412,
-      "hash": "9d3b8928bb03be29d67c637c953ec7a0f89fd0c7bad8100861bbd3c3c71ebcbf"
+      "sizeBytes": 130296,
+      "hash": "488ca952b774cc0be4532d51e2533658853fcecb5d6e32cd22a56488171d795e"
     },
     "actor:enemy:288": {
       "kind": "actor",
       "key": "enemy:288",
       "bundlePath": "public/assets/bundles/actor/enemy/288.zip",
       "status": "full",
-      "sizeBytes": 166979,
-      "hash": "41f12cf651bb85826bc26c20be27ea2f2419b1eaaa7aa849989273b59226a4c1"
+      "sizeBytes": 158767,
+      "hash": "6ae4414717a79503a485dd1be1639b6c16f563c82fcc72483d6e6f7161b1fc91"
     },
     "actor:enemy:289": {
       "kind": "actor",
       "key": "enemy:289",
       "bundlePath": "public/assets/bundles/actor/enemy/289.zip",
       "status": "full",
-      "sizeBytes": 136706,
-      "hash": "a75b87a006433f77e5a9516b8b16db99bc47d6442495cbd504d5e71b78437fd8"
+      "sizeBytes": 127387,
+      "hash": "29113d471b9ddf8a022f6e91bead9c566f20d69e5c9f5140aa7830a1807eaf54"
     },
     "actor:enemy:290": {
       "kind": "actor",
       "key": "enemy:290",
       "bundlePath": "public/assets/bundles/actor/enemy/290.zip",
       "status": "full",
-      "sizeBytes": 129545,
-      "hash": "5a7c0734bbc7b2c6052b1c33fbe695cd8c1a01487ad00cb6e15fe370e269854d"
+      "sizeBytes": 119874,
+      "hash": "e384fedb61c535fae88f8d7f1070293cae3a24fbc088df04b70ca2ab9ff80333"
     },
     "actor:enemy:291": {
       "kind": "actor",
       "key": "enemy:291",
       "bundlePath": "public/assets/bundles/actor/enemy/291.zip",
       "status": "full",
-      "sizeBytes": 154481,
-      "hash": "71e443253a563393501173269b09e5d6904143147f699d633543a948faae0f87"
+      "sizeBytes": 145825,
+      "hash": "a8875108457f0687a76993b4808bd91aa0c4559e4d92ee00425610d9188bfb94"
     },
     "actor:enemy:292": {
       "kind": "actor",
       "key": "enemy:292",
       "bundlePath": "public/assets/bundles/actor/enemy/292.zip",
       "status": "full",
-      "sizeBytes": 106540,
-      "hash": "81ee1e4b8cfc35b58ce49ea4c52be4e9f4f30fefbc1aed30ecd7592ff5b1c29a"
+      "sizeBytes": 96238,
+      "hash": "d6a6809517b03772fd62a7c09d63a9fd290d9b283d6218a5a6ce94188f24eee6"
     },
     "actor:enemy:293": {
       "kind": "actor",
@@ -2433,16 +2433,16 @@
       "key": "enemy:303",
       "bundlePath": "public/assets/bundles/actor/enemy/303.zip",
       "status": "full",
-      "sizeBytes": 98143,
-      "hash": "9b1e7b61a58410e7f73427323b44d96ce5c576654041d8c596124c032cbf1d65"
+      "sizeBytes": 93782,
+      "hash": "37a50f52ff967e8ac7d56477685365b35bb7083c0c7ec32f83426b4b51356b8f"
     },
     "actor:enemy:304": {
       "kind": "actor",
       "key": "enemy:304",
       "bundlePath": "public/assets/bundles/actor/enemy/304.zip",
       "status": "full",
-      "sizeBytes": 140157,
-      "hash": "68ff42cf65c5eacdf7b87b0228a0dda94941a07d6b4aee31c0efe7b16d574f28"
+      "sizeBytes": 127830,
+      "hash": "26bb2f25729f767d27ff4f0e6d448470e364804ca8605f26304ff338be867638"
     },
     "actor:enemy:305": {
       "kind": "actor",
@@ -3409,8 +3409,8 @@
       "key": "enemy:425",
       "bundlePath": "public/assets/bundles/actor/enemy/425.zip",
       "status": "full",
-      "sizeBytes": 58498,
-      "hash": "3c2e25340657df5b819352a8faf6c1d413fa0bd7984a6640383893df15dc3261"
+      "sizeBytes": 119810,
+      "hash": "b5646bc73d35b5bbe333eb9c1450960d706253675363c71759b9ea0d2336731d"
     },
     "actor:enemy:426": {
       "kind": "actor",
@@ -3425,16 +3425,16 @@
       "key": "enemy:427",
       "bundlePath": "public/assets/bundles/actor/enemy/427.zip",
       "status": "full",
-      "sizeBytes": 44607,
-      "hash": "f10078ac7e4c627868a0bf3e7dd83b1608550b9446497c92ac7d6b07aede33bb"
+      "sizeBytes": 100998,
+      "hash": "9507652e9f94930856f80398cd586eeb425661f12ba02ffe6fb1a794a3f11aca"
     },
     "actor:enemy:428": {
       "kind": "actor",
       "key": "enemy:428",
       "bundlePath": "public/assets/bundles/actor/enemy/428.zip",
       "status": "full",
-      "sizeBytes": 42575,
-      "hash": "c4b9c9166e68b02df715381dfe8b9465176731f83e6c0ed44604978194038ce3"
+      "sizeBytes": 81281,
+      "hash": "07204f7b234b092ac68867d9f756fb2a6cff8b100ea5b63f4d8bfae6b3a0e99f"
     },
     "actor:enemy:429": {
       "kind": "actor",
@@ -3753,16 +3753,16 @@
       "key": "enemy:468",
       "bundlePath": "public/assets/bundles/actor/enemy/468.zip",
       "status": "full",
-      "sizeBytes": 52253,
-      "hash": "efbfeac59ff1a17b7b4e801feac144a0814e9b44eeee1c9176b96299b9ccc0d1"
+      "sizeBytes": 30991,
+      "hash": "b3ef3c392d6ff440083a6ca53464caa4651d1303e2e7be0b0f3616f53f4c2ae4"
     },
     "actor:enemy:469": {
       "kind": "actor",
       "key": "enemy:469",
       "bundlePath": "public/assets/bundles/actor/enemy/469.zip",
       "status": "full",
-      "sizeBytes": 44857,
-      "hash": "7a45445ff9f3092f5fa408860d36a5d0201e76639b27c02163748de81300b2ad"
+      "sizeBytes": 19469,
+      "hash": "dedcef839b48cf903286efdd58e93a8eef4f73f5a2b3fec772fb5c526875d84c"
     },
     "actor:enemy:470": {
       "kind": "actor",
@@ -4105,8 +4105,8 @@
       "key": "enemy:512",
       "bundlePath": "public/assets/bundles/actor/enemy/512.zip",
       "status": "full",
-      "sizeBytes": 57524,
-      "hash": "aa567c5ccb6a2929e3fb8edca6118d30020a701b0596ec2dc13389fc71f3307c"
+      "sizeBytes": 48511,
+      "hash": "07698c072c181635f5dc1c598cfdee4f27fd39ca980776c1d596ce68f7218d04"
     },
     "actor:enemy:513": {
       "kind": "actor",
@@ -4793,8 +4793,8 @@
       "key": "enemy:614",
       "bundlePath": "public/assets/bundles/actor/enemy/614.zip",
       "status": "full",
-      "sizeBytes": 59353,
-      "hash": "df4feda3408645dfb56e5885cff91b69ab9deafbb8dff4d6365d724b855dbc8a"
+      "sizeBytes": 55954,
+      "hash": "494449f97689020a9f91f53ae439e3d351cf1fb3cfba04f91d78392e12214636"
     },
     "actor:enemy:615": {
       "kind": "actor",
@@ -5801,8 +5801,8 @@
       "key": "enemy:744",
       "bundlePath": "public/assets/bundles/actor/enemy/744.zip",
       "status": "full",
-      "sizeBytes": 43638,
-      "hash": "7ddd11f5202fc731612983c067a4adcfe5c7eedad44490b21be8be899399eb94"
+      "sizeBytes": 39253,
+      "hash": "3646dc9206dea837a03a983e2aaeab7bb03c8fe34f6d4040842fd44d264b3c9d"
     },
     "actor:enemy:745": {
       "kind": "actor",
@@ -33218,12 +33218,12 @@
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
       "iconCount": 778,
-      "width": 256,
-      "height": 256,
+      "width": 512,
+      "height": 512,
       "frame": 0,
       "animationRole": "idle",
-      "sizeBytes": 14877886,
-      "hash": "09c281c92f872367261c7d946a0f2fcac514bf83bdf4b5f68274cface225eb60",
+      "sizeBytes": 29135401,
+      "hash": "cb371f417f66d32cffbd04faa45d12efb9e3324f7941494c16427b787f0dc4aa",
       "generationSource": "actor-assets-initial-pose"
     },
     "icon:unit:c": {

@@ -20,11 +20,11 @@ import {
 
 export const ROOT = process.cwd();
 export const ENEMY_ICON_ZIP = 'public/assets/bundles/icon/enemy.zip';
-export const REGRESSION_ENEMY_IDS = Object.freeze([388, 440, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699]);
+export const REGRESSION_ENEMY_IDS = Object.freeze([388, 425, 426, 427, 428, 440, 443, 560, 609, 610, 611, 612, 613, 695, 696, 697, 699]);
 const PNG_SIG = Buffer.from('89504e470d0a1a0a', 'hex');
-export const ENEMY_ICON_SIZE = 256;
+export const ENEMY_ICON_SIZE = 512;
 export const ENEMY_ICON_FRAME = 0;
-const ENEMY_ICON_MARGIN = 10;
+const ENEMY_ICON_MARGIN = 20;
 const ENEMY_ICON_DRAW_SIZE = ENEMY_ICON_SIZE - ENEMY_ICON_MARGIN * 2;
 
 export async function exists(file) {

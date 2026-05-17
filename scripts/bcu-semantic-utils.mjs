@@ -127,6 +127,14 @@ export function buildActorIndexFromFiles(files) {
     else if (name.endsWith('.imgcut')) c.files.imgcut = file;
     else if (name.endsWith('.mamodel')) c.files.model = file;
     else {
+      const zombie = name.match(/_zombie(\d{2})\.maanim$/i);
+      if (zombie) {
+        // Zombie-specific maanim files are burrow/revive/special-effect animations.
+        // They must not overwrite normal actor roles such as move/idle/attack.
+        c.files[`zombieAnim${zombie[1]}`] = file;
+        return;
+      }
+
       const m = name.match(/(\d{2})\.maanim$/);
       if (m) c.files[`anim${m[1]}`] = file;
     }

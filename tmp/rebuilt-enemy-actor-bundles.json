@@ -1,6 +1,96 @@
 {
-  "generatedAt": "2026-05-17T15:27:42.301Z",
+  "generatedAt": "2026-05-17T16:33:19.073Z",
   "before": [
+    {
+      "enemyId": 19,
+      "bundlePath": "public/assets/bundles/actor/enemy/19.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 284,
+      "bundlePath": "public/assets/bundles/actor/enemy/284.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 285,
+      "bundlePath": "public/assets/bundles/actor/enemy/285.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 286,
+      "bundlePath": "public/assets/bundles/actor/enemy/286.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 287,
+      "bundlePath": "public/assets/bundles/actor/enemy/287.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 288,
+      "bundlePath": "public/assets/bundles/actor/enemy/288.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 289,
+      "bundlePath": "public/assets/bundles/actor/enemy/289.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 290,
+      "bundlePath": "public/assets/bundles/actor/enemy/290.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 291,
+      "bundlePath": "public/assets/bundles/actor/enemy/291.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 292,
+      "bundlePath": "public/assets/bundles/actor/enemy/292.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 303,
+      "bundlePath": "public/assets/bundles/actor/enemy/303.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 304,
+      "bundlePath": "public/assets/bundles/actor/enemy/304.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 425,
+      "bundlePath": "public/assets/bundles/actor/enemy/425.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 427,
+      "bundlePath": "public/assets/bundles/actor/enemy/427.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 428,
+      "bundlePath": "public/assets/bundles/actor/enemy/428.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 468,
+      "bundlePath": "public/assets/bundles/actor/enemy/468.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 469,
+      "bundlePath": "public/assets/bundles/actor/enemy/469.zip",
+      "status": "bundle-missing"
+    },
+    {
+      "enemyId": 512,
+      "bundlePath": "public/assets/bundles/actor/enemy/512.zip",
+      "status": "bundle-missing"
+    },
     {
       "enemyId": 552,
       "bundlePath": "public/assets/bundles/actor/enemy/552.zip",
@@ -70,32 +160,32 @@
     {
       "enemyId": 585,
       "bundlePath": "public/assets/bundles/actor/enemy/585.zip",
-      "status": "bad-image-signature",
-      "head": "0b7841ce085af9f9"
+      "status": "ok",
+      "head": "89504e470d0a1a0a"
     },
     {
       "enemyId": 586,
       "bundlePath": "public/assets/bundles/actor/enemy/586.zip",
-      "status": "bad-image-signature",
-      "head": "0b7840cb085af9e6"
+      "status": "ok",
+      "head": "89504e470d0a1a0a"
     },
     {
       "enemyId": 587,
       "bundlePath": "public/assets/bundles/actor/enemy/587.zip",
-      "status": "bad-image-signature",
-      "head": "0b78419e085af978"
+      "status": "ok",
+      "head": "89504e470d0a1a0a"
     },
     {
       "enemyId": 588,
       "bundlePath": "public/assets/bundles/actor/enemy/588.zip",
-      "status": "bad-image-signature",
-      "head": "0b7841ad085af979"
+      "status": "ok",
+      "head": "89504e470d0a1a0a"
     },
     {
       "enemyId": 589,
       "bundlePath": "public/assets/bundles/actor/enemy/589.zip",
-      "status": "bad-image-signature",
-      "head": "0b7841c9085af80b"
+      "status": "ok",
+      "head": "89504e470d0a1a0a"
     },
     {
       "enemyId": 590,
@@ -128,6 +218,11 @@
       "head": "89504e470d0a1a0a"
     },
     {
+      "enemyId": 614,
+      "bundlePath": "public/assets/bundles/actor/enemy/614.zip",
+      "status": "bundle-missing"
+    },
+    {
       "enemyId": 698,
       "bundlePath": "public/assets/bundles/actor/enemy/698.zip",
       "status": "ok",
@@ -150,9 +245,176 @@
       "bundlePath": "public/assets/bundles/actor/enemy/701.zip",
       "status": "ok",
       "head": "89504e470d0a1a0a"
+    },
+    {
+      "enemyId": 744,
+      "bundlePath": "public/assets/bundles/actor/enemy/744.zip",
+      "status": "bundle-missing"
     }
   ],
   "results": [
+    {
+      "enemyId": 19,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/19.zip",
+      "sizeBytes": 30405,
+      "hash": "5d0219cc69e3720022bd6eb5bac75c12d50c2b32d2695cab281f5c74434bcbcb",
+      "imageSha256": "50df6484fcc7c253289478ac2254dbaffac9762a28cc34d9e57f0af53bfb2b25"
+    },
+    {
+      "enemyId": 284,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/284.zip",
+      "sizeBytes": 30420,
+      "hash": "af373b4351ef55693092655adc72b3e007ab4cdab4b7130f13c64160463bc228",
+      "imageSha256": "50df6484fcc7c253289478ac2254dbaffac9762a28cc34d9e57f0af53bfb2b25"
+    },
+    {
+      "enemyId": 285,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/285.zip",
+      "sizeBytes": 74247,
+      "hash": "8e6ab157663e7f7a629865a7e17e1cc01d3c70062223a7c3c67ca450ac7a6ce3",
+      "imageSha256": "d2887d6b1699a4febb1f7871e4e935910c2e3c87e500103b176dbd5a78ab6cc6"
+    },
+    {
+      "enemyId": 286,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/286.zip",
+      "sizeBytes": 122700,
+      "hash": "962245673856cc7f7c95ff2b2320e1ef7e036ec133bad3511fb04d3e9fb459f6",
+      "imageSha256": "005a236cb32b6a925076aea09de72a7b73377525aa40572d348c41f6a36b7494"
+    },
+    {
+      "enemyId": 287,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/287.zip",
+      "sizeBytes": 130296,
+      "hash": "488ca952b774cc0be4532d51e2533658853fcecb5d6e32cd22a56488171d795e",
+      "imageSha256": "f237a3a04d6f092124eb2904c877f8ff7664263b7a211b420f845472b6e4590a"
+    },
+    {
+      "enemyId": 288,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/288.zip",
+      "sizeBytes": 158767,
+      "hash": "6ae4414717a79503a485dd1be1639b6c16f563c82fcc72483d6e6f7161b1fc91",
+      "imageSha256": "1d092ff3bf7d9d11e565291c4f6beb1e1ac059798d888e14b912021d9290b763"
+    },
+    {
+      "enemyId": 289,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/289.zip",
+      "sizeBytes": 127387,
+      "hash": "29113d471b9ddf8a022f6e91bead9c566f20d69e5c9f5140aa7830a1807eaf54",
+      "imageSha256": "305675f7b46748bacb57ae0bf508408778a2652e47a95e81b4bd4c0f6ba6163a"
+    },
+    {
+      "enemyId": 290,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/290.zip",
+      "sizeBytes": 119874,
+      "hash": "e384fedb61c535fae88f8d7f1070293cae3a24fbc088df04b70ca2ab9ff80333",
+      "imageSha256": "93e3b18924fee3a92103ce9b09387c0215c7c1b1dfe767fd217a9b289d1b9371"
+    },
+    {
+      "enemyId": 291,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/291.zip",
+      "sizeBytes": 145825,
+      "hash": "a8875108457f0687a76993b4808bd91aa0c4559e4d92ee00425610d9188bfb94",
+      "imageSha256": "c2c76f9b644d7fda4e7cf05985889476516af2cdf855de63a6862ac009ccd4ea"
+    },
+    {
+      "enemyId": 292,
+      "status": "rebuilt",
+      "sourcePack": "000002",
+      "bundlePath": "public/assets/bundles/actor/enemy/292.zip",
+      "sizeBytes": 96238,
+      "hash": "d6a6809517b03772fd62a7c09d63a9fd290d9b283d6218a5a6ce94188f24eee6",
+      "imageSha256": "714f63d8f43157f9bde002724db21e5322de38c28a24f3b3374542154aab4c27"
+    },
+    {
+      "enemyId": 303,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/303.zip",
+      "sizeBytes": 93782,
+      "hash": "37a50f52ff967e8ac7d56477685365b35bb7083c0c7ec32f83426b4b51356b8f",
+      "imageSha256": "3731045c2eb619b84f37f8aa8e9aca40f83ba1d8a6486ad12b13a208ed3f3917"
+    },
+    {
+      "enemyId": 304,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/304.zip",
+      "sizeBytes": 127830,
+      "hash": "26bb2f25729f767d27ff4f0e6d448470e364804ca8605f26304ff338be867638",
+      "imageSha256": "a0146acc523cde65b4e4302ef4a0fb348551b54bd193fcc9a90fd7f8e4c02f2c"
+    },
+    {
+      "enemyId": 425,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/425.zip",
+      "sizeBytes": 119810,
+      "hash": "b5646bc73d35b5bbe333eb9c1450960d706253675363c71759b9ea0d2336731d",
+      "imageSha256": "26f8c5a0f635352d326d18806a0af62da5235d0d1282f461ebe6e9e6d1dbe452"
+    },
+    {
+      "enemyId": 427,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/427.zip",
+      "sizeBytes": 100998,
+      "hash": "9507652e9f94930856f80398cd586eeb425661f12ba02ffe6fb1a794a3f11aca",
+      "imageSha256": "1e69f8dc38a52d16ffc0c37985a3e62796b1fbc8d929533f4221e4ddc73c1c34"
+    },
+    {
+      "enemyId": 428,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/428.zip",
+      "sizeBytes": 81281,
+      "hash": "07204f7b234b092ac68867d9f756fb2a6cff8b100ea5b63f4d8bfae6b3a0e99f",
+      "imageSha256": "c148d7be24fee70411ac012052e8d5d67314b0b0e468fabc6fec1ce0ac39c6b8"
+    },
+    {
+      "enemyId": 468,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/468.zip",
+      "sizeBytes": 30991,
+      "hash": "b3ef3c392d6ff440083a6ca53464caa4651d1303e2e7be0b0f3616f53f4c2ae4",
+      "imageSha256": "238c0308096f3946082dd97ad5cf4c516b55d7305d5897026943b76db1a25202"
+    },
+    {
+      "enemyId": 469,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/469.zip",
+      "sizeBytes": 19469,
+      "hash": "dedcef839b48cf903286efdd58e93a8eef4f73f5a2b3fec772fb5c526875d84c",
+      "imageSha256": "3f7ee2f6168e1e76d14a4320087622c1c7593c520feb0d85cae5990a7f4d4687"
+    },
+    {
+      "enemyId": 512,
+      "status": "rebuilt",
+      "sourcePack": "000003",
+      "bundlePath": "public/assets/bundles/actor/enemy/512.zip",
+      "sizeBytes": 48511,
+      "hash": "07698c072c181635f5dc1c598cfdee4f27fd39ca980776c1d596ce68f7218d04",
+      "imageSha256": "1b49c590d08c9483930903ee7959413e42c156ea7139b5b215e28937e724290f"
+    },
     {
       "enemyId": 552,
       "status": "already-ok"
@@ -199,48 +461,23 @@
     },
     {
       "enemyId": 585,
-      "status": "rebuilt",
-      "sourcePack": "110000",
-      "bundlePath": "public/assets/bundles/actor/enemy/585.zip",
-      "sizeBytes": 158661,
-      "hash": "6627b8c5ba846cc20cb69c809704c064a7b05d345d05b09cbd16f58d08a34a5d",
-      "imageSha256": "fdf0a7e340ea4256314b78985a28a8b1d20da2d55dcca6f0385eb9d0f7186363"
+      "status": "already-ok"
     },
     {
       "enemyId": 586,
-      "status": "rebuilt",
-      "sourcePack": "110000",
-      "bundlePath": "public/assets/bundles/actor/enemy/586.zip",
-      "sizeBytes": 30539,
-      "hash": "a564a2aa16424b32ab1d705e021d1299cd1d10adfd573f1e46dfb8ec19534bc3",
-      "imageSha256": "d813b4eb205e49a9f73c2c2ef267ab37681e8963ea97cd6cc2af9833fa9eb50b"
+      "status": "already-ok"
     },
     {
       "enemyId": 587,
-      "status": "rebuilt",
-      "sourcePack": "110000",
-      "bundlePath": "public/assets/bundles/actor/enemy/587.zip",
-      "sizeBytes": 54267,
-      "hash": "a8e8856f4c1fd8af281d483b51ff1e7b7a76c6b37317c48d9d0739ffe5592638",
-      "imageSha256": "712afc0b02d0a83eb63e9c4281ed3a75ded05bf1e1c5045a2a7768a5f8ca0e11"
+      "status": "already-ok"
     },
     {
       "enemyId": 588,
-      "status": "rebuilt",
-      "sourcePack": "110000",
-      "bundlePath": "public/assets/bundles/actor/enemy/588.zip",
-      "sizeBytes": 28093,
-      "hash": "f6e5a485b150f7d9954603f57877df29109f012ff7719ad028a9c5fb9ac77f77",
-      "imageSha256": "ed9a353ac0cf4bd95467408fb5025478a534dd01834dd75403f66a1f6e74612b"
+      "status": "already-ok"
     },
     {
       "enemyId": 589,
-      "status": "rebuilt",
-      "sourcePack": "110000",
-      "bundlePath": "public/assets/bundles/actor/enemy/589.zip",
-      "sizeBytes": 88777,
-      "hash": "7679a0fe749967cc9ab05b716fd5d27280c607de3b7e052071526930cd95f62d",
-      "imageSha256": "97067a97f663882dc21662e6511e5ca2424e091a9758a12cba06737e1a40326d"
+      "status": "already-ok"
     },
     {
       "enemyId": 590,
@@ -263,6 +500,15 @@
       "status": "already-ok"
     },
     {
+      "enemyId": 614,
+      "status": "rebuilt",
+      "sourcePack": "110800",
+      "bundlePath": "public/assets/bundles/actor/enemy/614.zip",
+      "sizeBytes": 55954,
+      "hash": "494449f97689020a9f91f53ae439e3d351cf1fb3cfba04f91d78392e12214636",
+      "imageSha256": "1754b6251ab50fd8b79ca3e83cf6bb43a236abb5db445efaa4df4b4ab0b573a8"
+    },
+    {
       "enemyId": 698,
       "status": "already-ok"
     },
@@ -277,6 +523,15 @@
     {
       "enemyId": 701,
       "status": "already-ok"
+    },
+    {
+      "enemyId": 744,
+      "status": "rebuilt",
+      "sourcePack": "140700",
+      "bundlePath": "public/assets/bundles/actor/enemy/744.zip",
+      "sizeBytes": 39253,
+      "hash": "3646dc9206dea837a03a983e2aaeab7bb03c8fe34f6d4040842fd44d264b3c9d",
+      "imageSha256": "0ef8e5c7a0bca027a03def7a652c1038afba5d9011cd79e2d113c75abe828e06"
     }
   ]
 }

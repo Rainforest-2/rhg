@@ -1,12 +1,17 @@
 import { BattleScene } from './BattleScene.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
+import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v2.bcu-cont-volcano');
 const W_VOLC_INNER = 250;
 const W_VOLC_PIERCE = 125;
 const VOLC_PRE = 15;
 const VOLC_POST = 10;
 const VOLC_SE = 30;
+const VOLC_ITV = 20;
+
+const SEAL_PROC_KEYS = new Set(['CRIT', 'SNIPER', 'BREAK', 'SUMMON', 'SATK', 'SHIELDBREAK']);
+const CURSE_PROC_KEYS = new Set(['KB', 'STOP', 'SLOW', 'WEAK', 'WARP', 'CURSE', 'SNIPER', 'SEAL', 'POISON', 'BOSS', 'POIATK', 'ARMOR', 'SPEED', 'LETHARGY', 'DMGCUT', 'DMGCAP', 'DELAY']);
 
 function pos(actor) {
   const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
@@ -14,7 +19,7 @@ function pos(actor) {
 }
 
 function dire(actor) {
-  if (Number.isFinite(actor?.direction)) return actor.direction;
+  if (Number.isFinite(actor?.direction)) return actor.direction < 0 ? -1 : 1;
   return actor?.side === 'dog-player' ? -1 : 1;
 }
 
@@ -23,29 +28,96 @@ function surgeItems(calc) {
     .filter((p) => p?.key === 'surge' || p?.key === 'miniSurge');
 }
 
-function cloneEvent(event = {}, damage, kind) {
-  const abilities = { ...(event?.abilities || event?.ability?.semantic || {}) };
-  delete abilities.wave;
-  delete abilities.miniWave;
-  delete abilities.surge;
-  delete abilities.miniSurge;
+function normalizeProcKey(key) {
+  const k = String(key || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (k === 'CRITICAL') return 'CRIT';
+  if (k === 'BARRIERBREAK' || k === 'BARRIERBREAKER') return 'BREAK';
+  if (k === 'SHIELDBREAKER') return 'SHIELDBREAK';
+  if (k === 'TOXIC') return 'POISON';
+  return k;
+}
+
+function isStatusActive(actor, names = []) {
+  const nowMs = globalThis.__APP__?.scene?.timeMs;
+  for (const name of names) {
+    if (typeof actor?.isBcuProcStatusActive === 'function' && actor.isBcuProcStatusActive(name, nowMs)) return true;
+    const st = actor?.bcuProcStatuses?.[name] || actor?.status?.[name];
+    if (!st) continue;
+    if (typeof st === 'boolean') return st;
+    if (Number.isFinite(st.framesRemaining) && st.framesRemaining > 0) return true;
+    if (Number.isFinite(st.untilMs) && (!Number.isFinite(nowMs) || nowMs > 0 && nowMs < st.untilMs)) return true;
+    if (Number.isFinite(st.remaining) && st.remaining > 0) return true;
+    if (Number.isFinite(st.time) && st.time > 0) return true;
+  }
+  return false;
+}
+
+function filterProcAbilities(abilities = {}, attacker = null) {
+  const cursed = isStatusActive(attacker, ['curse', 'P_CURSE']);
+  const sealed = isStatusActive(attacker, ['seal', 'P_SEAL']);
+  if (!cursed && !sealed) return { abilities: { ...abilities }, cursed, sealed, removed: [] };
+  const removed = [];
+  const out = {};
+  for (const [key, value] of Object.entries(abilities || {})) {
+    const normalized = normalizeProcKey(key);
+    const removeBySeal = sealed && SEAL_PROC_KEYS.has(normalized);
+    const removeByCurse = (cursed || sealed) && CURSE_PROC_KEYS.has(normalized);
+    if (removeBySeal || removeByCurse) {
+      removed.push({ key, normalized, removeBySeal, removeByCurse });
+      continue;
+    }
+    out[key] = value;
+  }
+  return { abilities: out, cursed, sealed, removed };
+}
+
+function cloneEvent(event = {}, damage, kind, attacker = null) {
+  const baseAbilities = { ...(event?.abilities || event?.ability?.semantic || {}) };
+  delete baseAbilities.wave;
+  delete baseAbilities.miniWave;
+  delete baseAbilities.surge;
+  delete baseAbilities.miniSurge;
+  const procFilter = filterProcAbilities(baseAbilities, attacker);
   return {
     ...event,
     damage,
-    abilities,
-    ability: { ...(event?.ability || {}), semantic: abilities },
+    abilities: procFilter.abilities,
+    ability: { ...(event?.ability || {}), semantic: procFilter.abilities },
     rawAbi: 0,
-    abilityMappingStatus: 'bcu-surge-runtime-no-recursive-surge',
+    abilityMappingStatus: 'bcu-cont-volcano-no-recursive-surge',
     targetMode: 'range',
     allowBaseHit: false,
-    attackKind: kind
+    attackKind: kind,
+    bcuContVolcanoProcFilter: procFilter
   };
+}
+
+function trace(scene, entry) {
+  const payload = { sceneFrame: scene?.logicFrame ?? null, ...entry };
+  BcuTraceRuntime.push('surge', payload);
+  globalThis.__BCU_SURGE_TRACE__ = [...(globalThis.__BCU_SURGE_TRACE__ || []), payload].slice(-240);
+  scene?.pushEvent?.({ type: 'bcuSurgeTrace', ...payload });
 }
 
 function enqueue(scene, item) {
   if (!scene.__bcuSurgeContainers) scene.__bcuSurgeContainers = [];
   scene.__bcuSurgeContainers.push(item);
-  scene.pushEvent?.({ type: 'bcuSurgeContainerCreated', kind: item.kind, t: item.t, aliveTime: item.aliveTime, startX: item.startX, endX: item.endX, damage: item.damage, animType: item.animType, soundEffect: 'SE_VOLC_START', source: item.source });
+  trace(scene, {
+    source: 'BattleSurgeRuntimePatch.enqueue',
+    bcuReference: 'AttackSimple.excuse -> new ContVolcano(new AttackVolcano(...), aliveTime, dis_0, dis_1)',
+    event: 'created',
+    id: item.id,
+    kind: item.kind,
+    t: item.t,
+    aliveTime: item.aliveTime,
+    startX: item.startX,
+    endX: item.endX,
+    pos: item.pos,
+    damage: item.damage,
+    animType: item.animType,
+    soundEffect: 'SE_VOLC_START',
+    activeMode: 'bcu-cont-volcano'
+  });
 }
 
 function extractVolc(payload = {}, isMini = false) {
@@ -60,7 +132,22 @@ function numAny(obj, names, fallback = 0) {
   return fallback;
 }
 
-function buildSurge(attacker, proc, finalDamage, key, scene, event, hitIndex, target) {
+function rollExclusiveLikeBcu(min, max) {
+  const lo = Math.trunc(min);
+  const hi = Math.trunc(max);
+  const span = hi - lo;
+  if (span <= 0) return lo;
+  return lo + Math.floor(Math.random() * span);
+}
+
+function resolveAliveTime(volc) {
+  const base = Math.max(1, Math.trunc(numAny(volc, ['time'], 20)));
+  const max = Math.max(base, Math.trunc(numAny(volc, ['maxtime', 'maxTime'], base)));
+  if (max > base) return Math.floor(rollExclusiveLikeBcu(base, max) / 20) * 20;
+  return base;
+}
+
+function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
   const payload = proc.payload || {};
   const isMini = proc.key === 'miniSurge';
   const volc = extractVolc(payload, isMini);
@@ -68,17 +155,12 @@ function buildSurge(attacker, proc, finalDamage, key, scene, event, hitIndex, ta
   const origin = pos(attacker);
   const d0 = numAny(volc, ['dis0', 'dis_0', 'dis0Raw'], 0);
   const d1 = numAny(volc, ['dis1', 'dis_1', 'dis1Raw'], d0);
-  const min = Math.min(d0, d1);
-  const max = Math.max(d0, d1);
-  const rolled = min + Math.floor(Math.random() * Math.max(1, max - min + 1));
-  const center = origin + d * rolled;
+  const addp = rollExclusiveLikeBcu(d0, d1);
+  const center = origin + d * addp;
   const sta = center + (d === 1 ? W_VOLC_PIERCE : W_VOLC_INNER);
   const end = center - (d === 1 ? W_VOLC_INNER : W_VOLC_PIERCE);
   const mult = isMini ? Math.max(0, Number(volc.mult ?? payload.mult ?? 20)) / 100 : 1;
-  const minTime = Math.max(1, Math.trunc(Number(volc.time || 1)));
-  const maxTime = Math.max(minTime, Math.trunc(Number(volc.maxtime || volc.maxTime || minTime)));
-  const rolledTime = minTime + Math.floor(Math.random() * Math.max(1, maxTime - minTime + 1));
-  const aliveTime = Math.max(1, Math.floor(rolledTime / 20) * 20 || rolledTime);
+  const aliveTime = resolveAliveTime(volc);
   return {
     id: `${key}:${proc.key}`,
     kind: proc.key,
@@ -86,25 +168,94 @@ function buildSurge(attacker, proc, finalDamage, key, scene, event, hitIndex, ta
     target,
     event,
     hitIndex,
+    pos: center,
     startX: Math.min(sta, end),
     endX: Math.max(sta, end),
+    sta,
+    end,
     damage: Math.max(1, Math.trunc(finalDamage * mult)),
     t: 0,
     aliveTime,
     animType: 'START',
+    vcapt: new Set(),
+    volcTime: VOLC_ITV,
+    attacked: false,
+    lastProcFilter: null,
     source: isMini ? 'BCU ContVolcano MINIVOLC state machine' : 'BCU ContVolcano VOLC state machine'
   };
 }
 
-function targetsInRange(scene, attacker, startX, endX) {
+function targetsInRange(scene, attacker, startX, endX, vcapt = null) {
   const lo = Math.min(startX, endX);
   const hi = Math.max(startX, endX);
   return (scene.actors || []).filter((target) => {
-    if (!target || target.side === attacker?.side) return false;
+    if (!target || target.side === attacker?.side || vcapt?.has(target)) return false;
     if (!(target.isTargetable?.() ?? target.isAlive?.())) return false;
     const p = pos(target);
     const half = Number(target.width || target.rawStats?.width || 0) / 2;
     return (p + half) >= lo && (p - half) <= hi;
+  });
+}
+
+function updateProc(scene, item) {
+  const abilities = { ...(item.event?.abilities || item.event?.ability?.semantic || {}) };
+  delete abilities.surge;
+  delete abilities.miniSurge;
+  delete abilities.wave;
+  delete abilities.miniWave;
+  const filter = filterProcAbilities(abilities, item.attacker);
+  item.lastProcFilter = filter;
+  trace(scene, {
+    source: 'BattleSurgeRuntimePatch.updateProc',
+    bcuReference: 'ContVolcano.updateProc clears SEAL and CURSE proc groups while attacker is sealed/cursed',
+    event: 'update-proc',
+    id: item.id,
+    t: item.t,
+    cursed: filter.cursed,
+    sealed: filter.sealed,
+    removed: filter.removed.map((r) => r.normalized),
+    activeMode: 'bcu-cont-volcano'
+  });
+  return filter;
+}
+
+function attackTick(scene, item) {
+  // BCU order: AttackVolcano.capture() uses current vcapt, then excuse() decrements volcTime and may clear vcapt,
+  // then processes the captured list and adds damaged entities into vcapt.
+  const targets = targetsInRange(scene, item.attacker, item.startX, item.endX, item.vcapt);
+  item.volcTime -= 1;
+  const clearedBeforeProcess = item.volcTime === 0;
+  if (clearedBeforeProcess) {
+    item.volcTime = VOLC_ITV;
+    item.vcapt.clear();
+  }
+  const event = cloneEvent(item.event, item.damage, item.kind, item.attacker);
+  let applied = 0;
+  for (const target of targets) {
+    const res = scene.queueAttackDamage(item.attacker, target, 'actor', event, {
+      key: `${item.id}:${item.t}:${target.instanceId || target.label || 'target'}`,
+      hitIndex: item.hitIndex,
+      bcuSurge: item.kind,
+      bcuRuntimeSource: 'ContVolcano.attackTick'
+    });
+    item.vcapt.add(target);
+    if (res?.accepted) applied += 1;
+  }
+  item.attacked = targets.length > 0;
+  trace(scene, {
+    source: 'BattleSurgeRuntimePatch.attackTick',
+    bcuReference: 'ContVolcano.update -> sb.getAttack(v); AttackVolcano.capture/excuse vcapt VOLC_ITV',
+    event: 'attack-tick',
+    id: item.id,
+    kind: item.kind,
+    t: item.t,
+    targetCount: targets.length,
+    appliedCount: applied,
+    vcaptSize: item.vcapt.size,
+    volcTime: item.volcTime,
+    clearedBeforeProcess,
+    procRemoved: event.bcuContVolcanoProcFilter?.removed?.map((r) => r.normalized) || [],
+    activeMode: 'bcu-cont-volcano'
   });
 }
 
@@ -113,45 +264,38 @@ function process(scene) {
   if (!q.length) return;
   const rest = [];
   for (const item of q) {
+    updateProc(scene, item);
     if (item.t >= VOLC_PRE && item.t <= VOLC_PRE + item.aliveTime && item.animType !== 'DURING') {
       item.animType = 'DURING';
-      scene.pushEvent?.({ type: 'bcuSurgeAnimChanged', id: item.id, animType: item.animType, soundEffect: 'SE_VOLC_LOOP', t: item.t });
+      trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update anim.changeAnim(DURING,false)', event: 'anim-changed', id: item.id, animType: item.animType, soundEffect: 'SE_VOLC_LOOP', t: item.t });
     } else if (item.t > VOLC_PRE + item.aliveTime && item.animType !== 'END') {
       item.animType = 'END';
-      scene.pushEvent?.({ type: 'bcuSurgeAnimChanged', id: item.id, animType: item.animType, t: item.t });
+      trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update anim.changeAnim(END,false)', event: 'anim-changed', id: item.id, animType: item.animType, t: item.t });
     }
     if (item.t >= VOLC_PRE && item.t < VOLC_PRE + item.aliveTime && (item.t - VOLC_PRE) % VOLC_SE === 0) {
-      scene.pushEvent?.({ type: 'bcuSurgeSound', id: item.id, soundEffect: 'SE_VOLC_LOOP', t: item.t });
+      trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update SE_VOLC_LOOP cadence', event: 'se-loop', id: item.id, t: item.t, soundEffect: 'SE_VOLC_LOOP' });
     }
     if (item.t >= item.aliveTime + VOLC_POST + VOLC_PRE) {
-      scene.pushEvent?.({ type: 'bcuSurgeDeactivated', id: item.id, kind: item.kind, t: item.t, reason: 'aliveTime+VOLC_POST+VOLC_PRE' });
+      trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update t >= aliveTime + VOLC_POST + VOLC_PRE activate=false', event: 'deactivated', id: item.id, t: item.t });
       continue;
     }
     item.t += 1;
-    if (item.t > VOLC_PRE && item.t < VOLC_POST + item.aliveTime) {
-      const event = cloneEvent(item.event, item.damage, item.kind);
-      const targets = targetsInRange(scene, item.attacker, item.startX, item.endX);
-      let applied = 0;
-      for (const target of targets) {
-        const res = scene.queueAttackDamage(item.attacker, target, 'actor', event, { key: `${item.id}:${item.t}:${target.instanceId || target.label || 'target'}`, hitIndex: item.hitIndex, bcuSurge: item.kind });
-        if (res?.accepted) applied += 1;
-      }
-      scene.pushEvent?.({ type: 'bcuSurgeAttackTick', id: item.id, kind: item.kind, t: item.t, targetCount: targets.length, appliedCount: applied, source: 'ContVolcano.update t > VOLC_PRE && t < VOLC_POST + aliveTime' });
-    }
+    if (item.t > VOLC_PRE && item.t < VOLC_POST + item.aliveTime) attackTick(scene, item);
+    trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.updateAnimation anim.update(false)', event: 'animation-update', id: item.id, t: item.t, animType: item.animType });
     rest.push(item);
   }
   scene.__bcuSurgeContainers = rest;
 }
 
 function enqueueFromResult(scene, attacker, target, event, calc, result, meta = {}) {
-  if (!result?.accepted) return;
+  if (!result?.accepted || meta?.bcuSurge || meta?.bcuWave) return;
   const items = surgeItems(calc);
   if (!items.length) return;
   const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage || 0)));
   if (finalDamage <= 0) return;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
   const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${target?.instanceId || 'target'}:${hitIndex}`;
-  for (const proc of items) enqueue(scene, buildSurge(attacker, proc, finalDamage, key, scene, event, hitIndex, target));
+  for (const proc of items) enqueue(scene, buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target));
 }
 
 export function installBattleSurgeRuntimePatch() {
@@ -161,7 +305,7 @@ export function installBattleSurgeRuntimePatch() {
 
   const originalQueueAttackDamage = proto.queueAttackDamage;
   if (typeof originalQueueAttackDamage !== 'function') throw new Error('BattleScene.queueAttackDamage is missing');
-  proto.queueAttackDamage = function queueAttackDamageWithBcuSurge(attacker, target, targetType, event, meta = {}) {
+  proto.queueAttackDamage = function queueAttackDamageWithBcuContVolcano(attacker, target, targetType, event, meta = {}) {
     const result = originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
     if (targetType === 'actor') {
       const calc = target?.lastIncomingDamageCalculation || attacker?.lastDamageCalculation || null;
@@ -172,7 +316,7 @@ export function installBattleSurgeRuntimePatch() {
 
   const originalRunTickPhase = proto.runTickPhase;
   if (typeof originalRunTickPhase === 'function') {
-    proto.runTickPhase = function runTickPhaseWithBcuSurge(phase, fn = () => {}) {
+    proto.runTickPhase = function runTickPhaseWithBcuContVolcano(phase, fn = () => {}) {
       if (phase === 'proc-resolve') {
         return originalRunTickPhase.call(this, phase, () => {
           const res = fn();

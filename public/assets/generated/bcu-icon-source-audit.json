@@ -7,10 +7,10 @@
     "pngValidation": "signature, IHDR, dimensions, color type, chunk boundaries, CRC, IEND; trailing bytes after IEND are allowed for icon assets"
   },
   "summary": {
-    "needs-remap": 768,
+    "needs-remap": 765,
     "missing": 7,
     "invalid-png": 54,
-    "ok": 2026
+    "ok": 2029
   },
   "enemyCoverage": {
     "expectedMinEnemyId": 0,
@@ -21770,7 +21770,7 @@
     },
     {
       "semanticKey": "enemy:448",
-      "currentSourcePath": "public/assets/bcu/100503/org/enemy/448/edi_448.png",
+      "currentSourcePath": null,
       "desiredSourcePath": "public/assets/bcu/000010/org/enemy/448/enemy_icon_448.png",
       "status": "needs-remap",
       "pngValidation": {
@@ -22700,7 +22700,7 @@
     },
     {
       "semanticKey": "enemy:478",
-      "currentSourcePath": null,
+      "currentSourcePath": "public/assets/bcu/000003/org/enemy/478/edi_478.png",
       "desiredSourcePath": "public/assets/bcu/000010/org/enemy/478/enemy_icon_478.png",
       "status": "needs-remap",
       "pngValidation": {
@@ -62332,70 +62332,26 @@
     },
     {
       "semanticKey": "unit:355:c",
-      "currentSourcePath": "public/assets/bcu/100800/org/unit/355/c/uni355_c00.png",
-      "desiredSourcePath": "public/assets/bcu/000007/org/unit/355/c/355_c.png",
-      "status": "needs-remap",
+      "currentSourcePath": "public/assets/bcu/000007/org/unit/355/c/uni355_c00.png",
+      "desiredSourcePath": "public/assets/bcu/000007/org/unit/355/c/uni355_c00.png",
+      "status": "ok",
       "pngValidation": {
         "valid": true,
         "reason": null,
-        "width": 512,
-        "height": 256,
-        "sizeBytes": 139760,
+        "width": 128,
+        "height": 128,
+        "sizeBytes": 6080,
         "signature": "89504e470d0a1a0a"
       },
       "candidates": [
         {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/c/uni355_c00.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 6080,
-            "signature": "0b7840b7085af986"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/c/355_c.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 139760,
-            "signature": "0b784237085af806"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/c/edi355_c.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 4969,
-            "signature": "0b784062085af926"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/c/udi355_c.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 16992,
-            "signature": "0b784237085af986"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/000007/org/unit/355/c/355_c.png",
+          "sourcePath": "public/assets/bcu/000007/org/unit/355/c/uni355_c00.png",
           "pngValidation": {
             "valid": true,
             "reason": null,
-            "width": 512,
-            "height": 256,
-            "sizeBytes": 139760,
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 6080,
             "signature": "89504e470d0a1a0a"
           }
         }
@@ -62407,70 +62363,26 @@
     },
     {
       "semanticKey": "unit:355:f",
-      "currentSourcePath": "public/assets/bcu/100800/org/unit/355/f/uni355_f00.png",
-      "desiredSourcePath": "public/assets/bcu/000007/org/unit/355/f/355_f.png",
-      "status": "needs-remap",
+      "currentSourcePath": "public/assets/bcu/000007/org/unit/355/f/uni355_f00.png",
+      "desiredSourcePath": "public/assets/bcu/000007/org/unit/355/f/uni355_f00.png",
+      "status": "ok",
       "pngValidation": {
         "valid": true,
         "reason": null,
-        "width": 512,
-        "height": 256,
-        "sizeBytes": 124640,
+        "width": 128,
+        "height": 128,
+        "sizeBytes": 4192,
         "signature": "89504e470d0a1a0a"
       },
       "candidates": [
         {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/f/uni355_f00.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 4192,
-            "signature": "0b7840b7085af986"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/f/355_f.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 124640,
-            "signature": "0b784237085af806"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/f/edi355_f.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 2775,
-            "signature": "0b784062085af926"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/f/udi355_f.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 9808,
-            "signature": "0b784237085af986"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/000007/org/unit/355/f/355_f.png",
+          "sourcePath": "public/assets/bcu/000007/org/unit/355/f/uni355_f00.png",
           "pngValidation": {
             "valid": true,
             "reason": null,
-            "width": 512,
-            "height": 256,
-            "sizeBytes": 124640,
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 4192,
             "signature": "89504e470d0a1a0a"
           }
         }
@@ -62482,70 +62394,26 @@
     },
     {
       "semanticKey": "unit:355:s",
-      "currentSourcePath": "public/assets/bcu/100800/org/unit/355/s/uni355_s00.png",
-      "desiredSourcePath": "public/assets/bcu/000007/org/unit/355/s/355_s.png",
-      "status": "needs-remap",
+      "currentSourcePath": "public/assets/bcu/000007/org/unit/355/s/uni355_s00.png",
+      "desiredSourcePath": "public/assets/bcu/000007/org/unit/355/s/uni355_s00.png",
+      "status": "ok",
       "pngValidation": {
         "valid": true,
         "reason": null,
-        "width": 512,
-        "height": 440,
-        "sizeBytes": 83504,
+        "width": 128,
+        "height": 128,
+        "sizeBytes": 4080,
         "signature": "89504e470d0a1a0a"
       },
       "candidates": [
         {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/s/uni355_s00.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 4080,
-            "signature": "0b7840b7085af986"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/s/355_s.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 83504,
-            "signature": "0b784237085af8be"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/s/edi355_s.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 21949,
-            "signature": "0b784062085af926"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/100800/org/unit/355/s/udi355_s.png",
-          "pngValidation": {
-            "valid": false,
-            "reason": "bad-signature",
-            "width": null,
-            "height": null,
-            "sizeBytes": 11568,
-            "signature": "0b784237085af986"
-          }
-        },
-        {
-          "sourcePath": "public/assets/bcu/000007/org/unit/355/s/355_s.png",
+          "sourcePath": "public/assets/bcu/000007/org/unit/355/s/uni355_s00.png",
           "pngValidation": {
             "valid": true,
             "reason": null,
-            "width": 512,
-            "height": 440,
-            "sizeBytes": 83504,
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 4080,
             "signature": "89504e470d0a1a0a"
           }
         }

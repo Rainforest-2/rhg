@@ -19,7 +19,7 @@ function inferAggregateIconEntry(actorKey) {
   if (m) {
     const id3 = pad3(Number(m[1]));
     if (!id3) return null;
-    return { key, kind: 'enemy', id: Number(m[1]), id3, bundleRef: { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' }, internalPath: `enemy/${id3}.png`, sourceStatus: 'inferred-aggregate-icon-entry' };
+    return { key, kind: 'enemy', id: Number(m[1]), id3, bundleRef: { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' }, internalPath: `enemy/${Number(m[1])}.png`, sourceStatus: 'inferred-canonical-enemy-icon-entry' };
   }
   m = key.match(/^unit:(\d+):(f|c|s|u)$/);
   if (m) {
@@ -119,6 +119,7 @@ export class SemanticAssetProvider {
     this.actorUiIconUrlCache = new Map();
     this.actorImageUrlCache = new Map();
     this.objectUrls = new Set();
+    this.reportedIconFailures = new Set();
     this.diagnostics = { mode: this.mode, bundleReads: [], rawOnlyReads: [], blockedRawReads: [], bundleErrors: [], missingBundles: [], rawFallbacks: [], failures: [], inferredIconEntries: [], backgroundLookups: [] };
   }
 
@@ -164,7 +165,10 @@ export class SemanticAssetProvider {
   }
   getCastleEntry(key) { return this.indexes.castles?.byKey?.[key] || this.indexes.castles?.byKey?.[`enemyCastle:${key}`] || null; }
   getCoreEntry(key) { return this.indexes.core?.byKey?.[key] || this.indexes.core?.entries?.find((e) => e.key === key) || null; }
-  getIconEntry(actorKey) { return this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || inferAggregateIconEntry(actorKey); }
+  getIconEntry(actorKey) {
+    if (String(actorKey || '').startsWith('enemy:')) return inferAggregateIconEntry(actorKey);
+    return this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || inferAggregateIconEntry(actorKey);
+  }
   getActorIconEntry(actorKey) { return this.getIconEntry(actorKey); }
   getLanguageEntry(key) { return this.indexes.language?.byKey?.[key] || this.indexes.language?.entries?.find((e) => e.key === key) || null; }
 
@@ -245,6 +249,7 @@ export class SemanticAssetProvider {
   async getActorIconUrl(actorKey) { if (this.actorIconUrlCache.has(actorKey)) return this.actorIconUrlCache.get(actorKey); const { bundleRef, archive } = await this.readActorBundle(actorKey); const internalPath = archive.has('icon.png') ? 'icon.png' : (archive.has('image.png') ? 'image.png' : null); if (!internalPath) throw new Error(`Actor bundle has no icon or image: ${actorKey}`); const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png'); this.actorIconUrlCache.set(actorKey, url); return url; }
 
   async readActorIconFallback(actorKey, reason) {
+    if (String(actorKey || '').startsWith('enemy:')) return null;
     const entry = this.getActorEntry(actorKey);
     if (!entry?.bundleRef || !this.hasBundleForKey(actorKey)) return null;
     const archive = await this.archive(entry.bundleRef);
@@ -281,7 +286,18 @@ export class SemanticAssetProvider {
     }
   }
 
-  async getActorUiIconUrl(actorKey) { if (this.actorUiIconUrlCache.has(actorKey)) return this.actorUiIconUrlCache.get(actorKey); try { const { bundleRef, internalPath } = await this.readIconBundle(actorKey); const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png'); this.actorUiIconUrlCache.set(actorKey, url); return url; } catch (error) { this.actorUiIconUrlCache.delete(actorKey); throw error; } }
+  async getActorUiIconUrl(actorKey) {
+    if (this.actorUiIconUrlCache.has(actorKey)) return this.actorUiIconUrlCache.get(actorKey);
+    try {
+      const { bundleRef, internalPath } = await this.readIconBundle(actorKey);
+      const url = await this.createObjectUrl(bundleRef, internalPath, 'image/png');
+      this.actorUiIconUrlCache.set(actorKey, url);
+      return url;
+    } catch (error) {
+      this.actorUiIconUrlCache.delete(actorKey);
+      throw error;
+    }
+  }
   async getActorImageUrl(actorKey) { if (this.actorImageUrlCache.has(actorKey)) return this.actorImageUrlCache.get(actorKey); const { bundleRef } = await this.readActorBundle(actorKey); const url = await this.createObjectUrl(bundleRef, 'image.png', 'image/png'); this.actorImageUrlCache.set(actorKey, url); return url; }
   async readActorText(actorKey, internalPath) { const { bundleRef } = await this.readActorBundle(actorKey); return await this.readTextByBundleRef(bundleRef, internalPath); }
   async readStageCsv(stageKey) { const entry = this.getStageEntry(stageKey); if (!entry?.bundleRef) { this.diagnostics.missingBundles.push({ semanticKey: stageKey, kind: 'stage' }); throw new Error(`Unknown stage semantic key: ${stageKey}`); } return { entry, text: await this.readTextByBundleRef(entry.bundleRef, entry.bundleRef.internalPath), logicalPath: entry.key }; }

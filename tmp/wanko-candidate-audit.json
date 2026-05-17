@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-17T14:10:19.990Z",
+  "outputFiles": [
+    "tmp/wanko-candidate-audit.json",
+    "tmp/wanko-candidate-audit.md"
+  ],
+  "inspectedSources": [
+    "public/assets/bundles/core/core-db.zip:names-jp.json",
+    "public/assets/generated/bcu-actor-index.json",
+    "tmp/enemy-asset-audit.json",
+    "PlayableCharacterRegistry.buildCharacterCatalog()",
+    "error-enemy.json/error-ally.json"
+  ],
+  "candidates": [
+    {
+      "actorKey": "enemy:0",
+      "enemyId": 0,
+      "name": "わんこ",
+      "localizedNames": [
+        "わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-000",
+      "playerActorKey": "enemy:0",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:46",
+      "enemyId": 46,
+      "name": "殺意のわんこ",
+      "localizedNames": [
+        "殺意のわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-046",
+      "playerActorKey": "enemy:46",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:85",
+      "enemyId": 85,
+      "name": "武者わんこ",
+      "localizedNames": [
+        "武者わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-085",
+      "playerActorKey": "enemy:85",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:103",
+      "enemyId": 103,
+      "name": "ゴーストわんこ",
+      "localizedNames": [
+        "ゴーストわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-103",
+      "playerActorKey": "enemy:103",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:111",
+      "enemyId": 111,
+      "name": "豚戦わんこ",
+      "localizedNames": [
+        "豚戦わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-111",
+      "playerActorKey": "enemy:111",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:117",
+      "enemyId": 117,
+      "name": "カベわんこ",
+      "localizedNames": [
+        "カベわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-117",
+      "playerActorKey": "enemy:117",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:120",
+      "enemyId": 120,
+      "name": "お祝いケーキわんこ",
+      "localizedNames": [
+        "お祝いケーキわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-120",
+      "playerActorKey": "enemy:120",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:126",
+      "enemyId": 126,
+      "name": "日の出わんこ",
+      "localizedNames": [
+        "日の出わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-126",
+      "playerActorKey": "enemy:126",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:147",
+      "enemyId": 147,
+      "name": "メタルわんこ",
+      "localizedNames": [
+        "メタルわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-147",
+      "playerActorKey": "enemy:147",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:186",
+      "enemyId": 186,
+      "name": "1億DL記念ケーキわんこ",
+      "localizedNames": [
+        "1億DL記念ケーキわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-186",
+      "playerActorKey": "enemy:186",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:258",
+      "enemyId": 258,
+      "name": "わんこずきんミーニャ",
+      "localizedNames": [
+        "わんこずきんミーニャ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-258",
+      "playerActorKey": "enemy:258",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:262",
+      "enemyId": 262,
+      "name": "やぐらわんこ",
+      "localizedNames": [
+        "やぐらわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-262",
+      "playerActorKey": "enemy:262",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:307",
+      "enemyId": 307,
+      "name": "アイスわんこ",
+      "localizedNames": [
+        "アイスわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-307",
+      "playerActorKey": "enemy:307",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:336",
+      "enemyId": 336,
+      "name": "ゴールデンわんこ",
+      "localizedNames": [
+        "ゴールデンわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-336",
+      "playerActorKey": "enemy:336",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:407",
+      "enemyId": 407,
+      "name": "古代わんこ",
+      "localizedNames": [
+        "古代わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-407",
+      "playerActorKey": "enemy:407",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:478",
+      "enemyId": 478,
+      "name": "ちびケーキわんこ",
+      "localizedNames": [
+        "ちびケーキわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-478",
+      "playerActorKey": "enemy:478",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:539",
+      "enemyId": 539,
+      "name": "チョコわんこ",
+      "localizedNames": [
+        "チョコわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-539",
+      "playerActorKey": "enemy:539",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:603",
+      "enemyId": 603,
+      "name": "野生のわんこ",
+      "localizedNames": [
+        "野生のわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-603",
+      "playerActorKey": "enemy:603",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:608",
+      "enemyId": 608,
+      "name": "ちびわんこ",
+      "localizedNames": [
+        "ちびわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-608",
+      "playerActorKey": "enemy:608",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:672",
+      "enemyId": 672,
+      "name": "ケーキわんこ",
+      "localizedNames": [
+        "ケーキわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-672",
+      "playerActorKey": "enemy:672",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:679",
+      "enemyId": 679,
+      "name": "名賢わんこ",
+      "localizedNames": [
+        "名賢わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-679",
+      "playerActorKey": "enemy:679",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:702",
+      "enemyId": 702,
+      "name": "足軽わんこ",
+      "localizedNames": [
+        "足軽わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-702",
+      "playerActorKey": "enemy:702",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:708",
+      "enemyId": 708,
+      "name": "12周年記念ケーキわんこ",
+      "localizedNames": [
+        "12周年記念ケーキわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-708",
+      "playerActorKey": "enemy:708",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:711",
+      "enemyId": 711,
+      "name": "巳わんこ",
+      "localizedNames": [
+        "巳わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-711",
+      "playerActorKey": "enemy:711",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:736",
+      "enemyId": 736,
+      "name": "南国わんこ",
+      "localizedNames": [
+        "南国わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-736",
+      "playerActorKey": "enemy:736",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:750",
+      "enemyId": 750,
+      "name": "怪人わんこ",
+      "localizedNames": [
+        "怪人わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-750",
+      "playerActorKey": "enemy:750",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:759",
+      "enemyId": 759,
+      "name": "13周年記念ケーキわんこ",
+      "localizedNames": [
+        "13周年記念ケーキわんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-759",
+      "playerActorKey": "enemy:759",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:760",
+      "enemyId": 760,
+      "name": "午わんこ",
+      "localizedNames": [
+        "午わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-760",
+      "playerActorKey": "enemy:760",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    },
+    {
+      "actorKey": "enemy:764",
+      "enemyId": 764,
+      "name": "鬼化わんこ",
+      "localizedNames": [
+        "鬼化わんこ"
+      ],
+      "matchedBy": [
+        "name:わんこ"
+      ],
+      "formationCharacterId": "dog-enemy-764",
+      "playerActorKey": "enemy:764",
+      "hasEnemyAssetSource": true,
+      "hasPlayerMapping": true,
+      "listedInErrorAllowlist": false,
+      "inclusionReason": "localized enemy name matched Wanko-family token: name:わんこ"
+    }
+  ]
+}

@@ -6,8 +6,8 @@ Generated: 1970-01-01T00:00:00.000Z
 | --- | ---: |
 | invalid-png | 54 |
 | missing | 7 |
-| needs-remap | 768 |
-| ok | 2026 |
+| needs-remap | 765 |
+| ok | 2029 |
 
 Enemy icons use valid `enemy_icon_<id3>.png` from discovered packs. Missing enemy icons are omitted from the runtime icon index; no `edi_*.png` or actor image fallback is used.
 Icon PNG validation allows trailing bytes after IEND because several BCU icon PNGs contain extra bytes while retaining a valid PNG image stream.

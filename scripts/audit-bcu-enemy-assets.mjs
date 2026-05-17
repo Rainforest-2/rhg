@@ -1,323 +1,175 @@
-import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
-import { constants as FS } from 'node:fs';
-import { resolveEnemyAsset } from '../js/bcu/BcuPathResolver.js';
+import {
+  ENEMY_ICON_ZIP,
+  REGRESSION_ENEMY_IDS,
+  collectEnemyIds,
+  enemyNameFromCore,
+  enemyRecords,
+  ensureTmp,
+  exists,
+  generateEnemyIconForEntry,
+  loadAllowlistAudit,
+  loadCoreDb,
+  resolveNeutralAnimation,
+  selectedActorFiles
+} from './actor-asset-task-utils.mjs';
+import { readJson, writeJson, writeText, readStoreZipEntries } from './bcu-semantic-utils.mjs';
 
-const TARGET_IDS = [388, 443, 609, 610, 611, 612, 613];
-const ROOT = new URL('../', import.meta.url);
-
-function localPath(path) {
-  return new URL(path.replace(/^\.\//, ''), ROOT);
-}
-
-async function exists(path) {
-  try {
-    await access(localPath(path), FS.F_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function readJson(path, fallback = null) {
-  try {
-    return JSON.parse(await readFile(localPath(path), 'utf8'));
-  } catch {
-    return fallback;
-  }
-}
-
-function pad3(value) {
-  return String(Math.max(0, Math.floor(Number(value) || 0))).padStart(3, '0');
-}
-
-function readU16(view, off) { return view.getUint16(off, true); }
-function readU32(view, off) { return view.getUint32(off, true); }
-
-function parseStoreZip(bytesLike) {
-  const bytes = bytesLike instanceof Uint8Array ? bytesLike : new Uint8Array(bytesLike);
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const files = new Map();
-  let offset = 0;
-  while (offset + 30 <= bytes.length && readU32(view, offset) === 0x04034b50) {
-    const method = readU16(view, offset + 8);
-    const compressedSize = readU32(view, offset + 18);
-    const uncompressedSize = readU32(view, offset + 22);
-    const nameLen = readU16(view, offset + 26);
-    const extraLen = readU16(view, offset + 28);
-    const nameStart = offset + 30;
-    const dataStart = nameStart + nameLen + extraLen;
-    const dataEnd = dataStart + compressedSize;
-    const name = new TextDecoder().decode(bytes.slice(nameStart, nameStart + nameLen));
-    if (method !== 0) throw new Error(`Unsupported ZIP compression method ${method} for ${name}`);
-    if (compressedSize !== uncompressedSize) throw new Error(`Invalid STORE ZIP sizes for ${name}`);
-    files.set(name, bytes.slice(dataStart, dataEnd));
-    offset = dataEnd;
-  }
-  return files;
-}
-
-const zipEntryCache = new Map();
-async function zipHas(bundlePath, internalPath) {
-  if (!bundlePath || !internalPath || !(await exists(bundlePath))) return false;
-  if (!zipEntryCache.has(bundlePath)) {
-    zipEntryCache.set(bundlePath, parseStoreZip(await readFile(localPath(bundlePath))));
-  }
-  return zipEntryCache.get(bundlePath).has(internalPath);
-}
-
-async function readCoreDb(coreIndex) {
-  const direct = await readJson('public/assets/core-db.json', null);
-  if (direct) return direct;
-  const entry = coreIndex?.byKey?.['core:db'] || coreIndex?.entries?.find((e) => e.key === 'core:db');
-  const bundlePath = entry?.bundleRef?.bundlePath;
-  if (!bundlePath || !(await exists(bundlePath))) return null;
-  const archive = parseStoreZip(await readFile(localPath(bundlePath)));
-  const readArchiveJson = (name) => {
-    const bytes = archive.get(name);
-    return bytes ? JSON.parse(new TextDecoder().decode(bytes)) : null;
-  };
-  return {
-    manifestLite: readArchiveJson('manifest-lite.json'),
-    enemies: readArchiveJson('enemies.json'),
-    namesJp: readArchiveJson('names-jp.json'),
-    diagnosticsSummary: readArchiveJson('diagnostics-summary.json')
-  };
-}
-
-function enemyRecords(coreDb) {
-  const out = new Map();
-  for (const record of Object.values(coreDb?.enemies?.enemies || {})) {
-    const id = Number(record?.enemyId ?? record?.id);
-    if (Number.isFinite(id)) out.set(id, record);
-  }
+function countBy(rows, key) {
+  const out = {};
+  for (const row of rows) out[row[key] || 'none'] = (out[row[key] || 'none'] || 0) + 1;
   return out;
 }
 
-function hasName(coreDb, enemyId) {
-  const id3 = pad3(enemyId);
-  const names = coreDb?.namesJp || {};
-  const candidates = [
-    `enemy:${enemyId}`,
-    `enemy:${id3}`,
-    id3,
-    String(enemyId)
-  ];
-  return candidates.some((key) => names?.enemies?.[key] || names?.enemy?.[key] || names?.[key]);
+function selectedRequiredAnimations(files) {
+  const a = files.animations || {};
+  return ['move', 'idle', 'attack', 'kb'].filter((role) => !!a[role]);
 }
 
-function selectedFiles(entry) {
-  return entry?.selected?.files || entry?.sourceCandidates?.find((c) => c.status === 'full')?.files || {};
-}
-
-function animationList(files) {
-  const anim = files?.animations || {};
-  return Object.entries(anim).filter(([, path]) => !!path).map(([role]) => role).sort();
-}
-
-function hasCompleteActorBundleFiles(entry) {
-  const files = selectedFiles(entry);
-  const animations = files?.animations || {};
-  return !!entry?.bundleRef?.bundlePath
-    && !!files.image
-    && !!files.imgcut
-    && !!files.model
-    && !!animations.move
-    && !!animations.idle
-    && !!animations.attack
-    && !!animations.kb;
-}
-
-function hasOnlyToleratedActorWarnings(entry) {
-  const warnings = entry?.warnings || [];
-  return warnings.length > 0 && warnings.every((warning) => warning === 'invalid-actor-image:trailing-bytes');
-}
-
-function isRuntimeToleratedActorEntry(entry) {
-  return entry?.status === 'invalid'
-    && hasCompleteActorBundleFiles(entry)
-    && hasOnlyToleratedActorWarnings(entry);
-}
-
-function rawCandidateFiles(fileList, id3) {
-  return fileList
-    .filter((path) => {
-      const p = String(path);
-      return p.includes(`/org/enemy/${id3}/`) || p.includes(`/${id3}_e`) || p.includes(`/edi_${id3}.png`) || p.includes(`/enemy_icon_${id3}.png`);
-    })
-    .sort();
-}
-
-function assetPresenceFrom(entry, candidates) {
-  const files = selectedFiles(entry);
-  const hasBySuffix = (suffixes) => candidates.some((path) => suffixes.some((suffix) => String(path).endsWith(suffix)));
-  return {
-    hasImage: !!files.image || hasBySuffix([`${entry?.id3 || ''}_e.png`]),
-    hasImgcut: !!files.imgcut || hasBySuffix([`${entry?.id3 || ''}_e.imgcut`]),
-    hasMamodel: !!files.model || hasBySuffix([`${entry?.id3 || ''}_e.mamodel`]),
-    availableAnimations: animationList(files)
-  };
-}
-
-function failureReason({ record, entry, bundleInManifest, bundleFileExists, runtimeBundleUsable, presence, resolved }) {
-  const missing = [];
-  if (!record?.stats && !record?.rawStats?.length) missing.push('stats');
-  if (!entry) missing.push('semantic-actor-entry');
-  if (!presence.hasImage) missing.push('image');
-  if (!presence.hasImgcut) missing.push('imgcut');
-  if (!presence.hasMamodel) missing.push('model');
-  for (const role of ['move', 'idle', 'attack', 'kb']) {
-    if (!presence.availableAnimations.includes(role)) missing.push(role);
-  }
-  if (entry?.status && entry.status !== 'full' && !runtimeBundleUsable) missing.push(`semantic-status-${entry.status}`);
-  if (entry?.bundleRef && !bundleInManifest && !runtimeBundleUsable) missing.push(bundleFileExists ? 'bundle-not-in-manifest' : 'bundle-file-missing');
-  if (!resolved) missing.push('current-resolver-null');
-  return missing.length ? missing.join(', ') : null;
-}
-
-function collectEnemyIds({ manifest, actorIndex, records }) {
-  const ids = new Set(TARGET_IDS);
-  for (const id of manifest?.indexes?.enemyIds || []) {
-    const n = Number(id);
-    if (Number.isFinite(n)) ids.add(n);
-  }
-  for (const entry of actorIndex?.entries || []) {
-    if (entry?.kind === 'enemy' && Number.isFinite(Number(entry.id))) ids.add(Number(entry.id));
-  }
-  for (const id of records.keys()) ids.add(id);
-  return [...ids].sort((a, b) => a - b);
+function classifyAssetFailure(row) {
+  if (row.isListedInErrorAllowlist) return 'expected-missing';
+  if (!row.semanticActorEntry) return 'semantic-actor-missing';
+  if (!row.rawImageExists && !row.actorBundleHasImage) return 'image-missing';
+  if (!row.rawImgcutExists && !row.actorBundleHasImgcut) return 'imgcut-missing';
+  if (!row.rawMamodelExists && !row.actorBundleHasModel) return 'model-missing';
+  if (!row.rawDefaultOrNeutralAnimationExists && !row.actorBundleHasDefaultOrNeutralAnimation) return 'neutral-animation-missing';
+  if (row.actorBundlePath && !row.actorBundleExists) return 'actor-bundle-missing';
+  if (row.actorBundleExists && !row.actorBundleInManifest) return 'actor-bundle-not-in-manifest';
+  return 'ok';
 }
 
 function renderMarkdown(report) {
-  const targetRows = report.targets.map((r) => `| ${r.enemyId} | ${r.hasStats ? 'yes' : 'no'} | ${r.hasSemanticActorEntry ? r.semanticStatus : 'no'} | ${r.bundleRef ? 'yes' : 'no'} | ${r.bundleInManifest ? 'yes' : 'no'} | ${r.runtimeBundleUsable ? 'yes' : 'no'} | ${r.hasUiIcon ? r.uiIconSource : 'no'} | ${r.resolvedByCurrentResolver ? 'yes' : 'no'} | ${r.failureReason || 'ok'} |`).join('\n');
-  const summaryRows = Object.entries(report.summary).map(([key, value]) => `- ${key}: ${value}`).join('\n');
-  const missingRows = report.problemEnemies.slice(0, 80).map((r) => `| ${r.enemyId} | ${r.semanticStatus || 'none'} | ${r.failureReason || ''} |`).join('\n');
-  return `# BCU Enemy Asset Audit
+  const byAsset = Object.entries(report.summary.byActorAssetFailureClass).map(([k, v]) => `- ${k}: ${v}`).join('\n');
+  const byIcon = Object.entries(report.summary.byIconGenerationFailureClass).map(([k, v]) => `- ${k}: ${v}`).join('\n');
+  const byMethod = Object.entries(report.summary.byIconCompositionMethod).map(([k, v]) => `- ${k}: ${v}`).join('\n');
+  const bad = report.enemies.filter((r) => !r.isListedInErrorAllowlist && r.iconGenerationFailureClass && r.iconGenerationFailureClass !== 'ok');
+  const degraded = report.enemies.filter((r) => r.iconCompositionMethod === 'single-cut-degraded-fallback');
+  const targets = report.enemies.filter((r) => REGRESSION_ENEMY_IDS.includes(r.enemyId));
+  return `# Enemy Asset Audit
 
 Generated: ${report.generatedAt}
 
-## Summary
+## Actor Asset Failure Class
 
-${summaryRows}
+${byAsset || '- none'}
 
-## Target Enemies
+## Icon Generation Failure Class
 
-| enemyId | stats | semantic | bundleRef | bundle manifest | runtime usable | UI icon | current resolver | failure |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-${targetRows}
+${byIcon || '- none'}
 
-## Problem Enemies (first 80)
+## Icon Composition Method
 
-| enemyId | semantic | failure |
-| --- | --- | --- |
-${missingRows}
+${byMethod || '- none'}
+
+## Non-Allowlisted Icon Failures
+
+${bad.map((r) => `- enemy:${r.enemyId}: ${r.iconGenerationFailureClass}; ${r.iconGenerationFailureReason}`).join('\n') || '- none'}
+
+## Degraded Single-Cut Fallback
+
+${degraded.map((r) => `- enemy:${r.enemyId}: ${r.iconGenerationFailureReason || r.iconCompositionMethod}`).join('\n') || '- none'}
+
+## Regression Targets
+
+| enemy | name | asset failure | icon method | icon failure | regenerated |
+| --- | --- | --- | --- | --- | --- |
+${targets.map((r) => `| ${r.enemyId} | ${r.name || ''} | ${r.actorAssetFailureClass} | ${r.iconCompositionMethod || '-'} | ${r.iconGenerationFailureClass || 'ok'} | ${r.regeneratedEnemyZipEntryExists ? 'yes' : 'no'} |`).join('\n')}
 `;
 }
 
-await mkdir(localPath('tmp'), { recursive: true });
-
-const manifest = await readJson('public/assets/bcu-manifest.json', { files: [], indexes: {} });
-const actorIndex = await readJson('public/assets/generated/bcu-actor-index.json', { entries: [], byKey: {} });
-const iconIndex = await readJson('public/assets/generated/bcu-icon-index.json', { entries: [], byKey: {} });
-const bundleManifest = await readJson('public/assets/generated/bcu-bundle-manifest.json', { bundles: {} });
-const coreIndex = await readJson('public/assets/generated/bcu-core-index.json', { entries: [], byKey: {} });
-const coreDb = await readCoreDb(coreIndex);
+await ensureTmp();
+const [coreDb, actorIndex, bundleManifest, allowlist] = await Promise.all([
+  loadCoreDb(),
+  readJson('public/assets/generated/bcu-actor-index.json', { entries: [], byKey: {} }),
+  readJson('public/assets/generated/bcu-bundle-manifest.json', { bundles: {} }),
+  loadAllowlistAudit()
+]);
 const records = enemyRecords(coreDb);
-const files = new Set([...(manifest.files || []), ...(coreDb?.manifestLite?.files || [])]);
-const allFiles = [...files];
-const enemyIds = collectEnemyIds({ manifest, actorIndex, records });
+const allowEnemyIds = new Set(allowlist.enemyIds);
+let currentZip = new Map();
+try { currentZip = await readStoreZipEntries(ENEMY_ICON_ZIP); } catch {}
+const generationReport = await readJson('tmp/generated-enemy-icons-report.json', null);
+const generatedById = new Map((generationReport?.enemies || []).map((r) => [Number(r.enemyId), r]));
+const enemyIds = await collectEnemyIds({ coreDb, actorIndex });
 
-const enemies = await Promise.all(enemyIds.map(async (enemyId) => {
-  const id3 = pad3(enemyId);
-  const semanticKey = `enemy:${enemyId}`;
-  const entry = actorIndex.byKey?.[semanticKey] || actorIndex.entries?.find((e) => e.key === semanticKey) || null;
-  const record = records.get(enemyId) || null;
-  const candidateAssetFiles = [...new Set([
-    ...rawCandidateFiles(allFiles, id3),
-    ...(entry?.diagnostics?.sourceRawPaths || []),
-    ...(entry?.sourceCandidates || []).flatMap((c) => c?.diagnostics?.sourceRawPaths || [])
-  ])].sort();
-  const currentResolverAsset = resolveEnemyAsset(files, enemyId);
-  const presence = assetPresenceFrom(entry, candidateAssetFiles);
-  const bundleKey = entry?.bundleRef?.bundleKey || `actor:enemy:${enemyId}`;
-  const bundleInManifest = !!bundleManifest.bundles?.[bundleKey];
-  const bundleFileExists = entry?.bundleRef?.bundlePath ? await exists(entry.bundleRef.bundlePath) : false;
-  const runtimeTolerated = isRuntimeToleratedActorEntry(entry);
-  const runtimeBundleUsable = !!(entry?.status === 'full' && bundleInManifest) || !!(runtimeTolerated && bundleFileExists);
-  const explicitIconEntry = iconIndex.byKey?.[semanticKey] || iconIndex.entries?.find((e) => e.key === semanticKey) || null;
-  const aggregateIconPath = `enemy/${id3}.png`;
-  const explicitIconOk = explicitIconEntry?.bundleRef?.bundlePath
-    ? await zipHas(explicitIconEntry.bundleRef.bundlePath, explicitIconEntry.internalPath || explicitIconEntry.bundleRef.internalPath)
-    : false;
-  const aggregateIconOk = explicitIconEntry ? false : await zipHas('public/assets/bundles/icon/enemy.zip', aggregateIconPath);
-  const actorIconOk = runtimeBundleUsable && (await zipHas(entry?.bundleRef?.bundlePath, 'icon.png') || await zipHas(entry?.bundleRef?.bundlePath, 'image.png'));
-  const hasUiIcon = explicitIconOk || aggregateIconOk || actorIconOk;
-  const out = {
+const enemies = [];
+for (const enemyId of enemyIds) {
+  const id3 = String(enemyId).padStart(3, '0');
+  const actorKey = `enemy:${enemyId}`;
+  const entry = actorIndex.byKey?.[actorKey] || actorIndex.entries?.find((e) => e.key === actorKey) || null;
+  const files = selectedActorFiles(entry);
+  const neutral = resolveNeutralAnimation(files);
+  const bundlePath = entry?.bundleRef?.bundlePath || `public/assets/bundles/actor/enemy/${id3}.zip`;
+  const actorBundleExists = await exists(bundlePath);
+  let bundleZip = new Map();
+  if (actorBundleExists) {
+    try { bundleZip = await readStoreZipEntries(bundlePath); } catch {}
+  }
+  const dryGen = generatedById.get(enemyId) || await generateEnemyIconForEntry({ enemyId, entry, allowlisted: allowEnemyIds.has(enemyId) });
+  const currentPath = `enemy/${enemyId}.png`;
+  const row = {
     enemyId,
+    actorKey,
     id3,
-    hasStats: !!(record?.stats || record?.rawStats?.length),
-    hasName: hasName(coreDb, enemyId) || !!record?.name?.value,
-    hasSemanticActorEntry: !!entry,
-    semanticKey,
+    name: enemyNameFromCore(coreDb, enemyId),
+    hasStats: !!(records.get(enemyId)?.stats || records.get(enemyId)?.rawStats?.length),
+    hasName: !!enemyNameFromCore(coreDb, enemyId),
+    isListedInErrorAllowlist: allowEnemyIds.has(enemyId),
+    rawActorDir: files.image ? files.image.split('/').slice(0, -1).join('/') : null,
+    rawImagePath: files.image || null,
+    rawImgcutPath: files.imgcut || null,
+    rawMamodelPath: files.model || null,
+    rawDefaultMaanimPath: null,
+    rawMoveMaanimPath: files.animations?.move || null,
+    rawIdleMaanimPath: files.animations?.idle || null,
+    rawRequiredAnimations: selectedRequiredAnimations(files),
+    rawImageExists: files.image ? await exists(files.image) : false,
+    rawImgcutExists: files.imgcut ? await exists(files.imgcut) : false,
+    rawMamodelExists: files.model ? await exists(files.model) : false,
+    rawDefaultOrNeutralAnimationExists: neutral?.path ? await exists(neutral.path) : false,
+    rawRequiredAnimationsPresent: ['move', 'idle', 'attack', 'kb'].every((role) => !!files.animations?.[role]),
+    actorBundlePath: bundlePath,
+    actorBundleExists,
+    actorBundleInManifest: !!bundleManifest.bundles?.[entry?.bundleRef?.bundleKey || `actor:enemy:${enemyId}`],
+    actorBundleReadable: actorBundleExists && bundleZip.size > 0,
+    actorBundleHasImage: bundleZip.has('image.png'),
+    actorBundleHasImgcut: bundleZip.has('imgcut.imgcut'),
+    actorBundleHasModel: bundleZip.has('model.mamodel'),
+    actorBundleHasDefaultOrNeutralAnimation: bundleZip.has('idle.maanim') || bundleZip.has('move.maanim'),
+    actorBundleRequiredAnimationsPresent: ['move.maanim', 'idle.maanim', 'attack.maanim', 'kb.maanim'].every((name) => bundleZip.has(name)),
+    semanticActorEntry: entry ? { key: entry.key, status: entry.status, bundleRef: entry.bundleRef } : null,
     semanticStatus: entry?.status || null,
-    bundleRef: entry?.bundleRef || null,
-    bundleInManifest,
-    bundleFileExists,
-    runtimeTolerated,
-    runtimeBundleUsable,
-    hasUiIcon,
-    uiIconSource: explicitIconOk ? 'icon-index'
-      : aggregateIconOk ? 'inferred-aggregate-icon'
-        : actorIconOk ? 'actor-bundle-icon-fallback'
-          : null,
-    ...presence,
-    resolvedByCurrentResolver: !!currentResolverAsset,
-    currentResolverAsset,
-    candidateAssetFiles,
-    sourceCandidates: entry?.sourceCandidates || [],
-    warnings: entry?.warnings || [],
-    coreRecordAsset: record?.asset || null,
-    failureReason: null
+    runtimeAssetResolvable: !!entry?.bundleRef && actorBundleExists,
+    currentEnemyZipEntry: currentPath,
+    currentEnemyZipEntryExists: currentZip.has(currentPath),
+    regeneratedEnemyZipEntry: currentPath,
+    regeneratedEnemyZipEntryExpected: dryGen.status === 'generated',
+    regeneratedEnemyZipEntryExists: dryGen.status === 'generated',
+    iconGenerationSource: dryGen.iconGenerationSource || null,
+    iconGenerationPossible: dryGen.status === 'generated',
+    iconCompositionMethod: dryGen.compositionMethod || null,
+    iconGenerationFailureClass: dryGen.status === 'generated' ? 'ok' : (dryGen.failureClass || dryGen.status),
+    iconGenerationFailureReason: dryGen.failureReason || dryGen.fallbackReason || null,
+    actorAssetFailureClass: null,
+    actorAssetFailureReason: null
   };
-  out.failureReason = failureReason({ record, entry, bundleInManifest, bundleFileExists, runtimeBundleUsable, presence, resolved: currentResolverAsset });
-  if (!hasUiIcon) out.failureReason = [out.failureReason, 'ui-icon-missing'].filter(Boolean).join(', ');
-  return out;
-}));
+  row.actorAssetFailureClass = classifyAssetFailure(row);
+  row.actorAssetFailureReason = row.actorAssetFailureClass === 'ok' ? null : row.actorAssetFailureClass;
+  enemies.push(row);
+}
 
-const problemEnemies = enemies.filter((r) => r.failureReason);
 const report = {
+  schemaVersion: 1,
   generatedAt: new Date().toISOString(),
-  sources: {
-    manifestFiles: manifest.files?.length || 0,
-    coreDb: !!coreDb,
-    actorIndexEntries: actorIndex.entries?.length || 0,
-    bundleManifestEntries: Object.keys(bundleManifest.bundles || {}).length
-  },
+  outputFiles: ['tmp/enemy-asset-audit.json', 'tmp/enemy-asset-audit.md'],
   summary: {
-    enemiesAudited: enemies.length,
-    targetEnemies: TARGET_IDS.length,
-    missingStats: enemies.filter((r) => !r.hasStats).length,
-    missingSemanticActorEntry: enemies.filter((r) => !r.hasSemanticActorEntry).length,
-    semanticNotFull: enemies.filter((r) => r.hasSemanticActorEntry && r.semanticStatus !== 'full').length,
-    runtimeTolerated: enemies.filter((r) => r.runtimeTolerated).length,
-    runtimeBundleUsable: enemies.filter((r) => r.runtimeBundleUsable).length,
-    bundleRefNotInManifest: enemies.filter((r) => r.bundleRef && !r.bundleInManifest).length,
-    currentResolverNull: enemies.filter((r) => !r.resolvedByCurrentResolver).length,
-    missingUiIcon: enemies.filter((r) => !r.hasUiIcon).length,
-    missingImage: enemies.filter((r) => !r.hasImage).length,
-    missingImgcut: enemies.filter((r) => !r.hasImgcut).length,
-    missingModel: enemies.filter((r) => !r.hasMamodel).length,
-    missingRequiredAnimation: enemies.filter((r) => ['move', 'idle', 'attack', 'kb'].some((role) => !r.availableAnimations.includes(role))).length
+    totalEnemies: enemies.length,
+    byActorAssetFailureClass: countBy(enemies, 'actorAssetFailureClass'),
+    byIconGenerationFailureClass: countBy(enemies, 'iconGenerationFailureClass'),
+    byIconCompositionMethod: countBy(enemies, 'iconCompositionMethod')
   },
-  targets: TARGET_IDS.map((id) => enemies.find((r) => r.enemyId === id)).filter(Boolean),
-  problemEnemies,
   enemies
 };
 
-await writeFile(localPath('tmp/enemy-asset-audit.json'), `${JSON.stringify(report, null, 2)}\n`);
-await writeFile(localPath('tmp/enemy-asset-audit.md'), renderMarkdown(report));
-
-console.log(`Wrote tmp/enemy-asset-audit.json and tmp/enemy-asset-audit.md`);
-for (const row of report.targets) {
-  console.log(`enemy ${row.enemyId}: semantic=${row.semanticStatus || 'none'} bundleInManifest=${row.bundleInManifest} resolver=${row.resolvedByCurrentResolver} failure=${row.failureReason || 'ok'}`);
-}
-console.log(`problemEnemies=${report.problemEnemies.length}`);
+await writeJson('tmp/enemy-asset-audit.json', report);
+await writeText('tmp/enemy-asset-audit.md', renderMarkdown(report));
+console.log(`enemy asset audit: enemies=${enemies.length} iconFailures=${enemies.filter((r) => r.iconGenerationFailureClass !== 'ok').length} degraded=${enemies.filter((r) => r.iconCompositionMethod === 'single-cut-degraded-fallback').length}`);

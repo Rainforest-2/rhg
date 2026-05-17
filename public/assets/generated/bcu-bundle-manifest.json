@@ -3324,6 +3324,14 @@
       "sizeBytes": 68675,
       "hash": "3d91f0d860dc3ed294ddb855d03e0cb14304c5bfa9bd056eaad8d4a189dc90dd"
     },
+    "actor:enemy:415": {
+      "kind": "actor",
+      "key": "enemy:415",
+      "bundlePath": "public/assets/bundles/actor/enemy/415.zip",
+      "status": "full",
+      "sizeBytes": 82086,
+      "hash": "beede2d1a7ae89ecb038dd443303cff864d216b7bdf24fd8772967286768a3c7"
+    },
     "actor:enemy:416": {
       "kind": "actor",
       "key": "enemy:416",
@@ -3540,6 +3548,22 @@
       "sizeBytes": 39595,
       "hash": "1ff94822ae2471aa94cc0910e4e87a217aac782e4dc1736928f501b8790e44ca"
     },
+    "actor:enemy:443": {
+      "kind": "actor",
+      "key": "enemy:443",
+      "bundlePath": "public/assets/bundles/actor/enemy/443.zip",
+      "status": "full",
+      "sizeBytes": 114606,
+      "hash": "366bff36b2344f9458ecec4b594a9c4dce9cc2b037694cc88ad4b65248d535d1"
+    },
+    "actor:enemy:444": {
+      "kind": "actor",
+      "key": "enemy:444",
+      "bundlePath": "public/assets/bundles/actor/enemy/444.zip",
+      "status": "full",
+      "sizeBytes": 57404,
+      "hash": "228191c987acb9528344213f3dd7d640466412e63f6da530d5f7f68c5c0ba63c"
+    },
     "actor:enemy:445": {
       "kind": "actor",
       "key": "enemy:445",
@@ -3569,8 +3593,24 @@
       "key": "enemy:448",
       "bundlePath": "public/assets/bundles/actor/enemy/448.zip",
       "status": "full",
-      "sizeBytes": 42030,
-      "hash": "206f640921472260e0111c8b949830d77e7c1ca6e13ad2ddd60eed5a48921322"
+      "sizeBytes": 54375,
+      "hash": "890e1d6f402e9fe98ab5b015278cffe950fa95ccae83561f17fe3b63610ad3b4"
+    },
+    "actor:enemy:449": {
+      "kind": "actor",
+      "key": "enemy:449",
+      "bundlePath": "public/assets/bundles/actor/enemy/449.zip",
+      "status": "full",
+      "sizeBytes": 30635,
+      "hash": "fdc9a24100a07a8150bb0af8560d082a0671815e3dcf0e845a79d9613723dc00"
+    },
+    "actor:enemy:450": {
+      "kind": "actor",
+      "key": "enemy:450",
+      "bundlePath": "public/assets/bundles/actor/enemy/450.zip",
+      "status": "full",
+      "sizeBytes": 112772,
+      "hash": "9b61deff367837d628d777a660565a4b47c7a20a5e6248777d98a9baeb1de860"
     },
     "actor:enemy:451": {
       "kind": "actor",
@@ -3771,6 +3811,30 @@
       "status": "full",
       "sizeBytes": 46181,
       "hash": "c2d9bb6e6b0da7e7ef4443f05a4c173e33f6356c65fecb673752b2104d9fe3d9"
+    },
+    "actor:enemy:476": {
+      "kind": "actor",
+      "key": "enemy:476",
+      "bundlePath": "public/assets/bundles/actor/enemy/476.zip",
+      "status": "full",
+      "sizeBytes": 161829,
+      "hash": "f447ad5980c887b6b8f86a569ce27f59fde7d78efd4ca45e0c7337d53d1439b4"
+    },
+    "actor:enemy:477": {
+      "kind": "actor",
+      "key": "enemy:477",
+      "bundlePath": "public/assets/bundles/actor/enemy/477.zip",
+      "status": "full",
+      "sizeBytes": 73936,
+      "hash": "a16d54e97d0eaf391f43211042f9a14c2792da87d3aa1147a69edf849c9f45f3"
+    },
+    "actor:enemy:478": {
+      "kind": "actor",
+      "key": "enemy:478",
+      "bundlePath": "public/assets/bundles/actor/enemy/478.zip",
+      "status": "full",
+      "sizeBytes": 42735,
+      "hash": "4077adf34ad51a90b898fe4ad13b65a5b3372c9dda1abf119dc1d4c0f83e4b0b"
     },
     "actor:enemy:479": {
       "kind": "actor",
@@ -10100,6 +10164,22 @@
       "sizeBytes": 126318,
       "hash": "5ffe7eb2e91ab8dc31e97e6e137e68da59595d32810a03575cfead14fae3b3fa"
     },
+    "actor:unit:182:c": {
+      "kind": "actor",
+      "key": "unit:182:c",
+      "bundlePath": "public/assets/bundles/actor/unit/182-c.zip",
+      "status": "full",
+      "sizeBytes": 128395,
+      "hash": "853c67112c9be2279be90fd5830c75a6e16f56c872bdc698eac2ee7e60cf1813"
+    },
+    "actor:unit:182:f": {
+      "kind": "actor",
+      "key": "unit:182:f",
+      "bundlePath": "public/assets/bundles/actor/unit/182-f.zip",
+      "status": "full",
+      "sizeBytes": 90959,
+      "hash": "71857baea0fab737d341a4ceb457e7a0bd7a16948aae764cf888522084e9c64d"
+    },
     "actor:unit:183:c": {
       "kind": "actor",
       "key": "unit:183:c",
@@ -10187,6 +10267,14 @@
       "status": "full",
       "sizeBytes": 189426,
       "hash": "73cd875ca174ef571b55093f9809feee31007627ea580026dec3323e5eb4d7b8"
+    },
+    "actor:unit:187:f": {
+      "kind": "actor",
+      "key": "unit:187:f",
+      "bundlePath": "public/assets/bundles/actor/unit/187-f.zip",
+      "status": "full",
+      "sizeBytes": 158588,
+      "hash": "1df800ecec6c30e51d4a031cdab824db9118df82b7b091529248a18cc7a76375"
     },
     "actor:unit:187:s": {
       "kind": "actor",
@@ -11708,6 +11796,14 @@
       "sizeBytes": 43680,
       "hash": "48679b472494eb3123deb56727f007722025543673731048cc2178b030826891"
     },
+    "actor:unit:260:s": {
+      "kind": "actor",
+      "key": "unit:260:s",
+      "bundlePath": "public/assets/bundles/actor/unit/260-s.zip",
+      "status": "full",
+      "sizeBytes": 86711,
+      "hash": "ae9b9e67ae60b9f110ae98c39f0dce4b384c04afcdef3e6e0e77de6bc5853fd4"
+    },
     "actor:unit:261:c": {
       "kind": "actor",
       "key": "unit:261:c",
@@ -11828,6 +11924,14 @@
       "sizeBytes": 72348,
       "hash": "ab2575114ace0e4b6ebafc3831a66a7049cf00c052e4714af2a56560d495b7cd"
     },
+    "actor:unit:267:s": {
+      "kind": "actor",
+      "key": "unit:267:s",
+      "bundlePath": "public/assets/bundles/actor/unit/267-s.zip",
+      "status": "full",
+      "sizeBytes": 78349,
+      "hash": "a1f40aa1b40267b88ec1e1b81eef4e4c96689cebf2e4225410b5b4538165a391"
+    },
     "actor:unit:268:c": {
       "kind": "actor",
       "key": "unit:268:c",
@@ -11939,6 +12043,30 @@
       "status": "full",
       "sizeBytes": 398023,
       "hash": "4b1f1ebd2d6dd266415338456a629362829a76c9887fcae1873d6e3890ef200b"
+    },
+    "actor:unit:273:c": {
+      "kind": "actor",
+      "key": "unit:273:c",
+      "bundlePath": "public/assets/bundles/actor/unit/273-c.zip",
+      "status": "full",
+      "sizeBytes": 133724,
+      "hash": "238fc3a15456fe45934d7253b73cf453781861e26d9c573cdb08121794d589e9"
+    },
+    "actor:unit:273:f": {
+      "kind": "actor",
+      "key": "unit:273:f",
+      "bundlePath": "public/assets/bundles/actor/unit/273-f.zip",
+      "status": "full",
+      "sizeBytes": 118251,
+      "hash": "8f88ff12fd91084b641f3522ba3876181a99bdaeff5df138afa94a92aadc950a"
+    },
+    "actor:unit:273:s": {
+      "kind": "actor",
+      "key": "unit:273:s",
+      "bundlePath": "public/assets/bundles/actor/unit/273-s.zip",
+      "status": "full",
+      "sizeBytes": 86038,
+      "hash": "a039e4fd6a7fc82983519544cdf4eb3b13c2a8de40e9164975f7e4dee2eecd10"
     },
     "actor:unit:274:c": {
       "kind": "actor",
@@ -12516,6 +12644,30 @@
       "sizeBytes": 41282,
       "hash": "256a97761966c32c645bfc3ea58b6b6544c00a882f7f8d8d4937aa05fb30f9d9"
     },
+    "actor:unit:304:c": {
+      "kind": "actor",
+      "key": "unit:304:c",
+      "bundlePath": "public/assets/bundles/actor/unit/304-c.zip",
+      "status": "full",
+      "sizeBytes": 275562,
+      "hash": "326e478bbb6249549a2446063774e103ab361873307c43859129496f5fe74703"
+    },
+    "actor:unit:304:f": {
+      "kind": "actor",
+      "key": "unit:304:f",
+      "bundlePath": "public/assets/bundles/actor/unit/304-f.zip",
+      "status": "full",
+      "sizeBytes": 159053,
+      "hash": "257d50839af41b853265c79ade4cd232ad73ef6b6e93204f99aa0a4849ee03e8"
+    },
+    "actor:unit:304:s": {
+      "kind": "actor",
+      "key": "unit:304:s",
+      "bundlePath": "public/assets/bundles/actor/unit/304-s.zip",
+      "status": "full",
+      "sizeBytes": 217720,
+      "hash": "3051cd6f71930731d9d320119d048a70953104f1e97556eacd5b4e1f3f5961c9"
+    },
     "actor:unit:304:u": {
       "kind": "actor",
       "key": "unit:304:u",
@@ -12524,6 +12676,30 @@
       "sizeBytes": 267097,
       "hash": "5b219b50c5fa72de480601b5ad36c6bf1e11677572648853a685f395694e0f5d"
     },
+    "actor:unit:305:c": {
+      "kind": "actor",
+      "key": "unit:305:c",
+      "bundlePath": "public/assets/bundles/actor/unit/305-c.zip",
+      "status": "full",
+      "sizeBytes": 261848,
+      "hash": "59c8e050ec248ec6db9df54564581b028478bf86baf7eed4092ba7554af82852"
+    },
+    "actor:unit:305:f": {
+      "kind": "actor",
+      "key": "unit:305:f",
+      "bundlePath": "public/assets/bundles/actor/unit/305-f.zip",
+      "status": "full",
+      "sizeBytes": 156472,
+      "hash": "e0537ee1ba7e2e3082d7ae04a8955858728e772b81eb3693eabffdf236417847"
+    },
+    "actor:unit:305:s": {
+      "kind": "actor",
+      "key": "unit:305:s",
+      "bundlePath": "public/assets/bundles/actor/unit/305-s.zip",
+      "status": "full",
+      "sizeBytes": 190076,
+      "hash": "36ae4d3291199b04990fed69a139602ec6f9d1fea67d576c737432648235f8f6"
+    },
     "actor:unit:305:u": {
       "kind": "actor",
       "key": "unit:305:u",
@@ -12531,6 +12707,30 @@
       "status": "full",
       "sizeBytes": 218362,
       "hash": "7d4f0c31f73c52ebf96f7179bbb25b5f7711f5dbcd6c2cf2b4e5319917c33328"
+    },
+    "actor:unit:306:c": {
+      "kind": "actor",
+      "key": "unit:306:c",
+      "bundlePath": "public/assets/bundles/actor/unit/306-c.zip",
+      "status": "full",
+      "sizeBytes": 291461,
+      "hash": "2ca40c5d2b06aae7be764ac5943e99f888ab99df70d5c29a264bd6837c10846c"
+    },
+    "actor:unit:306:f": {
+      "kind": "actor",
+      "key": "unit:306:f",
+      "bundlePath": "public/assets/bundles/actor/unit/306-f.zip",
+      "status": "full",
+      "sizeBytes": 166704,
+      "hash": "323b0d116ee164c08bd85345f0beedabe8fd08d935286f90d7cd0189ee42efdd"
+    },
+    "actor:unit:306:s": {
+      "kind": "actor",
+      "key": "unit:306:s",
+      "bundlePath": "public/assets/bundles/actor/unit/306-s.zip",
+      "status": "full",
+      "sizeBytes": 163407,
+      "hash": "5a4f6e098780017c8c30702688a7bc1d1724fdfd63b9de6ebdd014627f140f90"
     },
     "actor:unit:306:u": {
       "kind": "actor",
@@ -13108,6 +13308,46 @@
       "sizeBytes": 176824,
       "hash": "bf7ce465a54438369ec38ff7de0e6448f80f1e4a405fa751d2bda7ff5a73c969"
     },
+    "actor:unit:334:c": {
+      "kind": "actor",
+      "key": "unit:334:c",
+      "bundlePath": "public/assets/bundles/actor/unit/334-c.zip",
+      "status": "full",
+      "sizeBytes": 259037,
+      "hash": "c6f460256b23928a5a3faca48fac8841ec7d2b0a5ec41c8f3932d660ea6688ac"
+    },
+    "actor:unit:334:f": {
+      "kind": "actor",
+      "key": "unit:334:f",
+      "bundlePath": "public/assets/bundles/actor/unit/334-f.zip",
+      "status": "full",
+      "sizeBytes": 189745,
+      "hash": "60fb09975e8f4bba8a4688a8eb387d4e8ed41411bd40121fa25db6fe4604f9bb"
+    },
+    "actor:unit:334:s": {
+      "kind": "actor",
+      "key": "unit:334:s",
+      "bundlePath": "public/assets/bundles/actor/unit/334-s.zip",
+      "status": "full",
+      "sizeBytes": 312701,
+      "hash": "2d3448988beeb8520a7bfa94e7c7954e7b23f3463f27ac705de584750b8230e3"
+    },
+    "actor:unit:335:c": {
+      "kind": "actor",
+      "key": "unit:335:c",
+      "bundlePath": "public/assets/bundles/actor/unit/335-c.zip",
+      "status": "full",
+      "sizeBytes": 283197,
+      "hash": "81c7d09792d3467c6aa48d58be0e06b474b18d3adaab9440a8cc3d771477d7ac"
+    },
+    "actor:unit:335:f": {
+      "kind": "actor",
+      "key": "unit:335:f",
+      "bundlePath": "public/assets/bundles/actor/unit/335-f.zip",
+      "status": "full",
+      "sizeBytes": 175536,
+      "hash": "9be86a6e3e03b816f125773a3fdee8c9a22ab5cfba8fa0382e1e51c119b7094d"
+    },
     "actor:unit:335:s": {
       "kind": "actor",
       "key": "unit:335:s",
@@ -13115,6 +13355,22 @@
       "status": "full",
       "sizeBytes": 431448,
       "hash": "d4b98343dcf0b4cb0c4b4032e167e6a02ee4f2948dbd42df7a83ba7149fb1760"
+    },
+    "actor:unit:336:c": {
+      "kind": "actor",
+      "key": "unit:336:c",
+      "bundlePath": "public/assets/bundles/actor/unit/336-c.zip",
+      "status": "full",
+      "sizeBytes": 292428,
+      "hash": "1c431d3145f6503ec6ad34d3e532da2fb109d64dbcf1de2283e17f1a2d68ceff"
+    },
+    "actor:unit:336:f": {
+      "kind": "actor",
+      "key": "unit:336:f",
+      "bundlePath": "public/assets/bundles/actor/unit/336-f.zip",
+      "status": "full",
+      "sizeBytes": 197566,
+      "hash": "3317d29b48a87039b88be1bd85add604b08e626132a2f9194773175e0e0afea2"
     },
     "actor:unit:336:s": {
       "kind": "actor",
@@ -13436,6 +13692,22 @@
       "sizeBytes": 155047,
       "hash": "770ae9ed894dd0d6b22d07277ce416b65fdb311a9502cd534bb5288d97b65a70"
     },
+    "actor:unit:353:c": {
+      "kind": "actor",
+      "key": "unit:353:c",
+      "bundlePath": "public/assets/bundles/actor/unit/353-c.zip",
+      "status": "full",
+      "sizeBytes": 161726,
+      "hash": "6062e5361d012c87dfaf719958c0ecc5ab77d9d6b5ada7e133f7d7c405558efe"
+    },
+    "actor:unit:353:f": {
+      "kind": "actor",
+      "key": "unit:353:f",
+      "bundlePath": "public/assets/bundles/actor/unit/353-f.zip",
+      "status": "full",
+      "sizeBytes": 160615,
+      "hash": "a8ef924ef6855f8de69beb4ee2b857c63cdc21fe854b772faaa0c63f1602db1c"
+    },
     "actor:unit:353:s": {
       "kind": "actor",
       "key": "unit:353:s",
@@ -13460,6 +13732,30 @@
       "sizeBytes": 156216,
       "hash": "cd2a6238c00ecc39707c13941457c5be91a6740c5b7bee28895758542a789eba"
     },
+    "actor:unit:355:c": {
+      "kind": "actor",
+      "key": "unit:355:c",
+      "bundlePath": "public/assets/bundles/actor/unit/355-c.zip",
+      "status": "full",
+      "sizeBytes": 246326,
+      "hash": "b9c3df6487af84ee98a7bfefa285b5122c854f6fdb9505ecf885167dc7b7fbf3"
+    },
+    "actor:unit:355:f": {
+      "kind": "actor",
+      "key": "unit:355:f",
+      "bundlePath": "public/assets/bundles/actor/unit/355-f.zip",
+      "status": "full",
+      "sizeBytes": 196395,
+      "hash": "b2c27621c3af14eadfd457927e853800c6cdd614450cb1900daa3fdb1348248d"
+    },
+    "actor:unit:355:s": {
+      "kind": "actor",
+      "key": "unit:355:s",
+      "bundlePath": "public/assets/bundles/actor/unit/355-s.zip",
+      "status": "full",
+      "sizeBytes": 190939,
+      "hash": "d21bcb6483fdbe55b7806af406e7c30cb4aedc37dc40e4902b350ea7bc073e55"
+    },
     "actor:unit:356:c": {
       "kind": "actor",
       "key": "unit:356:c",
@@ -13476,6 +13772,22 @@
       "sizeBytes": 107505,
       "hash": "18d6a85ab41abb50420627cb6fb51c60f6b47f776e38f1ad1f33d94150a8af54"
     },
+    "actor:unit:357:c": {
+      "kind": "actor",
+      "key": "unit:357:c",
+      "bundlePath": "public/assets/bundles/actor/unit/357-c.zip",
+      "status": "full",
+      "sizeBytes": 290636,
+      "hash": "3b454900afe3a0feb154b283861e74c0fb6c46bcc9be9008ed9f3a7622ad2a36"
+    },
+    "actor:unit:357:f": {
+      "kind": "actor",
+      "key": "unit:357:f",
+      "bundlePath": "public/assets/bundles/actor/unit/357-f.zip",
+      "status": "full",
+      "sizeBytes": 223397,
+      "hash": "7a5c79febb16cd44fff209ef73fcee940437834120d90080681c97c5640009ad"
+    },
     "actor:unit:357:s": {
       "kind": "actor",
       "key": "unit:357:s",
@@ -13483,6 +13795,22 @@
       "status": "full",
       "sizeBytes": 408789,
       "hash": "4d7cecd5917772090bc21920b1c6dab24e7faa9a1ce140a9bb0d74b192dce762"
+    },
+    "actor:unit:358:c": {
+      "kind": "actor",
+      "key": "unit:358:c",
+      "bundlePath": "public/assets/bundles/actor/unit/358-c.zip",
+      "status": "full",
+      "sizeBytes": 271141,
+      "hash": "35832adcbef56b27e7d61cac9cbf2c05b4958f03bb4ccc37b1089a7c5b58f048"
+    },
+    "actor:unit:358:f": {
+      "kind": "actor",
+      "key": "unit:358:f",
+      "bundlePath": "public/assets/bundles/actor/unit/358-f.zip",
+      "status": "full",
+      "sizeBytes": 210263,
+      "hash": "592bde6cc5a691f69c55d5554f1160dcaa2ee0008735b2e4b7e765910a54a1f1"
     },
     "actor:unit:358:s": {
       "kind": "actor",
@@ -13507,6 +13835,14 @@
       "status": "full",
       "sizeBytes": 194510,
       "hash": "5459451acbf8ad6916cd314f9f75e863d07214ee85f6bd65449e20b912b087ff"
+    },
+    "actor:unit:359:s": {
+      "kind": "actor",
+      "key": "unit:359:s",
+      "bundlePath": "public/assets/bundles/actor/unit/359-s.zip",
+      "status": "full",
+      "sizeBytes": 374453,
+      "hash": "1cbb8b92d9405b177b2ffd6a0282371b4f6ebfa4b4b065db97d5e2aeb536336e"
     },
     "actor:unit:359:u": {
       "kind": "actor",
@@ -13947,6 +14283,30 @@
       "status": "full",
       "sizeBytes": 52399,
       "hash": "2b49e25200bdb5b0d9ee76f06197c0c770d7f8f292390089bad574b356db2f3b"
+    },
+    "actor:unit:382:c": {
+      "kind": "actor",
+      "key": "unit:382:c",
+      "bundlePath": "public/assets/bundles/actor/unit/382-c.zip",
+      "status": "full",
+      "sizeBytes": 96136,
+      "hash": "15bb7fa647b75ce1a0391c57ddf1982c38a4ac82223d99b7a651df8e96b2829a"
+    },
+    "actor:unit:382:f": {
+      "kind": "actor",
+      "key": "unit:382:f",
+      "bundlePath": "public/assets/bundles/actor/unit/382-f.zip",
+      "status": "full",
+      "sizeBytes": 94356,
+      "hash": "13f11f9e56111097f706248c301fdca3076bd27a44ff094e3086a8281aa28624"
+    },
+    "actor:unit:382:s": {
+      "kind": "actor",
+      "key": "unit:382:s",
+      "bundlePath": "public/assets/bundles/actor/unit/382-s.zip",
+      "status": "full",
+      "sizeBytes": 67530,
+      "hash": "52e5d56db53bd4cd6da5f5f86415685df8a7cf6614ebeb6e4249253c99b5e61b"
     },
     "actor:unit:383:c": {
       "kind": "actor",
@@ -14636,6 +14996,30 @@
       "sizeBytes": 178088,
       "hash": "e92d57475e387baa21e7a9cee88b720fc4dd731df03db84a37cd2d361db80e3a"
     },
+    "actor:unit:417:c": {
+      "kind": "actor",
+      "key": "unit:417:c",
+      "bundlePath": "public/assets/bundles/actor/unit/417-c.zip",
+      "status": "full",
+      "sizeBytes": 246358,
+      "hash": "164787e2de5c900ac07f8f06e4ec349e8a4be1d292bab0775aab6c201fef414c"
+    },
+    "actor:unit:417:f": {
+      "kind": "actor",
+      "key": "unit:417:f",
+      "bundlePath": "public/assets/bundles/actor/unit/417-f.zip",
+      "status": "full",
+      "sizeBytes": 278206,
+      "hash": "fd3606805e73e8724154917cc18f30c84ae0371f1eda3bbb1a7dd74d2f35b9c9"
+    },
+    "actor:unit:417:s": {
+      "kind": "actor",
+      "key": "unit:417:s",
+      "bundlePath": "public/assets/bundles/actor/unit/417-s.zip",
+      "status": "full",
+      "sizeBytes": 139987,
+      "hash": "05a16f811d702f178806b491ef82ba48e09c31d7e4a6950f3daabf85d1fc661b"
+    },
     "actor:unit:418:c": {
       "kind": "actor",
       "key": "unit:418:c",
@@ -14788,6 +15172,22 @@
       "sizeBytes": 82171,
       "hash": "624125f3f9a7bf00078614a7928c3a59116b6443b4d5638f88daba33393e149a"
     },
+    "actor:unit:427:c": {
+      "kind": "actor",
+      "key": "unit:427:c",
+      "bundlePath": "public/assets/bundles/actor/unit/427-c.zip",
+      "status": "full",
+      "sizeBytes": 130590,
+      "hash": "7ac095cf5807f738fc26c6556da128ff4e005be6df56396d5a60573671714b5c"
+    },
+    "actor:unit:427:f": {
+      "kind": "actor",
+      "key": "unit:427:f",
+      "bundlePath": "public/assets/bundles/actor/unit/427-f.zip",
+      "status": "full",
+      "sizeBytes": 118793,
+      "hash": "65750a20c5e7c78497cbaeb96a8ce87f3957b3e945b37a50bf5ec24b54cfa2ca"
+    },
     "actor:unit:427:s": {
       "kind": "actor",
       "key": "unit:427:s",
@@ -14852,6 +15252,22 @@
       "sizeBytes": 72527,
       "hash": "4845a11607ee0e1eb2e56f1d195b427f04591cffea7b92e69eca7037113d6ec4"
     },
+    "actor:unit:431:c": {
+      "kind": "actor",
+      "key": "unit:431:c",
+      "bundlePath": "public/assets/bundles/actor/unit/431-c.zip",
+      "status": "full",
+      "sizeBytes": 162944,
+      "hash": "63b27489aef6254fb8111380edd255a139ee8bdd260193a2240126dde9a96038"
+    },
+    "actor:unit:431:f": {
+      "kind": "actor",
+      "key": "unit:431:f",
+      "bundlePath": "public/assets/bundles/actor/unit/431-f.zip",
+      "status": "full",
+      "sizeBytes": 137213,
+      "hash": "0fe31e45aaa13434cd1392a4672e91bfc380740deac47dc6d2006482ed760e9c"
+    },
     "actor:unit:431:s": {
       "kind": "actor",
       "key": "unit:431:s",
@@ -14867,6 +15283,38 @@
       "status": "full",
       "sizeBytes": 464027,
       "hash": "cd16882bc417d669a23df41881ca38c163b439df9693a3f83648f80877e3a74c"
+    },
+    "actor:unit:432:c": {
+      "kind": "actor",
+      "key": "unit:432:c",
+      "bundlePath": "public/assets/bundles/actor/unit/432-c.zip",
+      "status": "full",
+      "sizeBytes": 87977,
+      "hash": "ef2b61bba36e578ff8216eb0ae59da42463cc08c07ee8d2ac806e0e47cf5341e"
+    },
+    "actor:unit:432:f": {
+      "kind": "actor",
+      "key": "unit:432:f",
+      "bundlePath": "public/assets/bundles/actor/unit/432-f.zip",
+      "status": "full",
+      "sizeBytes": 83520,
+      "hash": "ffe1f94d72dddda57414d74d243aa2cf38184b24117840f6e90be5f14bf4f873"
+    },
+    "actor:unit:433:c": {
+      "kind": "actor",
+      "key": "unit:433:c",
+      "bundlePath": "public/assets/bundles/actor/unit/433-c.zip",
+      "status": "full",
+      "sizeBytes": 109634,
+      "hash": "990145d32f11e3e4a99ade89f6376d1ccfa5c588c5b57d6dd7723f8267782d7a"
+    },
+    "actor:unit:433:f": {
+      "kind": "actor",
+      "key": "unit:433:f",
+      "bundlePath": "public/assets/bundles/actor/unit/433-f.zip",
+      "status": "full",
+      "sizeBytes": 102670,
+      "hash": "beb86ea7db68ddcd702eb43f9e2d9cc65006cd8eea8e5917b6f756b75243f8bc"
     },
     "actor:unit:434:c": {
       "kind": "actor",
@@ -14899,6 +15347,14 @@
       "status": "full",
       "sizeBytes": 110400,
       "hash": "da9094897ccd5cea29cfa14ba2968dd0e4874a756659c1b5f9d8e3c818a68c56"
+    },
+    "actor:unit:436:c": {
+      "kind": "actor",
+      "key": "unit:436:c",
+      "bundlePath": "public/assets/bundles/actor/unit/436-c.zip",
+      "status": "full",
+      "sizeBytes": 156955,
+      "hash": "53017574ce3f8244832e41cbcda198f561eaca5f8a0ab73d83c03c65b0c07fc8"
     },
     "actor:unit:436:f": {
       "kind": "actor",
@@ -15019,6 +15475,22 @@
       "status": "full",
       "sizeBytes": 239656,
       "hash": "b2c0bb642c7e3202d68e6f11b877a51638742e99f9eba0c06d76ae2cc276ff66"
+    },
+    "actor:unit:442:c": {
+      "kind": "actor",
+      "key": "unit:442:c",
+      "bundlePath": "public/assets/bundles/actor/unit/442-c.zip",
+      "status": "full",
+      "sizeBytes": 66785,
+      "hash": "3e017661160e64c5e433b02ad7507d158c75744205229615ea33caa8b0f42e00"
+    },
+    "actor:unit:442:f": {
+      "kind": "actor",
+      "key": "unit:442:f",
+      "bundlePath": "public/assets/bundles/actor/unit/442-f.zip",
+      "status": "full",
+      "sizeBytes": 37327,
+      "hash": "32371c3e0af87fd356f7fdc54e958be2f30969e1c8c3bec9b3be9e936c58770a"
     },
     "actor:unit:442:s": {
       "kind": "actor",
@@ -15435,6 +15907,38 @@
       "status": "full",
       "sizeBytes": 463449,
       "hash": "4da190da7e575853700dcb71404ff5a223b8af051da2dec67d72be58bb017789"
+    },
+    "actor:unit:463:c": {
+      "kind": "actor",
+      "key": "unit:463:c",
+      "bundlePath": "public/assets/bundles/actor/unit/463-c.zip",
+      "status": "full",
+      "sizeBytes": 395239,
+      "hash": "c7efcb0c0129b9cc316fbfaffdb931f2c672688b789a92dd23750769abe020f1"
+    },
+    "actor:unit:463:f": {
+      "kind": "actor",
+      "key": "unit:463:f",
+      "bundlePath": "public/assets/bundles/actor/unit/463-f.zip",
+      "status": "full",
+      "sizeBytes": 309768,
+      "hash": "a200a63b07f28288d0953755b059d157d3ea51106074aebd5fc58e1ffbc9186b"
+    },
+    "actor:unit:464:c": {
+      "kind": "actor",
+      "key": "unit:464:c",
+      "bundlePath": "public/assets/bundles/actor/unit/464-c.zip",
+      "status": "full",
+      "sizeBytes": 71914,
+      "hash": "233034a54aa26c2b5779e93c224e7f816ce70a075a2f409f6accca2534b2af7d"
+    },
+    "actor:unit:464:f": {
+      "kind": "actor",
+      "key": "unit:464:f",
+      "bundlePath": "public/assets/bundles/actor/unit/464-f.zip",
+      "status": "full",
+      "sizeBytes": 65616,
+      "hash": "5c488b3d456bdaeafe8ea0e25f4c8cd9e53236e74c1d365c2e048934944911bf"
     },
     "actor:unit:464:s": {
       "kind": "actor",
@@ -16020,6 +16524,22 @@
       "sizeBytes": 122756,
       "hash": "ac9bbd8af20215b1804839c75e3869c58c83d4e34bfa32d0b822e79b595d57f1"
     },
+    "actor:unit:496:c": {
+      "kind": "actor",
+      "key": "unit:496:c",
+      "bundlePath": "public/assets/bundles/actor/unit/496-c.zip",
+      "status": "full",
+      "sizeBytes": 128360,
+      "hash": "38a1188bca7174c8c982dd389bd5e5abcdec09b7f572a41e1b5708390f36d09c"
+    },
+    "actor:unit:496:f": {
+      "kind": "actor",
+      "key": "unit:496:f",
+      "bundlePath": "public/assets/bundles/actor/unit/496-f.zip",
+      "status": "full",
+      "sizeBytes": 115020,
+      "hash": "6aa8d0fd68bb3b47557a84863a5262c7ab08839d6ffc6904fa5a9deeac8e7e6c"
+    },
     "actor:unit:496:s": {
       "kind": "actor",
       "key": "unit:496:s",
@@ -16108,6 +16628,22 @@
       "sizeBytes": 40633,
       "hash": "47c3a8a2638f7c8905eb28c843b2062e843118a55f1624fcfc871a1e93367708"
     },
+    "actor:unit:502:c": {
+      "kind": "actor",
+      "key": "unit:502:c",
+      "bundlePath": "public/assets/bundles/actor/unit/502-c.zip",
+      "status": "full",
+      "sizeBytes": 266965,
+      "hash": "c697614b8505ff827024a6182e1e0b20b1fb24a26db23fb7110d2ed98b424816"
+    },
+    "actor:unit:502:f": {
+      "kind": "actor",
+      "key": "unit:502:f",
+      "bundlePath": "public/assets/bundles/actor/unit/502-f.zip",
+      "status": "full",
+      "sizeBytes": 234905,
+      "hash": "f446add7109a96c5687f2348a694ff16ed5e6068a54b053dee79e9034b777b5a"
+    },
     "actor:unit:502:s": {
       "kind": "actor",
       "key": "unit:502:s",
@@ -16115,6 +16651,22 @@
       "status": "full",
       "sizeBytes": 187342,
       "hash": "30dbbad2b8ee241dbca0c7112b08bdbbdb95abc3060cad30abb7cbffff4b2aa8"
+    },
+    "actor:unit:503:c": {
+      "kind": "actor",
+      "key": "unit:503:c",
+      "bundlePath": "public/assets/bundles/actor/unit/503-c.zip",
+      "status": "full",
+      "sizeBytes": 20389,
+      "hash": "d578dda363b5097f4598d195d35e50c95f4fb167833527fcf08f07bfc707d3bf"
+    },
+    "actor:unit:503:f": {
+      "kind": "actor",
+      "key": "unit:503:f",
+      "bundlePath": "public/assets/bundles/actor/unit/503-f.zip",
+      "status": "full",
+      "sizeBytes": 14914,
+      "hash": "f60e760d478840cd26581e0588a7ac6806c30ae0c05f2a91da7fcc3c30ceb9ea"
     },
     "actor:unit:504:c": {
       "kind": "actor",
@@ -19307,6 +19859,14 @@
       "status": "full",
       "sizeBytes": 42480,
       "hash": "c2aeccb3b3af21aeda771421f341e7ed86ccfcce1d0860f33faccc5bacaeea99"
+    },
+    "actor:unit:689:c": {
+      "kind": "actor",
+      "key": "unit:689:c",
+      "bundlePath": "public/assets/bundles/actor/unit/689-c.zip",
+      "status": "full",
+      "sizeBytes": 22299,
+      "hash": "64c12381f37131d7df76513090813cc7949fa65ea22cf35c2d1cab13decba663"
     },
     "actor:unit:689:f": {
       "kind": "actor",
@@ -32636,22 +33196,31 @@
       "sizeBytes": 63388,
       "hash": "333dd361ed31a6dc6b3ed5277f40da25490f0202e862cb11db7524fa2cdeb064"
     },
+    "ui:battle": {
+      "kind": "ui",
+      "key": "ui:battle",
+      "bundlePath": "public/assets/bundles/ui/battle-ui.zip",
+      "status": "full",
+      "sizeBytes": 95749,
+      "hash": "fb64c6d009010a153ea2d705c55ef5686aed0e9e68648fbfd0d7d3159b590ae1"
+    },
     "core:db": {
       "kind": "core",
       "key": "core:db",
       "bundlePath": "public/assets/bundles/core/core-db.zip",
       "status": "full",
-      "sizeBytes": 100083935,
-      "hash": "5ef544fed1a6ad50396960657490b90b74f0c973190177a7c0dbbb5338203818"
+      "sizeBytes": 154677202,
+      "hash": "3988344c4b707ef36c1080a70c041046f66e7bcd3128fad346057178cda39419"
     },
     "icon:enemy": {
       "kind": "icon",
       "key": "icon:enemy",
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
-      "iconCount": 762,
-      "sizeBytes": 1454336,
-      "hash": "33311cefa97becc429f71927092b48b9c573d0cb5fc3a05cfe3c74f16acc63dd"
+      "iconCount": 758,
+      "sizeBytes": 5779840,
+      "hash": "9075f822a65c9a2b24b932f6626904febfe433cd1b4c00f3d86c3aa21fc316f7",
+      "generationSource": "actor-assets-initial-pose"
     },
     "icon:unit:c": {
       "kind": "icon",
@@ -32659,8 +33228,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-c.zip",
       "status": "full",
       "iconCount": 799,
-      "sizeBytes": 4500219,
-      "hash": "bc6f450aa79a2183b3ff55ad284ecf704c9142dc57fb67eaa12bd67b84ddadd3"
+      "sizeBytes": 4366539,
+      "hash": "94aea4c000d4a5cf3bc7b9fe241d5f84e7d047342520d6cf63753c09d6ca12f6"
     },
     "icon:unit:f": {
       "kind": "icon",
@@ -32668,8 +33237,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-f.zip",
       "status": "full",
       "iconCount": 822,
-      "sizeBytes": 4392579,
-      "hash": "ff8e2e227d62aba36acc856b9e929325d9a689217dd5789ba72cd69648246e25"
+      "sizeBytes": 4272131,
+      "hash": "6b67f03a4bb22ad49ddf6718f440129a597848981a94ae82abbe586b9d7d3ca6"
     },
     "icon:unit:s": {
       "kind": "icon",
@@ -32677,8 +33246,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-s.zip",
       "status": "full",
       "iconCount": 393,
-      "sizeBytes": 2152123,
-      "hash": "bdf8614719d192615f2c8b63371c2f3178f31ec82d4f3f2b5bddb166a6fbb7b1"
+      "sizeBytes": 2072699,
+      "hash": "b5f469c3170b54212ccaea2cd43d5c23cfe2bf653e21910a6acdfbd7563c0d5a"
     },
     "icon:unit:u": {
       "kind": "icon",
@@ -32688,22 +33257,6 @@
       "iconCount": 18,
       "sizeBytes": 101061,
       "hash": "b754aa2a253343692f7164be8d5c3865224aa31c449f9eb7b6e6dcc9259faa5b"
-    },
-    "ui:battle": {
-      "kind": "ui",
-      "key": "ui:battle",
-      "bundlePath": "public/assets/bundles/ui/battle-ui.zip",
-      "status": "full",
-      "sizeBytes": 95749,
-      "hash": "fb64c6d009010a153ea2d705c55ef5686aed0e9e68648fbfd0d7d3159b590ae1"
-    },
-    "effect:status": {
-      "kind": "effect",
-      "key": "effect:status",
-      "bundlePath": "public/assets/bundles/effect/status-effects.zip",
-      "status": "full",
-      "sizeBytes": 270333,
-      "hash": "03755f99b1c6133f595edd93017baf0d0681d16b7aaada9d8878d87f8efb3b58"
     }
   }
 }

@@ -1,0 +1,909 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-17T14:10:21.721Z",
+  "outputFiles": [
+    "tmp/wanko-player-spawn-audit.json",
+    "tmp/wanko-player-spawn-audit.md"
+  ],
+  "candidates": [
+    {
+      "actorKey": "enemy:0",
+      "enemyId": 0,
+      "enemyName": "わんこ",
+      "playerCharacterId": "dog-enemy-000",
+      "playerActorKey": "enemy:0",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:0",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:0",
+          "bundlePath": "public/assets/bundles/actor/enemy/000.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/000.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:46",
+      "enemyId": 46,
+      "enemyName": "殺意のわんこ",
+      "playerCharacterId": "dog-enemy-046",
+      "playerActorKey": "enemy:46",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:46",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:46",
+          "bundlePath": "public/assets/bundles/actor/enemy/046.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/046.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:85",
+      "enemyId": 85,
+      "enemyName": "武者わんこ",
+      "playerCharacterId": "dog-enemy-085",
+      "playerActorKey": "enemy:85",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:85",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:85",
+          "bundlePath": "public/assets/bundles/actor/enemy/085.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/085.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:103",
+      "enemyId": 103,
+      "enemyName": "ゴーストわんこ",
+      "playerCharacterId": "dog-enemy-103",
+      "playerActorKey": "enemy:103",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:103",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:103",
+          "bundlePath": "public/assets/bundles/actor/enemy/103.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/103.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:111",
+      "enemyId": 111,
+      "enemyName": "豚戦わんこ",
+      "playerCharacterId": "dog-enemy-111",
+      "playerActorKey": "enemy:111",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:111",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:111",
+          "bundlePath": "public/assets/bundles/actor/enemy/111.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/111.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:117",
+      "enemyId": 117,
+      "enemyName": "カベわんこ",
+      "playerCharacterId": "dog-enemy-117",
+      "playerActorKey": "enemy:117",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:117",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:117",
+          "bundlePath": "public/assets/bundles/actor/enemy/117.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/117.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:120",
+      "enemyId": 120,
+      "enemyName": "お祝いケーキわんこ",
+      "playerCharacterId": "dog-enemy-120",
+      "playerActorKey": "enemy:120",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:120",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:120",
+          "bundlePath": "public/assets/bundles/actor/enemy/120.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/120.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:126",
+      "enemyId": 126,
+      "enemyName": "日の出わんこ",
+      "playerCharacterId": "dog-enemy-126",
+      "playerActorKey": "enemy:126",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:126",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:126",
+          "bundlePath": "public/assets/bundles/actor/enemy/126.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/126.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:147",
+      "enemyId": 147,
+      "enemyName": "メタルわんこ",
+      "playerCharacterId": "dog-enemy-147",
+      "playerActorKey": "enemy:147",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:147",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:147",
+          "bundlePath": "public/assets/bundles/actor/enemy/147.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/147.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:186",
+      "enemyId": 186,
+      "enemyName": "1億DL記念ケーキわんこ",
+      "playerCharacterId": "dog-enemy-186",
+      "playerActorKey": "enemy:186",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:186",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:186",
+          "bundlePath": "public/assets/bundles/actor/enemy/186.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/186.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:258",
+      "enemyId": 258,
+      "enemyName": "わんこずきんミーニャ",
+      "playerCharacterId": "dog-enemy-258",
+      "playerActorKey": "enemy:258",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:258",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:258",
+          "bundlePath": "public/assets/bundles/actor/enemy/258.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/258.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:262",
+      "enemyId": 262,
+      "enemyName": "やぐらわんこ",
+      "playerCharacterId": "dog-enemy-262",
+      "playerActorKey": "enemy:262",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:262",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:262",
+          "bundlePath": "public/assets/bundles/actor/enemy/262.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/262.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:307",
+      "enemyId": 307,
+      "enemyName": "アイスわんこ",
+      "playerCharacterId": "dog-enemy-307",
+      "playerActorKey": "enemy:307",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:307",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:307",
+          "bundlePath": "public/assets/bundles/actor/enemy/307.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/307.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:336",
+      "enemyId": 336,
+      "enemyName": "ゴールデンわんこ",
+      "playerCharacterId": "dog-enemy-336",
+      "playerActorKey": "enemy:336",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:336",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:336",
+          "bundlePath": "public/assets/bundles/actor/enemy/336.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/336.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:407",
+      "enemyId": 407,
+      "enemyName": "古代わんこ",
+      "playerCharacterId": "dog-enemy-407",
+      "playerActorKey": "enemy:407",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:407",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:407",
+          "bundlePath": "public/assets/bundles/actor/enemy/407.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/407.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:478",
+      "enemyId": 478,
+      "enemyName": "ちびケーキわんこ",
+      "playerCharacterId": "dog-enemy-478",
+      "playerActorKey": "enemy:478",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:478",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:478",
+          "bundlePath": "public/assets/bundles/actor/enemy/478.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/478.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:539",
+      "enemyId": 539,
+      "enemyName": "チョコわんこ",
+      "playerCharacterId": "dog-enemy-539",
+      "playerActorKey": "enemy:539",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:539",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:539",
+          "bundlePath": "public/assets/bundles/actor/enemy/539.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/539.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:603",
+      "enemyId": 603,
+      "enemyName": "野生のわんこ",
+      "playerCharacterId": "dog-enemy-603",
+      "playerActorKey": "enemy:603",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:603",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:603",
+          "bundlePath": "public/assets/bundles/actor/enemy/603.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/603.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:608",
+      "enemyId": 608,
+      "enemyName": "ちびわんこ",
+      "playerCharacterId": "dog-enemy-608",
+      "playerActorKey": "enemy:608",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:608",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:608",
+          "bundlePath": "public/assets/bundles/actor/enemy/608.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/608.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:672",
+      "enemyId": 672,
+      "enemyName": "ケーキわんこ",
+      "playerCharacterId": "dog-enemy-672",
+      "playerActorKey": "enemy:672",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:672",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:672",
+          "bundlePath": "public/assets/bundles/actor/enemy/672.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/672.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:679",
+      "enemyId": 679,
+      "enemyName": "名賢わんこ",
+      "playerCharacterId": "dog-enemy-679",
+      "playerActorKey": "enemy:679",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:679",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:679",
+          "bundlePath": "public/assets/bundles/actor/enemy/679.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/679.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:702",
+      "enemyId": 702,
+      "enemyName": "足軽わんこ",
+      "playerCharacterId": "dog-enemy-702",
+      "playerActorKey": "enemy:702",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:702",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:702",
+          "bundlePath": "public/assets/bundles/actor/enemy/702.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/702.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:708",
+      "enemyId": 708,
+      "enemyName": "12周年記念ケーキわんこ",
+      "playerCharacterId": "dog-enemy-708",
+      "playerActorKey": "enemy:708",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:708",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:708",
+          "bundlePath": "public/assets/bundles/actor/enemy/708.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/708.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:711",
+      "enemyId": 711,
+      "enemyName": "巳わんこ",
+      "playerCharacterId": "dog-enemy-711",
+      "playerActorKey": "enemy:711",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:711",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:711",
+          "bundlePath": "public/assets/bundles/actor/enemy/711.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/711.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:736",
+      "enemyId": 736,
+      "enemyName": "南国わんこ",
+      "playerCharacterId": "dog-enemy-736",
+      "playerActorKey": "enemy:736",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:736",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:736",
+          "bundlePath": "public/assets/bundles/actor/enemy/736.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/736.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:750",
+      "enemyId": 750,
+      "enemyName": "怪人わんこ",
+      "playerCharacterId": "dog-enemy-750",
+      "playerActorKey": "enemy:750",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:750",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:750",
+          "bundlePath": "public/assets/bundles/actor/enemy/750.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/750.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:759",
+      "enemyId": 759,
+      "enemyName": "13周年記念ケーキわんこ",
+      "playerCharacterId": "dog-enemy-759",
+      "playerActorKey": "enemy:759",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:759",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:759",
+          "bundlePath": "public/assets/bundles/actor/enemy/759.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/759.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:760",
+      "enemyId": 760,
+      "enemyName": "午わんこ",
+      "playerCharacterId": "dog-enemy-760",
+      "playerActorKey": "enemy:760",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:760",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:760",
+          "bundlePath": "public/assets/bundles/actor/enemy/760.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/760.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    },
+    {
+      "actorKey": "enemy:764",
+      "enemyId": 764,
+      "enemyName": "鬼化わんこ",
+      "playerCharacterId": "dog-enemy-764",
+      "playerActorKey": "enemy:764",
+      "sourceRoster": "dogPlayer",
+      "hasFormationCatalogEntry": true,
+      "hasPlayerMapping": true,
+      "hasStats": true,
+      "semanticActorEntry": {
+        "key": "enemy:764",
+        "status": "full",
+        "bundleRef": {
+          "bundleKey": "actor:enemy:764",
+          "bundlePath": "public/assets/bundles/actor/enemy/764.zip"
+        }
+      },
+      "semanticStatus": "full",
+      "actorBundlePath": "public/assets/bundles/actor/enemy/764.zip",
+      "actorBundleExists": true,
+      "actorBundleInManifest": true,
+      "requiredAnimationsPresent": true,
+      "runtimeAssetResolvable": true,
+      "preloadTemplateOk": true,
+      "spawnReadyOk": true,
+      "productionValidationOkWithTestMoney": true,
+      "listedInErrorAllowlist": false,
+      "failurePhase": "ok",
+      "failureReason": null
+    }
+  ]
+}

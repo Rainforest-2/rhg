@@ -60,6 +60,7 @@ export class FormationEditor {
     this.iconObserver = null;
     this.iconObserverRoot = null;
     this.iconDebug = { resolvedIconCount: 0, failedIconCount: 0, observedIconCount: 0, eagerIconCount: 0, queuedIconCount: 0 };
+    this.reportedIconFailures = new Set();
     this.catalogItems = [];
     this.catalogVirtual = { rowHeight: 194, columns: 4, overscanRows: 8, start: 0, end: 0, firstVisibleRow: 0, lastVisibleRow: 0 };
     this.renderFrame = null;
@@ -362,6 +363,9 @@ export class FormationEditor {
 
   recordIconFailure(semanticKey, err, detail = {}) {
     const debug = this.getFormationIconDebug();
+    const failureKey = `${semanticKey}:${detail.internalPath || err?.detail?.internalPath || ''}:${err?.detail?.reason || err?.message || String(err)}`;
+    if (this.reportedIconFailures.has(failureKey)) return;
+    this.reportedIconFailures.add(failureKey);
     const failure = { semanticKey, bundlePath: detail.bundlePath || err?.detail?.bundlePath || null, internalPath: detail.internalPath || err?.detail?.internalPath || null, errorName: err?.name || 'Error', errorMessage: err?.message || String(err) };
     debug.recentIconFailures.unshift(failure);
     debug.recentIconFailures.splice(20);
@@ -398,7 +402,11 @@ export class FormationEditor {
       delete img.dataset.iconPending;
       this.iconDebug.resolvedIconCount += 1;
     }).catch((err) => {
-      console.error('[FormationEditor] icon load failed detail', { key, bundlePath: err?.detail?.bundlePath || null, internalPath: err?.detail?.internalPath || null, name: err?.name, message: err?.message, stack: err?.stack, cause: err?.cause, error: err });
+      const failureKey = `${key}:${err?.detail?.internalPath || ''}:${err?.detail?.reason || err?.message || String(err)}`;
+      if (!this.reportedIconFailures.has(failureKey)) {
+        const log = err?.detail?.reason === 'missing-inferred-zip-entry' || err?.detail?.reason === 'missing-zip-entry' ? console.warn : console.error;
+        log?.('[FormationEditor] icon load failed detail', { key, bundlePath: err?.detail?.bundlePath || null, internalPath: err?.detail?.internalPath || null, name: err?.name, message: err?.message, reason: err?.detail?.reason || null });
+      }
       img.classList.add('image-missing');
       delete img.dataset.iconPending;
       delete img.dataset.iconResolved;

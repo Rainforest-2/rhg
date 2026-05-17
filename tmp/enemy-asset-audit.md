@@ -1,58 +1,87 @@
-# BCU Enemy Asset Audit
+# Enemy Asset Audit
 
-Generated: 2026-05-17T12:27:43.220Z
+Generated: 2026-05-17T14:10:20.775Z
 
-## Summary
+## Actor Asset Failure Class
 
-- enemiesAudited: 778
-- targetEnemies: 7
-- missingStats: 0
-- missingSemanticActorEntry: 0
-- semanticNotFull: 28
-- runtimeTolerated: 7
-- runtimeBundleUsable: 757
-- bundleRefNotInManifest: 28
-- currentResolverNull: 0
-- missingUiIcon: 3
-- missingImage: 0
-- missingImgcut: 0
-- missingModel: 0
-- missingRequiredAnimation: 3
+- ok: 718
+- expected-missing: 40
+- actor-bundle-not-in-manifest: 18
+- neutral-animation-missing: 1
+- imgcut-missing: 1
 
-## Target Enemies
+## Icon Generation Failure Class
 
-| enemyId | stats | semantic | bundleRef | bundle manifest | runtime usable | UI icon | current resolver | failure |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 388 | yes | full | yes | yes | yes | actor-bundle-icon-fallback | yes | ok |
-| 443 | yes | invalid | yes | no | yes | icon-index | yes | ok |
-| 609 | yes | full | yes | yes | yes | icon-index | yes | ok |
-| 610 | yes | invalid | yes | no | no | no | yes | semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing |
-| 611 | yes | invalid | yes | no | no | no | yes | semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing |
-| 612 | yes | invalid | yes | no | no | no | yes | semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing |
-| 613 | yes | full | yes | yes | yes | actor-bundle-icon-fallback | yes | ok |
+- ok: 758
+- image-or-imgcut-invalid: 18
+- source-missing: 2
 
-## Problem Enemies (first 80)
+## Icon Composition Method
 
-| enemyId | semantic | failure |
-| --- | --- | --- |
-| 478 | partial | move, idle, attack, kb, semantic-status-partial, bundle-not-in-manifest |
-| 552 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 554 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 556 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 560 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 561 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 562 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 585 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 586 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 587 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 588 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 589 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 590 | partial | move, idle, attack, kb, semantic-status-partial, bundle-not-in-manifest |
-| 591 | partial | move, idle, attack, semantic-status-partial, bundle-not-in-manifest |
-| 610 | invalid | semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing |
-| 611 | invalid | semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing |
-| 612 | invalid | semantic-status-invalid, bundle-not-in-manifest, ui-icon-missing |
-| 698 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 699 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 700 | invalid | semantic-status-invalid, bundle-not-in-manifest |
-| 701 | invalid | semantic-status-invalid, bundle-not-in-manifest |
+- composed-initial-pose: 739
+- single-cut-degraded-fallback: 19
+- failed: 18
+- none: 2
+
+## Non-Allowlisted Icon Failures
+
+- enemy:552: image-or-imgcut-invalid; bad-png-signature
+- enemy:554: image-or-imgcut-invalid; bad-png-signature
+- enemy:556: image-or-imgcut-invalid; bad-png-signature
+- enemy:560: image-or-imgcut-invalid; bad-png-signature
+- enemy:561: image-or-imgcut-invalid; bad-png-signature
+- enemy:562: image-or-imgcut-invalid; bad-png-signature
+- enemy:585: image-or-imgcut-invalid; bad-png-signature
+- enemy:586: image-or-imgcut-invalid; bad-png-signature
+- enemy:587: image-or-imgcut-invalid; bad-png-signature
+- enemy:588: image-or-imgcut-invalid; bad-png-signature
+- enemy:589: image-or-imgcut-invalid; bad-png-signature
+- enemy:590: source-missing; missing image/imgcut/model/neutral animation source
+- enemy:591: source-missing; missing image/imgcut/model/neutral animation source
+- enemy:610: image-or-imgcut-invalid; bad-png-signature
+- enemy:611: image-or-imgcut-invalid; bad-png-signature
+- enemy:612: image-or-imgcut-invalid; bad-png-signature
+- enemy:698: image-or-imgcut-invalid; bad-png-signature
+- enemy:699: image-or-imgcut-invalid; bad-png-signature
+- enemy:700: image-or-imgcut-invalid; bad-png-signature
+- enemy:701: image-or-imgcut-invalid; bad-png-signature
+
+## Degraded Single-Cut Fallback
+
+- enemy:19: composition unavailable: composed-pose-rendered-zero-parts
+- enemy:284: composition unavailable: composed-pose-rendered-zero-parts
+- enemy:285: composition unavailable: composed-pose-rendered-zero-parts
+- enemy:286: composition unavailable: composed-pose-no-visible-parts
+- enemy:287: composition unavailable: composed-pose-no-visible-parts
+- enemy:288: composition unavailable: composed-pose-rendered-zero-parts
+- enemy:289: composition unavailable: composed-pose-no-visible-parts
+- enemy:290: composition unavailable: composed-pose-no-visible-parts
+- enemy:291: composition unavailable: composed-pose-no-visible-parts
+- enemy:292: composition unavailable: composed-pose-no-visible-parts
+- enemy:303: composition unavailable: composed-pose-no-visible-parts
+- enemy:304: composition unavailable: composed-pose-rendered-zero-parts
+- enemy:425: composition unavailable: composed-pose-no-visible-parts
+- enemy:427: composition unavailable: composed-pose-no-visible-parts
+- enemy:428: composition unavailable: composed-pose-no-visible-parts
+- enemy:468: composition unavailable: composed-pose-no-visible-parts
+- enemy:469: composition unavailable: composed-pose-no-visible-parts
+- enemy:512: composition unavailable: composed-pose-rendered-zero-parts
+- enemy:744: composition unavailable: composed-pose-no-visible-parts
+
+## Regression Targets
+
+| enemy | name | asset failure | icon method | icon failure | regenerated |
+| --- | --- | --- | --- | --- | --- |
+| 388 | ウルトラメェメェ | ok | composed-initial-pose | ok | yes |
+| 440 | レインボークマトーク | ok | composed-initial-pose | ok | yes |
+| 443 | ミニスターサイクロン | ok | composed-initial-pose | ok | yes |
+| 560 | デビルサイクロン | actor-bundle-not-in-manifest | failed | image-or-imgcut-invalid | no |
+| 609 | 古兵器マンボロス | ok | composed-initial-pose | ok | yes |
+| 610 | 超棘獣ナマケモルガ | actor-bundle-not-in-manifest | failed | image-or-imgcut-invalid | no |
+| 611 | 超闇獣ダックジョー | actor-bundle-not-in-manifest | failed | image-or-imgcut-invalid | no |
+| 612 | ハニワンワン | actor-bundle-not-in-manifest | failed | image-or-imgcut-invalid | no |
+| 613 | 超天獣ラジャコング | ok | composed-initial-pose | ok | yes |
+| 695 | 丸太 | ok | composed-initial-pose | ok | yes |
+| 696 | 大岩 | ok | composed-initial-pose | ok | yes |
+| 697 | ツバサターン | ok | composed-initial-pose | ok | yes |
+| 699 | 生命の賢者Dr.ノーヴァ | actor-bundle-not-in-manifest | failed | image-or-imgcut-invalid | no |

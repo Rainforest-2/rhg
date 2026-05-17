@@ -22775,7 +22775,7 @@
         "bundlePath": "public/assets/bundles/icon/unit-c.zip"
       },
       "internalPath": "unit/355-c.png",
-      "sourcePath": "public/assets/bcu/000007/org/unit/355/c/355_c.png",
+      "sourcePath": "public/assets/bcu/000007/org/unit/355/c/uni355_c00.png",
       "sourceStatus": "audited"
     },
     {
@@ -33975,7 +33975,7 @@
         "bundlePath": "public/assets/bundles/icon/unit-f.zip"
       },
       "internalPath": "unit/355-f.png",
-      "sourcePath": "public/assets/bcu/000007/org/unit/355/f/355_f.png",
+      "sourcePath": "public/assets/bcu/000007/org/unit/355/f/uni355_f00.png",
       "sourceStatus": "audited"
     },
     {
@@ -43831,7 +43831,7 @@
         "bundlePath": "public/assets/bundles/icon/unit-s.zip"
       },
       "internalPath": "unit/355-s.png",
-      "sourcePath": "public/assets/bcu/000007/org/unit/355/s/355_s.png",
+      "sourcePath": "public/assets/bcu/000007/org/unit/355/s/uni355_s00.png",
       "sourceStatus": "audited"
     },
     {
@@ -61131,7 +61131,7 @@
         "bundlePath": "public/assets/bundles/icon/unit-c.zip"
       },
       "internalPath": "unit/355-c.png",
-      "sourcePath": "public/assets/bcu/000007/org/unit/355/c/355_c.png",
+      "sourcePath": "public/assets/bcu/000007/org/unit/355/c/uni355_c00.png",
       "sourceStatus": "audited"
     },
     "unit:356:c": {
@@ -72331,7 +72331,7 @@
         "bundlePath": "public/assets/bundles/icon/unit-f.zip"
       },
       "internalPath": "unit/355-f.png",
-      "sourcePath": "public/assets/bcu/000007/org/unit/355/f/355_f.png",
+      "sourcePath": "public/assets/bcu/000007/org/unit/355/f/uni355_f00.png",
       "sourceStatus": "audited"
     },
     "unit:356:f": {
@@ -82187,7 +82187,7 @@
         "bundlePath": "public/assets/bundles/icon/unit-s.zip"
       },
       "internalPath": "unit/355-s.png",
-      "sourcePath": "public/assets/bcu/000007/org/unit/355/s/355_s.png",
+      "sourcePath": "public/assets/bcu/000007/org/unit/355/s/uni355_s00.png",
       "sourceStatus": "audited"
     },
     "unit:357:s": {

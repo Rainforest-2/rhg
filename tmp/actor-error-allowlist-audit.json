@@ -1,0 +1,378 @@
+{
+  "discoveredFiles": [
+    "error-enemy.json",
+    "error-ally.json"
+  ],
+  "parsedEntries": [
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 1,
+      "actorKey": "enemy:1",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 21,
+      "actorKey": "enemy:21",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 22,
+      "actorKey": "enemy:22",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 315,
+      "actorKey": "enemy:315",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 347,
+      "actorKey": "enemy:347",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 417,
+      "actorKey": "enemy:417",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 450,
+      "actorKey": "enemy:450",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 453,
+      "actorKey": "enemy:453",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 467,
+      "actorKey": "enemy:467",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 468,
+      "actorKey": "enemy:468",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 469,
+      "actorKey": "enemy:469",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 472,
+      "actorKey": "enemy:472",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 473,
+      "actorKey": "enemy:473",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 474,
+      "actorKey": "enemy:474",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 475,
+      "actorKey": "enemy:475",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 476,
+      "actorKey": "enemy:476",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 477,
+      "actorKey": "enemy:477",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 524,
+      "actorKey": "enemy:524",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 525,
+      "actorKey": "enemy:525",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 526,
+      "actorKey": "enemy:526",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 527,
+      "actorKey": "enemy:527",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 566,
+      "actorKey": "enemy:566",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 567,
+      "actorKey": "enemy:567",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 568,
+      "actorKey": "enemy:568",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 569,
+      "actorKey": "enemy:569",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 570,
+      "actorKey": "enemy:570",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 571,
+      "actorKey": "enemy:571",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 646,
+      "actorKey": "enemy:646",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 663,
+      "actorKey": "enemy:663",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 664,
+      "actorKey": "enemy:664",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 665,
+      "actorKey": "enemy:665",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 666,
+      "actorKey": "enemy:666",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 667,
+      "actorKey": "enemy:667",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 668,
+      "actorKey": "enemy:668",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 669,
+      "actorKey": "enemy:669",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 670,
+      "actorKey": "enemy:670",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 671,
+      "actorKey": "enemy:671",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 688,
+      "actorKey": "enemy:688",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 689,
+      "actorKey": "enemy:689",
+      "sourceField": "missingEnemyIds"
+    },
+    {
+      "file": "error-enemy.json",
+      "kind": "enemy",
+      "id": 749,
+      "actorKey": "enemy:749",
+      "sourceField": "missingEnemyIds"
+    }
+  ],
+  "enemyIds": [
+    1,
+    21,
+    22,
+    315,
+    347,
+    417,
+    450,
+    453,
+    467,
+    468,
+    469,
+    472,
+    473,
+    474,
+    475,
+    476,
+    477,
+    524,
+    525,
+    526,
+    527,
+    566,
+    567,
+    568,
+    569,
+    570,
+    571,
+    646,
+    663,
+    664,
+    665,
+    666,
+    667,
+    668,
+    669,
+    670,
+    671,
+    688,
+    689,
+    749
+  ],
+  "playerCharacterIds": [],
+  "actorKeys": [
+    "enemy:1",
+    "enemy:21",
+    "enemy:22",
+    "enemy:315",
+    "enemy:347",
+    "enemy:417",
+    "enemy:450",
+    "enemy:453",
+    "enemy:467",
+    "enemy:468",
+    "enemy:469",
+    "enemy:472",
+    "enemy:473",
+    "enemy:474",
+    "enemy:475",
+    "enemy:476",
+    "enemy:477",
+    "enemy:524",
+    "enemy:525",
+    "enemy:526",
+    "enemy:527",
+    "enemy:566",
+    "enemy:567",
+    "enemy:568",
+    "enemy:569",
+    "enemy:570",
+    "enemy:571",
+    "enemy:646",
+    "enemy:663",
+    "enemy:664",
+    "enemy:665",
+    "enemy:666",
+    "enemy:667",
+    "enemy:668",
+    "enemy:669",
+    "enemy:670",
+    "enemy:671",
+    "enemy:688",
+    "enemy:689",
+    "enemy:749"
+  ],
+  "unparsedFiles": [],
+  "notes": [
+    "error-enemy.json: parsed",
+    "error-ally.json: parsed"
+  ]
+}

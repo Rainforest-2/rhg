@@ -1,5 +1,7 @@
 import { buildActorIndexFromFiles, loadManifest, comparePackId, validatePngFile, writeJson } from './bcu-semantic-utils.mjs';
 
+const ACTOR_PNG_VALIDATION_OPTIONS = { allowTrailingBytes: true };
+
 function basename(file) {
   return String(file || '').split('/').pop() || '';
 }
@@ -51,14 +53,14 @@ normalizeActorBodyImages(index);
 
 for (const entry of index.entries || []) {
   if (!entry.selected?.files?.image) continue;
-  const current = await validatePngFile(entry.selected.files.image);
+  const current = await validatePngFile(entry.selected.files.image, ACTOR_PNG_VALIDATION_OPTIONS);
   if (current.valid) continue;
   const replacements = [];
   for (const candidate of entry.sourceCandidates || []) {
     const canonical = findCanonicalBodyImage(entry, candidate);
     if (canonical && candidate.files) candidate.files.image = canonical;
     if (!candidate?.files?.image || !['full', 'partial'].includes(candidate.status)) continue;
-    const png = await validatePngFile(candidate.files.image);
+    const png = await validatePngFile(candidate.files.image, ACTOR_PNG_VALIDATION_OPTIONS);
     if (png.valid) replacements.push({ candidate, png });
   }
   replacements.sort((a, b) => comparePackId(b.candidate.sourcePack, a.candidate.sourcePack));

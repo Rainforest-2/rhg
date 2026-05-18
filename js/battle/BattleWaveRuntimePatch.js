@@ -6,11 +6,9 @@ import { EffectRuntime } from './EffectRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
-import { parseImgcut } from '../bcu/BcuImgcutParser.js';
-import { parseModel } from '../bcu/BcuModelParser.js';
-import { parseAnim } from '../bcu/BcuAnimParser.js';
+import { BattleWaveEffectLoader } from './BattleWaveEffectLoader.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v3.bcu-cont-wave-def-effect');
+const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v4.semantic-wave-effect-bundle');
 const W_PROG = 200;
 const W_E_INI = -32.75;
 const W_U_INI = -67.5;
@@ -20,108 +18,16 @@ const W_TIME = 3;
 const W_MINI_TIME = 1;
 const BCU_WAVE_EFFECT_SOURCE = 'bcu-effanim-wave-cont-wave-def';
 const BCU_WAVE_EFFECT_SCALE = 1;
-
-const WAVE_EFFECT_DEFS = Object.freeze({
-  unitWave: {
-    key: 'unitWave',
-    kind: 'wave',
-    direction: -1,
-    baseDir: './public/assets/bcu/000001/org/battle/s4/',
-    image: 'skill004.png',
-    imgcut: 'skill004.imgcut',
-    model: 'skill_wave_attack.mamodel',
-    anim: 'skill_wave_attack.maanim'
-  },
-  enemyWave: {
-    key: 'enemyWave',
-    kind: 'wave',
-    direction: 1,
-    baseDir: './public/assets/bcu/000001/org/battle/s5/',
-    image: 'skill005.png',
-    imgcut: 'skill005.imgcut',
-    model: 'skill_wave_attack_e.mamodel',
-    anim: 'skill_wave_attack_e.maanim'
-  },
-  unitMiniWave: {
-    key: 'unitMiniWave',
-    kind: 'miniWave',
-    direction: -1,
-    baseDir: './public/assets/bcu/100100/org/battle/s12/',
-    image: 'skill012.png',
-    imgcut: 'skill012.imgcut',
-    model: 'skill_smallwave_attack.mamodel',
-    anim: 'skill_smallwave_attack.maanim'
-  },
-  enemyMiniWave: {
-    key: 'enemyMiniWave',
-    kind: 'miniWave',
-    direction: 1,
-    baseDir: './public/assets/bcu/100100/org/battle/s13/',
-    image: 'skill013.png',
-    imgcut: 'skill013.imgcut',
-    model: 'skill_smallwave_attack_e.mamodel',
-    anim: 'skill_smallwave_attack_e.maanim'
-  }
-});
-
-async function fetchText(path) {
-  const response = await fetch(path);
-  if (!response.ok) throw new Error(`${path}: ${response.status}`);
-  return await response.text();
-}
-
-async function loadImage(path) {
-  return await new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(path));
-    image.src = path;
-  });
-}
-
-async function loadWaveEffectDef(def) {
-  const [image, imgcutText, modelText, animText] = await Promise.all([
-    loadImage(`${def.baseDir}${def.image}`),
-    fetchText(`${def.baseDir}${def.imgcut}`),
-    fetchText(`${def.baseDir}${def.model}`),
-    fetchText(`${def.baseDir}${def.anim}`)
-  ]);
-  const imgcut = parseImgcut(imgcutText);
-  const model = parseModel(modelText);
-  const anim = parseAnim(animText);
-  return {
-    ...def,
-    image,
-    imgcut,
-    model,
-    anim,
-    loaded: true,
-    frameCount: Math.max(1, (Number(anim?.maxFrame) || 0) + 1),
-    maxFrame: Number(anim?.maxFrame) || 0,
-    partCount: imgcut?.parts?.length || 0,
-    source: 'raw-bcu-wave-effanim'
-  };
-}
-
-async function loadWaveEffectAssets() {
-  const entries = await Promise.all(Object.entries(WAVE_EFFECT_DEFS).map(async ([key, def]) => {
-    try {
-      return [key, await loadWaveEffectDef(def)];
-    } catch (error) {
-      return [key, { ...def, loaded: false, reason: String(error?.message || error) }];
-    }
-  }));
-  return Object.fromEntries(entries);
-}
+const WAVE_EFFECT_TOTAL = 4;
 
 function describeWaveEffectAssets(assets = {}) {
   return Object.fromEntries(Object.entries(assets || {}).map(([key, asset]) => [key, {
     loaded: asset?.loaded === true,
     reason: asset?.reason || null,
+    source: asset?.source || null,
     maxFrame: asset?.maxFrame ?? null,
     frameCount: asset?.frameCount ?? null,
     partCount: asset?.partCount ?? null,
-    baseDir: asset?.baseDir || null,
     image: asset?.image ? true : false,
     model: asset?.model ? true : false,
     anim: asset?.anim ? true : false
@@ -253,8 +159,6 @@ function buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, tar
     effectKey: effectKeyFor(kind, d),
     effectSpawned: false,
     t: isMini ? -1 : -3,
-    // BCU ContWaveDef maxt is animation length - 1. JS does not yet require maxt for damage timing;
-    // use a conservative lifetime while actual visual lifetime is taken from the EffAnim maxFrame.
     maxt: isMini ? W_MINI_TIME + 6 : W_TIME + 8,
     attackFrame: isMini ? 4 : 6,
     spawnFrame: isMini ? W_MINI_TIME : W_TIME,
@@ -336,15 +240,7 @@ function spawnWaveEffect(scene, item) {
   }
   const runtime = createWaveEffectRuntime(asset);
   if (!runtime) {
-    trace(scene, {
-      source: 'BattleWaveRuntimePatch.spawnWaveEffect',
-      event: 'effect-skipped',
-      reason: 'runtime-create-failed',
-      id: item.id,
-      kind: item.kind,
-      effectKey: item.effectKey,
-      t: item.t
-    });
+    trace(scene, { source: 'BattleWaveRuntimePatch.spawnWaveEffect', event: 'effect-skipped', reason: 'runtime-create-failed', id: item.id, kind: item.kind, effectKey: item.effectKey, t: item.t });
     return null;
   }
   const effect = EffectRuntime.createEffect({
@@ -374,27 +270,14 @@ function spawnWaveEffect(scene, item) {
       layer: item.layer,
       frameCount: runtime.frameCount,
       maxFrame: runtime.maxFrame,
-      assetBaseDir: asset.baseDir
+      assetSource: asset.source || null
     }
   });
   effect.durationMs = runtime.frameCount * BCU_BATTLE_TIMER_PERIOD_MS;
   effect.frameDurationMs = BCU_BATTLE_TIMER_PERIOD_MS;
-  // Effects are ticked later in the same scene frame. Start one frame behind so
-  // the first render after t == 0 displays animation frame 0, matching BCU draw/update order.
   effect.elapsedMs = -BCU_BATTLE_TIMER_PERIOD_MS;
   scene.effects.push(effect);
-  trace(scene, {
-    source: 'BattleWaveRuntimePatch.spawnWaveEffect',
-    event: 'effect-spawned',
-    id: item.id,
-    effectId: effect.id,
-    kind: item.kind,
-    effectKey: item.effectKey,
-    pos: item.pos,
-    layer: item.layer,
-    frameCount: runtime.frameCount,
-    t: item.t
-  });
+  trace(scene, { source: 'BattleWaveRuntimePatch.spawnWaveEffect', event: 'effect-spawned', id: item.id, effectId: effect.id, kind: item.kind, effectKey: item.effectKey, pos: item.pos, layer: item.layer, frameCount: runtime.frameCount, t: item.t });
   return effect;
 }
 
@@ -411,22 +294,10 @@ function attackAtFrame(scene, item) {
       bcuWave: item.kind,
       bcuRuntimeSource: 'ContWaveDef.attackFrame'
     });
-    // BCU AttackWave.excuse adds every captured Entity to incl after damaged(), even when damage is guarded.
     item.incl.add(target);
     if (res?.accepted) applied += 1;
   }
-  trace(scene, {
-    source: 'BattleWaveRuntimePatch.attackAtFrame',
-    bcuReference: 'ContWaveDef.update t == attack -> sb.getAttack(atk); AttackWave.excuse incl.add',
-    event: 'attack-frame',
-    id: item.id,
-    kind: item.kind,
-    t: item.t,
-    targetCount: targets.length,
-    appliedCount: applied,
-    inclSize: item.incl.size,
-    activeMode: 'bcu-cont-wave-def'
-  });
+  trace(scene, { source: 'BattleWaveRuntimePatch.attackAtFrame', bcuReference: 'ContWaveDef.update t == attack -> sb.getAttack(atk); AttackWave.excuse incl.add', event: 'attack-frame', id: item.id, kind: item.kind, t: item.t, targetCount: targets.length, appliedCount: applied, inclSize: item.incl.size, activeMode: 'bcu-cont-wave-def' });
 }
 
 function process(scene) {
@@ -451,27 +322,14 @@ function process(scene) {
       const next = buildNextWave(item);
       rest.push(next);
       next.group?.containers?.add(next);
-      trace(scene, {
-        source: 'BattleWaveRuntimePatch.nextWave',
-        bcuReference: 'ContWaveDef.nextWave W_PROG=200, inverted reverses direction',
-        event: 'next-wave',
-        id: item.id,
-        nextId: next.id,
-        pos: next.pos,
-        remainingLevel: next.remainingLevel,
-        inverted: next.inverted,
-        direction: next.direction,
-        effectKey: next.effectKey
-      });
+      trace(scene, { source: 'BattleWaveRuntimePatch.nextWave', bcuReference: 'ContWaveDef.nextWave W_PROG=200, inverted reverses direction', event: 'next-wave', id: item.id, nextId: next.id, pos: next.pos, remainingLevel: next.remainingLevel, inverted: next.inverted, direction: next.direction, effectKey: next.effectKey });
     }
     if (item.t === item.attackFrame) attackAtFrame(scene, item);
     if (item.t === item.maxt) {
       trace(scene, { source: 'BattleWaveRuntimePatch.process', bcuReference: 'ContWaveDef.update if maxt == t activate=false', event: 'deactivated', id: item.id, t: item.t });
       continue;
     }
-    if (item.t >= 0) {
-      trace(scene, { source: 'BattleWaveRuntimePatch.process', bcuReference: 'ContWaveDef.update anim.update(false)', event: 'animation-update', id: item.id, t: item.t });
-    }
+    if (item.t >= 0) trace(scene, { source: 'BattleWaveRuntimePatch.process', bcuReference: 'ContWaveDef.update anim.update(false)', event: 'animation-update', id: item.id, t: item.t });
     item.t += 1;
     rest.push(item);
   }
@@ -496,26 +354,18 @@ export function installBattleWaveRuntimePatch() {
 
   proto.ensureWaveEffectLoading = function ensureWaveEffectLoadingBcu() {
     if (this._waveEffectPromise) return this._waveEffectPromise;
-    this._waveEffectPromise = loadWaveEffectAssets()
+    const loader = this.waveEffectLoader || new BattleWaveEffectLoader({ semanticProvider: this.bcuDb?.semanticProvider || this.semanticProvider || globalThis.__BCU_DB__?.semanticProvider || null });
+    this.waveEffectLoader = loader;
+    this._waveEffectPromise = loader.loadAll()
       .then((assets) => {
         this.waveEffectAssets = assets;
-        this.lastWaveEffectLoadDebug = {
-          source: 'BattleWaveRuntimePatch.ensureWaveEffectLoading',
-          loaded: Object.values(assets).filter((a) => a?.loaded).length,
-          total: Object.keys(WAVE_EFFECT_DEFS).length,
-          assets: describeWaveEffectAssets(assets)
-        };
+        this.lastWaveEffectLoadDebug = { source: 'BattleWaveRuntimePatch.ensureWaveEffectLoading', ...loader.lastLoadDebug, assets: describeWaveEffectAssets(assets) };
         globalThis.__BCU_WAVE_EFFECT_LOAD_DEBUG__ = this.lastWaveEffectLoadDebug;
         return assets;
       })
       .catch((error) => {
         this.waveEffectAssets = {};
-        this.lastWaveEffectLoadDebug = {
-          source: 'BattleWaveRuntimePatch.ensureWaveEffectLoading',
-          loaded: 0,
-          total: Object.keys(WAVE_EFFECT_DEFS).length,
-          reason: String(error?.message || error)
-        };
+        this.lastWaveEffectLoadDebug = { source: 'BattleWaveRuntimePatch.ensureWaveEffectLoading', loaded: 0, total: WAVE_EFFECT_TOTAL, reason: String(error?.message || error) };
         globalThis.__BCU_WAVE_EFFECT_LOAD_DEBUG__ = this.lastWaveEffectLoadDebug;
         return {};
       });

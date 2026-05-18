@@ -17,6 +17,7 @@ async function boot() {
   try {
     showBootStatus('BCU asset database loading...');
     await import('./ui/FormationEditorPerformancePatch.js');
+    await import('./ui/FormationCatalogVirtualDomPatch.js');
     await import('./ui/NyankoPresentationPatch.js');
     await import('./ui/NyankoUiBehaviorPatch.js');
     await import('./battle/bcu-runtime/BcuTraceRuntime.js');

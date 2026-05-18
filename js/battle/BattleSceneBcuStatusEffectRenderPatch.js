@@ -4,15 +4,22 @@ import { getActorStatusEffectManager } from './bcu-runtime/BcuStatusEffectManage
 import { getBcuStatusEffectPosition } from './bcu-runtime/BcuStatusEffectPositioner.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-status-effect-render-patch.v1');
+const BCU_STATUS_EFFECT_DT = 1000 / 30;
 
-export function drawBcuStatusEffects(renderer, ctx, scene, actorsForRender, dt = 1000 / 30) {
+export function drawBcuStatusEffects(renderer, ctx, scene, actorsForRender, dt = BCU_STATUS_EFFECT_DT, options = {}) {
   const trace = [];
   for (const actor of actorsForRender || []) {
     if (!actor?.isAlive?.()) continue;
     const manager = getActorStatusEffectManager(actor, scene);
     const effects = manager.updateEffects(dt, scene);
     for (const effect of effects) {
-      const pos = getBcuStatusEffectPosition({ renderer, scene, actor, iconIndex: effect.xSlot ?? effect.slot ?? 0 });
+      const pos = getBcuStatusEffectPosition({
+        renderer,
+        scene,
+        actor,
+        iconIndex: effect.xSlot ?? effect.slot ?? 0,
+        effect
+      });
       const entry = {
         source: 'BattleSceneBcuStatusEffectRenderPatch',
         actorId: actor.instanceId || actor.label || null,
@@ -37,7 +44,14 @@ export function drawBcuStatusEffects(renderer, ctx, scene, actorsForRender, dt =
       BcuTraceRuntime.push('statusIconRender', entry);
     }
   }
-  globalThis.__BCU_STATUS_ICON_RENDER_TRACE__ = trace;
+  if (options.append === true) {
+    const current = Array.isArray(globalThis.__BCU_STATUS_ICON_RENDER_TRACE__)
+      ? globalThis.__BCU_STATUS_ICON_RENDER_TRACE__
+      : [];
+    globalThis.__BCU_STATUS_ICON_RENDER_TRACE__ = current.concat(trace);
+  } else {
+    globalThis.__BCU_STATUS_ICON_RENDER_TRACE__ = trace;
+  }
   return trace;
 }
 
@@ -49,6 +63,10 @@ export function installBattleSceneBcuStatusEffectRenderPatch() {
   proto.render = function renderWithBcuStatusEffects(previewRenderer, scene, debugOptions = false) {
     const c = previewRenderer.ctx;
     const actorsForRender = this.getAliveActorsForRender(scene);
+    const actorSet = new Set(actorsForRender);
+    const statusDrawnActors = new Set();
+    globalThis.__BCU_STATUS_ICON_RENDER_TRACE__ = [];
+
     const originalGetAliveActorsForRender = this.getAliveActorsForRender;
     let suppliedOnce = false;
     this.getAliveActorsForRender = function getAliveActorsForRenderPatched(s) {
@@ -58,21 +76,25 @@ export function installBattleSceneBcuStatusEffectRenderPatch() {
       }
       return originalGetAliveActorsForRender.call(this, s);
     };
-    const originalDrawHpBar = this.drawHpBar;
-    let drewStatusEffects = false;
-    this.drawHpBar = function drawHpBarAfterBcuStatusEffects(ctx, actor) {
-      if (!drewStatusEffects) {
-        drewStatusEffects = true;
-        drawBcuStatusEffects(this, c || ctx, scene, actorsForRender);
+
+    const originalDrawActor = this.drawActor;
+    this.drawActor = function drawActorThenBcuStatusEffects(ctx, actor) {
+      const result = originalDrawActor.call(this, ctx, actor);
+      if (actorSet.has(actor) && !statusDrawnActors.has(actor)) {
+        statusDrawnActors.add(actor);
+        drawBcuStatusEffects(this, c || ctx, scene, [actor], BCU_STATUS_EFFECT_DT, { append: true });
       }
-      return originalDrawHpBar.call(this, ctx, actor);
+      return result;
     };
+
     try {
       const result = originalRender.call(this, previewRenderer, scene, debugOptions);
-      if (!drewStatusEffects) drawBcuStatusEffects(this, c, scene, actorsForRender);
+      if (!statusDrawnActors.size && actorsForRender.length) {
+        drawBcuStatusEffects(this, c, scene, actorsForRender, BCU_STATUS_EFFECT_DT, { append: true });
+      }
       return result;
     } finally {
-      this.drawHpBar = originalDrawHpBar;
+      this.drawActor = originalDrawActor;
       this.getAliveActorsForRender = originalGetAliveActorsForRender;
     }
   };

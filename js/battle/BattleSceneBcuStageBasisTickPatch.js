@@ -103,17 +103,22 @@ function getSelection(scene, actor) {
 
 function attackWaitReady(actor, nowMs) {
   const state = BattleAttackTimeline.getAttackWaitState(actor, nowMs);
+  const ready = state.ready && state.canStartAttack !== false;
   actor.lastStageBasisAttackWaitDebug = {
-    source: 'BCU StageBasisTickPatch attack-start uses BattleAttackTimeline waitTime frames',
+    source: 'BCU StageBasisTickPatch attack-start uses waitTime == 0 && attacksLeft != 0',
     nowMs,
-    ready: state.ready,
+    ready,
+    waitReady: state.ready,
+    canStartAttack: state.canStartAttack,
     remainingMs: state.remainingMs,
     remainingFrames: state.remainingFrames,
+    attacksLeft: state.attacksLeft,
     readyAtMs: state.readyAtMs,
     active: state.active,
-    reason: state.reason
+    reason: state.reason,
+    bcuReference: 'Entity.update2: waitTime == 0 && touchEnemy && atkm.attacksLeft != 0'
   };
-  return state.ready;
+  return ready;
 }
 
 export function installBattleSceneBcuStageBasisTickPatch() {

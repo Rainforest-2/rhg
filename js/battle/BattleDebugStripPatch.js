@@ -1,8 +1,7 @@
 import { BattleScene } from './BattleScene.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.debug-strip.v2-preserve-runtime-chain');
+const PATCH_FLAG = Symbol.for('wanko-battle.debug-strip.v3-mutable-empty-arrays');
 
-const EMPTY_EVENTS = Object.freeze([]);
 const KEEP_GLOBALS = new Set([
   '__APP__',
   'app',
@@ -10,10 +9,20 @@ const KEEP_GLOBALS = new Set([
   '__BCU_DB__'
 ]);
 
+function clearArray(value) {
+  if (Array.isArray(value)) {
+    value.length = 0;
+    return value;
+  }
+  return [];
+}
+
 function noDebugEventStore(scene) {
   if (!scene) return;
-  scene.debugEvents = EMPTY_EVENTS;
-  scene.tickPhaseTrace = EMPTY_EVENTS;
+  // Keep these arrays mutable because existing runtime wrappers may still push into them.
+  // We strip storage by truncating before/after runtime phases instead of assigning a frozen array.
+  scene.debugEvents = clearArray(scene.debugEvents);
+  scene.tickPhaseTrace = clearArray(scene.tickPhaseTrace);
   scene.debugBattleEnabled = false;
   scene.debugBattleSource = 'disabled-debug-strip';
 }

@@ -30,7 +30,8 @@ export function drawBcuStatusEffects(renderer, ctx, scene, actorsForRender, dt =
         positionSource: pos.positionSource,
         x: Number.isFinite(pos.x) ? pos.x : null,
         y: Number.isFinite(pos.y) ? pos.y : null,
-        sceneFrame: scene?.logicFrame ?? null
+        sceneFrame: scene?.logicFrame ?? null,
+        error: actor.lastBcuStatusEffectError || null
       };
       if (effect.runtime && pos.rendered) {
         entry.rendered = effect.runtime.draw(ctx, {

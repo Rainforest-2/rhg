@@ -7,6 +7,12 @@ function msToBcuFrame(ms) {
   return Math.round(n / BCU_BATTLE_TIMER_PERIOD_MS);
 }
 
+function bcuFrameToMs(frames) {
+  const n = Number(frames);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, n) * BCU_BATTLE_TIMER_PERIOD_MS;
+}
+
 export class BattleAttackTimeline {
   static getProfile(actor) {
     return BattleAttackProfile.ensure(actor);
@@ -32,12 +38,102 @@ export class BattleAttackTimeline {
     return msToBcuFrame(this.getBcuAttackIntervalMs(actor));
   }
 
+  static getBcuTbaFrames(actor) {
+    const raw = actor?.rawStats || actor?.stats || {};
+    if (Number.isFinite(raw.tbaFrames)) return Math.max(0, Math.round(raw.tbaFrames));
+    if (Number.isFinite(raw.attackWaitFrames)) return Math.max(0, Math.round(raw.attackWaitFrames));
+    if (Number.isFinite(actor?.attackWaitFrames)) return Math.max(0, Math.round(actor.attackWaitFrames));
+    return Math.max(0, Math.round(this.getWaitDurationMs(actor) / BCU_BATTLE_TIMER_PERIOD_MS));
+  }
+
+  static ensureBcuWaitState(actor, nowMs = 0) {
+    if (!actor) return 0;
+    if (!Number.isFinite(actor.bcuWaitTimeFrames)) {
+      actor.bcuWaitTimeFrames = 0;
+      actor.bcuWaitTimeSource = 'default-zero';
+      actor.bcuWaitLastTickFrame = null;
+    }
+    this.syncLegacyWaitFields(actor, nowMs, actor.bcuWaitTimeSource || 'ensure');
+    return actor.bcuWaitTimeFrames;
+  }
+
+  static syncLegacyWaitFields(actor, nowMs = 0, reason = 'bcu-wait-sync') {
+    if (!actor) return;
+    const frames = Math.max(0, Math.round(Number(actor.bcuWaitTimeFrames) || 0));
+    const remainingMs = bcuFrameToMs(frames);
+    const readyAtMs = nowMs + remainingMs;
+    actor.attackWaitRemainingMs = remainingMs;
+    actor.attackWaitReadyAtMs = readyAtMs;
+    actor.attackWaitReadyAtFrame = msToBcuFrame(readyAtMs);
+    actor.attackCooldownUntilMs = readyAtMs;
+    actor.attackWaitActive = frames > 0;
+    actor.attackWaitReason = frames > 0 ? (actor.bcuWaitTimeSource || reason) : null;
+  }
+
+  static setBcuWaitFrames(actor, frames, { nowMs = 0, reason = 'set-bcu-wait' } = {}) {
+    if (!actor) return 0;
+    const n = Math.max(0, Math.round(Number(frames) || 0));
+    actor.bcuWaitTimeFrames = n;
+    actor.bcuWaitTimeSetAtMs = nowMs;
+    actor.bcuWaitTimeSetAtFrame = msToBcuFrame(nowMs);
+    actor.bcuWaitTimeSource = reason;
+    actor.bcuWaitSetCount = (actor.bcuWaitSetCount || 0) + 1;
+    this.syncLegacyWaitFields(actor, nowMs, reason);
+    actor.lastBcuWaitTimeDebug = {
+      source: 'BattleAttackTimeline.setBcuWaitFrames',
+      nowMs,
+      nowFrame: msToBcuFrame(nowMs),
+      frames: n,
+      remainingMs: bcuFrameToMs(n),
+      reason,
+      setCount: actor.bcuWaitSetCount,
+      bcuReference: 'Entity.AtkManager.updateAttack final hit: waitTime = data.getTBA()'
+    };
+    return n;
+  }
+
+  static tickBcuWait(actor, { logicFrame = null, nowMs = 0 } = {}) {
+    if (!actor) return 0;
+    this.ensureBcuWaitState(actor, nowMs);
+    if (logicFrame !== null && actor.bcuWaitLastTickFrame === logicFrame) return actor.bcuWaitTimeFrames;
+    actor.bcuWaitLastTickFrame = logicFrame;
+    if (actor.bcuWaitTimeFrames > 0) actor.bcuWaitTimeFrames -= 1;
+    this.syncLegacyWaitFields(actor, nowMs, 'bcu-wait-tick');
+    actor.lastBcuWaitTickDebug = {
+      source: 'BattleAttackTimeline.tickBcuWait',
+      logicFrame,
+      nowMs,
+      remainingFrames: actor.bcuWaitTimeFrames,
+      remainingMs: bcuFrameToMs(actor.bcuWaitTimeFrames),
+      bcuReference: 'Entity.update first step: if(waitTime > 0) waitTime--'
+    };
+    return actor.bcuWaitTimeFrames;
+  }
+
   static isAttackCompleteReason(reason) {
     const r = String(reason || 'attack-complete');
     return r === 'attack-complete' || r === 'attack-ended' || r === 'timeline-complete' || r === 'attack-finished';
   }
 
   static getAttackWaitState(actor, nowMs = 0) {
+    if (actor && Number.isFinite(actor.bcuWaitTimeFrames)) {
+      const frames = Math.max(0, Math.round(actor.bcuWaitTimeFrames));
+      const remainingMs = bcuFrameToMs(frames);
+      const readyAtMs = nowMs + remainingMs;
+      return {
+        active: frames > 0,
+        ready: frames <= 0,
+        readyAtMs,
+        readyAtFrame: msToBcuFrame(readyAtMs),
+        nowFrame: msToBcuFrame(nowMs),
+        remainingMs,
+        remainingFrames: frames,
+        startedAtMs: Number.isFinite(actor?.bcuWaitTimeSetAtMs) ? actor.bcuWaitTimeSetAtMs : null,
+        startedAtFrame: Number.isFinite(actor?.bcuWaitTimeSetAtFrame) ? actor.bcuWaitTimeSetAtFrame : null,
+        reason: actor?.bcuWaitTimeSource || actor?.attackWaitReason || null,
+        source: 'BattleAttackTimeline.bcu-waitTime-frames'
+      };
+    }
     const readyAt = Number.isFinite(actor?.attackWaitReadyAtMs)
       ? actor.attackWaitReadyAtMs
       : Number.isFinite(actor?.attackCooldownUntilMs)
@@ -55,12 +151,14 @@ export class BattleAttackTimeline {
       startedAtMs: Number.isFinite(actor?.attackWaitStartedAtMs) ? actor.attackWaitStartedAtMs : null,
       startedAtFrame: Number.isFinite(actor?.attackWaitStartedAtMs) ? msToBcuFrame(actor.attackWaitStartedAtMs) : null,
       reason: actor?.attackWaitReason || null,
-      source: 'BattleAttackTimeline.bcu-33ms-frame-debug'
+      source: 'BattleAttackTimeline.legacy-readyAt-debug'
     };
   }
 
   static clearAttackWait(actor, nowMs = 0) {
     if (!actor) return;
+    actor.bcuWaitTimeFrames = 0;
+    actor.bcuWaitTimeSource = null;
     actor.attackWaitActive = false;
     actor.attackWaitReadyAtMs = nowMs;
     actor.attackCooldownUntilMs = nowMs;
@@ -72,7 +170,6 @@ export class BattleAttackTimeline {
     const profile = this.getProfile(actor);
     const intervalMs = this.getBcuAttackIntervalMs(actor);
     const intervalFrames = this.getBcuAttackIntervalFrames(actor);
-    const readyAtMs = nowMs + intervalMs;
     this.clearAttackWait(actor, nowMs);
     actor.setState?.('attack');
     actor.setAnimation?.(actor.attackAnimId, 'attack', true);
@@ -83,13 +180,13 @@ export class BattleAttackTimeline {
     actor.attackElapsedMs = 0;
     actor.hasHitInCurrentAttack = false;
     actor.resolvedAttackEventKeys = new Set();
-    actor.attackWaitStartedAtMs = nowMs;
-    actor.attackWaitStartedAtFrame = msToBcuFrame(nowMs);
-    actor.attackWaitReadyAtMs = readyAtMs;
-    actor.attackWaitReadyAtFrame = msToBcuFrame(readyAtMs);
-    actor.attackCooldownUntilMs = readyAtMs;
-    actor.attackWaitActive = intervalMs > 0;
-    actor.attackWaitReason = 'bcu-attack-interval-from-attack-start';
+    actor.attackWaitStartedAtMs = null;
+    actor.attackWaitStartedAtFrame = null;
+    actor.attackWaitReadyAtMs = nowMs;
+    actor.attackWaitReadyAtFrame = msToBcuFrame(nowMs);
+    actor.attackCooldownUntilMs = nowMs;
+    actor.attackWaitActive = false;
+    actor.attackWaitReason = null;
     actor.attackIntervalSetCount = (actor.attackIntervalSetCount || 0) + 1;
     actor.lastAttackTimelineDebug = {
       startedAtMs: nowMs,
@@ -101,27 +198,22 @@ export class BattleAttackTimeline {
       bcuTiming: profile?.bcuTiming || null,
       bcuAttackIntervalMs: intervalMs,
       bcuAttackIntervalFrames: intervalFrames,
-      readyAtMs,
-      readyAtFrame: actor.attackWaitReadyAtFrame,
-      cooldownSource: 'attack-start+bcu-getItv'
+      cooldownSource: 'bcu-waitTime-set-on-final-hit-not-attack-start'
     };
     actor.lastAttackWaitDebug = {
       nowMs,
       nowFrame: msToBcuFrame(nowMs),
-      reason: 'attack-start',
+      reason: 'attack-start-clear-waitTime',
       waitMs: profile?.waitMs ?? this.getWaitDurationMs(actor),
-      preserveExistingWait: false,
-      canSetNewTba: true,
-      readyAtMs,
-      readyAtFrame: actor.attackWaitReadyAtFrame,
-      remainingMs: intervalMs,
-      remainingFrames: intervalFrames,
-      active: actor.attackWaitActive,
-      ready: intervalMs <= 0,
-      setCount: actor.attackWaitSetCount || 0,
+      waitFrames: this.getBcuTbaFrames(actor),
+      readyAtMs: nowMs,
+      readyAtFrame: msToBcuFrame(nowMs),
+      remainingMs: 0,
+      remainingFrames: 0,
+      active: false,
+      ready: true,
       intervalSetCount: actor.attackIntervalSetCount || 0,
-      source: 'set-bcu-attack-interval-on-attack-start',
-      bcuTiming: profile?.bcuTiming || null
+      source: 'BCU AtkManager.startAttack does not assign waitTime'
     };
     actor.applyCurrentAnimationFrame?.();
     return profile;
@@ -151,7 +243,18 @@ export class BattleAttackTimeline {
     if (!actor.resolvedAttackEventKeys) actor.resolvedAttackEventKeys = new Set();
     actor.resolvedAttackEventKeys.add(key);
     actor.hasHitInCurrentAttack = true;
-    actor.lastAttackHitResolvedDebug = { key, resolvedHitCount: actor.resolvedAttackEventKeys.size };
+    const profile = this.getProfile(actor);
+    const totalHits = Array.isArray(profile?.events) ? profile.events.length : 0;
+    const resolvedHits = actor.resolvedAttackEventKeys.size;
+    const finalHitResolved = totalHits > 0 && resolvedHits >= totalHits;
+    if (finalHitResolved && !actor.bcuWaitSetForAttackCycle) {
+      this.setBcuWaitFrames(actor, this.getBcuTbaFrames(actor), {
+        nowMs: Number.isFinite(actor.lastSceneTimeMs) ? actor.lastSceneTimeMs : 0,
+        reason: 'final-hit-resolved-set-TBA'
+      });
+      actor.bcuWaitSetForAttackCycle = actor.attackCycleId || true;
+    }
+    actor.lastAttackHitResolvedDebug = { key, resolvedHitCount: resolvedHits, totalHitCount: totalHits, finalHitResolved, bcuWaitTimeFrames: actor.bcuWaitTimeFrames };
   }
 
   static getAttackEndMs(actor) {
@@ -187,6 +290,7 @@ export class BattleAttackTimeline {
       unresolvedHitCount: Math.max(0, events.length - resolvedKeys.length),
       resolvedKeys,
       hasHitInCurrentAttack: actor?.hasHitInCurrentAttack === true,
+      bcuWaitTimeFrames: Number.isFinite(actor?.bcuWaitTimeFrames) ? actor.bcuWaitTimeFrames : null,
       lastAttackTimelineDebug: actor?.lastAttackTimelineDebug || null,
       lastAttackWaitDebug: actor?.lastAttackWaitDebug || null,
       waitState,
@@ -198,48 +302,14 @@ export class BattleAttackTimeline {
 
   static enterAttackWait(actor, { nowMs = 0, reason = 'attack-complete' } = {}) {
     if (!actor) return;
-
     const previous = this.getAttackWaitState(actor, nowMs);
     const waitMs = this.getWaitDurationMs(actor);
-    const preserveExistingWait = actor.attackWaitActive === true && previous.remainingMs > 0;
-    const canSetNewTba = this.isAttackCompleteReason(reason);
     const profile = this.getProfile(actor);
-    const attackStartReadyAt = Number.isFinite(actor.attackStartedAtMs)
-      ? actor.attackStartedAtMs + this.getBcuAttackIntervalMs(actor)
-      : null;
 
     actor.setState?.('attack-wait');
     actor.setAnimation?.(actor.idleAnimId || actor.moveAnimId, 'attack-wait', false);
-    actor.attackWaitReason = preserveExistingWait ? (actor.attackWaitReason || reason) : reason;
-
-    if (preserveExistingWait) {
-      actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
-    } else if (Number.isFinite(attackStartReadyAt)) {
-      actor.attackWaitStartedAtMs = actor.attackStartedAtMs;
-      actor.attackWaitStartedAtFrame = msToBcuFrame(actor.attackStartedAtMs);
-      actor.attackWaitReadyAtMs = attackStartReadyAt;
-      actor.attackWaitReadyAtFrame = msToBcuFrame(attackStartReadyAt);
-      actor.attackCooldownUntilMs = attackStartReadyAt;
-      actor.attackWaitActive = attackStartReadyAt > nowMs;
-    } else if (canSetNewTba) {
-      actor.attackWaitStartedAtMs = nowMs;
-      actor.attackWaitStartedAtFrame = msToBcuFrame(nowMs);
-      actor.attackWaitReadyAtMs = nowMs + waitMs;
-      actor.attackWaitReadyAtFrame = msToBcuFrame(actor.attackWaitReadyAtMs);
-      actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
-      actor.attackWaitActive = waitMs > 0;
-      actor.attackWaitSetCount = (actor.attackWaitSetCount || 0) + 1;
-    } else {
-      const readyAt = Number.isFinite(actor.attackWaitReadyAtMs)
-        ? actor.attackWaitReadyAtMs
-        : Number.isFinite(actor.attackCooldownUntilMs)
-          ? actor.attackCooldownUntilMs
-          : nowMs;
-      actor.attackWaitReadyAtMs = Math.min(readyAt, nowMs);
-      actor.attackWaitReadyAtFrame = msToBcuFrame(actor.attackWaitReadyAtMs);
-      actor.attackCooldownUntilMs = actor.attackWaitReadyAtMs;
-      actor.attackWaitActive = false;
-    }
+    this.ensureBcuWaitState(actor, nowMs);
+    this.syncLegacyWaitFields(actor, nowMs, actor.bcuWaitTimeSource || reason);
 
     const next = this.getAttackWaitState(actor, nowMs);
     actor.attackWaitRemainingMs = next.remainingMs;
@@ -248,9 +318,9 @@ export class BattleAttackTimeline {
       nowFrame: msToBcuFrame(nowMs),
       reason,
       waitMs,
-      waitFrames: msToBcuFrame(waitMs),
-      preserveExistingWait,
-      canSetNewTba,
+      waitFrames: this.getBcuTbaFrames(actor),
+      preserveExistingWait: previous.remainingFrames > 0,
+      canSetNewTba: false,
       readyAtMs: next.readyAtMs,
       readyAtFrame: next.readyAtFrame,
       remainingMs: next.remainingMs,
@@ -259,7 +329,7 @@ export class BattleAttackTimeline {
       ready: next.ready,
       setCount: actor.attackWaitSetCount || 0,
       intervalSetCount: actor.attackIntervalSetCount || 0,
-      source: preserveExistingWait ? 'preserved-existing-bcu-interval' : (Number.isFinite(attackStartReadyAt) ? 'reuse-attack-start-bcu-interval' : (canSetNewTba ? 'fallback-set-new-tba-on-attack-complete' : 'no-new-tba-non-complete-reason')),
+      source: 'BCU waitTime is assigned on final hit; enterAttackWait only changes state',
       bcuTiming: profile?.bcuTiming || null
     };
     actor.applyCurrentAnimationFrame?.();

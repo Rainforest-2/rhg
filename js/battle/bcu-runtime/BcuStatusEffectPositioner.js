@@ -29,7 +29,9 @@ export function getBcuStatusEffectPosition({ renderer, scene, actor, iconIndex =
   const baseScreenX = renderer.projectBattleX(scene, worldX);
   const baseScreenY = renderer.getEntityRenderY(scene, actor, actor.y) + crowdOffsetY + kbOffsetY;
 
-  const renderScale = renderer.getEntityRenderScale(scene, actor, actor.scale || 1);
+  // BCU BattleBox.drawEntity passes bf.sb.siz to drawEff, not psiz = bf.sb.siz * sprite.
+  // Therefore status effects must use camera siz directly, without actor scale or spriteScale.
+  const siz = typeof renderer?.getCameraScale === 'function' ? renderer.getCameraScale(scene) : 1;
   const dire = getBcuEntityDirection(actor);
   const EWID = 36;
 
@@ -37,9 +39,9 @@ export function getBcuStatusEffectPosition({ renderer, scene, actor, iconIndex =
   // x by -EWID * e.dire * siz. It does not use actor top/head bounds; the EffAnim model carries
   // its own visual offset relative to the entity origin.
   const bcuOffsetY = Number.isFinite(effect?.bcuOffsetY) ? effect.bcuOffsetY : 0;
-  const x = baseScreenX - iconIndex * EWID * dire * renderScale;
-  const y = baseScreenY + bcuOffsetY * renderScale;
-  const scale = renderScale * 0.75;
+  const x = baseScreenX - iconIndex * EWID * dire * siz;
+  const y = baseScreenY + bcuOffsetY * siz;
+  const scale = siz * 0.75;
   const rendered = Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(scale) && scale > 0;
   return {
     rendered,
@@ -47,12 +49,13 @@ export function getBcuStatusEffectPosition({ renderer, scene, actor, iconIndex =
     x,
     y,
     scale,
-    direction: dire,
+    // A_STOP/A_E_STOP already encode player/enemy orientation. BCU uses dire only for slot spacing.
+    direction: 1,
     dire,
     drawList,
     bounds,
     bcuOffsetY,
-    renderScale,
+    renderScale: siz,
     bcuReference: 'Entity.AnimManager.drawEff: eae.draw(P(x,p.y+offset), siz*0.75); x -= EWID*dire*siz'
   };
 }

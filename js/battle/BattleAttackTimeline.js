@@ -13,6 +13,16 @@ function bcuFrameToMs(frames) {
   return Math.max(0, n) * BCU_BATTLE_TIMER_PERIOD_MS;
 }
 
+function hasGlassAbility(actor) {
+  return !!(
+    actor?.rawStats?.bcuAbilityFlags?.glass ||
+    actor?.stats?.bcuAbilityFlags?.glass ||
+    actor?.bcuCombatModel?.ability?.flags?.glass ||
+    actor?.rawStats?.bcuCombatModel?.ability?.flags?.glass ||
+    actor?.stats?.bcuCombatModel?.ability?.flags?.glass
+  );
+}
+
 export class BattleAttackTimeline {
   static getProfile(actor) {
     return BattleAttackProfile.ensure(actor);
@@ -46,20 +56,28 @@ export class BattleAttackTimeline {
     return Math.max(0, Math.round(this.getWaitDurationMs(actor) / BCU_BATTLE_TIMER_PERIOD_MS));
   }
 
-  static getBcuAttackLoopInitial(actor) {
+  static getBcuRawAttackLoop(actor) {
     const raw = actor?.rawStats || actor?.stats || {};
-    // BCU DataEntity.loop defaults to -1. Entity.AtkManager starts with data.getAtkLoop().
-    // update2 starts an attack only when attacksLeft != 0; negative values behave as infinite.
     if (Number.isFinite(raw.loop)) return Math.round(raw.loop);
     if (Number.isFinite(actor?.attackLoop)) return Math.round(actor.attackLoop);
+    return -1;
+  }
+
+  static getBcuAttackLoopInitial(actor) {
+    const rawLoop = this.getBcuRawAttackLoop(actor);
+    // BCU AtkManager uses data.getAtkLoop(), but normal battle units are expected to keep attacking.
+    // Some bundled CSV rows expose loop=1 for ordinary units; treating that literally makes every
+    // non-glass actor attack once and then stop. Keep finite-loop semantics only for AB_GLASS/self-destruct actors.
+    if (hasGlassAbility(actor)) return rawLoop > 0 ? rawLoop : 1;
     return -1;
   }
 
   static ensureBcuAttackLoopState(actor) {
     if (!actor) return 0;
     if (!Number.isFinite(actor.bcuAttacksLeft)) {
+      actor.bcuRawAttackLoop = this.getBcuRawAttackLoop(actor);
       actor.bcuAttacksLeft = this.getBcuAttackLoopInitial(actor);
-      actor.bcuAttackLoopSource = 'DataEntity.getAtkLoop';
+      actor.bcuAttackLoopSource = hasGlassAbility(actor) ? 'DataEntity.getAtkLoop-glass-finite' : 'normal-actor-infinite-attack-loop';
     }
     return actor.bcuAttacksLeft;
   }
@@ -156,6 +174,7 @@ export class BattleAttackTimeline {
         remainingFrames: frames,
         attacksLeft,
         attackLoopInitial: this.getBcuAttackLoopInitial(actor),
+        rawAttackLoop: this.getBcuRawAttackLoop(actor),
         startedAtMs: Number.isFinite(actor?.bcuWaitTimeSetAtMs) ? actor.bcuWaitTimeSetAtMs : null,
         startedAtFrame: Number.isFinite(actor?.bcuWaitTimeSetAtFrame) ? actor.bcuWaitTimeSetAtFrame : null,
         reason: actor?.bcuWaitTimeSource || actor?.attackWaitReason || null,
@@ -180,6 +199,7 @@ export class BattleAttackTimeline {
       remainingFrames: msToBcuFrame(remainingMs),
       attacksLeft,
       attackLoopInitial: actor ? this.getBcuAttackLoopInitial(actor) : 0,
+      rawAttackLoop: actor ? this.getBcuRawAttackLoop(actor) : 0,
       startedAtMs: Number.isFinite(actor?.attackWaitStartedAtMs) ? actor.attackWaitStartedAtMs : null,
       startedAtFrame: Number.isFinite(actor?.attackWaitStartedAtMs) ? msToBcuFrame(actor.attackWaitStartedAtMs) : null,
       reason: actor?.attackWaitReason || null,
@@ -204,6 +224,9 @@ export class BattleAttackTimeline {
     const intervalFrames = this.getBcuAttackIntervalFrames(actor);
     this.ensureBcuAttackLoopState(actor);
     this.clearAttackWait(actor, nowMs);
+    actor.attackCycleSerial = (actor.attackCycleSerial || 0) + 1;
+    actor.attackCycleId = actor.attackCycleSerial;
+    actor.bcuWaitSetForAttackCycle = null;
     actor.setState?.('attack');
     actor.setAnimation?.(actor.attackAnimId, 'attack', true);
     actor.attackTarget = target;
@@ -213,7 +236,6 @@ export class BattleAttackTimeline {
     actor.attackElapsedMs = 0;
     actor.hasHitInCurrentAttack = false;
     actor.resolvedAttackEventKeys = new Set();
-    actor.bcuWaitSetForAttackCycle = null;
     actor.attackWaitStartedAtMs = null;
     actor.attackWaitStartedAtFrame = null;
     actor.attackWaitReadyAtMs = nowMs;
@@ -225,6 +247,7 @@ export class BattleAttackTimeline {
     actor.lastAttackTimelineDebug = {
       startedAtMs: nowMs,
       startedAtFrame: actor.attackStartedAtFrame,
+      attackCycleId: actor.attackCycleId,
       target: target?.instanceId || target?.label || null,
       targetType,
       events: Array.isArray(profile?.events) ? profile.events.length : 0,
@@ -232,12 +255,15 @@ export class BattleAttackTimeline {
       bcuTiming: profile?.bcuTiming || null,
       bcuAttackIntervalMs: intervalMs,
       bcuAttackIntervalFrames: intervalFrames,
+      rawAttackLoop: actor.bcuRawAttackLoop,
       attacksLeft: actor.bcuAttacksLeft,
+      attackLoopSource: actor.bcuAttackLoopSource,
       cooldownSource: 'bcu-waitTime-set-on-final-hit-not-attack-start'
     };
     actor.lastAttackWaitDebug = {
       nowMs,
       nowFrame: msToBcuFrame(nowMs),
+      attackCycleId: actor.attackCycleId,
       reason: 'attack-start-clear-waitTime',
       waitMs: profile?.waitMs ?? this.getWaitDurationMs(actor),
       waitFrames: this.getBcuTbaFrames(actor),
@@ -247,6 +273,7 @@ export class BattleAttackTimeline {
       remainingFrames: 0,
       active: false,
       ready: true,
+      rawAttackLoop: actor.bcuRawAttackLoop,
       attacksLeft: actor.bcuAttacksLeft,
       intervalSetCount: actor.attackIntervalSetCount || 0,
       source: 'BCU AtkManager.startAttack does not assign waitTime'
@@ -283,10 +310,10 @@ export class BattleAttackTimeline {
     const totalHits = Array.isArray(profile?.events) ? profile.events.length : 0;
     const resolvedHits = actor.resolvedAttackEventKeys.size;
     const finalHitResolved = totalHits > 0 && resolvedHits >= totalHits;
-    const cycleId = actor.attackCycleId || 0;
+    const cycleId = actor.attackCycleId || actor.attackCycleSerial || 0;
     if (finalHitResolved && actor.bcuWaitSetForAttackCycle !== cycleId) {
       this.ensureBcuAttackLoopState(actor);
-      actor.bcuAttacksLeft -= 1;
+      if (actor.bcuAttacksLeft > 0) actor.bcuAttacksLeft -= 1;
       this.setBcuWaitFrames(actor, this.getBcuTbaFrames(actor), {
         nowMs: Number.isFinite(actor.lastSceneTimeMs) ? actor.lastSceneTimeMs : 0,
         reason: 'final-hit-resolved-set-TBA'
@@ -295,12 +322,14 @@ export class BattleAttackTimeline {
       actor.lastBcuAttackLoopDebug = {
         source: 'BattleAttackTimeline.markHitResolved',
         cycleId,
+        rawAttackLoop: actor.bcuRawAttackLoop,
         initialLoop: this.getBcuAttackLoopInitial(actor),
         attacksLeft: actor.bcuAttacksLeft,
-        bcuReference: 'Entity.AtkManager.updateAttack: attacksLeft--; waitTime = data.getTBA()'
+        attackLoopSource: actor.bcuAttackLoopSource,
+        bcuReference: 'Entity.AtkManager.updateAttack: attacksLeft--; waitTime = data.getTBA(); non-glass normal actors keep infinite loop in JS runtime'
       };
     }
-    actor.lastAttackHitResolvedDebug = { key, resolvedHitCount: resolvedHits, totalHitCount: totalHits, finalHitResolved, bcuWaitTimeFrames: actor.bcuWaitTimeFrames, attacksLeft: actor.bcuAttacksLeft };
+    actor.lastAttackHitResolvedDebug = { key, resolvedHitCount: resolvedHits, totalHitCount: totalHits, finalHitResolved, cycleId, bcuWaitTimeFrames: actor.bcuWaitTimeFrames, attacksLeft: actor.bcuAttacksLeft };
   }
 
   static getAttackEndMs(actor) {
@@ -325,6 +354,7 @@ export class BattleAttackTimeline {
       state: actor?.state || null,
       attackStartedAtMs: Number.isFinite(actor?.attackStartedAtMs) ? actor.attackStartedAtMs : null,
       attackStartedAtFrame: Number.isFinite(actor?.attackStartedAtFrame) ? actor.attackStartedAtFrame : null,
+      attackCycleId: actor?.attackCycleId || null,
       attackElapsedMs: this.getElapsedMs(actor, nowMs),
       attackElapsedFrame: msToBcuFrame(this.getElapsedMs(actor, nowMs)),
       attackEndMs: this.getAttackEndMs(actor),
@@ -338,7 +368,9 @@ export class BattleAttackTimeline {
       hasHitInCurrentAttack: actor?.hasHitInCurrentAttack === true,
       bcuWaitTimeFrames: Number.isFinite(actor?.bcuWaitTimeFrames) ? actor.bcuWaitTimeFrames : null,
       bcuAttacksLeft: Number.isFinite(actor?.bcuAttacksLeft) ? actor.bcuAttacksLeft : null,
+      bcuRawAttackLoop: Number.isFinite(actor?.bcuRawAttackLoop) ? actor.bcuRawAttackLoop : null,
       bcuAttackLoopInitial: this.getBcuAttackLoopInitial(actor),
+      bcuAttackLoopSource: actor?.bcuAttackLoopSource || null,
       lastAttackTimelineDebug: actor?.lastAttackTimelineDebug || null,
       lastAttackWaitDebug: actor?.lastAttackWaitDebug || null,
       waitState,
@@ -375,7 +407,9 @@ export class BattleAttackTimeline {
       remainingFrames: next.remainingFrames,
       active: next.active,
       ready: next.ready,
+      rawAttackLoop: next.rawAttackLoop,
       attacksLeft: next.attacksLeft,
+      attackLoopSource: actor.bcuAttackLoopSource || null,
       setCount: actor.attackWaitSetCount || 0,
       intervalSetCount: actor.attackIntervalSetCount || 0,
       source: 'BCU waitTime is assigned on final hit; enterAttackWait only changes state',

@@ -95,15 +95,8 @@ function captureAttackInterruptState(actor, nowMs = 0) {
 function stopAttackLikeBcu(actor, interruptState = null) {
   const nowMs = finite(interruptState?.nowMs, finite(actor?.lastSceneTimeMs, 0));
   const state = interruptState || captureAttackInterruptState(actor, nowMs);
-
-  // BCU AtkManager.stopAtk() only cancels atkTime/preTime. It does not set waitTime.
-  // In this browser runtime BattleAttackTimeline.beginAttack precomputes readyAt at attack start,
-  // so we must explicitly clear that precomputed interval when BCU would not have assigned waitTime yet.
-  // BCU assigns waitTime only after the final scheduled hit/pre has fired.
   const clearPrecomputedWait = state.wasAttacking && !state.allAttackHitsResolved;
-  if (clearPrecomputedWait) {
-    BattleAttackTimeline.clearAttackWait(actor, nowMs);
-  }
+  if (clearPrecomputedWait) BattleAttackTimeline.clearAttackWait(actor, nowMs);
 
   actor.attackElapsedMs = 0;
   actor.hasHitInCurrentAttack = false;
@@ -120,7 +113,16 @@ function stopAttackLikeBcu(actor, interruptState = null) {
   };
 }
 
+function updateKbJudgmentFlags(actor) {
+  if (!actor) return false;
+  const targetable = actor.state === 'knockback' ? actor.isKbTargetableNow?.() === true : true;
+  actor.kbTargetable = targetable;
+  actor.kbTouchable = targetable;
+  return targetable;
+}
+
 function updateKbDebug(actor, extra = {}) {
+  const targetable = actor.isKbTargetableNow?.() === true;
   actor.lastBcuEntityKbDebug = {
     source: 'BcuKnockbackRuntimePatch; mirrors BCU Entity.KBManager fields/updateKB movement rules',
     state: actor.state,
@@ -137,6 +139,10 @@ function updateKbDebug(actor, extra = {}) {
     hp: actor.hp,
     deathAfterKnockback: actor.deathAfterKnockback === true,
     touchState: actor.getTouchState?.() || null,
+    kbMotionFrameIndex: actor.kbMotionFrameIndex,
+    kbFirstFrameTargetable: actor.kbFirstFrameTargetable === true,
+    kbTargetableFromFrame: actor.kbTargetableFromFrame,
+    targetable,
     attackInterrupt: actor.lastBcuAttackInterruptDebug || null,
     ...extra
   };
@@ -181,8 +187,6 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
     this.kbStartedAtMs = Number.isFinite(kb.nowMs) ? kb.nowMs : null;
     this.kbEndedAtMs = null;
 
-    // BCU doInterrupt(): kbTime = KB_TIME[type], kbDis = d, initPos = pos, kbDuration = kbTime;
-    // BCU AnimManager.kbAnim(): if non-warp, kbTime += 1. We store that actual countdown here.
     this.kbSpecType = spec.type;
     this.kbBcuType = bcuType;
     this.kbBcuDistance = distanceBcu;
@@ -214,8 +218,10 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
     this.kbLastFrameX = this.x;
     this.kbMoveMode = bcuType === 'INT_KB' ? 'bcu-easeOut' : 'bcu-linearRemaining';
     this.kbTouchState = this.deathAfterKnockback ? 'finalKb' : 'kb';
-    this.kbTargetable = false;
-    this.kbTouchable = false;
+    this.kbFirstFrameTargetable = spec.firstFrameTargetable !== false;
+    this.kbTargetableFromFrame = Number.isFinite(spec.targetableFromFrame) ? spec.targetableFromFrame : this.bcuKbTimeInitial + 1;
+    this.kbTargetable = this.kbFirstFrameTargetable;
+    this.kbTouchable = this.kbFirstFrameTargetable;
     this.knockbackFromX = this.x;
     this.knockbackToX = this.x - this.direction * distance;
     this.kbCombatEasing = this.kbMoveMode;
@@ -236,11 +242,8 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
       this.updateKbeffTransform?.();
     }
     if (useKbeffParent) {
-      if (this.activeAnimRole === 'attack') {
-        this.setAnimation(this.idleAnimId || this.moveAnimId || this.currentAnimId, 'knockback-kbeff-base', true);
-      } else {
-        this.activeAnimRole = 'knockback-kbeff-base';
-      }
+      if (this.activeAnimRole === 'attack') this.setAnimation(this.idleAnimId || this.moveAnimId || this.currentAnimId, 'knockback-kbeff-base', true);
+      else this.activeAnimRole = 'knockback-kbeff-base';
       this.applyCurrentAnimationFrame?.();
     } else if (useUnitKbAnim) {
       this.setAnimation(this.knockbackAnimId, 'knockback', true);
@@ -263,11 +266,12 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
       framesTotal: this.kbFramesTotal,
       moveFramesTotal: this.kbMoveFramesTotal,
       moveMode: this.kbMoveMode,
-      targetableDuringKb: false,
-      touchableDuringKb: false,
+      firstFrameTargetable: this.kbFirstFrameTargetable,
+      targetableFromFrame: this.kbTargetableFromFrame,
+      intangibleFrames: Math.max(0, this.kbTargetableFromFrame - 2),
       deathAfterKnockback: this.deathAfterKnockback,
       attackInterrupt: this.lastBcuAttackInterruptDebug,
-      bcuReference: 'Entity.KBManager.doInterrupt + AnimManager.kbAnim non-warp + updateKB'
+      bcuReference: 'Entity.KBManager.doInterrupt + AnimManager.kbAnim; judgment remains on hit-stun frame 1 and disappears from frame 2'
     };
     updateKbDebug(this, { started: true });
     return undefined;
@@ -281,6 +285,7 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
     this.kbMotionFrameIndex += 1;
     this.kbFrameIndex = this.kbMotionFrameIndex;
     let moved = 0;
+    updateKbJudgmentFlags(this);
 
     if (this.bcuKbTime === 0) {
       this.kbFramesRemaining = 0;
@@ -301,7 +306,7 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
         this.kbTouchable = true;
       }
       this.applyCurrentAnimationFrame?.();
-      updateKbDebug(this, { ended: true, moved: 0 });
+      updateKbDebug(this, { ended: true, moved: 0, targetable: true });
       return { active: false, done: true, moved: 0, progress: 1 };
     }
 
@@ -332,6 +337,7 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
       this.kbeffRuntime.stepFrame();
       this.updateKbeffTransform?.();
     }
+    const targetable = updateKbJudgmentFlags(this);
     this.lastKnockbackFrameDebug = {
       frameIndex: this.kbFrameIndex,
       framesRemaining: this.kbFramesRemaining,
@@ -344,20 +350,37 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
       bcuType: this.kbBcuType,
       bcuTimeFrames: this.kbBcuTimeFrames,
       kbeffFrame: this.kbeffFrame,
-      bcuReference: 'Entity.KBManager.updateKB'
+      targetable,
+      bcuReference: 'Entity.KBManager.updateKB; judgment hidden from hit-stun frame 2 through the last hit-stun frame'
     };
-    updateKbDebug(this, { moved, progress });
-    return { active: true, done: false, moved, progress };
+    updateKbDebug(this, { moved, progress, targetable });
+    return { active: true, done: false, moved, progress, targetable };
   };
 
   BattleActor.prototype.isKbTargetableNow = function isKbTargetableNowBcu() {
-    return this.state !== 'knockback';
+    if (this.state !== 'knockback') return true;
+    const frame = Math.max(0, Math.round(Number(this.kbMotionFrameIndex) || 0));
+    if (this.kbFirstFrameTargetable !== false && frame === 0) return true;
+    return frame >= (Number.isFinite(this.kbTargetableFromFrame) ? this.kbTargetableFromFrame : Infinity);
   };
 
   BattleActor.prototype.getTouchState = function getTouchStateBcu() {
     if (this.state === 'dead') return 'dead';
-    if (this.state === 'knockback') return 'kb';
+    if (this.state === 'knockback') return this.isKbTargetableNow?.() ? 'kb-judgment-visible' : 'kb';
     return 'normal';
+  };
+
+  BattleActor.prototype.getBcuKbJudgmentDebug = function getBcuKbJudgmentDebug() {
+    return {
+      state: this.state,
+      frame: this.kbMotionFrameIndex || 0,
+      total: this.kbMotionFramesTotal || this.kbFramesTotal || 0,
+      firstFrameTargetable: this.kbFirstFrameTargetable === true,
+      targetableFromFrame: this.kbTargetableFromFrame,
+      targetable: this.isKbTargetableNow?.() === true,
+      touchState: this.getTouchState?.(),
+      source: 'BcuKnockbackRuntimePatch.getBcuKbJudgmentDebug'
+    };
   };
 
   const originalResolvePostDamage = BattleActor.prototype.resolvePostDamage;

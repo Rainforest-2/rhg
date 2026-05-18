@@ -6,7 +6,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v3.bcu-cont-volcano-effect');
+const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v4.bcu-point-capture');
 const W_VOLC_INNER = 250;
 const W_VOLC_PIERCE = 125;
 const VOLC_PRE = 15;
@@ -94,6 +94,7 @@ function cloneEvent(event = {}, damage, kind, attacker = null) {
     targetMode: 'range',
     allowBaseHit: false,
     attackKind: kind,
+    bcuNoHitSmoke: true,
     bcuContVolcanoProcFilter: procFilter
   };
 }
@@ -252,6 +253,8 @@ function rollExclusiveLikeBcu(min, max) {
 }
 
 function resolveAliveTime(volc) {
+  const explicitFrames = numAny(volc, ['aliveTimeFrames', 'timeFrames'], NaN);
+  if (Number.isFinite(explicitFrames) && explicitFrames > 0) return Math.max(1, Math.trunc(explicitFrames));
   const base = Math.max(1, Math.trunc(numAny(volc, ['time'], 20)));
   const max = Math.max(base, Math.trunc(numAny(volc, ['maxtime', 'maxTime'], base)));
   if (max > base) return Math.floor(rollExclusiveLikeBcu(base, max) / 20) * 20;
@@ -307,8 +310,10 @@ function targetsInRange(scene, attacker, startX, endX, vcapt = null) {
     if (!target || target.side === attacker?.side || vcapt?.has(target)) return false;
     if (!(target.isTargetable?.() ?? target.isAlive?.())) return false;
     const p = pos(target);
-    const half = Number(target.width || target.rawStats?.width || 0) / 2;
-    return (p + half) >= lo && (p - half) <= hi;
+    // BCU StageBasis.inRange checks AbEntity.pos as a point: left <= pos <= right.
+    // It does not expand the range by target width. Expanding by half width made surge
+    // hits occur outside the visible ContVolcano column.
+    return p >= lo && p <= hi;
   });
 }
 
@@ -349,6 +354,9 @@ function attackTick(scene, item) {
       key: `${item.id}:${item.t}:${target.instanceId || target.label || 'target'}`,
       hitIndex: item.hitIndex,
       bcuSurge: item.kind,
+      bcuProjectileNoHitSmoke: true,
+      bcuRangeStart: item.startX,
+      bcuRangeEnd: item.endX,
       bcuRuntimeSource: 'ContVolcano.attackTick'
     });
     item.vcapt.add(target);
@@ -357,7 +365,7 @@ function attackTick(scene, item) {
   item.attacked = targets.length > 0;
   trace(scene, {
     source: 'BattleSurgeRuntimePatch.attackTick',
-    bcuReference: 'ContVolcano.update -> sb.getAttack(v); AttackVolcano.capture/excuse vcapt VOLC_ITV',
+    bcuReference: 'ContVolcano.update -> sb.getAttack(v); AttackVolcano.capture uses StageBasis.inRange point-position capture and vcapt VOLC_ITV',
     event: 'attack-tick',
     id: item.id,
     kind: item.kind,

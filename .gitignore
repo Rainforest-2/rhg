@@ -1,3 +1,3 @@
 
-# Oversized generated core DB
-public/assets/bundles/core/core-db.zip
+# Generated semantic bundles are runtime assets.
+# Keep public/assets/bundles/core/core-db.zip trackable because GitHub Pages must serve it.

@@ -1,4 +1,4 @@
-export const BCU_COMBAT_MODEL_VERSION = 'bcu-combat-v2';
+export const BCU_COMBAT_MODEL_VERSION = 'bcu-combat-v3-surge-level-frames';
 
 export const BCU_TRAITS = Object.freeze({
   red: 'red', floating: 'floating', black: 'black', metal: 'metal', white: 'white', angel: 'angel', alien: 'alien', zombie: 'zombie', witch: 'witch', base: 'base', eva: 'eva', relic: 'relic', demon: 'demon', baron: 'baron', beast: 'beast', sage: 'sage', villain: 'villain'
@@ -36,6 +36,8 @@ function n(raw,index,fallback=0){const v=Number(raw?.[index]);return Number.isFi
 function enabled(raw,index){return n(raw,index,0)===1;}
 function flagsFromList(list){return Object.fromEntries([...new Set(list)].map((key)=>[key,true]));}
 function rangeEnd(rawStart, rawLength){return rawStart + rawLength;}
+function surgeFramesFromLevel(level){const lv=Math.max(0,Math.trunc(Number(level)||0));return lv*20;}
+function volcanoProc({prob=0,dis0=0,dis1=0,level=0,mult=0}={}){const lv=Math.max(0,Math.trunc(Number(level)||0));return {prob,dis0,dis1,level:lv,time:lv,timeFrames:surgeFramesFromLevel(lv),aliveTimeFrames:surgeFramesFromLevel(lv),mult};}
 
 function parseTraits(rawValues, kind) {
   const cols = kind === 'enemy' ? ENEMY_TRAIT_COLUMNS : UNIT_TRAIT_COLUMNS;
@@ -85,6 +87,7 @@ function parseUnitProc(rawValues) {
   const miniVolc = rawValues?.length >= 109 && enabled(rawValues,108);
   const volcStart = n(rawValues,87,0)/4;
   const volcLength = n(rawValues,88,0)/4;
+  const volcLevel = n(rawValues,89,0);
   const blastStart = n(rawValues,114,0)/4;
   const blastLength = n(rawValues,115,0)/4;
   return {
@@ -92,8 +95,8 @@ function parseUnitProc(rawValues) {
     wave:{prob:miniWave?0:n(rawValues,35,0),level:miniWave?0:n(rawValues,36,0)}, miniWave:{prob:miniWave?n(rawValues,35,0):0,level:miniWave?n(rawValues,36,0):0,mult:miniWave?20:0},
     weaken:{prob:n(rawValues,37,0),time:n(rawValues,38,0),mult:n(rawValues,39,0)}, strengthen:{health:n(rawValues,40,0),mult:n(rawValues,41,0)}, lethal:{prob:n(rawValues,42,0)},
     barrierBreaker:{prob:n(rawValues,70,0)}, strongAttack:{prob:n(rawValues,82,0),mult:n(rawValues,83,0)}, curse:{prob:n(rawValues,92,0),time:n(rawValues,93,0)}, shieldBreaker:{prob:n(rawValues,95,0)},
-    volcano:{prob:miniVolc?0:n(rawValues,86,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),time:miniVolc?0:n(rawValues,89,0)},
-    miniVolcano:{prob:miniVolc?n(rawValues,86,0):0,dis0:miniVolc?volcStart:0,dis1:miniVolc?rangeEnd(volcStart,volcLength):0,time:miniVolc?n(rawValues,89,0):0,mult:miniVolc?20:0},
+    volcano:volcanoProc({prob:miniVolc?0:n(rawValues,86,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
+    miniVolcano:volcanoProc({prob:miniVolc?n(rawValues,86,0):0,dis0:miniVolc?volcStart:0,dis1:miniVolc?rangeEnd(volcStart,volcLength):0,level:miniVolc?volcLevel:0,mult:miniVolc?20:0}),
     metalKiller:{mult:n(rawValues,112,0)}, blast:{prob:n(rawValues,113,0),dis0:blastStart,dis1:rangeEnd(blastStart,blastLength)}
   };
 }
@@ -103,8 +106,10 @@ function parseEnemyProc(rawValues) {
   const miniVolc = rawValues?.length >= 103 && enabled(rawValues,102);
   const volcStart = n(rawValues,82,0)/4;
   const volcLength = n(rawValues,83,0)/4;
+  const volcLevel = n(rawValues,84,0);
   const deathSurgeStart = n(rawValues,90,0)/4;
   const deathSurgeLength = n(rawValues,91,0)/4;
+  const deathSurgeLevel = n(rawValues,92,0);
   const blastStart = n(rawValues,107,0)/4;
   const blastLength = n(rawValues,108,0)/4;
   return {
@@ -113,9 +118,9 @@ function parseEnemyProc(rawValues) {
     weaken:{prob:n(rawValues,29,0),time:n(rawValues,30,0),mult:n(rawValues,31,0)}, strengthen:{health:n(rawValues,32,0),mult:n(rawValues,33,0)}, lethal:{prob:n(rawValues,34,0)},
     burrow:{count:n(rawValues,43,0),dis:n(rawValues,44,0)/4}, revive:{count:n(rawValues,45,0),time:n(rawValues,46,0),health:n(rawValues,47,0)}, barrier:{health:n(rawValues,64,0)},
     warp:{prob:n(rawValues,65,0),time:n(rawValues,66,0),dis0:n(rawValues,67,0)/4,dis1:n(rawValues,68,0)/4}, curse:{prob:n(rawValues,73,0),time:n(rawValues,74,0)}, strongAttack:{prob:n(rawValues,75,0),mult:n(rawValues,76,0)}, toxic:{prob:n(rawValues,79,0),mult:n(rawValues,80,0)},
-    volcano:{prob:miniVolc?0:n(rawValues,81,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),time:miniVolc?0:n(rawValues,84,0)},
-    miniVolcano:{prob:miniVolc?n(rawValues,81,0):0,dis0:miniVolc?volcStart:0,dis1:miniVolc?rangeEnd(volcStart,volcLength):0,time:miniVolc?n(rawValues,84,0):0,mult:miniVolc?20:0},
-    demonShield:{hp:n(rawValues,87,0),regen:n(rawValues,88,0)}, deathSurge:{prob:n(rawValues,89,0),dis0:deathSurgeStart,dis1:rangeEnd(deathSurgeStart,deathSurgeLength),time:n(rawValues,92,0)},
+    volcano:volcanoProc({prob:miniVolc?0:n(rawValues,81,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
+    miniVolcano:volcanoProc({prob:miniVolc?n(rawValues,81,0):0,dis0:miniVolc?volcStart:0,dis1:miniVolc?rangeEnd(volcStart,volcLength):0,level:miniVolc?volcLevel:0,mult:miniVolc?20:0}),
+    demonShield:{hp:n(rawValues,87,0),regen:n(rawValues,88,0)}, deathSurge:volcanoProc({prob:n(rawValues,89,0),dis0:deathSurgeStart,dis1:rangeEnd(deathSurgeStart,deathSurgeLength),level:deathSurgeLevel}),
     blast:{prob:n(rawValues,106,0),dis0:blastStart,dis1:rangeEnd(blastStart,blastLength)}, delay:{prob:n(rawValues,111,0),strength:n(rawValues,112,0)}
   };
 }
@@ -126,7 +131,7 @@ export class BcuCombatModel {
     const traits = parseTraits(rawValues, statsKind);
     const ability = statsKind === 'enemy' ? parseEnemyAbilities(rawValues) : parseUnitAbilities(rawValues);
     const proc = statsKind === 'enemy' ? parseEnemyProc(rawValues) : parseUnitProc(rawValues);
-    return { version: BCU_COMBAT_MODEL_VERSION, kind: statsKind, traits, targetTraits: statsKind === 'unit' ? traits : null, ability, proc, source: statsKind === 'enemy' ? 'BCU DataEnemy.fillData' : 'BCU DataUnit.constructor', notes: ['BCU CSV columns mapped from DataEnemy/DataUnit; stage save-state treasure/combo/orb values require a full BCU Basis model'] };
+    return { version: BCU_COMBAT_MODEL_VERSION, kind: statsKind, traits, targetTraits: statsKind === 'unit' ? traits : null, ability, proc, source: statsKind === 'enemy' ? 'BCU DataEnemy.fillData' : 'BCU DataUnit.constructor', notes: ['BCU DataUnit/DataEnemy trait, ability, and proc columns mapped', 'Surge/death-surge time columns are exposed as level and aliveTimeFrames=level*20 for Battle Cats level compatibility'] };
   }
   static hasAbi(model, bit) { return ((Number(model?.ability?.abi)||0)&bit)!==0; }
 }

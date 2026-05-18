@@ -8,6 +8,7 @@ import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 import { getBcuStatusSnapshot } from './BcuStatusSnapshot.js';
 import { loadBcuStatusEffectInventory, readStatusEffectImageBlob, readStatusEffectText } from './BcuStatusEffectAssetInventory.js';
 import { resolveStatusIcons } from './BcuStatusIconResolver.js';
+import { PHASE_A_STATUS_EFFECT_KEYS } from './BcuStatusEffectSpec.js';
 
 const INVENTORY_PROMISES = new WeakMap();
 const DEFINITION_PROMISES = new WeakMap();
@@ -69,6 +70,42 @@ async function loadDefinition(provider, effectKey, variant = 'DEF') {
     }));
   }
   return await perProvider.get(cacheKey);
+}
+
+export async function preloadBcuStatusEffectDefinitions(sceneOrProvider, options = {}) {
+  const provider = sceneOrProvider?.readTextByBundleRef
+    ? sceneOrProvider
+    : providerForScene(sceneOrProvider);
+  const keys = Array.isArray(options.effectKeys) && options.effectKeys.length
+    ? options.effectKeys
+    : PHASE_A_STATUS_EFFECT_KEYS;
+  const variant = options.variant || 'DEF';
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  if (!provider) {
+    const summary = { ok: false, reason: 'missing-semantic-provider', total: keys.length, loaded: 0, failed: keys.length, errors: [] };
+    globalThis.__BCU_STATUS_EFFECT_PRELOAD__ = summary;
+    return summary;
+  }
+  const results = await Promise.allSettled(keys.map((effectKey) => loadDefinition(provider, effectKey, variant)));
+  const errors = [];
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      errors.push({ effectKey: keys[index], message: String(result.reason?.message || result.reason) });
+    }
+  });
+  const endedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const summary = {
+    ok: errors.length === 0,
+    total: keys.length,
+    loaded: results.filter((r) => r.status === 'fulfilled').length,
+    failed: errors.length,
+    errors,
+    elapsedMs: endedAt - startedAt,
+    source: 'preloadBcuStatusEffectDefinitions'
+  };
+  globalThis.__BCU_STATUS_EFFECT_PRELOAD__ = summary;
+  BcuTraceRuntime.push('statusIconRender', { source: 'preloadBcuStatusEffectDefinitions', ...summary });
+  return summary;
 }
 
 export class BcuEntityEffectIconRuntime {

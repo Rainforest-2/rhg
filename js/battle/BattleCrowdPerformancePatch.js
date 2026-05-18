@@ -51,10 +51,6 @@ function getSceneFrame(scene) {
   return Math.trunc(Number(scene?.logicFrame) || 0);
 }
 
-function sameTarget(selection, target) {
-  return !!selection?.target && selection.target === target;
-}
-
 function validateCachedSelection(scene, actor, cached) {
   if (!cached || !cached.selection || !actor) return null;
   const frame = getSceneFrame(scene);

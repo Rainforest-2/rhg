@@ -1,5 +1,3 @@
-const MAX_TRACE = 200;
-
 const CHANNEL_GLOBALS = {
   frame: '__BCU_FRAME_TRACE__',
   entity: '__BCU_ENTITY_TRACE__',
@@ -22,64 +20,36 @@ const CHANNEL_GLOBALS = {
   lifecycle: '__BCU_LIFECYCLE_TRACE__'
 };
 
-function sanitize(value, depth = 0) {
-  if (value == null) return value;
-  if (depth > 4) return '[max-depth]';
-  if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') return value;
-  if (Array.isArray(value)) return value.slice(0, 32).map((v) => sanitize(v, depth + 1));
-  if (typeof value === 'object') {
-    const out = {};
-    for (const [key, v] of Object.entries(value)) {
-      if (typeof v === 'function') continue;
-      if (key === 'model' || key === 'image' || key === 'img' || key === 'ctx' || key === 'canvas') {
-        out[key] = '[omitted]';
-        continue;
-      }
-      if (key === 'actor' || key === 'attacker' || key === 'target') {
-        out[key] = v?.instanceId || v?.label || v?.id || null;
-        continue;
-      }
-      out[key] = sanitize(v, depth + 1);
-    }
-    return out;
+const EMPTY_TRACE = Object.freeze([]);
+
+function exposeEmptyTraces() {
+  for (const globalName of Object.values(CHANNEL_GLOBALS)) {
+    globalThis[globalName] = EMPTY_TRACE;
   }
-  return String(value);
+  globalThis.__BCU_TRACE_RUNTIME__ = BcuTraceRuntime;
 }
 
 export const BcuTraceRuntime = {
-  enabled: true,
+  enabled: false,
   frame: 0,
   channels: new Map(),
   resetFrame(frame) {
     const n = Number(frame);
     this.frame = Number.isFinite(n) ? n : this.frame + 1;
-    this.expose();
+    return this.frame;
   },
-  push(channel, entry = {}) {
-    if (!this.enabled || !channel) return null;
-    const list = this.channels.get(channel) || [];
-    const clean = sanitize({
-      frame: Number.isFinite(entry.frame) ? entry.frame : this.frame,
-      source: entry.source || 'BcuTraceRuntime',
-      bcuReference: entry.bcuReference || null,
-      ...entry
-    });
-    list.push(clean);
-    if (list.length > MAX_TRACE) list.splice(0, list.length - MAX_TRACE);
-    this.channels.set(channel, list);
-    const globalName = CHANNEL_GLOBALS[channel];
-    if (globalName) globalThis[globalName] = list;
-    return clean;
+  push() {
+    return null;
   },
-  get(channel) {
-    return this.channels.get(channel) || [];
+  get() {
+    return EMPTY_TRACE;
   },
   expose() {
-    for (const [channel, globalName] of Object.entries(CHANNEL_GLOBALS)) {
-      if (!this.channels.has(channel)) this.channels.set(channel, []);
-      globalThis[globalName] = this.channels.get(channel);
-    }
-    globalThis.__BCU_TRACE_RUNTIME__ = this;
+    exposeEmptyTraces();
+  },
+  clear() {
+    this.channels.clear();
+    exposeEmptyTraces();
   }
 };
 

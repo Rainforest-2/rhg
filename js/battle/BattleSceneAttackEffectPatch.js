@@ -7,7 +7,7 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v5');
-const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v5-projectile-psiz');
+const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v6-projectile-wave-offset');
 const BCU_HIT_SOURCE = 'bcu-effanim-attack-smoke';
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BASE_SMOKE_Y_OFFSET = 100;
@@ -241,10 +241,12 @@ function drawOneBcuEffect(renderer, ctx, effect) {
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
   const projectile = isProjectileContAbEffect(effect);
-  // BCU ContWaveDef/ContVolcano are ContAb stage objects and use the painter psiz directly.
-  // Hit smoke is Entity.damage smoke and keeps the actor spriteScale plus explicit smoke scale.
-  const scale = cameraScale * (projectile ? 1 : spriteScale) * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
-  const x = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
+  // BCU BattleBox.drawEff uses pSiz = siz * sprite for ContAb, including ContWaveDef/ContVolcano.
+  // Hit smoke additionally uses its own 1.2 effect.scale through Entity.damage smoke draw.
+  const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
+  const baseX = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
+  const screenOffsetX = finiteNumber(effect.bcuScreenOffsetX, effect.effectRuntimeDebug?.bcuScreenOffsetX, 0) ?? 0;
+  const x = baseX + screenOffsetX * cameraScale;
   const layer = finiteNumber(effect.currentLayer, effect.bcuRenderLayer, 0) ?? 0;
   const baseY = typeof renderer.getBcuLayerScreenY === 'function'
     ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
@@ -264,7 +266,7 @@ function drawOneBcuEffect(renderer, ctx, effect) {
     }
   }
 
-  effect.lastRenderDebug = { source: 'BattleSceneAttackEffectPatch.drawEffects', x, y, worldX: effect.worldX ?? effect.x ?? null, layer, baseY, yOffset, scale, projectileContAb: projectile, scaleSource: projectile ? 'BCU ContAb psiz without actor spriteScale' : 'BCU smoke psiz*spriteScale*1.2', mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback', partName: effect.currentPart?.name || null, modelDraw: effect.lastModelDrawDebug || null };
+  effect.lastRenderDebug = { source: 'BattleSceneAttackEffectPatch.drawEffects', x, baseX, screenOffsetX, y, worldX: effect.worldX ?? effect.x ?? null, layer, baseY, yOffset, scale, projectileContAb: projectile, scaleSource: projectile ? 'BCU ContAb psiz = siz*sprite' : 'BCU smoke psiz*sprite*1.2', mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback', partName: effect.currentPart?.name || null, modelDraw: effect.lastModelDrawDebug || null };
   return drawn;
 }
 

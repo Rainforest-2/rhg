@@ -55,6 +55,7 @@ async function boot() {
     await import('./battle/BcuKnockbackAnimationPatch.js');
     await import('./battle/BcuProcImmunityPatch.js');
     await import('./battle/BattleSceneAttackEffectPatch.js');
+    await import('./battle/BattleProjectileEffectBcuParityPatch.js');
     await import('./battle/BattleSceneRendererBcuOriginPatch.js');
     await import('./battle/BattleSceneRendererHudPatch.js');
     await import('./battle/BattleSceneRendererBcuGlowPatch.js');

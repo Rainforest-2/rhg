@@ -7,6 +7,7 @@ import { PreviewRenderer } from './PreviewRenderer.js';
 import { PreviewUi } from './PreviewUi.js';
 import { BattleScene } from '../battle/BattleScene.js';
 import { BattleSceneRenderer } from '../battle/BattleSceneRenderer.js';
+import { preloadBcuStatusEffectDefinitions } from '../battle/bcu-runtime/BcuStatusEffectManager.js';
 import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
 import { FormationEditor } from '../ui/FormationEditor.js';
 import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
@@ -235,10 +236,32 @@ export class PreviewApp {
       const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), { selectedStageId: this.selectedStageId || undefined, bcuDb: this.bcuDb });
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       console.info('battleScene:init:ok');
+
+      overlay?.setProgress({ phase: 'status-effects', message: 'Preloading status effect icons', value: 0.84 });
+      const statusPreloadStart = performance.now();
+      try {
+        const statusPreload = await preloadBcuStatusEffectDefinitions(nextScene);
+        nextScene.loadTimings = nextScene.loadTimings || {};
+        nextScene.loadTimings.statusEffectPreloadMs = performance.now() - statusPreloadStart;
+        nextScene.loadTimings.statusEffectPreload = statusPreload;
+        if (statusPreload?.ok) {
+          this.ui?.log('info', `Status effect icons preloaded: ${statusPreload.loaded}/${statusPreload.total} in ${Math.round(statusPreload.elapsedMs || nextScene.loadTimings.statusEffectPreloadMs)}ms`);
+        } else {
+          this.ui?.log('warn', `Status effect icon preload incomplete: ${statusPreload?.loaded || 0}/${statusPreload?.total || 0}`);
+        }
+      } catch (error) {
+        nextScene.loadTimings = nextScene.loadTimings || {};
+        nextScene.loadTimings.statusEffectPreloadMs = performance.now() - statusPreloadStart;
+        nextScene.loadTimings.statusEffectPreloadError = errorReport(error);
+        console.warn('[PreviewApp] status effect icon preload failed', error);
+        this.ui?.log('warn', `Status effect icon preload failed: ${error?.message || String(error)}`);
+      }
+
       const elapsed=performance.now()-t0;
       const lt = nextScene.loadTimings || {};
       const bgText = lt.backgroundDeferred ? 'timeout/pending' : `${Math.round(lt.backgroundMs || 0)}ms`;
-      this.ui?.log('info',`Battle load timings: total=${Math.round(lt.totalMs||elapsed)}ms stage=${Math.round(lt.stageDefinitionMs||0)}ms stats=${Math.round(lt.productionStatsMs||0)}ms criticalTemplates=${Math.round(lt.criticalTemplatesMs||0)}ms background=${bgText} bases=${Math.round(lt.basesMs||0)}ms warmup=async`);
+      const statusText = Number.isFinite(lt.statusEffectPreloadMs) ? `${Math.round(lt.statusEffectPreloadMs)}ms` : 'skipped';
+      this.ui?.log('info',`Battle load timings: total=${Math.round(lt.totalMs||elapsed)}ms stage=${Math.round(lt.stageDefinitionMs||0)}ms stats=${Math.round(lt.productionStatsMs||0)}ms criticalTemplates=${Math.round(lt.criticalTemplatesMs||0)}ms background=${bgText} bases=${Math.round(lt.basesMs||0)}ms statusEffects=${statusText} warmup=async`);
       this.battleScene = nextScene;
       overlay?.setProgress({ phase: 'production', message: 'Preparing production roster', value: 0.9, elapsedMs:elapsed });
       const battleMount=document.querySelector('.canvas-panel')||document.body;

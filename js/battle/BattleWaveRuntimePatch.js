@@ -18,7 +18,7 @@ const W_TIME = 3;
 const W_MINI_TIME = 1;
 const BCU_WAVE_EFFECT_SOURCE = 'bcu-effanim-wave-cont-wave-def';
 const BCU_WAVE_EFFECT_SCALE = 1;
-const WAVE_EFFECT_TOTAL = 4;
+const WAVE_EFFECT_TOTAL = 10;
 
 function describeWaveEffectAssets(assets = {}) {
   return Object.fromEntries(Object.entries(assets || {}).map(([key, asset]) => [key, {
@@ -30,7 +30,8 @@ function describeWaveEffectAssets(assets = {}) {
     partCount: asset?.partCount ?? null,
     image: asset?.image ? true : false,
     model: asset?.model ? true : false,
-    anim: asset?.anim ? true : false
+    anim: asset?.anim ? true : false,
+    phases: asset?.phases ? Object.keys(asset.phases) : []
   }]));
 }
 

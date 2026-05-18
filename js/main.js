@@ -29,6 +29,7 @@ async function boot() {
     await import('./battle/BattleDeterministicRandomPatch.js');
     await import('./battle/BattleWaveRuntimePatch.js');
     await import('./battle/BattleSurgeRuntimePatch.js');
+    await import('./battle/BattleProjectileRuntimeBugfixPatch.js');
     await import('./battle/BattleSceneBcuWaveRuntimePatch.js');
     await import('./battle/BattleSceneBcuSurgeRuntimePatch.js');
     await import('./battle/BattleSceneBcuStageBasisOrderPatch.js');

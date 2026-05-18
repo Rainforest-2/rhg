@@ -1,6 +1,6 @@
 import { BattleScene } from './BattleScene.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.debug-strip.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.debug-strip.v2-preserve-runtime-chain');
 
 const EMPTY_EVENTS = Object.freeze([]);
 const KEEP_GLOBALS = new Set([
@@ -55,16 +55,15 @@ export function installBattleDebugStripPatch() {
 
   const originalRunTickPhase = proto.runTickPhase;
   if (typeof originalRunTickPhase === 'function') {
-    proto.runTickPhase = function runTickPhaseWithoutDebugStorage(phase, fn = () => {}) {
-      const previous = this.currentTickPhase;
-      this.currentTickPhase = phase;
-      let result;
-      try {
-        result = fn();
-      } finally {
-        this.lastTickPhase = phase;
-        this.currentTickPhase = previous || null;
-      }
+    proto.runTickPhase = function runTickPhasePreserveRuntimeChain(phase, fn = () => {}) {
+      noDebugEventStore(this);
+      const result = originalRunTickPhase.call(this, phase, (...args) => {
+        noDebugEventStore(this);
+        const out = fn(...args);
+        noDebugEventStore(this);
+        return out;
+      });
+      noDebugEventStore(this);
       return result;
     };
   }

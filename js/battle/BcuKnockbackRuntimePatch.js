@@ -1,5 +1,6 @@
 import { BattleActor } from './BattleActor.js';
 import { BattleScene } from './BattleScene.js';
+import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { BCU_KNOCKBACK_SPECS, convertBcuDistanceToWorld, getDefaultSpecTypeForKind } from './BcuKnockbackSpec.js';
 
 const ACTOR_FLAG = Symbol.for('wanko-battle.bcu-entity-kb-actor.v1');
@@ -7,6 +8,7 @@ const SCENE_FLAG = Symbol.for('wanko-battle.bcu-entity-kb-scene.v1');
 const KB_PRI = Object.freeze({ INT_KB: 2, INT_HB: 4, INT_SW: 5, INT_ASS: 1, INT_WARP: 3 });
 const KB_STATUS_TIME = Object.freeze({ INT_KB: 11, INT_HB: 23, INT_SW: 47, INT_ASS: 11 });
 const KB_DIS = Object.freeze({ INT_KB: 165, INT_HB: 345, INT_SW: 705, INT_ASS: 55 });
+const BCU_FRAME_MS = 1000 / 30;
 
 function finite(v, fallback = 0) {
   const n = Number(v);
@@ -51,14 +53,71 @@ function resolveSpec(kb = {}, actor = null) {
   return BCU_KNOCKBACK_SPECS[specType] || BCU_KNOCKBACK_SPECS.HP_KB;
 }
 
-function stopAttackLikeBcu(actor) {
+function getAttackEventCount(actor) {
+  try {
+    const profile = BattleAttackTimeline.getProfile(actor);
+    return Array.isArray(profile?.events) ? profile.events.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function getResolvedAttackEventCount(actor) {
+  return actor?.resolvedAttackEventKeys instanceof Set ? actor.resolvedAttackEventKeys.size : 0;
+}
+
+function captureAttackInterruptState(actor, nowMs = 0) {
+  const waitState = BattleAttackTimeline.getAttackWaitState(actor, nowMs);
+  const totalHitCount = getAttackEventCount(actor);
+  const resolvedHitCount = getResolvedAttackEventCount(actor);
+  const state = actor?.state || null;
+  const role = actor?.activeAnimRole || null;
+  const attackStartedAtMs = Number.isFinite(actor?.attackStartedAtMs) ? actor.attackStartedAtMs : null;
+  const wasAttacking = state === 'attack' || role === 'attack';
+  const allAttackHitsResolved = totalHitCount > 0 && resolvedHitCount >= totalHitCount;
+  return {
+    nowMs,
+    state,
+    role,
+    wasAttacking,
+    totalHitCount,
+    resolvedHitCount,
+    allAttackHitsResolved,
+    attackStartedAtMs,
+    waitWasActive: waitState.active,
+    waitReadyAtMs: waitState.readyAtMs,
+    waitRemainingMs: waitState.remainingMs,
+    waitReason: waitState.reason || null,
+    bcuReference: 'Entity.KBManager.doInterrupt calls atkm.stopAtk(); waitTime is not assigned by KB itself'
+  };
+}
+
+function stopAttackLikeBcu(actor, interruptState = null) {
+  const nowMs = finite(interruptState?.nowMs, finite(actor?.lastSceneTimeMs, 0));
+  const state = interruptState || captureAttackInterruptState(actor, nowMs);
+
+  // BCU AtkManager.stopAtk() only cancels atkTime/preTime. It does not set waitTime.
+  // In this browser runtime BattleAttackTimeline.beginAttack precomputes readyAt at attack start,
+  // so we must explicitly clear that precomputed interval when BCU would not have assigned waitTime yet.
+  // BCU assigns waitTime only after the final scheduled hit/pre has fired.
+  const clearPrecomputedWait = state.wasAttacking && !state.allAttackHitsResolved;
+  if (clearPrecomputedWait) {
+    BattleAttackTimeline.clearAttackWait(actor, nowMs);
+  }
+
   actor.attackElapsedMs = 0;
-  actor.attackWaitElapsedMs = 0;
   actor.hasHitInCurrentAttack = false;
   actor.resolvedAttackEventKeys = new Set();
   actor.attackTarget = null;
   actor.attackTargetType = null;
   actor.attackStartedAtMs = 0;
+  actor.attackStartedAtFrame = null;
+  actor.lastBcuAttackInterruptDebug = {
+    source: 'BcuKnockbackRuntimePatch.stopAttackLikeBcu',
+    ...state,
+    clearPrecomputedWait,
+    after: BattleAttackTimeline.getAttackWaitState(actor, nowMs)
+  };
 }
 
 function updateKbDebug(actor, extra = {}) {
@@ -78,6 +137,7 @@ function updateKbDebug(actor, extra = {}) {
     hp: actor.hp,
     deathAfterKnockback: actor.deathAfterKnockback === true,
     touchState: actor.getTouchState?.() || null,
+    attackInterrupt: actor.lastBcuAttackInterruptDebug || null,
     ...extra
   };
 }
@@ -101,7 +161,6 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
     return false;
   };
 
-  const originalStartKnockback = BattleActor.prototype.startKnockback;
   BattleActor.prototype.startKnockback = function startKnockbackBcuEntity(knockback = null) {
     const kb = knockback || {};
     const spec = resolveSpec(kb, this);
@@ -109,10 +168,12 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
     const statusFrames = finite(kb.bcuStatusFrames, finite(spec.statusFrames, KB_STATUS_TIME[bcuType] ?? spec.motionFrames ?? 0));
     const distanceBcu = finite(kb.bcuDistance, finite(spec.distanceBcu, KB_DIS[bcuType] ?? 0));
     const distance = finite(kb.distancePx, convertBcuDistanceToWorld(distanceBcu, kb.tuning || {}));
+    const nowMs = Number.isFinite(kb.nowMs) ? kb.nowMs : finite(this.lastSceneTimeMs, 0);
+    const interruptState = captureAttackInterruptState(this, nowMs);
 
     this.knockbackSerial += 1;
     this.setState('knockback');
-    stopAttackLikeBcu(this);
+    stopAttackLikeBcu(this, interruptState);
     this.walking = false;
     this.knockbackType = kb.type || (bcuType === 'INT_KB' ? 'proc' : 'hp');
     this.knockbackReason = kb.reason || 'bcu-entity-kb';
@@ -205,6 +266,7 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
       targetableDuringKb: false,
       touchableDuringKb: false,
       deathAfterKnockback: this.deathAfterKnockback,
+      attackInterrupt: this.lastBcuAttackInterruptDebug,
       bcuReference: 'Entity.KBManager.doInterrupt + AnimManager.kbAnim non-warp + updateKB'
     };
     updateKbDebug(this, { started: true });
@@ -307,7 +369,7 @@ if (!BattleActor.prototype[ACTOR_FLAG]) {
     const hb = Math.max(1, this.knockbacks || 1);
     let ext = (hpBefore * hb) % this.maxHp;
     if (ext === 0) ext = this.maxHp;
-    const shouldHb = !this.isBase && damage > 0 && this.state !== 'knockback' && ext <= damage * hb;
+    const shouldHb = !this.isBase && damage > 0 && this.state !== 'knockback' && (ext <= damage * hb || hpBefore < damage);
     const hpAfter = Math.max(0, hpBefore - damage);
     this.hp = hpAfter;
     this.lastDamageResolveDebug = {
@@ -368,7 +430,7 @@ if (BattleScene?.prototype && !BattleScene.prototype[SCENE_FLAG]) {
 }
 
 export function getBcuKnockbackPatchDebug() {
-  return { installed: true, actorPatched: !!BattleActor.prototype[ACTOR_FLAG], scenePatched: !!BattleScene?.prototype?.[SCENE_FLAG], KB_PRI, KB_STATUS_TIME, KB_DIS };
+  return { installed: true, actorPatched: !!BattleActor.prototype[ACTOR_FLAG], scenePatched: !!BattleScene?.prototype?.[SCENE_FLAG], KB_PRI, KB_STATUS_TIME, KB_DIS, BCU_FRAME_MS };
 }
 
 globalThis.__BCU_KNOCKBACK_RUNTIME_PATCH_DEBUG__ = getBcuKnockbackPatchDebug();

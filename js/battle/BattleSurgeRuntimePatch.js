@@ -1,14 +1,20 @@
 import { BattleScene } from './BattleScene.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
+import { EffectRuntime } from './EffectRuntime.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
+import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v2.bcu-cont-volcano');
+const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v3.bcu-cont-volcano-effect');
 const W_VOLC_INNER = 250;
 const W_VOLC_PIERCE = 125;
 const VOLC_PRE = 15;
 const VOLC_POST = 10;
 const VOLC_SE = 30;
 const VOLC_ITV = 20;
+const BCU_SURGE_EFFECT_SOURCE = 'bcu-effanim-surge-cont-volcano';
+const BCU_SURGE_EFFECT_SCALE = 1;
 
 const SEAL_PROC_KEYS = new Set(['CRIT', 'SNIPER', 'BREAK', 'SUMMON', 'SATK', 'SHIELDBREAK']);
 const CURSE_PROC_KEYS = new Set(['KB', 'STOP', 'SLOW', 'WEAK', 'WARP', 'CURSE', 'SNIPER', 'SEAL', 'POISON', 'BOSS', 'POIATK', 'ARMOR', 'SPEED', 'LETHARGY', 'DMGCUT', 'DMGCAP', 'DELAY']);
@@ -99,9 +105,113 @@ function trace(scene, entry) {
   scene?.pushEvent?.({ type: 'bcuSurgeTrace', ...payload });
 }
 
+function effectKeyFor(kind, direction) {
+  const enemy = direction === 1;
+  if (kind === 'miniSurge') return enemy ? 'enemyMiniSurge' : 'unitMiniSurge';
+  return enemy ? 'enemySurge' : 'unitSurge';
+}
+
+function createSurgeEffectRuntime(asset, phase = 'start') {
+  const anim = asset?.phases?.[phase] || asset?.anim;
+  if (!asset?.loaded || !asset?.model || !anim) return null;
+  const model = new BcuModelInstance(asset.model);
+  const animator = new BcuAnimator(anim);
+  animator.setLoop?.(false);
+  animator.restart?.();
+  const maxFrame = Number(anim?.maxFrame) || 0;
+  return { model, animator, frameCount: Math.max(1, maxFrame + 1), maxFrame, phase, source: asset.source || null };
+}
+
+function spawnSurgeEffect(scene, item, phase = 'start') {
+  if (!scene || !item) return null;
+  if (!item.effectPhasesSpawned) item.effectPhasesSpawned = new Set();
+  if (item.effectPhasesSpawned.has(phase)) return null;
+  item.effectPhasesSpawned.add(phase);
+  const asset = scene.waveEffectAssets?.[item.effectKey] || null;
+  if (!asset?.loaded) {
+    scene.ensureWaveEffectLoading?.();
+    trace(scene, {
+      source: 'BattleSurgeRuntimePatch.spawnSurgeEffect',
+      event: 'effect-skipped',
+      reason: asset?.reason || 'surge-effect-asset-not-ready',
+      id: item.id,
+      kind: item.kind,
+      effectKey: item.effectKey,
+      phase,
+      t: item.t
+    });
+    return null;
+  }
+  const runtime = createSurgeEffectRuntime(asset, phase);
+  if (!runtime) {
+    trace(scene, {
+      source: 'BattleSurgeRuntimePatch.spawnSurgeEffect',
+      event: 'effect-skipped',
+      reason: 'runtime-create-failed',
+      id: item.id,
+      kind: item.kind,
+      effectKey: item.effectKey,
+      phase,
+      t: item.t
+    });
+    return null;
+  }
+  const effect = EffectRuntime.createEffect({
+    id: `bcu-surge-${scene.logicFrame || 0}-${item.effectKey}-${phase}-${Math.random().toString(36).slice(2)}`,
+    type: item.kind,
+    x: item.pos,
+    y: 0,
+    image: asset.image,
+    imgcut: asset.imgcut,
+    model: runtime.model,
+    animator: runtime.animator,
+    scale: BCU_SURGE_EFFECT_SCALE,
+    source: BCU_SURGE_EFFECT_SOURCE,
+    createdAtMs: scene.timeMs,
+    layer: item.layer,
+    bcuSmokeYOffset: 0,
+    debug: {
+      source: BCU_SURGE_EFFECT_SOURCE,
+      bcuReference: 'BCU ContVolcano draws VolcEff START/DURING/END via A_VOLC/A_E_VOLC/A_MINIVOLC/A_E_MINIVOLC',
+      id: item.id,
+      kind: item.kind,
+      effectKey: item.effectKey,
+      phase,
+      pos: item.pos,
+      startX: item.startX,
+      endX: item.endX,
+      direction: item.direction,
+      t: item.t,
+      layer: item.layer,
+      frameCount: runtime.frameCount,
+      maxFrame: runtime.maxFrame,
+      assetSource: runtime.source
+    }
+  });
+  effect.durationMs = runtime.frameCount * BCU_BATTLE_TIMER_PERIOD_MS;
+  effect.frameDurationMs = BCU_BATTLE_TIMER_PERIOD_MS;
+  effect.elapsedMs = -BCU_BATTLE_TIMER_PERIOD_MS;
+  scene.effects.push(effect);
+  trace(scene, {
+    source: 'BattleSurgeRuntimePatch.spawnSurgeEffect',
+    event: 'effect-spawned',
+    id: item.id,
+    effectId: effect.id,
+    kind: item.kind,
+    effectKey: item.effectKey,
+    phase,
+    pos: item.pos,
+    layer: item.layer,
+    frameCount: runtime.frameCount,
+    t: item.t
+  });
+  return effect;
+}
+
 function enqueue(scene, item) {
   if (!scene.__bcuSurgeContainers) scene.__bcuSurgeContainers = [];
   scene.__bcuSurgeContainers.push(item);
+  scene.ensureWaveEffectLoading?.();
   trace(scene, {
     source: 'BattleSurgeRuntimePatch.enqueue',
     bcuReference: 'AttackSimple.excuse -> new ContVolcano(new AttackVolcano(...), aliveTime, dis_0, dis_1)',
@@ -116,6 +226,7 @@ function enqueue(scene, item) {
     damage: item.damage,
     animType: item.animType,
     soundEffect: 'SE_VOLC_START',
+    effectKey: item.effectKey,
     activeMode: 'bcu-cont-volcano'
   });
 }
@@ -173,6 +284,10 @@ function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
     endX: Math.max(sta, end),
     sta,
     end,
+    direction: d,
+    layer: Number.isFinite(attacker?.currentLayer) ? attacker.currentLayer : 0,
+    effectKey: effectKeyFor(proc.key, d),
+    effectPhasesSpawned: new Set(),
     damage: Math.max(1, Math.trunc(finalDamage * mult)),
     t: 0,
     aliveTime,
@@ -220,8 +335,6 @@ function updateProc(scene, item) {
 }
 
 function attackTick(scene, item) {
-  // BCU order: AttackVolcano.capture() uses current vcapt, then excuse() decrements volcTime and may clear vcapt,
-  // then processes the captured list and adds damaged entities into vcapt.
   const targets = targetsInRange(scene, item.attacker, item.startX, item.endX, item.vcapt);
   item.volcTime -= 1;
   const clearedBeforeProcess = item.volcTime === 0;
@@ -264,12 +377,15 @@ function process(scene) {
   if (!q.length) return;
   const rest = [];
   for (const item of q) {
+    if (item.t === 0) spawnSurgeEffect(scene, item, 'start');
     updateProc(scene, item);
     if (item.t >= VOLC_PRE && item.t <= VOLC_PRE + item.aliveTime && item.animType !== 'DURING') {
       item.animType = 'DURING';
+      spawnSurgeEffect(scene, item, 'during');
       trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update anim.changeAnim(DURING,false)', event: 'anim-changed', id: item.id, animType: item.animType, soundEffect: 'SE_VOLC_LOOP', t: item.t });
     } else if (item.t > VOLC_PRE + item.aliveTime && item.animType !== 'END') {
       item.animType = 'END';
+      spawnSurgeEffect(scene, item, 'end');
       trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update anim.changeAnim(END,false)', event: 'anim-changed', id: item.id, animType: item.animType, t: item.t });
     }
     if (item.t >= VOLC_PRE && item.t < VOLC_PRE + item.aliveTime && (item.t - VOLC_PRE) % VOLC_SE === 0) {

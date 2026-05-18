@@ -104,10 +104,11 @@ function getSelection(scene, actor) {
 function attackWaitReady(actor, nowMs) {
   const state = BattleAttackTimeline.getAttackWaitState(actor, nowMs);
   actor.lastStageBasisAttackWaitDebug = {
-    source: 'BCU StageBasisTickPatch attack-start uses BattleAttackTimeline wait state',
+    source: 'BCU StageBasisTickPatch attack-start uses BattleAttackTimeline waitTime frames',
     nowMs,
     ready: state.ready,
     remainingMs: state.remainingMs,
+    remainingFrames: state.remainingFrames,
     readyAtMs: state.readyAtMs,
     active: state.active,
     reason: state.reason
@@ -142,6 +143,8 @@ export function installBattleSceneBcuStageBasisTickPatch() {
       for (const actor of this.actors) {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!shouldTickActor(actor)) continue;
+        // BCU Entity.update first line: if(waitTime > 0) waitTime--. This must also run while KBing.
+        BattleAttackTimeline.tickBcuWait(actor, { logicFrame: this.logicFrame, nowMs: this.timeMs });
         actor.tick(scaledDt);
         if (actor.state === 'dead') continue;
         if (actor.state === 'knockback') {

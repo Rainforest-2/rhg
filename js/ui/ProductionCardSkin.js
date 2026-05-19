@@ -13,6 +13,7 @@ const loadImage = (src) => new Promise((res, rej) => {
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const imageWidth = (img) => img?.naturalWidth || img?.width || 0;
 const imageHeight = (img) => img?.naturalHeight || img?.height || 0;
+const DOG_CARD_ICON_SCALE = 1.2;
 
 export const BCU_UNI_IMGCUT_PATH = './public/assets/bcu/000001/org/data/uni.imgcut';
 export const BCU_SLOT_FRAME_PATH = './public/assets/bcu/000001/org/page/uni.png';
@@ -25,6 +26,7 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   cardCanvasSize: PRODUCTION_CARD_CANVAS,
   contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
   dogContentRect: Object.freeze({ x: 6, y: 4, w: 98, h: 58 }),
+  dogIconScale: DOG_CARD_ICON_SCALE,
   // Dog cards are a project extension, not a BC unit card. Keep the BCU uni frame,
   // but repaint the full inner card face, including the cost area, so the source
   // frame's gray placeholder cannot leak under dog icons.
@@ -41,6 +43,15 @@ const samePart = (a, b) => a && b && a.x === b.x && a.y === b.y && a.w === b.w &
 
 function getSemanticProvider() {
   try { return getBcuAssetDatabase()?.semanticProvider || null; } catch { return null; }
+}
+
+function getCanvasPixelRatio(ctx) {
+  const canvas = ctx?.canvas;
+  if (!canvas) return 1;
+  const rx = Number(canvas.width || 0) / PRODUCTION_CARD_CANVAS.w;
+  const ry = Number(canvas.height || 0) / PRODUCTION_CARD_CANVAS.h;
+  const ratio = Math.min(rx, ry);
+  return Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
 }
 
 async function loadBundleImage(provider, internalPath) {
@@ -89,6 +100,8 @@ export class ProductionCardSkin {
         source: this.source,
         cardPart: this.cardPart,
         dogContentBackground: PRODUCTION_CARD_SKIN.dogContentBackgroundRect,
+        dogIconScale: PRODUCTION_CARD_SKIN.dogIconScale,
+        highDpiCanvasAware: true,
         costRightX: PRODUCTION_CARD_SKIN.costRightX,
         costY: PRODUCTION_CARD_SKIN.costY,
         costScale: 1
@@ -100,8 +113,17 @@ export class ProductionCardSkin {
     }
   }
 
+  prepareCardContext(ctx) {
+    const ratio = getCanvasPixelRatio(ctx);
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+    return ratio;
+  }
+
   drawCard(ctx, { unitDef, icon, cost, cooldownProgressRatio = 1, affordable = true, cooldownReady = true, interactive = true, isBack = false, isEmpty = false, iconLoadFailed = false }) {
     const state = { unitDef, affordable, cooldownReady, interactive, isBack, isEmpty, iconLoadFailed };
+    this.prepareCardContext(ctx);
     ctx.clearRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
 
     if (isEmpty || !unitDef) {
@@ -154,7 +176,10 @@ export class ProductionCardSkin {
   drawDogCard(ctx, icon, state) {
     this.drawSlotFrame(ctx);
     this.drawDogIconBackground(ctx);
-    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect);
+    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, {
+      scale: PRODUCTION_CARD_SKIN.dogIconScale,
+      clip: true
+    });
     if (!state?.iconLoadFailed) return;
     const key = state.unitDef?.slotId || state.unitDef?.assetDef?.semanticKey || state.unitDef?.uiIcon?.semanticKey || 'unknown-dog-card';
     if (!this.warnedFallbackKeys.has(key)) {
@@ -198,16 +223,24 @@ export class ProductionCardSkin {
     ctx.strokeRect(2, 2, w - 4, h - 4);
   }
 
-  drawContainedIcon(ctx, icon, rect) {
+  drawContainedIcon(ctx, icon, rect, options = {}) {
     const sw = imageWidth(icon);
     const sh = imageHeight(icon);
     if (!icon || sw <= 0 || sh <= 0) return;
-    const fit = Math.min(rect.w / sw, rect.h / sh);
-    const dw = Math.max(1, Math.floor(sw * fit));
-    const dh = Math.max(1, Math.floor(sh * fit));
-    const dx = rect.x + Math.floor((rect.w - dw) / 2);
-    const dy = rect.y + Math.floor((rect.h - dh) / 2);
+    const scale = Number.isFinite(Number(options.scale)) ? Number(options.scale) : 1;
+    const fit = Math.min(rect.w / sw, rect.h / sh) * Math.max(0.01, scale);
+    const dw = Math.max(1, sw * fit);
+    const dh = Math.max(1, sh * fit);
+    const dx = rect.x + (rect.w - dw) / 2;
+    const dy = rect.y + (rect.h - dh) / 2;
+    ctx.save();
+    if (options.clip) {
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
+    }
     ctx.drawImage(icon, 0, 0, sw, sh, dx, dy, dw, dh);
+    ctx.restore();
   }
 
   drawAvailabilityOverlay(ctx, state) {

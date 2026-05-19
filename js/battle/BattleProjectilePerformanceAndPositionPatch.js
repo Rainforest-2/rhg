@@ -92,12 +92,6 @@ export function installBattleProjectilePerformanceAndPositionPatch() {
           return originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
         } finally {
           this.spawnHitEffect = originalSpawnHitEffect;
-          this.lastProjectileHitSmokeSuppressDebug = {
-            source: 'BattleProjectilePerformanceAndPositionPatch.queueAttackDamageSuppressProjectileHitSmoke',
-            frame: this.logicFrame,
-            kind: meta?.bcuWave || meta?.bcuSurge || event?.attackKind || null,
-            reason: 'BCU AttackWave/AttackVolcano damages do not spawn Entity.damage A_ATK_SMOKE under the projectile effect'
-          };
         }
       };
     }
@@ -106,13 +100,6 @@ export function installBattleProjectilePerformanceAndPositionPatch() {
     if (typeof originalPushEvent === 'function') {
       sceneProto.pushEvent = function pushEventSuppressProjectileVerbose(event = {}) {
         if (!shouldKeepProjectileTrace(event?.type, event?.event)) {
-          this.lastProjectileTraceSuppressedDebug = {
-            source: 'BattleProjectilePerformanceAndPositionPatch.pushEventSuppressProjectileVerbose',
-            type: event?.type,
-            event: event?.event,
-            frame: this.logicFrame,
-            reason: 'suppress per-frame wave/surge trace for battle performance'
-          };
           return;
         }
         return originalPushEvent.call(this, event);
@@ -125,13 +112,6 @@ export function installBattleProjectilePerformanceAndPositionPatch() {
     const originalPush = BcuTraceRuntime.push;
     BcuTraceRuntime.push = function pushSuppressProjectileVerbose(channel, entry = {}) {
       if ((channel === 'wave' || channel === 'surge') && !IMPORTANT_TRACE_EVENTS.has(String(entry?.event || ''))) {
-        globalThis.__BCU_PROJECTILE_TRACE_SUPPRESS_DEBUG__ = {
-          source: 'BattleProjectilePerformanceAndPositionPatch.BcuTraceRuntime.push',
-          channel,
-          event: entry?.event || null,
-          reason: 'suppress verbose projectile trace',
-          frame: this.frame
-        };
         return null;
       }
       return originalPush.call(this, channel, entry);

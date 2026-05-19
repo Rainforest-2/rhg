@@ -111,6 +111,7 @@ export class BattleWaveEffectLoader {
     this.provider = options.semanticProvider || null;
     this.bundleRef = options.bundleRef || BCU_WAVE_EFFECT_BUNDLE_REF;
     this.entries = options.entries || WAVE_EFFECT_ENTRIES;
+    this.allowRawFallback = options.allowRawFallback === true;
     this.lastLoadDebug = null;
   }
 
@@ -145,11 +146,14 @@ export class BattleWaveEffectLoader {
     const provider = this.getProvider();
     const assets = {};
     const errors = [];
-    const mode = provider ? 'semantic-bundle' : 'raw-diagnostics';
+    const bundleOnly = !this.allowRawFallback;
+    const mode = provider ? 'semantic-bundle' : (bundleOnly ? 'semantic-bundle-missing-provider' : 'raw-diagnostics');
 
     for (const [key, def] of Object.entries(this.entries)) {
       try {
-        assets[key] = provider ? await this.loadDefinitionFromBundle(provider, def) : await this.loadDefinitionFromRawForDiagnostics(def);
+        if (provider) assets[key] = await this.loadDefinitionFromBundle(provider, def);
+        else if (bundleOnly) throw new Error(`Missing semantic provider for effect bundle ${this.bundleRef.bundleKey}`);
+        else assets[key] = await this.loadDefinitionFromRawForDiagnostics(def);
       } catch (error) {
         assets[key] = { ...def, loaded: false, reason: String(error?.message || error) };
         errors.push({ key, message: String(error?.message || error) });
@@ -159,8 +163,9 @@ export class BattleWaveEffectLoader {
     this.lastLoadDebug = {
       source: 'BattleWaveEffectLoader.loadAll',
       mode,
-      bundlePath: provider ? this.bundleRef.bundlePath : null,
-      bundleKey: provider ? this.bundleRef.bundleKey : null,
+      bundlePath: provider || bundleOnly ? this.bundleRef.bundlePath : null,
+      bundleKey: provider || bundleOnly ? this.bundleRef.bundleKey : null,
+      rawFallbackAllowed: this.allowRawFallback,
       loaded: Object.values(assets).filter((asset) => asset?.loaded).length,
       total: Object.keys(this.entries).length,
       errors,

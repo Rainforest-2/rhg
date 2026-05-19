@@ -1,0 +1,129 @@
+# AGENTS.md
+
+This file defines repository-wide instructions for AI coding agents working on `rhgrive2/game`.
+
+The project is a browser-based Battle Cats Ultimate (BCU) parity / preview runtime. Many battle features are installed through ordered prototype patches from `js/main.js`. Preserve existing behavior first; optimize only when the change is demonstrably safe.
+
+## Scope
+
+These instructions apply to the entire repository unless a more specific `AGENTS.md` exists in a subdirectory.
+
+## Core rule
+
+Do not change battle logic, rendering parity, or patch ordering while performing lightweight optimization. Prefer small, local, reviewable changes that reduce debug allocation or redundant diagnostic writes without altering game behavior.
+
+## Protected runtime contracts
+
+Treat the following as high-risk contracts:
+
+- `BattleScene.prototype.runTickPhase`
+- `BattleScene.prototype.queueAttackDamage`
+- `BattleSceneRenderer.prototype.drawEffects`
+- `BattleSceneRenderer.prototype.drawActor`
+- actor animation mutation via `animator.apply(...)` and `model.getBattleDrawList(...)`
+- wave / surge / projectile container lifetime and positioning
+- status effect application, expiration, and visual rendering
+- target selection, `canAttack`, and damage resolution order
+
+Do not replace wrapper chains with direct `fn()` calls. If wrapping a method, call the captured original with the same `this` and compatible arguments, for example `originalRunTickPhase.call(this, phase, wrappedFn)`.
+
+Do not assign frozen arrays to `scene.debugEvents` or `scene.tickPhaseTrace`. Existing wrappers may still push into these arrays. If debug storage must be cleared, keep the arrays mutable and truncate them.
+
+## Import-order sensitivity
+
+`js/main.js` imports many runtime patches in sequence. Later patches may intentionally wrap or replace methods installed by earlier patches. Before changing any patch file, inspect both:
+
+- the relevant file itself;
+- its import position in `js/main.js`.
+
+Current high-risk ordering facts:
+
+- `BattleSceneAttackEffectPatch.js` is imported before `BattleSceneRendererEffectGlowPatch.js`.
+- `BattleSceneRendererEffectGlowPatch.js` can be the effective final `drawEffects` implementation.
+- `BattleDebugStripPatch.js` is imported late and must preserve prior `runTickPhase` wrappers.
+
+## Safe first-pass optimization targets
+
+Prefer these before touching logic-heavy code:
+
+1. `js/battle/BattleSceneBcuStatusEffectRenderPatch.js`
+   - Remove or guard diagnostic trace allocation only.
+   - Keep `manager.updateEffects(dt, scene)`.
+   - Keep `getBcuStatusEffectPosition(...)`.
+   - Keep `effect.runtime.draw(ctx, ...)` when `effect.runtime && pos.rendered`.
+   - Do not break status icon/effect rendering.
+
+2. `js/battle/BattleSceneRendererEffectGlowPatch.js`
+   - Remove or guard render diagnostic allocation only.
+   - Safe candidates include per-frame `debug` objects passed only for diagnostics, `effect.lastModelDrawDebug`, `effect.lastRenderDebug`, `globalThis.__BATTLE_EFFECT_RENDER_DEBUG__`, `errors`, and `examples`.
+   - Keep `drawBcuImagePart`, opacity, glow, transform, scale, layer, sort, and position calculations unchanged.
+
+3. `js/battle/BattleSceneAttackEffectPatch.js`
+   - Prefer reducing `spawnHitEffect` diagnostic objects and no-op `pushEvent` payload allocation.
+   - Do not change `EffectRuntime.createHitEffect`, `effects.push`, `durationMs`, `frameDurationMs`, layer, `worldX`, or y-offset behavior.
+   - Renderer-side changes here may have limited runtime effect because a later renderer patch can replace `drawEffects`.
+
+4. `js/ui/FormationCatalogVirtualDomPatch.js`
+   - Removing `globalThis.__FORMATION_VDOM_DIFF_DEBUG__` is acceptable.
+   - Do not change diffing behavior, image preservation, spacer logic, or `replaceChildren` flow.
+
+5. `js/battle/BattleProjectilePerformanceAndPositionPatch.js`
+   - Only remove or guard redundant trace suppression diagnostics.
+   - Do not change `WAVE_SCREEN_OFFSET = -28`.
+   - Do not change `normalizeProjectileEffect` semantics.
+   - Do not change projectile hit-smoke suppression.
+
+## Do not include in first-pass optimization
+
+Avoid these unless explicitly requested and separately tested:
+
+- draw-list caching;
+- target-search indexing;
+- status-icon dirty caching;
+- background offscreen caching;
+- projectile runtime consolidation;
+- wrapper-chain refactoring;
+- changes to wave/surge container tick frequency;
+- changes to attack capture/excuse separation;
+- changes to knockback, death, zombie revive, barrier, shield, curse, seal, or immunity behavior.
+
+These areas can improve performance but can easily break BCU parity or existing regressions.
+
+## Debug and trace policy
+
+`BcuTraceRuntime` may be disabled/no-op in production-like runs. Removing diagnostic object allocation is acceptable when all of the following are true:
+
+- the object is used only for `globalThis.__...DEBUG__`, `globalThis.__...TRACE__`, `BcuTraceRuntime.push(...)`, or `scene.pushEvent(...)`;
+- no gameplay state depends on the object;
+- rendering calls are preserved;
+- the change is local and easy to review.
+
+Do not claim a change has zero impact if it removes public console/debug globals. State it as: game behavior should be unchanged; debug/global inspection output may change.
+
+## Verification checklist
+
+After any battle or renderer optimization, verify at minimum:
+
+- normal attacks deal damage;
+- second and later attacks still occur;
+- knockback behavior remains stable;
+- wave damage applies;
+- surge damage applies;
+- wave position remains BCU-compatible;
+- surge effects do not persist after their container is inactive;
+- projectile damage does not recreate extra hit smoke;
+- status effects apply and expire correctly;
+- status icons/effects render when expected;
+- actor animation continues moving;
+- knockback animation remains correct;
+- `debugEvents` does not grow under `BattleDebugStripPatch`;
+- `BcuTraceRuntime` remains no-op when intended.
+
+## Change style
+
+- Keep commits small.
+- Prefer one risk category per commit.
+- Do not mix debug allocation cleanup with logic refactoring.
+- Do not change formatting broadly.
+- Do not rename files or symbols unless required.
+- If behavior parity is uncertain, stop at analysis and document the risk instead of changing code.

@@ -16,8 +16,8 @@ Do not change battle logic, rendering parity, or patch ordering while performing
 
 When local reference ZIPs are available, treat the non-PC reference sources as the primary logic models:
 
-- `BCU_java_util_common.zip`
-- `BCU_Android-master.zip`
+- `references/bcu/BCU_java_util_common.zip`
+- `references/bcu/BCU_Android-master.zip`
 
 These two sources are the logic examples to inspect for battle behavior, data interpretation, entity lifecycle, attack resolution, proc handling, status effects, wave/surge behavior, spawn logic, and other gameplay rules.
 

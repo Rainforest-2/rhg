@@ -6,7 +6,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v5');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v6-smoke-kind');
 const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v6-projectile-wave-offset');
 const BCU_HIT_SOURCE = 'bcu-effanim-attack-smoke';
 const ACTOR_SMOKE_Y_OFFSET = 75;
@@ -20,6 +20,16 @@ function finiteNumber(...values) {
     if (Number.isFinite(n)) return n;
   }
   return null;
+}
+
+function normalizeSmokeKind(value) {
+  return value === 'white' ? 'white' : 'attack';
+}
+
+function smokeReference(kind) {
+  return kind === 'white'
+    ? 'BCU Entity.damage: AttackVolcano uses A_WHITE_SMOKE + BattleBox smoke draw psiz*1.2'
+    : 'BCU Entity.damage: normal attack and AttackWave use A_ATK_SMOKE + BattleBox smoke draw psiz*1.2';
 }
 
 function isProjectileContAbEffect(effect) {
@@ -68,20 +78,22 @@ function getFrameDurationMs() {
   return BCU_BATTLE_TIMER_PERIOD_MS;
 }
 
-function isHitEffectReady(asset) {
-  const def = asset?.smokeDefinitions?.attack;
+function isHitEffectReady(asset, smokeKind = 'attack') {
+  const key = normalizeSmokeKind(smokeKind);
+  const def = asset?.smokeDefinitions?.[key] || asset?.smokeDefinitions?.attack;
   return !!(asset?.loaded && asset?.image && asset?.imgcut?.parts?.length && def?.model && def?.anim);
 }
 
 function createBcuSmokeRuntime(asset, smokeKind = 'attack') {
-  const def = asset?.smokeDefinitions?.[smokeKind] || asset?.smokeDefinitions?.attack;
+  const key = normalizeSmokeKind(smokeKind);
+  const def = asset?.smokeDefinitions?.[key] || asset?.smokeDefinitions?.attack;
   if (!def?.model || !def?.anim) return null;
   const model = new BcuModelInstance(def.model);
   const animator = new BcuAnimator(def.anim);
   animator.setLoop?.(false);
   animator.restart?.();
   const frameCount = Math.max(1, (Number(def.anim?.maxFrame) || 0) + 1);
-  return { model, animator, frameCount, maxFrame: Number(def.anim?.maxFrame) || 0, source: def.source || smokeKind };
+  return { model, animator, frameCount, maxFrame: Number(def.anim?.maxFrame) || 0, source: def.source || key, smokeKind: key };
 }
 
 export function installBattleSceneAttackEffectPatch() {
@@ -131,14 +143,16 @@ export function installBattleSceneAttackEffectPatch() {
     return this._hitEffectPromise;
   };
 
-  proto.spawnHitEffect = function spawnHitEffectBcu(attacker, target, targetType) {
+  proto.spawnHitEffect = function spawnHitEffectBcu(attacker, target, targetType, options = {}) {
     const asset = this.hitEffectAsset;
-    if (!isHitEffectReady(asset)) {
+    const smokeKind = normalizeSmokeKind(options?.smokeKind || options?.bcuProjectileSmokeKind || 'attack');
+    if (!isHitEffectReady(asset, smokeKind)) {
       if (!this._hitEffectPromise) this.ensureHitEffectLoading?.();
       this.lastHitEffectSpawnDebug = {
         source: 'BattleSceneAttackEffectPatch.spawnHitEffect',
         spawned: false,
         reason: 'asset-not-ready-or-load-failed',
+        smokeKind,
         queued: false,
         loadDebug: this.lastHitEffectLoadDebug || describeAsset(asset)
       };
@@ -147,14 +161,14 @@ export function installBattleSceneAttackEffectPatch() {
     }
 
     if (this.effects.length >= (BATTLE_CONFIG.tuning?.maxEffects ?? 40)) {
-      this.lastHitEffectSpawnDebug = { source: 'BattleSceneAttackEffectPatch.spawnHitEffect', spawned: false, reason: 'max-effects', effects: this.effects.length };
+      this.lastHitEffectSpawnDebug = { source: 'BattleSceneAttackEffectPatch.spawnHitEffect', spawned: false, reason: 'max-effects', smokeKind, effects: this.effects.length };
       globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
       return null;
     }
 
-    const smokeRuntime = createBcuSmokeRuntime(asset, 'attack');
+    const smokeRuntime = createBcuSmokeRuntime(asset, smokeKind);
     if (!smokeRuntime) {
-      this.lastHitEffectSpawnDebug = { source: 'BattleSceneAttackEffectPatch.spawnHitEffect', spawned: false, reason: 'smoke-runtime-missing', loadDebug: this.lastHitEffectLoadDebug || describeAsset(asset) };
+      this.lastHitEffectSpawnDebug = { source: 'BattleSceneAttackEffectPatch.spawnHitEffect', spawned: false, reason: 'smoke-runtime-missing', smokeKind, loadDebug: this.lastHitEffectLoadDebug || describeAsset(asset) };
       globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
       return null;
     }
@@ -179,7 +193,8 @@ export function installBattleSceneAttackEffectPatch() {
       bcuSmokeYOffset,
       debug: {
         source: BCU_HIT_SOURCE,
-        bcuReference: 'BCU Entity.damage A_ATK_SMOKE + BattleBox smoke draw psiz*1.2',
+        bcuReference: smokeReference(smokeKind),
+        smokeKind,
         targetType,
         attacker: attacker?.instanceId || attacker?.label || null,
         target: target?.instanceId || target?.label || target?.side || null,
@@ -197,7 +212,7 @@ export function installBattleSceneAttackEffectPatch() {
     this.effects.push(effect);
     this.lastHitEffectSpawnDebug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id };
     globalThis.__BATTLE_HIT_EFFECT_SPAWN_DEBUG__ = this.lastHitEffectSpawnDebug;
-    this.pushEvent?.({ type: 'bcuHitEffectSpawned', actor: attacker?.instanceId || attacker?.label || null, target: target?.instanceId || target?.label || target?.side || null, targetType, worldX: Math.round(worldX), layer, bcuSmokeYOffset, frameCount: smokeRuntime.frameCount, source: BCU_HIT_SOURCE });
+    this.pushEvent?.({ type: 'bcuHitEffectSpawned', actor: attacker?.instanceId || attacker?.label || null, target: target?.instanceId || target?.label || target?.side || null, targetType, worldX: Math.round(worldX), layer, bcuSmokeYOffset, frameCount: smokeRuntime.frameCount, smokeKind, source: BCU_HIT_SOURCE });
     return effect;
   };
 }

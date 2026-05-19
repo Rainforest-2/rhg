@@ -4,6 +4,10 @@ import { drawBcuImagePart } from '../bcu/BcuCanvasComposite.js';
 const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v1');
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BCU_SMOKE_SCALE = 1.2;
+const BCU_STAGE_EFFECT_SOURCES = new Set([
+  'bcu-effanim-wave-cont-wave-def',
+  'bcu-effanim-surge-cont-volcano'
+]);
 
 function finiteNumber(...values) {
   for (const value of values) {
@@ -11,6 +15,25 @@ function finiteNumber(...values) {
     if (Number.isFinite(n)) return n;
   }
   return null;
+}
+
+function getEffectLayer(effect) {
+  return finiteNumber(effect?.currentLayer, effect?.bcuRenderLayer, effect?.layer, 0) ?? 0;
+}
+
+function isBcuStageLayeredEffect(effect) {
+  if (!effect || effect.finished) return false;
+  if (effect.bcuProjectileStageObject === true) return true;
+  if (BCU_STAGE_EFFECT_SOURCES.has(String(effect.source || ''))) return true;
+  if (BCU_STAGE_EFFECT_SOURCES.has(String(effect.effectRuntimeDebug?.source || ''))) return true;
+  return false;
+}
+
+function compareEffectLayer(a, b) {
+  const al = getEffectLayer(a);
+  const bl = getEffectLayer(b);
+  if (al !== bl) return al - bl;
+  return (a?.createdAtMs || 0) - (b?.createdAtMs || 0);
 }
 
 function drawBcuModelEffectWithGlow(renderer, ctx, effect, x, y, scale) {
@@ -56,7 +79,7 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
   const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
   const x = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
-  const layer = finiteNumber(effect.currentLayer, effect.bcuRenderLayer, 0) ?? 0;
+  const layer = getEffectLayer(effect);
   const baseY = typeof renderer.getBcuLayerScreenY === 'function'
     ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
     : (effect.worldY ?? effect.y ?? 0);
@@ -82,21 +105,76 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     }
   }
 
+  effect.lastBcuStageLayerRenderDebug = {
+    source: 'BattleSceneRendererEffectGlowPatch.drawOneBcuEffectWithGlow',
+    x,
+    y,
+    baseY,
+    yOffset,
+    layer,
+    scale,
+    bcuReference: 'BCU BattleBox.drawEff y = midh - (road_h - layer * DEP) * siz; ContVolcano is drawn through ContAb layer ordering'
+  };
   return drawn;
+}
+
+function drawPendingStageEffectsBeforeLayer(renderer, ctx, actorLayer) {
+  const state = renderer.__bcuStageEffectLayerState;
+  if (!state) return;
+  while (state.index < state.effects.length) {
+    const effect = state.effects[state.index];
+    if (getEffectLayer(effect) + 1 > actorLayer) break;
+    drawOneBcuEffectWithGlow(renderer, ctx, effect);
+    state.drawn.add(effect);
+    state.index += 1;
+  }
+}
+
+function drawRemainingStageEffects(renderer, ctx) {
+  const state = renderer.__bcuStageEffectLayerState;
+  if (!state) return;
+  while (state.index < state.effects.length) {
+    const effect = state.effects[state.index];
+    drawOneBcuEffectWithGlow(renderer, ctx, effect);
+    state.drawn.add(effect);
+    state.index += 1;
+  }
 }
 
 if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
   BattleSceneRenderer.prototype[PATCH_FLAG] = true;
+
+  const originalRender = BattleSceneRenderer.prototype.render;
+  if (typeof originalRender === 'function') {
+    BattleSceneRenderer.prototype.render = function renderWithBcuStageEffectLayering(previewRenderer, scene, debugOptions = false) {
+      const effects = (scene?.effects || []).filter((effect) => effect && !effect.finished && isBcuStageLayeredEffect(effect)).sort(compareEffectLayer);
+      this.__bcuStageEffectLayerState = { effects, index: 0, drawn: new Set() };
+      try {
+        return originalRender.call(this, previewRenderer, scene, debugOptions);
+      } finally {
+        delete this.__bcuStageEffectLayerState;
+      }
+    };
+  }
+
+  const originalDrawActor = BattleSceneRenderer.prototype.drawActor;
+  if (typeof originalDrawActor === 'function') {
+    BattleSceneRenderer.prototype.drawActor = function drawActorWithBcuStageEffects(ctx, actor, ...rest) {
+      const layer = typeof this.getBcuEntityLayer === 'function' ? this.getBcuEntityLayer(actor) : finiteNumber(actor?.currentLayer, actor?.layer, 0) ?? 0;
+      drawPendingStageEffectsBeforeLayer(this, ctx, layer);
+      return originalDrawActor.call(this, ctx, actor, ...rest);
+    };
+  }
+
   BattleSceneRenderer.prototype.drawEffects = function drawEffectsBcuWithGlow(ctx, effects = []) {
+    drawRemainingStageEffects(this, ctx);
+    const drawnStage = this.__bcuStageEffectLayerState?.drawn || null;
     const list = Array.isArray(effects) ? effects : [];
     const active = list
       .filter((effect) => effect && !effect.finished)
-      .sort((a, b) => {
-        const al = finiteNumber(a.currentLayer, a.bcuRenderLayer, 0) ?? 0;
-        const bl = finiteNumber(b.currentLayer, b.bcuRenderLayer, 0) ?? 0;
-        if (al !== bl) return al - bl;
-        return (a.createdAtMs || 0) - (b.createdAtMs || 0);
-      });
+      .filter((effect) => !(drawnStage?.has(effect)))
+      .filter((effect) => !isBcuStageLayeredEffect(effect))
+      .sort(compareEffectLayer);
     for (const effect of active) {
       try {
         drawOneBcuEffectWithGlow(this, ctx, effect);

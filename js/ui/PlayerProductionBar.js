@@ -14,6 +14,30 @@ const loadImage = (src) => new Promise((res, rej) => {
 const ANDROID_LINEUP_SLIDE_ANGLE_DEG = 50;
 const ANDROID_LINEUP_SLIDE_DISTANCE_RATIO = 0.15;
 const ANDROID_LINEUP_SLIDE_TAN = Math.tan(ANDROID_LINEUP_SLIDE_ANGLE_DEG * Math.PI / 180);
+const PRODUCTION_CARD_MIN_PIXEL_RATIO = 2;
+const PRODUCTION_CARD_MAX_PIXEL_RATIO = 3;
+
+function getProductionCardPixelRatio() {
+  const deviceRatio = Number(globalThis.devicePixelRatio || 1);
+  const ratio = Math.max(PRODUCTION_CARD_MIN_PIXEL_RATIO, Math.ceil(Number.isFinite(deviceRatio) ? deviceRatio : 1));
+  return Math.min(PRODUCTION_CARD_MAX_PIXEL_RATIO, ratio);
+}
+
+function configureProductionCardCanvas(canvas) {
+  const ratio = getProductionCardPixelRatio();
+  canvas.width = Math.round(PRODUCTION_CARD_CANVAS.w * ratio);
+  canvas.height = Math.round(PRODUCTION_CARD_CANVAS.h * ratio);
+  canvas.style.width = `${PRODUCTION_CARD_CANVAS.w}px`;
+  canvas.style.height = `${PRODUCTION_CARD_CANVAS.h}px`;
+  canvas.dataset.pixelRatio = String(ratio);
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+  }
+  return ctx;
+}
 
 function productionIconDebug() {
   if (!globalThis.__PRODUCTION_ICON_DEBUG__) {
@@ -271,23 +295,31 @@ export class PlayerProductionBar {
   rebuildStacks() {
     this.cardsWrap.innerHTML = '';
     this.cardStacks = [];
+    const pixelRatio = getProductionCardPixelRatio();
     for (let col = 0; col < LINEUP_COLS; col += 1) {
       const stackEl = document.createElement('div');
       stackEl.className = 'prod-card-stack';
       stackEl.dataset.col = String(col);
       const backCanvas = document.createElement('canvas');
       backCanvas.className = 'prod-card is-back';
-      backCanvas.width = PRODUCTION_CARD_CANVAS.w;
-      backCanvas.height = PRODUCTION_CARD_CANVAS.h;
+      const backCtx = configureProductionCardCanvas(backCanvas);
       const frontCanvas = document.createElement('canvas');
       frontCanvas.className = 'prod-card is-front';
       frontCanvas.dataset.col = String(col);
-      frontCanvas.width = PRODUCTION_CARD_CANVAS.w;
-      frontCanvas.height = PRODUCTION_CARD_CANVAS.h;
+      const frontCtx = configureProductionCardCanvas(frontCanvas);
       stackEl.append(backCanvas, frontCanvas);
       this.cardsWrap.appendChild(stackEl);
-      this.cardStacks.push({ col, stackEl, backCanvas, frontCanvas, backCtx: backCanvas.getContext('2d'), frontCtx: frontCanvas.getContext('2d') });
+      this.cardStacks.push({ col, stackEl, backCanvas, frontCanvas, backCtx, frontCtx });
     }
+    productionPageDebug().lastCardCanvasConfig = {
+      source: 'PlayerProductionBar.rebuildStacks',
+      logicalSize: PRODUCTION_CARD_CANVAS,
+      pixelRatio,
+      backingSize: {
+        w: Math.round(PRODUCTION_CARD_CANVAS.w * pixelRatio),
+        h: Math.round(PRODUCTION_CARD_CANVAS.h * pixelRatio)
+      }
+    };
   }
   bindScene(scene) { this.scene = scene; return this.update(scene); }
   async ensureCardAssets(unitDef, stats = null) {

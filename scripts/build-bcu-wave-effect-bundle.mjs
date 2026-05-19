@@ -6,6 +6,10 @@ import { FIXED_DATE, fileBufferOrNull, hashFile, readJson, writeJson, writeStore
 export const EFFECT_WAVE_BUNDLE_KEY = 'effect:wave';
 export const EFFECT_WAVE_BUNDLE_PATH = 'public/assets/bundles/effect/wave.zip';
 const GENERATED_BUNDLE_MANIFEST_PATH = 'public/assets/generated/bcu-bundle-manifest.json';
+const BCU_ASSET_ROOT = 'public/assets/bcu';
+const ALL_SKILL_EFFECTS_PREFIX = 'all-skill-effects';
+const SKILL_EFFECT_FILE_RE = /\.(png|imgcut|mamodel|maanim)$/i;
+const SKILL_EFFECT_DIR_RE = /\/org\/battle\/s\d+$/;
 
 function normalizePath(p) {
   return String(p || '').replace(/\\/g, '/').replace(/^\.\//, '');
@@ -56,10 +60,51 @@ function addEntry(entries, entry) {
   });
 }
 
-function makeBundleJson({ aliases, missingRequired }) {
+async function* walkFiles(dir) {
+  let list;
+  try {
+    list = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const ent of list) {
+    const full = normalizePath(path.join(dir, ent.name));
+    if (ent.isDirectory()) {
+      yield* walkFiles(full);
+    } else if (ent.isFile()) {
+      yield full;
+    }
+  }
+}
+
+function isSkillEffectFile(file) {
+  const normalized = normalizePath(file);
+  if (!SKILL_EFFECT_FILE_RE.test(normalized)) return false;
+  return SKILL_EFFECT_DIR_RE.test(normalizePath(path.dirname(normalized)));
+}
+
+async function collectAllSkillEffectEntries() {
+  const out = [];
+  for await (const file of walkFiles(BCU_ASSET_ROOT)) {
+    if (!isSkillEffectFile(file)) continue;
+    const rel = normalizePath(file).replace(`${BCU_ASSET_ROOT}/`, '');
+    const data = await fileBufferOrNull(file);
+    if (!data) continue;
+    out.push({
+      name: `${ALL_SKILL_EFFECTS_PREFIX}/${rel}`,
+      data,
+      sourcePath: file,
+      required: false,
+      role: 'bcu-all-skill-effect-raw-copy'
+    });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function makeBundleJson({ aliases, missingRequired, allSkillEffectFiles }) {
   return Buffer.from(JSON.stringify({
     key: EFFECT_WAVE_BUNDLE_KEY,
-    scope: 'wave-surge-blast-effects',
+    scope: 'all-skill-effects-with-runtime-wave-surge-aliases',
     bcuReference: {
       package: 'battlecatsultimate/BCU_java_util_common',
       classes: ['battle.entity.ContWaveDef', 'battle.attack.ContVolcano', 'battle.attack.ContBlast'],
@@ -82,7 +127,11 @@ function makeBundleJson({ aliases, missingRequired }) {
       }
     },
     runtimeAliases: aliases,
-    policy: 'single projectile-effect bundle for GitHub Pages friendliness; runtime reads this semantic bundle, raw public/assets/bcu fallback is diagnostics only',
+    allSkillEffects: {
+      prefix: ALL_SKILL_EFFECTS_PREFIX,
+      files: allSkillEffectFiles
+    },
+    policy: 'single projectile/effect bundle; runtime aliases use short paths, all skill effect source files are also copied under all-skill-effects/',
     missingRequired,
     generatedAt: FIXED_DATE
   }, null, 2));
@@ -113,7 +162,19 @@ export async function buildWaveEffectBundleEntries() {
     }
   }
 
-  addEntry(entries, { name: 'bundle.json', data: makeBundleJson({ aliases, missingRequired }), required: true, sourcePath: 'generated' });
+  const allSkillEffectEntries = await collectAllSkillEffectEntries();
+  for (const entry of allSkillEffectEntries) addEntry(entries, entry);
+
+  addEntry(entries, {
+    name: 'bundle.json',
+    data: makeBundleJson({
+      aliases,
+      missingRequired,
+      allSkillEffectFiles: allSkillEffectEntries.map((entry) => ({ name: entry.name, sourcePath: entry.sourcePath }))
+    }),
+    required: true,
+    sourcePath: 'generated'
+  });
 
   return [...entries.values()].sort((a, b) => {
     if (a.name === 'bundle.json') return -1;
@@ -139,7 +200,8 @@ export async function rebuildWaveEffectBundle() {
     status: 'full',
     sizeBytes: stat.size,
     hash: await hashFile(EFFECT_WAVE_BUNDLE_PATH),
-    files: filtered.map((entry) => entry.name)
+    files: filtered.map((entry) => entry.name),
+    allSkillEffectsPrefix: ALL_SKILL_EFFECTS_PREFIX
   };
   await writeJson(GENERATED_BUNDLE_MANIFEST_PATH, manifest);
   return { bundleKey: EFFECT_WAVE_BUNDLE_KEY, bundlePath: EFFECT_WAVE_BUNDLE_PATH, entries: filtered.map((entry) => entry.name), sizeBytes: stat.size, hash: manifest.bundles[EFFECT_WAVE_BUNDLE_KEY].hash };

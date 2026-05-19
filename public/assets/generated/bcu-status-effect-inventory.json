@@ -101,6 +101,108 @@
       ]
     }
   },
+  "A_UP": {
+    "resolved": true,
+    "ambiguous": false,
+    "phase": "A",
+    "bundleRef": {
+      "bundleKey": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip"
+    },
+    "internal": {
+      "image": "A_UP/image.png",
+      "imgcut": "A_UP/imgcut.imgcut",
+      "model": "A_UP/model.mamodel",
+      "DEF": "A_UP/DEF.maanim"
+    },
+    "sources": {
+      "image": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+      "imgcut": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+      "model": "public/assets/bcu/000001/org/battle/s0/up/skill_up.mamodel",
+      "DEF": "public/assets/bcu/000001/org/battle/s0/up/skill_up.maanim"
+    },
+    "candidates": {
+      "image": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.png"
+        }
+      ],
+      "imgcut": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.imgcut"
+        }
+      ],
+      "model": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/up/skill_up.mamodel",
+          "packId": "000001",
+          "suffix": "org/battle/s0/up/skill_up.mamodel"
+        }
+      ],
+      "DEF": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/up/skill_up.maanim",
+          "packId": "000001",
+          "suffix": "org/battle/s0/up/skill_up.maanim"
+        }
+      ]
+    }
+  },
+  "A_E_UP": {
+    "resolved": true,
+    "ambiguous": false,
+    "phase": "A",
+    "bundleRef": {
+      "bundleKey": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip"
+    },
+    "internal": {
+      "image": "A_E_UP/image.png",
+      "imgcut": "A_E_UP/imgcut.imgcut",
+      "model": "A_E_UP/model.mamodel",
+      "DEF": "A_E_UP/DEF.maanim"
+    },
+    "sources": {
+      "image": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+      "imgcut": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+      "model": "public/assets/bcu/000001/org/battle/s0/up/skill_up_e.mamodel",
+      "DEF": "public/assets/bcu/000001/org/battle/s0/up/skill_up_e.maanim"
+    },
+    "candidates": {
+      "image": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.png"
+        }
+      ],
+      "imgcut": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.imgcut"
+        }
+      ],
+      "model": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/up/skill_up_e.mamodel",
+          "packId": "000001",
+          "suffix": "org/battle/s0/up/skill_up_e.mamodel"
+        }
+      ],
+      "DEF": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/up/skill_up_e.maanim",
+          "packId": "000001",
+          "suffix": "org/battle/s0/up/skill_up_e.maanim"
+        }
+      ]
+    }
+  },
   "A_SLOW": {
     "resolved": true,
     "ambiguous": false,
@@ -301,6 +403,108 @@
           "file": "public/assets/bcu/000001/org/battle/s0/stop/skill_stop_e.maanim",
           "packId": "000001",
           "suffix": "org/battle/s0/stop/skill_stop_e.maanim"
+        }
+      ]
+    }
+  },
+  "A_SHIELD": {
+    "resolved": true,
+    "ambiguous": false,
+    "phase": "A",
+    "bundleRef": {
+      "bundleKey": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip"
+    },
+    "internal": {
+      "image": "A_SHIELD/image.png",
+      "imgcut": "A_SHIELD/imgcut.imgcut",
+      "model": "A_SHIELD/model.mamodel",
+      "DEF": "A_SHIELD/DEF.maanim"
+    },
+    "sources": {
+      "image": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+      "imgcut": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+      "model": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield.mamodel",
+      "DEF": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield.maanim"
+    },
+    "candidates": {
+      "image": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.png"
+        }
+      ],
+      "imgcut": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.imgcut"
+        }
+      ],
+      "model": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield.mamodel",
+          "packId": "000001",
+          "suffix": "org/battle/s0/shield/skill_shield.mamodel"
+        }
+      ],
+      "DEF": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield.maanim",
+          "packId": "000001",
+          "suffix": "org/battle/s0/shield/skill_shield.maanim"
+        }
+      ]
+    }
+  },
+  "A_E_SHIELD": {
+    "resolved": true,
+    "ambiguous": false,
+    "phase": "A",
+    "bundleRef": {
+      "bundleKey": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip"
+    },
+    "internal": {
+      "image": "A_E_SHIELD/image.png",
+      "imgcut": "A_E_SHIELD/imgcut.imgcut",
+      "model": "A_E_SHIELD/model.mamodel",
+      "DEF": "A_E_SHIELD/DEF.maanim"
+    },
+    "sources": {
+      "image": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+      "imgcut": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+      "model": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield_e.mamodel",
+      "DEF": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield_e.maanim"
+    },
+    "candidates": {
+      "image": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.png",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.png"
+        }
+      ],
+      "imgcut": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/skill000.imgcut",
+          "packId": "000001",
+          "suffix": "org/battle/s0/skill000.imgcut"
+        }
+      ],
+      "model": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield_e.mamodel",
+          "packId": "000001",
+          "suffix": "org/battle/s0/shield/skill_shield_e.mamodel"
+        }
+      ],
+      "DEF": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s0/shield/skill_shield_e.maanim",
+          "packId": "000001",
+          "suffix": "org/battle/s0/shield/skill_shield_e.maanim"
         }
       ]
     }

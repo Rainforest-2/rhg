@@ -33619,6 +33619,14 @@
         "unit-wave/model.mamodel"
       ],
       "allSkillEffectsPrefix": "all-skill-effects"
+    },
+    "effect:status": {
+      "kind": "effect",
+      "key": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip",
+      "status": "full",
+      "sizeBytes": 413133,
+      "hash": "3e49560f093aeeb20136db3fc455389c01c0f2e9e7cee694056590103858e251"
     }
   }
 }

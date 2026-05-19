@@ -2,29 +2,70 @@ import { readFileSync, existsSync } from 'node:fs';
 import { DamageAbilityResolver } from '../js/battle/DamageAbilityResolver.js';
 import { DamageCalculator } from '../js/battle/DamageCalculator.js';
 import { BATTLE_CONFIG } from '../js/battle/BattleConfig.js';
-const fail=(m)=>{throw new Error(m);};
-if(!existsSync('js/battle/DamageAbilityResolver.js')) fail('missing resolver file');
-let r=DamageAbilityResolver.resolve({baseDamage:100,event:{rawAbi:1,abilityMappingStatus:'raw-only-unverified'}});
-if(r.enabled!==false||r.multiplier!==1) fail('default resolver should be disabled x1');
-if(!r.notes.includes('damage-ability-resolver-disabled')) fail('disabled note missing');
-const cfg={config:{tuning:{battleDebug:{damageAbilityResolver:{enabled:true,allowCritical:false,allowBaseDestroyer:false,allowMetal:false}}}}};
-r=DamageAbilityResolver.resolve({baseDamage:100,event:{abilities:{critical:true}},context:cfg}); if(r.multiplier!==1) fail('allowCritical false should not apply');
-r=DamageAbilityResolver.resolve({baseDamage:100,event:{abilities:{critical:true}},context:{config:{tuning:{battleDebug:{damageAbilityResolver:{enabled:true,allowCritical:true,criticalMultiplier:2}}}}}}); if(r.multiplier!==2) fail('critical opt-in failed');
-r=DamageAbilityResolver.resolve({baseDamage:100,targetType:'base',event:{abilities:{baseDestroyer:true}},context:{config:{tuning:{battleDebug:{damageAbilityResolver:{enabled:true,allowBaseDestroyer:true,baseDestroyerMultiplier:4}}}}}}); if(r.multiplier!==4) fail('baseDestroyer opt-in failed');
-r=DamageAbilityResolver.resolve({baseDamage:100,targetType:'actor',event:{abilities:{baseDestroyer:true}},context:{config:{tuning:{battleDebug:{damageAbilityResolver:{enabled:true,allowBaseDestroyer:true,baseDestroyerMultiplier:4}}}}}}); if(r.multiplier!==1) fail('baseDestroyer should not apply to actor');
-r=DamageAbilityResolver.resolve({baseDamage:100,targetType:'actor',target:{traitFlags:{metal:true}},event:{abilities:{critical:false}},context:{config:{tuning:{battleDebug:{damageAbilityResolver:{enabled:true,allowMetal:true,metalMaxDamageWithoutCritical:1}}}}}}); if(Math.abs(r.multiplier-0.01)>1e-9) fail('metal opt-in failed');
-r=DamageAbilityResolver.resolve({baseDamage:100,targetType:'actor',target:{traitFlags:{metal:true}},event:{abilities:{critical:true}},context:{config:{tuning:{battleDebug:{damageAbilityResolver:{enabled:true,allowCritical:true,allowMetal:true,criticalMultiplier:2,metalMaxDamageWithoutCritical:1}}}}}}); if(r.multiplier!==2) fail('critical should bypass metal cap');
-let d=DamageCalculator.calculate({attacker:{damage:120},target:{},event:{},context:{config:BATTLE_CONFIG}}); if(d.finalDamage!==120) fail('default damage changed');
-const debugCfg=JSON.parse(JSON.stringify(BATTLE_CONFIG));debugCfg.tuning.battleDebug.damageAbilityResolver.enabled=true;debugCfg.tuning.battleDebug.damageAbilityResolver.allowCritical=true;d=DamageCalculator.calculate({attacker:{damage:120},target:{},event:{abilities:{critical:true}},context:{config:debugCfg}}); if(d.finalDamage!==240) fail('critical did not change damage');
-const scene = readFileSync('js/battle/BattleScene.js','utf8');
-const calc = readFileSync('js/battle/DamageCalculator.js','utf8');
-const conf = readFileSync('js/battle/BattleConfig.js','utf8');
-if(!conf.includes('damageAbilityResolver: { enabled: false')) fail('config default missing');
-if(!scene.includes('config:BATTLE_CONFIG')) fail('BattleScene missing config context');
-if(!scene.includes('abilityResolver:{enabled:!!damageResult.abilityResolver?.enabled')) fail('event missing abilityResolver');
-if(!scene.includes('damageCalculation?.abilityResolver') && !scene.includes('lastDamageCalculation?.abilityResolver')) fail('stats report missing abilityResolver summary');
-if(calc.includes('abilityEnabledBits') && calc.match(/abilityEnabledBits.*critical|rawAbi.*critical|enabledBits.*baseDestroyer|rawAbi.*baseDestroyer/)) fail('raw bits drive semantic ability');
-if(!existsSync('js/battle/ProcResolver.js')||!existsSync('js/battle/KBRuntime.js')||!existsSync('js/battle/EffectRuntime.js')) fail('expected later runtime files missing');
-const proc = readFileSync('js/battle/ProcResolver.js','utf8');
-if(!proc.includes('pending-no-apply') || proc.includes('target.hp =')) fail('ProcResolver no-op contract broken');
+
+const fail = (message) => { throw new Error(message); };
+const rngPass = () => 0;
+const rngFail = () => 0.99;
+
+if (!existsSync('js/battle/DamageAbilityResolver.js')) fail('missing resolver file');
+
+let r = DamageAbilityResolver.resolve({ baseDamage: 100, event: {}, context: { random: rngPass } });
+if (r.enabled !== true || r.finalDamage !== 100 || r.multiplier !== 1) fail('default resolver should be enabled x1 with no abilities');
+if (!r.notes.includes('no-bcu-damage-ability-applied')) fail('default no-op note missing');
+
+r = DamageAbilityResolver.resolve({
+  attacker: { bcuCombatModel: { proc: { critical: { prob: 100, mult: 200 } } } },
+  target: { traitFlags: {} },
+  baseDamage: 100,
+  targetType: 'actor',
+  event: {},
+  context: { random: rngPass }
+});
+if (r.finalDamage !== 200 || !r.applied.critical) fail('critical proc did not apply from BCU proc model');
+
+r = DamageAbilityResolver.resolve({
+  attacker: { bcuCombatModel: { proc: { critical: { prob: 50, mult: 200 } } } },
+  target: { traitFlags: {} },
+  baseDamage: 100,
+  targetType: 'actor',
+  event: {},
+  context: { random: rngFail }
+});
+if (r.finalDamage !== 100 || r.applied.critical) fail('critical probability failure should leave damage unchanged');
+
+r = DamageAbilityResolver.resolve({
+  attacker: { bcuCombatModel: { proc: { baseDestroyer: { mult: 300 } } } },
+  baseDamage: 100,
+  targetType: 'base',
+  event: {},
+  context: { random: rngPass }
+});
+if (r.finalDamage !== 400 || !r.applied.baseDestroyer) fail('baseDestroyer multiplier failed');
+
+r = DamageAbilityResolver.resolve({
+  attacker: { side: 'dog-player', bcuCombatModel: { kind: 'unit', proc: { critical: { prob: 0 } } } },
+  target: { side: 'cat-enemy', traitFlags: { metal: true }, bcuCombatModel: { kind: 'enemy', traits: { list: ['metal'], flags: { metal: true } } } },
+  baseDamage: 100,
+  targetType: 'actor',
+  event: {},
+  context: { random: rngPass }
+});
+if (r.finalDamage !== 1 || !r.applied.metal) fail('metal non-critical cap failed');
+
+let d = DamageCalculator.calculate({ attacker: { damage: 120 }, target: {}, event: {}, context: { config: BATTLE_CONFIG, random: rngPass } });
+if (d.finalDamage !== 120) fail('default damage changed');
+
+const strengthened = { damage: 120, bcuStrengthenActive: true, bcuStrengthenMultiplier: 100 };
+d = DamageCalculator.calculate({ attacker: strengthened, target: {}, event: {}, context: { config: BATTLE_CONFIG, random: rngPass } });
+if (d.finalDamage !== 240 || !d.applied.strengthen) fail('strengthen did not change damage');
+
+const scene = readFileSync('js/battle/BattleScene.js', 'utf8');
+const calc = readFileSync('js/battle/DamageCalculator.js', 'utf8');
+if (!scene.includes('config:BATTLE_CONFIG')) fail('BattleScene missing config context');
+if (!scene.includes('abilityResolver:{enabled:!!damageResult.abilityResolver?.enabled')) fail('event missing abilityResolver');
+if (!scene.includes('damageCalculation?.abilityResolver') && !scene.includes('lastDamageCalculation?.abilityResolver')) fail('stats report missing abilityResolver summary');
+if (calc.match(/abilityEnabledBits.*critical|rawAbi.*critical|enabledBits.*baseDestroyer|rawAbi.*baseDestroyer/)) fail('raw bits drive semantic ability');
+if (!existsSync('js/battle/ProcResolver.js') || !existsSync('js/battle/KBRuntime.js') || !existsSync('js/battle/EffectRuntime.js')) fail('expected later runtime files missing');
+const proc = readFileSync('js/battle/ProcResolver.js', 'utf8');
+if (!proc.includes('pending-no-apply') || proc.includes('target.hp =')) fail('ProcResolver no-op contract broken');
 console.log('ok: damage-ability-resolver checks passed');

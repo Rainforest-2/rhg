@@ -67,6 +67,7 @@ export function installBattleDeterministicRandomPatch() {
 
   proto.queueAttackDamage = function queueAttackDamageWithDeterministicRandom(attacker, target, targetType, event, meta = {}) {
     const random = meta.random || this.getBcuRandom();
+    if (targetType === 'actor' && target) target.__bcuLastBattleRandom = random;
     RANDOM_STACK.push(random);
     try {
       return originalQueueAttackDamage.call(this, attacker, target, targetType, event, { ...meta, random });

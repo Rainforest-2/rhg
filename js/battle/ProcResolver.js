@@ -1,3 +1,5 @@
+import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
+
 function getCombatModel(entity) {
   return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
 }
@@ -29,7 +31,7 @@ function payloadFor(key, proc = {}) {
   if (key === 'toxic') return { prob: procNumber(proc, 'toxic', 'prob'), mult: procNumber(proc, 'toxic', 'mult') };
   if (key === 'wave') return { prob: procNumber(proc, 'wave', 'prob'), level: procNumber(proc, 'wave', 'level') };
   if (key === 'miniWave') return { prob: procNumber(proc, 'miniWave', 'prob'), level: procNumber(proc, 'miniWave', 'level'), mult: procNumber(proc, 'miniWave', 'mult') };
-  if (key === 'surge') return { prob: Math.max(procNumber(proc, 'volcano', 'prob'), procNumber(proc, 'deathSurge', 'prob')), volcano: proc?.volcano || null, deathSurge: proc?.deathSurge || null };
+  if (key === 'surge') return { prob: procNumber(proc, 'volcano', 'prob'), volcano: proc?.volcano || null, deathSurge: null };
   if (key === 'miniSurge') return { prob: procNumber(proc, 'miniVolcano', 'prob'), miniVolcano: proc?.miniVolcano || null };
   if (key === 'barrierBreaker') return { prob: procNumber(proc, 'barrierBreaker', 'prob') };
   if (key === 'shieldPierce') return { prob: procNumber(proc, 'shieldBreaker', 'prob') };
@@ -97,6 +99,12 @@ export class ProcResolver {
     for (const candidate of candidates) {
       const payload = payloadFor(candidate.key, proc);
       const prob = Number(payload.prob || 0);
+      const traitCompatibility = describeBcuTraitCompatibility({ attacker, target, targetType, targetOnly: semantic?.targetOnly === true });
+      const requiresActorTraitCompatibility = targetType === 'actor' && candidate.target === 'actor';
+      if (requiresActorTraitCompatibility && !bcuTraitCompatible({ attacker, target, targetType, targetOnly: semantic?.targetOnly === true })) {
+        skipped.push({ key: candidate.key, category: candidate.category, reason: 'target-trait-incompatible', payload, traitCompatibility });
+        continue;
+      }
       if (prob <= 0) {
         skipped.push({ key: candidate.key, category: candidate.category, reason: 'zero-probability', payload });
         continue;
@@ -122,7 +130,8 @@ export class ProcResolver {
         context: {
           damageApplied: !!damageResult?.applied,
           finalDamage: Number.isFinite(damageResult?.finalDamage) ? damageResult.finalDamage : null,
-          targetType
+          targetType,
+          traitCompatibility
         }
       };
       pending.push(item);
@@ -143,6 +152,7 @@ export class ProcResolver {
         proc,
         candidates,
         candidateKeys,
+        deathSurgeSeparated: Number(proc?.deathSurge?.prob || 0) > 0,
         pendingCount: pending.length,
         appliedCount: applied.length,
         skippedCount: skipped.length,

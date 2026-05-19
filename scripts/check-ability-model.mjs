@@ -37,8 +37,9 @@ assert.equal(existsSync(new URL('../js/battle/ProcResolver.js', import.meta.url)
 assert.equal(existsSync(new URL('../js/battle/KBRuntime.js', import.meta.url)), true);
 assert.equal(existsSync(new URL('../js/battle/EffectRuntime.js', import.meta.url)), true);
 const procText = readFileSync(new URL('../js/battle/ProcResolver.js', import.meta.url), 'utf8');
-assert.match(procText, /ProcResolver\.v2-pending-contract/);
-assert.match(procText, /semantic-pending-no-apply/);
+assert.match(procText, /ProcResolver\.v3-bcu-proc-roll-contract/);
+assert.match(procText, /semantic-ability-true/);
+assert.match(procText, /target-trait-incompatible/);
 assert.doesNotMatch(procText, /target\.hp\s*=/);
 ok('18');
 const result = DamageCalculator.calculate({ attacker: { damage: 100 }, target: {}, targetType: 'actor', event: {} });

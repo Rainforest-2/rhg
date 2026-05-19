@@ -5,7 +5,9 @@ export const STATUS_KEY_ALIASES = Object.freeze({
   CURSE: ['curse', 'P_CURSE'],
   SEAL: ['seal', 'P_SEAL'],
   POISON: ['toxic', 'poison', 'P_POISON', 'P_POIATK'],
-  WARP: ['warp', 'P_WARP']
+  WARP: ['warp', 'P_WARP'],
+  STRONG: ['strengthen', 'strong', 'P_STRONG'],
+  LETHAL: ['lethal', 'lethalSurvive', 'P_LETHAL']
 });
 
 export function isActiveStatusValue(st, nowMs) {
@@ -61,6 +63,8 @@ export function getBcuStatusSnapshot(actor, scene = null) {
     SEAL: normalizeOne(actor, scene, 'SEAL'),
     POISON: normalizeOne(actor, scene, 'POISON'),
     WARP: normalizeOne(actor, scene, 'WARP'),
+    STRONG: normalizeOne(actor, scene, 'STRONG'),
+    LETHAL: normalizeOne(actor, scene, 'LETHAL'),
     DEAD: { active: actor?.state === 'dead' || actor?.state === 'removed' || actor?.isAlive?.() === false, sourceKeys: ['state'] }
   };
   if (actor?.bcuWarpState && actor.bcuWarpState !== 'none') snapshot.WARP.active = true;

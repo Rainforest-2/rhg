@@ -31,6 +31,19 @@ export class DamageCalculator {
     };
   }
 
+  static applyBcuStrengthenToBaseDamage(baseDamage, attacker = null) {
+    const mult = Number(attacker?.bcuStrengthenMultiplier ?? attacker?.bcuProcStatuses?.strengthen?.mult ?? 0);
+    const active = attacker?.bcuStrengthenActive === true || attacker?.bcuProcStatuses?.strengthen?.active === true;
+    if (!active || !Number.isFinite(mult) || mult <= 0) return { damage: baseDamage, applied: false, mult: 0 };
+    const damage = this.normalizeDamage(baseDamage * (100 + mult) / 100, baseDamage);
+    return {
+      damage,
+      applied: true,
+      mult,
+      source: 'BCU Entity.AttackSimple.excuse status[P_STRONG][0] adds attack percent'
+    };
+  }
+
   static getTargetTraits(target) {
     const traits = target?.abilityModel?.traits?.list || target?.traits || target?.rawStats?.abilityModel?.traits?.list || target?.rawStats?.traits || target?.traitFlags || [];
     if (Array.isArray(traits)) return traits;
@@ -60,6 +73,7 @@ export class DamageCalculator {
       baseDestroyer: 1,
       metalKiller: 1,
       strongAttack: 1,
+      strengthen: 1,
       baronKiller: 1,
       stage: 1,
       weaken: 1,
@@ -72,12 +86,18 @@ export class DamageCalculator {
 
   static calculate({ attacker = null, target = null, targetType = 'actor', event = null, context = {} } = {}) {
     const rawBaseDamage = this.getBaseDamage({ attacker, event });
-    const weakenBase = this.applyBcuWeakenToBaseDamage(rawBaseDamage, attacker);
+    const strengthenBase = this.applyBcuStrengthenToBaseDamage(rawBaseDamage, attacker);
+    const weakenBase = this.applyBcuWeakenToBaseDamage(strengthenBase.damage, attacker);
     const baseDamage = weakenBase.damage;
     const eventAbilitySemantic = event?.abilities || event?.ability?.semantic || {};
     const modifiers = this.buildDefaultModifiers({ attacker, target, targetType, event });
+    if (strengthenBase.applied) {
+      modifiers.strengthen = rawBaseDamage === 0 ? 1 : strengthenBase.damage / rawBaseDamage;
+      modifiers.notes.push('bcu-strengthen-applied-to-attacker-base-damage');
+      modifiers.bcuStrengthen = strengthenBase;
+    }
     if (weakenBase.applied) {
-      modifiers.weaken = weakenBase.mult / 100;
+      modifiers.weaken = weakenBase.damage === 0 ? 1 : weakenBase.damage / strengthenBase.damage;
       modifiers.notes.push('bcu-weaken-applied-to-attacker-base-damage');
       modifiers.bcuWeaken = weakenBase;
     }
@@ -113,6 +133,7 @@ export class DamageCalculator {
         attackerBcuAbi: attacker?.bcuAbi ?? attacker?.rawStats?.bcuAbi ?? null,
         targetTraitMappingStatus: target?.abilityModel?.traits?.mappingStatus || null,
         targetTraits: this.getTargetTraits(target),
+        strengthenBase,
         weakenBase
       },
       abilityResolver: abilityResult,
@@ -121,6 +142,7 @@ export class DamageCalculator {
       procSkippedCount: Array.isArray(proc?.skipped) ? proc.skipped.length : 0,
       applied: {
         stageMagnification: false,
+        strengthen: strengthenBase.applied,
         weaken: weakenBase.applied,
         baseDestroyer: !!abilityResult.applied?.baseDestroyer,
         trait: !!(abilityResult.applied?.strong || abilityResult.applied?.massiveDamage || abilityResult.applied?.insaneDamage || abilityResult.applied?.resistant),

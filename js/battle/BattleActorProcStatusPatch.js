@@ -71,29 +71,29 @@ function applyStatus(actor, key, payload = {}, meta = {}) {
   const durationMs = framesToMs(durationFrames);
   if (durationMs <= 0 && key !== 'knockbackProc' && key !== 'toxic') return { applied: false, reason: 'zero-duration' };
   if (key === 'freeze') {
-    statuses.freeze = { key, framesRemaining: Math.max(statuses.freeze?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.freeze?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_STOP]' };
+    statuses.freeze = { key, framesRemaining: durationFrames, untilMs: nowMs + durationMs, durationMs, payload, source: 'BCU status[P_STOP] overwrite' };
     actor.freezeUntilMs = statuses.freeze.untilMs;
     return { applied: true, status: statuses.freeze };
   }
   if (key === 'slow') {
-    statuses.slow = { key, framesRemaining: Math.max(statuses.slow?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.slow?.untilMs || 0, nowMs + durationMs), durationMs, movePerFrame: BCU_SLOW_MOVE_PER_FRAME, payload, source: 'BCU Entity.updateMove status[P_SLOW]' };
+    statuses.slow = { key, framesRemaining: durationFrames, untilMs: nowMs + durationMs, durationMs, movePerFrame: BCU_SLOW_MOVE_PER_FRAME, payload, source: 'BCU Entity.updateMove status[P_SLOW] overwrite' };
     actor.slowUntilMs = statuses.slow.untilMs;
     return { applied: true, status: statuses.slow };
   }
   if (key === 'weaken') {
     const mult = Number(payload.mult || 0);
-    statuses.weaken = { key, framesRemaining: Math.max(statuses.weaken?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.weaken?.untilMs || 0, nowMs + durationMs), durationMs, mult, payload, source: 'BCU WeakToken/status[P_WEAK][1]' };
+    statuses.weaken = { key, framesRemaining: durationFrames, untilMs: nowMs + durationMs, durationMs, mult, payload, source: 'BCU WeakToken/status[P_WEAK][1] overwrite' };
     actor.weakenUntilMs = statuses.weaken.untilMs;
     actor.weakenMultiplier = statuses.weaken.mult;
     return { applied: true, status: statuses.weaken };
   }
   if (key === 'curse') {
-    statuses.curse = { key, framesRemaining: Math.max(statuses.curse?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.curse?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_CURSE]' };
+    statuses.curse = { key, framesRemaining: durationFrames, untilMs: nowMs + durationMs, durationMs, payload, source: 'BCU status[P_CURSE] overwrite' };
     actor.curseUntilMs = statuses.curse.untilMs;
     return { applied: true, status: statuses.curse };
   }
   if (key === 'seal') {
-    statuses.seal = { key, framesRemaining: Math.max(statuses.seal?.framesRemaining || 0, durationFrames), untilMs: Math.max(statuses.seal?.untilMs || 0, nowMs + durationMs), durationMs, payload, source: 'BCU status[P_SEAL]' };
+    statuses.seal = { key, framesRemaining: durationFrames, untilMs: nowMs + durationMs, durationMs, payload, source: 'BCU status[P_SEAL] overwrite' };
     actor.sealUntilMs = statuses.seal.untilMs;
     return { applied: true, status: statuses.seal };
   }

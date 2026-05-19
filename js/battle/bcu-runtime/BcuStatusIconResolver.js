@@ -6,6 +6,8 @@ const STATUS_TO_EFFECT = [
   ['STOP', 'P_STOP'],
   ['SLOW', 'P_SLOW'],
   ['WEAK', 'P_WEAK'],
+  ['STRONG', 'P_STRONG'],
+  ['LETHAL', 'P_LETHAL'],
   ['CURSE', 'P_CURSE'],
   ['SEAL', 'P_SEAL'],
   ['POISON', 'P_POISON'],
@@ -31,6 +33,10 @@ export function resolveStatusIcons(actor, scene) {
     if (statusKey === 'CURSE' && snapshot.SEAL.active) {
       suppressed = true;
       suppressedReason = 'SEAL suppresses CURSE';
+    }
+    if (statusKey === 'STRONG' && snapshot.WEAK.active) {
+      suppressed = true;
+      suppressedReason = 'WEAK suppresses STRONG icon';
     }
     const xSlot = suppressed ? null : visibleSlot++;
     icons.push({

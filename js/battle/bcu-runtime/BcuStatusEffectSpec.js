@@ -10,6 +10,10 @@ export const PHASE_A_STATUS_EFFECT_KEYS = Object.freeze([
   'A_E_SLOW',
   'A_DOWN',
   'A_E_DOWN',
+  'A_UP',
+  'A_E_UP',
+  'A_SHIELD',
+  'A_E_SHIELD',
   'A_CURSE',
   'A_E_CURSE',
   'A_SEAL',
@@ -30,6 +34,20 @@ export const BCU_STATUS_EFFECT_SPECS = Object.freeze({
     imgcut: 'org/battle/s0/skill000.imgcut',
     model: 'org/battle/s0/down/skill_down_e.mamodel',
     variants: { DEF: 'org/battle/s0/down/skill_down_e.maanim' }
+  },
+  A_UP: {
+    phase: 'A',
+    image: 'org/battle/s0/skill000.png',
+    imgcut: 'org/battle/s0/skill000.imgcut',
+    model: 'org/battle/s0/up/skill_up.mamodel',
+    variants: { DEF: 'org/battle/s0/up/skill_up.maanim' }
+  },
+  A_E_UP: {
+    phase: 'A',
+    image: 'org/battle/s0/skill000.png',
+    imgcut: 'org/battle/s0/skill000.imgcut',
+    model: 'org/battle/s0/up/skill_up_e.mamodel',
+    variants: { DEF: 'org/battle/s0/up/skill_up_e.maanim' }
   },
   A_SLOW: {
     phase: 'A',
@@ -58,6 +76,20 @@ export const BCU_STATUS_EFFECT_SPECS = Object.freeze({
     imgcut: 'org/battle/s0/skill000.imgcut',
     model: 'org/battle/s0/stop/skill_stop_e.mamodel',
     variants: { DEF: 'org/battle/s0/stop/skill_stop_e.maanim' }
+  },
+  A_SHIELD: {
+    phase: 'A',
+    image: 'org/battle/s0/skill000.png',
+    imgcut: 'org/battle/s0/skill000.imgcut',
+    model: 'org/battle/s0/shield/skill_shield.mamodel',
+    variants: { DEF: 'org/battle/s0/shield/skill_shield.maanim' }
+  },
+  A_E_SHIELD: {
+    phase: 'A',
+    image: 'org/battle/s0/skill000.png',
+    imgcut: 'org/battle/s0/skill000.imgcut',
+    model: 'org/battle/s0/shield/skill_shield_e.mamodel',
+    variants: { DEF: 'org/battle/s0/shield/skill_shield_e.maanim' }
   },
   A_CURSE: {
     phase: 'A',
@@ -101,6 +133,8 @@ export function getStatusEffectKey(statusKey, actor) {
   if (statusKey === 'STOP') return enemy ? 'A_E_STOP' : 'A_STOP';
   if (statusKey === 'SLOW') return enemy ? 'A_E_SLOW' : 'A_SLOW';
   if (statusKey === 'WEAK') return enemy ? 'A_E_DOWN' : 'A_DOWN';
+  if (statusKey === 'STRONG') return enemy ? 'A_E_UP' : 'A_UP';
+  if (statusKey === 'LETHAL') return enemy ? 'A_E_SHIELD' : 'A_SHIELD';
   if (statusKey === 'CURSE') return enemy ? 'A_E_CURSE' : 'A_CURSE';
   if (statusKey === 'SEAL') return enemy ? 'A_E_SEAL' : 'A_SEAL';
   if (statusKey === 'POISON') return 'A_POISON';

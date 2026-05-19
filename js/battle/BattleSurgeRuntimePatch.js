@@ -29,6 +29,10 @@ function dire(actor) {
   return actor?.side === 'dog-player' ? -1 : 1;
 }
 
+function isDirectDamageTarget(targetType) {
+  return targetType === 'actor' || targetType === 'base';
+}
+
 function surgeItems(calc) {
   return [...(calc?.proc?.pending || []), ...(calc?.proc?.applied || [])]
     .filter((p) => p?.key === 'surge' || p?.key === 'miniSurge');
@@ -431,7 +435,7 @@ export function installBattleSurgeRuntimePatch() {
   if (typeof originalQueueAttackDamage !== 'function') throw new Error('BattleScene.queueAttackDamage is missing');
   proto.queueAttackDamage = function queueAttackDamageWithBcuContVolcano(attacker, target, targetType, event, meta = {}) {
     const result = originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
-    if (targetType === 'actor') {
+    if (isDirectDamageTarget(targetType)) {
       const calc = target?.lastIncomingDamageCalculation || attacker?.lastDamageCalculation || null;
       enqueueFromResult(this, attacker, target, event, calc, result, meta);
     }

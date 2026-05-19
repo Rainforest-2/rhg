@@ -29,11 +29,51 @@ Because this repository is JavaScript running in a browser-like environment, do 
 
 When using the reference ZIPs, document which files/classes/methods were inspected and what behavior was derived from them. If the JS implementation intentionally differs for performance reasons, state the invariant that preserves player-visible behavior.
 
+## Mandatory optimization analysis artifact
+
+Any optimization or lightweighting change must include a committed analysis document before or alongside runtime code changes. Do not rely on private scratchpad reasoning only.
+
+Create the document under:
+
+- `docs/optimization/`
+
+Use a descriptive filename such as:
+
+- `docs/optimization/2026-05-19-debug-allocation-cleanup.md`
+- `docs/optimization/2026-05-19-renderer-hot-path-review.md`
+
+The analysis document must include:
+
+- objective;
+- inspected files;
+- inspected reference ZIP files/classes/methods, when logic parity is involved;
+- import-order constraints from `js/main.js`;
+- current wrapper chain or data flow for every touched method;
+- candidate optimizations considered;
+- selected changes and why they are safe;
+- rejected changes and why they are risky;
+- behavior invariants that must remain unchanged;
+- expected debug/global output changes;
+- static verification commands or searches performed;
+- executable non-browser checks, if any;
+- validation limits, including when validation is code-review-only;
+- rollback plan.
+
+If no analysis document is committed, do not edit runtime code. If a change was already made without this document, add the missing analysis document in the next commit before making further optimizations.
+
+## AGENTS.md update requirement
+
+For every optimization pass, explicitly decide whether `AGENTS.md` needs an update.
+
+- If new stable guardrails, reference-source rules, forbidden patterns, or workflow constraints are discovered, update `AGENTS.md` in the same branch.
+- If no update is needed, the analysis document must contain a section named `AGENTS.md update decision` explaining why no repository-wide instruction changed.
+- Do not add temporary implementation notes, one-off prompts, browser-only test instructions, or speculative claims to `AGENTS.md`.
+
 ## Codex self-analysis workflow
 
-When a local-file-capable Codex-style agent is asked to optimize or lighten the project, it must first analyze the repository and write its own task-specific design prompt before editing runtime code.
+When a local-file-capable Codex-style agent is asked to optimize or lighten the project, it must first analyze the repository and write its own task-specific design prompt before editing runtime code. That design prompt must be persisted in the mandatory optimization analysis artifact described above.
 
-The design prompt is an internal planning artifact for the agent. It should be concrete enough to guide safe implementation, but it must not broaden the requested scope. It should include:
+The design prompt should be concrete enough to guide safe implementation, but it must not broaden the requested scope. It should include:
 
 - the user's objective restated in one sentence;
 - files inspected and why they matter;
@@ -63,8 +103,6 @@ Before changing code, the agent must use local search tools such as `rg`, `find`
 - `lastDrawListDebug`
 - `lastHitEffectSpawnDebug`
 - `getBattleDrawList`
-
-If the analysis reveals new stable guardrails that should apply to future agents, update `AGENTS.md` in the same branch. Keep such updates factual and repository-specific. Do not add temporary implementation notes, one-off prompts, browser-only test instructions, or speculative claims.
 
 The agent may proceed from analysis to implementation only when the planned change is local, reversible, and does not alter protected runtime contracts. Otherwise, stop after producing the design prompt and risk analysis.
 

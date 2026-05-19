@@ -12,6 +12,44 @@ These instructions apply to the entire repository unless a more specific `AGENTS
 
 Do not change battle logic, rendering parity, or patch ordering while performing lightweight optimization. Prefer small, local, reviewable changes that reduce debug allocation or redundant diagnostic writes without altering game behavior.
 
+## Codex self-analysis workflow
+
+When a local-file-capable Codex-style agent is asked to optimize or lighten the project, it must first analyze the repository and write its own task-specific design prompt before editing runtime code.
+
+The design prompt is an internal planning artifact for the agent. It should be concrete enough to guide safe implementation, but it must not broaden the requested scope. It should include:
+
+- the user's objective restated in one sentence;
+- files inspected and why they matter;
+- current data flow and wrapper chain for every touched method;
+- import-order constraints from `js/main.js`;
+- explicit non-goals;
+- candidate optimizations ranked by safety;
+- the exact code paths that must remain behaviorally unchanged;
+- expected debug/global output changes, if any;
+- static verification steps available in the local environment;
+- rollback criteria.
+
+Before changing code, the agent must use local search tools such as `rg`, `find`, and direct file reads to verify all references to the target symbols. At minimum, search for:
+
+- `runTickPhase`
+- `queueAttackDamage`
+- `drawEffects`
+- `drawActor`
+- `BcuTraceRuntime.push`
+- `pushEvent`
+- `globalThis.__BCU_`
+- `globalThis.__BATTLE_`
+- `globalThis.__FORMATION_`
+- `lastRenderDebug`
+- `lastModelDrawDebug`
+- `lastDrawListDebug`
+- `lastHitEffectSpawnDebug`
+- `getBattleDrawList`
+
+If the analysis reveals new stable guardrails that should apply to future agents, update `AGENTS.md` in the same branch. Keep such updates factual and repository-specific. Do not add temporary implementation notes, one-off prompts, browser-only test instructions, or speculative claims.
+
+The agent may proceed from analysis to implementation only when the planned change is local, reversible, and does not alter protected runtime contracts. Otherwise, stop after producing the design prompt and risk analysis.
+
 ## Protected runtime contracts
 
 Treat the following as high-risk contracts:

@@ -12,6 +12,23 @@ These instructions apply to the entire repository unless a more specific `AGENTS
 
 Do not change battle logic, rendering parity, or patch ordering while performing lightweight optimization. Prefer small, local, reviewable changes that reduce debug allocation or redundant diagnostic writes without altering game behavior.
 
+## Reference source policy
+
+When local reference ZIPs are available, treat the non-PC reference sources as the primary logic models:
+
+- `BCU_java_util_common-ef840238e4700eb4b8eb57b4446633e465f4edd5.zip`
+- `BCU_Android-master.zip`
+
+These two sources are the logic examples to inspect for battle behavior, data interpretation, entity lifecycle, attack resolution, proc handling, status effects, wave/surge behavior, spawn logic, and other gameplay rules.
+
+Do not use `BCU-java-PC-slow_kotlin.zip` as the primary gameplay-logic source when the non-PC references answer the same question. The PC source may still be useful for PC-specific rendering, tooling, UI, or presentation details, but it is not the first choice for gameplay logic parity.
+
+Player-facing behavior should match the reference game. From a player perspective, this JavaScript implementation is expected to behave like the reference sources, even though the runtime language and performance constraints differ.
+
+Because this repository is JavaScript running in a browser-like environment, do not mechanically port Java/Kotlin code line-for-line. Preserve the reference behavior, not necessarily the reference implementation shape. Avoid translating patterns that would create avoidable JS overhead, such as excessive allocation in hot loops, deep object graphs, broad per-frame scans, unnecessary wrapper churn, or debug object creation in battle/render paths.
+
+When using the reference ZIPs, document which files/classes/methods were inspected and what behavior was derived from them. If the JS implementation intentionally differs for performance reasons, state the invariant that preserves player-visible behavior.
+
 ## Codex self-analysis workflow
 
 When a local-file-capable Codex-style agent is asked to optimize or lighten the project, it must first analyze the repository and write its own task-specific design prompt before editing runtime code.
@@ -22,6 +39,7 @@ The design prompt is an internal planning artifact for the agent. It should be c
 - files inspected and why they matter;
 - current data flow and wrapper chain for every touched method;
 - import-order constraints from `js/main.js`;
+- reference ZIP files/classes/methods inspected, when logic parity is involved;
 - explicit non-goals;
 - candidate optimizations ranked by safety;
 - the exact code paths that must remain behaviorally unchanged;

@@ -9,8 +9,40 @@ function flagsFromList(list = []) {
   return flags;
 }
 
+function lower(value) {
+  return String(value ?? '').toLowerCase();
+}
+
 export function getCombatModel(entity) {
   return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
+}
+
+function readFaction(entity) {
+  return lower(
+    entity?.faction
+    ?? entity?.unitDef?.faction
+    ?? entity?.assetDef?.faction
+    ?? entity?.rawStats?.faction
+    ?? entity?.stats?.faction
+    ?? entity?.definition?.faction
+    ?? entity?.template?.faction
+    ?? getCombatModel(entity)?.faction
+  );
+}
+
+export function isDogActor(entity) {
+  if (!entity) return false;
+  const faction = readFaction(entity);
+  if (faction === 'dog' || faction === 'wanko' || faction === 'enemy') return true;
+  const side = lower(entity?.side);
+  if (side.startsWith('dog-') || side.includes('dog') || side.includes('wanko')) return true;
+  const kind = lower(entity?.kind);
+  if (kind === 'dog' || kind === 'wanko') return true;
+  return false;
+}
+
+export function isDogMirrorCombat(attacker, target) {
+  return isDogActor(attacker) && isDogActor(target);
 }
 
 export function getTraitFlags(entity) {
@@ -58,6 +90,7 @@ export function hasTargetOnly(attacker, event = null) {
 export function bcuTraitCompatible({ attacker = null, target = null, targetType = 'actor', targetOnly = false } = {}) {
   if (targetType === 'base' || target?.isBase === true || target?.kind === 'base') return true;
   if (!target) return false;
+  if (targetType === 'actor' && isDogMirrorCombat(attacker, target)) return true;
   const attackTraits = getAttackTraitList(attacker);
   if (!attackTraits.length || attackTraits.some((trait) => trait == null || trait === '__all' || trait === 'all')) {
     return true;
@@ -71,15 +104,23 @@ export function bcuTraitCompatible({ attacker = null, target = null, targetType 
 export function describeBcuTraitCompatibility({ attacker = null, target = null, targetType = 'actor', targetOnly = false } = {}) {
   const attackTraits = getAttackTraitList(attacker);
   const targetTraits = targetType === 'base' ? ['base'] : getTargetTraitList(target);
+  const dogMirror = targetType === 'actor' && isDogMirrorCombat(attacker, target);
   const compatible = bcuTraitCompatible({ attacker, target, targetType, targetOnly });
   const targetFlags = flagsFromList(targetTraits);
+  const sharedTraits = dogMirror
+    ? ['custom-dog-mirror']
+    : attackTraits.filter((trait) => trait == null || targetFlags[String(trait)] === true);
   return {
     compatible,
     targetOnly: !!targetOnly,
     targetType,
     attackTraits,
     targetTraits,
-    sharedTraits: attackTraits.filter((trait) => trait == null || targetFlags[String(trait)] === true),
-    source: 'BCU Entity.traitCompatible / ECastle.traitCompatible'
+    sharedTraits,
+    dogMirror,
+    reason: dogMirror ? 'custom-dog-mirror-universal-trait-compatibility' : (compatible ? 'bcu-trait-compatible' : 'bcu-trait-incompatible'),
+    source: dogMirror
+      ? 'custom dog-vs-dog battle rule; BCU has no dog mirror trait-targeting model'
+      : 'BCU Entity.traitCompatible / ECastle.traitCompatible'
   };
 }

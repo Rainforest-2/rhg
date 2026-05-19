@@ -113,8 +113,6 @@ function renderCatalogWindowDiff(editor) {
   const fragment = document.createDocumentFragment();
   fragment.appendChild(topSpacer);
 
-  let reused = 0;
-  let created = 0;
   for (let index = start; index < end; index += 1) {
     const character = chars[index];
     if (!character) continue;
@@ -122,41 +120,21 @@ function renderCatalogWindowDiff(editor) {
     requiredKeys.add(key);
     let card = existingCards.get(key);
     if (card) {
-      reused += 1;
       updateCard(editor, card, character, index, usedBaseIds);
     } else {
       card = buildCard(editor, character, index, usedBaseIds);
-      created += 1;
     }
     fragment.appendChild(card);
   }
   fragment.appendChild(bottomSpacer);
 
-  let removed = 0;
   for (const [key, node] of existingCards) {
     if (!requiredKeys.has(key)) {
       node.remove();
-      removed += 1;
     }
   }
 
   grid.replaceChildren(fragment);
-
-  globalThis.__FORMATION_VDOM_DIFF_DEBUG__ = {
-    source: 'FormationCatalogVirtualDomPatch.renderCatalogWindowDiff',
-    catalogItemCount: chars.length,
-    start,
-    end,
-    renderedDomCardCount: Math.max(0, end - start),
-    reused,
-    created,
-    removed,
-    columns,
-    firstVisibleRow,
-    lastVisibleRow,
-    overscanRows: dynamicOverscanRows,
-    reason: 'preserve overlapping virtual catalog card DOM and image elements; only create/remove changed range'
-  };
 }
 
 export function installFormationCatalogVirtualDomPatch() {

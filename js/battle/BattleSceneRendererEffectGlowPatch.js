@@ -37,32 +37,12 @@ function drawBcuModelEffectWithGlow(renderer, ctx, effect, x, y, scale) {
     const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
     drawBcuImagePart(ctx, effect.image, part.x, part.y, part.w, part.h, -pivotX, -pivotY, part.w, part.h, {
       opacity,
-      glow: Number.isFinite(Number(p.glow)) ? Number(p.glow) : 0,
-      debug: {
-        source: 'BattleSceneRendererEffectGlowPatch.drawBcuModelEffectWithGlow',
-        effectId: effect.id || null,
-        modelPartIndex: p.index ?? null,
-        partIndex,
-        partName: part.name || null
-      }
+      glow: Number.isFinite(Number(p.glow)) ? Number(p.glow) : 0
     });
     ctx.restore();
     drawn += 1;
   }
   ctx.restore();
-  effect.lastModelDrawDebug = {
-    source: 'BattleSceneRendererEffectGlowPatch.drawBcuModelEffectWithGlow',
-    drawListCount: drawList.length,
-    drawn,
-    glowCount: drawList.filter((d) => [1, 2, 3, -1].includes(Number(d.glow))).length,
-    glowModes: drawList.reduce((acc, d) => {
-      const g = Number(d.glow);
-      if ([1, 2, 3, -1].includes(g)) acc[String(g)] = (acc[String(g)] || 0) + 1;
-      return acc;
-    }, {}),
-    animatorFrame: effect.animator.frame,
-    animatorMaxFrame: effect.animator.anim?.maxFrame ?? null
-  };
   return drawn > 0;
 }
 
@@ -93,27 +73,13 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       drawBcuImagePart(ctx, effect.image, part.x, part.y, part.w, part.h, x - drawW * 0.5, y - drawH * 0.5, drawW, drawH, {
         opacity: Number.isFinite(effect.opacity) ? effect.opacity : 1,
-        glow: Number.isFinite(Number(effect.glow)) ? Number(effect.glow) : 0,
-        debug: { source: 'BattleSceneRendererEffectGlowPatch.imgcutFallback', effectId: effect.id || null }
+        glow: Number.isFinite(Number(effect.glow)) ? Number(effect.glow) : 0
       });
       ctx.restore();
       drawn = true;
     }
   }
 
-  effect.lastRenderDebug = {
-    source: 'BattleSceneRendererEffectGlowPatch.drawEffects',
-    x,
-    y,
-    worldX: effect.worldX ?? effect.x ?? null,
-    layer,
-    baseY,
-    yOffset,
-    scale,
-    mode: effect.model && effect.animator ? 'bcu-model-effanim-glow' : 'imgcut-frame-fallback-glow',
-    partName: effect.currentPart?.name || null,
-    modelDraw: effect.lastModelDrawDebug || null
-  };
   return drawn;
 }
 
@@ -129,29 +95,12 @@ if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
         if (al !== bl) return al - bl;
         return (a.createdAtMs || 0) - (b.createdAtMs || 0);
       });
-    let drawn = 0;
-    const errors = [];
     for (const effect of active) {
       try {
-        if (drawOneBcuEffectWithGlow(this, ctx, effect)) drawn += 1;
+        drawOneBcuEffectWithGlow(this, ctx, effect);
       } catch (error) {
-        errors.push({ id: effect?.id || null, message: String(error?.message || error) });
+        // Keep renderer behavior unchanged: one bad effect should not abort the frame.
       }
     }
-    globalThis.__BATTLE_EFFECT_RENDER_DEBUG__ = {
-      source: 'BattleSceneRendererEffectGlowPatch.drawEffects',
-      input: list.length,
-      active: active.length,
-      drawn,
-      errors,
-      examples: active.slice(0, 5).map((effect) => ({
-        id: effect.id,
-        source: effect.source,
-        layer: effect.currentLayer,
-        mode: effect.model && effect.animator ? 'bcu-model-effanim-glow' : 'imgcut-frame-fallback-glow',
-        part: effect.currentPart?.name || null,
-        debug: effect.lastRenderDebug || null
-      }))
-    };
   };
 }

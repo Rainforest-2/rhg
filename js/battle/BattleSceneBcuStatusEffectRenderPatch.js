@@ -1,13 +1,11 @@
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
-import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 import { getActorStatusEffectManager } from './bcu-runtime/BcuStatusEffectManager.js';
 import { getBcuStatusEffectPosition } from './bcu-runtime/BcuStatusEffectPositioner.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-status-effect-render-patch.v1');
 const BCU_STATUS_EFFECT_DT = 1000 / 30;
 
-export function drawBcuStatusEffects(renderer, ctx, scene, actorsForRender, dt = BCU_STATUS_EFFECT_DT, options = {}) {
-  const trace = [];
+export function drawBcuStatusEffects(renderer, ctx, scene, actorsForRender, dt = BCU_STATUS_EFFECT_DT) {
   for (const actor of actorsForRender || []) {
     if (!actor?.isAlive?.()) continue;
     const manager = getActorStatusEffectManager(actor, scene);
@@ -20,40 +18,16 @@ export function drawBcuStatusEffects(renderer, ctx, scene, actorsForRender, dt =
         iconIndex: effect.xSlot ?? effect.slot ?? 0,
         effect
       });
-      const entry = {
-        source: 'BattleSceneBcuStatusEffectRenderPatch',
-        actorId: actor.instanceId || actor.label || null,
-        effectKey: effect.effectKey,
-        statusKey: effect.statusKey,
-        loaded: effect.loaded,
-        rendered: false,
-        positionSource: pos.positionSource,
-        x: Number.isFinite(pos.x) ? pos.x : null,
-        y: Number.isFinite(pos.y) ? pos.y : null,
-        sceneFrame: scene?.logicFrame ?? null,
-        error: actor.lastBcuStatusEffectError || null
-      };
       if (effect.runtime && pos.rendered) {
-        entry.rendered = effect.runtime.draw(ctx, {
+        effect.runtime.draw(ctx, {
           x: pos.x,
           y: pos.y,
           scale: pos.scale,
           direction: pos.direction
         });
       }
-      trace.push(entry);
-      BcuTraceRuntime.push('statusIconRender', entry);
     }
   }
-  if (options.append === true) {
-    const current = Array.isArray(globalThis.__BCU_STATUS_ICON_RENDER_TRACE__)
-      ? globalThis.__BCU_STATUS_ICON_RENDER_TRACE__
-      : [];
-    globalThis.__BCU_STATUS_ICON_RENDER_TRACE__ = current.concat(trace);
-  } else {
-    globalThis.__BCU_STATUS_ICON_RENDER_TRACE__ = trace;
-  }
-  return trace;
 }
 
 export function installBattleSceneBcuStatusEffectRenderPatch() {
@@ -66,7 +40,6 @@ export function installBattleSceneBcuStatusEffectRenderPatch() {
     const actorsForRender = this.getAliveActorsForRender(scene);
     const actorSet = new Set(actorsForRender);
     const statusDrawnActors = new Set();
-    globalThis.__BCU_STATUS_ICON_RENDER_TRACE__ = [];
 
     const originalGetAliveActorsForRender = this.getAliveActorsForRender;
     let suppliedOnce = false;

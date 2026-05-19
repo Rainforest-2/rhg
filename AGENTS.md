@@ -2,7 +2,7 @@
 
 This file defines repository-wide instructions for AI coding agents working on `rhgrive2/game`.
 
-The project is a browser-based Battle Cats Ultimate (BCU) parity / preview runtime. Many battle features are installed through ordered prototype patches from `js/main.js`. Preserve existing behavior first; optimize only when the change is demonstrably safe.
+The project is a browser-based Battle Cats Ultimate (BCU) parity / preview runtime. Many battle features are installed through ordered prototype patches from `js/main.js`. Preserve existing behavior first; optimize only when the change is demonstrably safe from code inspection.
 
 ## Scope
 
@@ -75,7 +75,7 @@ Prefer these before touching logic-heavy code:
 
 ## Do not include in first-pass optimization
 
-Avoid these unless explicitly requested and separately tested:
+Avoid these unless explicitly requested and separately reviewed:
 
 - draw-list caching;
 - target-search indexing;
@@ -100,24 +100,21 @@ These areas can improve performance but can easily break BCU parity or existing 
 
 Do not claim a change has zero impact if it removes public console/debug globals. State it as: game behavior should be unchanged; debug/global inspection output may change.
 
-## Verification checklist
+## Agent verification limits
 
-After any battle or renderer optimization, verify at minimum:
+Do not ask AI coding agents to perform browser/manual gameplay checks unless the execution environment explicitly supports them. Browser runtime validation is out of scope for agents that only have repository and shell access.
 
-- normal attacks deal damage;
-- second and later attacks still occur;
-- knockback behavior remains stable;
-- wave damage applies;
-- surge damage applies;
-- wave position remains BCU-compatible;
-- surge effects do not persist after their container is inactive;
-- projectile damage does not recreate extra hit smoke;
-- status effects apply and expire correctly;
-- status icons/effects render when expected;
-- actor animation continues moving;
-- knockback animation remains correct;
-- `debugEvents` does not grow under `BattleDebugStripPatch`;
-- `BcuTraceRuntime` remains no-op when intended.
+For Codex-style agents, use static and local checks instead:
+
+- inspect all changed files and adjacent wrapper files;
+- inspect `js/main.js` import order for affected patches;
+- search for references to removed globals, debug fields, and helper functions;
+- verify no protected method wrapper was bypassed or replaced with a direct callback call;
+- verify no rendering call was removed while deleting diagnostic objects;
+- verify no wave/surge position, layer, lifetime, or hit-smoke suppression constant changed;
+- verify no status effect update/draw path was skipped;
+- run available non-browser checks only if the repository provides them;
+- if no executable checks are available, state that validation is code-review-only.
 
 ## Change style
 

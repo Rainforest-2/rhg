@@ -1,3 +1,4 @@
+import './BattleMiniProcParityPatch.js';
 import { BattleScene } from './BattleScene.js';
 import { DamageCalculator } from './DamageCalculator.js';
 

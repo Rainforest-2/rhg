@@ -23,6 +23,8 @@ function drawBcuModelEffectWithGlow(renderer, ctx, effect, x, y, scale) {
   ctx.translate(x, y);
   ctx.scale(scale, scale);
   for (const p of drawList) {
+    const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
+    if (Number.isFinite(Number(imgcutIndex)) && Number(imgcutIndex) < 0) continue;
     const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
     if (!Number.isInteger(partIndex) || partIndex < 0) continue;
     const opacity = Number.isFinite(p.opacity) ? p.opacity : 1;

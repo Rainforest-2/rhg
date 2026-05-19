@@ -27,6 +27,7 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
   dogContentRect: Object.freeze({ x: 6, y: 4, w: 98, h: 58 }),
   dogIconScale: DOG_CARD_ICON_SCALE,
+  dogIconFitMode: 'cover',
   // Dog cards are a project extension, not a BC unit card. Keep the BCU uni frame,
   // but repaint the full inner card face, including the cost area, so the source
   // frame's gray placeholder cannot leak under dog icons.
@@ -101,6 +102,7 @@ export class ProductionCardSkin {
         cardPart: this.cardPart,
         dogContentBackground: PRODUCTION_CARD_SKIN.dogContentBackgroundRect,
         dogIconScale: PRODUCTION_CARD_SKIN.dogIconScale,
+        dogIconFitMode: PRODUCTION_CARD_SKIN.dogIconFitMode,
         highDpiCanvasAware: true,
         costRightX: PRODUCTION_CARD_SKIN.costRightX,
         costY: PRODUCTION_CARD_SKIN.costY,
@@ -178,6 +180,7 @@ export class ProductionCardSkin {
     this.drawDogIconBackground(ctx);
     this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, {
       scale: PRODUCTION_CARD_SKIN.dogIconScale,
+      fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode,
       clip: true
     });
     if (!state?.iconLoadFailed) return;
@@ -228,7 +231,10 @@ export class ProductionCardSkin {
     const sh = imageHeight(icon);
     if (!icon || sw <= 0 || sh <= 0) return;
     const scale = Number.isFinite(Number(options.scale)) ? Number(options.scale) : 1;
-    const fit = Math.min(rect.w / sw, rect.h / sh) * Math.max(0.01, scale);
+    const fitBase = options.fitMode === 'cover'
+      ? Math.max(rect.w / sw, rect.h / sh)
+      : Math.min(rect.w / sw, rect.h / sh);
+    const fit = fitBase * Math.max(0.01, scale);
     const dw = Math.max(1, sw * fit);
     const dh = Math.max(1, sh * fit);
     const dx = rect.x + (rect.w - dw) / 2;

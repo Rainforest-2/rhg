@@ -2,7 +2,7 @@ import { BattleScene } from './BattleScene.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 
-const SCENE_FLAG = Symbol.for('wanko-battle.projectile-performance-position-scene.v2-no-hit-smoke');
+const SCENE_FLAG = Symbol.for('wanko-battle.projectile-performance-position-scene.v3-bcu-smoke-kind');
 const EFFECT_FLAG = Symbol.for('wanko-battle.projectile-performance-position-effect.v1');
 const TRACE_FLAG = Symbol.for('wanko-battle.projectile-performance-position-trace.v1');
 
@@ -36,8 +36,12 @@ function shouldKeepProjectileTrace(type, event) {
   return IMPORTANT_TRACE_EVENTS.has(String(event || ''));
 }
 
-function shouldSuppressHitSmoke(event = {}, meta = {}) {
-  return meta?.bcuProjectileNoHitSmoke === true || !!meta?.bcuWave || !!meta?.bcuSurge || event?.bcuNoHitSmoke === true;
+function projectileSmokeKind(event = {}, meta = {}) {
+  const attackKind = String(event?.attackKind || '');
+  if (meta?.bcuSurge || attackKind === 'surge' || attackKind === 'miniSurge') return 'white';
+  if (meta?.bcuWave || attackKind === 'wave' || attackKind === 'miniWave') return 'attack';
+  if (meta?.bcuProjectileNoHitSmoke === true || event?.bcuNoHitSmoke === true) return 'none';
+  return null;
 }
 
 function normalizeProjectileEffect(effect, payload = {}) {
@@ -82,21 +86,28 @@ export function installBattleProjectilePerformanceAndPositionPatch() {
 
     const originalQueueAttackDamage = sceneProto.queueAttackDamage;
     if (typeof originalQueueAttackDamage === 'function') {
-      sceneProto.queueAttackDamage = function queueAttackDamageSuppressProjectileHitSmoke(attacker, target, targetType, event, meta = {}) {
-        if (!shouldSuppressHitSmoke(event, meta) || typeof this.spawnHitEffect !== 'function') {
+      sceneProto.queueAttackDamage = function queueAttackDamageWithBcuProjectileSmoke(attacker, target, targetType, event, meta = {}) {
+        const smokeKind = projectileSmokeKind(event, meta);
+        if (!smokeKind || typeof this.spawnHitEffect !== 'function') {
           return originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
         }
         const originalSpawnHitEffect = this.spawnHitEffect;
-        this.spawnHitEffect = () => null;
+        this.spawnHitEffect = smokeKind === 'none'
+          ? () => null
+          : (smokeAttacker, smokeTarget, smokeTargetType) => originalSpawnHitEffect.call(this, smokeAttacker, smokeTarget, smokeTargetType, {
+              smokeKind,
+              bcuProjectileSmokeKind: smokeKind
+            });
         try {
           return originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
         } finally {
           this.spawnHitEffect = originalSpawnHitEffect;
-          this.lastProjectileHitSmokeSuppressDebug = {
-            source: 'BattleProjectilePerformanceAndPositionPatch.queueAttackDamageSuppressProjectileHitSmoke',
+          this.lastProjectileHitSmokeDebug = {
+            source: 'BattleProjectilePerformanceAndPositionPatch.queueAttackDamageWithBcuProjectileSmoke',
             frame: this.logicFrame,
             kind: meta?.bcuWave || meta?.bcuSurge || event?.attackKind || null,
-            reason: 'BCU AttackWave/AttackVolcano damages do not spawn Entity.damage A_ATK_SMOKE under the projectile effect'
+            smokeKind,
+            bcuReference: 'BCU Entity.damaged: AttackWave uses A_ATK_SMOKE; AttackVolcano uses A_WHITE_SMOKE'
           };
         }
       };
@@ -141,9 +152,10 @@ export function installBattleProjectilePerformanceAndPositionPatch() {
   globalThis.__BCU_PROJECTILE_PERF_POSITION_PATCH__ = {
     installed: true,
     waveScreenOffsetX: WAVE_SCREEN_OFFSET,
-    projectileHitSmokeSuppressed: true,
+    projectileHitSmokeSuppressed: false,
+    projectileSmokeKinds: { wave: 'attack', miniWave: 'attack', surge: 'white', miniSurge: 'white' },
     importantTraceEvents: [...IMPORTANT_TRACE_EVENTS],
-    bcuReference: 'BCU PC BattleBox.drawEff: ContWaveAb p -= 28*siz; ContAb drawn at pos/layer; AttackWave/AttackVolcano damage does not create extra hit smoke'
+    bcuReference: 'BCU PC BattleBox.drawEff: ContWaveAb p -= 28*siz; Entity.damaged smoke: AttackWave A_ATK_SMOKE, AttackVolcano A_WHITE_SMOKE'
   };
 }
 

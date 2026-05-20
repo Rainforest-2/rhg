@@ -3,7 +3,8 @@ import { mapColcKey, stageKey, stageMapKey, toInt } from '../bcu/BcuIdentifier.j
 export const STAGE_SELECTOR_CATEGORIES = [
   { id: 'main', label: '通常ステージ', description: '日本編など', collectionCodes: ['CH'] },
   { id: 'legend', label: 'レジェンド系ステージ', description: 'レジェンド・真レジェンド・レジェンド0', collectionCodes: ['N', 'A', 'ND'] },
-  { id: 'event', label: 'イベント・コラボ', description: 'イベント、コラボ、強襲、EXなど', collectionCodes: ['S', 'C', 'E', 'RA', 'CA', 'T', 'V', 'M', 'H', 'Q', 'B'] },
+  { id: 'event', label: 'イベントステージ', description: 'イベント、強襲、EXなど', collectionCodes: ['S', 'E', 'RA', 'T', 'V', 'M', 'H', 'Q', 'B'] },
+  { id: 'collab', label: 'コラボステージ', description: 'コラボ、コラボ強襲など', collectionCodes: ['C', 'CA'] },
   { id: 'special', label: '特殊ステージ', description: '道場、迷宮、検定、その他', collectionCodes: ['R', 'L', 'SR', 'G', 'D', 'DM'] },
 ];
 

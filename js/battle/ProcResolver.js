@@ -99,10 +99,9 @@ export class ProcResolver {
     for (const candidate of candidates) {
       const payload = payloadFor(candidate.key, proc);
       const prob = Number(payload.prob || 0);
-      const traitCompatibility = describeBcuTraitCompatibility({ attacker, target, targetType, targetOnly: semantic?.targetOnly === true });
       const requiresActorTraitCompatibility = targetType === 'actor' && candidate.target === 'actor';
       if (requiresActorTraitCompatibility && !bcuTraitCompatible({ attacker, target, targetType, targetOnly: semantic?.targetOnly === true })) {
-        skipped.push({ key: candidate.key, category: candidate.category, reason: 'target-trait-incompatible', payload, traitCompatibility });
+        skipped.push({ key: candidate.key, category: candidate.category, reason: 'target-trait-incompatible', payload, traitCompatibility: describeBcuTraitCompatibility({ attacker, target, targetType, targetOnly: semantic?.targetOnly === true }) });
         continue;
       }
       if (prob <= 0) {
@@ -130,8 +129,7 @@ export class ProcResolver {
         context: {
           damageApplied: !!damageResult?.applied,
           finalDamage: Number.isFinite(damageResult?.finalDamage) ? damageResult.finalDamage : null,
-          targetType,
-          traitCompatibility
+          targetType
         }
       };
       pending.push(item);

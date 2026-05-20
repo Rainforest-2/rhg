@@ -24,6 +24,10 @@ function getTraitFlags(entity) {
   return entity?.traitFlags || entity?.abilityModel?.traits?.flags || entity?.rawStats?.traitFlags || entity?.rawStats?.abilityModel?.traits?.flags || getFlagsFromList(entity?.traits) || {};
 }
 
+function hasTrait(entity, trait) {
+  return getTraitFlags(entity)?.[trait] === true;
+}
+
 function getTraitList(entity) {
   const flags = getTraitFlags(entity);
   return Object.keys(flags).filter((key) => flags[key]);
@@ -150,6 +154,23 @@ function makeSharedInfoForAttack(attacker, target) {
   return { mode: 'generic-side-fallback', attackTraits, targetTraits, shared, compatible: shared.length > 0 };
 }
 
+function applyFixedKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference }) {
+  let ans = currentDamage;
+  if (hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {
+    const before = ans;
+    ans = bcuInt(ans * attackMult);
+    result.modifiers[key] *= before === 0 ? 1 : ans / before;
+    pushStep(result, key, before, ans, `${reference} attack`, { trait, abilityBit, multiplier: attackMult });
+  }
+  if (hasTargetAbi(result.__target, abilityBit) && hasTrait(result.__attacker, trait)) {
+    const before = ans;
+    ans = bcuInt(ans * defenseMult);
+    result.modifiers[key] *= before === 0 ? 1 : ans / before;
+    pushStep(result, key, before, ans, `${reference} defense`, { trait, abilityBit, multiplier: defenseMult });
+  }
+  return ans;
+}
+
 export class DamageAbilityResolver {
   static getConfig(context = {}) {
     return context?.config?.tuning?.battleDebug?.damageAbilityResolver || context?.battleDebug?.damageAbilityResolver || context?.damageAbilityResolver || {};
@@ -173,19 +194,19 @@ export class DamageAbilityResolver {
     let ans = bcuInt(baseDamage);
     const result = {
       enabled: true,
-      source: 'DamageAbilityResolver.v4-bcu-metal-abi-getDamage-order',
+      source: 'DamageAbilityResolver.v5-fact-only-killer-specials',
       baseDamage: ans,
       finalDamage: ans,
       multiplier: 1,
-      modifiers: { critical: 1, baseDestroyer: 1, metal: 1, strong: 1, resistant: 1, massiveDamage: 1, insaneDamage: 1, metalKiller: 1, strongAttack: 1, baronKiller: 1, sageSlayer: 1, villainKiller: 1 },
-      applied: { critical: false, baseDestroyer: false, metal: false, strong: false, resistant: false, massiveDamage: false, insaneDamage: false, metalKiller: false, strongAttack: false, baronKiller: false, sageSlayer: false, villainKiller: false },
+      modifiers: { critical: 1, baseDestroyer: 1, metal: 1, strong: 1, resistant: 1, massiveDamage: 1, insaneDamage: 1, metalKiller: 1, strongAttack: 1, baronKiller: 1, sageSlayer: 1, villainKiller: 1, witchKiller: 1, evaKiller: 1 },
+      applied: { critical: false, baseDestroyer: false, metal: false, strong: false, resistant: false, massiveDamage: false, insaneDamage: false, metalKiller: false, strongAttack: false, baronKiller: false, sageSlayer: false, villainKiller: false, witchKiller: false, evaKiller: false },
       appliedDetails: [],
       notes: [],
       implementationStatus: {
         resolver: 'DamageAbilityResolver',
-        mode: 'bcu-getDamage-order',
-        exactScope: ['DataUnit/DataEnemy CSV flags', 'EEnemy.getDamage primary damage abilities', 'EUnit.getDamage primary defense abilities', 'Entity.critCalc metal/critical', 'Entity.damaged metal-killer add-damage'],
-        omittedRuntimeState: ['orbs', 'combos', 'curse status', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases']
+        mode: 'bcu-getDamage-order-plus-fact-only-killers',
+        exactScope: ['DataUnit/DataEnemy CSV flags', 'EEnemy.getDamage primary damage abilities', 'EUnit.getDamage primary defense abilities', 'Entity.critCalc metal/critical', 'Entity.damaged metal-killer add-damage', 'documented fixed killer/special damage multipliers with existing ability bits'],
+        omittedRuntimeState: ['orbs', 'combos', 'curse status', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'beast killer because no confirmed holder ability bit is parsed', 'sage status resistance']
       },
       debug: {
         rawAbi: event?.rawAbi ?? null,
@@ -207,6 +228,12 @@ export class DamageAbilityResolver {
         config: { bcuDamageResolver: true, ...config }
       }
     };
+
+    // Internal, non-enumeration contract for helper calls in this function only.
+    Object.defineProperties(result, {
+      __attacker: { value: attacker, enumerable: false },
+      __target: { value: target, enumerable: false }
+    });
 
     if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target) && sharedInfo.compatible) {
       if (hasAttackerAbi(attacker, BCU_ABI.AB_GOOD)) {
@@ -251,10 +278,12 @@ export class DamageAbilityResolver {
       pushStep(result, 'baseDestroyer', before, ans, 'BCU isBase ATKBASE multiplier', { proc: proc.baseDestroyer });
     }
 
-    if (targetType === 'actor' && getTraitFlags(target)?.baron === true && hasAttackerAbi(attacker, BCU_ABI.AB_BAKILL)) {
-      const before = ans; ans = isUnitAttackAgainstEnemy(attacker, target) ? bcuInt(ans * 1.6) : bcuInt(ans * 0.7);
-      result.modifiers.baronKiller *= before === 0 ? 1 : ans / before;
-      pushStep(result, 'baronKiller', before, ans, isUnitAttackAgainstEnemy(attacker, target) ? 'BCU EEnemy.getDamage AB_BAKILL attack' : 'BCU EUnit.getDamage AB_BAKILL defense');
+    if (targetType === 'actor') {
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'baronKiller', abilityBit: BCU_ABI.AB_BAKILL, trait: BCU_TRAITS.baron, attackMult: 1.6, defenseMult: 0.7, reference: 'Reference 超生命体特効' });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'sageSlayer', abilityBit: BCU_ABI.AB_SKILL, trait: BCU_TRAITS.sage, attackMult: 1.2, defenseMult: 0.5, reference: 'Reference 超賢者特効 damage-only' });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'villainKiller', abilityBit: BCU_ABI.AB_VKILL, trait: BCU_TRAITS.villain, attackMult: 2.5, defenseMult: 0.4, reference: 'Reference 怪人特効' });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'witchKiller', abilityBit: BCU_ABI.AB_WKILL, trait: BCU_TRAITS.witch, attackMult: 5, defenseMult: 0.1, reference: 'Reference 魔女キラー' });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'evaKiller', abilityBit: BCU_ABI.AB_EKILL, trait: BCU_TRAITS.eva, attackMult: 5, defenseMult: 0.2, reference: 'Reference 使徒キラー' });
     }
 
     const strongAttackProb = Number(proc?.strongAttack?.prob || 0);

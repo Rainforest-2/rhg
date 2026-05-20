@@ -2,7 +2,7 @@ import { BattleScene } from './BattleScene.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { DamageCalculator } from './DamageCalculator.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.base-projectile-proc-patch.v2-calc-fallback');
+const PATCH_FLAG = Symbol.for('wanko-battle.base-projectile-proc-patch.v3-captured-base-hit');
 
 const W_PROG = 200;
 const W_E_INI = -32.75;
@@ -76,12 +76,11 @@ function hasProjectileProc(calc) {
   return waveItems(calc).length > 0 || surgeItems(calc).length > 0;
 }
 
-function isAcceptedBaseDamage(result = {}) {
-  return result?.accepted === true
-    || result?.applied === true
-    || result?.damageApplied === true
-    || result?.baseDamageApplied === true
-    || Number.isFinite(Number(result?.damage));
+function fallbackDamage(attacker, event) {
+  const n = Number(event?.damage);
+  if (Number.isFinite(n)) return Math.max(0, Math.trunc(n));
+  const raw = Number(attacker?.damage);
+  return Number.isFinite(raw) ? Math.max(0, Math.trunc(raw)) : 0;
 }
 
 function resolveBaseDamageCalculation(scene, attacker, target, event, result, meta = {}) {
@@ -110,7 +109,7 @@ function resolveBaseDamageCalculation(scene, attacker, target, event, result, me
       source: 'BattleBaseProjectileProcPatch.resolveBaseDamageCalculation',
       reason: direct ? 'direct-calc-had-no-projectile-proc-or-no-proc' : 'direct-calc-missing',
       directSource: direct?.source || null,
-      bcuReference: 'BCU AttackSimple.excuse checks wave/volcano proc after successful base damage as it does for entity damage'
+      bcuReference: 'BCU AttackSimple.excuse: base is in capt; wave/volcano generation checks !capt.isEmpty(), not ECastle.damaged return value'
     };
     return fallback;
   } catch (error) {
@@ -213,8 +212,8 @@ function buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, tar
     group,
     incl: group.incl,
     inverted,
-    createdLogicFrame: Number.isFinite(attacker?.scene?.logicFrame) ? attacker.scene.logicFrame : null,
-    source: isMini ? 'BCU ContWaveDef MINIWAVE state machine from base hit' : 'BCU ContWaveDef WAVE state machine from base hit'
+    createdLogicFrame: null,
+    source: isMini ? 'BCU ContWaveDef MINIWAVE state machine from captured base hit' : 'BCU ContWaveDef WAVE state machine from captured base hit'
   };
   group.containers.add(item);
   return item;
@@ -273,13 +272,14 @@ function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
     volcTime: VOLC_ITV,
     attacked: false,
     lastProcFilter: null,
-    source: isMini ? 'BCU ContVolcano MINIVOLC state machine from base hit' : 'BCU ContVolcano VOLC state machine from base hit'
+    source: isMini ? 'BCU ContVolcano MINIVOLC state machine from captured base hit' : 'BCU ContVolcano VOLC state machine from captured base hit'
   };
 }
 
 function enqueueBaseProjectiles(scene, attacker, target, event, calc, result, meta, beforeWaveCount, beforeSurgeCount) {
-  if (!isAcceptedBaseDamage(result) || meta?.bcuWave || meta?.bcuSurge) return;
-  const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage || 0)));
+  if (meta?.bcuWave || meta?.bcuSurge) return;
+  const rawDamage = fallbackDamage(attacker, event);
+  const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage ?? rawDamage)));
   if (finalDamage <= 0) return;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
   const targetId = target?.instanceId || target?.label || target?.side || 'base';
@@ -298,25 +298,29 @@ function enqueueBaseProjectiles(scene, attacker, target, event, calc, result, me
     for (const proc of surgeItemsToSpawn) scene.__bcuSurgeContainers.push(buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target));
   }
 
-  scene.lastBaseProjectileProcDebug = {
-    source: 'BattleBaseProjectileProcPatch.enqueueBaseProjectiles',
-    target: targetId,
-    accepted: isAcceptedBaseDamage(result),
-    finalDamage,
-    hasCalc: !!calc,
-    calcSource: calc?.source || null,
-    fallback: calc?.baseProjectileFallbackDebug || null,
-    procPendingCount: calc?.proc?.pending?.length || 0,
-    procAppliedCount: calc?.proc?.applied?.length || 0,
-    waveCount: waveItemsToSpawn.length,
-    surgeCount: surgeItemsToSpawn.length,
-    beforeWaveCount,
-    afterWaveCount: scene.__bcuWaveContainers?.length || 0,
-    beforeSurgeCount,
-    afterSurgeCount: scene.__bcuSurgeContainers?.length || 0,
-    bcuReference: 'BCU AttackSimple.excuse creates ContWaveDef/ContVolcano after a successful base hit just like actor hits'
-  };
-  scene.pushEvent?.({ type: 'bcuBaseProjectileProcQueued', ...scene.lastBaseProjectileProcDebug });
+  if (waveItemsToSpawn.length || surgeItemsToSpawn.length) {
+    scene.lastBaseProjectileProcDebug = {
+      source: 'BattleBaseProjectileProcPatch.enqueueBaseProjectiles',
+      target: targetId,
+      capturedBaseHit: true,
+      resultAccepted: result?.accepted === true,
+      resultReason: result?.reason || null,
+      finalDamage,
+      hasCalc: !!calc,
+      calcSource: calc?.source || null,
+      fallback: calc?.baseProjectileFallbackDebug || null,
+      procPendingCount: calc?.proc?.pending?.length || 0,
+      procAppliedCount: calc?.proc?.applied?.length || 0,
+      waveCount: waveItemsToSpawn.length,
+      surgeCount: surgeItemsToSpawn.length,
+      beforeWaveCount,
+      afterWaveCount: scene.__bcuWaveContainers?.length || 0,
+      beforeSurgeCount,
+      afterSurgeCount: scene.__bcuSurgeContainers?.length || 0,
+      bcuReference: 'BCU AttackSimple.excuse creates ContWaveDef/ContVolcano when capt is not empty; ECastle.traitCompatible returns true'
+    };
+    scene.pushEvent?.({ type: 'bcuBaseProjectileProcQueued', ...scene.lastBaseProjectileProcDebug });
+  }
 }
 
 export function installBattleBaseProjectileProcPatch() {

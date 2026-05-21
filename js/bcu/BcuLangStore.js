@@ -18,7 +18,7 @@ function splitLangLine(line) {
 }
 
 function baseName(path) {
-  return String(path || '').replace(/\\/g, '/').split('/').pop() || '';
+  return String(path || '').split('/').pop() || '';
 }
 
 function canonicalLangFileName(path, locale) {
@@ -31,10 +31,6 @@ function addToMap(map, locale, key, value, file) {
   if (!key || !value) return;
   if (!map.has(key)) map.set(key, new Map());
   map.get(key).set(locale, { value, file });
-}
-
-function uniqueList(values) {
-  return [...new Set(values.filter(Boolean).map((value) => String(value).replace(/\\/g, '/')))];
 }
 
 export class BcuLangStore {
@@ -56,7 +52,7 @@ export class BcuLangStore {
     const langFiles = manifest?.langFiles || {};
     const locales = Object.keys(langFiles).filter((locale) => locale === 'jp').sort();
     this.loadedLocales = locales;
-    if (this.diagnostics?.lang) this.diagnostics.lang.loadedLocales = locales;
+    this.diagnostics.lang.loadedLocales = locales;
     for (const locale of locales) {
       const files = [...langFiles[locale]].sort((a, b) => {
         const aa = STANDARD_NAME_FILES.has(canonicalLangFileName(a, locale)) ? 0 : 1;
@@ -66,67 +62,14 @@ export class BcuLangStore {
       for (const file of files) {
         let text = '';
         try { text = await readText(file); } catch (error) {
-          this.diagnostics?.lang?.invalidLines?.push?.({ locale, file, line: 0, reason: `load-failed:${error?.message || error}` });
+          this.diagnostics.lang.invalidLines.push({ locale, file, line: 0, reason: `load-failed:${error?.message || error}` });
           continue;
         }
         this.loadedFiles.push(file);
-        this.diagnostics?.lang?.loadedFiles?.push?.(file);
+        this.diagnostics.lang.loadedFiles.push(file);
         this.parseFile(locale, file, text);
       }
     }
-  }
-
-  async mergeFromSemanticLanguageBundle(provider, locale = this.locale) {
-    if (!provider?.getLanguageEntry || !provider?.archive) return { loaded: false, reason: 'semantic-provider-unavailable', files: [] };
-    const targetLocale = locale || this.locale || 'jp';
-    if (targetLocale !== 'jp') return { loaded: false, reason: `unsupported-locale:${targetLocale}`, files: [] };
-    const entry = provider.getLanguageEntry(`lang:${targetLocale}`) || provider.getLanguageEntry('lang:jp');
-    if (!entry?.bundleRef?.bundlePath) return { loaded: false, reason: 'language-bundle-entry-missing', files: [] };
-
-    let archive = null;
-    try { archive = await provider.archive(entry.bundleRef); }
-    catch (error) {
-      this.diagnostics?.lang?.invalidLines?.push?.({ locale: targetLocale, file: entry.bundleRef.bundlePath, line: 0, reason: `language-bundle-load-failed:${error?.message || error}` });
-      return { loaded: false, reason: `language-bundle-load-failed:${error?.message || error}`, files: [] };
-    }
-
-    const decoder = new TextDecoder();
-    const archiveKeys = [...archive.keys()].map((key) => String(key).replace(/\\/g, '/'));
-    const indexFiles = Array.isArray(entry.files) ? entry.files : [];
-    const files = uniqueList(indexFiles.length ? indexFiles : archiveKeys)
-      .filter((file) => file.endsWith('.txt') || file.endsWith('.properties'))
-      .sort((a, b) => {
-        const aa = STANDARD_NAME_FILES.has(canonicalLangFileName(a, targetLocale)) ? 0 : 1;
-        const bb = STANDARD_NAME_FILES.has(canonicalLangFileName(b, targetLocale)) ? 0 : 1;
-        return aa - bb || String(a).localeCompare(String(b));
-      });
-
-    const loaded = [];
-    for (const file of files) {
-      const canonicalName = canonicalLangFileName(file, targetLocale);
-      const candidates = uniqueList([
-        file,
-        file.replace(/^\.\//, ''),
-        baseName(file),
-        canonicalName,
-        `${targetLocale}-${canonicalName}`
-      ]);
-      const internalPath = candidates.find((candidate) => archive.has(candidate)) || archiveKeys.find((key) => baseName(key) === baseName(file));
-      if (!internalPath) {
-        this.diagnostics?.lang?.invalidLines?.push?.({ locale: targetLocale, file, line: 0, reason: 'language-bundle-internal-file-missing' });
-        continue;
-      }
-      const text = decoder.decode(archive.get(internalPath));
-      const source = `${entry.bundleRef.bundlePath}:${internalPath}`;
-      this.loadedFiles.push(source);
-      this.diagnostics?.lang?.loadedFiles?.push?.(source);
-      this.parseFile(targetLocale, file, text);
-      loaded.push(source);
-    }
-
-    if (!this.loadedLocales.includes(targetLocale)) this.loadedLocales.push(targetLocale);
-    if (this.diagnostics?.lang) this.diagnostics.lang.loadedLocales = [...new Set([...(this.diagnostics.lang.loadedLocales || []), targetLocale])];
-    return { loaded: loaded.length > 0, reason: loaded.length ? 'ok' : 'no-language-files-loaded', files: loaded };
   }
 
   static fromCoreDb(coreDb, { locale = 'jp', diagnostics } = {}) {
@@ -142,7 +85,7 @@ export class BcuLangStore {
       }
     }
     store.loadedFiles = ['core-db.zip:names-jp.json'];
-    diagnostics?.lang?.loadedFiles?.push?.('core-db.zip:names-jp.json');
+    if (diagnostics?.lang) diagnostics.lang.loadedFiles.push('core-db.zip:names-jp.json');
     return store;
   }
 
@@ -166,9 +109,9 @@ export class BcuLangStore {
       'RewardName.txt': (cols) => cols.length >= 2 && this.add(locale, 'reward', `reward:${cols[0]}`, cols[1], file)
     }[name];
     if (!parser && name.endsWith('Name.txt')) {
-      this.diagnostics?.lang?.unknownNameFiles?.push?.({ locale, file, lineCount: lines.length });
+      this.diagnostics.lang.unknownNameFiles.push({ locale, file, lineCount: lines.length });
     } else if (!parser && !name.endsWith('.properties') && !name.endsWith('.json') && !['Difficulty.txt'].includes(name)) {
-      this.diagnostics?.lang?.unknownFiles?.push?.({ locale, file, lineCount: lines.length });
+      this.diagnostics.lang.unknownFiles.push({ locale, file, lineCount: lines.length });
     }
     if (!parser && !name.endsWith('Name.txt')) return;
     for (let i = 0; i < lines.length; i += 1) {
@@ -176,7 +119,7 @@ export class BcuLangStore {
       if (!clean) continue;
       const cols = splitLangLine(clean);
       if (!cols || cols.length < 2) {
-        this.diagnostics?.lang?.invalidLines?.push?.({ locale, file, line: i + 1, reason: 'missing-delimiter' });
+        this.diagnostics.lang.invalidLines.push({ locale, file, line: i + 1, reason: 'missing-delimiter' });
         continue;
       }
       if (parser) parser(cols, i + 1);
@@ -243,7 +186,7 @@ export class BcuLangStore {
     }
     const value = key;
     const result = { value, locale: requestedLocale, requestedLocale, source: 'fallback-id', key, warnings: [`missing-${kind}-name`] };
-    this.diagnostics?.lang?.missingNames?.push?.({ kind, key, locale: requestedLocale, fallback: value });
+    this.diagnostics.lang.missingNames.push({ kind, key, locale: requestedLocale, fallback: value });
     return result;
   }
 

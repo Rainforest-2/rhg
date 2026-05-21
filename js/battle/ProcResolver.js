@@ -41,6 +41,11 @@ function payloadFor(key, proc = {}) {
   return { prob: 0 };
 }
 
+function procModelCandidateActive(key, proc = {}, semantic = {}) {
+  if (key === 'zombieKiller' || key === 'soulstrike') return semantic?.[key] === true;
+  return Number(payloadFor(key, proc).prob || 0) > 0;
+}
+
 export class ProcResolver {
   static getProcCatalog() {
     return {
@@ -64,25 +69,46 @@ export class ProcResolver {
     };
   }
 
-  static collectProcCandidates({ event = null } = {}) {
+  static collectProcCandidates({ event = null, proc = {} } = {}) {
     const semantic = event?.abilities || event?.ability?.semantic || {};
     const catalog = this.getProcCatalog();
-    return Object.values(catalog)
-      .filter((entry) => semantic?.[entry.key] === true)
-      .map((entry) => ({
+    const byKey = new Map();
+
+    for (const entry of Object.values(catalog)) {
+      if (semantic?.[entry.key] === true) {
+        byKey.set(entry.key, {
+          key: entry.key,
+          category: entry.category,
+          pendingType: entry.pendingType || null,
+          implemented: entry.implemented === true,
+          pendingSupported: entry.pendingSupported === true,
+          target: entry.target || null,
+          source: 'semantic-ability-true'
+        });
+      }
+    }
+
+    for (const entry of Object.values(catalog)) {
+      if (!procModelCandidateActive(entry.key, proc, semantic)) continue;
+      const existing = byKey.get(entry.key);
+      byKey.set(entry.key, {
         key: entry.key,
         category: entry.category,
         pendingType: entry.pendingType || null,
         implemented: entry.implemented === true,
         pendingSupported: entry.pendingSupported === true,
         target: entry.target || null,
-        source: 'semantic-ability-true'
-      }));
+        source: existing ? 'semantic-and-bcu-proc-model' : 'bcu-proc-model'
+      });
+    }
+
+    return [...byKey.values()];
   }
 
   static resolve({ attacker = null, target = null, targetType = 'actor', event = null, damageResult = null, context = {} } = {}) {
     const semantic = event?.abilities || event?.ability?.semantic || {};
-    const candidates = this.collectProcCandidates({ event });
+    const proc = getProcModel(attacker);
+    const candidates = this.collectProcCandidates({ event, proc });
     const candidateKeys = candidates.map((candidate) => candidate.key);
     const notes = [];
     const pending = [];
@@ -94,7 +120,6 @@ export class ProcResolver {
     const attackEventKey = context?.attackEventKey ?? event?.key ?? null;
     const rawAbiUnverified = (event?.rawAbi ?? 0) > 0 && event?.abilityMappingStatus === 'raw-only-unverified';
     const rng = typeof context?.random === 'function' ? context.random : Math.random;
-    const proc = getProcModel(attacker);
 
     if (rawAbiUnverified) notes.push('raw-abi-present-proc-mapping-not-verified');
 
@@ -126,6 +151,7 @@ export class ProcResolver {
         hitIndex,
         attackEventKey,
         source: candidate.implemented ? 'ProcResolver.bcu-proc-roll-ready-to-apply' : 'ProcResolver.bcu-proc-roll-pending-no-apply',
+        candidateSource: candidate.source,
         reason: candidate.implemented ? 'runtime-application-supported' : 'runtime-application-not-implemented',
         payload,
         context: {
@@ -139,7 +165,7 @@ export class ProcResolver {
     }
 
     return {
-      source: 'ProcResolver.v3-bcu-proc-roll-contract',
+      source: 'ProcResolver.v4-bcu-proc-model-candidate-contract',
       mode: 'bcu-proc-roll-pending-apply-contract',
       applied,
       pending,

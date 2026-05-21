@@ -6,7 +6,7 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { DamageCalculator } from './DamageCalculator.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.blast-runtime-patch.v3-proc-model-fallback');
+const PATCH_FLAG = Symbol.for('wanko-battle.blast-runtime-patch.v4-proc-resolver-model-candidates');
 const BLAST_SHIFT = 100;
 const BLAST_HALF_WIDTH = 75;
 const BLAST_PRE_FRAME = 11;
@@ -31,86 +31,6 @@ function hasBlastProc(calc) {
   return blastItems(calc).length > 0;
 }
 
-function getCombatModel(entity) {
-  return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
-}
-
-function getBlastProc(entity) {
-  return getCombatModel(entity)?.proc?.blast || entity?.bcuProc?.blast || entity?.rawStats?.bcuProc?.blast || entity?.abilityModel?.bcuProc?.blast || null;
-}
-
-function procNumber(proc, field, fallback = 0) {
-  const n = Number(proc?.[field]);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function calcAlreadyConsideredBlast(calc) {
-  const keys = calc?.proc?.debug?.candidateKeys;
-  if (Array.isArray(keys) && keys.includes('blast')) return true;
-  const skipped = calc?.proc?.skipped;
-  if (Array.isArray(skipped) && skipped.some((p) => p?.key === 'blast')) return true;
-  return false;
-}
-
-function chance(prob, rng = Math.random) {
-  const p = Number(prob) || 0;
-  if (p <= 0) return false;
-  if (p >= 100) return true;
-  return rng() * 100 < p;
-}
-
-function withDirectBlastProcFallback(calc, attacker, targetType, event, meta = {}, random = Math.random) {
-  if (hasBlastProc(calc) || calcAlreadyConsideredBlast(calc)) return calc;
-  const blast = getBlastProc(attacker);
-  const prob = procNumber(blast, 'prob', 0);
-  if (prob <= 0 || !chance(prob, random)) return calc;
-  const item = {
-    key: 'blast',
-    category: 'effect',
-    pendingType: 'effect',
-    implemented: false,
-    targetType: 'world',
-    targetId: null,
-    attackerId: attacker?.instanceId || attacker?.label || null,
-    hitIndex: event?.hitIndex ?? meta?.hitIndex ?? null,
-    attackEventKey: meta?.key ?? event?.key ?? null,
-    source: 'BattleBlastRuntimePatch.direct-attacker-proc-fallback',
-    reason: 'event-semantic-blast-missing-but-attacker-proc-blast-confirmed',
-    payload: {
-      prob,
-      blast,
-      dis0: procNumber(blast, 'dis0', 0),
-      dis1: procNumber(blast, 'dis1', procNumber(blast, 'dis0', 0))
-    },
-    context: {
-      damageApplied: true,
-      finalDamage: Number.isFinite(calc?.finalDamage) ? calc.finalDamage : null,
-      targetType
-    }
-  };
-  const nextProc = {
-    ...(calc?.proc || {}),
-    pending: [...(calc?.proc?.pending || []), item],
-    debug: {
-      ...(calc?.proc?.debug || {}),
-      blastDirectFallback: true,
-      blastProc: blast
-    }
-  };
-  return {
-    ...(calc || {}),
-    proc: nextProc,
-    procPendingCount: (Number(calc?.procPendingCount) || 0) + 1,
-    blastDirectFallbackDebug: {
-      source: 'BattleBlastRuntimePatch.withDirectBlastProcFallback',
-      reason: 'ProcResolver did not see event.abilities.blast; recovered from attacker BCU proc model',
-      prob,
-      dis0: item.payload.dis0,
-      dis1: item.payload.dis1
-    }
-  };
-}
-
 function fallbackDamage(attacker, event) {
   const n = Number(event?.damage);
   if (Number.isFinite(n)) return Math.max(0, Math.trunc(n));
@@ -124,12 +44,12 @@ function resolveBlastDamageCalculation(scene, attacker, target, targetType, even
     || target?.lastIncomingDamageCalculation
     || attacker?.lastDamageCalculation
     || null;
-  const random = typeof meta?.random === 'function'
-    ? meta.random
-    : (typeof scene?.getBcuRandom === 'function' ? scene.getBcuRandom() : Math.random);
   if (hasBlastProc(direct)) return direct;
 
   try {
+    const random = typeof meta?.random === 'function'
+      ? meta.random
+      : (typeof scene?.getBcuRandom === 'function' ? scene.getBcuRandom() : Math.random);
     const fallback = DamageCalculator.calculate({
       attacker,
       target,
@@ -140,24 +60,23 @@ function resolveBlastDamageCalculation(scene, attacker, target, targetType, even
         attackEventKey: meta?.key ?? event?.key ?? null
       }
     });
-    const recovered = withDirectBlastProcFallback(fallback, attacker, targetType, event, meta, random);
-    recovered.blastFallbackDebug = {
+    fallback.blastFallbackDebug = {
       source: 'BattleBlastRuntimePatch.resolveBlastDamageCalculation',
       reason: direct ? 'direct-calc-had-no-blast-proc-or-no-proc' : 'direct-calc-missing',
       directSource: direct?.source || null,
       targetType,
-      directProcHadBlastCandidate: calcAlreadyConsideredBlast(direct),
-      recoveredFromAttackerProc: hasBlastProc(recovered) && !hasBlastProc(fallback),
+      procResolverSource: fallback?.proc?.source || null,
+      procCandidateKeys: fallback?.proc?.debug?.candidateKeys || [],
       bcuReference: 'BCU AttackSimple.excuse creates ContBlast when captured target list is not empty, including castle/base captures'
     };
-    return recovered;
+    return fallback;
   } catch (error) {
     scene.lastBlastProcError = {
       source: 'BattleBlastRuntimePatch.resolveBlastDamageCalculation',
       targetType,
       message: String(error?.message || error)
     };
-    return withDirectBlastProcFallback(direct, attacker, targetType, event, meta, random);
+    return direct;
   }
 }
 
@@ -320,8 +239,7 @@ function enqueueFromResult(scene, attacker, target, targetType, event, calc, res
     procPendingCount: calc?.proc?.pending?.length || 0,
     procAppliedCount: calc?.proc?.applied?.length || 0,
     itemCount: items.length,
-    blastFallbackDebug: calc?.blastFallbackDebug || null,
-    blastDirectFallbackDebug: calc?.blastDirectFallbackDebug || null
+    blastFallbackDebug: calc?.blastFallbackDebug || null
   };
   if (!items.length) return;
   const rawDamage = fallbackDamage(attacker, event);

@@ -8,112 +8,115 @@ This project is a browser-based Battle Cats Ultimate (BCU) parity / preview runt
 
 These instructions apply to the whole repository unless a more specific `AGENTS.md` exists in a subdirectory.
 
-## Current priority: ability parity implementation
+## Current priority: fact-only ability parity
 
-The current task is not a research-only task. Codex should analyze first, document the plan, then proceed to implementation when the plan is local, testable, and does not require inventing unsupported behavior.
+The current task is ability/proc parity. This is not a prompt-writing-only task and not a speculative implementation task.
 
-The priority is to fix and complete ability/proc logic, starting with features that either need no new visual runtime or can reuse existing status/effect rendering. Codex has terminal access and should use local shell commands to inspect references, inspect assets, rebuild bundles, and run static checks.
+Codex must:
 
-Do not stop after writing an analysis document unless one of these is true:
+1. inspect local BCU references first;
+2. build a complete fact matrix for every ability/proc currently relevant to the JS runtime;
+3. implement only behavior whose holder field, target condition, timing, multiplier, probability, duration, and runtime hook are all confirmed by local references;
+4. explicitly defer anything that is not confirmed;
+5. keep existing game logic and wrapper chains stable;
+6. run local static checks and targeted smoke checks;
+7. commit the analysis document and code changes together for each safe slice.
 
-- a required local reference file is missing;
-- the behavior cannot be inferred from `references/bcu/`;
-- the implementation would require a new large renderer/projectile/runtime system not requested here;
-- the change would require broad unrelated rewrites;
-- local static checks reveal a blocking error that cannot be fixed safely in scope.
+Do not implement guessed behavior. Do not fill in missing CSV indexes, missing proc fields, missing multipliers, or missing timing from intuition, wiki memory, UI labels alone, or similar abilities.
 
-Otherwise, continue from analysis to code changes and commit the completed implementation.
+## User-specific rule: no speculation
 
-## User-specific ability/UI requirement
+For every ability or proc, Codex must classify it as one of:
 
-Attack-up / strengthen and survive / lethal-survive must be treated as positive buffs where applicable, not as enemy debuffs. If these abilities need status icon/effect display, place the friendly buff visual in the same on-actor status display position family currently used for enemy debuff visuals, mirrored to the appropriate friendly actor target. In other words, use the existing status-effect attachment/positioning system instead of inventing a separate floating UI location.
+- **fact-complete**: exact BCU source confirms holder field/index, target condition, effect, timing, and JS hook;
+- **fact-partial**: some facts are confirmed but at least one required runtime detail is missing;
+- **not-implemented**: no safe JS implementation is possible yet without inventing behavior;
+- **already-correct**: JS matches the inspected reference;
+- **implemented-in-this-pass**: changed by the current commit.
 
-Do not attach friendly buffs to the enemy side by mistake. Debuffs applied to enemies and buffs applied to allies should share the same rendering infrastructure but use the affected actor as the anchor.
+Only `fact-complete` items may be implemented. `fact-partial` items must be documented and deferred.
 
-## Ability effect asset bundle requirement
+## Immediate investigation result: 超獣特効 / Beast Hunter
 
-Codex may use the terminal. Before implementing ability visuals or status icons that already exist in assets, inspect the existing asset bundle that currently contains attack-down / weaken status animation assets. Then bundle all ability-related effect ZIP/assets that are needed for the current ability pass into that same ability/status effect bundle or its existing build pipeline.
+Ultra Beast / Behemoth Hunter has been found in the local BCU references. This ability was previously deferred because the JS code did not expose a confirmed holder bit. The correct source is not an `AB_*` bit. It is a proc item: `P_BSTHUNT` / `Proc.BSTHUNT`.
 
-Required workflow:
+### Confirmed BCU facts
 
-1. Locate the existing weaken / attack-down animation source and bundle.
-2. Locate all relevant ability/status effect asset ZIPs or raw asset directories under `public/assets`, `assets`, and `references/bcu` as applicable.
-3. Inspect existing bundle builder scripts before editing.
-4. Extend the existing bundle script instead of hand-editing ZIP files.
-5. Rebuild the affected bundle with terminal commands.
-6. Commit the updated build script, rebuilt ZIP, and generated manifest/index files together.
-7. Update the loader code only if the existing loader cannot read the newly bundled entries.
-8. Document exact internal bundle paths used by runtime code.
+Inspect these exact local files after extracting `references/bcu/BCU_java_util_common.zip`:
 
-Do not create a second competing status-effect bundle unless the existing architecture proves that one bundle cannot support the required entries. Do not hardcode loose raw paths as normal runtime behavior when a bundle path is available.
+- `util/Data.java`
+  - `Proc.BSTHUNT extends ProcItem` has fields:
+    - `active`
+    - `prob`
+    - `time`
+  - `P_BSTHUNT = 54`
+  - proc type entry for ability id 64 maps to `{ 0, P_BSTHUNT, 2, -1 }`
+  - comment says Beast Killer / behemoth hunter.
+- `battle/data/DataUnit.java`
+  - if `ints[105] == 1`:
+    - `proc.BSTHUNT.active = 1`
+    - `proc.BSTHUNT.prob = ints[106]`
+    - `proc.BSTHUNT.time = ints[107]`
+- `battle/entity/EEnemy.java`
+  - when the damaged enemy has trait `TRAIT_BEAST` and `atk.getProc().BSTHUNT.active == 1`, outgoing unit damage to that enemy is multiplied by `2.5`.
+- `battle/entity/EUnit.java`
+  - when the attacker trait contains `TRAIT_BEAST` and the unit has `getProc().BSTHUNT.active > 0`, incoming damage is multiplied by `0.6`.
+  - when the attacker trait contains `TRAIT_BEAST`, `getProc().BSTHUNT.prob > 0`, and `atk.dire != dire`, the ability can trigger attack-nullify:
+    - if `status[P_BSTHUNT][0] == 0` and `beastDodge.perform(basis.r)` succeeds, set `status[P_BSTHUNT][0] = beastDodge.time`;
+    - call `anim.getEff(P_IMUATK)`;
+    - while `status[P_BSTHUNT][0] > 0`, add `atk.atk` to damage-taken accounting and return `false` from the damage handling path.
+- `battle/entity/Entity.java`
+  - `status[P_BSTHUNT][0]` decrements each tick;
+  - `A_IMUATK` visual is kept while either `P_IMUATK` or `P_BSTHUNT` status is active, and cleared only when both are zero.
+- `util/lang/assets/proc_jp.json` and Android `app/src/main/res/raw/proc_jp.json`
+  - display text confirms: `超獣特効` = damage dealt `x2.5`, damage received `x0.6`, and if `prob > 0`, probability-based attack-nullify for `time`.
 
-## Reference source policy
+### Confirmed current JS gap
 
-Codex-style agents cannot see files attached in ChatGPT. Use local repository files only.
+Inspect `js/battle/BcuCombatModel.js`:
 
-Before changing ability or battle logic, inspect the local references under:
+- `BCU_TRAITS.beast` exists and enemy trait column `101` maps to `beast`.
+- `parseUnitProc(rawValues)` currently does not expose `BSTHUNT` from unit CSV indexes `105`, `106`, and `107`.
+- `DamageAbilityResolver` currently lists beast killer as omitted because no confirmed holder ability bit was parsed. That statement is now obsolete: the holder is confirmed as `proc.BSTHUNT.active`, not `BCU_ABI`.
 
-- `references/bcu/BCU_java_util_common.zip`
-- `references/bcu/BCU_Android-master.zip`
-- every relevant `*.md` file under `references/bcu/`
+### Required Beast Hunter implementation constraints
 
-The user will place the important special-ability logic Markdown file under `references/bcu/`. Find it with local search, for example:
+Implement Beast Hunter only using these facts:
 
-```bash
-find references/bcu -maxdepth 3 -type f | sort
-rg -n "波動|小波動|烈波|小烈波|爆波|呪い|古代の呪い|効果|能力|属性|上書き|毒撃|バリア|シールド|ゾンビ|魂攻撃|攻撃力アップ|生き残る|お金|めっぽう|打たれ強い|超ダメージ|渾身|ターゲット" references/bcu
-```
+- add a `beastHunter` or `bsthunt` proc object to `parseUnitProc(rawValues)`:
+  - `active: enabled(rawValues, 105) ? 1 : 0`
+  - `prob: enabled(rawValues, 105) ? n(rawValues, 106, 0) : 0`
+  - `time: enabled(rawValues, 105) ? n(rawValues, 107, 0) : 0`
+- do not invent an `AB_BSTHUNT` bit;
+- damage dealt to `BCU_TRAITS.beast` uses `attacker.proc.BSTHUNT.active == 1` and multiplier `2.5`;
+- damage received from `BCU_TRAITS.beast` uses `target.proc.BSTHUNT.active > 0` and multiplier `0.6`;
+- attack-nullify from Beast Hunter must be implemented only if the current JS damage/nullify/status pipeline has a safe hook equivalent to BCU `EUnit` handling. If not, implement only damage multipliers and defer nullify with exact source notes;
+- Beast Hunter uses the `P_IMUATK` visual family in BCU. If adding visuals, reuse the existing attack-nullify/status visual path; do not invent a new visual location.
 
-Treat the Markdown as a high-level gameplay explanation. Treat the BCU Java/Kotlin reference ZIPs as the primary source for exact control flow, field names, timing, and state transitions.
+## Required analysis artifact before ability runtime changes
 
-Use `BCU_java_util_common.zip` and `BCU_Android-master.zip` as the primary gameplay references. Do not use PC-only Kotlin sources as the first gameplay source when the non-PC references answer the same question. PC code may still be useful for rendering/UI details.
-
-When reference files are inspected, document the exact ZIP path, class, and method used. If a reference file is missing, stop and document what is missing instead of guessing.
-
-Useful local commands:
-
-```bash
-mkdir -p /tmp/bcu-ref
-python3 - <<'PY'
-import zipfile, pathlib
-for z in ['references/bcu/BCU_java_util_common.zip', 'references/bcu/BCU_Android-master.zip']:
-    p = pathlib.Path(z)
-    if p.exists():
-        out = pathlib.Path('/tmp/bcu-ref') / p.stem
-        out.mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(p) as f:
-            f.extractall(out)
-        print('extracted', p, '->', out)
-PY
-rg -n "class Entity|damage\(|processProcs|AttackSimple|AttackWave|AttackVolcano|Barrier|Shield|Zomb|strength|lethal|bounty|target" /tmp/bcu-ref
-```
-
-## Required analysis artifact before runtime changes
-
-Before editing runtime code for ability parity, create or update a design/analysis document under:
+Before editing runtime code for ability parity, create or update a document under:
 
 - `docs/ability-logic/`
 
-Use a descriptive filename, for example:
+For this task, create or update:
 
-- `docs/ability-logic/non-visual-ability-parity-plan.md`
-- `docs/ability-logic/proc-targeting-and-status-overwrite.md`
-- `docs/ability-logic/ability-status-assets-bundle.md`
+- `docs/ability-logic/fact-only-ability-parity-matrix.md`
 
 The document must include:
 
 - objective in one sentence;
 - exact user-requested scope;
 - explicit non-goals;
-- all local reference files/classes/methods inspected;
-- all Markdown reference sections inspected;
+- local reference files/classes/methods inspected;
+- Markdown reference sections inspected;
 - current JS files inspected;
 - current import order from `js/main.js` for touched patches;
 - wrapper chain for every touched method;
 - data flow for attack capture, damage calculation, proc resolution, proc application, status visualization, and post-damage resolution;
-- asset bundle paths inspected and modified;
-- list of abilities considered in scope;
-- list of abilities explicitly deferred;
+- complete ability/proc matrix with one row per ability/proc;
+- for each row: BCU field/index, JS parse location, JS runtime location, status as fact-complete/fact-partial/etc., implementation decision, and verification plan;
+- list of abilities explicitly deferred and exact missing fact/hook;
 - current observed JS behavior;
 - reference behavior;
 - selected implementation plan;
@@ -124,74 +127,120 @@ The document must include:
 - validation limits;
 - rollback plan.
 
-After the analysis document exists and no blocker is found, proceed to implementation. Do not require a second user confirmation for implementation unless the plan would exceed the requested scope.
+Do not proceed to code until this matrix exists. After the matrix exists, implement the fact-complete items in small safe slices. Do not wait for another user confirmation unless a required reference is missing or the only possible implementation would be speculative.
 
-## Known current ability-parity gaps to address
+## Reference source policy
 
-Use this as the initial checklist. Verify each item against local references before editing.
+Codex-style agents cannot see ChatGPT attachments. Use local repository files only.
 
-### High-priority correctness gaps
+Before changing ability or battle logic, inspect the local references under:
 
-1. **Proc target trait compatibility is incomplete.**
-   `ProcResolver` currently rolls proc candidates from semantic flags and probability. It must be checked against reference target-trait compatibility rules before applying attribute-targeted procs. Do not let a red-only/floating-only/etc. effect apply to unrelated targets.
+- `references/bcu/BCU_java_util_common.zip`
+- `references/bcu/BCU_Android-master.zip`
+- every relevant `*.md` file under `references/bcu/`
 
-2. **Status overwrite semantics are likely wrong.**
-   Existing freeze/slow/weaken/curse/seal logic uses max-duration style behavior. Reference behavior must be checked. If the local Markdown/reference says same-proc reapplication overwrites duration/value, implement overwrite, not max-extension.
+Use `BCU_java_util_common.zip` and `BCU_Android-master.zip` as the primary gameplay references. Do not use PC-only Kotlin sources as the first gameplay source when the non-PC references answer the same question. PC code may still be useful for UI/search/filter display details, but gameplay logic must come from common/Android references whenever available.
 
-3. **Curse / ancient-curse / seal filtering must respect the reference distinction between `effect` and `ability`.**
-   Do not blindly disable every semantic flag. Follow the local Markdown and BCU implementation. Wave, surge, barrier, shield, burrow, revive, and similar ability-class features may not follow the same disable rules as ordinary procs.
+Treat Markdown as high-level gameplay explanation. Treat Java/Kotlin reference ZIPs as the primary source for exact control flow, field names, timing, and state transitions.
 
-4. **Death surge is currently at risk of being treated as ordinary attack surge.**
-   If `deathSurge` is present, do not let it fire as a normal attack proc. Either implement proper death-trigger behavior if in scope, or explicitly separate and defer it.
+Useful local commands:
 
-5. **Wave/surge immunity must gate damage from wave/surge runtime.**
-   A proc-application immunity wrapper alone is insufficient. Damage from `BattleWaveRuntimePatch` and `BattleSurgeRuntimePatch` must respect reference immunity rules.
+```bash
+mkdir -p /tmp/bcu-ref
+python3 - <<'PY'
+import zipfile, pathlib
+pairs = [
+    ('references/bcu/BCU_java_util_common.zip', '/tmp/bcu-ref/common'),
+    ('references/bcu/BCU_Android-master.zip', '/tmp/bcu-ref/android'),
+]
+for z, out in pairs:
+    p = pathlib.Path(z)
+    if not p.exists():
+        print('MISSING', p)
+        continue
+    pathlib.Path(out).mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(p) as f:
+        f.extractall(out)
+    print('extracted', p, '->', out)
+PY
+rg -n "P_BSTHUNT|BSTHUNT|TRAIT_BEAST|超獣特効|AB_BAKILL|AB_SKILL|AB_VKILL|P_IMUATK|P_BOUNTY|P_BLAST|P_IMU|DataUnit|DataEnemy|EEnemy|getDamage|EUnit|damaged|AttackSimple|AttackWave|AttackVolcano" /tmp/bcu-ref references/bcu js
+```
 
-6. **Target-only / only-attacks behavior is not fully connected to capture.**
-   Capture and base targeting must respect target-only constraints.
+## Ability/proc matrix checklist
 
-7. **Base/castle is not a normal actor pipeline.**
-   Base damage/proc behavior must be made consistent carefully. Avoid one-off fixes that cause duplicated wave/surge creation or inconsistent proc rolls.
+Codex must inspect and classify all of these. Add rows for any additional `P_*`, `AB_*`, or trait-related ability found in references.
 
-8. **Positive buff status placement must not be confused with enemy debuff placement.**
-   Buff effects such as strengthen and survive should anchor to the affected friendly actor using the existing status-effect position system.
+### Damage and target-trait abilities
 
-### Abilities suitable for this implementation campaign
+- めっぽう強い / `AB_GOOD`
+- 打たれ強い / `AB_RESIST`
+- 超打たれ強い / `AB_RESISTS`
+- 超ダメージ / `AB_MASSIVE`
+- 極ダメージ / `AB_MASSIVES`
+- ターゲット限定 / `AB_ONLY`
+- メタル / `AB_METALIC`
+- クリティカル / `P_CRIT`
+- メタルキラー / `P_METALKILL`
+- 渾身の一撃 / `P_SATK`
+- 城破壊 / `P_ATKBASE`
+- 超生命体特効 / `AB_BAKILL`
+- 超獣特効 / `P_BSTHUNT`
+- 超賢者特効 / `AB_SKILL`
+- 怪人特効 / `AB_VKILL`
+- 魔女キラー / `AB_WKILL`
+- 使徒キラー / `AB_EKILL`
 
-Verify exact names and rules before coding:
+### Proc/status abilities
 
-- target trait compatibility for damage effects and procs;
-- correct status overwrite and status value application;
-- strengthen / attack-up at low HP;
-- lethal survive / survive at 1 HP;
-- bounty / extra money on kill;
-- target-only / only-attacks;
-- wave immunity;
-- surge immunity;
-- toxic immunity;
-- full proc immunities and, if reference mapping is clear, partial resistances;
-- curse/seal filtering according to effect-vs-ability rules;
-- barrier breaker and shield pierce as damage-gate logic;
-- demon shield regeneration on knockback if this does not require new actor art;
-- zombie killer revive suppression;
-- soulstrike corpse targeting and revive cancellation;
-- existing damage ability parity corrections for metal, critical, massive, resistant, good, base-destroyer, metal-killer, strong attack, and related damage-only features.
+- ふっとばす / `P_KB`
+- 止める / `P_STOP`
+- 遅くする / `P_SLOW`
+- 攻撃力ダウン / `P_WEAK`
+- 呪い / `P_CURSE`
+- ワープ / `P_WARP`
+- 毒撃 / `P_POIATK`
+- 攻撃無効 / `P_IMUATK`
+- 超獣特効の攻撃無効 / `P_BSTHUNT` status branch
+- 攻撃力アップ / `P_STRONG`
+- 生き残る / `P_LETHAL`
+- 撃破時お金アップ / `P_BOUNTY`
+- 1回攻撃 / `AB_GLASS`
 
-### Defer unless explicitly requested or existing runtime can be reused safely
+### Projectile/area abilities
 
-- full blast runtime and blast immunity;
-- counter-surge emitter;
-- summon;
-- burrow / underground movement;
-- large renderer refactors;
-- new actor animation systems;
-- unrelated optimization-only work.
+- 波動 / `P_WAVE`
+- 小波動 / `P_MINIWAVE`
+- 波動無効 / `P_IMUWAVE` or equivalent ability bit/status in references
+- 烈波 / `P_VOLC`
+- 小烈波 / `P_MINIVOLC`
+- 烈波無効 / `P_IMUVOLC`
+- 死亡時烈波 / `P_DEATHSURGE`
+- 烈波カウンター / `AB_CSUR`
+- 爆波 / `P_BLAST`
+- 爆波無効 / `P_IMUBLAST`
 
-Death surge may be implemented only if the existing surge visual/runtime can be reused without a new renderer system and references clearly define the trigger. Otherwise separate it from ordinary surge and document it as deferred.
+### Barrier, shield, corpse, summon, movement
 
-## Core architecture files to inspect
+- バリア / `P_BARRIER`
+- バリアブレイカー / `P_BREAK`
+- 悪魔シールド / `P_DEMONSHIELD`
+- シールドブレイカー / `P_SHIELDBREAK`
+- ゾンビキラー / `AB_ZKILL`
+- 魂攻撃 / `AB_CKILL`
+- 蘇生 / `P_REVIVE`
+- 地中移動 / `P_BURROW`
+- 召喚 / `P_SPIRIT`
+- 精霊 or spirit unit behavior if locally referenced
 
-At minimum, inspect these before editing related logic:
+### Immunity and resistance abilities
+
+- freeze/slow/weaken/kb/wave/surge/warp/curse/toxic/blast immunities;
+- partial resistances where BCU exposes a `mult`, `prob`, or duration rule;
+- sage status-resistance and sage-resistance bypass, only if exact BCU control flow is confirmed.
+
+## Existing implementation facts to re-check before edits
+
+Current JS files that must be inspected before relevant changes:
 
 - `js/main.js`
 - `js/battle/BcuCombatModel.js`
@@ -216,13 +265,12 @@ At minimum, inspect these before editing related logic:
 - `js/battle/BattleBaseProjectileProcPatch.js`
 - `js/battle/BcuKnockbackRuntimePatch.js`
 - `js/battle/BcuKnockbackProcPriorityPatch.js`
-- every asset loader and bundle builder related to status/ability effects.
+- ability/status effect asset loaders and bundle builder scripts.
 
-Search for all wrappers and state fields before touching any of them:
+Search before editing:
 
 ```bash
-rg -n "queueAttackDamage|takeDamage|resolvePostDamage|applyBcuProc|DamageCalculator\.calculate|ProcResolver\.resolve|captureTargets|runTickPhase|isTargetable|isAlive|bcuProcStatuses|bcuBarrier|bcuDemonShield|bcuZombie|bcuWave|bcuSurge|deathSurge|miniWave|miniSurge|blast|targetOnly|lethal|strengthen|bounty|counterSurge|burrow|warp|curse|seal|weaken|freeze|slow|toxic|bcuStatus" js
-rg -n "weaken|weak|attack.*down|strength|survive|lethal|status|ability|effect" public assets scripts js references/bcu
+rg -n "queueAttackDamage|takeDamage|resolvePostDamage|applyBcuProc|DamageCalculator\.calculate|ProcResolver\.resolve|captureTargets|runTickPhase|isTargetable|isAlive|bcuProcStatuses|bcuBarrier|bcuDemonShield|bcuZombie|bcuWave|bcuSurge|deathSurge|miniWave|miniSurge|blast|targetOnly|lethal|strengthen|bounty|counterSurge|burrow|warp|curse|seal|weaken|freeze|slow|toxic|bcuStatus|beast|BSTHUNT|beastHunter" js scripts references/bcu
 ```
 
 ## Protected runtime contracts
@@ -246,148 +294,51 @@ Treat these as high-risk contracts:
 - knockback state transitions;
 - status expiration and movement/attack suppression.
 
-Do not replace wrapper chains with direct calls. If wrapping, capture the current method and call it with the same `this` and compatible arguments, for example:
-
-```js
-const originalQueueAttackDamage = proto.queueAttackDamage;
-proto.queueAttackDamage = function wrapped(attacker, target, targetType, event, meta = {}) {
-  const result = originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
-  // local extension here
-  return result;
-};
-```
+Do not replace wrapper chains with direct calls. If wrapping, capture the current method and call it with the same `this` and compatible arguments.
 
 Do not reorder imports in `js/main.js` unless the analysis document proves the existing order is wrong. Later patches may intentionally wrap earlier patches.
 
-## Implementation rules for ability parity
+## Positive buff/status visual requirement
 
-1. **Preserve player-visible reference behavior over Java class shape.**
-   Do not mechanically port Java/Kotlin patterns that create avoidable JS overhead.
+Attack-up / strengthen, survive / lethal-survive, attack-nullify, and Beast Hunter attack-nullify must use existing actor-anchored status/effect rendering when visuals are required and the asset exists.
 
-2. **Keep logic local and reversible.**
-   Prefer small helpers over broad rewrites. Avoid changing unrelated rendering, UI, or asset loading except the required status/ability asset bundle work.
+Buffs applied to friendly actors and debuffs applied to enemy actors may share the same rendering infrastructure, but the affected actor must be the anchor. Do not attach friendly buffs to the enemy side.
 
-3. **Separate parse, resolve, apply, visualize, and post-damage phases.**
-   - `BcuCombatModel` should parse CSV/reference data.
-   - `AbilityModel` should expose semantic flags without losing raw data.
-   - `DamageAbilityResolver` should handle damage multipliers and damage-only gates.
-   - `ProcResolver` should roll and describe procs after target compatibility is known.
-   - `BattleSceneProcApplyPatch` / `BcuProcRuntime` / actor patches should apply runtime state.
-   - status effect render patches should only visualize state that already exists on the actor.
-   - actor `takeDamage` / `resolvePostDamage` patches should handle shields, barriers, survive, zombie, bounty, and death effects in reference order.
+Before implementing any ability visual:
 
-4. **Do not double-roll probability.**
-   A proc should be rolled once for a hit unless reference behavior explicitly rolls again. If multiple wrappers observe the same proc, use the existing result, not a fresh random roll.
+1. locate the existing status/effect bundle that contains weaken / attack-down or attack-nullify effects;
+2. extend the existing bundle builder, not the ZIP by hand;
+3. rebuild the bundle and generated manifests;
+4. document exact internal bundle paths used by runtime code.
 
-5. **Do not double-apply procs.**
-   If both `BattleSceneProcApplyPatch` and `BcuProcRuntime` see the same proc, dedupe by key/hit/event or mark already-applied. Preserve the existing dedupe style unless replacing it with a proven safer one.
+## Implementation order recommendation
 
-6. **Use deterministic battle RNG where existing code provides it.**
-   Respect `BattleDeterministicRandomPatch` and `meta.random`. Do not introduce raw `Math.random()` in battle logic when a scene RNG is available.
+Use small commits. Suggested order:
 
-7. **Status logic must be frame-based where reference uses frames.**
-   Convert to milliseconds only at boundaries already used by the runtime. Avoid mixing ms and frame counters without documenting it.
+1. analysis matrix only;
+2. data parse fixes that expose confirmed reference fields without changing runtime behavior;
+3. damage-only fact-complete abilities, including Beast Hunter damage multipliers;
+4. status/proc fact-complete abilities with no new renderer;
+5. projectile/immunity gates that reuse existing runtime safely;
+6. visuals/assets only after logic is confirmed.
 
-8. **Target traits must come from combat model flags.**
-   Do not infer traits from display text or names. Do not duplicate same effect for multi-trait targets unless reference does.
+For Beast Hunter specifically, prefer this order:
 
-9. **Base/castle behavior must be explicit.**
-   When logic differs for `targetType === 'base'`, state the reference reason. Do not accidentally apply actor-only procs to base.
+1. parse `proc.BSTHUNT` from unit indexes 105/106/107;
+2. implement damage dealt `x2.5` and damage received `x0.6` using `proc.BSTHUNT.active` and `BCU_TRAITS.beast`;
+3. add tests/smoke checks for Beast target and non-Beast target;
+4. implement attack-nullify only after identifying the exact JS hook equivalent to BCU `EUnit.damaged` return-false behavior and status/effect lifetime.
 
-10. **Bundle existing ability assets before relying on them.**
-    If a status/buff icon or animation is required and already exists in assets, bundle it through the existing build pipeline and load it from the bundle. Do not rely on raw fallback paths in normal runtime.
+## Required checks
 
-## Suggested implementation sequence
-
-Use small commits. One logical area per commit.
-
-1. Add or update the `docs/ability-logic/...` analysis document.
-2. Inspect and, if needed, extend the existing ability/status effect asset bundle builder. Rebuild the bundle and manifest with terminal commands.
-3. Add a shared trait/proc compatibility helper, with self-checks or tests if the repo has no test runner.
-4. Route `ProcResolver.resolve(...)` through target compatibility without changing unrelated payload formats.
-5. Correct status overwrite/value semantics in `BattleActorProcStatusPatch.js`.
-6. Correct curse/seal filtering according to references.
-7. Implement non-projectile damage/state abilities:
-   - strengthen;
-   - lethal survive;
-   - bounty;
-   - targetOnly;
-   - wave/surge/toxic full immunity gates;
-   - barrier/shield gate-order corrections;
-   - zombie killer / soulstrike corrections.
-8. Wire friendly buff visuals through the existing status-effect attachment path if assets are available.
-9. Explicitly separate deferred visual/effect abilities, especially counterSurge/blast/summon/burrow when not safely reusable.
-10. Run verification commands and update the analysis document with results.
-
-If a later step reveals a prior assumption was wrong, update the analysis document before continuing.
-
-## Verification requirements
-
-Do not ask for browser/manual tests. Codex may not be able to run a browser.
-
-Use terminal-based checks. If the repository has no package scripts, say so in the analysis/summary and use syntax/static checks instead.
-
-Recommended commands:
+At minimum run:
 
 ```bash
-find references/bcu -maxdepth 3 -type f | sort
-rg -n "relevant keyword" references/bcu js public assets scripts
-rg -n "queueAttackDamage|takeDamage|resolvePostDamage|ProcResolver|DamageCalculator|applyBcuProc" js/battle
-node --check js/battle/<changed-file>.js
-node --check js/ui/<changed-file>.js
-node --check scripts/<changed-script>.mjs
+node --check js/battle/BcuCombatModel.js
+node --check js/battle/DamageAbilityResolver.js
+node --check js/battle/ProcResolver.js
+node --check js/main.js
+node --check scripts/diagnose-production-card-icon-quality.mjs || true
 ```
 
-If bundle scripts are changed, run the bundle script and verify the ZIP contents with a local command such as:
-
-```bash
-python3 - <<'PY'
-import zipfile, sys
-for p in sys.argv[1:]:
-    with zipfile.ZipFile(p) as z:
-        print(p)
-        for n in sorted(z.namelist()):
-            print(' ', n)
-PY public/assets/bundles/<bundle>.zip
-```
-
-For every changed JavaScript module, run `node --check` when the local Node version supports it. If this is not available, state that syntax validation was not executed.
-
-Before finalizing, verify:
-
-- no protected wrapper was bypassed;
-- no new duplicate proc roll was added;
-- no new duplicate proc application was added;
-- target trait compatibility is applied before proc runtime application;
-- base/castle behavior is not accidentally treated as actor behavior;
-- wave/surge containers still tick at the same phase if touched;
-- status/buff visuals anchor to the affected actor;
-- status/ability assets are loaded from bundle paths, not loose raw paths, in normal runtime;
-- `js/main.js` import order was preserved unless deliberately documented;
-- debug/global output changes are documented if any.
-
-## Reporting format for Codex summaries
-
-When summarizing a completed change, include:
-
-- objective;
-- references inspected;
-- changed files;
-- exact behavior fixed;
-- abilities implemented;
-- ability/status assets bundled and their internal paths;
-- abilities deliberately deferred;
-- verification commands and results;
-- remaining risks.
-
-Do not claim full BCU parity unless all relevant reference branches were inspected and implemented. Prefer precise wording: `implemented for normal actor hits`, `implemented for base hits`, `deferred because it requires visual runtime`, etc.
-
-## Change style
-
-- Keep commits small and reviewable.
-- Avoid broad formatting churn.
-- Avoid renaming public fields unless required.
-- Preserve existing debug fields unless removing or changing them is documented.
-- Do not mix ability logic fixes with optimization-only work.
-- Do not mix large renderer refactors with ability parity work.
-- If behavior parity is uncertain and cannot be resolved from local references, document the blocker and stop instead of guessing.
+Run additional checks for every touched file. If a test or browser run is not possible in the local environment, state that explicitly in the analysis document and provide the exact command the user should run.

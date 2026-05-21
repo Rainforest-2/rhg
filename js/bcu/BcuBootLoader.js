@@ -42,8 +42,6 @@ export class BcuBootLoader {
         packs: coreDb.manifestLite?.packs || {}
       };
       const names = BcuLangStore.fromCoreDb(coreDb, { locale, diagnostics });
-      const languageMerge = await names.mergeFromSemanticLanguageBundle(semanticProvider, locale);
-      diagnostics.lang.semanticLanguageMerge = languageMerge;
       const enemies = BcuEnemyRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, locale });
       const units = BcuUnitRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, locale });
       const backgrounds = BcuBackgroundRepository.fromCoreDb(coreDb, { manifest, names, diagnostics, locale });

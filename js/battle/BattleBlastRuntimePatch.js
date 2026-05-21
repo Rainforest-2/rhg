@@ -4,8 +4,9 @@ import { EffectRuntime } from './EffectRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
+import { DamageCalculator } from './DamageCalculator.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.blast-runtime-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.blast-runtime-patch.v2-base-hit-fallback');
 const BLAST_SHIFT = 100;
 const BLAST_HALF_WIDTH = 75;
 const BLAST_PRE_FRAME = 11;
@@ -24,6 +25,57 @@ function dire(actor) {
 
 function blastItems(calc) {
   return [...(calc?.proc?.pending || []), ...(calc?.proc?.applied || [])].filter((p) => p?.key === 'blast');
+}
+
+function hasBlastProc(calc) {
+  return blastItems(calc).length > 0;
+}
+
+function fallbackDamage(attacker, event) {
+  const n = Number(event?.damage);
+  if (Number.isFinite(n)) return Math.max(0, Math.trunc(n));
+  const raw = Number(attacker?.damage);
+  return Number.isFinite(raw) ? Math.max(0, Math.trunc(raw)) : 0;
+}
+
+function resolveBlastDamageCalculation(scene, attacker, target, targetType, event, result, meta = {}) {
+  const direct = result?.damageCalculation
+    || result?.damageResult
+    || target?.lastIncomingDamageCalculation
+    || attacker?.lastDamageCalculation
+    || null;
+  if (hasBlastProc(direct)) return direct;
+
+  try {
+    const random = typeof meta?.random === 'function'
+      ? meta.random
+      : (typeof scene?.getBcuRandom === 'function' ? scene.getBcuRandom() : Math.random);
+    const fallback = DamageCalculator.calculate({
+      attacker,
+      target,
+      targetType,
+      event,
+      context: {
+        random,
+        attackEventKey: meta?.key ?? event?.key ?? null
+      }
+    });
+    fallback.blastFallbackDebug = {
+      source: 'BattleBlastRuntimePatch.resolveBlastDamageCalculation',
+      reason: direct ? 'direct-calc-had-no-blast-proc-or-no-proc' : 'direct-calc-missing',
+      directSource: direct?.source || null,
+      targetType,
+      bcuReference: 'BCU AttackSimple.excuse creates ContBlast when captured target list is not empty, including castle/base captures'
+    };
+    return fallback;
+  } catch (error) {
+    scene.lastBlastProcError = {
+      source: 'BattleBlastRuntimePatch.resolveBlastDamageCalculation',
+      targetType,
+      message: String(error?.message || error)
+    };
+    return direct;
+  }
 }
 
 function cloneEvent(event = {}, damage) {
@@ -166,20 +218,24 @@ function attackBlast(scene, item, level) {
 function enqueue(scene, item) {
   if (!scene.__bcuBlastContainers) scene.__bcuBlastContainers = [];
   scene.__bcuBlastContainers.push(item);
+  scene.ensureWaveEffectLoading?.();
   spawnBlastEffect(scene, item, 'start');
   scene.pushEvent?.({ type: 'bcuBlastCreated', id: item.id, actor: item.attacker?.instanceId || item.attacker?.label || null, pos: item.pos, effectKey: item.effectKey, source: 'BattleBlastRuntimePatch.enqueue' });
 }
 
-function enqueueFromResult(scene, attacker, target, event, calc, result, meta = {}) {
-  if (!result?.accepted || meta?.bcuBlast || meta?.bcuWave || meta?.bcuSurge) return;
+function enqueueFromResult(scene, attacker, target, targetType, event, calc, result, meta = {}) {
+  if (targetType !== 'base' && !result?.accepted) return;
+  if (meta?.bcuBlast || meta?.bcuWave || meta?.bcuSurge) return;
   const items = blastItems(calc);
   if (!items.length) return;
-  const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage || 0)));
+  const rawDamage = fallbackDamage(attacker, event);
+  const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage ?? rawDamage)));
   if (finalDamage <= 0) return;
   const d = dire(attacker);
   const random = meta.random || scene.getBcuRandom?.() || Math.random;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
-  const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${target?.instanceId || 'target'}:${hitIndex}`;
+  const targetId = target?.instanceId || target?.label || target?.side || 'base';
+  const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${targetId}:${hitIndex}`;
   for (const proc of items) {
     const addp = rollOffset(proc.payload || {}, random);
     const blastPos = pos(attacker) + d * addp;
@@ -196,7 +252,9 @@ function enqueueFromResult(scene, attacker, target, event, calc, result, meta = 
       t: 0,
       damage: finalDamage,
       capturedByLevel: [new Set(), new Set(), new Set()],
-      source: 'BCU AttackSimple.excuse -> ContBlast(new AttackBlast(pos+75,pos-75))'
+      source: targetType === 'base'
+        ? 'BCU AttackSimple.excuse -> ContBlast from captured base hit'
+        : 'BCU AttackSimple.excuse -> ContBlast(new AttackBlast(pos+75,pos-75))'
     });
   }
 }
@@ -232,8 +290,8 @@ export function installBattleBlastRuntimePatch() {
   proto.queueAttackDamage = function queueAttackDamageWithBcuContBlast(attacker, target, targetType, event, meta = {}) {
     const result = originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
     if (targetType === 'actor' || targetType === 'base') {
-      const calc = target?.lastIncomingDamageCalculation || attacker?.lastDamageCalculation || null;
-      enqueueFromResult(this, attacker, target, event, calc, result, meta);
+      const calc = resolveBlastDamageCalculation(this, attacker, target, targetType, event, result, meta);
+      enqueueFromResult(this, attacker, target, targetType, event, calc, result, meta);
     }
     return result;
   };

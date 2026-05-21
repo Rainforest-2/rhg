@@ -45,7 +45,10 @@ const EFFECT_DEFS = Object.freeze([
   phased({ key: 'enemyMiniSurge', role: 'bcu-A_E_MINIVOLC', dir: 'public/assets/bcu/120300/org/battle/s16', out: 'enemy-mini-surge', image: 'skill016.png', imgcut: 'skill016.imgcut', model: 'skill_smallvolcano_e.mamodel', prefix: 'skill_smallvolcano_e' }),
 
   phased({ key: 'unitBlast', role: 'bcu-A_BLAST', dir: 'public/assets/bcu/130700/org/battle/s21', out: 'unit-blast', image: 'skill021.png', imgcut: 'skill021.imgcut', model: 'skill_explosion.mamodel', prefix: 'skill_explosion', names: ['start', 'explode', 'dummy'] }),
-  phased({ key: 'enemyBlast', role: 'bcu-A_E_BLAST', dir: 'public/assets/bcu/130700/org/battle/s22', out: 'enemy-blast', image: 'skill022.png', imgcut: 'skill022.imgcut', model: 'skill_explosion_e.mamodel', prefix: 'skill_explosion', names: ['start', 'explode', 'dummy'] })
+  phased({ key: 'enemyBlast', role: 'bcu-A_E_BLAST', dir: 'public/assets/bcu/130700/org/battle/s22', out: 'enemy-blast', image: 'skill022.png', imgcut: 'skill022.imgcut', model: 'skill_explosion_e.mamodel', prefix: 'skill_explosion', names: ['start', 'explode', 'dummy'] }),
+
+  single({ key: 'strongAttack', role: 'bcu-A_SATK', dir: 'public/assets/bcu/000001/org/battle/s6', out: 'strong-attack', image: 'skill006.png', imgcut: 'skill006.imgcut', model: 'strong_attack.mamodel', anim: 'strong_attack.maanim' }),
+  single({ key: 'metalKiller', role: 'bcu-A_METAL_KILLER/A_E_METAL_KILLER', dir: 'public/assets/bcu/130300/org/battle/s20', out: 'metal-killer', image: 'skill020.png', imgcut: 'skill020.imgcut', model: 'skill_metal_strong.mamodel', anim: 'skill_metal_strong.maanim' })
 ]);
 
 function addEntry(entries, entry) {
@@ -118,7 +121,10 @@ function makeBundleJson({ aliases, missingRequired, allSkillEffectFiles }) {
         A_MINIVOLC: './org/battle/s15/skill_smallvolcano',
         A_E_MINIVOLC: './org/battle/s16/skill_smallvolcano_e',
         A_BLAST: './org/battle/s21/skill_explosion',
-        A_E_BLAST: './org/battle/s22/skill_explosion'
+        A_E_BLAST: './org/battle/s22/skill_explosion',
+        A_SATK: './org/battle/s6/strong_attack',
+        A_METAL_KILLER: './org/battle/s20/skill_metal_strong',
+        A_E_METAL_KILLER: './org/battle/s20/skill_metal_strong'
       },
       timing: {
         normalWave: { initialT: -3, effectAtT: 0, attackAtT: 6, nextWaveAtT: 3 },

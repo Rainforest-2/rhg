@@ -27,7 +27,10 @@ const WAVE_EFFECT_ENTRIES = Object.freeze({
   enemyMiniSurge: phasedEntry({ key: 'enemyMiniSurge', kind: 'miniSurge', direction: 1, baseDir: './public/assets/bcu/120300/org/battle/s16/', bundleDir: 'enemy-mini-surge', image: 'skill016.png', imgcut: 'skill016.imgcut', model: 'skill_smallvolcano_e.mamodel', phases: { start: 'skill_smallvolcano_e00.maanim', during: 'skill_smallvolcano_e01.maanim', end: 'skill_smallvolcano_e02.maanim' } }),
 
   unitBlast: phasedEntry({ key: 'unitBlast', kind: 'blast', direction: -1, baseDir: './public/assets/bcu/130700/org/battle/s21/', bundleDir: 'unit-blast', image: 'skill021.png', imgcut: 'skill021.imgcut', model: 'skill_explosion.mamodel', phases: { start: 'skill_explosion00.maanim', explode: 'skill_explosion01.maanim', dummy: 'skill_explosion02.maanim' } }),
-  enemyBlast: phasedEntry({ key: 'enemyBlast', kind: 'blast', direction: 1, baseDir: './public/assets/bcu/130700/org/battle/s22/', bundleDir: 'enemy-blast', image: 'skill022.png', imgcut: 'skill022.imgcut', model: 'skill_explosion_e.mamodel', phases: { start: 'skill_explosion00.maanim', explode: 'skill_explosion01.maanim', dummy: 'skill_explosion02.maanim' } })
+  enemyBlast: phasedEntry({ key: 'enemyBlast', kind: 'blast', direction: 1, baseDir: './public/assets/bcu/130700/org/battle/s22/', bundleDir: 'enemy-blast', image: 'skill022.png', imgcut: 'skill022.imgcut', model: 'skill_explosion_e.mamodel', phases: { start: 'skill_explosion00.maanim', explode: 'skill_explosion01.maanim', dummy: 'skill_explosion02.maanim' } }),
+
+  strongAttack: singleEntry({ key: 'strongAttack', kind: 'strongAttack', direction: -1, baseDir: './public/assets/bcu/000001/org/battle/s6/', bundleDir: 'strong-attack', image: 'skill006.png', imgcut: 'skill006.imgcut', model: 'strong_attack.mamodel', anim: 'strong_attack.maanim' }),
+  metalKiller: singleEntry({ key: 'metalKiller', kind: 'metalKiller', direction: -1, baseDir: './public/assets/bcu/130300/org/battle/s20/', bundleDir: 'metal-killer', image: 'skill020.png', imgcut: 'skill020.imgcut', model: 'skill_metal_strong.mamodel', anim: 'skill_metal_strong.maanim' })
 });
 
 async function fetchText(path) {

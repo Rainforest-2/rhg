@@ -509,6 +509,62 @@
       ]
     }
   },
+  "A_IMUATK": {
+    "resolved": true,
+    "ambiguous": false,
+    "phase": "A",
+    "bundleRef": {
+      "bundleKey": "effect:status",
+      "bundlePath": "public/assets/bundles/effect/status-effects.zip"
+    },
+    "internal": {
+      "image": "A_IMUATK/image.png",
+      "imgcut": "A_IMUATK/imgcut.imgcut",
+      "model": "A_IMUATK/model.mamodel",
+      "DEF": "A_IMUATK/DEF.maanim"
+    },
+    "sources": {
+      "image": "public/assets/bcu/000001/org/battle/s7/skill007.png",
+      "imgcut": "public/assets/bcu/000001/org/battle/s7/skill007.imgcut",
+      "model": "public/assets/bcu/000001/org/battle/s7/skill_attack_invalid.mamodel",
+      "DEF": "public/assets/bcu/000001/org/battle/s7/skill_attack_invalid.maanim"
+    },
+    "candidates": {
+      "image": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s7/skill007.png",
+          "packId": "000001",
+          "suffix": "org/battle/s7/skill007.png"
+        },
+        {
+          "file": "public/assets/bcu/110200/org/battle/s7/skill007.png",
+          "packId": "110200",
+          "suffix": "org/battle/s7/skill007.png"
+        }
+      ],
+      "imgcut": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s7/skill007.imgcut",
+          "packId": "000001",
+          "suffix": "org/battle/s7/skill007.imgcut"
+        }
+      ],
+      "model": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s7/skill_attack_invalid.mamodel",
+          "packId": "000001",
+          "suffix": "org/battle/s7/skill_attack_invalid.mamodel"
+        }
+      ],
+      "DEF": [
+        {
+          "file": "public/assets/bcu/000001/org/battle/s7/skill_attack_invalid.maanim",
+          "packId": "000001",
+          "suffix": "org/battle/s7/skill_attack_invalid.maanim"
+        }
+      ]
+    }
+  },
   "A_CURSE": {
     "resolved": true,
     "ambiguous": false,

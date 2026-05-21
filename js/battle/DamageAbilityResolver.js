@@ -60,6 +60,11 @@ function getAttackerProc(attacker) {
   return cm?.proc || attacker?.bcuProc || attacker?.rawStats?.bcuProc || attacker?.abilityModel?.bcuProc || {};
 }
 
+function getTargetProc(target) {
+  const cm = getCombatModel(target);
+  return cm?.proc || target?.bcuProc || target?.rawStats?.bcuProc || target?.abilityModel?.bcuProc || {};
+}
+
 function hasAbiValue(abi, bit) { return (Number(abi) & bit) !== 0; }
 function hasAttackerAbi(attacker, bit) { return hasAbiValue(getAttackerAbi(attacker), bit); }
 function hasTargetAbi(target, bit) { return hasAbiValue(getTargetAbi(target), bit); }
@@ -171,6 +176,29 @@ function applyFixedKillerMultiplier(result, currentDamage, { key, abilityBit, tr
   return ans;
 }
 
+function hasBeastHunterProc(proc = {}) {
+  return Number(proc?.beastHunter?.active || proc?.bsthunt?.active || proc?.BSTHUNT?.active || 0) > 0;
+}
+
+function applyBeastHunterMultiplier(result, currentDamage) {
+  let ans = currentDamage;
+  const attackerProc = getAttackerProc(result.__attacker);
+  const targetProc = getTargetProc(result.__target);
+  if (hasBeastHunterProc(attackerProc) && hasTrait(result.__target, BCU_TRAITS.beast)) {
+    const before = ans;
+    ans = bcuInt(ans * 2.5);
+    result.modifiers.beastHunter *= before === 0 ? 1 : ans / before;
+    pushStep(result, 'beastHunter', before, ans, 'BCU EEnemy.getDamage P_BSTHUNT attack vs TRAIT_BEAST', { trait: BCU_TRAITS.beast, multiplier: 2.5, proc: attackerProc.beastHunter || attackerProc.bsthunt || attackerProc.BSTHUNT || null });
+  }
+  if (hasBeastHunterProc(targetProc) && hasTrait(result.__attacker, BCU_TRAITS.beast)) {
+    const before = ans;
+    ans = bcuInt(ans * 0.6);
+    result.modifiers.beastHunter *= before === 0 ? 1 : ans / before;
+    pushStep(result, 'beastHunter', before, ans, 'BCU EUnit.getDamage P_BSTHUNT defense vs TRAIT_BEAST', { trait: BCU_TRAITS.beast, multiplier: 0.6, proc: targetProc.beastHunter || targetProc.bsthunt || targetProc.BSTHUNT || null });
+  }
+  return ans;
+}
+
 export class DamageAbilityResolver {
   static getConfig(context = {}) {
     return context?.config?.tuning?.battleDebug?.damageAbilityResolver || context?.battleDebug?.damageAbilityResolver || context?.damageAbilityResolver || {};
@@ -198,15 +226,15 @@ export class DamageAbilityResolver {
       baseDamage: ans,
       finalDamage: ans,
       multiplier: 1,
-      modifiers: { critical: 1, baseDestroyer: 1, metal: 1, strong: 1, resistant: 1, massiveDamage: 1, insaneDamage: 1, metalKiller: 1, strongAttack: 1, baronKiller: 1, sageSlayer: 1, villainKiller: 1, witchKiller: 1, evaKiller: 1 },
-      applied: { critical: false, baseDestroyer: false, metal: false, strong: false, resistant: false, massiveDamage: false, insaneDamage: false, metalKiller: false, strongAttack: false, baronKiller: false, sageSlayer: false, villainKiller: false, witchKiller: false, evaKiller: false },
+      modifiers: { critical: 1, baseDestroyer: 1, metal: 1, strong: 1, resistant: 1, massiveDamage: 1, insaneDamage: 1, metalKiller: 1, strongAttack: 1, beastHunter: 1, baronKiller: 1, sageSlayer: 1, villainKiller: 1, witchKiller: 1, evaKiller: 1 },
+      applied: { critical: false, baseDestroyer: false, metal: false, strong: false, resistant: false, massiveDamage: false, insaneDamage: false, metalKiller: false, strongAttack: false, beastHunter: false, baronKiller: false, sageSlayer: false, villainKiller: false, witchKiller: false, evaKiller: false },
       appliedDetails: [],
       notes: [],
       implementationStatus: {
         resolver: 'DamageAbilityResolver',
         mode: 'bcu-getDamage-order-plus-fact-only-killers',
-        exactScope: ['DataUnit/DataEnemy CSV flags', 'EEnemy.getDamage primary damage abilities', 'EUnit.getDamage primary defense abilities', 'Entity.critCalc metal/critical', 'Entity.damaged metal-killer add-damage', 'documented fixed killer/special damage multipliers with existing ability bits'],
-        omittedRuntimeState: ['orbs', 'combos', 'curse status', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'beast killer because no confirmed holder ability bit is parsed', 'sage status resistance']
+        exactScope: ['DataUnit/DataEnemy CSV flags', 'EEnemy.getDamage primary damage abilities', 'EUnit.getDamage primary defense abilities', 'Entity.critCalc metal/critical', 'Entity.damaged metal-killer add-damage', 'P_BSTHUNT beast hunter damage multipliers', 'documented fixed killer/special damage multipliers with existing ability bits/proc fields'],
+        omittedRuntimeState: ['orbs', 'combos', 'curse status', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'sage status resistance']
       },
       debug: {
         rawAbi: event?.rawAbi ?? null,
@@ -284,6 +312,7 @@ export class DamageAbilityResolver {
       ans = applyFixedKillerMultiplier(result, ans, { key: 'villainKiller', abilityBit: BCU_ABI.AB_VKILL, trait: BCU_TRAITS.villain, attackMult: 2.5, defenseMult: 0.4, reference: 'Reference 怪人特効' });
       ans = applyFixedKillerMultiplier(result, ans, { key: 'witchKiller', abilityBit: BCU_ABI.AB_WKILL, trait: BCU_TRAITS.witch, attackMult: 5, defenseMult: 0.1, reference: 'Reference 魔女キラー' });
       ans = applyFixedKillerMultiplier(result, ans, { key: 'evaKiller', abilityBit: BCU_ABI.AB_EKILL, trait: BCU_TRAITS.eva, attackMult: 5, defenseMult: 0.2, reference: 'Reference 使徒キラー' });
+      ans = applyBeastHunterMultiplier(result, ans);
     }
 
     const strongAttackProb = Number(proc?.strongAttack?.prob || 0);

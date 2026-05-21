@@ -94,9 +94,11 @@ function parseUnitProc(rawValues) {
     knockback:{prob:n(rawValues,24,0)}, freeze:{prob:n(rawValues,25,0),time:n(rawValues,26,0)}, slow:{prob:n(rawValues,27,0),time:n(rawValues,28,0)}, critical:{prob:n(rawValues,31,0),mult:200}, bounty:{mult:enabled(rawValues,33)?100:0}, baseDestroyer:{mult:enabled(rawValues,34)?300:0},
     wave:{prob:miniWave?0:n(rawValues,35,0),level:miniWave?0:n(rawValues,36,0)}, miniWave:{prob:miniWave?n(rawValues,35,0):0,level:miniWave?n(rawValues,36,0):0,mult:miniWave?20:0},
     weaken:{prob:n(rawValues,37,0),time:n(rawValues,38,0),mult:n(rawValues,39,0)}, strengthen:{health:n(rawValues,40,0),mult:n(rawValues,41,0)}, lethal:{prob:n(rawValues,42,0)},
+    attackNullify:{prob:n(rawValues,84,0),time:n(rawValues,85,0)}, IMUATK:{prob:n(rawValues,84,0),time:n(rawValues,85,0)},
     barrierBreaker:{prob:n(rawValues,70,0)}, strongAttack:{prob:n(rawValues,82,0),mult:n(rawValues,83,0)}, curse:{prob:n(rawValues,92,0),time:n(rawValues,93,0)}, shieldBreaker:{prob:n(rawValues,95,0)},
     volcano:volcanoProc({prob:miniVolc?0:n(rawValues,86,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
     miniVolcano:volcanoProc({prob:miniVolc?n(rawValues,86,0):0,dis0:miniVolc?volcStart:0,dis1:miniVolc?rangeEnd(volcStart,volcLength):0,level:miniVolc?volcLevel:0,mult:miniVolc?20:0}),
+    beastHunter:{active:enabled(rawValues,105)?1:0,prob:n(rawValues,106,0),time:n(rawValues,107,0)}, bsthunt:{active:enabled(rawValues,105)?1:0,prob:n(rawValues,106,0),time:n(rawValues,107,0)}, BSTHUNT:{active:enabled(rawValues,105)?1:0,prob:n(rawValues,106,0),time:n(rawValues,107,0)},
     metalKiller:{mult:n(rawValues,112,0)}, blast:{prob:n(rawValues,113,0),dis0:blastStart,dis1:rangeEnd(blastStart,blastLength)}
   };
 }
@@ -117,7 +119,7 @@ function parseEnemyProc(rawValues) {
     wave:{prob:miniWave?0:n(rawValues,27,0),level:miniWave?0:n(rawValues,28,0)}, miniWave:{prob:miniWave?n(rawValues,27,0):0,level:miniWave?n(rawValues,28,0):0,mult:miniWave?20:0},
     weaken:{prob:n(rawValues,29,0),time:n(rawValues,30,0),mult:n(rawValues,31,0)}, strengthen:{health:n(rawValues,32,0),mult:n(rawValues,33,0)}, lethal:{prob:n(rawValues,34,0)},
     burrow:{count:n(rawValues,43,0),dis:n(rawValues,44,0)/4}, revive:{count:n(rawValues,45,0),time:n(rawValues,46,0),health:n(rawValues,47,0)}, barrier:{health:n(rawValues,64,0)},
-    warp:{prob:n(rawValues,65,0),time:n(rawValues,66,0),dis0:n(rawValues,67,0)/4,dis1:n(rawValues,68,0)/4}, curse:{prob:n(rawValues,73,0),time:n(rawValues,74,0)}, strongAttack:{prob:n(rawValues,75,0),mult:n(rawValues,76,0)}, toxic:{prob:n(rawValues,79,0),mult:n(rawValues,80,0)},
+    warp:{prob:n(rawValues,65,0),time:n(rawValues,66,0),dis0:n(rawValues,67,0)/4,dis1:n(rawValues,68,0)/4}, curse:{prob:n(rawValues,73,0),time:n(rawValues,74,0)}, strongAttack:{prob:n(rawValues,75,0),mult:n(rawValues,76,0)}, attackNullify:{prob:n(rawValues,77,0),time:n(rawValues,78,0)}, IMUATK:{prob:n(rawValues,77,0),time:n(rawValues,78,0)}, toxic:{prob:n(rawValues,79,0),mult:n(rawValues,80,0)},
     volcano:volcanoProc({prob:miniVolc?0:n(rawValues,81,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
     miniVolcano:volcanoProc({prob:miniVolc?n(rawValues,81,0):0,dis0:miniVolc?volcStart:0,dis1:miniVolc?rangeEnd(volcStart,volcLength):0,level:miniVolc?volcLevel:0,mult:miniVolc?20:0}),
     demonShield:{hp:n(rawValues,87,0),regen:n(rawValues,88,0)}, deathSurge:volcanoProc({prob:n(rawValues,89,0),dis0:deathSurgeStart,dis1:rangeEnd(deathSurgeStart,deathSurgeLength),level:deathSurgeLevel}),

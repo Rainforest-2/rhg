@@ -106,27 +106,28 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 
 ## Wrapper chain
 
-- `BattleScene.prototype.queueAttackDamage`: base `BattleScene.queueAttackDamage` -> `BattleDeterministicRandomPatch` -> `BattleWaveRuntimePatch` -> `BattleSurgeRuntimePatch` -> `BattleBaseProjectileProcPatch` -> `BattleProjectileRuntimeBugfixPatch` -> `BattleSceneProcApplyPatch` -> `BattleSceneBcuProcRuntimePatch` -> `BattleProjectilePerformanceAndPositionPatch`。`BattleCriticalEffectPatch` と `BattleUnifiedDamageDebugPatch` は wrapper を持つが `js/main.js` からは直接 import されていない。
-- `BattleActor.prototype.takeDamage`: base `BattleActor.takeDamage` -> `BattleActorBarrierShieldPatch` -> `BattleSoulstrikePatch`。次回 `P_IMUATK` / `P_BSTHUNT` を入れる場合は、BCU の `EUnit.damaged` と `Entity.damaged` の順序に合わせ、barrier/shield より外側で攻撃無効を判定できる import 位置が必要。
-- `BattleActor.prototype.resolvePostDamage`: base -> `BcuKnockbackRuntimePatch` direct replacement -> `BcuKnockbackProcPriorityPatch` direct replacement -> `BattleActorStrengthenLethalPatch` wrapper -> `BattleActorZombieRevivePatch` wrapper。次回 `P_BOUNTY` や `AB_GLASS` を触る場合は、この chain の後段か `BattleScene` 側の kill bookkeeping が必要。
-- `BattleAttackResolver.captureTargets`: base method は `AB_ONLY` target filtering を持つが、`BattleSoulstrikePatch` が direct replacement しており target-only filter を再適用していない。Run 2 では soulstrike corpse targetability と `AB_ONLY` filtering を統合する必要がある。
-- `BattleActor.applyBcuProc`: `BattleActorProcStatusPatch` が freeze/slow/weaken/curse/seal/toxic/knockbackProc を処理。`P_IMUATK`/`P_BSTHUNT` はこの hook ではなく `takeDamage` pre-damage gate が BCU に近い。
+- `BattleScene.prototype.queueAttackDamage`: base `BattleScene.queueAttackDamage` -> `BattleDeterministicRandomPatch` -> `BattleActorAttackNullifyPatch` -> `BattleWaveRuntimePatch` -> `BattleSurgeRuntimePatch` -> `BattleBlastRuntimePatch` -> `BattleBaseProjectileProcPatch` -> `BattleProjectileRuntimeBugfixPatch` -> `BattleSceneProcApplyPatch` -> `BattleSceneBcuProcRuntimePatch` -> `BattleBountyRuntimePatch` -> `BattleProjectilePerformanceAndPositionPatch` -> `BattleCriticalEffectPatch` -> `BattleProcHitEffectPatch`。Run 2 で追加した wrapper は既存 wrapper を置換せず外側から呼ぶ。
+- `BattleActor.prototype.takeDamage`: base `BattleActor.takeDamage` -> `BattleActorBarrierShieldPatch` -> `BattleSoulstrikePatch`。`P_IMUATK` / `P_BSTHUNT` は `BattleActor.takeDamage` を直接置換せず、`BattleActorAttackNullifyPatch` の `queueAttackDamage` pre-gate で、barrier/shield/takeDamage より前に rejection する。
+- `BattleActor.prototype.resolvePostDamage`: base -> `BcuKnockbackRuntimePatch` direct replacement -> `BcuKnockbackProcPriorityPatch` direct replacement -> `BattleActorStrengthenLethalPatch` wrapper -> `BattleActorZombieRevivePatch` wrapper。`P_BOUNTY` はこの chain を触らず `BattleScene.runTickPhase('knockback-death')` の後段で scene economy に反映する。
+- `BattleScene.prototype.enterAttackWait`: base -> `BattleActorGlassPatch`。`AB_GLASS` は attack-complete かつ finite loop 消費後に normal death effect を出さず `state='dead'`, `removeAfterMs=0` にする。
+- `BattleAttackResolver.captureTargets`: `BattleSoulstrikePatch` direct replacement 内で corpse targetability を許可しつつ、`AB_ONLY` 時は `bcuTraitCompatible` を再適用する。
+- `BattleActor.applyBcuProc`: `BattleActorProcStatusPatch` が freeze/slow/weaken/curse/seal/toxic/knockbackProc を処理。`P_IMUATK`/`P_BSTHUNT` はこの hook ではなく pre-damage gate で `bcuProcStatuses.attackNullify` / `beastHunterNullify` を設定する。
 
 ## データフロー
 
 1. Attack capture: `BattleScene.resolveAttackHitEvent` -> `captureHitTargets` -> `BattleAttackResolver.captureTargets`。BCU `AttackSimple.capture` と同じく range/single、base candidate、`AB_ONLY` filter をここで扱う。
 2. Damage calculation: `queueAttackDamage` -> `DamageCalculator.calculate` -> attacker strengthen/weaken -> `DamageAbilityResolver.resolve` -> `ProcResolver.resolve`。
-3. Damage gate: actor target は `target.takeDamage(damage, meta)`。barrier/shield、soulstrike、次回の `P_IMUATK`/`P_BSTHUNT` pre-damage rejection はここ。
+3. Damage gate: actor target は `BattleActorAttackNullifyPatch` が `P_IMUATK`/`P_BSTHUNT` active/roll を判定し、通過した場合だけ `target.takeDamage(damage, meta)` に進む。barrier/shield と soulstrike は既存 takeDamage wrapper chain 側。
 4. Proc application: `BattleSceneProcApplyPatch` が accepted actor hit の `damageResult.proc.applied` を `target.applyBcuProc` に渡す。pending runtime は `BattleSceneBcuProcRuntimePatch` と `BcuProcRuntime`。
 5. Status: `BattleActorProcStatusPatch` が active status を `actor.bcuProcStatuses` に保持し、`tick` で減算。`BcuStatusSnapshot` が render 用 snapshot を作る。
-6. Visual: `BattleSceneBcuStatusEffectRenderPatch` -> `BcuStatusEffectManager` -> `BcuStatusEffectSpec` -> `effect:status` ZIP。projectile は `BattleWaveRuntimePatch` / `BattleSurgeRuntimePatch` -> `BattleWaveEffectLoader` -> `effect:wave` ZIP。
-7. Post-damage: tick phase `knockback-death` で `KBRuntime.resolvePostDamage`。lethal/strengthen/zombie revive は wrapper chain に入る。kill money/bounty hook は未実装。
+6. Visual: `BattleSceneBcuStatusEffectRenderPatch` -> `BcuStatusEffectManager` -> `BcuStatusEffectSpec` -> `effect:status` ZIP。projectile/proc-hit は `BattleWaveRuntimePatch` / `BattleSurgeRuntimePatch` / `BattleBlastRuntimePatch` / `BattleProcHitEffectPatch` -> `BattleWaveEffectLoader` -> `effect:wave` ZIP。critical は `BattleCriticalEffectPatch` -> hit-effect/kbeff loader。
+7. Post-damage: tick phase `knockback-death` で `KBRuntime.resolvePostDamage`。lethal/strengthen/zombie revive は wrapper chain に入る。`BattleBountyRuntimePatch` は同 phase の後段で `bcuBountyStatus` を death/kill money に反映する。
 
 ## Effect / animation / ZIP bundle 調査結果
 
-- `effect:status`: `public/assets/bundles/effect/status-effects.zip`。builder は `scripts/build-bcu-status-effect-bundle.mjs`。現行 entries は `A_DOWN`, `A_E_DOWN`, `A_UP`, `A_E_UP`, `A_SLOW`, `A_E_SLOW`, `A_STOP`, `A_E_STOP`, `A_SHIELD`, `A_E_SHIELD`, `A_CURSE`, `A_E_CURSE`, `A_SEAL`, `A_E_SEAL`, `A_POISON`。`A_IMUATK` は未登録。
-- `A_IMUATK`: BCU `Data.java` id 43、`Entity.AnimManager.getEff(P_IMUATK)`、`EffAnim.java` maps to `./org/battle/s7/skill_attack_invalid`。raw exists at `public/assets/bcu/000001/org/battle/s7/skill_attack_invalid.{mamodel,maanim}` with `skill007.{png,imgcut}`。`effect:wave` already contains raw entries under `all-skill-effects/000001/org/battle/s7/`, but actor-anchored status renderer cannot resolve a short status key until `BcuStatusEffectSpec`/status bundle or a status loader alias is extended.
-- `effect:wave`: `public/assets/bundles/effect/wave.zip`。builder は `scripts/build-bcu-wave-effect-bundle.mjs`。aliases: `unit-wave`, `enemy-wave`, `unit-mini-wave`, `enemy-mini-wave`, `unit-surge`, `enemy-surge`, `unit-mini-surge`, `enemy-mini-surge`, `unit-blast`, `enemy-blast`。raw all-skill-effects also include barrier, warp, poison, curse, attack invalid, demon shield, summon, guard, metal strong, blast, recast。
+- `effect:status`: `public/assets/bundles/effect/status-effects.zip`。builder は `scripts/build-bcu-status-effect-bundle.mjs`。Run 2 で `A_IMUATK` を `BcuStatusEffectSpec` / `PHASE_A_STATUS_EFFECT_KEYS` に追加し、ZIP と `public/assets/generated/bcu-status-effect-inventory.json` / manifest を再生成した。内部 path: `A_IMUATK/image.png`, `A_IMUATK/imgcut.imgcut`, `A_IMUATK/model.mamodel`, `A_IMUATK/DEF.maanim`。
+- `A_IMUATK`: BCU `Data.java` id 43、`Entity.AnimManager.getEff(P_IMUATK)`、`EffAnim.java` maps to `./org/battle/s7/skill_attack_invalid`。raw source: `public/assets/bcu/000001/org/battle/s7/skill_attack_invalid.{mamodel,maanim}` with `skill007.{png,imgcut}`。Run 2 で actor-anchored status snapshot key `ATTACK_NULLIFY` -> `A_IMUATK` に接続した。
+- `effect:wave`: `public/assets/bundles/effect/wave.zip`。builder は `scripts/build-bcu-wave-effect-bundle.mjs`。aliases: `unit-wave`, `enemy-wave`, `unit-mini-wave`, `enemy-mini-wave`, `unit-surge`, `enemy-surge`, `unit-mini-surge`, `enemy-mini-surge`, `unit-blast`, `enemy-blast`, `strong-attack`, `metal-killer`。Run 2 で `A_SATK` と `A_METAL_KILLER/A_E_METAL_KILLER` aliases を追加し ZIP/manifest を再生成した。
 - `effect:kbeff`: `public/assets/bundles/effect/kbeff.zip`。builder は `scripts/build-bcu-effect-bundle.mjs`。critical/kb/smoke 系。positive buff/status ではなく hit/KBEFF 系。
 - barrier/demon shield raw assets are bundled in `effect:wave` raw tree (`s2`, `s14`) but current actor/base shield renderer lifetime and placement are not wired.
 - `A_COUNTERSURGE` maps to `./org/battle/s18/skill_demonsummon`; raw exists in `effect:wave` all-skill-effects, but current counter-surge runtime/visual mapping is not proven complete.
@@ -140,15 +141,15 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 | 超打たれ強い `AB_RESISTS` | `Data.java AB_RESISTS`; unit index 80 | shared target trait; stronger received damage reduction | `parseUnitAbility` | `DamageAbilityResolver.resolve` | no separate visual | `already-correct` |
 | 超ダメージ `AB_MASSIVE` | `Data.java AB_MASSIVE`; unit index 30 | shared target trait; outgoing damage multiplier | `parseUnitAbility` | `DamageAbilityResolver.resolve` | no separate visual | `already-correct` |
 | 極ダメージ `AB_MASSIVES` | `Data.java AB_MASSIVES`; unit index 81 | shared target trait; stronger outgoing damage multiplier | `parseUnitAbility` | `DamageAbilityResolver.resolve` | no separate visual | `already-correct` |
-| ターゲット限定 `AB_ONLY` | `Data.java AB_ONLY`; unit index 32 | capture gate; actor only if trait-compatible; base can still be captured when no actor candidate per BCU | `parseUnitAbility`; event semantic via attack profile | base `BattleAttackResolver.captureTargets` has filter | no visual | `fact-complete`; current soulstrike direct replacement drops filter, needs Run 2 fix |
+| ターゲット限定 `AB_ONLY` | `Data.java AB_ONLY`; unit index 32 | capture gate; actor only if trait-compatible; base can still be captured when no actor candidate per BCU | `parseUnitAbility`; event semantic via attack profile | `BattleSoulstrikePatch` now reapplies `bcuTraitCompatible` while allowing soulstrike corpse targetability | no visual | `implemented-in-this-pass` |
 | メタル `AB_METALIC` | `Data.java AB_METALIC`; unit index 43; enemy trait metal column | damage gate caps non-crit damage to 1 | `parseUnitAbility`; enemy/unit traits | `DamageAbilityResolver.resolve` | no separate visual | `already-correct` |
-| クリティカル `P_CRIT` | `Data.java P_CRIT`; unit index 31, enemy index 25 | damage gate; probability, metal bypass, damage multiplier | `parseUnitProc`, `parseEnemyProc` | `ProcResolver` + `DamageAbilityResolver` | critical KBEFF in `effect:kbeff`; current critical visual patch not imported in `main.js` | `fact-complete`; logic present, visual import/order still to verify before calling already-correct |
-| メタルキラー `P_METALKILL` | `P_METALKILL`; unit index 112 | metal target; percent/max-hp style kill calculation in `Entity.damaged` | `parseUnitProc` | `DamageAbilityResolver.resolve` | BCU `s20/skill_metal_strong` exists in `effect:wave` raw tree; runtime visual not wired | `fact-complete`; logic hook present, visual alias needed if BCU shows it |
-| 渾身の一撃 `P_SATK` | `P_SATK`; unit 82/83, enemy 75/76 | damage multiplier proc before final damage | `parseUnitProc`, `parseEnemyProc` as `strongAttack` | `DamageAbilityResolver.resolve` | BCU `A_STRONG` via `s6/strong_attack` in `effect:wave` raw tree; no runtime visual alias | `fact-complete`; logic present, visual alias pending |
+| クリティカル `P_CRIT` | `Data.java P_CRIT`; unit index 31, enemy index 25 | damage gate; probability, metal bypass, damage multiplier | `parseUnitProc`, `parseEnemyProc` | `ProcResolver` + `DamageAbilityResolver` + `BattleCriticalEffectPatch` import | critical KBEFF in `effect:kbeff`; `BattleSceneAttackEffectPatch` is imported before critical patch | `implemented-in-this-pass` for visual import/wiring |
+| メタルキラー `P_METALKILL` | `P_METALKILL`; unit index 112 | metal target; percent/max-hp style kill calculation in `Entity.damaged` | `parseUnitProc` | `DamageAbilityResolver.resolve` + `BattleProcHitEffectPatch` | BCU `s20/skill_metal_strong`; bundle alias `effect:wave` `metal-killer/*` | `implemented-in-this-pass` |
+| 渾身の一撃 `P_SATK` | `P_SATK`; unit 82/83, enemy 75/76 | damage multiplier proc before final damage | `parseUnitProc`, `parseEnemyProc` as `strongAttack` | `DamageAbilityResolver.resolve` + `BattleProcHitEffectPatch` | BCU `A_SATK` `s6/strong_attack`; bundle alias `effect:wave` `strong-attack/*` | `implemented-in-this-pass` |
 | 城破壊 `P_ATKBASE` | `P_ATKBASE`; unit 34, enemy 26 | base target only; damage multiplier | `parseUnitProc`, `parseEnemyProc` | `DamageAbilityResolver.resolve` | no separate visual found | `already-correct` |
 | 超生命体特効 `AB_BAKILL` | `AB_BAKILL`; unit index 97; enemy trait 94 baron | baron target; outgoing x1.6, incoming x0.7 | `parseUnitAbility`; enemy trait parse | `DamageAbilityResolver.resolve` | no separate visual | `already-correct` |
-| 超獣特効 `P_BSTHUNT` damage | `Proc.BSTHUNT`; `P_BSTHUNT=54`; unit 105/106/107; enemy trait 101 beast | beast target; outgoing x2.5 in `EEnemy.getDamage`, incoming x0.6 in `EUnit.getDamage` | missing in `parseUnitProc`; `BCU_TRAITS.beast` exists | `DamageAbilityResolver.resolve` can apply both directions | no separate damage visual | `fact-complete` |
-| 超獣特効 `P_BSTHUNT` attack-nullify branch | same as above | pre-damage; when attacker has beast trait and defender `BSTHUNT.active>0`, probability `prob`, duration `time`; status `status[P_BSTHUNT][0]` decrements each tick; rejects damage while active | missing in `parseUnitProc` | `BattleActor.takeDamage` outer pre-damage gate; status tick via `BattleActorProcStatusPatch`/snapshot | BCU uses `A_IMUATK`; raw `public/assets/bcu/000001/org/battle/s7/skill_attack_invalid.*`; bundle plan: extend `effect:status` or status loader alias from existing `effect:wave` raw copy, then rebuild `status-effects.zip` and manifest | `fact-complete` |
+| 超獣特効 `P_BSTHUNT` damage | `Proc.BSTHUNT`; `P_BSTHUNT=54`; unit 105/106/107; enemy trait 101 beast | beast target; outgoing x2.5 in `EEnemy.getDamage`, incoming x0.6 in `EUnit.getDamage` | `parseUnitProc` exposes `beastHunter` / `bsthunt` / `BSTHUNT` from indexes 105/106/107 | `DamageAbilityResolver.resolve` applies both directions using `BCU_TRAITS.beast` | no separate damage visual | `implemented-in-this-pass` |
+| 超獣特効 `P_BSTHUNT` attack-nullify branch | same as above | pre-damage; when attacker has beast trait and defender `BSTHUNT.active>0`, probability `prob`, duration `time`; status `status[P_BSTHUNT][0]` decrements each tick; rejects damage while active | `parseUnitProc` exposes probability/time | `BattleActorAttackNullifyPatch` pre-gates `queueAttackDamage`; status tick via `BattleActorProcStatusPatch`/snapshot alias `beastHunterNullify` | BCU uses `A_IMUATK`; bundled as `effect:status` `A_IMUATK/*`; actor-anchored `ATTACK_NULLIFY` status icon/effect | `implemented-in-this-pass` |
 | 超賢者特効 `AB_SKILL` damage | `AB_SKILL`; unit index 111; enemy trait 104 sage | sage target; outgoing and incoming fixed hunter multipliers | `parseUnitAbility`; enemy trait parse | `DamageAbilityResolver.resolve` | no separate visual | `already-correct` for damage only |
 | 超賢者特効 status resistance | `EEnemy.getResistValue`, `EUnit.getResistValue`; `SUPER_SAGE_RESIST_TYPE` | proc duration/prob resistance and bypass; timing during proc application | `parseUnitAbility` has flag | `BcuResistRuntime` exists but returns unresolved/implemented false | no separate visual | `fact-partial`; exact control flow known, JS resistance field mapping/runtime unresolved |
 | 怪人特効 `AB_VKILL` | `AB_VKILL`; common ability bit; enemy trait 110 villain | villain target; outgoing x2.5, incoming x0.4 per Markdown and BCU constants | unit parser lacks direct source; combo/orb holder not parsed | `DamageAbilityResolver` supports if flag exists | no separate visual | `fact-partial`; local holder path for playable actors is combo/orb, not safely parsed |
@@ -161,11 +162,11 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 | 呪い `P_CURSE` | `P_CURSE`; unit 92/93, enemy 73/74 | post-damage proc; disables effect procs via sealed `getProc` equivalent | `parseUnitProc`, `parseEnemyProc` | `ProcResolver`, status patch | `A_CURSE`/`A_E_CURSE` in `effect:status` | `already-correct` for visible status; seal completeness still below |
 | ワープ `P_WARP` | `P_WARP`; enemy 65/66/67/68 | post-damage proc; only if hit did not KB; remove from field, reappear at distance/time | `parseEnemyProc` | `ProcResolver` has pending only; `BcuProcRuntime` key exists; no full warp actor state | raw `s2/skill_warp*` in `effect:wave`; loader alias not wired | `fact-partial`; KB-gated warp state/lifetime not implemented |
 | 毒撃 `P_POIATK` | `P_POIATK`; enemy 79/80 | post-damage proc; max HP percent extra damage; poison effect spawn | `parseEnemyProc` as `toxic` | `ProcResolver`, `BattleActorProcStatusPatch` | `A_POISON` in `effect:status`; raw `s8/skill_percentage_attack` in `effect:wave` | `already-correct` for current toxic path |
-| 攻撃無効 `P_IMUATK` | `P_IMUATK`; unit 84/85, enemy 77/78 | pre-damage branch in `Entity.damaged`; probability/time; rejects damage and procs while active; status decrements each tick | missing in unit/enemy proc parser | `BattleActor.takeDamage` outer pre-damage gate; status snapshot/renderer | BCU `A_IMUATK`; raw `s7/skill_attack_invalid`; bundle plan as above | `fact-complete` |
+| 攻撃無効 `P_IMUATK` | `P_IMUATK`; unit 84/85, enemy 77/78 | pre-damage branch in `Entity.damaged`; probability/time; rejects damage and procs while active; status decrements each tick | `parseUnitProc`, `parseEnemyProc` expose `attackNullify` / `IMUATK` | `BattleActorAttackNullifyPatch` pre-gates `queueAttackDamage`; active status alias `attackNullify` | BCU `A_IMUATK`; bundled as `effect:status` `A_IMUATK/*` and rendered actor-anchored | `implemented-in-this-pass` |
 | 攻撃力アップ `P_STRONG` | `P_STRONG`; unit 40/41, enemy 32/33 | post-damage/HP threshold; attack multiplier while active | `parseUnitProc`, `parseEnemyProc` | `BattleActorStrengthenLethalPatch`, `DamageCalculator` | `A_UP`/`A_E_UP` in `effect:status`; actor anchored | `already-correct` |
 | 生き残る `P_LETHAL` | `P_LETHAL`; unit 42, enemy 34 | post-damage death gate; probability once; HP set to 1 | `parseUnitProc`, `parseEnemyProc` | `BattleActorStrengthenLethalPatch` | `A_SHIELD`/`A_E_SHIELD` in `effect:status` | `already-correct` |
-| 撃破時お金アップ `P_BOUNTY` | `P_BOUNTY`; unit index 33; `EEnemy.kill` checks status `P_BOUNTY` | death/kill money; BCU doubles earned money once and resets if enemy survives | `parseUnitProc` exposes `bounty` | no dedicated reward patch, but `BattleActor.resolvePostDamage` stores `lastKilledBy` and `BattleScene` `knockback-death` phase has scene economy; enemy reward/drop exists | no separate visual found | `fact-complete`; safe hook is death bookkeeping + `BattleEconomy`, implementation still absent |
-| 1回攻撃 `AB_GLASS` | `AB_GLASS`; unit index 58==2, enemy index 52==2 | after attack, disappear without normal death effect | `parseUnitAbility`, `parseEnemyAbility`; `BattleAttackTimeline.hasGlassAbility` | attack timeline finite-loop support; disappearance/post-attack hook needs explicit cleanup | Markdown says no ability icon and no ascension effect | `fact-complete`; current full disappearance behavior needs Run 2 audit/fix |
+| 撃破時お金アップ `P_BOUNTY` | `P_BOUNTY`; unit index 33; `EEnemy.kill` checks status `P_BOUNTY` | death/kill money; BCU doubles earned money once and resets if enemy survives | `parseUnitProc` exposes `bounty` | `BattleBountyRuntimePatch` records accepted bounty hit and awards in `knockback-death`; clears if target survives | no separate visual found | `implemented-in-this-pass` |
+| 1回攻撃 `AB_GLASS` | `AB_GLASS`; unit index 58==2, enemy index 52==2 | after attack, disappear without normal death effect | `parseUnitAbility`, `parseEnemyAbility`; `BattleAttackTimeline.hasGlassAbility` | `BattleAttackTimeline` finite loop + `BattleActorGlassPatch` post-attack cleanup | Markdown says no ability icon and no ascension effect | `implemented-in-this-pass` |
 | 波動 `P_WAVE` | `P_WAVE`; unit 35/36, enemy 27/28 | projectile after captured hit; normal wave level and timing | `parseUnitProc`, `parseEnemyProc` | `BattleWaveRuntimePatch` | `effect:wave` `unit-wave`/`enemy-wave`; builder wired | `already-correct` |
 | 小波動 `P_MINIWAVE` | mini flag unit 94 / enemy 86 | mini wave; 20% damage in BCU; shorter timing | `parseUnitProc`, `parseEnemyProc` | `BattleWaveRuntimePatch` | `effect:wave` `unit-mini-wave`/`enemy-mini-wave` | `already-correct` |
 | 波動無効 / 波動ストッパー | `P_IMUWAVE`, `AB_WAVES`; unit 46/47, enemy 37/38 | wave damage/proc immunity; stopper visual `A_WAVE_STOP`; immunity visual `A_WAVE_INVALID` | `AB_WAVES` parsed; `P_IMUWAVE` parser incomplete for uppercase immunity runtime | `BcuProcImmunityPatch` expects fields; wave runtime stopper path present but full immunity parse/visual incomplete | raw `s0/wave_invalid`, `s0/wave_stop`; not in status bundle aliases | `fact-partial`; full immunity asset found but parser/runtime/visual mapping incomplete |
@@ -174,14 +175,14 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 | 烈波無効 | `P_IMUVOLC`; unit 91, enemy 85 | surge damage/proc immunity | parser incomplete | `BcuProcImmunityPatch` / surge runtime has shape but no confirmed parser-to-runtime field | no separate visible effect confirmed beyond immunity effect search | `fact-partial` |
 | 死亡時烈波 | `P_DEATHSURGE`; enemy 89/90/91/92 | death trigger; surge spawn | `parseEnemyProc` | no complete death-surge hook found in current runtime | `effect:wave` surge aliases available | `fact-partial`; death timing/hook not complete |
 | 烈波カウンター `AB_CSUR` | `AB_CSUR`; unit 109, enemy 103 | when hit by surge, counter-surge spawn; BCU `A_COUNTERSURGE` | parsed as `counterSurge` | no full current counter runtime proven | raw `s18/skill_demonsummon` in `effect:wave` | `fact-partial` |
-| 爆波 `P_BLAST` | `P_BLAST`; unit 113/114/115, enemy 106/107/108 | after captured hit; `ContBlast` at frames 10/20/30; damage 100/70/40%, lifetime 44 | `parseUnitProc`, `parseEnemyProc` | no blast runtime patch found; `EffectRuntime` marks blast unimplemented | `effect:wave` `unit-blast`/`enemy-blast`; builder wired | `fact-complete`; source/assets/hooks known, runtime to add |
+| 爆波 `P_BLAST` | `P_BLAST`; unit 113/114/115, enemy 106/107/108 | after captured hit; `ContBlast` attacks from frame 10, level bands reset at 10/20/30; damage 100/70/40%, lifetime 44 | `parseUnitProc`, `parseEnemyProc`; `AbilityModel`/`ProcResolver` semantic added | `BattleBlastRuntimePatch` queues ContBlast-like runtime and uses non-recursive blast event | `effect:wave` `unit-blast`/`enemy-blast`; builder wired | `implemented-in-this-pass` |
 | 爆波無効 `P_IMUBLAST` | `P_IMUBLAST`; unit 116, enemy 109 | blast damage/proc immunity | parser missing | no blast runtime yet; immunity depends on blast object meta | no separate visible effect confirmed | `fact-partial` |
 | バリア | `P_BARRIER`; enemy index 64 | pre-damage shield gate; blocks until broken | `parseEnemyProc` | `BattleActorBarrierShieldPatch` | BCU `A_B`/`A_E_B`; raw `s2/barrier`; in `effect:wave` raw tree, not actor shield renderer | `fact-partial`; logic present, visual/lifetime placement incomplete |
 | バリアブレイカー | `P_BREAK`; unit 70 | barrier gate breaker probability | `parseUnitProc` | `ProcResolver` pending + barrier patch consumes | barrier break raw in `s2`; visual not wired | `fact-partial`; visual incomplete |
 | 悪魔シールド | `P_DEMONSHIELD`; enemy 87/88 | shield HP/regeneration; damage absorption | `parseEnemyProc` | `BattleActorBarrierShieldPatch` | raw `s14/skill_demonshield*` in `effect:wave` raw tree | `fact-partial`; logic present, visual/regen timing audit needed |
 | シールドブレイカー | `P_SHIELDBREAK`; unit 95 | demon shield pierce probability | `parseUnitProc` | `ProcResolver` pending + shield patch consumes | demon shield breaker raw exists | `fact-partial`; visual incomplete |
 | ゾンビキラー `AB_ZKILL` | `AB_ZKILL`; unit index 52 | kill gate; suppress zombie revive | `parseUnitAbility` | `BattleActorZombieRevivePatch` | no separate visual required by BCU source found | `already-correct` |
-| 魂攻撃 `AB_CKILL` | `AB_CKILL`; unit index 98 | corpse target condition; cancels zombie revive | `parseUnitAbility` | `BattleSoulstrikePatch` takeDamage; capture override has target-only regression | no separate visual required by inspected source | `fact-complete`; behavior hook present, capture integration needs Run 2 fix |
+| 魂攻撃 `AB_CKILL` | `AB_CKILL`; unit index 98 | corpse target condition; cancels zombie revive | `parseUnitAbility` | `BattleSoulstrikePatch` takeDamage and capture override with `AB_ONLY` compatibility restored | no separate visual required by inspected source | `implemented-in-this-pass` |
 | 蘇生 | `P_REVIVE`; enemy 45/46/47 | death/post-damage; corpse state and revive after time with HP percent | `parseEnemyProc` | `BattleActorZombieRevivePatch` | no separate visual confirmed in current source pass | `already-correct` for current revive path |
 | 地中移動 | `P_BURROW`; enemy 43/44 | movement/capture state; disappear and reappear by distance/count | `parseEnemyProc` | no complete burrow movement state found | raw zombie movement assets not fully mapped | `fact-partial` |
 | 召喚 | summon-related common effects and Markdown | spawn auxiliary actor/effect; exact holder/data path not proven in local JS | not parsed | no runtime hook | raw `s17/s18/skill_demonsummon*` in `effect:wave` raw tree | `fact-partial` |
@@ -189,17 +190,16 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 | freeze/slow/weaken/kb/warp/curse/toxic immunities | `P_IMUKB`, `P_IMUSTOP`, `P_IMUSLOW`, `P_IMUWEAK`, `P_IMUWARP`, `P_IMUCURSE`, `P_IMUPOIATK`; unit/enemy indexes listed above | proc application gate; full immunity shows invalid effect | parser incomplete/inconsistent uppercase fields | `BcuProcImmunityPatch` full-only path exists but lacks parser coverage and visual | Markdown says blue round effect; BCU `A_EFF_INV`/invalid effects need exact local mapping | `fact-partial` |
 | partial resistances | BCU `getResistValue`, sage hunter, talent/orb fields | duration/prob reduction; additive/multiplicative rules depend on source | not safely parsed | `BcuResistRuntime` explicitly unresolved | no distinct visual | `fact-partial` |
 
-## `fact-complete` rows to implement in Run 2
+## Implemented in Run 2
 
-- `P_BSTHUNT` parse and damage: unit indexes 105/106/107, beast trait 101, x2.5 outgoing, x0.6 incoming.
-- `P_BSTHUNT` attack-nullify branch: same status lifetime as `status[P_BSTHUNT][0]`; `A_IMUATK` visual remains while `P_IMUATK` or `P_BSTHUNT` status active.
-- `P_IMUATK`: parse unit 84/85 and enemy 77/78; implement pre-damage attack-nullify gate and actor-anchored `A_IMUATK`.
-- `AB_ONLY` capture regression under `BattleSoulstrikePatch`: preserve base target-only filtering while allowing soulstrike corpse targets.
-- `P_BOUNTY`: award kill money using existing `BattleEconomy` and enemy `reward/dropAmount`, with BCU reset semantics if target survives.
-- `AB_GLASS`: audit/finish post-attack disappearance without normal death effect.
-- `P_BLAST`: runtime object using existing `P_BLAST` parser, BCU timing, and existing `effect:wave` blast aliases.
-- `P_METALKILL`, `P_SATK`, `P_CRIT` visuals: logic is present enough; visual parity requires importing/wiring existing raw or bundle aliases where BCU visibly spawns an effect.
-- `AB_CKILL`: fix target capture integration together with `AB_ONLY`.
+- `P_BSTHUNT` parse and damage: unit indexes 105/106/107 now expose `beastHunter` / `bsthunt` / `BSTHUNT`; `DamageAbilityResolver` applies x2.5 outgoing vs beast and x0.6 incoming from beast.
+- `P_BSTHUNT` attack-nullify branch: `BattleActorAttackNullifyPatch` rolls active beast-hunter nullify against beast attackers and stores `beastHunterNullify` status; `ATTACK_NULLIFY` snapshot renders `A_IMUATK`.
+- `P_IMUATK`: unit 84/85 and enemy 77/78 parse as `attackNullify` / `IMUATK`; the same pre-damage gate rejects damage while active.
+- `AB_ONLY` + `AB_CKILL`: `BattleSoulstrikePatch` keeps soulstrike corpse targetability and reapplies `AB_ONLY` trait filtering.
+- `P_BOUNTY`: `BattleBountyRuntimePatch` records accepted bounty hits, awards scene economy money at death, and clears the status if the target survives.
+- `AB_GLASS`: `BattleActorGlassPatch` removes one-attack actors after attack completion without entering normal death/KB effect flow.
+- `P_BLAST`: `BattleBlastRuntimePatch` creates a ContBlast-style runtime object, attacks levels at BCU frames, and uses `effect:wave` `unit-blast` / `enemy-blast`.
+- `P_METALKILL`, `P_SATK`, `P_CRIT` visuals: critical patch is imported; `strong-attack` and `metal-killer` aliases were added to `effect:wave` and are spawned by `BattleProcHitEffectPatch`.
 
 ## Deferred / `fact-partial` rows and blockers
 
@@ -212,28 +212,19 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 - Burrow, summon, spirit: holder/runtime identity and movement/spawn state are not sufficiently mapped.
 - Partial resistances: exact source fields beyond sage hunter and current runtime integration remain unresolved.
 
-## Run 2 で変更すべきファイル
+## Run 2 changed files
 
-- `js/battle/BcuCombatModel.js`: parse `P_BSTHUNT`, `P_IMUATK`, missing immunity flags, and any exact complete fields.
-- `js/battle/AbilityModel.js`: expose semantic labels for beast hunter, attack nullify, and complete blast/status keys.
-- `js/battle/DamageAbilityResolver.js`: apply `P_BSTHUNT` x2.5/x0.6 using `BCU_TRAITS.beast`; remove stale omission note.
-- `js/battle/BattleActorAttackNullifyPatch.js` or equivalent new focused patch: pre-damage `P_IMUATK`/`P_BSTHUNT` gate, status lifetime, active damage rejection.
-- `js/battle/BattleActorProcStatusPatch.js`, `BcuStatusSnapshot.js`, `BcuStatusIconResolver.js`, `BcuStatusEffectSpec.js`: status storage/snapshot/render keys for attack nullify.
-- `scripts/build-bcu-status-effect-bundle.mjs` and generated `public/assets/bundles/effect/status-effects.zip` / generated manifest or inventory: add `A_IMUATK` if using the actor-anchored status bundle.
-- `js/battle/BattleSoulstrikePatch.js`: preserve `AB_ONLY` trait filtering in capture.
-- `js/battle/BattleBountyRuntimePatch.js` or existing post-damage scene hook: implement `P_BOUNTY`.
-- `js/battle/BattleBlastRuntimePatch.js` plus `js/main.js`: add blast runtime import only after the wrapper order is documented.
+- Parser/model/runtime: `js/battle/BcuCombatModel.js`, `js/battle/AbilityModel.js`, `js/battle/DamageAbilityResolver.js`, `js/battle/ProcResolver.js`, `js/battle/EffectRuntime.js`, `js/main.js`.
+- New focused runtime patches: `js/battle/BattleActorAttackNullifyPatch.js`, `js/battle/BattleBountyRuntimePatch.js`, `js/battle/BattleActorGlassPatch.js`, `js/battle/BattleBlastRuntimePatch.js`, `js/battle/BattleProcHitEffectPatch.js`.
+- Existing runtime fixes: `js/battle/BattleSoulstrikePatch.js`, `js/battle/BattleWaveRuntimePatch.js`, `js/battle/BattleWaveEffectLoader.js`.
+- Status/effect wiring: `js/battle/bcu-runtime/BcuStatusSnapshot.js`, `js/battle/bcu-runtime/BcuStatusIconResolver.js`, `js/battle/bcu-runtime/BcuStatusEffectSpec.js`, `scripts/build-bcu-wave-effect-bundle.mjs`.
+- Rebuilt/generated assets: `public/assets/bundles/effect/status-effects.zip`, `public/assets/bundles/effect/wave.zip`, `public/assets/generated/bcu-bundle-manifest.json`, `public/assets/generated/bcu-status-effect-inventory.json`.
 
-## Run 2 implementation order
+## Next implementation order
 
-1. Parser-only changes for `P_BSTHUNT`, `P_IMUATK`, and exact complete fields; run `node --check`.
-2. `P_BSTHUNT` damage multipliers in `DamageAbilityResolver`; add focused static/unit checks.
-3. Attack-nullify status gate and `A_IMUATK` actor visual; extend status bundle builder and rebuild ZIP/manifest.
-4. Fix `BattleSoulstrikePatch` capture to preserve `AB_ONLY`; verify corpse targeting and target-only cases.
-5. Implement `P_BOUNTY` kill money after post-damage death bookkeeping.
-6. Implement/verify `AB_GLASS` post-attack disappearance.
-7. Implement `P_BLAST` runtime using existing `effect:wave` aliases.
-8. Update this matrix with implemented rows and all command results.
+1. Keep `fact-partial` rows deferred until exact parser/runtime/visual blockers are closed.
+2. Next highest-value candidates are full proc immunities and barrier/demon shield visuals because raw assets exist but parser/runtime mapping is incomplete.
+3. Do not implement `P_WARP`, death surge, counter surge, burrow, summon, spirit, or partial resistances until the blockers above are resolved in this matrix.
 
 ## 検索・確認コマンド
 
@@ -262,7 +253,7 @@ unzip -l public/assets/bundles/effect/status-effects.zip
 unzip -l public/assets/bundles/effect/wave.zip
 ```
 
-## Run 1 verification commands
+## Run 2 verification commands
 
 These are terminal-only checks; no browser test is required for this analysis pass.
 
@@ -271,32 +262,58 @@ node --check js/battle/BcuCombatModel.js
 node --check js/battle/DamageAbilityResolver.js
 node --check js/battle/ProcResolver.js
 node --check js/main.js
-node --check scripts/build-bcu-status-effect-bundle.mjs
+node --check js/battle/AbilityModel.js
+node --check js/battle/BattleActorAttackNullifyPatch.js
+node --check js/battle/BattleBlastRuntimePatch.js
+node --check js/battle/BattleBountyRuntimePatch.js
+node --check js/battle/BattleActorGlassPatch.js
+node --check js/battle/BattleProcHitEffectPatch.js
+node --check js/battle/BattleSoulstrikePatch.js
+node --check js/battle/BattleWaveEffectLoader.js
+node --check js/battle/BattleWaveRuntimePatch.js
+node --check js/battle/EffectRuntime.js
+node --check js/battle/bcu-runtime/BcuStatusSnapshot.js
+node --check js/battle/bcu-runtime/BcuStatusIconResolver.js
+node --check js/battle/bcu-runtime/BcuStatusEffectSpec.js
 node --check scripts/build-bcu-wave-effect-bundle.mjs
-node --check scripts/build-bcu-effect-bundle.mjs
-unzip -l public/assets/bundles/effect/status-effects.zip
-unzip -l public/assets/bundles/effect/wave.zip
+node scripts/build-bcu-status-effect-bundle.mjs
+node scripts/build-bcu-wave-effect-bundle.mjs
+unzip -l public/assets/bundles/effect/status-effects.zip | rg 'A_IMUATK/(image|imgcut|model|DEF)'
+unzip -l public/assets/bundles/effect/wave.zip | rg '^(.*)(strong-attack|metal-killer|unit-blast|enemy-blast)/(image|imgcut|model|anim)'
 ```
 
-Run 1 result:
+Run 2 result:
 
 - `node --check js/battle/BcuCombatModel.js`: pass.
 - `node --check js/battle/DamageAbilityResolver.js`: pass.
 - `node --check js/battle/ProcResolver.js`: pass.
 - `node --check js/main.js`: pass.
-- `node --check scripts/build-bcu-status-effect-bundle.mjs`: pass.
+- `node --check js/battle/AbilityModel.js`: pass.
+- `node --check js/battle/BattleActorAttackNullifyPatch.js`: pass.
+- `node --check js/battle/BattleBlastRuntimePatch.js`: pass.
+- `node --check js/battle/BattleBountyRuntimePatch.js`: pass.
+- `node --check js/battle/BattleActorGlassPatch.js`: pass.
+- `node --check js/battle/BattleProcHitEffectPatch.js`: pass.
+- `node --check js/battle/BattleSoulstrikePatch.js`: pass.
+- `node --check js/battle/BattleWaveEffectLoader.js`: pass.
+- `node --check js/battle/BattleWaveRuntimePatch.js`: pass.
+- `node --check js/battle/EffectRuntime.js`: pass.
+- `node --check js/battle/bcu-runtime/BcuStatusSnapshot.js`: pass.
+- `node --check js/battle/bcu-runtime/BcuStatusIconResolver.js`: pass.
+- `node --check js/battle/bcu-runtime/BcuStatusEffectSpec.js`: pass.
 - `node --check scripts/build-bcu-wave-effect-bundle.mjs`: pass.
-- `node --check scripts/build-bcu-effect-bundle.mjs`: pass.
-- `unzip -l public/assets/bundles/effect/status-effects.zip`: pass; 60 files; no `A_IMUATK/*` entries.
-- `unzip -l public/assets/bundles/effect/wave.zip`: pass; 203 files; includes `all-skill-effects/000001/org/battle/s7/skill_attack_invalid.*`, `unit-blast/*`, and `enemy-blast/*`.
+- `node scripts/build-bcu-status-effect-bundle.mjs`: pass; rebuilt `status-effects.zip` and inventory.
+- `node scripts/build-bcu-wave-effect-bundle.mjs`: pass; rebuilt `wave.zip` and manifest.
+- `unzip -l public/assets/bundles/effect/status-effects.zip | rg 'A_IMUATK/(image|imgcut|model|DEF)'`: pass; all four entries present.
+- `unzip -l public/assets/bundles/effect/wave.zip | rg '^(.*)(strong-attack|metal-killer|unit-blast|enemy-blast)/(image|imgcut|model|anim)'`: pass; blast, strong attack, and metal killer aliases present.
+- focused Node import check for `P_BSTHUNT` parser/damage: pass; parse `{active:1,prob:40,time:120}`, outgoing damage `250`, incoming damage `60`.
 
 ## Validation limits
 
 - BCU extraction and source search were local only; no external source was used.
-- Browser rendering was not run by request. The document only claims loader/bundle evidence from code and ZIP entries, not visual pixel validation.
-- `already-correct` means current JS matches the inspected local BCU behavior for the scoped logic and required visible effect found in this pass. Rows marked `fact-complete` are implementable in Run 2 but not yet current runtime parity.
+- Browser rendering was not run by request. The document only claims terminal-verified loader/bundle evidence from code and ZIP entries, not visual pixel validation.
+- `already-correct` means current JS matches the inspected local BCU behavior for the scoped logic and required visible effect found in this pass. Rows marked `implemented-in-this-pass` were changed by this commit.
 
 ## Rollback plan
 
-- Run 1 rollback: revert only `docs/ability-logic/fact-only-ability-parity-matrix.md`.
-- Run 2 rollback: keep parser, runtime, bundle, generated manifest, and matrix updates in one commit; if any complete row fails verification, revert that commit or split by ability before merge. Do not hand-edit ZIP files; always restore/rebuild them through the builder scripts.
+- Run 2 rollback: revert this commit to restore parser, runtime, bundle ZIPs, generated manifest/inventory, and matrix together. Do not hand-edit ZIP files; always restore/rebuild them through the builder scripts.

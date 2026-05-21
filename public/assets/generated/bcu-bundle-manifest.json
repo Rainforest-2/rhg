@@ -33411,8 +33411,8 @@
       "key": "effect:wave",
       "bundlePath": "public/assets/bundles/effect/wave.zip",
       "status": "full",
-      "sizeBytes": 1140217,
-      "hash": "b2105561209254a3b0b50b3a771d933c32dc5f2a6fcbed71bb848aba474e1c77",
+      "sizeBytes": 1163513,
+      "hash": "d9d57ee0b2c6faa5acd2612015c4e8df1834af2f5a7d45cd5c4d1505f0c0470f",
       "files": [
         "bundle.json",
         "all-skill-effects/000001/org/battle/s0/skill_effect_invalid.maanim",
@@ -33591,6 +33591,14 @@
         "enemy-wave/image.png",
         "enemy-wave/imgcut.imgcut",
         "enemy-wave/model.mamodel",
+        "metal-killer/anim.maanim",
+        "metal-killer/image.png",
+        "metal-killer/imgcut.imgcut",
+        "metal-killer/model.mamodel",
+        "strong-attack/anim.maanim",
+        "strong-attack/image.png",
+        "strong-attack/imgcut.imgcut",
+        "strong-attack/model.mamodel",
         "unit-blast/anim-dummy.maanim",
         "unit-blast/anim-explode.maanim",
         "unit-blast/anim-start.maanim",
@@ -33625,8 +33633,8 @@
       "key": "effect:status",
       "bundlePath": "public/assets/bundles/effect/status-effects.zip",
       "status": "full",
-      "sizeBytes": 413133,
-      "hash": "3e49560f093aeeb20136db3fc455389c01c0f2e9e7cee694056590103858e251"
+      "sizeBytes": 425621,
+      "hash": "e223cfcf26e99048548ca9ae9518f8e5275be0f06f31dd621139144023404bd2"
     }
   }
 }

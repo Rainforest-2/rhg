@@ -1,5 +1,6 @@
 import { BattleActor } from './BattleActor.js';
 import { BattleAttackResolver } from './BattleAttackResolver.js';
+import { bcuTraitCompatible, describeBcuTraitCompatibility, hasTargetOnly } from './BcuTraitCompatibility.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.soulstrike-patch.v1');
 const RESOLVER_PATCH_FLAG = Symbol.for('wanko-battle.attack-resolver-soulstrike.v1');
@@ -23,6 +24,11 @@ function isActorTargetableForEvent(target, event, attacker) {
   return false;
 }
 
+function isBcuTraitAllowed(target, event, attacker) {
+  if (!hasTargetOnly(attacker, event)) return true;
+  return bcuTraitCompatible({ attacker, target, targetType: 'actor', targetOnly: true });
+}
+
 export function installBattleSoulstrikePatch() {
   if (!BattleAttackResolver[RESOLVER_PATCH_FLAG]) {
     BattleAttackResolver[RESOLVER_PATCH_FLAG] = true;
@@ -31,6 +37,7 @@ export function installBattleSoulstrikePatch() {
       const actorCandidates = (enemyActors || [])
         .filter((t) => isActorTargetableForEvent(t, event, attacker))
         .filter((t) => this.isTargetInEventRange(attacker, t, event))
+        .filter((t) => isBcuTraitAllowed(t, event, attacker))
         .map((target) => ({ target, targetType: 'actor', event, soulstrikeCorpse: isZombieCorpse(target) }));
       const baseCandidate = enemyBase?.isAlive?.() && event?.allowBaseHit !== false && this.isTargetInEventRange(attacker, enemyBase, event)
         ? { target: enemyBase, targetType: 'base', event }
@@ -42,6 +49,9 @@ export function installBattleSoulstrikePatch() {
       }
       const c = actorCandidates.length ? actorCandidates : (baseCandidate ? [baseCandidate] : []);
       const one = this.chooseSingleTarget(attacker, c);
+      if (one?.targetType === 'actor' && hasTargetOnly(attacker, event)) {
+        one.traitCompatibility = describeBcuTraitCompatibility({ attacker, target: one.target, targetType: 'actor', targetOnly: true });
+      }
       return one ? [one] : [];
     };
   }

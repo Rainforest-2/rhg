@@ -14,6 +14,7 @@ export const PHASE_A_STATUS_EFFECT_KEYS = Object.freeze([
   'A_E_UP',
   'A_SHIELD',
   'A_E_SHIELD',
+  'A_IMUATK',
   'A_CURSE',
   'A_E_CURSE',
   'A_SEAL',
@@ -91,6 +92,13 @@ export const BCU_STATUS_EFFECT_SPECS = Object.freeze({
     model: 'org/battle/s0/shield/skill_shield_e.mamodel',
     variants: { DEF: 'org/battle/s0/shield/skill_shield_e.maanim' }
   },
+  A_IMUATK: {
+    phase: 'A',
+    image: 'org/battle/s7/skill007.png',
+    imgcut: 'org/battle/s7/skill007.imgcut',
+    model: 'org/battle/s7/skill_attack_invalid.mamodel',
+    variants: { DEF: 'org/battle/s7/skill_attack_invalid.maanim' }
+  },
   A_CURSE: {
     phase: 'A',
     image: 'org/battle/s3/skill003.png',
@@ -135,6 +143,7 @@ export function getStatusEffectKey(statusKey, actor) {
   if (statusKey === 'WEAK') return enemy ? 'A_E_DOWN' : 'A_DOWN';
   if (statusKey === 'STRONG') return enemy ? 'A_E_UP' : 'A_UP';
   if (statusKey === 'LETHAL') return enemy ? 'A_E_SHIELD' : 'A_SHIELD';
+  if (statusKey === 'ATTACK_NULLIFY') return 'A_IMUATK';
   if (statusKey === 'CURSE') return enemy ? 'A_E_CURSE' : 'A_CURSE';
   if (statusKey === 'SEAL') return enemy ? 'A_E_SEAL' : 'A_SEAL';
   if (statusKey === 'POISON') return 'A_POISON';

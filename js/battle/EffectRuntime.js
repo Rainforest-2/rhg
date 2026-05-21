@@ -65,6 +65,17 @@ export class EffectRuntime {
   }
 
   static getUnsupportedEffectCatalog() {
-    return ['wave', 'miniWave', 'surge', 'miniSurge', 'critical', 'barrierBreak', 'shieldPierce'].map((key) => ({ key, implemented: false }));
+    return [
+      ['wave', true],
+      ['miniWave', true],
+      ['surge', true],
+      ['miniSurge', true],
+      ['blast', true],
+      ['critical', true],
+      ['strongAttack', true],
+      ['metalKiller', true],
+      ['barrierBreak', false],
+      ['shieldPierce', false]
+    ].map(([key, implemented]) => ({ key, implemented }));
   }
 }

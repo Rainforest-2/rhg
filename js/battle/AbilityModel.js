@@ -7,15 +7,18 @@ export const ABILITY_STATUS = Object.freeze({
 });
 
 const ABILITY_KEYS = [
-  'critical','savageBlow','baseDestroyer','wave','miniWave','surge','miniSurge','freeze','slow','weaken','knockbackProc','warp','curse','toxic','barrierBreaker','shieldPierce','zombieKiller','soulstrike','resistant','massiveDamage','insaneDamage','tough','insanelyTough','metal','traitTarget','strong','targetOnly','witchKiller','evaKiller','baronKiller','sageSlayer','metalKiller'
+  'critical','savageBlow','baseDestroyer','wave','miniWave','surge','miniSurge','blast','freeze','slow','weaken','knockbackProc','warp','curse','toxic','attackNullify','beastHunter','barrierBreaker','shieldPierce','zombieKiller','soulstrike','resistant','massiveDamage','insaneDamage','tough','insanelyTough','metal','traitTarget','strong','targetOnly','witchKiller','evaKiller','baronKiller','sageSlayer','metalKiller'
 ];
 
 export const ABILITY_CATALOG = Object.freeze(Object.fromEntries(ABILITY_KEYS.map((key) => {
   const base = { key, category: 'other', implemented: false, partial: false, resolver: null, notes: 'not-implemented' };
-  if (['critical', 'baseDestroyer', 'metal', 'strong', 'massiveDamage', 'insaneDamage', 'resistant', 'insanelyTough', 'metalKiller'].includes(key)) {
+  if (['critical', 'baseDestroyer', 'metal', 'strong', 'massiveDamage', 'insaneDamage', 'resistant', 'insanelyTough', 'metalKiller', 'beastHunter'].includes(key)) {
     return [key, { ...base, category: 'damage', implemented: true, partial: false, resolver: 'DamageCalculator/BcuDamageResolver', notes: 'BCU CSV mapped' }];
   }
-  const category = ['freeze','slow','weaken','knockbackProc','warp','curse','toxic','wave','miniWave','surge','miniSurge','barrierBreaker','shieldPierce','zombieKiller','soulstrike'].includes(key)
+  if (['blast', 'attackNullify'].includes(key)) {
+    return [key, { ...base, category: 'proc', implemented: true, partial: false, resolver: 'ProcResolver/BattleScene runtime patches', notes: 'BCU proc mapped' }];
+  }
+  const category = ['freeze','slow','weaken','knockbackProc','warp','curse','toxic','attackNullify','wave','miniWave','surge','miniSurge','blast','barrierBreaker','shieldPierce','zombieKiller','soulstrike'].includes(key)
     ? 'proc'
     : (['resistant','massiveDamage','insaneDamage','tough','insanelyTough','traitTarget','targetOnly'].includes(key) ? 'trait' : 'damage');
   return [key, { ...base, category }];
@@ -41,10 +44,12 @@ function buildBcuProcSemantic(proc = {}, abilityFlags = {}) {
     miniWave: procProb(proc, 'miniWave') > 0,
     surge: procProb(proc, 'volcano') > 0 || procProb(proc, 'deathSurge') > 0,
     miniSurge: procProb(proc, 'miniVolcano') > 0,
+    blast: procProb(proc, 'blast') > 0,
     warp: procProb(proc, 'warp') > 0,
     curse: procProb(proc, 'curse') > 0,
     seal: procProb(proc, 'seal') > 0,
     toxic: procProb(proc, 'toxic') > 0,
+    attackNullify: procProb(proc, 'attackNullify') > 0,
     barrierBreaker: procProb(proc, 'barrierBreaker') > 0,
     shieldPierce: procProb(proc, 'shieldBreaker') > 0,
     zombieKiller: !!abilityFlags.zombieKiller,
@@ -52,7 +57,8 @@ function buildBcuProcSemantic(proc = {}, abilityFlags = {}) {
     savageBlow: procProb(proc, 'strongAttack') > 0,
     baseDestroyer: procValue(proc, 'baseDestroyer', 'mult') > 0,
     critical: procProb(proc, 'critical') > 0,
-    metalKiller: procValue(proc, 'metalKiller', 'mult') > 0
+    metalKiller: procValue(proc, 'metalKiller', 'mult') > 0,
+    beastHunter: Number(proc?.beastHunter?.active || proc?.bsthunt?.active || proc?.BSTHUNT?.active || 0) > 0
   };
 }
 

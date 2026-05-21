@@ -28,8 +28,10 @@ async function boot() {
     await import('./battle/BattleActorBarrierShieldPatch.js');
     await import('./battle/BattleSoulstrikePatch.js');
     await import('./battle/BattleDeterministicRandomPatch.js');
+    await import('./battle/BattleActorAttackNullifyPatch.js');
     await import('./battle/BattleWaveRuntimePatch.js');
     await import('./battle/BattleSurgeRuntimePatch.js');
+    await import('./battle/BattleBlastRuntimePatch.js');
     await import('./battle/BattleBaseProjectileProcPatch.js');
     await import('./battle/BattleProjectileRuntimeBugfixPatch.js');
     await import('./battle/BattleSceneBcuWaveRuntimePatch.js');
@@ -45,6 +47,7 @@ async function boot() {
     await import('./battle/BattleSceneBcuAttackPhasePatch.js');
     await import('./battle/BattleSceneProcApplyPatch.js');
     await import('./battle/BattleSceneBcuProcRuntimePatch.js');
+    await import('./battle/BattleBountyRuntimePatch.js');
     await import('./battle/BattleSceneBcuStatusIconPatch.js');
     await import('./battle/BattleSceneBcuStatusEffectRenderPatch.js');
     await import('./battle/BattleSceneBcuTouchPatch.js');
@@ -54,10 +57,13 @@ async function boot() {
     await import('./battle/BcuKnockbackProcPriorityPatch.js');
     await import('./battle/BattleActorStrengthenLethalPatch.js');
     await import('./battle/BattleActorZombieRevivePatch.js');
+    await import('./battle/BattleActorGlassPatch.js');
     await import('./battle/BcuKnockbackEffectLayerPatch.js');
     await import('./battle/BcuKnockbackAnimationPatch.js');
     await import('./battle/BcuProcImmunityPatch.js');
     await import('./battle/BattleSceneAttackEffectPatch.js');
+    await import('./battle/BattleCriticalEffectPatch.js');
+    await import('./battle/BattleProcHitEffectPatch.js');
     await import('./battle/BattleProjectileEffectBcuParityPatch.js');
     await import('./battle/BattleProjectilePerformanceAndPositionPatch.js');
     await import('./battle/BattleCrowdPerformancePatch.js');

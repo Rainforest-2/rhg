@@ -11,7 +11,8 @@ const STATUS_TO_EFFECT = [
   ['CURSE', 'P_CURSE'],
   ['SEAL', 'P_SEAL'],
   ['POISON', 'P_POISON'],
-  ['WARP', 'P_WARP']
+  ['WARP', 'P_WARP'],
+  ['ATTACK_NULLIFY', 'P_IMUATK']
 ];
 
 export function resolveStatusIcons(actor, scene) {

@@ -33,6 +33,7 @@ function payloadFor(key, proc = {}) {
   if (key === 'miniWave') return { prob: procNumber(proc, 'miniWave', 'prob'), level: procNumber(proc, 'miniWave', 'level'), mult: procNumber(proc, 'miniWave', 'mult') };
   if (key === 'surge') return { prob: procNumber(proc, 'volcano', 'prob'), volcano: proc?.volcano || null, deathSurge: null };
   if (key === 'miniSurge') return { prob: procNumber(proc, 'miniVolcano', 'prob'), miniVolcano: proc?.miniVolcano || null };
+  if (key === 'blast') return { prob: procNumber(proc, 'blast', 'prob'), blast: proc?.blast || null, dis0: procNumber(proc, 'blast', 'dis0'), dis1: procNumber(proc, 'blast', 'dis1') };
   if (key === 'barrierBreaker') return { prob: procNumber(proc, 'barrierBreaker', 'prob') };
   if (key === 'shieldPierce') return { prob: procNumber(proc, 'shieldBreaker', 'prob') };
   if (key === 'zombieKiller') return { prob: 100 };
@@ -55,6 +56,7 @@ export class ProcResolver {
       miniWave: { key: 'miniWave', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
       surge: { key: 'surge', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
       miniSurge: { key: 'miniSurge', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
+      blast: { key: 'blast', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
       barrierBreaker: { key: 'barrierBreaker', category: 'shield', implemented: false, pendingSupported: true, pendingType: 'shield', target: 'actor' },
       shieldPierce: { key: 'shieldPierce', category: 'shield', implemented: false, pendingSupported: true, pendingType: 'shield', target: 'actor' },
       zombieKiller: { key: 'zombieKiller', category: 'special', implemented: false, pendingSupported: true, pendingType: 'special', target: 'actor' },

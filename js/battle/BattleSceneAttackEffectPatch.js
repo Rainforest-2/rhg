@@ -7,12 +7,16 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v6-smoke-kind');
-const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v6-projectile-wave-offset');
+const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v7-projectile-blast-offset');
 const BCU_HIT_SOURCE = 'bcu-effanim-attack-smoke';
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BASE_SMOKE_Y_OFFSET = 100;
 const BCU_SMOKE_SCALE = 1.2;
-const PROJECTILE_EFFECT_SOURCES = new Set(['bcu-effanim-wave-cont-wave-def', 'bcu-effanim-surge-cont-volcano']);
+const PROJECTILE_EFFECT_SOURCES = new Set([
+  'bcu-effanim-wave-cont-wave-def',
+  'bcu-effanim-surge-cont-volcano',
+  'bcu-effanim-cont-blast'
+]);
 
 function finiteNumber(...values) {
   for (const value of values) {
@@ -256,7 +260,7 @@ function drawOneBcuEffect(renderer, ctx, effect) {
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
   const projectile = isProjectileContAbEffect(effect);
-  // BCU BattleBox.drawEff uses pSiz = siz * sprite for ContAb, including ContWaveDef/ContVolcano.
+  // BCU BattleBox.drawEff uses pSiz = siz * sprite for ContAb, including ContWaveDef/ContVolcano/ContBlast.
   // Hit smoke additionally uses its own 1.2 effect.scale through Entity.damage smoke draw.
   const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
   const baseX = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);

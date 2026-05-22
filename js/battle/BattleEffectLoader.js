@@ -62,15 +62,18 @@ function maybeParseEffectDefinition({ modelText, animText, source }) {
   return parseEffectDefinition({ modelText, animText, source });
 }
 
-function attachCompatibilityDefinitions(asset, attackDef, whiteDef, criticalDef, criticalMissingReason = null) {
+function attachCompatibilityDefinitions(asset, attackDef, whiteDef, criticalDef, criticalMissingReason = null, bossShockwaveDef = null, bossShockwaveMissingReason = null) {
   const effectDefinitions = { attack: attackDef, white: whiteDef };
   if (criticalDef) effectDefinitions.critical = criticalDef;
+  if (bossShockwaveDef) effectDefinitions.bossShockwave = bossShockwaveDef;
   return {
     ...asset,
     effectDefinitions,
     smokeDefinitions: { attack: attackDef, white: whiteDef },
     criticalEffectDefinition: criticalDef || null,
-    criticalEffectMissingReason: criticalDef ? null : criticalMissingReason
+    criticalEffectMissingReason: criticalDef ? null : criticalMissingReason,
+    bossShockwaveEffectDefinition: bossShockwaveDef || null,
+    bossShockwaveEffectMissingReason: bossShockwaveDef ? null : bossShockwaveMissingReason
   };
 }
 
@@ -98,9 +101,12 @@ export class BattleEffectLoader {
     const whiteAnimText = await readOptionalBundleText(provider, this.bundleRef, 'white_smoke.maanim') || EMBEDDED_WHITE_SMOKE_ANIM;
     const criticalModelText = await readOptionalBundleText(provider, this.bundleRef, 'critical.mamodel');
     const criticalAnimText = await readOptionalBundleText(provider, this.bundleRef, 'critical.maanim');
+    const bossModelText = await readOptionalBundleText(provider, this.bundleRef, 'boss_welcome.mamodel');
+    const bossAnimText = await readOptionalBundleText(provider, this.bundleRef, 'boss_welcome.maanim');
     const attackDef = parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: attackModelText === EMBEDDED_ATTACK_SMOKE_MODEL ? 'embedded-bcu-attack_smoke' : 'bundle:attack_smoke' });
     const whiteDef = parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: whiteModelText === EMBEDDED_WHITE_SMOKE_MODEL ? 'embedded-bcu-white_smoke' : 'bundle:white_smoke' });
     const criticalDef = maybeParseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'bundle:critical' });
+    const bossShockwaveDef = maybeParseEffectDefinition({ modelText: bossModelText, animText: bossAnimText, source: 'bundle:boss_welcome' });
     return attachCompatibilityDefinitions({
       image,
       imgcut,
@@ -112,7 +118,7 @@ export class BattleEffectLoader {
       source: 'semantic-bundle:effect:kbeff',
       bundleRef: this.bundleRef,
       imgcutPartCount: imgcut.parts?.length || 0
-    }, attackDef, whiteDef, criticalDef, criticalDef ? null : 'effect:kbeff bundle has no critical.mamodel/critical.maanim');
+    }, attackDef, whiteDef, criticalDef, criticalDef ? null : 'effect:kbeff bundle has no critical.mamodel/critical.maanim', bossShockwaveDef, bossShockwaveDef ? null : 'effect:kbeff bundle has no boss_welcome.mamodel/boss_welcome.maanim');
   }
 
   async loadHitEffectFromRawForDiagnostics() {
@@ -126,9 +132,12 @@ export class BattleEffectLoader {
     const whiteAnimText = await readOptionalRawText(`${this.rawBaseDir}white_smoke.maanim`) || EMBEDDED_WHITE_SMOKE_ANIM;
     const criticalModelText = await readOptionalRawText(`${this.rawBaseDir}critical.mamodel`);
     const criticalAnimText = await readOptionalRawText(`${this.rawBaseDir}critical.maanim`);
+    const bossModelText = await readOptionalRawText(`${this.rawBaseDir}boss_welcome.mamodel`);
+    const bossAnimText = await readOptionalRawText(`${this.rawBaseDir}boss_welcome.maanim`);
     const attackDef = parseEffectDefinition({ modelText: attackModelText, animText: attackAnimText, source: 'raw-or-embedded:attack_smoke' });
     const whiteDef = parseEffectDefinition({ modelText: whiteModelText, animText: whiteAnimText, source: 'raw-or-embedded:white_smoke' });
     const criticalDef = maybeParseEffectDefinition({ modelText: criticalModelText, animText: criticalAnimText, source: 'raw:critical' });
+    const bossShockwaveDef = maybeParseEffectDefinition({ modelText: bossModelText, animText: bossAnimText, source: 'raw:boss_welcome' });
     return attachCompatibilityDefinitions({
       image,
       imgcut,
@@ -140,7 +149,7 @@ export class BattleEffectLoader {
       source: 'raw-diagnostics:public/assets/bcu/000001/org/battle/a',
       bundleRef: null,
       imgcutPartCount: imgcut.parts?.length || 0
-    }, attackDef, whiteDef, criticalDef, criticalDef ? null : 'raw critical.mamodel/critical.maanim missing');
+    }, attackDef, whiteDef, criticalDef, criticalDef ? null : 'raw critical.mamodel/critical.maanim missing', bossShockwaveDef, bossShockwaveDef ? null : 'raw boss_welcome.mamodel/boss_welcome.maanim missing');
   }
 
   async loadHitEffect(){
@@ -157,7 +166,8 @@ export class BattleEffectLoader {
           partNames: asset.parts.map((p) => p.name),
           imgcutPartCount: asset.imgcutPartCount,
           effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }])),
-          criticalEffectMissingReason: asset.criticalEffectMissingReason || null
+          criticalEffectMissingReason: asset.criticalEffectMissingReason || null,
+          bossShockwaveEffectMissingReason: asset.bossShockwaveEffectMissingReason || null
         };
         globalThis.__BATTLE_HIT_EFFECT_LOADER_DEBUG__ = this.lastLoadDebug;
         return asset;
@@ -172,7 +182,8 @@ export class BattleEffectLoader {
         partNames: asset.parts.map((p) => p.name),
         imgcutPartCount: asset.imgcutPartCount,
         effectDefinitions: Object.fromEntries(Object.entries(asset.effectDefinitions || {}).map(([key, def]) => [key, { source: def.source, maxFrame: def.maxFrame, frameCount: def.frameCount }])),
-        criticalEffectMissingReason: asset.criticalEffectMissingReason || null
+        criticalEffectMissingReason: asset.criticalEffectMissingReason || null,
+        bossShockwaveEffectMissingReason: asset.bossShockwaveEffectMissingReason || null
       };
       globalThis.__BATTLE_HIT_EFFECT_LOADER_DEBUG__ = this.lastLoadDebug;
       return asset;

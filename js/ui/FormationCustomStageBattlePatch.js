@@ -1,14 +1,15 @@
 import { FormationEditor } from './FormationEditor.js';
 
-const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v2-category-ui');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
+const CUSTOM_LEVEL = 'custom-stage-battle';
 
 function uniqueList(values) {
   return [...new Set((values || []).filter(Boolean).map(String))];
 }
 
-function escapeAttr(value) {
-  return String(value ?? '').replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/\"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function safeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
 }
 
 function ensureState(editor) {
@@ -17,12 +18,16 @@ function ensureState(editor) {
       enabled: false,
       enemyStageIds: editor.selectedStageId ? [editor.selectedStageId] : [],
       playerStageIds: [],
-      baseSource: 'enemy'
+      baseSource: 'enemy',
+      pickingSide: null
     };
   }
   editor.customStageBattle.enemyStageIds = uniqueList(editor.customStageBattle.enemyStageIds);
   editor.customStageBattle.playerStageIds = uniqueList(editor.customStageBattle.playerStageIds);
   editor.customStageBattle.baseSource = editor.customStageBattle.baseSource === 'player' ? 'player' : 'enemy';
+  editor.customStageBattle.pickingSide = editor.customStageBattle.pickingSide === 'enemy' || editor.customStageBattle.pickingSide === 'player'
+    ? editor.customStageBattle.pickingSide
+    : null;
   return editor.customStageBattle;
 }
 
@@ -32,11 +37,6 @@ function stageName(editor, stageId) {
   const meta = editor.stageMeta?.get?.(stage.stageKey || stage.stageId) || {};
   try { return editor.resolveStageDisplay(stage, meta)?.displayName || stage.stageId || stageId; }
   catch { return stage.stageId || stageId; }
-}
-
-function listMarkup(editor, side, ids) {
-  if (!ids.length) return `<p class='formation-custom-stage-empty'>未登録</p>`;
-  return `<ol class='formation-custom-stage-list'>${ids.map((id, index) => `<li><span><strong>${escapeAttr(stageName(editor, id))}</strong><small>${escapeAttr(id)}</small></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>Remove</button></li>`).join('')}</ol>`;
 }
 
 function currentBaseStageId(state) {
@@ -68,75 +68,75 @@ function normalizedConfig(editor) {
   };
 }
 
-function insertPanel(editor) {
-  const dialog = editor.root?.querySelector?.('.formation-stage-dialog');
-  if (!dialog || dialog.querySelector('.formation-custom-stage-battle')) return;
-  const panel = document.createElement('section');
-  panel.className = 'formation-custom-stage-battle';
-  panel.innerHTML = `
-    <header class='formation-custom-stage-header'>
-      <div><strong>カスタム: ステージ同士バトル</strong><span>敵側・味方側に複数ステージを登録して同時スポーン</span></div>
-      <button type='button' data-action='custom-stage-toggle'></button>
-    </header>
-    <div class='formation-custom-stage-controls'>
-      <button type='button' data-action='custom-stage-base-enemy'>背景/長さ: 敵1番目</button>
-      <button type='button' data-action='custom-stage-base-player'>背景/長さ: 味方1番目</button>
-      <button type='button' data-action='custom-stage-clear'>登録クリア</button>
-    </div>
-    <div class='formation-custom-stage-columns'>
-      <section><h4>敵側ステージ</h4><div data-custom-stage-list='enemy'></div></section>
-      <section><h4>味方側ステージ</h4><div data-custom-stage-list='player'></div></section>
-    </div>
-    <p class='formation-custom-stage-note'></p>`;
-  const header = dialog.querySelector('header');
-  header?.insertAdjacentElement('afterend', panel);
+function addCustomCategoryCard(editor) {
+  const state = editor.stageSelectorState || {};
+  if (state.level !== 'category') return;
+  const list = editor.root?.querySelector?.('.formation-stage-list');
+  if (!list || list.querySelector('[data-custom-stage-category]')) return;
+  const custom = ensureState(editor);
+  const config = normalizedConfig(editor);
+  list.insertAdjacentHTML('beforeend', `<button type='button' class='formation-stage-card formation-stage-card-category formation-stage-card-custom ${custom.enabled ? 'is-active' : ''}' data-custom-stage-category='1'>
+    <strong>カスタムステージ</strong>
+    <small>${custom.enemyStageIds.length}敵側 / ${custom.playerStageIds.length}味方側</small>
+    <span>${config.enabled ? 'ON' : 'OFF'} / 複数ステージ同士を戦わせる専用モード</span>
+  </button>`);
 }
 
-function addStageButtons(editor) {
-  for (const card of editor.root?.querySelectorAll?.('.formation-stage-card[data-stage-id]') || []) {
-    if (card.querySelector('.formation-stage-custom-actions')) continue;
-    const id = card.dataset.stageId;
-    const box = document.createElement('div');
-    box.className = 'formation-stage-custom-actions';
-    box.innerHTML = `<button type='button' data-custom-stage-add-side='enemy' data-custom-stage-id='${escapeAttr(id)}'>敵に追加</button><button type='button' data-custom-stage-add-side='player' data-custom-stage-id='${escapeAttr(id)}'>味方に追加</button>`;
-    card.appendChild(box);
-  }
+function renderList(editor, side, ids) {
+  if (!ids.length) return `<p class='formation-custom-stage-empty'>未登録</p>`;
+  return `<ol class='formation-custom-stage-list'>${ids.map((id, index) => `<li><span><strong>${safeHtml(stageName(editor, id))}</strong><small>${safeHtml(id)}</small></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>Remove</button></li>`).join('')}</ol>`;
 }
 
-function updatePanel(editor) {
-  insertPanel(editor);
-  addStageButtons(editor);
+function renderCustomStageBattleView(editor) {
   const state = ensureState(editor);
   const config = normalizedConfig(editor);
-  const panel = editor.root?.querySelector?.('.formation-custom-stage-battle');
-  if (!panel) return;
-  panel.classList.toggle('is-enabled', !!state.enabled);
-  const toggle = panel.querySelector('[data-action="custom-stage-toggle"]');
-  if (toggle) toggle.textContent = state.enabled ? 'Custom ON' : 'Custom OFF';
-  const enemyBase = panel.querySelector('[data-action="custom-stage-base-enemy"]');
-  const playerBase = panel.querySelector('[data-action="custom-stage-base-player"]');
-  enemyBase?.classList.toggle('is-active', state.baseSource !== 'player');
-  playerBase?.classList.toggle('is-active', state.baseSource === 'player');
-  const enemyList = panel.querySelector('[data-custom-stage-list="enemy"]');
-  const playerList = panel.querySelector('[data-custom-stage-list="player"]');
-  if (enemyList) enemyList.innerHTML = listMarkup(editor, 'enemy', state.enemyStageIds);
-  if (playerList) playerList.innerHTML = listMarkup(editor, 'player', state.playerStageIds);
-  const note = panel.querySelector('.formation-custom-stage-note');
-  if (note) {
-    const baseStageId = currentBaseStageId(state);
-    note.textContent = state.enabled
-      ? (config.valid ? `有効: 背景・ステージ長・城は ${stageName(editor, baseStageId)} を使用` : 'ONですが、敵側と味方側の両方に1つ以上ステージ登録が必要です')
-      : 'OFF時は通常の単一ステージ戦闘です。';
-  }
+  const baseStageId = currentBaseStageId(state);
+  const list = editor.root?.querySelector?.('.formation-stage-list');
+  if (!list) return;
+  const title = editor.root.querySelector('.formation-stage-dialog header strong');
+  const lead = editor.root.querySelector('.formation-stage-dialog header span');
+  if (title) title.textContent = 'カスタムステージ';
+  if (lead) lead.textContent = 'ステージ同士バトルの敵側・味方側登録';
+  list.innerHTML = `<div class='formation-stage-breadcrumb'>
+      <button type='button' class='formation-stage-crumb' data-stage-root='1'>カテゴリ</button>
+      <button type='button' class='formation-stage-crumb is-active' data-custom-stage-category='1'>カスタムステージ</button>
+    </div>
+    <section class='formation-custom-stage-battle is-category-view ${state.enabled ? 'is-enabled' : ''}'>
+      <header class='formation-custom-stage-header'>
+        <div><strong>ステージ同士バトル</strong><span>敵側・味方側に複数ステージを登録して同時スポーン</span></div>
+        <button type='button' data-action='custom-stage-toggle'>${state.enabled ? 'Custom ON' : 'Custom OFF'}</button>
+      </header>
+      <div class='formation-custom-stage-controls'>
+        <button type='button' class='${state.baseSource !== 'player' ? 'is-active' : ''}' data-action='custom-stage-base-enemy'>背景/長さ: 敵1番目</button>
+        <button type='button' class='${state.baseSource === 'player' ? 'is-active' : ''}' data-action='custom-stage-base-player'>背景/長さ: 味方1番目</button>
+        <button type='button' data-action='custom-stage-clear'>登録クリア</button>
+      </div>
+      <div class='formation-custom-stage-columns'>
+        <section>
+          <h4>敵側ステージ</h4>
+          ${renderList(editor, 'enemy', state.enemyStageIds)}
+          <button type='button' data-custom-stage-pick-side='enemy'>敵側にステージを追加</button>
+        </section>
+        <section>
+          <h4>味方側ステージ</h4>
+          ${renderList(editor, 'player', state.playerStageIds)}
+          <button type='button' data-custom-stage-pick-side='player'>味方側にステージを追加</button>
+        </section>
+      </div>
+      <p class='formation-custom-stage-note'>${state.enabled
+        ? (config.valid ? `有効: 背景・ステージ長・城は ${safeHtml(stageName(editor, baseStageId))} を使用` : 'ONですが、敵側と味方側の両方に1つ以上ステージ登録が必要です')
+        : 'OFF時は通常の単一ステージ戦闘です。'}</p>
+    </section>`;
 }
 
 function addStage(editor, side, id) {
   const state = ensureState(editor);
   const key = side === 'player' ? 'playerStageIds' : 'enemyStageIds';
-  if (!state[key].includes(id)) state[key].push(id);
+  if (id && !state[key].includes(id)) state[key].push(id);
   state[key] = uniqueList(state[key]);
-  if (!state.enemyStageIds.length && editor.selectedStageId) state.enemyStageIds.push(editor.selectedStageId);
-  updatePanel(editor);
+  state.pickingSide = null;
+  editor.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+  editor.renderStageSelector();
 }
 
 function removeStage(editor, side, index) {
@@ -144,7 +144,21 @@ function removeStage(editor, side, index) {
   const key = side === 'player' ? 'playerStageIds' : 'enemyStageIds';
   state[key].splice(Number(index), 1);
   state[key] = uniqueList(state[key]);
-  updatePanel(editor);
+  editor.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+  editor.renderStageSelector();
+}
+
+function updateCustomUiAfterRender(editor) {
+  const state = ensureState(editor);
+  if (editor.stageSelectorState?.level === CUSTOM_LEVEL) {
+    renderCustomStageBattleView(editor);
+    return;
+  }
+  addCustomCategoryCard(editor);
+  const lead = editor.root?.querySelector?.('.formation-stage-dialog header span');
+  if (lead && state.pickingSide && editor.stageSelectorState?.level !== CUSTOM_LEVEL) {
+    lead.textContent = `${state.pickingSide === 'enemy' ? '敵側' : '味方側'}に追加するステージを選択中`;
+  }
 }
 
 function patchFormationEditor() {
@@ -157,44 +171,48 @@ function patchFormationEditor() {
   };
 
   const originalRenderStageSelector = proto.renderStageSelector;
-  proto.renderStageSelector = function renderStageSelectorWithCustomStageBattle(...args) {
+  proto.renderStageSelector = function renderStageSelectorWithCustomStageCategory(...args) {
     const result = originalRenderStageSelector.apply(this, args);
-    updatePanel(this);
-    return result;
-  };
-
-  const originalRefresh = proto.refresh;
-  proto.refresh = function refreshWithCustomStageBattle(...args) {
-    const result = originalRefresh.apply(this, args);
-    updatePanel(this);
-    return result;
-  };
-
-  const originalSelectStage = proto.selectStage;
-  proto.selectStage = function selectStageWithCustomStageBattle(stageId) {
-    const result = originalSelectStage.call(this, stageId);
-    const state = ensureState(this);
-    if (state.enabled && !state.enemyStageIds.length && stageId) state.enemyStageIds = [stageId];
-    updatePanel(this);
+    updateCustomUiAfterRender(this);
     return result;
   };
 
   const originalOnClick = proto.onClick;
-  proto.onClick = async function onClickWithCustomStageBattle(e) {
-    const add = e.target.closest?.('[data-custom-stage-add-side]');
-    if (add) {
+  proto.onClick = async function onClickWithCustomStageCategory(e) {
+    const customCategory = e.target.closest?.('[data-custom-stage-category]');
+    if (customCategory && this.root?.contains(customCategory)) {
       e.preventDefault();
       e.stopPropagation();
-      const id = add.dataset.customStageId || add.closest('[data-stage-id]')?.dataset.stageId;
-      addStage(this, add.dataset.customStageAddSide, id);
+      ensureState(this).pickingSide = null;
+      this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+      this.renderStageSelector();
+      return;
+    }
+
+    const pick = e.target.closest?.('[data-custom-stage-pick-side]');
+    if (pick && this.root?.contains(pick)) {
+      e.preventDefault();
+      e.stopPropagation();
+      ensureState(this).pickingSide = pick.dataset.customStagePickSide === 'player' ? 'player' : 'enemy';
+      this.stageSelectorState = { level: 'category', categoryId: null, mapKey: null };
+      this.renderStageSelector();
       return;
     }
 
     const remove = e.target.closest?.('[data-custom-stage-remove-side]');
-    if (remove) {
+    if (remove && this.root?.contains(remove)) {
       e.preventDefault();
       e.stopPropagation();
       removeStage(this, remove.dataset.customStageRemoveSide, remove.dataset.customStageRemoveIndex);
+      return;
+    }
+
+    const stageCard = e.target.closest?.('[data-stage-id]');
+    const state = ensureState(this);
+    if (stageCard && this.root?.contains(stageCard) && state.pickingSide) {
+      e.preventDefault();
+      e.stopPropagation();
+      addStage(this, state.pickingSide, stageCard.dataset.stageId);
       return;
     }
 
@@ -203,24 +221,26 @@ function patchFormationEditor() {
     if (type === 'custom-stage-toggle') {
       e.preventDefault();
       e.stopPropagation();
-      const state = ensureState(this);
       state.enabled = !state.enabled;
       if (state.enabled && !state.enemyStageIds.length && this.selectedStageId) state.enemyStageIds = [this.selectedStageId];
-      updatePanel(this);
+      this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+      this.renderStageSelector();
       return;
     }
     if (type === 'custom-stage-base-enemy' || type === 'custom-stage-base-player') {
       e.preventDefault();
       e.stopPropagation();
-      ensureState(this).baseSource = type === 'custom-stage-base-player' ? 'player' : 'enemy';
-      updatePanel(this);
+      state.baseSource = type === 'custom-stage-base-player' ? 'player' : 'enemy';
+      this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+      this.renderStageSelector();
       return;
     }
     if (type === 'custom-stage-clear') {
       e.preventDefault();
       e.stopPropagation();
-      this.customStageBattle = { enabled: false, enemyStageIds: this.selectedStageId ? [this.selectedStageId] : [], playerStageIds: [], baseSource: 'enemy' };
-      updatePanel(this);
+      this.customStageBattle = { enabled: false, enemyStageIds: this.selectedStageId ? [this.selectedStageId] : [], playerStageIds: [], baseSource: 'enemy', pickingSide: null };
+      this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+      this.renderStageSelector();
       return;
     }
 
@@ -230,7 +250,8 @@ function patchFormationEditor() {
         e.preventDefault();
         e.stopPropagation();
         this.setHint('Custom stage battle requires at least one enemy-side stage and one player-side stage.');
-        updatePanel(this);
+        this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+        this.renderStageSelector();
         return;
       }
       if (config.enabled && config.baseStageId) {

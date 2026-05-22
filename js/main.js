@@ -19,6 +19,7 @@ async function boot() {
     await import('./ui/FormationEditorPerformancePatch.js');
     await import('./ui/FormationCatalogVirtualDomPatch.js');
     await import('./ui/NyankoPresentationPatch.js');
+    await import('./ui/FormationJapaneseBootPatch.js');
     await import('./ui/NyankoUiBehaviorPatch.js');
     await import('./ui/FormationCustomStageBattlePatch.js');
     await import('./battle/bcu-runtime/BcuTraceRuntime.js');

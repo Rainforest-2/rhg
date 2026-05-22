@@ -7,6 +7,17 @@
 body.nyanko-ui-polish .formation-header{
   min-height:clamp(66px,8.2dvh,82px);
   align-items:center;
+  overflow:hidden;
+}
+
+body.nyanko-ui-polish .formation-header::before{
+  right:clamp(16px,4.4vw,62px);
+  transform:translateY(-52%) rotate(-2deg) scale(.82);
+  transform-origin:right center;
+  color:rgba(255,232,150,.145);
+  text-shadow:0 2px 0 rgba(0,0,0,.12);
+  z-index:0;
+  pointer-events:none;
 }
 
 body.nyanko-ui-polish .formation-header p{
@@ -14,9 +25,21 @@ body.nyanko-ui-polish .formation-header p{
 }
 
 body.nyanko-ui-polish .formation-header h3{
-  color:#fffdf0!important;
-  -webkit-text-stroke:1.8px #050505;
-  text-shadow:0 4px 0 #000,0 0 10px rgba(0,0,0,.42);
+  position:relative;
+  z-index:1;
+  color:#ffeaa4!important;
+  -webkit-text-stroke:2.35px #050505;
+  text-shadow:
+    0 2px 0 #050505,
+    2px 0 0 #050505,
+    -2px 0 0 #050505,
+    0 -1px 0 #050505;
+  filter:none!important;
+}
+
+body.nyanko-ui-polish .formation-header h3::before{
+  -webkit-text-stroke:0;
+  text-shadow:0 1px 0 rgba(255,255,255,.58);
 }
 
 body.nyanko-ui-polish .formation-catalog-section{
@@ -147,6 +170,15 @@ body.nyanko-ui-polish .formation-action-hint{
   body.nyanko-ui-polish .formation-header{
     min-height:58px;
   }
+  body.nyanko-ui-polish .formation-header::before{
+    transform:translateY(-52%) rotate(-2deg) scale(.7);
+    right:10px;
+    opacity:.78;
+  }
+  body.nyanko-ui-polish .formation-header h3{
+    -webkit-text-stroke:1.8px #050505;
+    text-shadow:0 2px 0 #050505,1px 0 0 #050505,-1px 0 0 #050505;
+  }
   body.nyanko-ui-polish .formation-catalog-tabs button{
     min-height:38px;
     padding:7px 8px;
@@ -166,6 +198,14 @@ body.nyanko-ui-polish .formation-action-hint{
 @media (max-height:560px) and (orientation:landscape){
   body.nyanko-ui-polish .formation-header{
     min-height:50px;
+  }
+  body.nyanko-ui-polish .formation-header::before{
+    transform:translateY(-52%) rotate(-2deg) scale(.68);
+    right:clamp(12px,3vw,38px);
+  }
+  body.nyanko-ui-polish .formation-header h3{
+    -webkit-text-stroke:1.85px #050505;
+    text-shadow:0 2px 0 #050505,1px 0 0 #050505,-1px 0 0 #050505;
   }
   body.nyanko-ui-polish .formation-catalog-section{
     row-gap:6px;

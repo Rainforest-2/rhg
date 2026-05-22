@@ -1,6 +1,8 @@
 import { BCU_STAGE_MANIFEST } from '../data/bcuStageManifest.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
+export const SELECTED_STAGE_STORAGE_KEY = 'bcu.selectedStageId';
+
 function semanticStages() {
   try {
     const entries = getBcuAssetDatabase()?.semanticIndexes?.stages?.entries || [];
@@ -20,13 +22,35 @@ function semanticStages() {
   } catch { return []; }
 }
 
-export function getAvailableStages() { return semanticStages().concat(BCU_STAGE_MANIFEST.filter((s) => s?.enabled !== false)); }
-export function getStageById(stageId) {
-  const stages = getAvailableStages();
+function findStageInList(stages, stageId) {
+  if (!stageId) return null;
   const exactKey = stages.find((s) => s.stageKey === stageId);
   if (exactKey) return exactKey;
   const matches = stages.filter((s) => s.stageId === stageId || s.semanticEntry?.aliases?.includes(stageId));
   return matches.length === 1 ? matches[0] : null;
+}
+
+export function readPersistedStageId() {
+  try {
+    const value = globalThis.localStorage?.getItem?.(SELECTED_STAGE_STORAGE_KEY);
+    return value ? String(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writePersistedStageId(stageId) {
+  const value = stageId ? String(stageId) : '';
+  try {
+    if (value) globalThis.localStorage?.setItem?.(SELECTED_STAGE_STORAGE_KEY, value);
+    else globalThis.localStorage?.removeItem?.(SELECTED_STAGE_STORAGE_KEY);
+  } catch {}
+  return value || null;
+}
+
+export function getAvailableStages() { return semanticStages().concat(BCU_STAGE_MANIFEST.filter((s) => s?.enabled !== false)); }
+export function getStageById(stageId) {
+  return findStageInList(getAvailableStages(), stageId);
 }
 export function scoreStageForDefault(stageDefinition = {}, availableEnemyAssets = new Set(), manifestIndex = 0) {
   const rt = stageDefinition.runtime || stageDefinition;
@@ -39,6 +63,8 @@ export function scoreStageForDefault(stageDefinition = {}, availableEnemyAssets 
 }
 export function getDefaultStage() {
   const stages = getAvailableStages();
+  const persisted = findStageInList(stages, readPersistedStageId());
+  if (persisted) return persisted;
   return stages.find((s) => s.stageId === 'stageRNA001_00')
     || stages.find((s) => s.semanticEntry?.kind === 'stage-definition')
     || stages[0]

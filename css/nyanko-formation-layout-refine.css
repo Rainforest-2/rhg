@@ -1,0 +1,191 @@
+/*
+ * Formation layout refinement pass.
+ * Keep the current Battle Cats-inspired wood/yellow/black styling, but reduce low-value
+ * text and give the character catalog more usable space without flattening all spacing.
+ */
+
+body.nyanko-ui-polish .formation-header{
+  min-height:clamp(66px,8.2dvh,82px);
+  align-items:center;
+}
+
+body.nyanko-ui-polish .formation-header p{
+  display:none!important;
+}
+
+body.nyanko-ui-polish .formation-header h3{
+  color:#fffdf0!important;
+  -webkit-text-stroke:1.8px #050505;
+  text-shadow:0 4px 0 #000,0 0 10px rgba(0,0,0,.42);
+}
+
+body.nyanko-ui-polish .formation-catalog-section{
+  grid-template-columns:max-content minmax(220px,1fr);
+  grid-template-rows:auto minmax(0,1fr);
+  column-gap:clamp(10px,1vw,14px);
+  row-gap:clamp(8px,.9vw,12px);
+  padding:clamp(9px,1vw,13px);
+}
+
+body.nyanko-ui-polish .formation-catalog-tabs{
+  grid-column:1;
+  grid-row:1;
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:clamp(7px,.75vw,10px);
+  min-width:max-content;
+}
+
+body.nyanko-ui-polish .formation-catalog-tabs button{
+  min-width:clamp(74px,7vw,112px);
+  min-height:42px;
+  padding:8px 12px;
+}
+
+body.nyanko-ui-polish .formation-catalog-toolbar{
+  grid-column:2;
+  grid-row:1;
+  display:flex;
+  align-items:center;
+  min-width:0;
+  gap:0;
+}
+
+body.nyanko-ui-polish .formation-catalog-summary{
+  display:none!important;
+}
+
+body.nyanko-ui-polish .formation-search-input{
+  width:100%;
+  min-width:0;
+  height:44px;
+  padding-inline:18px;
+}
+
+body.nyanko-ui-polish .formation-catalog-scroll{
+  grid-column:1 / -1;
+  grid-row:2;
+  min-height:clamp(220px,34dvh,430px);
+  padding:8px 8px 10px;
+}
+
+body.nyanko-ui-polish .formation-catalog-grid{
+  gap:clamp(8px,.78vw,11px);
+}
+
+body.nyanko-ui-polish .formation-character-card{
+  min-height:168px;
+  padding:8px 8px 8px;
+}
+
+body.nyanko-ui-polish .formation-character-card::before{
+  height:66px;
+  inset:8px 8px auto;
+}
+
+body.nyanko-ui-polish .formation-character-card img{
+  margin-top:8px;
+  width:clamp(58px,6vw,78px);
+  height:clamp(58px,6vw,78px);
+  opacity:.96;
+}
+
+body.nyanko-ui-polish .formation-character-card.image-missing,
+body.nyanko-ui-polish .formation-character-card img.image-missing{
+  opacity:.34;
+}
+
+body.nyanko-ui-polish .formation-character-card strong{
+  min-height:2.2em;
+  margin:3px 0 1px;
+  padding:4px 6px;
+}
+
+body.nyanko-ui-polish .formation-card-meta span{
+  min-height:23px;
+}
+
+body.nyanko-ui-polish .formation-current-stage{
+  min-height:40px;
+  padding:7px 10px;
+  border-radius:14px;
+  font-size:clamp(.62rem,.78vw,.78rem);
+  line-height:1.18;
+  color:#ffe9a4;
+  opacity:.92;
+  word-break:break-all;
+}
+
+body.nyanko-ui-polish .formation-action-hint{
+  color:#fff7cf;
+}
+
+@media (max-width:980px){
+  body.nyanko-ui-polish .formation-catalog-section{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto minmax(0,1fr);
+  }
+  body.nyanko-ui-polish .formation-catalog-tabs{
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    flex-wrap:wrap;
+  }
+  body.nyanko-ui-polish .formation-catalog-toolbar{
+    grid-column:1;
+    grid-row:2;
+  }
+  body.nyanko-ui-polish .formation-catalog-scroll{
+    grid-column:1;
+    grid-row:3;
+    min-height:clamp(190px,32dvh,360px);
+  }
+}
+
+@media (max-width:640px){
+  body.nyanko-ui-polish .formation-header{
+    min-height:58px;
+  }
+  body.nyanko-ui-polish .formation-catalog-tabs button{
+    min-height:38px;
+    padding:7px 8px;
+  }
+  body.nyanko-ui-polish .formation-search-input{
+    height:38px;
+  }
+  body.nyanko-ui-polish .formation-character-card{
+    min-height:148px;
+    padding:7px 6px;
+  }
+  body.nyanko-ui-polish .formation-character-card::before{
+    height:56px;
+  }
+}
+
+@media (max-height:560px) and (orientation:landscape){
+  body.nyanko-ui-polish .formation-header{
+    min-height:50px;
+  }
+  body.nyanko-ui-polish .formation-catalog-section{
+    row-gap:6px;
+    padding:6px 8px;
+  }
+  body.nyanko-ui-polish .formation-catalog-tabs button{
+    min-height:34px;
+    padding:5px 9px;
+  }
+  body.nyanko-ui-polish .formation-search-input{
+    height:34px;
+  }
+  body.nyanko-ui-polish .formation-catalog-scroll{
+    min-height:clamp(150px,36dvh,260px);
+    padding:6px 6px 8px;
+  }
+  body.nyanko-ui-polish .formation-character-card{
+    min-height:134px;
+  }
+  body.nyanko-ui-polish .formation-character-card::before{
+    height:50px;
+  }
+}

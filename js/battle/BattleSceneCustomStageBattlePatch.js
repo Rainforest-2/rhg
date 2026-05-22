@@ -6,11 +6,15 @@ import { buildStageEnemyUnitDefs } from './BcuStageEnemyResolver.js';
 import { resolveStageSelection } from './StageRegistry.js';
 import { TEMPLATE_LOAD_LEVEL } from './BattleActorFactory.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.custom-stage-battle-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.custom-stage-battle-patch.v2-scene-rng');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
 
 function uniqueList(values) {
   return [...new Set((values || []).filter(Boolean).map(String))];
+}
+
+function sceneRandom(scene) {
+  return typeof scene?.getBcuRandom === 'function' ? scene.getBcuRandom() : Math.random;
 }
 
 function normalizeConfig(raw = {}) {
@@ -111,7 +115,7 @@ async function loadStageState(scene, loader, stageId, side, stageIndex) {
       unitDef.preloadError = { name: error?.name || 'Error', message: error?.message || String(error) };
     }
   }
-  const spawnRuntime = new BcuStageSpawnRuntime(runtime, unitDefs, { random: () => scene.getBcuRandom?.() ?? Math.random() });
+  const spawnRuntime = new BcuStageSpawnRuntime(runtime, unitDefs, { random: sceneRandom(scene) });
   const killCounterByRowIndex = Object.fromEntries((runtime.enemyRows || []).map((row, i) => [
     Number.isFinite(row?.rowIndex) ? row.rowIndex : i,
     Number(row?.killCountTrigger) > 0 ? Number(row.killCountTrigger) : 0
@@ -200,6 +204,7 @@ function spawnCustomStageUnit(scene, stageState, event) {
 function tickCustomStageBattle(scene) {
   const states = scene.customStageBattle?.stageStates || [];
   if (!states.length) return;
+  const random = sceneRandom(scene);
   for (const stageState of states) {
     const side = stageState.side;
     const req = stageState.spawnRuntime.tick(scene.logicFrame, {
@@ -207,13 +212,13 @@ function tickCustomStageBattle(scene) {
       aliveEnemyCount: customAliveCount(scene, side),
       maxEnemyCount: stageState.runtime?.effectiveMaxEnemyCount || scene.getEffectiveEnemyMaxCount?.() || 20,
       enemyBaseHpPercent: baseHpPercent(scene, side),
-      random: Math.random,
+      random,
       killCounterByRowIndex: stageState.killCounterByRowIndex,
       isGroupAllowed: (args) => isGroupAllowed(scene, stageState, args)
     });
     for (const event of req) {
       const ok = spawnCustomStageUnit(scene, stageState, event);
-      if (ok) stageState.spawnRuntime.commitSpawn(event, { random: Math.random });
+      if (ok) stageState.spawnRuntime.commitSpawn(event, { random });
       else stageState.spawnRuntime.rejectSpawn(event, 'custom-stage-spawn-failed', { retryDelayFrame: 1, currentFrame: scene.logicFrame });
     }
   }

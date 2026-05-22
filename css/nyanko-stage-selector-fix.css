@@ -1,167 +1,257 @@
-/* Focused stage selector cleanup: remove debug-feeling telemetry and present simple stage tiles. */
+/*
+ * Premium stage selector polish.
+ * Scope: visual presentation only. No stage-selection/runtime logic is represented here.
+ * Direction: Battle Cats-inspired bold toy UI — heavy ink outlines, warm wood header,
+ * cream content panels, yellow action pills, readable hierarchy, and fewer debug-like tiles.
+ */
+
 body.nyanko-ui-polish .formation-stage-overlay{
-  padding:clamp(10px,2vw,26px);
-  background:rgba(33,15,6,.72);
-  backdrop-filter:blur(2px);
+  padding:clamp(10px,2vw,26px)!important;
+  background:
+    radial-gradient(circle at 16% 12%,rgba(255,229,133,.22),transparent 24%),
+    radial-gradient(circle at 84% 88%,rgba(255,213,49,.12),transparent 28%),
+    rgba(29,13,5,.78)!important;
+  backdrop-filter:blur(3px) saturate(1.05)!important;
+  -webkit-backdrop-filter:blur(3px) saturate(1.05)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-dialog{
-  width:min(1040px,100%);
-  height:min(720px,100%);
-  border:5px solid #050505;
-  border-radius:26px;
-  padding:14px;
-  background:linear-gradient(180deg,#7d3917 0 72px,#fff1bd 72px calc(100% - 18px),#5d2a12 calc(100% - 18px));
-  box-shadow:0 10px 0 #2a1207,0 28px 60px rgba(0,0,0,.48),inset 0 2px 0 rgba(255,255,255,.48);
+  width:min(1080px,100%)!important;
+  height:min(740px,calc(100dvh - 28px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))!important;
+  min-height:min(440px,calc(100dvh - 28px))!important;
+  gap:14px!important;
+  border:6px solid #050505!important;
+  border-radius:28px!important;
+  padding:clamp(12px,1.35vw,18px)!important;
+  color:#1b1207!important;
+  background:
+    linear-gradient(180deg,#ad642f 0 68px,#5b2912 68px 79px,#fff5ca 80px calc(100% - 20px),#6b3014 calc(100% - 20px) 100%)!important;
+  box-shadow:
+    0 10px 0 #210d04,
+    0 30px 72px rgba(0,0,0,.52),
+    inset 0 2px 0 rgba(255,255,255,.52)!important;
+  overflow:hidden!important;
+}
+
+body.nyanko-ui-polish .formation-stage-dialog::before{
+  content:"";
+  position:absolute;
+  inset:86px 16px 18px;
+  pointer-events:none;
+  border:4px solid rgba(5,5,5,.88);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 18% 18%,rgba(255,255,255,.22),transparent 20%),
+    repeating-radial-gradient(circle at 16px 16px,rgba(255,255,255,.11) 0 2px,transparent 3px 28px),
+    linear-gradient(180deg,#9dc0a9,#668b75);
+  box-shadow:inset 0 0 0 4px rgba(255,255,255,.11),inset 0 0 40px rgba(0,0,0,.18);
+  z-index:0;
+}
+
+body.nyanko-ui-polish .formation-stage-dialog > *{
+  position:relative!important;
+  z-index:1!important;
 }
 
 body.nyanko-ui-polish .formation-stage-dialog header{
-  min-height:58px;
-  border-bottom:5px solid #050505;
-  padding:0 2px 12px;
+  min-height:60px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:16px!important;
+  padding:0 4px 12px!important;
+  border-bottom:0!important;
+}
+
+body.nyanko-ui-polish .formation-stage-dialog header > div{
+  min-width:0!important;
 }
 
 body.nyanko-ui-polish .formation-stage-dialog header strong{
-  color:#fff;
-  font-size:clamp(1.35rem,2.2vw,2rem);
-  font-weight:1000;
-  letter-spacing:.03em;
-  -webkit-text-stroke:1.5px #050505;
-  text-shadow:0 4px 0 #000;
+  color:#ffeaa4!important;
+  font-size:clamp(1.35rem,2.25vw,2.1rem)!important;
+  font-weight:1000!important;
+  letter-spacing:.045em!important;
+  -webkit-text-stroke:2.1px #050505!important;
+  text-shadow:0 2px 0 #050505,2px 0 0 #050505,-2px 0 0 #050505!important;
 }
 
 body.nyanko-ui-polish .formation-stage-dialog header span{
-  display:inline-flex;
-  width:max-content;
-  margin-top:4px;
-  padding:4px 10px;
-  border:3px solid #050505;
-  border-radius:999px;
-  background:#fff7cf;
-  color:#4b2413;
-  font-weight:1000;
-  box-shadow:0 3px 0 rgba(0,0,0,.62);
+  display:inline-flex!important;
+  width:max-content!important;
+  max-width:min(520px,58vw)!important;
+  margin-top:5px!important;
+  padding:5px 12px!important;
+  border:3px solid #050505!important;
+  border-radius:999px!important;
+  background:linear-gradient(180deg,#fffdf0,#ffe9a4)!important;
+  color:#4b2413!important;
+  font-size:.78rem!important;
+  font-weight:1000!important;
+  text-shadow:none!important;
+  box-shadow:0 3px 0 rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.9)!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
 }
 
-body.nyanko-ui-polish .formation-stage-dialog header button{
-  width:auto;
-  min-width:104px;
-  min-height:44px;
-  border:4px solid #050505;
-  border-radius:999px;
-  background:linear-gradient(180deg,#fff,#ffe27a 44%,#f4a51f);
-  color:#1b1207;
-  font-weight:1000;
-  box-shadow:0 5px 0 #321407,inset 0 2px 0 rgba(255,255,255,.7);
+body.nyanko-ui-polish .formation-stage-dialog header button,
+body.nyanko-ui-polish .formation-stage-crumb,
+body.nyanko-ui-polish .formation-custom-stage-battle button{
+  width:auto!important;
+  min-width:96px!important;
+  min-height:42px!important;
+  padding:8px 14px!important;
+  border:4px solid #050505!important;
+  border-radius:999px!important;
+  background:linear-gradient(180deg,#fffdf0 0%,#ffe45d 45%,#f4a51f 100%)!important;
+  color:#1b1207!important;
+  font-weight:1000!important;
+  letter-spacing:.035em!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.6)!important;
+  box-shadow:0 5px 0 #321407,inset 0 2px 0 rgba(255,255,255,.72)!important;
+}
+
+body.nyanko-ui-polish .formation-stage-dialog header button:hover,
+body.nyanko-ui-polish .formation-stage-crumb:hover,
+body.nyanko-ui-polish .formation-custom-stage-battle button:hover{
+  transform:translateY(-1px)!important;
+  background:linear-gradient(180deg,#ffffff 0%,#fff06e 45%,#ffbd35 100%)!important;
+  box-shadow:0 7px 0 #321407,0 0 0 4px rgba(255,213,49,.24),inset 0 2px 0 rgba(255,255,255,.8)!important;
+}
+
+body.nyanko-ui-polish .formation-stage-dialog header button:active,
+body.nyanko-ui-polish .formation-stage-crumb:active,
+body.nyanko-ui-polish .formation-custom-stage-battle button:active{
+  transform:translateY(3px)!important;
+  box-shadow:0 2px 0 #321407,inset 0 2px 0 rgba(255,255,255,.58)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-list{
-  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
-  gap:12px;
-  padding:14px 6px 6px;
+  grid-template-columns:repeat(auto-fill,minmax(218px,1fr))!important;
+  align-content:start!important;
+  gap:clamp(10px,1.05vw,14px)!important;
+  padding:18px 10px 12px!important;
+  border:0!important;
+  border-radius:18px!important;
+  background:transparent!important;
+  scrollbar-color:#f4a51f rgba(50,20,7,.24);
 }
 
 body.nyanko-ui-polish .formation-stage-breadcrumb{
-  grid-column:1/-1;
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:8px;
-  margin:0 0 4px;
+  grid-column:1/-1!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:10px!important;
+  margin:0 0 2px!important;
+  padding:2px 0 4px!important;
 }
 
 body.nyanko-ui-polish .formation-stage-crumb{
-  width:auto;
-  min-width:0;
-  padding:7px 12px;
-  border:3px solid #050505;
-  border-radius:999px;
-  background:linear-gradient(180deg,#fff,#ffe27a 54%,#f4a51f);
-  color:#1b1207;
-  font-weight:1000;
-  box-shadow:0 4px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72);
+  min-width:0!important;
+  min-height:36px!important;
+  padding:6px 12px!important;
+  border-width:3px!important;
+  font-size:.8rem!important;
+  box-shadow:0 4px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-crumb.is-active{
-  background:#111;
-  color:#ffe27a;
-  text-shadow:0 2px 0 #000;
+  background:linear-gradient(180deg,#2a2a2a,#050505)!important;
+  color:#ffe27a!important;
+  text-shadow:0 2px 0 #000!important;
+  box-shadow:0 4px 0 #321407,inset 0 1px 0 rgba(255,255,255,.16)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card{
-  position:relative;
-  min-height:112px;
-  display:grid;
-  grid-template-rows:1fr auto;
-  gap:8px;
-  align-content:stretch;
-  border:4px solid #050505;
-  border-radius:16px;
-  padding:13px 12px 12px;
-  background:linear-gradient(180deg,#fffdf0 0%,#fff1bd 62%,#111 63%,#020202 100%);
-  box-shadow:0 6px 0 rgba(0,0,0,.68),inset 0 2px 0 rgba(255,255,255,.78);
-  overflow:hidden;
+  position:relative!important;
+  min-height:118px!important;
+  display:grid!important;
+  grid-template-rows:minmax(60px,1fr) auto!important;
+  gap:9px!important;
+  align-content:stretch!important;
+  text-align:left!important;
+  border:4px solid #050505!important;
+  border-radius:18px!important;
+  padding:14px 13px 13px!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.54),transparent 26%),
+    linear-gradient(180deg,#fffdf0 0%,#fff3bd 62%,#111 63%,#020202 100%)!important;
+  color:#1b1207!important;
+  box-shadow:0 7px 0 rgba(0,0,0,.68),inset 0 2px 0 rgba(255,255,255,.82)!important;
+  overflow:hidden!important;
+  isolation:isolate!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card::before{
-  content:"";
-  position:absolute;
-  right:12px;
-  top:12px;
-  width:18px;
-  height:18px;
-  border:3px solid #050505;
-  border-radius:999px;
-  background:#e02727;
-  box-shadow:0 3px 0 rgba(0,0,0,.64);
+  content:""!important;
+  position:absolute!important;
+  right:12px!important;
+  top:12px!important;
+  width:20px!important;
+  height:20px!important;
+  border:3px solid #050505!important;
+  border-radius:999px!important;
+  background:radial-gradient(circle at 35% 32%,#fff 0 13%,#ffd531 14% 48%,#e02727 49% 100%)!important;
+  box-shadow:0 3px 0 rgba(0,0,0,.62)!important;
+  z-index:1!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card::after{
-  content:"STAGE";
-  position:absolute;
-  left:12px;
-  bottom:12px;
-  color:#ffe27a;
-  font:1000 .68rem/1 "Arial Rounded MT Bold",system-ui,sans-serif;
-  letter-spacing:.08em;
-  text-shadow:0 2px 0 #000;
+  content:"STAGE"!important;
+  position:absolute!important;
+  left:13px!important;
+  bottom:13px!important;
+  color:#ffe27a!important;
+  font:1000 .68rem/1 "Arial Rounded MT Bold",system-ui,sans-serif!important;
+  letter-spacing:.08em!important;
+  text-shadow:0 2px 0 #000!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card-category::after,
 body.nyanko-ui-polish .formation-stage-card-collection::after{
-  content:"CATEGORY";
+  content:"CATEGORY"!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card-map::after{
-  content:"MAP";
+  content:"MAP"!important;
+}
+
+body.nyanko-ui-polish .formation-stage-card-custom::after{
+  content:"CUSTOM"!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card strong{
-  align-self:center;
-  padding-right:34px;
-  color:#111;
-  font-size:clamp(.9rem,1.05vw,1.05rem);
-  line-height:1.15;
-  white-space:normal;
-  overflow:hidden;
-  display:-webkit-box;
-  -webkit-line-clamp:3;
-  -webkit-box-orient:vertical;
-  text-shadow:none;
+  align-self:center!important;
+  padding-right:38px!important;
+  color:#111!important;
+  font-size:clamp(.92rem,1.05vw,1.07rem)!important;
+  line-height:1.16!important;
+  font-weight:1000!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:3!important;
+  -webkit-box-orient:vertical!important;
+  text-overflow:clip!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.7)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card small{
-  justify-self:end;
-  align-self:end;
-  min-width:76px;
-  padding:5px 10px;
-  border:2px solid #050505;
-  border-radius:999px;
-  background:#fff7cf;
-  color:#1b1207;
-  font-weight:1000;
-  text-align:center;
-  box-shadow:0 2px 0 #000;
+  justify-self:end!important;
+  align-self:end!important;
+  min-width:74px!important;
+  max-width:calc(100% - 76px)!important;
+  padding:5px 10px!important;
+  border:2px solid #050505!important;
+  border-radius:999px!important;
+  background:#fff7cf!important;
+  color:#1b1207!important;
+  font-size:.67rem!important;
+  font-weight:1000!important;
+  text-align:center!important;
+  box-shadow:0 2px 0 #000,inset 0 1px 0 rgba(255,255,255,.8)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card span,
@@ -170,35 +260,330 @@ body.nyanko-ui-polish .formation-stage-card em{
 }
 
 body.nyanko-ui-polish .formation-stage-card.is-active{
-  background:linear-gradient(180deg,#fffbe8 0%,#ffd531 62%,#111 63%,#020202 100%);
-  box-shadow:0 8px 0 rgba(0,0,0,.72),0 0 0 5px rgba(255,213,49,.34),inset 0 2px 0 rgba(255,255,255,.85);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.62),transparent 28%),
+    linear-gradient(180deg,#fffbe8 0%,#ffd531 62%,#111 63%,#020202 100%)!important;
+  box-shadow:0 9px 0 rgba(0,0,0,.72),0 0 0 5px rgba(255,213,49,.34),inset 0 2px 0 rgba(255,255,255,.85)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card.is-active::after{
-  content:"SELECTED";
-  color:#fff;
+  content:"SELECTED"!important;
+  color:#fff!important;
 }
 
 body.nyanko-ui-polish .formation-stage-card:hover,
 body.nyanko-ui-polish .formation-stage-card:focus-visible{
-  transform:translateY(-2px);
-  outline:0;
-  box-shadow:0 9px 0 rgba(0,0,0,.72),0 0 0 4px rgba(255,213,49,.28),inset 0 2px 0 rgba(255,255,255,.85);
+  transform:translateY(-2px)!important;
+  outline:0!important;
+  box-shadow:0 10px 0 rgba(0,0,0,.72),0 0 0 4px rgba(255,213,49,.28),inset 0 2px 0 rgba(255,255,255,.85)!important;
 }
 
-@media (max-width:640px){
+body.nyanko-ui-polish .formation-stage-empty{
+  grid-column:1/-1!important;
+  color:#fff7cf!important;
+  padding:16px!important;
+  border:4px solid #050505!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#7d3917,#4b2413)!important;
+  box-shadow:0 6px 0 rgba(0,0,0,.58)!important;
+  font-weight:1000!important;
+}
+
+/* Custom stage battle configuration */
+body.nyanko-ui-polish .formation-custom-stage-battle{
+  grid-column:1/-1!important;
+  display:grid!important;
+  gap:14px!important;
+  align-content:start!important;
+  min-height:0!important;
+  padding:clamp(12px,1.4vw,18px)!important;
+  border:5px solid #050505!important;
+  border-radius:24px!important;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.1),transparent 12%,transparent 88%,rgba(0,0,0,.08)),
+    linear-gradient(180deg,#fff8d7,#ffe8a4)!important;
+  box-shadow:0 8px 0 rgba(0,0,0,.64),inset 0 2px 0 rgba(255,255,255,.86)!important;
+  color:#1b1207!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-header{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  min-height:58px!important;
+  padding:10px 12px!important;
+  border:4px solid #050505!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#7d3917,#3b1708)!important;
+  box-shadow:0 5px 0 rgba(0,0,0,.62),inset 0 2px 0 rgba(255,255,255,.28)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-header strong{
+  display:block!important;
+  color:#ffeaa4!important;
+  font-size:clamp(1.05rem,1.45vw,1.45rem)!important;
+  font-weight:1000!important;
+  letter-spacing:.04em!important;
+  -webkit-text-stroke:1.45px #050505!important;
+  text-shadow:0 2px 0 #000!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-header span{
+  display:block!important;
+  margin-top:3px!important;
+  color:#fff7cf!important;
+  font-size:.74rem!important;
+  font-weight:900!important;
+  text-shadow:0 2px 0 #000!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]{
+  min-width:128px!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-battle.is-enabled .formation-custom-stage-header [data-action="custom-stage-toggle"]{
+  background:linear-gradient(180deg,#fffdf0 0%,#8ef05d 45%,#40a62f 100%)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-controls{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:10px!important;
+  align-items:center!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-controls button{
+  min-height:38px!important;
+  border-width:3px!important;
+  font-size:.78rem!important;
+  box-shadow:0 4px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-controls button.is-active{
+  background:linear-gradient(180deg,#2b2b2b,#050505)!important;
+  color:#ffe27a!important;
+  text-shadow:0 2px 0 #000!important;
+  box-shadow:0 4px 0 #321407,0 0 0 3px rgba(255,213,49,.26),inset 0 1px 0 rgba(255,255,255,.16)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-columns{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:clamp(12px,1.4vw,18px)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-columns > section{
+  min-width:0!important;
+  display:grid!important;
+  gap:10px!important;
+  align-content:start!important;
+  padding:12px!important;
+  border:4px solid #050505!important;
+  border-radius:20px!important;
+  background:
+    linear-gradient(180deg,#fffdf0 0 48px,#f6e2a1 48px 100%)!important;
+  box-shadow:0 6px 0 rgba(0,0,0,.58),inset 0 2px 0 rgba(255,255,255,.86)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-columns h4{
+  margin:0!important;
+  padding:8px 12px!important;
+  border:3px solid #050505!important;
+  border-radius:999px!important;
+  background:linear-gradient(180deg,#2b2b2b,#050505)!important;
+  color:#ffe27a!important;
+  font-size:.9rem!important;
+  font-weight:1000!important;
+  letter-spacing:.04em!important;
+  text-shadow:0 2px 0 #000!important;
+  box-shadow:0 4px 0 rgba(0,0,0,.52)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-list{
+  display:grid!important;
+  gap:8px!important;
+  margin:0!important;
+  padding:0!important;
+  list-style:none!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-list li{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-height:58px!important;
+  padding:9px 9px 9px 12px!important;
+  border:3px solid #050505!important;
+  border-radius:15px!important;
+  background:linear-gradient(180deg,#fff8d7,#ffe7a2)!important;
+  box-shadow:0 4px 0 rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.82)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-list li span{
+  min-width:0!important;
+  display:block!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-list li strong{
+  display:block!important;
+  color:#1b1207!important;
+  font-size:.88rem!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-list li small{
+  display:block!important;
+  margin-top:3px!important;
+  color:#704020!important;
+  font-size:.64rem!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-list li button,
+body.nyanko-ui-polish .formation-custom-stage-columns [data-custom-stage-pick-side]{
+  min-width:auto!important;
+  min-height:34px!important;
+  padding:6px 10px!important;
+  border-width:3px!important;
+  font-size:.72rem!important;
+  box-shadow:0 3px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-list li button{
+  background:linear-gradient(180deg,#fff0e8,#ff9e7a 50%,#d5442f)!important;
+  color:#1b1207!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-empty{
+  margin:0!important;
+  padding:18px 12px!important;
+  border:3px dashed rgba(5,5,5,.75)!important;
+  border-radius:15px!important;
+  background:rgba(255,255,255,.42)!important;
+  color:#6a3a1a!important;
+  font-weight:1000!important;
+  text-align:center!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-note{
+  margin:0!important;
+  padding:10px 12px!important;
+  border:3px solid #050505!important;
+  border-radius:16px!important;
+  background:linear-gradient(180deg,#2c2c2c,#070707)!important;
+  color:#fff7cf!important;
+  font-weight:1000!important;
+  font-size:.82rem!important;
+  text-shadow:0 2px 0 #000!important;
+  box-shadow:0 4px 0 rgba(0,0,0,.54)!important;
+}
+
+@media (max-width:760px){
   body.nyanko-ui-polish .formation-stage-dialog{
-    border-width:4px;
-    border-radius:18px;
-    padding:10px;
+    border-width:4px!important;
+    border-radius:20px!important;
+    padding:10px!important;
+    height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+    min-height:0!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog::before{
+    inset:78px 10px 12px!important;
+    border-width:3px!important;
+    border-radius:16px!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog header{
+    min-height:54px!important;
+    gap:10px!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog header strong{
+    font-size:1.25rem!important;
+    -webkit-text-stroke:1.65px #050505!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog header span{
+    display:none!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog header button{
+    min-width:82px!important;
+    min-height:38px!important;
+    padding:6px 10px!important;
   }
   body.nyanko-ui-polish .formation-stage-list{
-    grid-template-columns:1fr;
-    gap:9px;
-    padding:10px 2px 2px;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    padding:12px 4px 4px!important;
   }
   body.nyanko-ui-polish .formation-stage-card{
-    min-height:92px;
-    border-width:3px;
+    min-height:94px!important;
+    border-width:3px!important;
+    border-radius:15px!important;
+    padding:11px!important;
+  }
+  body.nyanko-ui-polish .formation-stage-card::before{
+    width:17px!important;
+    height:17px!important;
+    border-width:2px!important;
+  }
+  body.nyanko-ui-polish .formation-custom-stage-battle{
+    border-width:4px!important;
+    border-radius:18px!important;
+    padding:10px!important;
+  }
+  body.nyanko-ui-polish .formation-custom-stage-header{
+    flex-direction:column!important;
+    align-items:stretch!important;
+  }
+  body.nyanko-ui-polish .formation-custom-stage-columns{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media (max-height:560px) and (orientation:landscape){
+  body.nyanko-ui-polish .formation-stage-dialog{
+    height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+    border-radius:18px!important;
+    padding:8px!important;
+    gap:8px!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog::before{
+    inset:62px 10px 10px!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog header{
+    min-height:46px!important;
+    padding-bottom:6px!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog header strong{
+    font-size:1.12rem!important;
+    -webkit-text-stroke:1.45px #050505!important;
+  }
+  body.nyanko-ui-polish .formation-stage-dialog header span{
+    display:none!important;
+  }
+  body.nyanko-ui-polish .formation-stage-list{
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr))!important;
+    gap:8px!important;
+    padding:9px 4px 4px!important;
+  }
+  body.nyanko-ui-polish .formation-stage-card{
+    min-height:82px!important;
+    padding:9px 10px!important;
+  }
+  body.nyanko-ui-polish .formation-custom-stage-battle{
+    gap:9px!important;
+    padding:9px!important;
+  }
+  body.nyanko-ui-polish .formation-custom-stage-header{
+    min-height:44px!important;
+    padding:7px 9px!important;
+  }
+  body.nyanko-ui-polish .formation-custom-stage-columns > section{
+    padding:9px!important;
   }
 }

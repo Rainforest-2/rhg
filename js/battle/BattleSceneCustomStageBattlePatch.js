@@ -246,6 +246,36 @@ function decrementOpposingKillCounters(scene, deadActor) {
   if (changed.length) scene.pushEvent?.({ type: 'customStageBattleKillCounterDecremented', actor: deadActor.instanceId || deadActor.label || null, deadSide: deadActor.side, changed });
 }
 
+function applyFirstPlayerStageBaseHp(scene, states) {
+  const firstPlayerStage = (states || []).find((s) => s?.side === 'dog-player');
+  const base = (scene.bases || []).find((b) => b?.side === 'dog-player') || null;
+  const hp = Number(firstPlayerStage?.runtime?.enemyBaseHp ?? firstPlayerStage?.definition?.enemyBaseHp ?? firstPlayerStage?.definition?.meta?.enemyBaseHp);
+  if (!base || !Number.isFinite(hp) || hp <= 0) return null;
+  const previous = { hp: base.hp, maxHp: base.maxHp };
+  base.maxHp = Math.floor(hp);
+  base.hp = base.maxHp;
+  base.debug = {
+    ...(base.debug || {}),
+    customStageBattleBaseHp: {
+      side: 'dog-player',
+      appliedHp: base.maxHp,
+      previous,
+      sourceStageId: firstPlayerStage.stageId,
+      sourceStageKey: firstPlayerStage.stageKey,
+      source: 'first-player-custom-stage.enemyBaseHp'
+    }
+  };
+  scene.pushEvent?.({
+    type: 'customStageBattlePlayerBaseHpApplied',
+    side: 'dog-player',
+    hp: base.maxHp,
+    previous,
+    stageId: firstPlayerStage.stageId,
+    stageKey: firstPlayerStage.stageKey
+  });
+  return base.debug.customStageBattleBaseHp;
+}
+
 async function initializeCustomStageBattle(scene) {
   const config = getCustomConfig(scene);
   scene.customStageBattle = { enabled: false, config, stageStates: [], initDebug: { config } };
@@ -256,6 +286,7 @@ async function initializeCustomStageBattle(scene) {
   for (const stageId of config.enemyStageIds) states.push(await loadStageState(scene, loader, stageId, 'cat-enemy', index++));
   index = 0;
   for (const stageId of config.playerStageIds) states.push(await loadStageState(scene, loader, stageId, 'dog-player', index++));
+  const playerBaseHp = applyFirstPlayerStageBaseHp(scene, states);
   scene.customStageBattle = {
     enabled: true,
     config,
@@ -266,7 +297,8 @@ async function initializeCustomStageBattle(scene) {
       stageCount: states.length,
       enemyStageCount: states.filter((s) => s.side === 'cat-enemy').length,
       playerStageCount: states.filter((s) => s.side === 'dog-player').length,
-      unitDefCount: states.reduce((sum, s) => sum + s.unitDefs.length, 0)
+      unitDefCount: states.reduce((sum, s) => sum + s.unitDefs.length, 0),
+      playerBaseHp
     }
   };
   globalThis.__CUSTOM_STAGE_BATTLE_RUNTIME_DEBUG__ = scene.customStageBattle.initDebug;

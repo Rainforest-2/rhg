@@ -1,7 +1,8 @@
 import { FormationEditor } from './FormationEditor.js';
 
-const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v2-category-ui');
+const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v3-persist-category-ui');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
+const STORAGE_KEY = 'wanko.customStageBattle.v1';
 const CUSTOM_LEVEL = 'custom-stage-battle';
 
 function uniqueList(values) {
@@ -12,9 +13,65 @@ function safeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
 }
 
+function stateFromStorage() {
+  try {
+    const raw = globalThis.localStorage?.getItem?.(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.mode !== 'stage-vs-stage-multi') return null;
+    return {
+      enabled: !!parsed.enabled,
+      enemyStageIds: uniqueList(parsed.enemyStageIds),
+      playerStageIds: uniqueList(parsed.playerStageIds),
+      baseSource: parsed.baseSource === 'player' ? 'player' : 'enemy',
+      pickingSide: null
+    };
+  } catch {
+    return null;
+  }
+}
+
+function configFromState(state) {
+  const enemyStageIds = uniqueList(state?.enemyStageIds);
+  const playerStageIds = uniqueList(state?.playerStageIds);
+  const valid = enemyStageIds.length > 0 && playerStageIds.length > 0;
+  const baseSource = state?.baseSource === 'player' ? 'player' : 'enemy';
+  const baseStageId = baseSource === 'player'
+    ? (playerStageIds[0] || enemyStageIds[0] || null)
+    : (enemyStageIds[0] || playerStageIds[0] || null);
+  return {
+    enabled: !!state?.enabled && valid,
+    requestedEnabled: !!state?.enabled,
+    mode: 'stage-vs-stage-multi',
+    enemyStageIds,
+    playerStageIds,
+    baseSource,
+    baseStageId,
+    valid,
+    invalidReason: valid ? null : 'both-enemy-and-player-stage-lists-required',
+    source: 'FormationCustomStageBattlePatch'
+  };
+}
+
+function persistState(editor) {
+  const state = editor?.customStageBattle;
+  if (!state) return;
+  const payload = {
+    mode: 'stage-vs-stage-multi',
+    enabled: !!state.enabled,
+    enemyStageIds: uniqueList(state.enemyStageIds),
+    playerStageIds: uniqueList(state.playerStageIds),
+    baseSource: state.baseSource === 'player' ? 'player' : 'enemy',
+    updatedAt: Date.now()
+  };
+  try { globalThis.localStorage?.setItem?.(STORAGE_KEY, JSON.stringify(payload)); } catch {}
+  globalThis[GLOBAL_CONFIG_KEY] = configFromState(payload);
+}
+
 function ensureState(editor) {
   if (!editor.customStageBattle) {
-    editor.customStageBattle = {
+    const stored = stateFromStorage();
+    editor.customStageBattle = stored || {
       enabled: false,
       enemyStageIds: editor.selectedStageId ? [editor.selectedStageId] : [],
       playerStageIds: [],
@@ -28,6 +85,7 @@ function ensureState(editor) {
   editor.customStageBattle.pickingSide = editor.customStageBattle.pickingSide === 'enemy' || editor.customStageBattle.pickingSide === 'player'
     ? editor.customStageBattle.pickingSide
     : null;
+  globalThis[GLOBAL_CONFIG_KEY] = configFromState(editor.customStageBattle);
   return editor.customStageBattle;
 }
 
@@ -46,26 +104,7 @@ function currentBaseStageId(state) {
 }
 
 function normalizedConfig(editor) {
-  const state = ensureState(editor);
-  const enemyStageIds = uniqueList(state.enemyStageIds);
-  const playerStageIds = uniqueList(state.playerStageIds);
-  const valid = enemyStageIds.length > 0 && playerStageIds.length > 0;
-  const baseSource = state.baseSource === 'player' ? 'player' : 'enemy';
-  const baseStageId = baseSource === 'player'
-    ? (playerStageIds[0] || enemyStageIds[0] || null)
-    : (enemyStageIds[0] || playerStageIds[0] || null);
-  return {
-    enabled: !!state.enabled && valid,
-    requestedEnabled: !!state.enabled,
-    mode: 'stage-vs-stage-multi',
-    enemyStageIds,
-    playerStageIds,
-    baseSource,
-    baseStageId,
-    valid,
-    invalidReason: valid ? null : 'both-enemy-and-player-stage-lists-required',
-    source: 'FormationCustomStageBattlePatch'
-  };
+  return configFromState(ensureState(editor));
 }
 
 function addCustomCategoryCard(editor) {
@@ -135,6 +174,7 @@ function addStage(editor, side, id) {
   if (id && !state[key].includes(id)) state[key].push(id);
   state[key] = uniqueList(state[key]);
   state.pickingSide = null;
+  persistState(editor);
   editor.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
   editor.renderStageSelector();
 }
@@ -144,6 +184,7 @@ function removeStage(editor, side, index) {
   const key = side === 'player' ? 'playerStageIds' : 'enemyStageIds';
   state[key].splice(Number(index), 1);
   state[key] = uniqueList(state[key]);
+  persistState(editor);
   editor.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
   editor.renderStageSelector();
 }
@@ -184,6 +225,7 @@ function patchFormationEditor() {
       e.preventDefault();
       e.stopPropagation();
       ensureState(this).pickingSide = null;
+      persistState(this);
       this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
       this.renderStageSelector();
       return;
@@ -223,6 +265,7 @@ function patchFormationEditor() {
       e.stopPropagation();
       state.enabled = !state.enabled;
       if (state.enabled && !state.enemyStageIds.length && this.selectedStageId) state.enemyStageIds = [this.selectedStageId];
+      persistState(this);
       this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
       this.renderStageSelector();
       return;
@@ -231,6 +274,7 @@ function patchFormationEditor() {
       e.preventDefault();
       e.stopPropagation();
       state.baseSource = type === 'custom-stage-base-player' ? 'player' : 'enemy';
+      persistState(this);
       this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
       this.renderStageSelector();
       return;
@@ -239,6 +283,7 @@ function patchFormationEditor() {
       e.preventDefault();
       e.stopPropagation();
       this.customStageBattle = { enabled: false, enemyStageIds: this.selectedStageId ? [this.selectedStageId] : [], playerStageIds: [], baseSource: 'enemy', pickingSide: null };
+      persistState(this);
       this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
       this.renderStageSelector();
       return;
@@ -258,6 +303,7 @@ function patchFormationEditor() {
         this.selectedStageId = config.baseStageId;
         this.onStageChanged(this.selectedStageId);
       }
+      persistState(this);
       globalThis[GLOBAL_CONFIG_KEY] = config;
       e.preventDefault();
       e.stopPropagation();

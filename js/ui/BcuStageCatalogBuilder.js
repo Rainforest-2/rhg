@@ -5,7 +5,7 @@ export const STAGE_SELECTOR_CATEGORIES = [
   { id: 'legend', label: 'レジェンド系ステージ', description: 'レジェンド・真レジェンド・レジェンド0', collectionCodes: ['N', 'A', 'ND'] },
   { id: 'event', label: 'イベントステージ', description: 'イベント、強襲、EXなど', collectionCodes: ['S', 'E', 'RA', 'T', 'V', 'M', 'H', 'Q', 'B'] },
   { id: 'collab', label: 'コラボステージ', description: 'コラボ、コラボ強襲など', collectionCodes: ['C', 'CA'] },
-  { id: 'special', label: '特殊ステージ', description: '道場、迷宮、検定、その他', collectionCodes: ['R', 'L', 'SR', 'G', 'D', 'DM'] },
+  { id: 'special', label: '特殊ステージ', description: '道場、迷宮、検定、その他', collectionCodes: ['R', 'L', 'SR', 'G', 'DM'] },
 ];
 
 export const MAP_COLC_ID_BY_CODE = {
@@ -44,9 +44,10 @@ const COLLECTION_LABEL_FALLBACKS = {
   L: '地底迷宮',
   SR: 'コロシアムステージ',
   G: 'にゃんこ道検定',
-  D: '特殊ステージ',
   DM: '月間・曜日ステージ',
 };
+
+const BCU_NON_MAPCOLC_COLLECTION_CODES = new Set(['D']);
 
 const CATEGORY_BY_COLLECTION = new Map(
   STAGE_SELECTOR_CATEGORIES.flatMap((category) => category.collectionCodes.map((code) => [code, category.id]))
@@ -295,6 +296,7 @@ export function buildBcuStageCatalog(stages = [], { bcuDb = null } = {}) {
     const id = stageIdentity(stage);
     if (!id) continue;
     const collectionCode = collectionCodeOf(stage);
+    if (BCU_NON_MAPCOLC_COLLECTION_CODES.has(collectionCode)) continue;
     const categoryId = CATEGORY_BY_COLLECTION.get(collectionCode) || 'special';
     const category = categoryById.get(categoryId) || categoryById.get('special');
     const address = parseStageAddress(stage, collectionCode);

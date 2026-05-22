@@ -1,4 +1,5 @@
 import './BattleBossShockwaveRuntimePatch.js';
+import './BattleSceneBcuCastleHpIndicatorPatch.js';
 import { BattleScene } from './BattleScene.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.debug-strip.v3-mutable-empty-arrays');

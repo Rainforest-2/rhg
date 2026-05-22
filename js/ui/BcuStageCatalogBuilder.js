@@ -60,7 +60,7 @@ function resolveName(db, kind, key) {
   if (!db?.names || !key) return null;
   try {
     const hit = db.names.resolve(kind, key, db.locale || 'jp');
-    if (hit?.source === 'lang' && hit.value && hit.value !== key) return { value: hit.value, file: hit.file || null };
+    if (hit?.source === 'lang' && hit.value && hit.value !== key) return { value: hit.value, file: hit.file || null, key };
   } catch {}
   return null;
 }
@@ -82,33 +82,133 @@ function collectionCodeOf(stage) {
   return 'UNKNOWN';
 }
 
-function parseStageAddress(stage, collectionCode) {
-  const rawId = stage?.stageId || stage?.semanticEntry?.stageId || stage?.basename || stage?.semanticEntry?.basename || stage?.stageKey || '';
-  const match = String(rawId).match(/^stage([A-Za-z]+)(-?\d+)_(-?\d+)/i);
-  if (!match) {
+function stripCsv(value) {
+  return String(value || '').replace(/\.csv$/i, '');
+}
+
+function basenameOf(stage) {
+  return stripCsv(stage?.stageId || stage?.basename || stage?.semanticEntry?.basename || stage?.semanticEntry?.stageId || stage?.key || '');
+}
+
+function groupOf(stage) {
+  return String(stage?.groupDir || stage?.semanticEntry?.groupDir || '');
+}
+
+function numericAddressFromRecord(stage) {
+  const mapColcId = toInt(stage?.mapColcId ?? stage?.numericAddress?.mapColcId, null);
+  const mapId = toInt(stage?.mapId ?? stage?.numericAddress?.mapId, null);
+  const stageNo = toInt(stage?.stageNo ?? stage?.numericAddress?.stageNo, null);
+  if ([mapColcId, mapId, stageNo].every(Number.isFinite)) {
     return {
+      mapColcId,
+      mapId,
+      mapNo: mapId,
+      mapNoRaw: String(mapId).padStart(3, '0'),
+      stageNo,
+      stageNoRaw: String(stageNo).padStart(2, '0'),
       prefix: '',
-      mapNo: null,
-      mapNoRaw: 'unknown',
-      stageNo: null,
-      stageNoRaw: String(rawId || 'unknown'),
-      rawId,
-      collectionCode,
+      rawId: basenameOf(stage),
+      source: 'core-db-numeric-stage-address'
     };
   }
+  return null;
+}
+
+function normalAddress(stage, collectionCode) {
+  const mapColcId = MAP_COLC_ID_BY_CODE[collectionCode];
+  if (!Number.isInteger(mapColcId)) return null;
+  const rawId = basenameOf(stage);
+  const match = rawId.match(/^stage([A-Za-z]+)(-?\d+)_(-?\d+)/i);
+  if (!match) return null;
+  const mapNo = toInt(match[2], null);
+  const stageNo = toInt(match[3], null);
+  if (!Number.isFinite(mapNo) || !Number.isFinite(stageNo)) return null;
   return {
     prefix: match[1].toUpperCase(),
-    mapNo: toInt(match[2], null),
+    mapColcId,
+    mapId: mapNo,
+    mapNo,
     mapNoRaw: match[2],
-    stageNo: toInt(match[3], null),
+    stageNo,
     stageNoRaw: match[3],
     rawId,
+    source: `BCU collection ${collectionCode}`
+  };
+}
+
+function chapterAddress(stage) {
+  const collectionCode = collectionCodeOf(stage);
+  if (collectionCode !== 'CH') return null;
+  const g = groupOf(stage);
+  const rawId = basenameOf(stage);
+  let m;
+  if (g === 'stageZ') {
+    m = rawId.match(/^stageZ(\d{2})_(\d{2})$/i);
+    if (!m) return null;
+    const id0 = Number(m[1]);
+    const id1 = Number(m[2]);
+    const mapId = id0 < 3 ? id0 : ({ 4: 10, 5: 12, 6: 13, 7: 15, 8: 16, 9: 17 })[id0];
+    return Number.isInteger(mapId)
+      ? { mapColcId: 3, mapId, mapNo: mapId, mapNoRaw: String(mapId), stageNo: id1, stageNoRaw: m[2], prefix: 'Z', rawId, source: 'BCU CH stageZ' }
+      : null;
+  }
+  if (g === 'stageW') {
+    m = rawId.match(/^stageW(\d{2})_(\d{2})$/i);
+    if (!m) return null;
+    const mapId = Number(m[1]) - 1;
+    const stageNo = Number(m[2]);
+    return Number.isInteger(mapId) && Number.isInteger(stageNo)
+      ? { mapColcId: 3, mapId, mapNo: mapId, mapNoRaw: String(mapId), stageNo, stageNoRaw: m[2], prefix: 'W', rawId, source: 'BCU CH stageW' }
+      : null;
+  }
+  if (g === 'stageSpace') {
+    if (rawId === 'stageSpace09_Invasion_00') return { mapColcId: 3, mapId: 11, mapNo: 11, mapNoRaw: '11', stageNo: 0, stageNoRaw: '00', prefix: 'SPACE', rawId, source: 'BCU CH space special' };
+    if (rawId === 'stageSpace09_Invasion_Z_00') return { mapColcId: 3, mapId: 18, mapNo: 18, mapNoRaw: '18', stageNo: 0, stageNoRaw: '00', prefix: 'SPACE', rawId, source: 'BCU CH space special zombie' };
+    m = rawId.match(/^stageSpace(\d{2})_(\d{2})$/i);
+    if (!m) return null;
+    const mapId = Number(m[1]) - 1;
+    const stageNo = Number(m[2]);
+    return Number.isInteger(mapId) && Number.isInteger(stageNo)
+      ? { mapColcId: 3, mapId, mapNo: mapId, mapNoRaw: String(mapId), stageNo, stageNoRaw: m[2], prefix: 'SPACE', rawId, source: 'BCU CH stageSpace' }
+      : null;
+  }
+  if (g === 'stage') {
+    m = rawId.match(/^stage(\d{2})$/i);
+    if (!m) return null;
+    return { mapColcId: 3, mapId: 9, mapNo: 9, mapNoRaw: '9', stageNo: Number(m[1]), stageNoRaw: m[1], prefix: 'STAGE', rawId, source: 'BCU CH stage' };
+  }
+  return null;
+}
+
+function dmAddress(stage) {
+  if (collectionCodeOf(stage) !== 'DM' || groupOf(stage) !== 'StageDM') return null;
+  const rawId = basenameOf(stage);
+  const m = rawId.match(/^stageDM\d{3}_(\d{2})$/i);
+  return m
+    ? { mapColcId: 3, mapId: 14, mapNo: 14, mapNoRaw: '14', stageNo: Number(m[1]), stageNoRaw: m[1], prefix: 'DM', rawId, source: 'BCU DM StageDM' }
+    : null;
+}
+
+function parseStageAddress(stage, collectionCode) {
+  const parsed = numericAddressFromRecord(stage) || chapterAddress(stage) || dmAddress(stage) || normalAddress(stage, collectionCode);
+  if (parsed) return { ...parsed, collectionCode };
+  const rawId = basenameOf(stage) || stage?.stageKey || stage?.key || 'unknown';
+  return {
+    prefix: '',
+    mapColcId: MAP_COLC_ID_BY_CODE[collectionCode] ?? null,
+    mapId: null,
+    mapNo: null,
+    mapNoRaw: 'unknown',
+    stageNo: null,
+    stageNoRaw: rawId,
+    rawId,
     collectionCode,
+    source: 'unresolved-stage-address'
   };
 }
 
 function stageIdentity(stage) {
-  return stage?.stageKey || stage?.stageId || stage?.semanticEntry?.stageId || stage?.basename || '';
+  return stage?.stageKey || stage?.key || stage?.stageId || stage?.semanticEntry?.stageId || stage?.basename || '';
 }
 
 function packRank(stage) {
@@ -125,22 +225,31 @@ function collectionLabel(db, code, mapColcId) {
   return resolved?.value || COLLECTION_LABEL_FALLBACKS[code] || code || '未分類';
 }
 
-function mapLabel(db, mapColcId, mapNo, fallback) {
+function mapLabelInfo(db, mapColcId, mapNo, fallback) {
   const resolved = Number.isFinite(mapColcId) && Number.isFinite(mapNo)
     ? resolveName(db, 'stageMap', stageMapKey(mapColcId, mapNo))
     : null;
-  return resolved?.value || fallback || `マップ ${Number.isFinite(mapNo) ? mapNo : ''}`.trim();
+  if (resolved?.value) return { value: resolved.value, source: 'lang', file: resolved.file || null, key: resolved.key || null };
+  return { value: fallback || `マップ ${Number.isFinite(mapNo) ? mapNo : ''}`.trim(), source: 'fallback', file: null, key: null };
 }
 
-function stageLabel(db, mapColcId, mapNo, stageNo, fallback) {
+function stageLabelInfo(db, mapColcId, mapNo, stageNo, fallback) {
   const resolved = Number.isFinite(mapColcId) && Number.isFinite(mapNo) && Number.isFinite(stageNo)
     ? resolveName(db, 'stage', stageKey(mapColcId, mapNo, stageNo))
     : null;
-  return resolved?.value || fallback || `ステージ ${Number.isFinite(stageNo) ? stageNo : ''}`.trim();
+  if (resolved?.value) return { value: resolved.value, source: 'lang', file: resolved.file || null, key: resolved.key || null };
+  return { value: fallback || `ステージ ${Number.isFinite(stageNo) ? stageNo : ''}`.trim(), source: 'fallback', file: null, key: null };
+}
+
+function normalizeNameKey(value) {
+  return String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
 }
 
 function sortByCollectionThenMap(a, b) {
-  const collection = (COLLECTION_ORDER.get(a.collectionCode) ?? 9999) - (COLLECTION_ORDER.get(b.collectionCode) ?? 9999);
+  const category = (CATEGORY_ORDER.get(a.categoryId) ?? 9999) - (CATEGORY_ORDER.get(b.categoryId) ?? 9999);
+  if (category) return category;
+  const collection = Math.min(...(a.collectionCodes || [a.collectionCode]).map((code) => COLLECTION_ORDER.get(code) ?? 9999))
+    - Math.min(...(b.collectionCodes || [b.collectionCode]).map((code) => COLLECTION_ORDER.get(code) ?? 9999));
   if (collection) return collection;
   const map = String(a.mapNoRaw).localeCompare(String(b.mapNoRaw), 'ja', { numeric: true });
   if (map) return map;
@@ -153,6 +262,29 @@ function sortStage(a, b) {
   return a.label.localeCompare(b.label, 'ja', { numeric: true });
 }
 
+function appendUnique(list, value) {
+  if (!value || list.includes(value)) return;
+  list.push(value);
+}
+
+function rawMapKey(collectionCode, address) {
+  const mapNoKey = Number.isFinite(address.mapNo) ? String(address.mapNo) : address.mapNoRaw;
+  return `${collectionCode}:${mapNoKey}`;
+}
+
+function mapDedupeKey(categoryId, collectionCode, address, labelInfo) {
+  const labelKey = labelInfo.source === 'lang' ? normalizeNameKey(labelInfo.value) : '';
+  if (labelKey) return `${categoryId}:map-name:${labelKey}`;
+  return `${categoryId}:${rawMapKey(collectionCode, address)}`;
+}
+
+function stageDedupeKey({ categoryId, mapKey, address, labelInfo, id }) {
+  const labelKey = labelInfo.source === 'lang' ? normalizeNameKey(labelInfo.value) : '';
+  if (categoryId === 'collab' && labelKey) return `${mapKey}:stage-name:${labelKey}`;
+  const stageNoKey = Number.isFinite(address.stageNo) ? String(address.stageNo) : address.stageNoRaw;
+  return `${mapKey}:${address.rawId || stageNoKey || id}`;
+}
+
 export function buildBcuStageCatalog(stages = [], { bcuDb = null } = {}) {
   const categories = STAGE_SELECTOR_CATEGORIES.map((category) => ({ ...category, maps: [], mapCount: 0, stageCount: 0 }));
   const categoryById = new Map(categories.map((category) => [category.id, category]));
@@ -163,52 +295,73 @@ export function buildBcuStageCatalog(stages = [], { bcuDb = null } = {}) {
     const id = stageIdentity(stage);
     if (!id) continue;
     const collectionCode = collectionCodeOf(stage);
-    const mapColcId = MAP_COLC_ID_BY_CODE[collectionCode] ?? null;
     const categoryId = CATEGORY_BY_COLLECTION.get(collectionCode) || 'special';
     const category = categoryById.get(categoryId) || categoryById.get('special');
     const address = parseStageAddress(stage, collectionCode);
-    const mapNoKey = Number.isFinite(address.mapNo) ? String(address.mapNo) : address.mapNoRaw;
-    const mapKey = `${collectionCode}:${mapNoKey}`;
+    const mapColcId = address.mapColcId;
+    const mapInfo = mapLabelInfo(bcuDb, mapColcId, address.mapNo, Number.isFinite(address.mapNo) ? `マップ ${address.mapNo}` : '未分類マップ');
+    const mapKey = mapDedupeKey(category.id, collectionCode, address, mapInfo);
+    const rawKey = rawMapKey(collectionCode, address);
     let map = mapsByKey.get(mapKey);
     if (!map) {
-      const label = mapLabel(bcuDb, mapColcId, address.mapNo, Number.isFinite(address.mapNo) ? `マップ ${address.mapNo}` : '未分類マップ');
+      const collection = collectionLabel(bcuDb, collectionCode, mapColcId);
       map = {
         key: mapKey,
+        aliasKeys: [rawKey],
         categoryId: category.id,
         collectionCode,
-        collectionLabel: collectionLabel(bcuDb, collectionCode, mapColcId),
+        collectionCodes: [collectionCode],
+        collectionLabel: collection,
+        collectionLabels: [collection],
         mapColcId,
         mapNo: address.mapNo,
         mapNoRaw: address.mapNoRaw,
-        label,
+        label: mapInfo.value,
+        labelSource: mapInfo.source,
+        labelFile: mapInfo.file,
         stages: [],
         stageCount: 0,
+        mergedMapCount: 1,
       };
       mapsByKey.set(mapKey, map);
+      mapsByKey.set(rawKey, map);
       category.maps.push(map);
+    } else {
+      appendUnique(map.aliasKeys, rawKey);
+      mapsByKey.set(rawKey, map);
+      appendUnique(map.collectionCodes, collectionCode);
+      appendUnique(map.collectionLabels, collectionLabel(bcuDb, collectionCode, mapColcId));
+      map.mergedMapCount = Math.max(1, Number(map.mergedMapCount) || 1) + 1;
     }
 
-    const stageNoKey = Number.isFinite(address.stageNo) ? String(address.stageNo) : address.stageNoRaw;
-    const dedupeKey = `${mapKey}:${address.rawId || stageNoKey}`;
-    const existing = map.__stageByKey?.get(dedupeKey);
-    const label = stageLabel(bcuDb, mapColcId, address.mapNo, address.stageNo, stage?.label || address.rawId || id);
+    const stageInfo = stageLabelInfo(bcuDb, mapColcId, address.mapNo, address.stageNo, stage?.name?.value || stage?.label || address.rawId || id);
     const item = {
       key: id,
       id,
-      label,
+      label: stageInfo.value,
+      labelSource: stageInfo.source,
+      labelFile: stageInfo.file,
+      labelKey: stageInfo.key,
       stage,
       mapKey,
       categoryId: category.id,
       collectionCode,
       collectionLabel: map.collectionLabel,
+      collectionCodes: map.collectionCodes,
+      collectionLabels: map.collectionLabels,
       mapLabel: map.label,
       mapNo: address.mapNo,
       mapNoRaw: address.mapNoRaw,
+      mapColcId,
       stageNo: address.stageNo,
       stageNoRaw: address.stageNoRaw,
       rawId: address.rawId,
+      addressSource: address.source,
+      dedupePolicy: category.id === 'collab' && stageInfo.source === 'lang' ? 'collab-map-stage-name' : 'stage-identity'
     };
     if (!map.__stageByKey) map.__stageByKey = new Map();
+    const dedupeKey = stageDedupeKey({ categoryId: category.id, mapKey, address, labelInfo: stageInfo, id });
+    const existing = map.__stageByKey.get(dedupeKey);
     if (shouldReplaceStage(existing, item)) map.__stageByKey.set(dedupeKey, item);
   }
 
@@ -224,6 +377,7 @@ export function buildBcuStageCatalog(stages = [], { bcuDb = null } = {}) {
         stageById.set(stage.key, stage);
         if (stage.stage?.stageId) stageById.set(stage.stage.stageId, stage);
         if (stage.stage?.stageKey) stageById.set(stage.stage.stageKey, stage);
+        if (stage.rawId) stageById.set(stage.rawId, stage);
       }
     }
     category.mapCount = category.maps.length;

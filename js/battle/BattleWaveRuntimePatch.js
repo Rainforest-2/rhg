@@ -8,7 +8,7 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleWaveEffectLoader } from './BattleWaveEffectLoader.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v4.semantic-wave-effect-bundle');
+const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v5-explicit-proc-resolve');
 const W_PROG = 200;
 const W_E_INI = -32.75;
 const W_U_INI = -67.5;
@@ -307,9 +307,11 @@ function attackAtFrame(scene, item) {
 
 function process(scene) {
   const q = Array.isArray(scene.__bcuWaveContainers) ? scene.__bcuWaveContainers : [];
-  if (!q.length) return;
+  if (!q.length) return { processed: 0, active: 0, source: 'BattleWaveRuntimePatch.process' };
   const rest = [];
+  let processed = 0;
   for (const item of q) {
+    processed += 1;
     if (item.activate === false || item.group?.active === false) continue;
     const rangeTargets = targetsInRange(scene, item.attacker, item.pos - item.width / 2, item.pos + item.width / 2, item.incl);
     if (item.t === 0) {
@@ -339,6 +341,7 @@ function process(scene) {
     rest.push(item);
   }
   scene.__bcuWaveContainers = rest.filter((w) => w.activate !== false && w.group?.active !== false);
+  return { processed, active: scene.__bcuWaveContainers.length, source: 'BattleWaveRuntimePatch.process' };
 }
 
 function enqueueFromResult(scene, attacker, target, event, calc, result, meta = {}) {
@@ -356,6 +359,10 @@ export function installBattleWaveRuntimePatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
+
+  proto.processBcuWaveRuntime = function processBcuWaveRuntimePhase() {
+    return process(this);
+  };
 
   proto.ensureWaveEffectLoading = function ensureWaveEffectLoadingBcu() {
     if (this._waveEffectPromise) return this._waveEffectPromise;
@@ -403,7 +410,7 @@ export function installBattleWaveRuntimePatch() {
       if (phase === 'proc-resolve') {
         return originalRunTickPhase.call(this, phase, () => {
           const res = fn();
-          process(this);
+          this.processBcuWaveRuntime?.();
           return res;
         });
       }

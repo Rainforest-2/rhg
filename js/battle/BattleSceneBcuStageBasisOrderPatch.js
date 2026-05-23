@@ -2,7 +2,7 @@ import { BattleScene } from './BattleScene.js';
 import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 import { traceBcuStageBasisShadow } from './bcu-runtime/BcuStageBasisShadow.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-stagebasis-order-shadow-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-stagebasis-order-shadow-patch.v2.wrapper-chain-trace');
 
 export function installBattleSceneBcuStageBasisOrderPatch() {
   const proto = BattleScene?.prototype;
@@ -18,11 +18,10 @@ export function installBattleSceneBcuStageBasisOrderPatch() {
   };
   BcuTraceRuntime.push('stagebasis', {
     source: 'BattleSceneBcuStageBasisOrderPatch',
-    bcuReference: 'StageBasis.update',
-    mode: 'shadow-trace-only',
-    unresolved: 'BattleScene.tick is not replaced; capture/excuse/postUpdate order not fully switched'
+    bcuReference: 'StageBasis.update/updateEntities order tracing',
+    mode: 'runTickPhase-wrapper-trace',
+    note: 'BattleSceneBcuStageBasisTickPatch replaces BattleScene.tick later in main.js; BattleSceneBcuStageBasisPhaseBridgePatch connects explicit damage/proc/base/effect phase evidence.'
   });
 }
 
 installBattleSceneBcuStageBasisOrderPatch();
-

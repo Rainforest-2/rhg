@@ -46,26 +46,30 @@ function procModelCandidateActive(key, proc = {}, semantic = {}) {
   return Number(payloadFor(key, proc).prob || 0) > 0;
 }
 
+function mirrorsToApplied(candidate) {
+  return candidate?.implemented === true && (candidate?.pendingType === 'state' || candidate?.pendingType === 'knockback' || candidate?.pendingType === 'kb');
+}
+
 export class ProcResolver {
   static getProcCatalog() {
     return {
       freeze: { key: 'freeze', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       slow: { key: 'slow', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       weaken: { key: 'weaken', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
-      knockbackProc: { key: 'knockbackProc', category: 'kb', implemented: true, pendingSupported: true, pendingType: 'knockback', target: 'actor' },
-      warp: { key: 'warp', category: 'state', implemented: false, pendingSupported: true, pendingType: 'state', target: 'actor' },
+      knockbackProc: { key: 'knockbackProc', category: 'kb', implemented: true, pendingSupported: true, pendingType: 'kb', target: 'actor' },
+      warp: { key: 'warp', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor', runtime: 'BattleActorProcStatusPatch.applyWarp / BcuProcRuntime.performProc' },
       curse: { key: 'curse', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       seal: { key: 'seal', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
       toxic: { key: 'toxic', category: 'state', implemented: true, pendingSupported: true, pendingType: 'state', target: 'actor' },
-      wave: { key: 'wave', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
-      miniWave: { key: 'miniWave', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
-      surge: { key: 'surge', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
-      miniSurge: { key: 'miniSurge', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
-      blast: { key: 'blast', category: 'effect', implemented: false, pendingSupported: true, pendingType: 'effect', target: 'world' },
-      barrierBreaker: { key: 'barrierBreaker', category: 'shield', implemented: false, pendingSupported: true, pendingType: 'shield', target: 'actor' },
-      shieldPierce: { key: 'shieldPierce', category: 'shield', implemented: false, pendingSupported: true, pendingType: 'shield', target: 'actor' },
-      zombieKiller: { key: 'zombieKiller', category: 'special', implemented: false, pendingSupported: true, pendingType: 'special', target: 'actor' },
-      soulstrike: { key: 'soulstrike', category: 'special', implemented: false, pendingSupported: true, pendingType: 'special', target: 'actor' }
+      wave: { key: 'wave', category: 'effect', implemented: true, pendingSupported: true, pendingType: 'effect', target: 'world', runtime: 'BattleWaveRuntimePatch ContWaveDef container' },
+      miniWave: { key: 'miniWave', category: 'effect', implemented: true, pendingSupported: true, pendingType: 'effect', target: 'world', runtime: 'BattleWaveRuntimePatch ContWaveDef miniWave container' },
+      surge: { key: 'surge', category: 'effect', implemented: true, pendingSupported: true, pendingType: 'effect', target: 'world', runtime: 'BattleSurgeRuntimePatch ContVolcano container' },
+      miniSurge: { key: 'miniSurge', category: 'effect', implemented: true, pendingSupported: true, pendingType: 'effect', target: 'world', runtime: 'BattleSurgeRuntimePatch ContVolcano miniSurge container' },
+      blast: { key: 'blast', category: 'effect', implemented: true, pendingSupported: true, pendingType: 'effect', target: 'world', runtime: 'BattleBlastRuntimePatch ContBlast container' },
+      barrierBreaker: { key: 'barrierBreaker', category: 'shield', implemented: true, pendingSupported: true, pendingType: 'shield', target: 'actor', runtime: 'BattleActorBarrierShieldPatch gateBarrier' },
+      shieldPierce: { key: 'shieldPierce', category: 'shield', implemented: true, pendingSupported: true, pendingType: 'shield', target: 'actor', runtime: 'BattleActorBarrierShieldPatch gateShield' },
+      zombieKiller: { key: 'zombieKiller', category: 'special', implemented: true, pendingSupported: true, pendingType: 'special', target: 'actor', runtime: 'BattleActorZombieRevivePatch blocks revive' },
+      soulstrike: { key: 'soulstrike', category: 'special', implemented: true, pendingSupported: true, pendingType: 'special', target: 'actor', runtime: 'BattleSoulstrikePatch corpse targeting' }
     };
   }
 
@@ -83,6 +87,7 @@ export class ProcResolver {
           implemented: entry.implemented === true,
           pendingSupported: entry.pendingSupported === true,
           target: entry.target || null,
+          runtime: entry.runtime || null,
           source: 'semantic-ability-true'
         });
       }
@@ -98,6 +103,7 @@ export class ProcResolver {
         implemented: entry.implemented === true,
         pendingSupported: entry.pendingSupported === true,
         target: entry.target || null,
+        runtime: entry.runtime || null,
         source: existing ? 'semantic-and-bcu-proc-model' : 'bcu-proc-model'
       });
     }
@@ -150,8 +156,9 @@ export class ProcResolver {
         attackerId,
         hitIndex,
         attackEventKey,
-        source: candidate.implemented ? 'ProcResolver.bcu-proc-roll-ready-to-apply' : 'ProcResolver.bcu-proc-roll-pending-no-apply',
+        source: candidate.implemented ? 'ProcResolver.bcu-proc-roll-ready-to-runtime' : 'ProcResolver.bcu-proc-roll-pending-no-apply',
         candidateSource: candidate.source,
+        runtime: candidate.runtime || null,
         reason: candidate.implemented ? 'runtime-application-supported' : 'runtime-application-not-implemented',
         payload,
         context: {
@@ -161,12 +168,12 @@ export class ProcResolver {
         }
       };
       pending.push(item);
-      if (candidate.implemented) applied.push(item);
+      if (mirrorsToApplied(candidate)) applied.push(item);
     }
 
     return {
-      source: 'ProcResolver.v4-bcu-proc-model-candidate-contract',
-      mode: 'bcu-proc-roll-pending-apply-contract',
+      source: 'ProcResolver.v6-runtime-catalog-no-duplicate-effect-containers',
+      mode: 'bcu-proc-roll-pending-runtime-contract',
       applied,
       pending,
       skipped,

@@ -1,7 +1,7 @@
 import { BattleActor } from './BattleActor.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v3');
+const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v4-warp-runtime');
 const BCU_SLOW_MOVE_PER_FRAME = 0.25;
 
 function framesToMs(frames) {
@@ -18,6 +18,7 @@ function expireStatuses(actor, nowMs) {
   if (!actor?.bcuProcStatuses || !Number.isFinite(nowMs)) return;
   for (const key of Object.keys(actor.bcuProcStatuses)) {
     const st = actor.bcuProcStatuses[key];
+    if (key === 'warp') continue;
     if (Number.isFinite(st?.framesRemaining)) {
       if (st.framesRemaining <= 0) delete actor.bcuProcStatuses[key];
       continue;
@@ -39,11 +40,104 @@ function decrementStatusFrames(actor) {
   if (frame !== null && actor.__lastBcuProcStatusFrame === frame) return;
   actor.__lastBcuProcStatusFrame = frame;
   for (const key of Object.keys(actor.bcuProcStatuses)) {
+    if (key === 'warp') continue;
     const st = actor.bcuProcStatuses[key];
     if (!Number.isFinite(st?.framesRemaining)) continue;
     if (st.framesRemaining > 0) st.framesRemaining -= 1;
     if (st.framesRemaining <= 0) delete actor.bcuProcStatuses[key];
   }
+}
+
+function rollWarpDistance(payload = {}, random = Math.random) {
+  const d0 = Math.trunc(Number(payload.dis0 ?? payload.dis_0 ?? payload.distance ?? 0) || 0);
+  const d1 = Math.trunc(Number(payload.dis1 ?? payload.dis_1 ?? d0) || d0);
+  const lo = Math.min(d0, d1);
+  const hi = Math.max(d0, d1);
+  if (hi <= lo) return lo;
+  return lo + Math.floor(random() * (hi - lo));
+}
+
+function applyWarp(actor, payload = {}, meta = {}) {
+  const durationFrames = Math.max(0, Math.floor(Number(payload.timeFrames ?? payload.time ?? 0) || 0));
+  if (durationFrames <= 0) return { applied: false, reason: 'zero-warp-duration' };
+  const random = typeof meta.random === 'function' ? meta.random : Math.random;
+  const distance = rollWarpDistance(payload, random);
+  const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
+  const durationMs = framesToMs(durationFrames);
+  const statuses = ensureStatuses(actor);
+  statuses.warp = {
+    key: 'warp',
+    framesRemaining: durationFrames,
+    durationFrames,
+    untilMs: nowMs + durationMs,
+    distance,
+    dis0: Number(payload.dis0 ?? payload.dis_0 ?? 0) || 0,
+    dis1: Number(payload.dis1 ?? payload.dis_1 ?? payload.dis0 ?? payload.dis_0 ?? 0) || 0,
+    state: 'enter',
+    hidden: true,
+    moved: false,
+    payload,
+    source: 'BCU Entity.processProcs WARP -> interrupt(INT_WARP) and status[P_WARP][0] countdown'
+  };
+  actor.bcuWarpState = 'enter';
+  actor.bcuWarpHidden = true;
+  actor.bcuWarpDistance = distance;
+  actor.bcuWarpStartedAtMs = nowMs;
+  actor.bcuWarpUntilMs = statuses.warp.untilMs;
+  actor.lastBcuWarpDebug = {
+    source: 'BattleActorProcStatusPatch.applyWarp',
+    bcuReference: 'Entity.processProcs: interrupt(INT_WARP, dis_0 + random(dis_1-dis_0)); status[P_WARP][0] = time + A_W enter/exit len',
+    durationFrames,
+    durationMs,
+    distance,
+    nowMs,
+    visualLimitation: 'A_W/A_W_C entrance/exit asset lengths not loaded in this environment; runtime applies logic countdown and final displacement.'
+  };
+  return { applied: true, status: statuses.warp, distance, durationFrames, visualVerified: false };
+}
+
+function tickWarp(actor, nowMs = actor?.lastSceneTimeMs) {
+  const st = actor?.bcuProcStatuses?.warp;
+  if (!st) return false;
+  if (!Number.isFinite(st.framesRemaining) || st.framesRemaining <= 0) {
+    delete actor.bcuProcStatuses.warp;
+    actor.bcuWarpHidden = false;
+    actor.bcuWarpState = null;
+    return false;
+  }
+  actor.bcuWarpHidden = true;
+  actor.bcuWarpState = st.state || 'enter';
+  st.framesRemaining -= 1;
+  if (st.framesRemaining <= 0) {
+    const distance = Number(st.distance || 0);
+    if (!st.moved && Number.isFinite(distance) && distance !== 0) {
+      actor.x -= distance * (Number.isFinite(actor.direction) ? actor.direction : 1);
+      actor.posBcu = actor.x;
+      st.moved = true;
+    }
+    actor.bcuWarpHidden = false;
+    actor.bcuWarpState = 'exit';
+    actor.lastBcuWarpDebug = {
+      ...(actor.lastBcuWarpDebug || {}),
+      source: 'BattleActorProcStatusPatch.tickWarp',
+      completed: true,
+      movedDistance: distance,
+      x: actor.x,
+      nowMs,
+      bcuReference: 'Entity.KBManager.updateKB: INT_WARP moves by kbDis at exit transition and clears status[P_WARP][2]'
+    };
+    delete actor.bcuProcStatuses.warp;
+    return false;
+  }
+  actor.lastBcuWarpTickDebug = {
+    source: 'BattleActorProcStatusPatch.tickWarp',
+    framesRemaining: st.framesRemaining,
+    distance: st.distance,
+    hidden: true,
+    state: actor.bcuWarpState,
+    nowMs
+  };
+  return true;
 }
 
 function applyToxic(actor, payload = {}, meta = {}) {
@@ -69,7 +163,7 @@ function applyStatus(actor, key, payload = {}, meta = {}) {
   const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
   const durationFrames = Math.max(0, Math.floor(Number(payload.timeFrames ?? payload.time ?? 0) || 0));
   const durationMs = framesToMs(durationFrames);
-  if (durationMs <= 0 && key !== 'knockbackProc' && key !== 'toxic') return { applied: false, reason: 'zero-duration' };
+  if (durationMs <= 0 && key !== 'knockbackProc' && key !== 'toxic' && key !== 'warp') return { applied: false, reason: 'zero-duration' };
   if (key === 'freeze') {
     statuses.freeze = { key, framesRemaining: durationFrames, untilMs: nowMs + durationMs, durationMs, payload, source: 'BCU status[P_STOP] overwrite' };
     actor.freezeUntilMs = statuses.freeze.untilMs;
@@ -97,6 +191,9 @@ function applyStatus(actor, key, payload = {}, meta = {}) {
     actor.sealUntilMs = statuses.seal.untilMs;
     return { applied: true, status: statuses.seal };
   }
+  if (key === 'warp') {
+    return applyWarp(actor, payload, meta);
+  }
   if (key === 'toxic') {
     return applyToxic(actor, payload, meta);
   }
@@ -111,7 +208,7 @@ function applyProc(actor, item, meta = {}) {
     actor.startKnockback?.({ type: 'proc', reason: 'proc-kb', tuning: meta.tuning || {}, nowMs: meta.nowMs });
     return { applied: actor.state === 'knockback', reason: 'proc-kb', proc: item };
   }
-  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken' || item.key === 'curse' || item.key === 'seal' || item.key === 'toxic') {
+  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken' || item.key === 'curse' || item.key === 'seal' || item.key === 'toxic' || item.key === 'warp') {
     return applyStatus(actor, item.key, item.payload || {}, meta);
   }
   return { applied: false, reason: 'proc-not-runtime-applied' };
@@ -154,11 +251,30 @@ export function installBattleActorProcStatusPatch() {
     return Number.isFinite(mult) && mult > 0 ? mult : 100;
   };
 
+  const originalIsTargetable = proto.isTargetable;
+  proto.isTargetable = function isTargetableWithBcuWarp() {
+    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp) return false;
+    return originalIsTargetable.call(this);
+  };
+
+  const originalIsTouchable = proto.isTouchable;
+  proto.isTouchable = function isTouchableWithBcuWarp() {
+    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp) return false;
+    return originalIsTouchable.call(this);
+  };
+
+  const originalIsRenderable = proto.isRenderable;
+  proto.isRenderable = function isRenderableWithBcuWarp() {
+    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp) return false;
+    return originalIsRenderable.call(this);
+  };
+
   const originalTick = proto.tick;
   proto.tick = function tickWithBcuProcStatuses(dt) {
     const nowMs = Number.isFinite(this.lastSceneTimeMs) ? this.lastSceneTimeMs : null;
     decrementStatusFrames(this);
     expireStatuses(this, nowMs);
+    if (tickWarp(this, nowMs)) return;
     if (this.bcuProcStatuses?.freeze && Number.isFinite(nowMs) && nowMs < this.bcuProcStatuses.freeze.untilMs) {
       this.lastBcuProcTickDebug = { frozen: true, framesRemaining: this.bcuProcStatuses.freeze.framesRemaining ?? null, untilMs: this.bcuProcStatuses.freeze.untilMs, nowMs, source: 'BCU status[P_STOP] prevents actor animation/update tick' };
       return;
@@ -176,12 +292,14 @@ const DEBUG_STATUS_MAP = {
   CURSE: 'curse',
   SEAL: 'seal',
   POISON: 'toxic',
+  WARP: 'warp',
   freeze: 'freeze',
   slow: 'slow',
   weaken: 'weaken',
   curse: 'curse',
   seal: 'seal',
-  toxic: 'toxic'
+  toxic: 'toxic',
+  warp: 'warp'
 };
 
 function resolveDebugActor(actorOrSelector) {
@@ -199,7 +317,7 @@ globalThis.__BCU_TEST_APPLY_STATUS__ = function __BCU_TEST_APPLY_STATUS__(actorO
   const actor = resolveDebugActor(actorOrSelector);
   const key = DEBUG_STATUS_MAP[statusKey] || DEBUG_STATUS_MAP[String(statusKey || '').toUpperCase()];
   if (!actor || !key) return { applied: false, reason: 'actor-or-status-not-found' };
-  return actor.applyBcuProc?.({ key, payload: { timeFrames: frames, time: frames, mult: key === 'weaken' ? 50 : undefined } }, { nowMs: actor.lastSceneTimeMs ?? globalThis.__APP__?.scene?.timeMs ?? 0 }) || { applied: false, reason: 'applyBcuProc-missing' };
+  return actor.applyBcuProc?.({ key, payload: { timeFrames: frames, time: frames, mult: key === 'weaken' ? 50 : undefined, dis0: key === 'warp' ? 200 : undefined, dis1: key === 'warp' ? 200 : undefined } }, { nowMs: actor.lastSceneTimeMs ?? globalThis.__APP__?.scene?.timeMs ?? 0 }) || { applied: false, reason: 'applyBcuProc-missing' };
 };
 
 globalThis.__BCU_TEST_CLEAR_STATUS__ = function __BCU_TEST_CLEAR_STATUS__(actorOrSelector, statusKey) {
@@ -207,6 +325,10 @@ globalThis.__BCU_TEST_CLEAR_STATUS__ = function __BCU_TEST_CLEAR_STATUS__(actorO
   const key = DEBUG_STATUS_MAP[statusKey] || DEBUG_STATUS_MAP[String(statusKey || '').toUpperCase()];
   if (!actor?.bcuProcStatuses || !key) return { cleared: false };
   delete actor.bcuProcStatuses[key];
+  if (key === 'warp') {
+    actor.bcuWarpHidden = false;
+    actor.bcuWarpState = null;
+  }
   actor.bcuStatusEffectManager?.removeEffect?.(0);
   return { cleared: true, key };
 };
@@ -217,6 +339,7 @@ globalThis.__BCU_TEST_LIST_STATUS_EFFECTS__ = function __BCU_TEST_LIST_STATUS_EF
   return (scene?.actors || []).map((actor) => ({
     actor: actor.instanceId || actor.label || null,
     statuses: actor.bcuProcStatuses || {},
+    warp: { hidden: actor.bcuWarpHidden === true, state: actor.bcuWarpState || null, debug: actor.lastBcuWarpDebug || null },
     effects: actor.bcuStatusEffectManager?.getRenderableEffects?.() || []
   }));
 };

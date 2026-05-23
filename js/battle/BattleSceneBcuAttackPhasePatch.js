@@ -2,7 +2,7 @@ import { BattleScene } from './BattleScene.js';
 import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-phase-patch.v2');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-phase-patch.v3-explicit-damage-resolve');
 
 function ensureQueue(scene) {
   if (!Array.isArray(scene.pendingBcuAttackDamageQueue)) scene.pendingBcuAttackDamageQueue = [];
@@ -44,7 +44,7 @@ function sortDamageBatch(batch) {
 
 function processDeferredAttackDamage(scene, reason = 'damage-resolve') {
   const queue = ensureQueue(scene);
-  if (!queue.length) return { processed: 0, applied: 0, skipped: 0 };
+  if (!queue.length) return { processed: 0, applied: 0, skipped: 0, source: 'BCU AttackAb.excuse explicit damage-resolve', reason };
 
   const batch = sortDamageBatch(queue.splice(0, queue.length));
   let applied = 0;
@@ -105,6 +105,7 @@ function processDeferredAttackDamage(scene, reason = 'damage-resolve') {
   scene.pushEvent?.({
     type: 'bcuAttackDamageQueueFlushed',
     source: 'BCU StageBasis AttackAb.capture then AttackAb.excuse separation',
+    bcuReference: 'StageBasis.updateEntities: la.forEach(AttackAb::capture); la.forEach(AttackAb::excuse)',
     flushReason: reason,
     processed: batch.length,
     applied,
@@ -112,13 +113,17 @@ function processDeferredAttackDamage(scene, reason = 'damage-resolve') {
     sort: 'capturedAtFrame, side, attacker.posBcu, hitIndex, key'
   });
 
-  return { processed: batch.length, applied, skipped };
+  return { processed: batch.length, applied, skipped, source: 'BCU AttackAb.excuse explicit damage-resolve', reason };
 }
 
 export function installBattleSceneBcuAttackPhasePatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
+
+  proto.processDeferredAttackDamage = function processDeferredAttackDamagePhase(reason = 'damage-resolve') {
+    return processDeferredAttackDamage(this, reason);
+  };
 
   const originalRunTickPhase = proto.runTickPhase;
   if (typeof originalRunTickPhase !== 'function') {
@@ -129,19 +134,19 @@ export function installBattleSceneBcuAttackPhasePatch() {
     if (phase === 'damage-resolve') {
       return originalRunTickPhase.call(this, phase, () => {
         const result = fn();
-        processDeferredAttackDamage(this, 'damage-resolve');
+        this.processDeferredAttackDamage?.('damage-resolve-wrapper-safety');
         return result;
       });
     }
     if (phase === 'knockback-death') {
       return originalRunTickPhase.call(this, phase, () => {
-        processDeferredAttackDamage(this, 'pre-knockback-death-safety-flush');
+        this.processDeferredAttackDamage?.('pre-knockback-death-safety-flush');
         return fn();
       });
     }
     if (phase === 'cleanup') {
       return originalRunTickPhase.call(this, phase, () => {
-        processDeferredAttackDamage(this, 'pre-cleanup-safety-flush');
+        this.processDeferredAttackDamage?.('pre-cleanup-safety-flush');
         return fn();
       });
     }

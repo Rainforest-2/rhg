@@ -1,40 +1,47 @@
 import { StageDefinitionLoader } from './StageDefinitionLoader.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.stage-definition-negative-spawn.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.stage-definition-negative-spawn.v2');
 const FRAME_MUL = 2;
 const COL_E = 0;
 const COL_S0 = 2;
-const COL_S1 = 10;
+const COL_NEGATIVE_SPAWN_FLAG = 12;
 
 function num(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
+function isIntegerText(value) {
+  return /^[-+]?\d+$/.test(String(value ?? '').trim());
+}
+
 function patchRow(row) {
   if (!row || !Array.isArray(row.raw)) return;
   const rawFirst0 = num(row.raw[COL_S0], 0);
-  let rawFirst1 = num(row.raw[COL_S1], rawFirst0);
-  if (rawFirst1 === 0) rawFirst1 = rawFirst0;
-  const firstMin = rawFirst0 * FRAME_MUL;
-  const firstMax = rawFirst1 * FRAME_MUL;
+  const negativeSpawnFlag = isIntegerText(row.raw[COL_NEGATIVE_SPAWN_FLAG]) && Number.parseInt(row.raw[COL_NEGATIVE_SPAWN_FLAG], 10) === 1;
+  const firstMin = (negativeSpawnFlag ? -rawFirst0 : rawFirst0) * FRAME_MUL;
+  const firstMax = Number.isFinite(row.scdef?.spawn_1) ? row.scdef.spawn_1 : 0;
   row.firstFrameMin = firstMin;
   row.firstFrameMax = firstMax;
   row.firstFrame = firstMin;
-  row.firstMs = firstMin * 33;
+  row.firstMs = Math.round(firstMin * BCU_BATTLE_TIMER_PERIOD_MS);
   row.negativeFirstDelayFrames = firstMin < 0 ? Math.abs(firstMin) : 0;
   row.bcuNegativeFirstSpawn = firstMin < 0;
   row.bcuFirstSpawnPatchDebug = {
-    source: 'BCU EStage.assign keeps initial rem value from spawn_0',
+    source: 'BCU Stage.java ss[12]==1 negates SCDef.S0; EStage.assign keeps rem from spawn_0',
     rawEnemyId: num(row.raw[COL_E], null),
     rawFirst0,
-    rawFirst1,
+    negativeSpawnFlag,
     firstFrameMin: firstMin,
     firstFrameMax: firstMax
   };
   if (row.scdef) {
     row.scdef.firstFrameMin = firstMin;
     row.scdef.firstFrameMax = firstMax;
+    row.scdef.spawn_0 = firstMin;
+    row.scdef.spawn_1 = firstMax;
+    row.scdef.negativeSpawnFlag = negativeSpawnFlag ? 1 : 0;
   }
 }
 
@@ -49,10 +56,10 @@ function patchDefinition(def) {
     }
   }
   if (def?.runtime) {
-    def.runtime.negativeFirstSpawnSource = 'BCU EStage rem parity';
+    def.runtime.negativeFirstSpawnSource = 'BCU Stage.java ss[12] negative spawn parity';
   }
   if (def) {
-    def.negativeFirstSpawnSource = 'BCU EStage rem parity';
+    def.negativeFirstSpawnSource = 'BCU Stage.java ss[12] negative spawn parity';
   }
   return def;
 }

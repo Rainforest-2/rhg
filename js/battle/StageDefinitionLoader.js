@@ -6,8 +6,28 @@ import { assertRuntimeUrlAllowed } from '../bcu/RuntimeAssetGuard.js';
 const FRAME_MUL = 2;
 const FPS = 1000 / BCU_BATTLE_TIMER_PERIOD_MS;
 
+// SCDef internal array indexes. These are not the same as the raw stage CSV
+// columns after M. BCU Stage.java copies raw columns 0..9, then maps raw
+// ss[10]/ss[11]/ss[12]/ss[13] into SC/M1/negative-S0/KC explicitly.
 export const BCU_STAGE_ENEMY_COLUMNS = Object.freeze({
-  E: 0, N: 1, S0: 2, R0: 3, R1: 4, C0: 5, L0: 6, L1: 7, B: 8, M: 9, S1: 10, SCORE: 10, C1: 11, G: 12, M1: 13, KC: 14, SC: 15
+  E: 0, N: 1, S0: 2, R0: 3, R1: 4, C0: 5, L0: 6, L1: 7, B: 8, M: 9, S1: 10, C1: 11, G: 12, M1: 13, KC: 14, SC: 15
+});
+
+export const BCU_STAGE_CSV_COLUMNS = Object.freeze({
+  E: 0,
+  N: 1,
+  S0: 2,
+  R0: 3,
+  R1: 4,
+  C0: 5,
+  L0: 6,
+  L1: 7,
+  B: 8,
+  M: 9,
+  SC: 10,
+  M1: 11,
+  NEGATIVE_SPAWN_FLAG: 12,
+  KC: 13
 });
 
 const stripComment = (line) => String(line || '').split('//')[0].trim();
@@ -16,6 +36,11 @@ const toNum = (v, d = null) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : d;
 };
+const isIntegerText = (v) => /^[-+]?\d+$/.test(String(v ?? '').trim());
+const parseIntNLike = (v, missingFallback = 0) => {
+  if (v === undefined || v === null || String(v).trim() === '') return missingFallback;
+  return isIntegerText(v) ? Number.parseInt(String(v).trim(), 10) : -1;
+};
 const clampMaxEnemyCount = (value) => {
   const n = toNum(value, null);
   if (!Number.isFinite(n) || n <= 0) return null;
@@ -23,20 +48,11 @@ const clampMaxEnemyCount = (value) => {
 };
 
 function parseCastleRow(castleRow = []) {
-  const castleId = toNum(castleRow[0], null);
-  if (castleRow.length >= 3) {
-    return {
-      castleId,
-      cannonId: toNum(castleRow[1], null),
-      noContinue: toNum(castleRow[2], null),
-      source: 'bcu-stage-castle-row-extended-cannon'
-    };
-  }
   return {
-    castleId,
+    castleId: parseIntNLike(castleRow[0], null),
     cannonId: null,
-    noContinue: toNum(castleRow[1], null),
-    source: 'bcu-stage-castle-row'
+    noContinue: String(castleRow[1] ?? '').trim() === '1' ? 1 : 0,
+    source: 'bcu-stage-castle-row-castle-noncontinue'
   };
 }
 
@@ -117,39 +133,147 @@ export class StageDefinitionLoader {
     const metaRow = rawRows[1] || [];
     const warnings = [];
     const enemyRowsRaw = rawRows.slice(2);
+    const baseEnemyIdRaw = toNum(metaRow[6], null);
+    const baseEnemyId = Number.isFinite(baseEnemyIdRaw) ? baseEnemyIdRaw - 2 : null;
 
     const parsedRows = enemyRowsRaw.map((raw, sourceOrder) => {
       const rowWarnings = [];
-      const c = BCU_STAGE_ENEMY_COLUMNS;
-      const scdefRaw = Object.fromEntries(Object.entries(c).map(([k, idx]) => [k, raw[idx] ?? null]));
-      const rawEnemyId = toNum(raw[c.E], null);
+      const csv = BCU_STAGE_CSV_COLUMNS;
+      const rawEnemyId = toNum(raw[csv.E], null);
       const sourceEnemyId = rawEnemyId;
       const enemyId = Number.isFinite(rawEnemyId) ? rawEnemyId - 2 : null;
       if (!Number.isFinite(enemyId)) rowWarnings.push('invalid-enemyId');
-      const count = toNum(raw[c.N], 0);
+
+      const count = toNum(raw[csv.N], 0);
       const isInfinite = count === 0;
-      const firstFrameMinRaw = toNum(raw[c.S0], 0);
-      let firstFrameMaxRaw = toNum(raw[c.S1], null);
-      if (!Number.isFinite(firstFrameMaxRaw) || firstFrameMaxRaw <= 0) firstFrameMaxRaw = firstFrameMinRaw;
-      if (firstFrameMaxRaw < firstFrameMinRaw) { [firstFrameMaxRaw] = [firstFrameMinRaw]; rowWarnings.push('firstFrameRangeNormalized'); }
-      const firstFrameMin = Math.max(0, firstFrameMinRaw * FRAME_MUL);
-      const firstFrameMax = Math.max(firstFrameMin, firstFrameMaxRaw * FRAME_MUL);
-      let respawnMinFrame = Math.max(0, toNum(raw[c.R0], 0) * FRAME_MUL);
-      let respawnMaxFrame = Math.max(0, toNum(raw[c.R1], 0) * FRAME_MUL);
-      if (respawnMinFrame > respawnMaxFrame) { const t=respawnMinFrame; respawnMinFrame=respawnMaxFrame; respawnMaxFrame=t; rowWarnings.push('respawn min/max swapped'); }
-      let baseHpTrigger = toNum(raw[c.C0], 100);
-      let magnification = toNum(raw[c.M], 100);
-      if (baseHpTrigger > 100 && magnification === 100) { magnification = baseHpTrigger; baseHpTrigger = 100; rowWarnings.push('C0>100 moved to magnification'); warnings.push(`row ${sourceOrder}: normalized baseHpTrigger>100 into magnification`);}
-      let upper = toNum(raw[c.C1], null);
-      if (!Number.isFinite(upper) || upper <= 0) upper = null;
-      if (Number.isFinite(upper) && upper < baseHpTrigger) rowWarnings.push('C1<C0 health-window-source-unverified');
-      const atkMagRaw = toNum(raw[c.M1], null);
-      const attackMagnification = Number.isFinite(atkMagRaw) && atkMagRaw > 0 ? atkMagRaw : magnification;
-      const specialSpawnControl = toNum(raw[c.SC], null);
-      if (Number.isFinite(specialSpawnControl) && specialSpawnControl !== 0) rowWarnings.push('SC present but unsupported');
-      rowWarnings.push('negative spawn legacy removed/unverified');
-      const scdef = { rawEnemyId, enemyId, count, firstFrameMin, firstFrameMax, respawnMinFrame, respawnMaxFrame, baseHpTriggerLowerPercent: baseHpTrigger, baseHpTriggerUpperPercent: upper, group: toNum(raw[c.G], 0), magnification, attackMagnification, killCountTrigger: toNum(raw[c.KC], null), specialSpawnControl };
-      return { rowIndex:null,runtimeOrderIndex:null,sourceOrder,csvRowIndex:sourceOrder+2,originalCsvOrderIndex:sourceOrder,raw,scdefRaw,scdef,debug:{source:'StageDefinitionLoader.scdef-indexed-row',scdefRaw,scdef,warnings:rowWarnings},rawEnemyId,sourceEnemyId,enemyId,bcuId:Number.isFinite(enemyId)?formatBcuId(enemyId):null,count,countMode:isInfinite?'unlimited':'limited',isInfinite,firstFrameMin,firstFrameMax,firstFrame:firstFrameMin,firstMs:toMs(firstFrameMin),respawnMinFrame,respawnMaxFrame,respawnMinMs:toMs(respawnMinFrame),respawnMaxMs:toMs(respawnMaxFrame),baseHpTrigger,baseHpTriggerPercent:baseHpTrigger,baseHpTriggerLowerPercent:baseHpTrigger,baseHpTriggerUpperPercent:upper,frontLayer:toNum(raw[c.L0],0),backLayer:toNum(raw[c.L1],0),layerMin:toNum(raw[c.L0],0),layerMax:toNum(raw[c.L1],0),bossFlag:toNum(raw[c.B],0),magnification,hpMagnification:magnification,attackMagnification,score:toNum(raw[c.S1],null),killCountTrigger:toNum(raw[c.KC],null),killCount:toNum(raw[c.KC],null),group:toNum(raw[c.G],0),specialSpawnControl,unsupportedSpawnControl:specialSpawnControl,spawnWorldX:null,warnings:rowWarnings };
+      const rawSpawn0 = toNum(raw[csv.S0], 0);
+      const negativeSpawnFlag = isIntegerText(raw[csv.NEGATIVE_SPAWN_FLAG]) && Number.parseInt(raw[csv.NEGATIVE_SPAWN_FLAG], 10) === 1;
+      const firstFrameMin = (negativeSpawnFlag ? -rawSpawn0 : rawSpawn0) * FRAME_MUL;
+      const firstFrameMax = 0;
+      const respawnMinFrame = toNum(raw[csv.R0], 0) * FRAME_MUL;
+      const respawnMaxFrame = toNum(raw[csv.R1], 0) * FRAME_MUL;
+
+      let baseHpTrigger = toNum(raw[csv.C0], 100);
+      let magnification = toNum(raw[csv.M], 100);
+      if (baseHpTrigger > 100 && magnification === 100) {
+        magnification = baseHpTrigger;
+        baseHpTrigger = 100;
+        rowWarnings.push('C0>100 moved to magnification');
+        warnings.push(`row ${sourceOrder}: normalized baseHpTrigger>100 into magnification`);
+      }
+      if (Number.isFinite(baseEnemyId) && enemyId === baseEnemyId) {
+        baseHpTrigger = 0;
+        rowWarnings.push('base enemy row forced castle_0=0');
+      }
+
+      const score = parseIntNLike(raw[csv.SC], 0);
+      const atkMagRaw = isIntegerText(raw[csv.M1]) ? Number.parseInt(raw[csv.M1], 10) : null;
+      const attackMagnification = Number.isFinite(atkMagRaw) && atkMagRaw !== 0 ? atkMagRaw : magnification;
+      const killCount = isIntegerText(raw[csv.KC]) ? Number.parseInt(raw[csv.KC], 10) : 0;
+      const group = 0;
+      const upper = null;
+
+      const scdefRaw = {
+        csv: Object.fromEntries(Object.entries(csv).map(([k, idx]) => [k, raw[idx] ?? null])),
+        internal: {
+          E: enemyId,
+          N: count,
+          S0: firstFrameMin,
+          R0: respawnMinFrame,
+          R1: respawnMaxFrame,
+          C0: baseHpTrigger,
+          L0: toNum(raw[csv.L0], 0),
+          L1: toNum(raw[csv.L1], 0),
+          B: toNum(raw[csv.B], 0),
+          M: magnification,
+          S1: firstFrameMax,
+          C1: 0,
+          G: group,
+          M1: attackMagnification,
+          KC: killCount,
+          SC: score
+        },
+        bcuStageJavaMapping: 'raw ss[10]->SC, ss[11]->M1, ss[12]==1 negates S0, ss[13]->KC'
+      };
+
+      const scdef = {
+        rawEnemyId,
+        enemyId,
+        count,
+        firstFrameMin,
+        firstFrameMax,
+        spawn_0: firstFrameMin,
+        spawn_1: firstFrameMax,
+        respawnMinFrame,
+        respawnMaxFrame,
+        respawn_0: respawnMinFrame,
+        respawn_1: respawnMaxFrame,
+        baseHpTriggerLowerPercent: baseHpTrigger,
+        baseHpTriggerUpperPercent: upper,
+        castle_0: baseHpTrigger,
+        castle_1: 0,
+        group,
+        magnification,
+        multiple: magnification,
+        attackMagnification,
+        mult_atk: attackMagnification,
+        killCountTrigger: killCount,
+        kill_count: killCount,
+        score,
+        specialSpawnControl: score,
+        negativeSpawnFlag: negativeSpawnFlag ? 1 : 0
+      };
+
+      if (negativeSpawnFlag) rowWarnings.push('negative spawn applied from raw ss[12]');
+
+      return {
+        rowIndex: null,
+        runtimeOrderIndex: null,
+        sourceOrder,
+        csvRowIndex: sourceOrder + 2,
+        originalCsvOrderIndex: sourceOrder,
+        raw,
+        scdefRaw,
+        scdef,
+        debug: { source: 'StageDefinitionLoader.bcu-stage-java-row', scdefRaw, scdef, warnings: rowWarnings },
+        rawEnemyId,
+        sourceEnemyId,
+        enemyId,
+        bcuId: Number.isFinite(enemyId) ? formatBcuId(enemyId) : null,
+        count,
+        countMode: isInfinite ? 'unlimited' : 'limited',
+        isInfinite,
+        firstFrameMin,
+        firstFrameMax,
+        firstFrame: firstFrameMin,
+        firstMs: toMs(firstFrameMin),
+        negativeFirstDelayFrames: firstFrameMin < 0 ? Math.abs(firstFrameMin) : 0,
+        bcuNegativeFirstSpawn: firstFrameMin < 0,
+        respawnMinFrame,
+        respawnMaxFrame,
+        respawnMinMs: toMs(respawnMinFrame),
+        respawnMaxMs: toMs(respawnMaxFrame),
+        baseHpTrigger,
+        baseHpTriggerPercent: baseHpTrigger,
+        baseHpTriggerLowerPercent: baseHpTrigger,
+        baseHpTriggerUpperPercent: upper,
+        frontLayer: toNum(raw[csv.L0], 0),
+        backLayer: toNum(raw[csv.L1], 0),
+        layerMin: toNum(raw[csv.L0], 0),
+        layerMax: toNum(raw[csv.L1], 0),
+        bossFlag: toNum(raw[csv.B], 0),
+        magnification,
+        hpMagnification: magnification,
+        attackMagnification,
+        score,
+        killCountTrigger: killCount,
+        killCount,
+        group,
+        specialSpawnControl: score,
+        unsupportedSpawnControl: null,
+        spawnWorldX: null,
+        warnings: rowWarnings
+      };
     });
 
     const runtimeRows = parsedRows.slice().reverse();
@@ -223,6 +347,8 @@ export class StageDefinitionLoader {
       sourceEnemyRows: parsedRows,
       castleRawRow: castleRow,
       headerRawRow: metaRow,
+      baseEnemyId,
+      bcuStageCsvColumnMapping: 'Stage.java: data[0]-=2, spawn/respawn*=2, ss[10]->SC, ss[11]->M1, ss[12] negative S0, ss[13]->KC',
       warnings: [...warnings]
     };
 
@@ -249,7 +375,7 @@ export class StageDefinitionLoader {
     };
 
     out.debug = {
-      source: 'StageDefinitionLoader.scdef-indexed',
+      source: 'StageDefinitionLoader.bcu-stage-java-indexed',
       castleRawRow: castleRow,
       headerRawRow: metaRow,
       castleRowSource: castle.source,

@@ -1,20 +1,45 @@
 /*
  * Formation layout refinement pass.
- * Keep the current Battle Cats-inspired wood/yellow/black styling, but reduce low-value
- * text and give the character catalog more usable space without flattening all spacing.
+ * Keeps the Battle Cats-inspired wood/yellow/black styling in the owning stylesheet instead
+ * of adding a late final-pass override file. Presentation only.
  */
 
+body.nyanko-ui-polish .formation-panel{
+  border-width:5px!important;
+  border-radius:26px!important;
+  background:
+    linear-gradient(180deg,#bd7338 0 64px,#351305 64px 76px,#fff8d1 77px calc(100% - 18px),#351305 calc(100% - 18px) 100%)!important;
+}
+
+body.nyanko-ui-polish .formation-panel::before{
+  inset:82px 16px 18px!important;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.16) 0 1px,transparent 1px 48px),
+    linear-gradient(180deg,rgba(255,255,255,.12) 0 1px,transparent 1px 48px),
+    linear-gradient(180deg,#a8c5ae,#779983)!important;
+  background-size:48px 48px,48px 48px,auto!important;
+  opacity:.58!important;
+}
+
 body.nyanko-ui-polish .formation-header{
-  min-height:clamp(66px,8.2dvh,82px);
+  min-height:64px!important;
   align-items:center;
   overflow:hidden;
+  padding:10px 16px!important;
+  border-radius:18px!important;
+  border:4px solid #050505!important;
+  background:linear-gradient(180deg,#b66b35 0%,#793516 56%,#3c1607 100%)!important;
+  box-shadow:0 6px 0 rgba(0,0,0,.76),inset 0 2px 0 rgba(255,255,255,.42)!important;
 }
 
 body.nyanko-ui-polish .formation-header::before{
-  right:clamp(16px,4.4vw,62px);
-  transform:translateY(-52%) rotate(-2deg) scale(.82);
+  content:"ネコ基地"!important;
+  right:clamp(26px,5vw,78px)!important;
+  top:50%;
+  transform:translateY(-50%) rotate(-2deg)!important;
   transform-origin:right center;
-  color:rgba(255,232,150,.145);
+  color:rgba(255,224,120,.17)!important;
+  font-size:clamp(42px,5.4vw,84px)!important;
   text-shadow:0 2px 0 rgba(0,0,0,.12);
   z-index:0;
   pointer-events:none;
@@ -24,22 +49,87 @@ body.nyanko-ui-polish .formation-header p{
   display:none!important;
 }
 
-body.nyanko-ui-polish .formation-header h3{
+body.nyanko-ui-polish .formation-header h3,
+body.nyanko-ui-polish .formation-stage-dialog header strong,
+body.nyanko-ui-polish .formation-custom-stage-header strong{
   position:relative;
   z-index:1;
-  color:#ffeaa4!important;
-  -webkit-text-stroke:2.35px #050505;
+  color:#fff8d1!important;
+  -webkit-text-fill-color:#fff8d1!important;
+  -webkit-text-stroke:0!important;
+  paint-order:normal!important;
   text-shadow:
-    0 2px 0 #050505,
     2px 0 0 #050505,
     -2px 0 0 #050505,
-    0 -1px 0 #050505;
+    0 2px 0 #050505,
+    0 -2px 0 #050505,
+    2px 2px 0 #050505,
+    -2px 2px 0 #050505,
+    2px -2px 0 #050505,
+    -2px -2px 0 #050505,
+    0 4px 0 rgba(0,0,0,.55)!important;
   filter:none!important;
 }
 
+body.nyanko-ui-polish .formation-header h3{
+  font-size:clamp(1.3rem,2.15vw,2.1rem)!important;
+  letter-spacing:.035em!important;
+}
+
 body.nyanko-ui-polish .formation-header h3::before{
-  -webkit-text-stroke:0;
-  text-shadow:0 1px 0 rgba(255,255,255,.58);
+  content:"MENU"!important;
+  min-width:84px!important;
+  height:34px!important;
+  margin-right:14px!important;
+  border:3px solid #050505!important;
+  border-radius:999px!important;
+  background:linear-gradient(180deg,#fff9bf 0%,#ffe75a 48%,#f49a18 100%)!important;
+  color:#321300!important;
+  -webkit-text-fill-color:#321300!important;
+  -webkit-text-stroke:0!important;
+  font-size:.55em!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.58)!important;
+  box-shadow:0 4px 0 #3d1707,inset 0 2px 0 rgba(255,255,255,.75)!important;
+}
+
+body.nyanko-ui-polish .formation-slots-wrap,
+body.nyanko-ui-polish .formation-catalog-section,
+body.nyanko-ui-polish .formation-action-rail{
+  background:linear-gradient(180deg,rgba(255,250,218,.98),rgba(246,218,139,.96))!important;
+}
+
+body.nyanko-ui-polish .formation-page-tab,
+body.nyanko-ui-polish .formation-catalog-tabs button,
+body.nyanko-ui-polish .secondary-action{
+  border-color:#050505!important;
+  background:linear-gradient(180deg,#fffbd7 0%,#ffe75a 45%,#f49a18 100%)!important;
+  color:#261005!important;
+  -webkit-text-fill-color:#261005!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.65)!important;
+}
+
+body.nyanko-ui-polish .formation-page-tab.is-active{
+  background:linear-gradient(180deg,#2b2b2b,#050505)!important;
+  color:#ffe75a!important;
+  -webkit-text-fill-color:#ffe75a!important;
+  text-shadow:0 2px 0 #000!important;
+}
+
+body.nyanko-ui-polish .formation-page-tab{
+  min-height:42px!important;
+  padding:8px 14px!important;
+  border-width:4px!important;
+  border-radius:999px!important;
+  box-shadow:0 5px 0 #3a1506,inset 0 2px 0 rgba(255,255,255,.72)!important;
+}
+
+body.nyanko-ui-polish .formation-page-tab span{
+  min-width:46px!important;
+  text-align:center!important;
+  border:2px solid #050505!important;
+  color:#096181!important;
+  -webkit-text-fill-color:#096181!important;
+  background:#fff!important;
 }
 
 body.nyanko-ui-polish .formation-catalog-section{
@@ -168,16 +258,15 @@ body.nyanko-ui-polish .formation-action-hint{
 
 @media (max-width:640px){
   body.nyanko-ui-polish .formation-header{
-    min-height:58px;
+    min-height:58px!important;
   }
   body.nyanko-ui-polish .formation-header::before{
-    transform:translateY(-52%) rotate(-2deg) scale(.7);
-    right:10px;
+    transform:translateY(-52%) rotate(-2deg) scale(.7)!important;
+    right:10px!important;
     opacity:.78;
   }
   body.nyanko-ui-polish .formation-header h3{
-    -webkit-text-stroke:1.8px #050505;
-    text-shadow:0 2px 0 #050505,1px 0 0 #050505,-1px 0 0 #050505;
+    font-size:1.12rem!important;
   }
   body.nyanko-ui-polish .formation-catalog-tabs button{
     min-height:38px;
@@ -195,17 +284,33 @@ body.nyanko-ui-polish .formation-action-hint{
   }
 }
 
-@media (max-height:560px) and (orientation:landscape){
-  body.nyanko-ui-polish .formation-header{
-    min-height:50px;
+@media (max-height:820px) and (orientation:landscape){
+  body.nyanko-ui-polish .formation-panel{
+    border-radius:20px!important;
+    padding:8px!important;
   }
-  body.nyanko-ui-polish .formation-header::before{
-    transform:translateY(-52%) rotate(-2deg) scale(.68);
-    right:clamp(12px,3vw,38px);
+  body.nyanko-ui-polish .formation-header{
+    min-height:56px!important;
+    padding:7px 14px!important;
   }
   body.nyanko-ui-polish .formation-header h3{
-    -webkit-text-stroke:1.85px #050505;
-    text-shadow:0 2px 0 #050505,1px 0 0 #050505,-1px 0 0 #050505;
+    font-size:clamp(1.08rem,1.85vw,1.7rem)!important;
+  }
+  body.nyanko-ui-polish .formation-slots-wrap{
+    padding:8px!important;
+  }
+  body.nyanko-ui-polish .formation-catalog-section{
+    padding:9px!important;
+  }
+}
+
+@media (max-height:560px) and (orientation:landscape){
+  body.nyanko-ui-polish .formation-header{
+    min-height:50px!important;
+  }
+  body.nyanko-ui-polish .formation-header::before{
+    transform:translateY(-52%) rotate(-2deg) scale(.68)!important;
+    right:clamp(12px,3vw,38px)!important;
   }
   body.nyanko-ui-polish .formation-catalog-section{
     row-gap:6px;

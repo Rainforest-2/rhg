@@ -1,6 +1,6 @@
 import { ProductionCardSkin, PRODUCTION_CARD_SKIN } from './ProductionCardSkin.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.production-card-dog-icon-fit.v2');
+const PATCH_FLAG = Symbol.for('wanko-battle.production-card-dog-icon-fit.v3');
 
 function warnDogIconFallback(skin, state) {
   const key = state?.unitDef?.slotId || state?.unitDef?.assetDef?.semanticKey || state?.unitDef?.uiIcon?.semanticKey || 'unknown-dog-card';
@@ -14,13 +14,16 @@ export function installProductionCardDogIconFitPatch() {
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
 
-  proto.drawDogCard = function drawDogCardAtOriginalScale(ctx, icon, state) {
+  proto.drawDogCard = function drawDogCardWithCostTextOverlap(ctx, icon, state) {
     this.drawSlotFrame(ctx);
     this.drawDogIconBackground(ctx);
     this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, {
       scale: PRODUCTION_CARD_SKIN.dogIconScale,
       fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode,
-      clip: true
+      // Cat cards are full card images, so their art is allowed to occupy the cost band;
+      // draw cost text later on top. Do the same for dog cards instead of clipping the
+      // icon at the top of the price area.
+      clip: false
     });
     if (state?.iconLoadFailed) warnDogIconFallback(this, state);
   };
@@ -28,6 +31,7 @@ export function installProductionCardDogIconFitPatch() {
   globalThis.__BCU_PRODUCTION_CARD_DOG_ICON_FIT_PATCH__ = {
     installed: true,
     restoredOriginalScale: true,
+    allowsCostTextOverlap: true,
     contentRect: PRODUCTION_CARD_SKIN.dogContentRect,
     iconScale: PRODUCTION_CARD_SKIN.dogIconScale,
     fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode

@@ -1,15 +1,37 @@
 import { FormationEditor } from './FormationEditor.js';
 
-const PATCH_FLAG = Symbol.for('wanko-ui.formation-catalog-virtual-dom-diff.v1');
+const PATCH_FLAG = Symbol.for('wanko-ui.formation-catalog-virtual-dom-diff.v2-grid-column-sync');
 
 function safeHtml(value) {
   return String(value ?? '').replace(/[&<>'\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[ch]));
 }
 
-function estimateCatalogColumns(editor, scroller) {
-  if (typeof editor.estimateCatalogColumns === 'function') return editor.estimateCatalogColumns(scroller);
+function countComputedGridColumns(grid) {
+  if (!grid || typeof getComputedStyle !== 'function') return 0;
+  const columns = getComputedStyle(grid).gridTemplateColumns;
+  if (!columns || columns === 'none' || columns.includes('repeat(')) return 0;
+  return columns
+    .split(/\s+/)
+    .map((v) => v.trim())
+    .filter((v) => v && !v.startsWith('[') && v !== 'none')
+    .length;
+}
+
+function estimateCatalogColumns(editor, scroller, grid) {
+  const computedColumns = countComputedGridColumns(grid);
+  if (computedColumns > 0) return computedColumns;
+
   const width = Math.max(1, scroller?.clientWidth || 1);
-  return Math.max(1, Math.floor(width / 166));
+  let minTrackWidth = 148;
+  let columnGap = 12;
+  if (typeof getComputedStyle === 'function' && grid) {
+    const style = getComputedStyle(grid);
+    columnGap = Number.parseFloat(style.columnGap) || columnGap;
+    const template = style.gridTemplateColumns || '';
+    const minMatch = template.match(/minmax\((\d+(?:\.\d+)?)px/i);
+    if (minMatch) minTrackWidth = Number.parseFloat(minMatch[1]) || minTrackWidth;
+  }
+  return Math.max(1, Math.floor((width + columnGap) / (minTrackWidth + columnGap)));
 }
 
 function cardKey(character) {
@@ -81,7 +103,7 @@ function renderCatalogWindowDiff(editor) {
   if (!scroller || !grid) return;
 
   const chars = editor.catalogItems || [];
-  const columns = estimateCatalogColumns(editor, scroller);
+  const columns = estimateCatalogColumns(editor, scroller, grid);
   const rowHeight = editor.catalogVirtual.rowHeight;
   const totalRows = Math.ceil(chars.length / columns);
   const visibleRows = Math.ceil((scroller.clientHeight || 480) / rowHeight);

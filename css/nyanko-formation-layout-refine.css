@@ -215,6 +215,10 @@ body.nyanko-ui-polish .formation-character-card strong{
   padding:4px 6px;
 }
 
+body.nyanko-ui-polish .formation-character-card .character-id{
+  display:none!important;
+}
+
 body.nyanko-ui-polish .formation-card-meta span{
   min-height:23px;
 }
@@ -227,7 +231,24 @@ body.nyanko-ui-polish .formation-current-stage{
   line-height:1.18;
   color:#ffe9a4;
   opacity:.92;
-  word-break:break-all;
+  word-break:normal;
+}
+
+body.nyanko-ui-polish .apply-battle-button{
+  color:#fff8d1!important;
+  -webkit-text-fill-color:#fff8d1!important;
+  -webkit-text-stroke:0!important;
+  paint-order:normal!important;
+  text-shadow:
+    2px 0 0 #050505,
+    -2px 0 0 #050505,
+    0 2px 0 #050505,
+    0 -2px 0 #050505,
+    2px 2px 0 #050505,
+    -2px 2px 0 #050505,
+    2px -2px 0 #050505,
+    -2px -2px 0 #050505,
+    0 4px 0 rgba(0,0,0,.72)!important;
 }
 
 body.nyanko-ui-polish .formation-action-hint{
@@ -281,6 +302,9 @@ body.nyanko-ui-polish .formation-action-hint{
   }
   body.nyanko-ui-polish .formation-character-card::before{
     height:56px;
+  }
+  body.nyanko-ui-polish .apply-battle-button{
+    -webkit-text-stroke:0!important;
   }
 }
 

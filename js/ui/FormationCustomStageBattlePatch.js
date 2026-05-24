@@ -1,6 +1,6 @@
 import { FormationEditor } from './FormationEditor.js';
 
-const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v3-persist-category-ui');
+const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v4-hide-internal-ids');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
 const STORAGE_KEY = 'wanko.customStageBattle.v1';
 const CUSTOM_LEVEL = 'custom-stage-battle';
@@ -93,8 +93,8 @@ function stageName(editor, stageId) {
   const stage = (editor.stageOptions || []).find((s) => (s.stageKey || s.stageId) === stageId || s.stageId === stageId);
   if (!stage) return stageId;
   const meta = editor.stageMeta?.get?.(stage.stageKey || stage.stageId) || {};
-  try { return editor.resolveStageDisplay(stage, meta)?.displayName || stage.stageId || stageId; }
-  catch { return stage.stageId || stageId; }
+  try { return editor.resolveStageDisplay(stage, meta)?.displayName || stage?.name?.value || stage?.label || stage.stageId || stageId; }
+  catch { return stage?.name?.value || stage?.label || stage.stageId || stageId; }
 }
 
 function currentBaseStageId(state) {
@@ -105,6 +105,12 @@ function currentBaseStageId(state) {
 
 function normalizedConfig(editor) {
   return configFromState(ensureState(editor));
+}
+
+function updateCurrentStageLabel(editor, stageId) {
+  const current = editor.root?.querySelector?.('.formation-current-stage');
+  if (!current || !stageId) return;
+  current.textContent = stageName(editor, stageId);
 }
 
 function addCustomCategoryCard(editor) {
@@ -123,7 +129,7 @@ function addCustomCategoryCard(editor) {
 
 function renderList(editor, side, ids) {
   if (!ids.length) return `<p class='formation-custom-stage-empty'>未登録</p>`;
-  return `<ol class='formation-custom-stage-list'>${ids.map((id, index) => `<li><span><strong>${safeHtml(stageName(editor, id))}</strong><small>${safeHtml(id)}</small></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>Remove</button></li>`).join('')}</ol>`;
+  return `<ol class='formation-custom-stage-list'>${ids.map((id, index) => `<li><span><strong>${safeHtml(stageName(editor, id))}</strong></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>はずす</button></li>`).join('')}</ol>`;
 }
 
 function renderCustomStageBattleView(editor) {
@@ -132,6 +138,7 @@ function renderCustomStageBattleView(editor) {
   const baseStageId = currentBaseStageId(state);
   const list = editor.root?.querySelector?.('.formation-stage-list');
   if (!list) return;
+  updateCurrentStageLabel(editor, baseStageId || editor.selectedStageId);
   const title = editor.root.querySelector('.formation-stage-dialog header strong');
   const lead = editor.root.querySelector('.formation-stage-dialog header span');
   if (title) title.textContent = 'カスタムステージ';
@@ -195,6 +202,7 @@ function updateCustomUiAfterRender(editor) {
     renderCustomStageBattleView(editor);
     return;
   }
+  updateCurrentStageLabel(editor, currentBaseStageId(state) || editor.selectedStageId);
   addCustomCategoryCard(editor);
   const lead = editor.root?.querySelector?.('.formation-stage-dialog header span');
   if (lead && state.pickingSide && editor.stageSelectorState?.level !== CUSTOM_LEVEL) {

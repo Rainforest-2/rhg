@@ -3,7 +3,7 @@ function showBootStatus(message) {
   if (!el) {
     el = document.createElement('section');
     el.id = 'boot-status-panel';
-    el.style.cssText = 'position:fixed;inset:0;z-index:999999;display:grid;place-items:center;background:#05070d;color:#d8e2f0;font:16px/1.5 system-ui,sans-serif';
+    el.style.cssText = 'position:fixed;inset:0;z-index:999999;display:grid;place-items:center';
     document.body.appendChild(el);
   }
   el.textContent = message;
@@ -15,7 +15,7 @@ function hideBootStatus() {
 
 async function boot() {
   try {
-    showBootStatus('BCU asset database loading...');
+    showBootStatus('素材を読み込み中…');
     await import('./ui/FormationEditorPerformancePatch.js');
     await import('./ui/FormationCatalogVirtualDomPatch.js');
     await import('./ui/NyankoPresentationPatch.js');
@@ -82,7 +82,7 @@ async function boot() {
     const { BcuBootLoader, setBcuAssetDatabase } = await import('./bcu/BcuBootLoader.js');
     const db = await BcuBootLoader.loadGame({ assetRoot: './public/assets', bcuRoot: './public/assets/bcu', locale: 'jp', preloadMode: 'metadata-and-current-battle' });
     setBcuAssetDatabase(db);
-    showBootStatus('Starting preview...');
+    showBootStatus('出撃準備中…');
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     const app = new PreviewApp({ bcuDb: db });
     globalThis.__APP__ = app;

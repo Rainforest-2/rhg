@@ -135,10 +135,10 @@ export class PreviewApp {
     c.fillRect(0,0,w,h);
     c.fillStyle='#e2e8f0';
     c.font='bold 22px ui-sans-serif';
-    c.fillText(this.sceneTransitioning ? 'Battle loading...' : '編成を選んで Apply を押してください',24,48);
+    c.fillText(this.sceneTransitioning ? '戦闘準備中...' : '編成を選んで いざ出撃!! を押してください',24,48);
     c.fillStyle='#94a3b8';
     c.font='16px ui-sans-serif';
-    c.fillText('Battle assets are loaded after Apply.',24,76);
+    c.fillText('出撃時にステージ・背景・キャラ素材を読み込みます。',24,76);
   }
 
   buildApplyBattleReport({ ok, phase, error = null, failedSubsystem = null, timings = {} } = {}) {
@@ -183,7 +183,7 @@ export class PreviewApp {
     const attemptStart = performance.now();
     this.loadingOverlay?.show();
     this.loadingOverlay?.startTimer();
-    this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘を準備中...', value: 0.05 });
+    this.loadingOverlay?.setProgress({ phase: 'battle-scene', message: '戦闘画面を準備中…', value: 0.05 });
     try {
       console.info('applyFormationToBattle:before-resetBattle');
       await this.resetBattle({ keepFormationVisible: false, showOverlay: true });
@@ -231,13 +231,13 @@ export class PreviewApp {
       const t0=performance.now();
       overlay?.show();
       overlay?.startTimer();
-      overlay?.setProgress({ phase: 'battle-scene', message: 'Preparing battle scene', value: 0.05 });
+      overlay?.setProgress({ phase: 'battle-scene', message: '戦闘画面を準備中…', value: 0.05 });
       await nextFrame();
       const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), { selectedStageId: this.selectedStageId || undefined, bcuDb: this.bcuDb });
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       console.info('battleScene:init:ok');
 
-      overlay?.setProgress({ phase: 'status-effects', message: 'Preloading status effect icons', value: 0.84 });
+      overlay?.setProgress({ phase: 'status-effects', message: '状態効果アイコンを準備中…', value: 0.84 });
       const statusPreloadStart = performance.now();
       try {
         const statusPreload = await preloadBcuStatusEffectDefinitions(nextScene);
@@ -263,13 +263,13 @@ export class PreviewApp {
       const statusText = Number.isFinite(lt.statusEffectPreloadMs) ? `${Math.round(lt.statusEffectPreloadMs)}ms` : 'skipped';
       this.ui?.log('info',`Battle load timings: total=${Math.round(lt.totalMs||elapsed)}ms stage=${Math.round(lt.stageDefinitionMs||0)}ms stats=${Math.round(lt.productionStatsMs||0)}ms criticalTemplates=${Math.round(lt.criticalTemplatesMs||0)}ms background=${bgText} bases=${Math.round(lt.basesMs||0)}ms statusEffects=${statusText} warmup=async`);
       this.battleScene = nextScene;
-      overlay?.setProgress({ phase: 'production', message: 'Preparing production roster', value: 0.9, elapsedMs:elapsed });
+      overlay?.setProgress({ phase: 'production', message: '出撃キャラを準備中…', value: 0.9, elapsedMs:elapsed });
       const battleMount=document.querySelector('.canvas-panel')||document.body;
       if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}      
       this.productionBar?.setVisible(true);
       this.sceneReady = true;
       this.formationEditor?.setVisible(keepFormationVisible);
-      overlay?.setProgress({ phase: 'ready', message: 'Battle ready', value: 1.0 });
+      overlay?.setProgress({ phase: 'ready', message: '戦闘開始！', value: 1.0 });
       await new Promise((resolve) => setTimeout(resolve, 180));
       this.ui?.log('info', 'Battle reset completed');
     })();
@@ -288,5 +288,5 @@ export class PreviewApp {
   async load(id, animId) { this.current = this.findAsset(id); this.state.assetMeta = { id: this.current.id, label: this.current.label, role: this.current.role, group: this.current.group, baseDir: this.current.baseDir || '-', renderMode: this.current.renderMode || 'animated-unit', layers: this.current.layers?.length || 0 }; this.ui.setAssetMeta(this.state.assetMeta); this.ui.log('info', `load asset ${this.current.label}`); if ((this.current.renderMode || 'model') === 'castle-composite') { const cr = await this.loadCompositeLayers(this.current); this.state.loadedFiles = cr.loaded.map((x) => `${x.id}:${x.image.src.split('/').pop()}`); this.state.missingFiles = cr.missing; this.state.renderMode = 'castle-composite'; this.state.modelRequired = false; this.state.animationRequired = false; this.state.compositeLayers = cr.loaded; this.state.sprite = null; this.state.model = null; this.ui.setAnimationAvailability(this.current, new Set()); this.state.availableAnimations = new Set(); this.ui.log('info', `loaded files: ${this.state.loadedFiles.join(', ') || 'none'}`); await this.loadAnim(null); return; } const r = await this.loader.loadAssetSet(this.current); r.errors.forEach((e) => this.ui.log('error', e)); r.missing.forEach((m) => this.ui.log('warn', `missing file: ${m}`)); this.state.loadedFiles = r.loaded; this.state.missingFiles = r.missing; this.state.renderMode = r.renderMode; this.state.modelRequired = r.modelRequired; this.state.animationRequired = r.animationRequired; this.state.compositeLayers = null; this.state.sprite = r.image && r.imgcut ? new BcuSpriteSheet(r.image, r.imgcut) : null; this.state.model = r.model ? new BcuModelInstance(r.model) : null; let available = new Set(); if (this.current.animations?.length) available = await this.probeAnimations(this.current); else this.ui.setAnimationAvailability(this.current, available); this.state.availableAnimations = available; this.ui.log('info', `loaded files: ${r.loaded.join(', ') || 'none'}`); await this.loadAnim(animId || this.current.animations[0]?.id || null); }
   async loadAnim(animId) { const ad = this.current.animations.find((a) => a.id === animId) || this.current.animations[0]; if (!ad) { this.state.currentAnimLabel = 'none'; this.state.anim = null; this.animator = new BcuAnimator({ tracks: [], maxFrame: 1 }); this.applyAnim(); return; } this.state.currentAnimLabel = ad.file; const result = await this.loader.loadAnimation(this.current, ad); if (result.status === 'missing') this.ui.log('warn', `missing animation: ${ad.id} (${result.missing.join(', ')})`); result.errors.forEach((e) => this.ui.log('error', e)); this.state.anim = result.anim; this.animator = new BcuAnimator(result.anim || { tracks: [], maxFrame: 1 }); if (result.anim) { this.ui.log('info', `animation file: ${result.file}`); this.ui.log('info', `tracks: ${result.anim.tracks.length}, maxFrame: ${result.anim.maxFrame}`); this.ui.log('info', `mod histogram: ${Object.entries(result.anim.modificationHistogram || {}).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`);} this.applyAnim(); }
   applyAnim() { if (!this.state.model) { this.state.debugApplied = []; this.state.lastAppliedByPart = new Map(); this.ui.setDebug(this.state); return; } this.state.model.reset(); this.state.debugApplied = this.animator?.apply(this.state.model) || []; this.state.lastAppliedByPart = new Map(this.state.debugApplied.filter((x) => x.applied).map((x) => [x.partId, x])); this.ui.setDebug(this.state); }
-  updateStatus() { const frame = (this.animator?.frame || 0).toFixed(2), parts = this.state.sprite?.imgcut?.parts?.length || 0, m = this.state.model?.parts?.length || 0, t = this.state.anim?.tracks?.length || 0; const applied = (this.state.debugApplied || []).filter((x) => x.applied).length; this.state.debugStats = { frame, parts, modelParts: m, maxFrame: this.state.anim?.maxFrame || 0, tracks: t, appliedCount: applied, currentAnimLabel: Array.isArray(this.state.currentAnimLabel) ? this.state.currentAnimLabel.join('|') : this.state.currentAnimLabel }; this.ui.setStatus(`frame:${frame} | parts:${parts} | model parts:${m} | tracks:${t} | applied:${applied} | ${this.animator?.playing ? 'playing' : 'paused'}`); this.ui.setDebug(this.state); }
+  updateStatus() { const frame = (this.animator?.frame || 0).toFixed(2), parts = this.state.sprite?.imgcut?.parts?.length || 0, m = this.state.model?.parts?.length || 0, t = this.state.anim?.tracks?.length || 0; const applied = (this.state.debugApplied || []).filter((x) => x.applied).length; this.state.debugStats = { frame, parts, modelParts: m, maxFrame: this.state.anim?.maxFrame || 0, tracks: t, appliedCount: applied, currentAnimLabel: Array.isArray(this.state.currentAnimLabel) ? this.state.currentAnimLabel.join('|') : this.state.currentAnimLabel }; this.ui.setStatus(`frame:${frame} | parts:${parts} | model parts:${m} | tracks:${t} | applied:${this.state.debugApplied?.length || 0} | applied:${applied} | ${this.animator?.playing ? 'playing' : 'paused'}`); this.ui.setDebug(this.state); }
 }

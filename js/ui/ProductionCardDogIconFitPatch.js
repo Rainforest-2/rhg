@@ -1,6 +1,6 @@
 import { ProductionCardSkin, PRODUCTION_CARD_SKIN } from './ProductionCardSkin.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.production-card-dog-icon-fit.v3');
+const PATCH_FLAG = Symbol.for('wanko-battle.production-card-dog-icon-fit.v4');
 
 function warnDogIconFallback(skin, state) {
   const key = state?.unitDef?.slotId || state?.unitDef?.assetDef?.semanticKey || state?.unitDef?.uiIcon?.semanticKey || 'unknown-dog-card';
@@ -9,22 +9,33 @@ function warnDogIconFallback(skin, state) {
   skin.log?.warn?.('[ProductionCardSkin] dog card uses BCU uni frame but icon unavailable', key);
 }
 
+function clipToDogCardInnerFace(ctx) {
+  const r = PRODUCTION_CARD_SKIN.dogContentBackgroundRect;
+  ctx.beginPath();
+  ctx.rect(r.x, r.y, r.w, r.h);
+  ctx.clip();
+}
+
 export function installProductionCardDogIconFitPatch() {
   const proto = ProductionCardSkin?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
 
-  proto.drawDogCard = function drawDogCardWithCostTextOverlap(ctx, icon, state) {
+  proto.drawDogCard = function drawDogCardClippedToInnerFrame(ctx, icon, state) {
     this.drawSlotFrame(ctx);
     this.drawDogIconBackground(ctx);
+
+    ctx.save();
+    clipToDogCardInnerFace(ctx);
     this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, {
       scale: PRODUCTION_CARD_SKIN.dogIconScale,
       fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode,
-      // Cat cards are full card images, so their art is allowed to occupy the cost band;
-      // draw cost text later on top. Do the same for dog cards instead of clipping the
-      // icon at the top of the price area.
+      // Do not clip at dogContentRect: the icon must be able to overlap the price band
+      // like cat cards do. The outer save/clip keeps it inside the card's black frame.
       clip: false
     });
+    ctx.restore();
+
     if (state?.iconLoadFailed) warnDogIconFallback(this, state);
   };
 
@@ -32,7 +43,9 @@ export function installProductionCardDogIconFitPatch() {
     installed: true,
     restoredOriginalScale: true,
     allowsCostTextOverlap: true,
+    clipsToInnerFrame: true,
     contentRect: PRODUCTION_CARD_SKIN.dogContentRect,
+    clipRect: PRODUCTION_CARD_SKIN.dogContentBackgroundRect,
     iconScale: PRODUCTION_CARD_SKIN.dogIconScale,
     fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode
   };

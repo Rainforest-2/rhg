@@ -1,9 +1,6 @@
-import { ProductionCardSkin } from './ProductionCardSkin.js';
+import { ProductionCardSkin, PRODUCTION_CARD_SKIN } from './ProductionCardSkin.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.production-card-dog-icon-fit.v1');
-
-const DOG_SAFE_ART_RECT = Object.freeze({ x: 6, y: 5, w: 98, h: 54 });
-const DOG_SAFE_ICON_SCALE = 0.94;
+const PATCH_FLAG = Symbol.for('wanko-battle.production-card-dog-icon-fit.v2');
 
 function warnDogIconFallback(skin, state) {
   const key = state?.unitDef?.slotId || state?.unitDef?.assetDef?.semanticKey || state?.unitDef?.uiIcon?.semanticKey || 'unknown-dog-card';
@@ -17,12 +14,12 @@ export function installProductionCardDogIconFitPatch() {
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
 
-  proto.drawDogCard = function drawDogCardWithoutCostBandClipping(ctx, icon, state) {
+  proto.drawDogCard = function drawDogCardAtOriginalScale(ctx, icon, state) {
     this.drawSlotFrame(ctx);
     this.drawDogIconBackground(ctx);
-    this.drawContainedIcon(ctx, icon, DOG_SAFE_ART_RECT, {
-      scale: DOG_SAFE_ICON_SCALE,
-      fitMode: 'contain',
+    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, {
+      scale: PRODUCTION_CARD_SKIN.dogIconScale,
+      fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode,
       clip: true
     });
     if (state?.iconLoadFailed) warnDogIconFallback(this, state);
@@ -30,10 +27,10 @@ export function installProductionCardDogIconFitPatch() {
 
   globalThis.__BCU_PRODUCTION_CARD_DOG_ICON_FIT_PATCH__ = {
     installed: true,
-    safeArtRect: DOG_SAFE_ART_RECT,
-    iconScale: DOG_SAFE_ICON_SCALE,
-    fitMode: 'contain',
-    behavior: 'dog production icons are fitted entirely above the cost band so the price background cannot clip the lower image'
+    restoredOriginalScale: true,
+    contentRect: PRODUCTION_CARD_SKIN.dogContentRect,
+    iconScale: PRODUCTION_CARD_SKIN.dogIconScale,
+    fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode
   };
 }
 

@@ -82,6 +82,7 @@
     radial-gradient(circle at 92% 100%,rgba(90,170,255,.14),transparent 38%);
 }
 
+#boot-status-panel .boot-loading-icon,
 #boot-status-panel .boot-loading-kicker,
 #boot-status-panel .boot-loading-title,
 #boot-status-panel .boot-loading-message,
@@ -89,6 +90,15 @@
 #boot-status-panel .boot-loading-meta{
   position:relative;
   z-index:1;
+}
+
+#boot-status-panel .boot-loading-icon{
+  width:64px;
+  height:64px;
+  object-fit:cover;
+  border-radius:16px;
+  justify-self:start;
+  box-shadow:0 10px 28px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.18) inset;
 }
 
 #boot-status-panel .boot-loading-kicker{

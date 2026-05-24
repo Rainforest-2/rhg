@@ -1,40 +1,82 @@
 import { BattleActor } from './BattleActor.js';
+import { BCU_PROC_IMMUNITY_FIELDS } from './BcuCombatModel.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-proc-immunity.v1');
 
-const IMMUNITY_FIELD_BY_PROC = Object.freeze({
-  knockbackProc: 'IMUKB',
-  freeze: 'IMUSTOP',
-  slow: 'IMUSLOW',
-  weaken: 'IMUWEAK',
-  curse: 'IMUCURSE',
-  warp: 'IMUWARP',
-  toxic: 'IMUPOIATK',
-  wave: 'IMUWAVE',
-  miniWave: 'IMUWAVE',
-  surge: 'IMUVOLC',
-  miniSurge: 'IMUVOLC'
-});
+const IMMUNITY_FIELD_BY_PROC = BCU_PROC_IMMUNITY_FIELDS;
 
 function procModel(actor) {
   return actor?.bcuCombatModel?.proc || actor?.rawStats?.bcuCombatModel?.proc || actor?.stats?.bcuCombatModel?.proc || actor?.abilityModel?.bcuProc || null;
 }
 
-function immunityMult(actor, procKey) {
+function combatModel(actor) {
+  return actor?.bcuCombatModel || actor?.rawStats?.bcuCombatModel || actor?.stats?.bcuCombatModel || null;
+}
+
+function checkSmartImu(value, side, invert) {
+  const s = Number(side) || 0;
+  if (s === 0) return true;
+  const v = Number(value) || 0;
+  return invert ? v * s < 0 : v * s > 0;
+}
+
+function immunityMult(actor, procKey, item = null) {
   const field = IMMUNITY_FIELD_BY_PROC[procKey];
+  const cm = combatModel(actor);
   const proc = procModel(actor);
-  const n = Number(proc?.[field]?.mult ?? 0);
-  return Number.isFinite(n) ? n : 0;
+  const raw = proc?.[field] || {};
+  const direct = Number(cm?.immunity?.[procKey]?.mult);
+  const n = Number.isFinite(direct) ? direct : Number(raw?.mult ?? 0);
+  const mult = Number.isFinite(n) ? n : 0;
+  if (field === 'IMUWEAK') {
+    const smartImu = Number(raw?.smartImu ?? 0) || 0;
+    const weakenMult = Number(item?.payload?.mult ?? 100);
+    const applies = checkSmartImu(weakenMult - 100, smartImu, mult > 0);
+    return applies ? mult : 0;
+  }
+  return mult;
 }
 
 function isImmune(actor, item) {
   const key = item?.key;
   const field = IMMUNITY_FIELD_BY_PROC[key];
   if (!field) return { immune: false, field: null, mult: 0 };
-  const mult = immunityMult(actor, key);
-  // Current BCU CSV mapping only marks full immunity flags as mult=100.
-  // Partial/smart immunity requires additional Proc smartImu handling and is not claimed here.
-  return { immune: mult >= 100, field, mult };
+  const mult = immunityMult(actor, key, item);
+  return { immune: mult >= 100, partial: mult > 0 && mult < 100, field, mult };
+}
+
+function reduceFrames(value, mult) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  return Math.trunc(n * Math.max(0, 100 - mult) / 100);
+}
+
+function reducePercent(value, mult) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  return n * Math.max(0, 100 - mult) / 100;
+}
+
+function itemWithPartialResistance(item, immunity) {
+  if (!immunity?.partial) return { item, adjusted: false };
+  const key = item?.key;
+  const payload = { ...(item?.payload || {}) };
+  if (key === 'knockbackProc') {
+    if (Object.prototype.hasOwnProperty.call(payload, 'dis')) payload.dis = reducePercent(payload.dis, immunity.mult);
+    if (Object.prototype.hasOwnProperty.call(payload, 'distance')) payload.distance = reducePercent(payload.distance, immunity.mult);
+    return { item: { ...item, payload, bcuProcResistance: immunity }, adjusted: true };
+  }
+  if (key === 'freeze' || key === 'slow' || key === 'weaken' || key === 'curse' || key === 'warp') {
+    if (Object.prototype.hasOwnProperty.call(payload, 'time')) payload.time = reduceFrames(payload.time, immunity.mult);
+    if (Object.prototype.hasOwnProperty.call(payload, 'timeFrames')) payload.timeFrames = reduceFrames(payload.timeFrames, immunity.mult);
+    return { item: { ...item, payload, bcuProcResistance: immunity }, adjusted: true };
+  }
+  if (key === 'toxic') {
+    if (Object.prototype.hasOwnProperty.call(payload, 'mult')) payload.mult = reducePercent(payload.mult, immunity.mult);
+    if (Object.prototype.hasOwnProperty.call(payload, 'damage')) payload.damage = reducePercent(payload.damage, immunity.mult);
+    return { item: { ...item, payload, bcuProcResistance: immunity }, adjusted: true };
+  }
+  return { item, adjusted: false };
 }
 
 if (!BattleActor.prototype[PATCH_FLAG]) {
@@ -62,13 +104,24 @@ if (!BattleActor.prototype[PATCH_FLAG]) {
       this.lastBcuProcApplyDebug = { item, result, nowMs: meta.nowMs ?? null, source: 'BcuProcImmunityPatch.applyBcuProc' };
       return result;
     }
-    const result = previousApply ? previousApply.call(this, item, meta) : { applied: false, reason: 'previous-applyBcuProc-missing' };
+    const adjusted = itemWithPartialResistance(item, immunity);
+    const result = previousApply ? (previousApply.call(this, adjusted.item, meta) || { applied: false, reason: 'previous-applyBcuProc-returned-empty' }) : { applied: false, reason: 'previous-applyBcuProc-missing' };
+    if (adjusted.adjusted) {
+      result.bcuProcResistance = {
+        field: immunity.field,
+        mult: immunity.mult,
+        source: 'BcuProcImmunityPatch partial resistance',
+        bcuReference: 'Entity.processProcs getResistValue / POIATK mult * (100-rst)'
+      };
+    }
     this.lastBcuProcImmunityDebug = {
       source: 'BcuProcImmunityPatch.applyBcuProc',
-      item,
+      item: adjusted.item,
       checkedField: immunity.field,
       immunityMult: immunity.mult,
       immune: false,
+      partial: immunity.partial,
+      adjusted: adjusted.adjusted,
       delegatedResult: result
     };
     return result;
@@ -78,6 +131,7 @@ if (!BattleActor.prototype[PATCH_FLAG]) {
     installed: true,
     source: 'BcuProcImmunityPatch',
     immunityFieldByProc: IMMUNITY_FIELD_BY_PROC,
-    fullImmunityOnly: true
+    fullImmunityOnly: false,
+    partialResistance: ['knockbackProc', 'freeze', 'slow', 'weaken', 'curse', 'warp', 'toxic']
   };
 }

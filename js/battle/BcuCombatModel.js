@@ -1,4 +1,4 @@
-export const BCU_COMBAT_MODEL_VERSION = 'bcu-combat-v3-surge-level-frames';
+export const BCU_COMBAT_MODEL_VERSION = 'bcu-combat-v4-immunity-guards';
 
 export const BCU_TRAITS = Object.freeze({
   red: 'red', floating: 'floating', black: 'black', metal: 'metal', white: 'white', angel: 'angel', alien: 'alien', zombie: 'zombie', witch: 'witch', base: 'base', eva: 'eva', relic: 'relic', demon: 'demon', baron: 'baron', beast: 'beast', sage: 'sage', villain: 'villain'
@@ -31,6 +31,33 @@ export const BCU_ABI = Object.freeze({
 
 const UNIT_TRAIT_COLUMNS = Object.freeze([[10,BCU_TRAITS.red],[16,BCU_TRAITS.floating],[17,BCU_TRAITS.black],[18,BCU_TRAITS.metal],[19,BCU_TRAITS.white],[20,BCU_TRAITS.angel],[21,BCU_TRAITS.alien],[22,BCU_TRAITS.zombie],[78,BCU_TRAITS.relic],[96,BCU_TRAITS.demon]]);
 const ENEMY_TRAIT_COLUMNS = Object.freeze([[10,BCU_TRAITS.red],[13,BCU_TRAITS.floating],[14,BCU_TRAITS.black],[15,BCU_TRAITS.metal],[16,BCU_TRAITS.white],[17,BCU_TRAITS.angel],[18,BCU_TRAITS.alien],[19,BCU_TRAITS.zombie],[48,BCU_TRAITS.witch],[49,BCU_TRAITS.base],[71,BCU_TRAITS.eva],[72,BCU_TRAITS.relic],[93,BCU_TRAITS.demon],[94,BCU_TRAITS.baron],[101,BCU_TRAITS.beast],[104,BCU_TRAITS.sage],[110,BCU_TRAITS.villain]]);
+export const BCU_PROC_KB_DEFAULT = Object.freeze({ dis: 165, time: 11 });
+
+export const BCU_PROC_IMMUNITY_FIELDS = Object.freeze({
+  knockbackProc: 'IMUKB',
+  freeze: 'IMUSTOP',
+  slow: 'IMUSLOW',
+  weaken: 'IMUWEAK',
+  curse: 'IMUCURSE',
+  warp: 'IMUWARP',
+  toxic: 'IMUPOIATK',
+  wave: 'IMUWAVE',
+  miniWave: 'IMUWAVE',
+  surge: 'IMUVOLC',
+  miniSurge: 'IMUVOLC',
+  blast: 'IMUBLAST'
+});
+
+export const BCU_DAMAGE_GUARD_FIELDS = Object.freeze({
+  wave: 'IMUWAVE',
+  miniWave: 'IMUWAVE',
+  surge: 'IMUVOLC',
+  miniSurge: 'IMUVOLC',
+  volcano: 'IMUVOLC',
+  miniVolcano: 'IMUVOLC',
+  blast: 'IMUBLAST',
+  toxic: 'IMUPOIATK'
+});
 
 function n(raw,index,fallback=0){const v=Number(raw?.[index]);return Number.isFinite(v)?v:fallback;}
 function enabled(raw,index){return n(raw,index,0)===1;}
@@ -38,6 +65,22 @@ function flagsFromList(list){return Object.fromEntries([...new Set(list)].map((k
 function rangeEnd(rawStart, rawLength){return rawStart + rawLength;}
 function surgeFramesFromLevel(level){const lv=Math.max(0,Math.trunc(Number(level)||0));return lv*20;}
 function volcanoProc({prob=0,dis0=0,dis1=0,level=0,mult=0}={}){const lv=Math.max(0,Math.trunc(Number(level)||0));return {prob,dis0,dis1,level:lv,time:lv,timeFrames:surgeFramesFromLevel(lv),aliveTimeFrames:surgeFramesFromLevel(lv),mult};}
+function imu(mult=0, extra={}){const m=Math.max(0,Math.min(100,Math.trunc(Number(mult)||0)));return {mult:m,block:m,full:m>=100,partial:m>0&&m<100,...extra};}
+function fullImu(raw,index,extra={}){return imu(enabled(raw,index)?100:0,{index,...extra});}
+
+function buildImmunity(proc = {}) {
+  const out = {};
+  for (const [key, field] of Object.entries(BCU_PROC_IMMUNITY_FIELDS)) {
+    const mult = Number(proc?.[field]?.mult ?? proc?.[field]?.block ?? 0);
+    const m = Number.isFinite(mult) ? Math.max(0, Math.min(100, Math.trunc(mult))) : 0;
+    out[key] = { field, mult: m, full: m >= 100, partial: m > 0 && m < 100, damageMultiplier: Math.max(0, (100 - m) / 100) };
+  }
+  return out;
+}
+
+function buildResistance(proc = {}) {
+  return Object.fromEntries(Object.entries(buildImmunity(proc)).filter(([, value]) => value.partial));
+}
 
 function parseTraits(rawValues, kind) {
   const cols = kind === 'enemy' ? ENEMY_TRAIT_COLUMNS : UNIT_TRAIT_COLUMNS;
@@ -91,9 +134,11 @@ function parseUnitProc(rawValues) {
   const blastStart = n(rawValues,114,0)/4;
   const blastLength = n(rawValues,115,0)/4;
   return {
-    knockback:{prob:n(rawValues,24,0)}, freeze:{prob:n(rawValues,25,0),time:n(rawValues,26,0)}, slow:{prob:n(rawValues,27,0),time:n(rawValues,28,0)}, critical:{prob:n(rawValues,31,0),mult:200}, bounty:{mult:enabled(rawValues,33)?100:0}, baseDestroyer:{mult:enabled(rawValues,34)?300:0},
-    wave:{prob:miniWave?0:n(rawValues,35,0),level:miniWave?0:n(rawValues,36,0)}, miniWave:{prob:miniWave?n(rawValues,35,0):0,level:miniWave?n(rawValues,36,0):0,mult:miniWave?20:0},
+    knockback:{prob:n(rawValues,24,0),dis:BCU_PROC_KB_DEFAULT.dis,time:BCU_PROC_KB_DEFAULT.time}, freeze:{prob:n(rawValues,25,0),time:n(rawValues,26,0)}, slow:{prob:n(rawValues,27,0),time:n(rawValues,28,0)}, critical:{prob:n(rawValues,31,0),mult:200}, bounty:{mult:enabled(rawValues,33)?100:0}, baseDestroyer:{mult:enabled(rawValues,34)?300:0},
+    wave:{prob:miniWave?0:n(rawValues,35,0),level:miniWave?0:n(rawValues,36,0)}, miniWave:{prob:miniWave?n(rawValues,35,0):0,level:miniWave?n(rawValues,36,0):0,mult:miniWave?20:0}, IMUWAVE:fullImu(rawValues,46,{source:'DataUnit.ints[46]'}),
     weaken:{prob:n(rawValues,37,0),time:n(rawValues,38,0),mult:n(rawValues,39,0)}, strengthen:{health:n(rawValues,40,0),mult:n(rawValues,41,0)}, lethal:{prob:n(rawValues,42,0)},
+    IMUKB:fullImu(rawValues,48,{source:'DataUnit.ints[48]'}), IMUSTOP:fullImu(rawValues,49,{source:'DataUnit.ints[49]'}), IMUSLOW:fullImu(rawValues,50,{source:'DataUnit.ints[50]'}), IMUWEAK:fullImu(rawValues,51,{source:'DataUnit.ints[51]',smartImu:0}),
+    IMUWARP:fullImu(rawValues,75,{source:'DataUnit.ints[75]'}), IMUCURSE:fullImu(rawValues,79,{source:'DataUnit.ints[79]'}), IMUPOIATK:fullImu(rawValues,90,{source:'DataUnit.ints[90]'}), IMUVOLC:fullImu(rawValues,91,{source:'DataUnit.ints[91]'}), IMUBLAST:fullImu(rawValues,116,{source:'DataUnit.ints[116]'}),
     attackNullify:{prob:n(rawValues,84,0),time:n(rawValues,85,0)}, IMUATK:{prob:n(rawValues,84,0),time:n(rawValues,85,0)},
     barrierBreaker:{prob:n(rawValues,70,0)}, strongAttack:{prob:n(rawValues,82,0),mult:n(rawValues,83,0)}, curse:{prob:n(rawValues,92,0),time:n(rawValues,93,0)}, shieldBreaker:{prob:n(rawValues,95,0)},
     volcano:volcanoProc({prob:miniVolc?0:n(rawValues,86,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
@@ -115,9 +160,11 @@ function parseEnemyProc(rawValues) {
   const blastStart = n(rawValues,107,0)/4;
   const blastLength = n(rawValues,108,0)/4;
   return {
-    knockback:{prob:n(rawValues,20,0)}, freeze:{prob:n(rawValues,21,0),time:n(rawValues,22,0)}, slow:{prob:n(rawValues,23,0),time:n(rawValues,24,0)}, critical:{prob:n(rawValues,25,0),mult:200}, baseDestroyer:{mult:enabled(rawValues,26)?300:0},
-    wave:{prob:miniWave?0:n(rawValues,27,0),level:miniWave?0:n(rawValues,28,0)}, miniWave:{prob:miniWave?n(rawValues,27,0):0,level:miniWave?n(rawValues,28,0):0,mult:miniWave?20:0},
+    knockback:{prob:n(rawValues,20,0),dis:BCU_PROC_KB_DEFAULT.dis,time:BCU_PROC_KB_DEFAULT.time}, freeze:{prob:n(rawValues,21,0),time:n(rawValues,22,0)}, slow:{prob:n(rawValues,23,0),time:n(rawValues,24,0)}, critical:{prob:n(rawValues,25,0),mult:200}, baseDestroyer:{mult:enabled(rawValues,26)?300:0},
+    wave:{prob:miniWave?0:n(rawValues,27,0),level:miniWave?0:n(rawValues,28,0)}, miniWave:{prob:miniWave?n(rawValues,27,0):0,level:miniWave?n(rawValues,28,0):0,mult:miniWave?20:0}, IMUWAVE:fullImu(rawValues,37,{source:'DataEnemy.ints[37]'}),
     weaken:{prob:n(rawValues,29,0),time:n(rawValues,30,0),mult:n(rawValues,31,0)}, strengthen:{health:n(rawValues,32,0),mult:n(rawValues,33,0)}, lethal:{prob:n(rawValues,34,0)},
+    IMUKB:fullImu(rawValues,39,{source:'DataEnemy.ints[39]'}), IMUSTOP:fullImu(rawValues,40,{source:'DataEnemy.ints[40]'}), IMUSLOW:fullImu(rawValues,41,{source:'DataEnemy.ints[41]'}), IMUWEAK:fullImu(rawValues,42,{source:'DataEnemy.ints[42]',smartImu:0}),
+    IMUWARP:fullImu(rawValues,70,{source:'DataEnemy.ints[70]'}), IMUVOLC:fullImu(rawValues,85,{source:'DataEnemy.ints[85]'}), IMUCURSE:fullImu(rawValues,105,{source:'DataEnemy.ints[105]'}), IMUBLAST:fullImu(rawValues,109,{source:'DataEnemy.ints[109]'}), IMUPOIATK:imu(0,{source:'DataEnemy has POIATK attack columns but no confirmed IMUPOIATK raw column in DataEnemy.fillData'}),
     burrow:{count:n(rawValues,43,0),dis:n(rawValues,44,0)/4}, revive:{count:n(rawValues,45,0),time:n(rawValues,46,0),health:n(rawValues,47,0)}, barrier:{health:n(rawValues,64,0)},
     warp:{prob:n(rawValues,65,0),time:n(rawValues,66,0),dis0:n(rawValues,67,0)/4,dis1:n(rawValues,68,0)/4}, curse:{prob:n(rawValues,73,0),time:n(rawValues,74,0)}, strongAttack:{prob:n(rawValues,75,0),mult:n(rawValues,76,0)}, attackNullify:{prob:n(rawValues,77,0),time:n(rawValues,78,0)}, IMUATK:{prob:n(rawValues,77,0),time:n(rawValues,78,0)}, toxic:{prob:n(rawValues,79,0),mult:n(rawValues,80,0)},
     volcano:volcanoProc({prob:miniVolc?0:n(rawValues,81,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
@@ -133,7 +180,9 @@ export class BcuCombatModel {
     const traits = parseTraits(rawValues, statsKind);
     const ability = statsKind === 'enemy' ? parseEnemyAbilities(rawValues) : parseUnitAbilities(rawValues);
     const proc = statsKind === 'enemy' ? parseEnemyProc(rawValues) : parseUnitProc(rawValues);
-    return { version: BCU_COMBAT_MODEL_VERSION, kind: statsKind, traits, targetTraits: statsKind === 'unit' ? traits : null, ability, proc, source: statsKind === 'enemy' ? 'BCU DataEnemy.fillData' : 'BCU DataUnit.constructor', notes: ['BCU DataUnit/DataEnemy trait, ability, and proc columns mapped', 'Surge/death-surge time columns are exposed as level and aliveTimeFrames=level*20 for Battle Cats level compatibility'] };
+    const immunity = buildImmunity(proc);
+    const resistance = buildResistance(proc);
+    return { version: BCU_COMBAT_MODEL_VERSION, kind: statsKind, traits, targetTraits: statsKind === 'unit' ? traits : null, ability, proc, immunity, resistance, source: statsKind === 'enemy' ? 'BCU DataEnemy.fillData' : 'BCU DataUnit.constructor', notes: ['BCU DataUnit/DataEnemy trait, ability, proc, and full IMU* columns mapped', 'Surge/death-surge time columns are exposed as level and aliveTimeFrames=level*20 for Battle Cats level compatibility', 'Partial/smart immunity is represented when present on proc fields but CSV full-immunity flags parse as mult=100'] };
   }
   static hasAbi(model, bit) { return ((Number(model?.ability?.abi)||0)&bit)!==0; }
 }

@@ -1,4 +1,8 @@
 import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
+import { BCU_PROC_KB_DEFAULT } from './BcuCombatModel.js';
+
+const SEAL_SUPPRESSED_PROC_KEYS = new Set(['critical', 'barrierBreaker', 'shieldPierce', 'strongAttack']);
+const CURSE_SUPPRESSED_PROC_KEYS = new Set(['knockbackProc', 'freeze', 'slow', 'weaken', 'warp', 'curse', 'seal', 'toxic']);
 
 function getCombatModel(entity) {
   return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
@@ -24,7 +28,7 @@ function payloadFor(key, proc = {}) {
   if (key === 'freeze') return { prob: procNumber(proc, 'freeze', 'prob'), time: procNumber(proc, 'freeze', 'time'), timeFrames: procNumber(proc, 'freeze', 'time') };
   if (key === 'slow') return { prob: procNumber(proc, 'slow', 'prob'), time: procNumber(proc, 'slow', 'time'), timeFrames: procNumber(proc, 'slow', 'time') };
   if (key === 'weaken') return { prob: procNumber(proc, 'weaken', 'prob'), time: procNumber(proc, 'weaken', 'time'), timeFrames: procNumber(proc, 'weaken', 'time'), mult: procNumber(proc, 'weaken', 'mult') };
-  if (key === 'knockbackProc') return { prob: procNumber(proc, 'knockback', 'prob') };
+  if (key === 'knockbackProc') return { prob: procNumber(proc, 'knockback', 'prob'), dis: procNumber(proc, 'knockback', 'dis', BCU_PROC_KB_DEFAULT.dis), time: procNumber(proc, 'knockback', 'time', BCU_PROC_KB_DEFAULT.time), timeFrames: procNumber(proc, 'knockback', 'time', BCU_PROC_KB_DEFAULT.time) };
   if (key === 'warp') return { prob: procNumber(proc, 'warp', 'prob'), time: procNumber(proc, 'warp', 'time'), timeFrames: procNumber(proc, 'warp', 'time'), dis0: procNumber(proc, 'warp', 'dis0'), dis1: procNumber(proc, 'warp', 'dis1') };
   if (key === 'curse') return { prob: procNumber(proc, 'curse', 'prob'), time: procNumber(proc, 'curse', 'time'), timeFrames: procNumber(proc, 'curse', 'time') };
   if (key === 'seal') return { prob: procNumber(proc, 'seal', 'prob'), time: procNumber(proc, 'seal', 'time'), timeFrames: procNumber(proc, 'seal', 'time') };
@@ -48,6 +52,28 @@ function procModelCandidateActive(key, proc = {}, semantic = {}) {
 
 function mirrorsToApplied(candidate) {
   return candidate?.implemented === true && (candidate?.pendingType === 'state' || candidate?.pendingType === 'knockback' || candidate?.pendingType === 'kb');
+}
+
+function statusActive(actor, keys) {
+  const list = Array.isArray(keys) ? keys : [keys];
+  for (const key of list) {
+    if (typeof actor?.isBcuProcStatusActive === 'function' && actor.isBcuProcStatusActive(key, actor.lastSceneTimeMs)) return true;
+    const st = actor?.bcuProcStatuses?.[key];
+    if (Number.isFinite(st?.framesRemaining) && st.framesRemaining > 0) return true;
+    if (Number.isFinite(st?.untilMs)) {
+      const nowMs = Number.isFinite(actor?.lastSceneTimeMs) ? actor.lastSceneTimeMs : 0;
+      if (nowMs < st.untilMs) return true;
+    }
+  }
+  return false;
+}
+
+function procSuppressionReason(key, attacker) {
+  const sealed = statusActive(attacker, ['seal', 'P_SEAL']);
+  const cursed = statusActive(attacker, ['curse', 'P_CURSE']);
+  if (sealed && SEAL_SUPPRESSED_PROC_KEYS.has(key)) return 'attacker-seal-suppressed-proc';
+  if ((cursed || sealed) && CURSE_SUPPRESSED_PROC_KEYS.has(key)) return cursed ? 'attacker-curse-suppressed-proc' : 'attacker-seal-suppressed-curse-proc-group';
+  return null;
 }
 
 export class ProcResolver {
@@ -132,6 +158,11 @@ export class ProcResolver {
     for (const candidate of candidates) {
       const payload = payloadFor(candidate.key, proc);
       const prob = Number(payload.prob || 0);
+      const suppressed = procSuppressionReason(candidate.key, attacker);
+      if (suppressed) {
+        skipped.push({ key: candidate.key, category: candidate.category, reason: suppressed, payload, bcuReference: 'AtkModelEnemy.getProc cursed proc / AtkModelUnit.getProc sealed proc and ContVolcano.updateProc suppression groups' });
+        continue;
+      }
       const requiresActorTraitCompatibility = targetType === 'actor' && candidate.target === 'actor';
       if (requiresActorTraitCompatibility && !bcuTraitCompatible({ attacker, target, targetType, targetOnly: semantic?.targetOnly === true })) {
         skipped.push({ key: candidate.key, category: candidate.category, reason: 'target-trait-incompatible', payload, traitCompatibility: describeBcuTraitCompatibility({ attacker, target, targetType, targetOnly: semantic?.targetOnly === true }) });

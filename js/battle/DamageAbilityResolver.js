@@ -134,6 +134,22 @@ function isEnemyAttackAgainstUnit(attacker, target) {
   return isEnemySide(attacker) && isDogPlayer(target);
 }
 
+function isBcuStatusActive(entity, key) {
+  if (!entity || !key) return false;
+  const nowMs = Number.isFinite(entity.lastSceneTimeMs) ? entity.lastSceneTimeMs : undefined;
+  if (typeof entity.isBcuProcStatusActive === 'function' && entity.isBcuProcStatusActive(key, nowMs) === true) return true;
+  const st = entity.bcuProcStatuses?.[key];
+  if (Number.isFinite(st?.framesRemaining)) return st.framesRemaining > 0;
+  if (Number.isFinite(st?.untilMs)) return Number.isFinite(nowMs) ? nowMs < st.untilMs : st.untilMs > 0;
+  if (key === 'curse' && Number.isFinite(entity.curseUntilMs)) return Number.isFinite(nowMs) ? nowMs < entity.curseUntilMs : entity.curseUntilMs > 0;
+  if (key === 'seal' && Number.isFinite(entity.sealUntilMs)) return Number.isFinite(nowMs) ? nowMs < entity.sealUntilMs : entity.sealUntilMs > 0;
+  return false;
+}
+
+function isBcuDamageAbilitySuppressed(entity) {
+  return isBcuStatusActive(entity, 'curse') || isBcuStatusActive(entity, 'seal');
+}
+
 function pushStep(result, key, before, after, note, extra = {}) {
   result.applied[key] = true;
   result.notes.push(note);
@@ -159,15 +175,15 @@ function makeSharedInfoForAttack(attacker, target) {
   return { mode: 'generic-side-fallback', attackTraits, targetTraits, shared, compatible: shared.length > 0 };
 }
 
-function applyFixedKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference }) {
+function applyFixedKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference, allowAttack = true, allowDefense = true }) {
   let ans = currentDamage;
-  if (hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {
+  if (allowAttack && hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {
     const before = ans;
     ans = bcuInt(ans * attackMult);
     result.modifiers[key] *= before === 0 ? 1 : ans / before;
     pushStep(result, key, before, ans, `${reference} attack`, { trait, abilityBit, multiplier: attackMult });
   }
-  if (hasTargetAbi(result.__target, abilityBit) && hasTrait(result.__attacker, trait)) {
+  if (allowDefense && hasTargetAbi(result.__target, abilityBit) && hasTrait(result.__attacker, trait)) {
     const before = ans;
     ans = bcuInt(ans * defenseMult);
     result.modifiers[key] *= before === 0 ? 1 : ans / before;
@@ -219,6 +235,9 @@ export class DamageAbilityResolver {
     const proc = getAttackerProc(attacker);
     const rng = typeof context?.random === 'function' ? context.random : Math.random;
     const sharedInfo = targetType === 'actor' ? makeSharedInfoForAttack(attacker, target) : { mode: 'base', attackTraits: [], targetTraits: [], shared: [], compatible: false };
+    const attackerAbilitySuppressed = isBcuDamageAbilitySuppressed(attacker);
+    const attackerSealProcSuppressed = isBcuStatusActive(attacker, 'seal');
+    const targetAbilitySuppressed = isBcuDamageAbilitySuppressed(target);
     let ans = bcuInt(baseDamage);
     const result = {
       enabled: true,
@@ -234,7 +253,7 @@ export class DamageAbilityResolver {
         resolver: 'DamageAbilityResolver',
         mode: 'bcu-getDamage-order-plus-fact-only-killers',
         exactScope: ['DataUnit/DataEnemy CSV flags', 'EEnemy.getDamage primary damage abilities', 'EUnit.getDamage primary defense abilities', 'Entity.critCalc metal/critical', 'Entity.damaged metal-killer add-damage', 'P_BSTHUNT beast hunter damage multipliers', 'documented fixed killer/special damage multipliers with existing ability bits/proc fields'],
-        omittedRuntimeState: ['orbs', 'combos', 'curse status', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'sage status resistance']
+        omittedRuntimeState: ['orbs', 'combos', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'sage status resistance']
       },
       debug: {
         rawAbi: event?.rawAbi ?? null,
@@ -253,6 +272,9 @@ export class DamageAbilityResolver {
         sharedMode: sharedInfo.mode,
         compatible: sharedInfo.compatible,
         proc,
+        attackerAbilitySuppressed,
+        attackerSealProcSuppressed,
+        targetAbilitySuppressed,
         config: { bcuDamageResolver: true, ...config }
       }
     };
@@ -263,7 +285,7 @@ export class DamageAbilityResolver {
       __target: { value: target, enumerable: false }
     });
 
-    if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target) && sharedInfo.compatible) {
+    if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target) && sharedInfo.compatible && !attackerAbilitySuppressed) {
       if (hasAttackerAbi(attacker, BCU_ABI.AB_GOOD)) {
         const before = ans; ans = bcuInt(ans * getGoodAtk(sharedInfo.shared, 0));
         result.modifiers.strong *= before === 0 ? 1 : ans / before;
@@ -279,9 +301,11 @@ export class DamageAbilityResolver {
         result.modifiers.insaneDamage *= before === 0 ? 1 : ans / before;
         pushStep(result, 'insaneDamage', before, ans, 'BCU EEnemy.getDamage AB_MASSIVES getMASSIVESATK', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared) });
       }
+    } else if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target) && sharedInfo.compatible && attackerAbilitySuppressed) {
+      result.notes.push('attacker-curse-or-seal-suppressed-bcu-damage-abilities');
     }
 
-    if (targetType === 'actor' && isEnemyAttackAgainstUnit(attacker, target)) {
+    if (targetType === 'actor' && isEnemyAttackAgainstUnit(attacker, target) && !targetAbilitySuppressed) {
       if (hasTargetAbi(target, BCU_ABI.AB_GOOD)) {
         const before = ans; ans = bcuInt(ans * getGoodDef(sharedInfo.shared, 0));
         result.modifiers.strong *= before === 0 ? 1 : ans / before;
@@ -298,6 +322,8 @@ export class DamageAbilityResolver {
         result.applied.insaneResistant = true;
         pushStep(result, 'resistant', before, ans, 'BCU EUnit.getDamage target AB_RESISTS getRESISTSDEF', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), ability: 'AB_RESISTS' });
       }
+    } else if (targetType === 'actor' && isEnemyAttackAgainstUnit(attacker, target) && targetAbilitySuppressed) {
+      result.notes.push('target-curse-or-seal-suppressed-bcu-defensive-damage-abilities');
     }
 
     if (targetType === 'base' && (proc?.baseDestroyer?.mult || 0) > 0) {
@@ -307,25 +333,28 @@ export class DamageAbilityResolver {
     }
 
     if (targetType === 'actor') {
-      ans = applyFixedKillerMultiplier(result, ans, { key: 'baronKiller', abilityBit: BCU_ABI.AB_BAKILL, trait: BCU_TRAITS.baron, attackMult: 1.6, defenseMult: 0.7, reference: 'Reference 超生命体特効' });
-      ans = applyFixedKillerMultiplier(result, ans, { key: 'sageSlayer', abilityBit: BCU_ABI.AB_SKILL, trait: BCU_TRAITS.sage, attackMult: 1.2, defenseMult: 0.5, reference: 'Reference 超賢者特効 damage-only' });
-      ans = applyFixedKillerMultiplier(result, ans, { key: 'villainKiller', abilityBit: BCU_ABI.AB_VKILL, trait: BCU_TRAITS.villain, attackMult: 2.5, defenseMult: 0.4, reference: 'Reference 怪人特効' });
-      ans = applyFixedKillerMultiplier(result, ans, { key: 'witchKiller', abilityBit: BCU_ABI.AB_WKILL, trait: BCU_TRAITS.witch, attackMult: 5, defenseMult: 0.1, reference: 'Reference 魔女キラー' });
-      ans = applyFixedKillerMultiplier(result, ans, { key: 'evaKiller', abilityBit: BCU_ABI.AB_EKILL, trait: BCU_TRAITS.eva, attackMult: 5, defenseMult: 0.2, reference: 'Reference 使徒キラー' });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'baronKiller', abilityBit: BCU_ABI.AB_BAKILL, trait: BCU_TRAITS.baron, attackMult: 1.6, defenseMult: 0.7, reference: 'Reference 超生命体特効', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'sageSlayer', abilityBit: BCU_ABI.AB_SKILL, trait: BCU_TRAITS.sage, attackMult: 1.2, defenseMult: 0.5, reference: 'Reference 超賢者特効 damage-only', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'villainKiller', abilityBit: BCU_ABI.AB_VKILL, trait: BCU_TRAITS.villain, attackMult: 2.5, defenseMult: 0.4, reference: 'Reference 怪人特効', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'witchKiller', abilityBit: BCU_ABI.AB_WKILL, trait: BCU_TRAITS.witch, attackMult: 5, defenseMult: 0.1, reference: 'Reference 魔女キラー', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
+      ans = applyFixedKillerMultiplier(result, ans, { key: 'evaKiller', abilityBit: BCU_ABI.AB_EKILL, trait: BCU_TRAITS.eva, attackMult: 5, defenseMult: 0.2, reference: 'Reference 使徒キラー', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
       ans = applyBeastHunterMultiplier(result, ans);
     }
 
     const strongAttackProb = Number(proc?.strongAttack?.prob || 0);
-    const strongAttackApplied = performProbability(strongAttackProb, rng);
+    const strongAttackApplied = !attackerSealProcSuppressed && performProbability(strongAttackProb, rng);
     if (strongAttackApplied && (proc?.strongAttack?.mult || 0) !== 0) {
       const before = ans; ans = bcuInt(ans * (100 + Number(proc.strongAttack.mult)) * 0.01);
       result.modifiers.strongAttack *= before === 0 ? 1 : ans / before;
       pushStep(result, 'strongAttack', before, ans, 'BCU Entity.critCalc SATK before critical', { prob: strongAttackProb, mult: proc.strongAttack.mult });
+    } else if (attackerSealProcSuppressed && strongAttackProb > 0) {
+      result.notes.push('attacker-seal-suppressed-strongAttack-proc');
     }
 
     const targetIsMetal = isTargetMetalForDamage(attacker, target, targetType);
-    const criticalProb = Number(proc?.critical?.prob || 0);
+    const criticalProb = attackerSealProcSuppressed ? 0 : Number(proc?.critical?.prob || 0);
     const criticalApplied = performProbability(criticalProb, rng);
+    if (attackerSealProcSuppressed && Number(proc?.critical?.prob || 0) > 0) result.notes.push('attacker-seal-suppressed-critical-proc');
     if (targetIsMetal) {
       if (criticalApplied) {
         const before = ans; ans = bcuInt(ans * 0.01 * 200);

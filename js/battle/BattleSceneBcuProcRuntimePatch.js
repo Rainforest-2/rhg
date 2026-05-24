@@ -15,6 +15,18 @@ function procApplyDedupeKey(item) {
   return `${key}:${item?.hitIndex ?? ''}:${item?.attackEventKey ?? ''}`;
 }
 
+function damageKind(event = null, meta = {}) {
+  return meta?.damageKind || event?.damageKind || event?.attackKind || event?.kind || 'normal';
+}
+
+function eventWithGuardDamage(attacker, event, guard) {
+  const mult = Number(guard?.damageMultiplier);
+  if (!Number.isFinite(mult) || mult >= 1 || mult < 0) return event;
+  const base = Number.isFinite(event?.damage) ? Number(event.damage) : Number(attacker?.damage);
+  if (!Number.isFinite(base)) return event;
+  return { ...(event || {}), damage: Math.max(0, Math.trunc(base * mult)), bcuDamageGuard: guard };
+}
+
 export function installBattleSceneBcuProcRuntimePatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
@@ -23,8 +35,29 @@ export function installBattleSceneBcuProcRuntimePatch() {
   const originalQueueAttackDamage = proto.queueAttackDamage;
   if (typeof originalQueueAttackDamage !== 'function') return;
   proto.queueAttackDamage = function queueAttackDamageWithBcuProcTrace(attacker, target, targetType, event, meta = {}) {
-    guardBcuDamage({ attacker, target, attack: event, kind: event?.attackKind || 'normal' });
-    const result = originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
+    const guard = guardBcuDamage({ attacker, target, attack: event, kind: damageKind(event, meta) });
+    if (guard?.accepted === false) {
+      const result = {
+        accepted: false,
+        reason: guard.reason || guard.blockedReason || 'bcu-damage-guard-rejected',
+        damage: 0,
+        procAccepted: false,
+        bcuDamageGuard: guard
+      };
+      this.pushEvent?.({
+        type: 'bcuDamageGuardRejected',
+        source: 'BattleSceneBcuProcRuntimePatch.queueAttackDamage',
+        attacker: attacker?.instanceId || attacker?.label || null,
+        target: target?.instanceId || target?.label || target?.side || null,
+        targetType,
+        kind: guard.kind || damageKind(event, meta),
+        field: guard.field || null,
+        reason: result.reason
+      });
+      return result;
+    }
+    const guardedEvent = eventWithGuardDamage(attacker, event, guard);
+    const result = originalQueueAttackDamage.call(this, attacker, target, targetType, guardedEvent, { ...meta, bcuDamageGuard: guard });
     if (!result?.accepted || targetType !== 'actor') return result;
     const calc = target?.lastIncomingDamageCalculation || attacker?.lastDamageCalculation || null;
     const appliedKeys = new Set(

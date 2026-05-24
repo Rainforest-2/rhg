@@ -3,7 +3,7 @@ import { FormationEditor } from './FormationEditor.js';
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-catalog-virtual-dom-diff.v1');
 
 function safeHtml(value) {
-  return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+  return String(value ?? '').replace(/[&<>'\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[ch]));
 }
 
 function estimateCatalogColumns(editor, scroller) {
@@ -39,7 +39,7 @@ function buildCard(editor, character, catalogIndex, usedBaseIds) {
   button.dataset.faction = character.faction;
   button.dataset.baseCharacterId = baseId || '';
   button.dataset.virtualCardKey = cardKey(character);
-  button.innerHTML = `${editor.renderIconMarkup(character)}<span>${safeHtml(character.faction === 'dog' ? 'DOG' : 'CAT')}</span><strong>${safeHtml(character.label)}</strong><small class='character-id'>${safeHtml(character.characterId)}</small>${editor.renderCardMeta(character)}`;
+  button.innerHTML = `${editor.renderIconMarkup(character)}<span>${safeHtml(character.faction === 'dog' ? 'DOG' : 'CAT')}</span><strong>${safeHtml(character.label)}</strong>${editor.renderCardMeta(character)}`;
   return button;
 }
 
@@ -54,8 +54,7 @@ function updateCard(editor, button, character, catalogIndex, usedBaseIds) {
   if (faction) faction.textContent = character.faction === 'dog' ? 'DOG' : 'CAT';
   const label = button.querySelector(':scope > strong');
   if (label) label.textContent = character.label || '';
-  const id = button.querySelector(':scope > .character-id');
-  if (id) id.textContent = character.characterId || '';
+  button.querySelector(':scope > .character-id')?.remove();
   const meta = button.querySelector(':scope > .formation-card-meta');
   if (meta) {
     const next = document.createElement('div');

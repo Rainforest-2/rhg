@@ -7,64 +7,145 @@
   place-items:center;
   padding:calc(env(safe-area-inset-top,0px) + 16px) calc(env(safe-area-inset-right,0px) + 16px) calc(env(safe-area-inset-bottom,0px) + 16px) calc(env(safe-area-inset-left,0px) + 16px);
   background:
-    radial-gradient(circle at 50% 28%,rgba(255,243,186,.28) 0 9%,transparent 30%),
-    linear-gradient(180deg,rgba(54,22,7,.90),rgba(21,8,3,.96)),
-    url('../public/assets/ui/nyanko-ui-stamp.svg'),
-    repeating-linear-gradient(90deg,#7a3516 0 28px,#6a2c12 28px 56px,#8d451f 56px 84px);
-  background-size:auto,auto,220px 220px,auto;
-  color:#fff8d1;
+    radial-gradient(circle at 50% 42%,rgba(255,190,88,.18) 0 8%,transparent 30%),
+    radial-gradient(circle at 16% 82%,rgba(255,91,60,.16) 0 10%,transparent 34%),
+    radial-gradient(circle at 86% 16%,rgba(90,170,255,.12) 0 9%,transparent 32%),
+    linear-gradient(180deg,#090b12 0%,#141019 46%,#06070b 100%);
+  color:#f9e9bf;
   opacity:1;
   pointer-events:auto;
-  overflow:auto;
-  touch-action:pan-y;
-  -webkit-overflow-scrolling:touch;
-  font-family:"Arial Rounded MT Bold","Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif!important;
-}
-
-#boot-status-panel{
-  color:#fff8d1!important;
-  font:1000 clamp(1.35rem,3.4vw,3rem)/1.12 "Arial Rounded MT Bold","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif!important;
-  letter-spacing:.05em;
-  text-align:center;
-  text-shadow:
-    2px 0 0 #050505,
-    -2px 0 0 #050505,
-    0 2px 0 #050505,
-    0 -2px 0 #050505,
-    2px 2px 0 #050505,
-    -2px 2px 0 #050505,
-    2px -2px 0 #050505,
-    -2px -2px 0 #050505,
-    0 5px 0 rgba(0,0,0,.72)!important;
+  overflow:hidden;
+  touch-action:none;
+  font-family:"Inter","SF Pro Display","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif!important;
+  isolation:isolate;
 }
 
 #boot-status-panel::before,
 .app-loading-overlay::before{
   content:"";
   position:absolute;
-  inset:clamp(14px,2vw,28px);
-  border:6px solid #050505;
-  border-radius:clamp(20px,2.4vw,34px);
-  background:
-    linear-gradient(180deg,#bd7338 0 70px,#351305 70px 84px,#fff8d1 85px calc(100% - 20px),#351305 calc(100% - 20px) 100%);
-  box-shadow:0 10px 0 #210d04,0 28px 72px rgba(0,0,0,.58),inset 0 2px 0 rgba(255,255,255,.52);
+  inset:0;
   z-index:-2;
+  pointer-events:none;
+  background:
+    linear-gradient(115deg,transparent 0 38%,rgba(255,255,255,.055) 39%,transparent 40% 100%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.026) 0 1px,transparent 1px 6px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 42px);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 14%,#000 84%,transparent 100%);
 }
 
 #boot-status-panel::after,
 .app-loading-overlay::after{
-  content:"ネコ基地";
+  content:"";
   position:absolute;
-  top:calc(env(safe-area-inset-top,0px) + clamp(30px,4.2vw,62px));
-  left:50%;
-  width:min(760px,68vw);
-  transform:translateX(-50%) rotate(-2deg);
-  color:rgba(255,224,120,.18);
-  font:1000 clamp(3.4rem,10vw,9.4rem)/1 "Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;
-  text-align:center;
-  letter-spacing:.06em;
-  pointer-events:none;
+  inset:0;
   z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at center,transparent 0 46%,rgba(0,0,0,.54) 88%),
+    linear-gradient(90deg,rgba(0,0,0,.5),transparent 18% 82%,rgba(0,0,0,.5));
+}
+
+#boot-status-panel{
+  color:#fff6dd!important;
+  font:900 clamp(1.15rem,2.7vw,2.25rem)/1.16 "Inter","SF Pro Display","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif!important;
+  letter-spacing:.03em;
+  text-align:center;
+  text-shadow:0 2px 18px rgba(255,191,85,.34),0 2px 0 rgba(0,0,0,.72)!important;
+}
+
+#boot-status-panel .boot-loading-card{
+  position:relative;
+  width:min(720px,calc(100vw - 42px));
+  display:grid;
+  gap:14px;
+  padding:clamp(22px,3.4vw,38px);
+  border-radius:28px;
+  border:1px solid rgba(255,232,171,.24);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.035)),
+    linear-gradient(180deg,rgba(22,24,34,.88),rgba(9,10,15,.92));
+  box-shadow:0 30px 84px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.06) inset,0 1px 0 rgba(255,255,255,.16) inset;
+  backdrop-filter:blur(20px) saturate(1.18);
+  -webkit-backdrop-filter:blur(20px) saturate(1.18);
+  overflow:hidden;
+}
+
+#boot-status-panel .boot-loading-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,#ffcb66 0 6px,transparent 6px),
+    radial-gradient(circle at 14% 0%,rgba(255,203,102,.24),transparent 34%),
+    radial-gradient(circle at 92% 100%,rgba(90,170,255,.14),transparent 38%);
+}
+
+#boot-status-panel .boot-loading-kicker,
+#boot-status-panel .boot-loading-title,
+#boot-status-panel .boot-loading-message,
+#boot-status-panel .boot-loading-rail,
+#boot-status-panel .boot-loading-meta{
+  position:relative;
+  z-index:1;
+}
+
+#boot-status-panel .boot-loading-kicker{
+  color:#ffcf6e;
+  font:850 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.28em;
+  text-align:left;
+  opacity:.92;
+}
+
+#boot-status-panel .boot-loading-title{
+  color:#fff6dd;
+  font:950 clamp(1.65rem,5.4vw,3.6rem)/1.02 "Inter","SF Pro Display","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  letter-spacing:.01em;
+  text-align:left;
+  text-shadow:0 12px 40px rgba(0,0,0,.58),0 0 24px rgba(255,203,102,.22)!important;
+}
+
+#boot-status-panel .boot-loading-message{
+  justify-self:start;
+  min-height:32px;
+  display:flex;
+  align-items:center;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:999px;
+  background:rgba(0,0,0,.24);
+  color:rgba(255,246,221,.82);
+  font:850 clamp(.86rem,1.6vw,1rem)/1.2 "Inter","SF Pro Display","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  text-shadow:0 1px 0 rgba(0,0,0,.46)!important;
+}
+
+#boot-status-panel .boot-loading-rail{
+  height:9px;
+  margin-top:4px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(0,0,0,.46);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.5);
+}
+
+#boot-status-panel .boot-loading-rail span{
+  display:block;
+  width:46%;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#ff8f3d,#ffd166,#8bd3ff);
+  box-shadow:0 0 22px rgba(255,209,102,.42);
+  animation:bootLoadingSlide 1.38s ease-in-out infinite;
+}
+
+#boot-status-panel .boot-loading-meta{
+  color:rgba(255,246,221,.38);
+  font:750 .68rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.18em;
+  text-align:right;
 }
 
 .app-loading-overlay.is-hidden{
@@ -74,131 +155,123 @@
 
 .app-loading-card{
   position:relative;
-  width:min(780px,calc(100vw - 40px));
+  align-self:end;
+  justify-self:center;
+  width:min(980px,calc(100vw - 44px));
   max-height:calc(100dvh - 52px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   display:grid;
-  grid-template-columns:clamp(92px,16vw,148px) minmax(0,1fr);
+  grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:
-    "mascot title"
-    "mascot version"
-    "mascot message"
-    "mascot time"
+    "title version"
+    "message time"
     "progress progress"
     "steps steps"
     "error error";
-  gap:10px 18px;
-  padding:clamp(16px,2vw,24px);
-  border-radius:24px;
-  border:5px solid #050505;
+  gap:10px 16px;
+  margin-bottom:clamp(18px,6vh,64px);
+  padding:clamp(16px,2.2vw,24px);
+  border-radius:22px;
+  border:1px solid rgba(255,232,171,.26);
   background:
-    linear-gradient(180deg,rgba(255,255,255,.26),transparent 36%),
-    linear-gradient(180deg,#fff8d1 0%,#ffe9a4 62%,#f4d083 100%);
-  box-shadow:0 8px 0 #321407,0 24px 60px rgba(0,0,0,.46),inset 0 3px 0 rgba(255,255,255,.86);
-  overflow:auto;
+    linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.035)),
+    linear-gradient(180deg,rgba(24,26,36,.92),rgba(9,10,15,.94));
+  box-shadow:
+    0 26px 70px rgba(0,0,0,.62),
+    0 0 0 1px rgba(255,255,255,.06) inset,
+    0 1px 0 rgba(255,255,255,.18) inset;
+  backdrop-filter:blur(18px) saturate(1.18);
+  -webkit-backdrop-filter:blur(18px) saturate(1.18);
+  overflow:hidden;
   touch-action:pan-y;
   -webkit-overflow-scrolling:touch;
-  isolation:isolate;
 }
 
 .app-loading-card::before{
   content:"";
-  grid-area:mascot;
-  align-self:center;
-  justify-self:center;
-  width:clamp(82px,14vw,132px);
-  height:clamp(82px,14vw,132px);
-  border:5px solid #050505;
-  border-radius:22px 22px 28px 28px;
+  position:absolute;
+  inset:0;
+  pointer-events:none;
   background:
-    radial-gradient(circle at 36% 42%,#050505 0 4%,transparent 5%),
-    radial-gradient(circle at 64% 42%,#050505 0 4%,transparent 5%),
-    radial-gradient(ellipse at 50% 63%,transparent 0 17%,#050505 18% 20%,transparent 21%),
-    linear-gradient(135deg,transparent 0 14%,#050505 15% 17%,transparent 18%),
-    linear-gradient(225deg,transparent 0 14%,#050505 15% 17%,transparent 18%),
-    linear-gradient(180deg,#fff 0%,#f5f0dc 100%);
-  box-shadow:0 7px 0 rgba(0,0,0,.62),inset 0 3px 0 rgba(255,255,255,.9);
+    linear-gradient(90deg,#ffcb66 0 88px,transparent 88px),
+    radial-gradient(circle at 10% 0%,rgba(255,203,102,.22),transparent 32%),
+    radial-gradient(circle at 96% 100%,rgba(90,170,255,.18),transparent 36%);
+  opacity:.88;
 }
 
 .app-loading-card::after{
-  content:"";
+  content:"LOADING";
   position:absolute;
   right:18px;
-  top:18px;
-  width:64px;
-  height:64px;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 66%,rgba(5,5,5,.18) 0 8%,transparent 9%),
-    radial-gradient(circle at 35% 35%,rgba(5,5,5,.18) 0 6%,transparent 7%),
-    radial-gradient(circle at 52% 27%,rgba(5,5,5,.18) 0 5%,transparent 6%),
-    radial-gradient(circle at 68% 38%,rgba(5,5,5,.18) 0 6%,transparent 7%);
-  opacity:.55;
+  bottom:14px;
+  color:rgba(255,255,255,.055);
+  font:900 clamp(2.6rem,7vw,5.8rem)/1 "Inter","SF Pro Display",system-ui,sans-serif;
+  letter-spacing:.08em;
   pointer-events:none;
+}
+
+.app-loading-title,
+.app-loading-version,
+.app-loading-message,
+.app-loading-phase-time,
+.app-loading-progress,
+.app-loading-steps,
+.app-loading-error{
+  position:relative;
+  z-index:1;
 }
 
 .app-loading-title{
   grid-area:title;
-  color:#fff8d1;
-  font-weight:1000;
-  font-size:clamp(1.45rem,3.1vw,2.6rem);
-  letter-spacing:.04em;
-  line-height:1.05;
-  -webkit-text-fill-color:#fff8d1;
-  text-shadow:
-    2px 0 0 #050505,
-    -2px 0 0 #050505,
-    0 2px 0 #050505,
-    0 -2px 0 #050505,
-    2px 2px 0 #050505,
-    -2px 2px 0 #050505,
-    2px -2px 0 #050505,
-    -2px -2px 0 #050505,
-    0 5px 0 rgba(0,0,0,.72);
+  color:#fff6dd;
+  font-weight:950;
+  font-size:clamp(1.45rem,3vw,2.7rem);
+  letter-spacing:.035em;
+  line-height:1.03;
+  text-shadow:0 8px 28px rgba(0,0,0,.58),0 0 22px rgba(255,203,102,.22);
 }
 
 .app-loading-version{
   grid-area:version;
-  justify-self:start;
+  justify-self:end;
+  align-self:center;
   padding:6px 12px;
-  border:3px solid #050505;
+  border:1px solid rgba(255,232,171,.34);
   border-radius:999px;
-  background:linear-gradient(180deg,#292929,#050505);
-  color:#ffe75a;
-  font:1000 .84rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
-  text-shadow:0 2px 0 #000;
-  box-shadow:0 4px 0 #321407,inset 0 1px 0 rgba(255,255,255,.16);
+  background:rgba(0,0,0,.34);
+  color:#ffcf6e;
+  font:800 .78rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.04em;
+  box-shadow:0 8px 26px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12);
 }
 
 .app-loading-message{
   grid-area:message;
-  min-height:44px;
+  min-height:34px;
   display:flex;
   align-items:center;
-  padding:10px 14px;
-  border:4px solid #050505;
-  border-radius:16px;
-  background:linear-gradient(180deg,#2b2b2b,#070707);
-  color:#fff7cf;
-  font-weight:1000;
-  line-height:1.35;
-  text-shadow:0 2px 0 #000;
-  box-shadow:0 5px 0 rgba(0,0,0,.56),inset 0 2px 0 rgba(255,255,255,.12);
+  color:#f7ead0;
+  font-weight:800;
+  font-size:clamp(.96rem,1.45vw,1.18rem);
+  line-height:1.32;
+  text-shadow:0 2px 0 rgba(0,0,0,.44);
 }
 
 .app-loading-phase-time{
   grid-area:time;
-  color:#6b3a14;
-  font:1000 .8rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+  justify-self:end;
+  align-self:center;
+  color:rgba(255,246,221,.58);
+  font:750 .76rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 
 .app-loading-progress{
   grid-area:progress;
-  height:24px;
+  height:10px;
   overflow:hidden;
   border-radius:999px;
-  border:4px solid #050505;
-  background:linear-gradient(180deg,#161616,#050505);
-  box-shadow:0 5px 0 #321407,inset 0 3px 0 rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.46);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.48),0 0 0 1px rgba(0,0,0,.32);
 }
 
 .app-loading-progress-bar{
@@ -206,46 +279,54 @@
   width:0%;
   height:100%;
   border-radius:inherit;
-  background:
-    linear-gradient(90deg,rgba(255,255,255,.32),transparent 18%,rgba(255,255,255,.22) 36%,transparent 54%),
-    linear-gradient(180deg,#fffbd7 0%,#ffe75a 45%,#f49a18 100%);
-  box-shadow:inset 0 2px 0 rgba(255,255,255,.72),0 0 18px rgba(255,213,49,.38);
+  background:linear-gradient(90deg,#ff8f3d 0%,#ffd166 48%,#8bd3ff 100%);
+  box-shadow:0 0 18px rgba(255,209,102,.54),0 0 34px rgba(139,211,255,.28);
   transition:width .18s ease;
+}
+
+.app-loading-progress-bar::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.56),transparent);
+  transform:translateX(-70%);
+  animation:loadingSweep 1.45s ease-in-out infinite;
 }
 
 .app-loading-steps{
   grid-area:steps;
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
-  gap:8px;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:6px;
 }
 
 .app-loading-step{
-  min-height:40px;
+  min-height:26px;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:8px 10px;
-  border-radius:13px;
-  border:3px solid #050505;
-  background:linear-gradient(180deg,#fffdf0,#ffe7a2);
-  color:#4b2413;
-  font-size:.78rem;
-  font-weight:1000;
+  padding:5px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  color:rgba(255,246,221,.52);
+  font-size:.68rem;
+  font-weight:850;
   text-align:center;
-  box-shadow:0 4px 0 rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.82);
+  letter-spacing:.03em;
 }
 
 .app-loading-step.is-active{
-  color:#ffe75a;
-  background:linear-gradient(180deg,#303030,#050505);
-  text-shadow:0 2px 0 #000;
-  box-shadow:0 4px 0 #321407,0 0 0 3px rgba(255,213,49,.26),inset 0 1px 0 rgba(255,255,255,.16);
+  color:#fff6dd;
+  border-color:rgba(255,203,102,.62);
+  background:linear-gradient(180deg,rgba(255,203,102,.22),rgba(255,143,61,.13));
+  box-shadow:0 0 20px rgba(255,203,102,.16),inset 0 1px 0 rgba(255,255,255,.16);
 }
 
 .app-loading-step.is-done{
-  color:#201006;
-  background:linear-gradient(180deg,#fffdf0,#8ef05d 45%,#40a62f 100%);
+  color:#ffcf6e;
+  border-color:rgba(255,203,102,.26);
+  background:rgba(255,203,102,.08);
 }
 
 .app-loading-error{
@@ -258,11 +339,11 @@
   word-break:break-word;
   padding:12px;
   border-radius:14px;
-  border:4px solid #050505;
-  background:linear-gradient(180deg,#7f1d1d,#450a0a);
-  color:#fff0e8;
+  border:1px solid rgba(255,100,100,.44);
+  background:rgba(110,16,24,.38);
+  color:#ffe1df;
   font:800 .82rem/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;
-  box-shadow:0 5px 0 rgba(0,0,0,.56);
+  box-shadow:0 14px 34px rgba(0,0,0,.36);
 }
 
 .app-loading-overlay.is-error .app-loading-error{
@@ -270,15 +351,33 @@
 }
 
 .app-loading-overlay.is-error .app-loading-message{
-  background:linear-gradient(180deg,#9f1d1d,#520808);
-  color:#fff0e8;
+  color:#ffe1df;
 }
 
-@media (max-width:640px){
+@keyframes loadingSweep{
+  0%{ transform:translateX(-85%); opacity:0; }
+  20%{ opacity:.92; }
+  100%{ transform:translateX(115%); opacity:0; }
+}
+
+@keyframes bootLoadingSlide{
+  0%{ transform:translateX(-105%); }
+  50%{ transform:translateX(72%); }
+  100%{ transform:translateX(220%); }
+}
+
+@media (max-width:760px){
+  #boot-status-panel .boot-loading-card{
+    width:min(560px,calc(100vw - 28px));
+    padding:20px;
+    border-radius:20px;
+  }
+  #boot-status-panel .boot-loading-title{
+    font-size:clamp(1.6rem,8vw,2.6rem);
+  }
   .app-loading-card{
     grid-template-columns:1fr;
     grid-template-areas:
-      "mascot"
       "title"
       "version"
       "message"
@@ -286,47 +385,50 @@
       "progress"
       "steps"
       "error";
-    width:min(520px,calc(100vw - 28px));
-    border-width:4px;
-    border-radius:20px;
+    width:min(560px,calc(100vw - 28px));
+    border-radius:18px;
   }
-  .app-loading-card::after{
-    display:none;
-  }
-  .app-loading-title{
-    text-align:center;
-  }
-  .app-loading-version{
-    justify-self:center;
+  .app-loading-version,
+  .app-loading-phase-time{
+    justify-self:start;
   }
   .app-loading-steps{
-    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-columns:repeat(3,minmax(0,1fr));
   }
 }
 
 @media (max-height:560px) and (orientation:landscape){
-  .app-loading-card{
-    grid-template-columns:96px minmax(0,1fr);
-    gap:8px 14px;
-    padding:14px;
+  #boot-status-panel .boot-loading-card{
+    gap:9px;
+    padding:16px 18px;
   }
-  .app-loading-card::before{
-    width:84px;
-    height:84px;
+  #boot-status-panel .boot-loading-title{
+    font-size:clamp(1.35rem,4.8vw,2.5rem);
+  }
+  .app-loading-card{
+    margin-bottom:14px;
+    gap:7px 14px;
+    padding:13px 16px;
   }
   .app-loading-title{
-    font-size:clamp(1.15rem,2.6vw,1.8rem);
+    font-size:clamp(1.15rem,2.3vw,1.8rem);
   }
   .app-loading-message{
-    min-height:36px;
-    padding:8px 12px;
-  }
-  .app-loading-steps{
-    grid-template-columns:repeat(6,minmax(0,1fr));
+    min-height:26px;
+    font-size:.86rem;
   }
   .app-loading-step{
-    min-height:32px;
-    padding:5px 6px;
-    font-size:.66rem;
+    min-height:22px;
+    padding:4px 6px;
+    font-size:.6rem;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .app-loading-progress-bar,
+  .app-loading-progress-bar::after,
+  #boot-status-panel .boot-loading-rail span{
+    animation:none!important;
+    transition:none!important;
   }
 }

@@ -1,12 +1,27 @@
+function safeBootText(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+
 function showBootStatus(message) {
   let el = document.getElementById('boot-status-panel');
   if (!el) {
     el = document.createElement('section');
     el.id = 'boot-status-panel';
     el.style.cssText = 'position:fixed;inset:0;z-index:999999;display:grid;place-items:center';
+    el.innerHTML = `<div class="boot-loading-card" role="status" aria-live="polite">
+      <div class="boot-loading-kicker">WANKO BATTLE</div>
+      <div class="boot-loading-title">起動準備中</div>
+      <div class="boot-loading-message"></div>
+      <div class="boot-loading-rail"><span></span></div>
+      <div class="boot-loading-meta">BCU ASSET PIPELINE</div>
+    </div>`;
     document.body.appendChild(el);
   }
-  el.textContent = message;
+  const msg = el.querySelector('.boot-loading-message');
+  const title = el.querySelector('.boot-loading-title');
+  if (title) title.textContent = message.includes('出撃') ? 'ゲームを開始しています' : 'アセットを準備しています';
+  if (msg) msg.textContent = message;
+  else el.textContent = safeBootText(message);
 }
 
 function hideBootStatus() {

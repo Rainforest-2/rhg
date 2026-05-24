@@ -32,15 +32,6 @@
   overflow:auto;
 }
 
-#boot-status-panel{
-  background:
-    radial-gradient(circle at 50% 28%,rgba(255,243,186,.28) 0 9%,transparent 30%),
-    linear-gradient(180deg,rgba(54,22,7,.90),rgba(21,8,3,.96)),
-    url('../public/assets/ui/nyanko-ui-stamp.svg'),
-    repeating-linear-gradient(90deg,#7a3516 0 28px,#6a2c12 28px 56px,#8d451f 56px 84px)!important;
-  background-size:auto,auto,220px 220px,auto!important;
-}
-
 body.nyanko-ui-polish .formation-page-tab span,
 body.nyanko-ui-polish .formation-page-tab.is-active span{
   text-shadow:none!important;

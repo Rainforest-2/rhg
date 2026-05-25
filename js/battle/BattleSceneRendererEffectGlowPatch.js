@@ -44,7 +44,7 @@ function drawBcuModelEffectWithGlow(renderer, ctx, effect, x, y, scale) {
   let drawn = 0;
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(scale, scale);
+  ctx.scale(effect.renderFlipX === true ? -scale : scale, scale);
   for (const p of drawList) {
     const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
     if (Number.isFinite(Number(imgcutIndex)) && Number(imgcutIndex) < 0) continue;
@@ -96,7 +96,9 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
       const drawH = part.h * scale;
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      drawBcuImagePart(ctx, effect.image, part.x, part.y, part.w, part.h, x - drawW * 0.5, y - drawH * 0.5, drawW, drawH, {
+      ctx.translate(x, y);
+      if (effect.renderFlipX === true) ctx.scale(-1, 1);
+      drawBcuImagePart(ctx, effect.image, part.x, part.y, part.w, part.h, -drawW * 0.5, -drawH * 0.5, drawW, drawH, {
         opacity: Number.isFinite(effect.opacity) ? effect.opacity : 1,
         glow: Number.isFinite(Number(effect.glow)) ? Number(effect.glow) : 0
       });
@@ -113,7 +115,8 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     yOffset,
     layer,
     scale,
-    bcuReference: 'BCU BattleBox.drawEff y = midh - (road_h - layer * DEP) * siz; ContVolcano is drawn through ContAb layer ordering'
+    renderFlipX: effect.renderFlipX === true,
+    bcuReference: 'BCU BattleBox.drawEff y = midh - (road_h - layer * DEP) * siz; side-oriented effects are mirrored at the effect anchor'
   };
   return drawn;
 }

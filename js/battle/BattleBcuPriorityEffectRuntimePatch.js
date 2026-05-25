@@ -7,6 +7,7 @@ import { enqueueBcuSurgeFromPayload } from './BattleSurgeRuntimePatch.js';
 const PATCH_FLAG = Symbol.for('wanko-battle.priority-effect-runtime.v1');
 const ACTOR_PATCH_FLAG = Symbol.for('wanko-battle.priority-effect-actor-runtime.v1');
 const COUNTER_SURGE_FORESWING = 50;
+const BCU_WARP_HOLE_Y_OFFSET = 275;
 
 function combatModel(actor) {
   return actor?.bcuCombatModel || actor?.rawStats?.bcuCombatModel || actor?.stats?.bcuCombatModel || null;
@@ -27,12 +28,12 @@ function roll(scene) {
   return typeof rng === 'function' ? rng() : Math.random();
 }
 
-function pos(actor) {
-  return Number.isFinite(actor?.x) ? actor.x : 0;
-}
-
 function barrierKey(actor) {
   return directionForActor(actor) === 1 ? 'enemyBarrier' : 'unitBarrier';
+}
+
+function shouldMirrorUnitSide(actor) {
+  return directionForActor(actor) === -1;
 }
 
 function counterKey(actor) {
@@ -49,8 +50,9 @@ function spawnBarrierShieldVisual(scene, actor, event) {
       actor,
       type: 'barrier',
       source: 'bcu-effanim-barrier',
+      renderFlipX: shouldMirrorUnitSide(actor),
       debug: {
-        bcuReference: 'Entity.Barrier.breakBarrier / anim.getEff(BREAK_NON|BREAK_ABI|BREAK_ATK)',
+        bcuReference: 'Entity.Barrier.breakBarrier / anim.getEff(BREAK_NON|BREAK_ABI|BREAK_ATK); side-specific draw mirrors friendly-side effect orientation',
         barrierEvent: event
       }
     });
@@ -63,8 +65,9 @@ function spawnBarrierShieldVisual(scene, actor, event) {
       actor,
       type: 'demonShield',
       source: 'bcu-effanim-demon-shield',
+      renderFlipX: shouldMirrorUnitSide(actor),
       debug: {
-        bcuReference: 'Entity.getEff(P_DEMONSHIELD): ShieldEff FULL/HALF/BROKEN/BREAKER/REGENERATION',
+        bcuReference: 'Entity.getEff(P_DEMONSHIELD): ShieldEff FULL/HALF/BROKEN/BREAKER/REGENERATION; friendly-side shield is mirrored to distinguish side orientation',
         shieldEvent: event
       }
     });
@@ -110,19 +113,28 @@ function processDelayedEffects(scene) {
   scene.__bcuDelayedWaveBundleEffects = rest;
 }
 
+function warpEffectPlacement(key) {
+  return key === 'warp'
+    ? { bcuSmokeYOffset: BCU_WARP_HOLE_Y_OFFSET, placement: 'hole' }
+    : { bcuSmokeYOffset: 0, placement: 'chara' };
+}
+
 function spawnWarpVisuals(scene, target, result) {
   const applied = (result?.procApply || []).find((p) => p?.key === 'warp' && (p?.applied === true || p?.result?.applied === true));
   const status = applied?.result?.status || target?.bcuProcStatuses?.warp || null;
   if (!applied || !status || status.__bcuWarpVisualQueued) return;
   status.__bcuWarpVisualQueued = true;
   for (const key of ['warp', 'warpChara']) {
+    const placement = warpEffectPlacement(key);
     spawnWaveBundleEffect(scene, {
       key,
       phase: 'entrance',
       actor: target,
       type: 'warp',
       source: 'bcu-effanim-warp',
-      debug: { bcuReference: 'Entity.getEff(P_WARP) uses A_W/A_W_C WarpEff.ENTER on warp start', status }
+      bcuSmokeYOffset: placement.bcuSmokeYOffset,
+      renderFlipX: shouldMirrorUnitSide(target),
+      debug: { bcuReference: 'WaprCont.draw: A_W is drawn at entity pos with y -= 275*psiz; A_W_C/chara is drawn at entity pos baseline on warp enter', status, placement: placement.placement }
     });
     queueDelayedEffect(scene, {
       key,
@@ -131,7 +143,9 @@ function spawnWarpVisuals(scene, target, result) {
       type: 'warp',
       source: 'bcu-effanim-warp',
       delay: Math.max(1, Math.trunc(Number(status.durationFrames || status.framesRemaining || 1))),
-      debug: { bcuReference: 'Entity.postUpdate calls anim.getEff(P_WARP) for WarpEff.EXIT when status[P_WARP][1] expires', status }
+      bcuSmokeYOffset: placement.bcuSmokeYOffset,
+      renderFlipX: shouldMirrorUnitSide(target),
+      debug: { bcuReference: 'Entity.KBManager.updateKB: exit calls kbmove(kbDis) then anim.getEff(P_WARP); WaprCont.draw uses shifted A_W hole and baseline A_W_C chara', status, placement: placement.placement }
     });
   }
 }

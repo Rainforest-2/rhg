@@ -34,6 +34,8 @@ export function spawnWaveBundleEffect(scene, {
   layer = null,
   type = null,
   source = 'bcu-wave-bundle-effect',
+  renderFlipX = false,
+  bcuSmokeYOffset = 0,
   debug = {}
 } = {}) {
   if (!scene || !key) return null;
@@ -65,13 +67,16 @@ export function spawnWaveBundleEffect(scene, {
     source,
     createdAtMs: scene.timeMs,
     layer: Number.isFinite(layer) ? layer : (Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0),
-    bcuSmokeYOffset: 0,
+    bcuSmokeYOffset,
+    renderFlipX: renderFlipX === true,
     debug: {
       source,
       key,
       phase,
       actor: actor?.instanceId || actor?.label || null,
       x: effectX,
+      bcuSmokeYOffset,
+      renderFlipX: renderFlipX === true,
       frameCount: runtime.frameCount,
       maxFrame: runtime.maxFrame,
       assetSource: asset.source || null,

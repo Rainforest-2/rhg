@@ -7,6 +7,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleWaveEffectLoader } from './BattleWaveEffectLoader.js';
+import { directionForActor, spawnWaveBundleEffect } from './BcuWaveBundleEffectSpawner.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v5-explicit-proc-resolve');
 const W_PROG = 200;
@@ -18,7 +19,7 @@ const W_TIME = 3;
 const W_MINI_TIME = 1;
 const BCU_WAVE_EFFECT_SOURCE = 'bcu-effanim-wave-cont-wave-def';
 const BCU_WAVE_EFFECT_SCALE = 1;
-const WAVE_EFFECT_TOTAL = 12;
+const WAVE_EFFECT_TOTAL = null;
 
 function describeWaveEffectAssets(assets = {}) {
   return Object.fromEntries(Object.entries(assets || {}).map(([key, asset]) => [key, {
@@ -206,6 +207,18 @@ function deactivateGroup(scene, item, blockerActor) {
     for (const w of item.group.containers || []) w.activate = false;
   }
   if (blockerActor?.anim?.getEff) blockerActor.anim.getEff('STPWAVE');
+  const blockerDirection = directionForActor(blockerActor);
+  spawnWaveBundleEffect(scene, {
+    key: blockerDirection === 1 ? 'enemyWaveStop' : 'unitWaveStop',
+    actor: blockerActor,
+    type: 'waveStop',
+    source: 'bcu-effanim-wave-stop',
+    debug: {
+      bcuReference: 'ContWaveDef.update: AB_WAVES blocker calls anim.getEff(STPWAVE) before deactivate',
+      waveId: item.id,
+      blockerDirection
+    }
+  });
   trace(scene, {
     source: 'BattleWaveRuntimePatch.deactivateGroup',
     bcuReference: 'ContWaveDef.deactivate kills every related wave on AB_WAVES stopper',

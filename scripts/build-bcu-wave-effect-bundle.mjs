@@ -33,6 +33,15 @@ function phased({ key, role, dir, out, image, imgcut, model, prefix, names = ['s
   ] };
 }
 
+function namedPhased({ key, role, dir, out, image, imgcut, model, phases }) {
+  return { key, role, sourceDir: dir, entries: [
+    { name: `${out}/image.png`, source: image, required: true },
+    { name: `${out}/imgcut.imgcut`, source: imgcut, required: true },
+    { name: `${out}/model.mamodel`, source: model, required: true },
+    ...Object.entries(phases).map(([phase, source]) => ({ name: `${out}/anim-${phase}.maanim`, source, required: true, phase }))
+  ] };
+}
+
 const EFFECT_DEFS = Object.freeze([
   single({ key: 'unitWave', role: 'bcu-A_WAVE', dir: 'public/assets/bcu/000001/org/battle/s4', out: 'unit-wave', image: 'skill004.png', imgcut: 'skill004.imgcut', model: 'skill_wave_attack.mamodel', anim: 'skill_wave_attack.maanim' }),
   single({ key: 'enemyWave', role: 'bcu-A_E_WAVE', dir: 'public/assets/bcu/000001/org/battle/s5', out: 'enemy-wave', image: 'skill005.png', imgcut: 'skill005.imgcut', model: 'skill_wave_attack_e.mamodel', anim: 'skill_wave_attack_e.maanim' }),
@@ -48,7 +57,20 @@ const EFFECT_DEFS = Object.freeze([
   phased({ key: 'enemyBlast', role: 'bcu-A_E_BLAST', dir: 'public/assets/bcu/130700/org/battle/s22', out: 'enemy-blast', image: 'skill022.png', imgcut: 'skill022.imgcut', model: 'skill_explosion_e.mamodel', prefix: 'skill_explosion', names: ['start', 'explode', 'dummy'] }),
 
   single({ key: 'strongAttack', role: 'bcu-A_SATK', dir: 'public/assets/bcu/000001/org/battle/s6', out: 'strong-attack', image: 'skill006.png', imgcut: 'skill006.imgcut', model: 'strong_attack.mamodel', anim: 'strong_attack.maanim' }),
-  single({ key: 'metalKiller', role: 'bcu-A_METAL_KILLER/A_E_METAL_KILLER', dir: 'public/assets/bcu/130300/org/battle/s20', out: 'metal-killer', image: 'skill020.png', imgcut: 'skill020.imgcut', model: 'skill_metal_strong.mamodel', anim: 'skill_metal_strong.maanim' })
+  single({ key: 'metalKiller', role: 'bcu-A_METAL_KILLER/A_E_METAL_KILLER', dir: 'public/assets/bcu/130300/org/battle/s20', out: 'metal-killer', image: 'skill020.png', imgcut: 'skill020.imgcut', model: 'skill_metal_strong.mamodel', anim: 'skill_metal_strong.maanim' }),
+
+  namedPhased({ key: 'unitBarrier', role: 'bcu-A_B', dir: 'public/assets/bcu/000001/org/battle/s2', out: 'unit-barrier', image: 'skill002.png', imgcut: 'skill002.imgcut', model: 'skill_barrier_e.mamodel', phases: { none: 'skill_barrier_e.maanim', breaker: 'skill_barrier_e_breaker.maanim', destruction: 'skill_barrier_e_destruction.maanim' } }),
+  namedPhased({ key: 'enemyBarrier', role: 'bcu-A_E_B', dir: 'public/assets/bcu/000001/org/battle/s2', out: 'enemy-barrier', image: 'skill002.png', imgcut: 'skill002.imgcut', model: 'skill_barrier_e.mamodel', phases: { none: 'skill_barrier_e.maanim', breaker: 'skill_barrier_e_breaker.maanim', destruction: 'skill_barrier_e_destruction.maanim' } }),
+  namedPhased({ key: 'demonShield', role: 'bcu-A_DEMON_SHIELD/A_E_DEMON_SHIELD', dir: 'public/assets/bcu/100800/org/battle/s14', out: 'demon-shield', image: 'skill014.png', imgcut: 'skill014.imgcut', model: 'skill_demonshield.mamodel', phases: { full: 'skill_demonshield00.maanim', half: 'skill_demonshield01.maanim', destruction: 'skill_demonshield_destruction.maanim', breaker: 'skill_demonshield_breaker.maanim', revive: 'skill_demonshield_revive.maanim' } }),
+  namedPhased({ key: 'warp', role: 'bcu-A_W', dir: 'public/assets/bcu/000001/org/battle/s2', out: 'warp', image: 'skill002.png', imgcut: 'skill002.imgcut', model: 'skill_warp.mamodel', phases: { entrance: 'skill_warp_entrance.maanim', exit: 'skill_warp_exit.maanim' } }),
+  namedPhased({ key: 'warpChara', role: 'bcu-A_W_C', dir: 'public/assets/bcu/000001/org/battle/s2', out: 'warp-chara', image: 'skill002.png', imgcut: 'skill002.imgcut', model: 'skill_warp_chara.mamodel', phases: { entrance: 'skill_warp_chara_entrance.maanim', exit: 'skill_warp_chara_exit.maanim' } }),
+  single({ key: 'unitWaveInvalid', role: 'bcu-A_WAVE_INVALID', dir: 'public/assets/bcu/000001/org/battle/s0/wave_invalid', out: 'unit-wave-invalid', image: '../skill000.png', imgcut: '../skill000.imgcut', model: 'skill_wave_invalid.mamodel', anim: 'skill_wave_invalid.maanim' }),
+  single({ key: 'enemyWaveInvalid', role: 'bcu-A_E_WAVE_INVALID', dir: 'public/assets/bcu/000001/org/battle/s0/wave_invalid', out: 'enemy-wave-invalid', image: '../skill000.png', imgcut: '../skill000.imgcut', model: 'skill_wave_invalid_e.mamodel', anim: 'skill_wave_invalid_e.maanim' }),
+  single({ key: 'unitWaveStop', role: 'bcu-A_WAVE_STOP', dir: 'public/assets/bcu/000001/org/battle/s0/wave_stop', out: 'unit-wave-stop', image: '../skill000.png', imgcut: '../skill000.imgcut', model: 'skill_wave_stop.mamodel', anim: 'skill_wave_stop.maanim' }),
+  single({ key: 'enemyWaveStop', role: 'bcu-A_E_WAVE_STOP', dir: 'public/assets/bcu/000001/org/battle/s0/wave_stop', out: 'enemy-wave-stop', image: '../skill000.png', imgcut: '../skill000.imgcut', model: 'skill_wave_stop_e.mamodel', anim: 'skill_wave_stop_e.maanim' }),
+  namedPhased({ key: 'enemyWaveGuard', role: 'bcu-A_E_GUARD', dir: 'public/assets/bcu/130200/org/battle/s19', out: 'enemy-wave-guard', image: 'skill019.png', imgcut: 'skill019.imgcut', model: 'skill_guard_e.mamodel', phases: { none: 'skill_guard_e.maanim', breaker: 'skill_guard_e_breaker.maanim' } }),
+  single({ key: 'unitCounterSurge', role: 'bcu-A_COUNTERSURGE', dir: 'public/assets/bcu/130000/org/battle/s18', out: 'unit-counter-surge', image: 'skill018.png', imgcut: 'skill018.imgcut', model: 'skill_demonsummon.mamodel', anim: 'skill_demonsummon.maanim' }),
+  single({ key: 'enemyCounterSurge', role: 'bcu-A_E_COUNTERSURGE', dir: 'public/assets/bcu/130000/org/battle/s17', out: 'enemy-counter-surge', image: '../../../../120400/org/battle/s17/skill017.png', imgcut: '../../../../120400/org/battle/s17/skill017.imgcut', model: 'skill_demonsummon_e.mamodel', anim: 'skill_demonsummon_e.maanim' })
 ]);
 
 function addEntry(entries, entry) {
@@ -124,7 +146,20 @@ function makeBundleJson({ aliases, missingRequired, allSkillEffectFiles }) {
         A_E_BLAST: './org/battle/s22/skill_explosion',
         A_SATK: './org/battle/s6/strong_attack',
         A_METAL_KILLER: './org/battle/s20/skill_metal_strong',
-        A_E_METAL_KILLER: './org/battle/s20/skill_metal_strong'
+        A_E_METAL_KILLER: './org/battle/s20/skill_metal_strong',
+        A_B: './org/battle/s2/skill_barrier_e',
+        A_E_B: './org/battle/s2/skill_barrier_e',
+        A_W: './org/battle/s2/skill_warp',
+        A_W_C: './org/battle/s2/skill_warp_chara',
+        A_WAVE_INVALID: './org/battle/s0/wave_invalid/skill_wave_invalid',
+        A_E_WAVE_INVALID: './org/battle/s0/wave_invalid/skill_wave_invalid_e',
+        A_WAVE_STOP: './org/battle/s0/wave_stop/skill_wave_stop',
+        A_E_WAVE_STOP: './org/battle/s0/wave_stop/skill_wave_stop_e',
+        A_DEMON_SHIELD: './org/battle/s14/skill_demonshield',
+        A_E_DEMON_SHIELD: './org/battle/s14/skill_demonshield',
+        A_COUNTERSURGE: './org/battle/s18/skill_demonsummon',
+        A_E_COUNTERSURGE: './org/battle/s17/skill_demonsummon_e',
+        A_E_GUARD: './org/battle/s19/skill_guard_e'
       },
       timing: {
         normalWave: { initialT: -3, effectAtT: 0, attackAtT: 6, nextWaveAtT: 3 },

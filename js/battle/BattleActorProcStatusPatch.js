@@ -145,17 +145,23 @@ function applyToxic(actor, payload = {}, meta = {}) {
   if (!Number.isFinite(mult) || mult <= 0) return { applied: false, reason: 'zero-toxic-mult' };
   const damage = Math.max(1, Math.trunc((actor.maxHp || actor.maxH || 0) * mult / 100));
   if (damage <= 0) return { applied: false, reason: 'zero-toxic-damage' };
-  actor.pendingDamage = Math.max(0, (actor.pendingDamage || 0) + damage);
-  actor.pendingHits = Array.isArray(actor.pendingHits) ? actor.pendingHits : [];
-  actor.pendingHits.push({
-    amount: damage,
+  const result = actor.takeDamage?.(damage, {
     attacker: meta.attacker?.instanceId || meta.attacker || null,
     timeMs: meta.nowMs ?? null,
-    toxic: true,
-    source: 'BCU POIATK/POISON maxHP-percent toxic damage'
-  });
-  actor.lastBcuToxicDebug = { source: 'BCU processProcs POIATK/toxic maxH percent', mult, damage, nowMs: meta.nowMs ?? null };
-  return { applied: true, damage, mult };
+    damageCalculation: {
+      source: 'BCU processProcs POIATK/toxic maxH percent',
+      finalDamage: damage,
+      baseDamage: damage,
+      proc: { applied: [], pending: [], skipped: [], notes: ['toxic-direct-damage'] }
+    },
+    baseDamage: damage,
+    finalDamage: damage,
+    damageMultiplier: 1,
+    bcuToxic: true,
+    attackKind: 'toxic'
+  }) || { accepted: false, reason: 'target-takeDamage-missing' };
+  actor.lastBcuToxicDebug = { source: 'BCU processProcs POIATK/toxic maxH percent', mult, damage, nowMs: meta.nowMs ?? null, result };
+  return { applied: result.accepted === true, damage, mult, result };
 }
 
 function applyStatus(actor, key, payload = {}, meta = {}) {

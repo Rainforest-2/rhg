@@ -326,10 +326,12 @@ export class DamageAbilityResolver {
       result.notes.push('target-curse-or-seal-suppressed-bcu-defensive-damage-abilities');
     }
 
-    if (targetType === 'base' && (proc?.baseDestroyer?.mult || 0) > 0) {
+    if (targetType === 'base' && !attackerSealProcSuppressed && (proc?.baseDestroyer?.mult || 0) > 0) {
       const before = ans; ans = bcuInt(ans * (1 + (Number(proc.baseDestroyer.mult) || 0) / 100));
       result.modifiers.baseDestroyer *= before === 0 ? 1 : ans / before;
       pushStep(result, 'baseDestroyer', before, ans, 'BCU isBase ATKBASE multiplier', { proc: proc.baseDestroyer });
+    } else if (targetType === 'base' && attackerSealProcSuppressed && (proc?.baseDestroyer?.mult || 0) > 0) {
+      result.notes.push('attacker-seal-suppressed-baseDestroyer-proc');
     }
 
     if (targetType === 'actor') {
@@ -371,7 +373,8 @@ export class DamageAbilityResolver {
       pushStep(result, 'critical', before, ans, 'BCU critCalc non-metal critical CRIT.mult=200', { prob: criticalProb });
     }
 
-    const metalKillerMult = Number(proc?.metalKiller?.mult || 0);
+    const metalKillerMult = attackerSealProcSuppressed ? 0 : Number(proc?.metalKiller?.mult || 0);
+    if (attackerSealProcSuppressed && Number(proc?.metalKiller?.mult || 0) > 0) result.notes.push('attacker-seal-suppressed-metalKiller-proc');
     if (targetIsMetal && metalKillerMult > 0) {
       const before = ans;
       const targetHealth = Math.max(0, Number(target?.hp ?? target?.health ?? 0));

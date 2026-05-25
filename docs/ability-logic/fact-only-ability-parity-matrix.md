@@ -201,14 +201,26 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 - `P_BLAST`: `BattleBlastRuntimePatch` creates a ContBlast-style runtime object, attacks levels at BCU frames, and uses `effect:wave` `unit-blast` / `enemy-blast`.
 - `P_METALKILL`, `P_SATK`, `P_CRIT` visuals: critical patch is imported; `strong-attack` and `metal-killer` aliases were added to `effect:wave` and are spawned by `BattleProcHitEffectPatch`.
 
+## Implemented in this pass
+
+- Effect ZIP audit: created `docs/ability-logic/effect-zip-audit.md` from current `unzip -l` output before runtime edits, then updated it after rebuilding `effect:wave`.
+- `effect:wave` aliases added by `scripts/build-bcu-wave-effect-bundle.mjs` and loaded by `BattleWaveEffectLoader`: `unit-barrier`, `enemy-barrier`, `demon-shield`, `warp`, `warp-chara`, `unit-wave-invalid`, `enemy-wave-invalid`, `unit-wave-stop`, `enemy-wave-stop`, `enemy-wave-guard`, `unit-counter-surge`, `enemy-counter-surge`.
+- Barrier / barrier breaker: BCU references used: `DataEnemy` index 64 -> `proc.BARRIER.health`; `DataUnit` index 70 -> `P_BREAK`; `Entity.damaged` barrier gate; `Entity.Barrier.breakBarrier`; `EffAnim.A_B/A_E_B`. Runtime keeps barrier before demon shield, consumes `barrierBreaker`, blocks insufficient damage/procs, and spawns `unit-barrier` / `enemy-barrier` `none`, `breaker`, or `destruction` phases from `BattleBcuPriorityEffectRuntimePatch`.
+- Demon shield / shield breaker: BCU references used: `DataEnemy` indexes 87/88 -> `DEMONSHIELD.hp/regen`; `DataUnit` index 95 -> `P_SHIELDBREAK`; `Entity.damaged` shield branch; `KBManager INT_HB` shield regeneration; `EffAnim.A_DEMON_SHIELD/A_E_DEMON_SHIELD`. Runtime now blocks normal shield-breaking damage instead of passing it through, only allows damage through on `shieldPierce`, regenerates on HP knockback using `maxShield * regen / 100`, and spawns `demon-shield` `full`, `half`, `destruction`, `breaker`, and `revive`.
+- Warp: BCU references used: `DataEnemy` indexes 65-68; `Entity.processProcs` `P_WARP`; `EffAnim.A_W/A_W_C`. Runtime applies hidden/untargetable/untouchable/unrenderable warp state, queues final displacement, and now spawns `warp` and `warp-chara` entrance/exit aliases. Knockback-gated suppression remains documented as not separately proven beyond BCU's observed process order.
+- Wave invalid / wave stopper: BCU references used: `DataUnit` index 46 / `DataEnemy` index 37 for `IMUWAVE`, `DataUnit` index 47 / `DataEnemy` index 38 for `AB_WAVES`, `Entity.damaged` `anim.getEff(P_WAVE)`, `ContWaveDef.update` stopper branch, and `EffAnim.A_WAVE_INVALID/A_E_WAVE_INVALID/A_WAVE_STOP/A_E_WAVE_STOP`. Runtime damage guard rejects wave/mini-wave at `queueAttackDamage`; stopper detection now reads parsed `AB_WAVES`; visuals spawn from `unit-wave-invalid` / `enemy-wave-invalid` and `unit-wave-stop` / `enemy-wave-stop`.
+- Surge and blast immunity: BCU references used: `DataUnit` index 91 / `DataEnemy` index 85 for `IMUVOLC`, `DataUnit` index 116 / `DataEnemy` index 109 for `IMUBLAST`, and `Entity.damaged` `WT_VOLC|WT_MIVC|WT_BLST` guards. Existing `BattleSceneBcuProcRuntimePatch` damage guard now has stable invalid-effect visuals for blocked surge/blast hits.
+- Death surge: BCU references used: `DataEnemy` indexes 89-92 and `AtkModelEntity` death-surge `ContVolcano` construction. Runtime scans death/knockback-death phase once per actor and enqueues a BCU surge container via `enqueueBcuSurgeFromPayload`.
+- Counter surge: BCU references used: `DataUnit` index 109 / `DataEnemy` index 103 `AB_CSUR`, `Entity.damaged` `AttackVolcano` counter branch, and `SurgeSummoner` `COUNTER_SURGE_FORESWING=50`. Runtime detects accepted incoming surge hits, spawns `unit-counter-surge` / `enemy-counter-surge`, delays 50 frames, and enqueues a non-looping counter surge with `bcuCounterSurge` metadata.
+- Curse/seal suppression: BCU references used: `AtkModelEntity.sealed` blank proc except `MOVEWAVE`, `AtkModelEnemy.cursed` cleared proc list, and `ContVolcano.updateProc` seal/curse proc-group update. Runtime broadens seal suppression for proc/projectile generation and suppresses sealed `P_ATKBASE` / `P_METALKILL` damage additions.
+- Toxic direct damage guard: BCU references used: `DataEnemy` indexes 79/80 `P_POIATK`, `DataUnit` index 90 `IMUPOIATK`, `Entity.damaged` poison immunity guard. Runtime no longer writes toxic damage directly into `pendingDamage`; it goes through `takeDamage` after `BcuProcImmunityPatch` has the opportunity to block toxic.
+
 ## Deferred / `fact-partial` rows and blockers
 
 - `AB_SKILL` status resistance and sage bypass: BCU control flow is known, but `BcuResistRuntime` field mapping and current JS proc duration/prob interaction are unresolved.
 - `AB_VKILL`: BCU bit/trait/damage rule known, but playable holder source appears combo/orb-based locally; no safe parser path found.
-- `P_WARP`: exact BCU behavior known, raw warp assets found, but JS lacks full actor removed-from-field/reappearance state and KB-gated application.
-- Full proc/wave/surge/blast immunities: local flags and visuals are found in BCU, but parser names, invalid-effect mapping, and runtime meta are incomplete.
-- Barrier/demon shield and breakers: logic gates exist, raw assets are bundled, but actor/base-attached visual lifetime/placement and shield regeneration visual parity are not wired.
-- Death surge and counter surge: BCU source/assets are present, but JS death/counter trigger hooks are not fully proven.
+- Wave guard / castle guard: `A_E_GUARD` alias is bundled and loader-resolvable, but current JS has no completed castle/base guard state equivalent to BCU `ECastle.activeGuard`; row remains partial for runtime hook.
+- Warp no-KB suppression: BCU process order was inspected, but this pass did not add a separate pending-warp cancellation based on later HP knockback resolution.
 - Burrow, summon, spirit: holder/runtime identity and movement/spawn state are not sufficiently mapped.
 - Partial resistances: exact source fields beyond sage hunter and current runtime integration remain unresolved.
 

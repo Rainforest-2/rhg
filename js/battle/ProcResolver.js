@@ -1,7 +1,7 @@
 import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
 import { BCU_PROC_KB_DEFAULT } from './BcuCombatModel.js';
 
-const SEAL_SUPPRESSED_PROC_KEYS = new Set(['critical', 'barrierBreaker', 'shieldPierce', 'strongAttack']);
+const SEAL_SUPPRESSED_PROC_KEYS = new Set(['critical', 'barrierBreaker', 'shieldPierce', 'strongAttack', 'knockbackProc', 'freeze', 'slow', 'weaken', 'warp', 'curse', 'seal', 'toxic', 'wave', 'miniWave', 'surge', 'miniSurge', 'blast']);
 const CURSE_SUPPRESSED_PROC_KEYS = new Set(['knockbackProc', 'freeze', 'slow', 'weaken', 'warp', 'curse', 'seal', 'toxic']);
 
 function getCombatModel(entity) {

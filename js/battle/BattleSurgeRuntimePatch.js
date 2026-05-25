@@ -287,6 +287,8 @@ function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
     event,
     hitIndex,
     pos: center,
+    dis0: d0,
+    dis1: d1,
     startX: Math.min(sta, end),
     endX: Math.max(sta, end),
     sta,
@@ -351,7 +353,11 @@ function attackTick(scene, item) {
     item.volcTime = VOLC_ITV;
     item.vcapt.clear();
   }
-  const event = cloneEvent(item.event, item.damage, item.kind, item.attacker);
+  const event = {
+    ...cloneEvent(item.event, item.damage, item.kind, item.attacker),
+    bcuSurgeAliveTime: item.aliveTime,
+    bcuCounterSurgePayload: { dis0: item.dis0, dis1: item.dis1, time: item.aliveTime, timeFrames: item.aliveTime }
+  };
   let applied = 0;
   for (const target of targets) {
     const res = scene.queueAttackDamage(item.attacker, target, 'actor', event, {
@@ -424,6 +430,24 @@ function enqueueFromResult(scene, attacker, target, event, calc, result, meta = 
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
   const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${target?.instanceId || 'target'}:${hitIndex}`;
   for (const proc of items) enqueue(scene, buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target));
+}
+
+export function enqueueBcuSurgeFromPayload(scene, attacker, {
+  key = 'surge',
+  payload = {},
+  damage = null,
+  event = {},
+  hitIndex = null,
+  target = null,
+  id = null
+} = {}) {
+  if (!scene || !attacker) return null;
+  const kind = key === 'miniSurge' ? 'miniSurge' : 'surge';
+  const finalDamage = Math.max(1, Math.trunc(Number(damage ?? event?.damage ?? attacker?.damage ?? 1) || 1));
+  const proc = { key: kind, payload: kind === 'miniSurge' ? { miniVolcano: payload, ...payload } : { volcano: payload, ...payload } };
+  const surge = buildSurge(attacker, proc, finalDamage, id || `${scene.logicFrame || 0}:${attacker?.instanceId || 'actor'}:explicit-${kind}`, event, hitIndex, target);
+  enqueue(scene, surge);
+  return surge;
 }
 
 export function installBattleSurgeRuntimePatch() {

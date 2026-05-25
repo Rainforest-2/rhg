@@ -69,7 +69,7 @@ function gateShield(actor, damage, meta = {}) {
   if (damage >= actor.bcuDemonShieldHp) {
     const before = actor.bcuDemonShieldHp;
     actor.bcuDemonShieldHp = 0;
-    return { blocked: false, damage, event: { type: 'shield-broken-by-damage', before, after: 0, source: 'BCU shield breaks; damage continues after shield break' } };
+    return { blocked: true, damage: 0, event: { type: 'shield-broken-by-damage', before, after: 0, absorbedDamage: damage, source: 'BCU shield breaks by damage and cancels current damage/procs unless SHIELDBREAK passes first' } };
   }
   const before = actor.bcuDemonShieldHp;
   actor.bcuDemonShieldHp = Math.max(0, before - damage);
@@ -116,6 +116,7 @@ export function installBattleActorBarrierShieldPatch() {
     }
     return result;
   };
+
 }
 
 installBattleActorBarrierShieldPatch();

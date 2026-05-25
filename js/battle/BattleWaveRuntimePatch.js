@@ -401,7 +401,11 @@ export function installBattleWaveRuntimePatch() {
   if (typeof originalInit === 'function') {
     proto.init = async function initWithBcuWaveEffects(...args) {
       const result = await originalInit.apply(this, args);
-      await this.ensureWaveEffectLoading?.();
+      // Effect assets are non-critical visual resources. Loading every effect alias synchronously
+      // blocks battle start on some browsers after the expanded bundle was added, leaving the
+      // scene rendered once but the tick loop not yet running. Start loading in the background;
+      // runtime callers already skip and retry effects until the bundle is available.
+      void this.ensureWaveEffectLoading?.();
       return result;
     };
   }

@@ -35,11 +35,13 @@ Create or update `docs/ability-logic/effect-zip-audit.md` with exact ZIP entry n
 
 ## Bundle ownership
 
+This section defines target ownership for new/verified entries. It is not evidence that an entry is currently present. Current presence must still be proven by `unzip -l`.
+
 Use existing bundles unless a documented blocker proves a new bundle is required.
 
 - `effect/status-effects.zip`: actor-anchored status/proc visuals such as stop, slow, weaken, strengthen, survive, attack-nullify, curse, seal, poison.
-- `effect/wave.zip`: BCU `org/battle/s*` skill and projectile effects, including wave, mini-wave, surge, mini-surge, blast, strong attack, metal killer, barrier, demon shield, warp, wave invalid, wave stop, wave guard, counter surge, and summon visuals.
-- `effect/kbeff.zip`: BCU `org/battle/a` hit, knockback, critical, smoke, and kbeff-style visuals.
+- `effect/wave.zip`: target bundle for BCU `org/battle/s*` skill and projectile effects, including wave, mini-wave, surge, mini-surge, blast, strong attack, metal killer, barrier, demon shield, warp, wave invalid, wave stop, wave guard, counter surge, and summon visuals.
+- `effect/kbeff.zip`: target bundle for BCU `org/battle/a` hit, knockback, critical, smoke, and kbeff-style visuals.
 
 Do not edit ZIP files by hand. Extend builder scripts, rebuild ZIPs, and commit rebuilt ZIPs plus generated manifest/index changes together.
 

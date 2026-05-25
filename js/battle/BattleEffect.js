@@ -1,5 +1,5 @@
 export class BattleEffect {
-  constructor({ id, type = 'hit', x, y, durationMs = 225, frameDurationMs = 45, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect', debug = null, createdAtMs = null, layer = null, bcuSmokeYOffset = null }) {
+  constructor({ id, type = 'hit', x, y, durationMs = 225, frameDurationMs = 45, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect', debug = null, createdAtMs = null, layer = null, bcuSmokeYOffset = null, renderFlipX = false }) {
     this.id = id;
     this.type = type;
     this.x = x;
@@ -11,6 +11,7 @@ export class BattleEffect {
     this.bcuRenderLayer = this.currentLayer;
     this.bcuRenderLayerSource = Number.isFinite(Number(layer)) ? 'effect-runtime-layer' : 'effect-runtime-default-layer';
     this.bcuSmokeYOffset = Number.isFinite(Number(bcuSmokeYOffset)) ? Number(bcuSmokeYOffset) : null;
+    this.renderFlipX = renderFlipX === true;
     this.createdAtMs = createdAtMs;
     this.effectRuntimeDebug = debug || { source, type, worldX: x, worldY: y, hasImage: !!image, frameCount: frameParts?.length || 0 };
     this.elapsedMs = 0;
@@ -30,6 +31,7 @@ export class BattleEffect {
     if (this.finished) return;
     this.elapsedMs += dt;
     if (this.animator?.tick) this.animator.tick(dt);
+    if (this.animator?.apply && this.model) this.animator.apply(this.model);
     const idx = Math.min(this.frameParts.length - 1, Math.floor(this.elapsedMs / this.frameDurationMs));
     this.currentPart = this.frameParts[idx] || null;
     if (this.elapsedMs >= this.durationMs) this.finished = true;

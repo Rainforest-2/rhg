@@ -1,5 +1,5 @@
 export class BattleEffect {
-  constructor({ id, type = 'hit', x, y, durationMs = 225, frameDurationMs = 45, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect', debug = null, createdAtMs = null, layer = null, bcuSmokeYOffset = null, renderFlipX = false }) {
+  constructor({ id, type = 'hit', x, y, durationMs = 225, frameDurationMs = 45, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect', debug = null, createdAtMs = null, layer = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false }) {
     this.id = id;
     this.type = type;
     this.x = x;
@@ -11,6 +11,7 @@ export class BattleEffect {
     this.bcuRenderLayer = this.currentLayer;
     this.bcuRenderLayerSource = Number.isFinite(Number(layer)) ? 'effect-runtime-layer' : 'effect-runtime-default-layer';
     this.bcuSmokeYOffset = Number.isFinite(Number(bcuSmokeYOffset)) ? Number(bcuSmokeYOffset) : null;
+    this.bcuScreenOffsetX = Number.isFinite(Number(bcuScreenOffsetX)) ? Number(bcuScreenOffsetX) : 0;
     this.renderFlipX = renderFlipX === true;
     this.createdAtMs = createdAtMs;
     this.effectRuntimeDebug = debug || { source, type, worldX: x, worldY: y, hasImage: !!image, frameCount: frameParts?.length || 0 };

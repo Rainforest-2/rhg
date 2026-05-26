@@ -78,7 +78,8 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
   const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
-  const x = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
+  const screenOffsetX = finiteNumber(effect.bcuScreenOffsetX, 0) ?? 0;
+  const x = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0) + screenOffsetX * cameraScale;
   const layer = getEffectLayer(effect);
   const baseY = typeof renderer.getBcuLayerScreenY === 'function'
     ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
@@ -113,10 +114,11 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     y,
     baseY,
     yOffset,
+    screenOffsetX,
     layer,
     scale,
     renderFlipX: effect.renderFlipX === true,
-    bcuReference: 'BCU BattleBox.drawEff y = midh - (road_h - layer * DEP) * siz; side-oriented effects are mirrored at the effect anchor'
+    bcuReference: 'BCU BattleBox draws WaprCont at getX(pos)+dx and y-24*siz, then WaprCont.draw offsets A_W by another -275*siz before drawing A_W_C at the WaprCont anchor'
   };
   return drawn;
 }

@@ -7,7 +7,10 @@ import { enqueueBcuSurgeFromPayload } from './BattleSurgeRuntimePatch.js';
 const PATCH_FLAG = Symbol.for('wanko-battle.priority-effect-runtime.v1');
 const ACTOR_PATCH_FLAG = Symbol.for('wanko-battle.priority-effect-actor-runtime.v1');
 const COUNTER_SURGE_FORESWING = 50;
-const BCU_WARP_HOLE_Y_OFFSET = 275;
+const BCU_WARP_BATTLEBOX_Y_OFFSET = 24;
+const BCU_WARP_HOLE_EXTRA_Y_OFFSET = 275;
+const BCU_WARP_UNIT_SCREEN_OFFSET_X = -27;
+const BCU_WARP_ENEMY_SCREEN_OFFSET_X = -24;
 
 function combatModel(actor) {
   return actor?.bcuCombatModel || actor?.rawStats?.bcuCombatModel || actor?.stats?.bcuCombatModel || null;
@@ -113,10 +116,28 @@ function processDelayedEffects(scene) {
   scene.__bcuDelayedWaveBundleEffects = rest;
 }
 
-function warpEffectPlacement(key) {
-  return key === 'warp'
-    ? { bcuSmokeYOffset: BCU_WARP_HOLE_Y_OFFSET, placement: 'hole' }
-    : { bcuSmokeYOffset: 0, placement: 'chara' };
+function effectPhaseLength(scene, key, phase) {
+  const anim = scene?.waveEffectAssets?.[key]?.phases?.[phase] || null;
+  const maxFrame = Number(anim?.maxFrame);
+  return Number.isFinite(maxFrame) ? Math.max(1, Math.trunc(maxFrame) + 1) : 0;
+}
+
+function warpExitDelay(scene, status) {
+  const effectEnterLen = effectPhaseLength(scene, 'warp', 'entrance');
+  const baseFrames = Math.max(1, Math.trunc(Number(status?.durationFrames || status?.timeFrames || 1)));
+  // BCU sets status[P_WARP][0] = procTime + A_W ENTER + A_W EXIT, starts ENTER immediately,
+  // and starts EXIT when kbTime + 1 == A_W EXIT length. Therefore the visual delay from ENTER
+  // creation to EXIT creation is procTime + A_W ENTER + 1.
+  return Math.max(1, baseFrames + effectEnterLen + 1);
+}
+
+function warpEffectPlacement(actor, key) {
+  const dire = directionForActor(actor);
+  return {
+    bcuScreenOffsetX: dire === -1 ? BCU_WARP_UNIT_SCREEN_OFFSET_X : BCU_WARP_ENEMY_SCREEN_OFFSET_X,
+    bcuSmokeYOffset: BCU_WARP_BATTLEBOX_Y_OFFSET + (key === 'warp' ? BCU_WARP_HOLE_EXTRA_Y_OFFSET : 0),
+    placement: key === 'warp' ? 'hole' : 'chara'
+  };
 }
 
 function spawnWarpVisuals(scene, target, result) {
@@ -124,8 +145,9 @@ function spawnWarpVisuals(scene, target, result) {
   const status = applied?.result?.status || target?.bcuProcStatuses?.warp || null;
   if (!applied || !status || status.__bcuWarpVisualQueued) return;
   status.__bcuWarpVisualQueued = true;
+  const exitDelay = warpExitDelay(scene, status);
   for (const key of ['warp', 'warpChara']) {
-    const placement = warpEffectPlacement(key);
+    const placement = warpEffectPlacement(target, key);
     spawnWaveBundleEffect(scene, {
       key,
       phase: 'entrance',
@@ -133,8 +155,9 @@ function spawnWarpVisuals(scene, target, result) {
       type: 'warp',
       source: 'bcu-effanim-warp',
       bcuSmokeYOffset: placement.bcuSmokeYOffset,
-      renderFlipX: shouldMirrorUnitSide(target),
-      debug: { bcuReference: 'WaprCont.draw: A_W is drawn at entity pos with y -= 275*psiz; A_W_C/chara is drawn at entity pos baseline on warp enter', status, placement: placement.placement }
+      bcuScreenOffsetX: placement.bcuScreenOffsetX,
+      renderFlipX: key === 'warpChara' && shouldMirrorUnitSide(target),
+      debug: { bcuReference: 'BattleBox draws WaprCont at getX(pos)+dx and y-24*siz; WaprCont.draw then draws A_W at y-275*psiz and A_W_C at the WaprCont anchor', status, placement: placement.placement, exitDelay }
     });
     queueDelayedEffect(scene, {
       key,
@@ -142,10 +165,11 @@ function spawnWarpVisuals(scene, target, result) {
       actor: target,
       type: 'warp',
       source: 'bcu-effanim-warp',
-      delay: Math.max(1, Math.trunc(Number(status.durationFrames || status.framesRemaining || 1))),
+      delay: exitDelay,
       bcuSmokeYOffset: placement.bcuSmokeYOffset,
-      renderFlipX: shouldMirrorUnitSide(target),
-      debug: { bcuReference: 'Entity.KBManager.updateKB: exit calls kbmove(kbDis) then anim.getEff(P_WARP); WaprCont.draw uses shifted A_W hole and baseline A_W_C chara', status, placement: placement.placement }
+      bcuScreenOffsetX: placement.bcuScreenOffsetX,
+      renderFlipX: key === 'warpChara' && shouldMirrorUnitSide(target),
+      debug: { bcuReference: 'Entity.KBManager.updateKB: when kbTime+1 == A_W EXIT length, kbmove(kbDis), anim.getEff(P_WARP), status[P_WARP][2]=0; BattleBox/WaprCont offsets match ENTER', status, placement: placement.placement, exitDelay }
     });
   }
 }

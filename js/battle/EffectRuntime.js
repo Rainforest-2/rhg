@@ -3,19 +3,20 @@ import { BattleEffect } from './BattleEffect.js';
 const SUPPRESS_NON_BCU_EFFECTS = true;
 
 export class EffectRuntime {
-  static createHitEffect({ id, x, y, asset = null, model = null, animator = null, imgcut = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, renderFlipX = false } = {}) {
-    return this.createEffect({ id, type: 'hit', x, y, frameParts: asset?.parts || [], image: asset?.image || null, imgcut: imgcut || asset?.imgcut || null, model, animator, scale, source, createdAtMs, layer, debug, bcuSmokeYOffset, renderFlipX });
+  static createHitEffect({ id, x, y, asset = null, model = null, animator = null, imgcut = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false } = {}) {
+    return this.createEffect({ id, type: 'hit', x, y, frameParts: asset?.parts || [], image: asset?.image || null, imgcut: imgcut || asset?.imgcut || null, model, animator, scale, source, createdAtMs, layer, debug, bcuSmokeYOffset, bcuScreenOffsetX, renderFlipX });
   }
 
   static createEffect(payload = {}) {
-    const { id, type = 'hit', x = 0, y = 0, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect-runtime', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, renderFlipX = false } = payload;
+    const { id, type = 'hit', x = 0, y = 0, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect-runtime', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false } = payload;
     return new BattleEffect({
       id: id || `fx-${Date.now()}-${Math.random()}`,
       type, x, y, frameParts, image, imgcut, model, animator, scale, source, createdAtMs,
       layer,
       bcuSmokeYOffset,
+      bcuScreenOffsetX,
       renderFlipX,
-      debug: { source, type, worldX: x, worldY: y, hasImage: !!image, frameCount: Array.isArray(frameParts) ? frameParts.length : 0, hasModel: !!model, hasAnimator: !!animator, layer, bcuSmokeYOffset, renderFlipX, ...(debug || {}) }
+      debug: { source, type, worldX: x, worldY: y, hasImage: !!image, frameCount: Array.isArray(frameParts) ? frameParts.length : 0, hasModel: !!model, hasAnimator: !!animator, layer, bcuSmokeYOffset, bcuScreenOffsetX, renderFlipX, ...(debug || {}) }
     });
   }
 
@@ -36,7 +37,7 @@ export class EffectRuntime {
       input: list.length,
       active: active.length,
       suppressed,
-      examples: list.slice(0, 6).map((e) => ({ id: e?.id || null, type: e?.type || null, source: e?.source || e?.effectRuntimeDebug?.source || null, hasImage: !!e?.image, frameCount: e?.frameParts?.length || 0, hasModel: !!e?.model, hasAnimator: !!e?.animator, renderFlipX: e?.renderFlipX === true }))
+      examples: list.slice(0, 6).map((e) => ({ id: e?.id || null, type: e?.type || null, source: e?.source || e?.effectRuntimeDebug?.source || null, hasImage: !!e?.image, frameCount: e?.frameParts?.length || 0, hasModel: !!e?.model, hasAnimator: !!e?.animator, renderFlipX: e?.renderFlipX === true, bcuScreenOffsetX: e?.bcuScreenOffsetX ?? 0 }))
     };
     return { effects: active, removed: Math.max(0, list.length - active.length), active: active.length, suppressed };
   }
@@ -60,7 +61,7 @@ export class EffectRuntime {
       activeCount: list.filter((e) => !e?.finished).length,
       finishedCount,
       byType,
-      examples: list.slice(0, 5).map((e) => ({ id: e?.id || null, type: e?.type || null, worldX: e?.worldX ?? e?.x ?? null, worldY: e?.worldY ?? e?.y ?? null, layer: e?.currentLayer ?? e?.bcuRenderLayer ?? null, source: e?.source || null, hasModel: !!e?.model, animatorFrame: e?.animator?.frame ?? null, renderFlipX: e?.renderFlipX === true })),
+      examples: list.slice(0, 5).map((e) => ({ id: e?.id || null, type: e?.type || null, worldX: e?.worldX ?? e?.x ?? null, worldY: e?.worldY ?? e?.y ?? null, layer: e?.currentLayer ?? e?.bcuRenderLayer ?? null, source: e?.source || null, hasModel: !!e?.model, animatorFrame: e?.animator?.frame ?? null, renderFlipX: e?.renderFlipX === true, bcuScreenOffsetX: e?.bcuScreenOffsetX ?? 0 })),
       unsupportedCatalog: this.getUnsupportedEffectCatalog()
     };
   }

@@ -265,7 +265,7 @@ function resolveAliveTime(volc) {
   return base;
 }
 
-function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
+function buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
   const payload = proc.payload || {};
   const isMini = proc.key === 'miniSurge';
   const volc = extractVolc(payload, isMini);
@@ -297,7 +297,9 @@ function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
     layer: Number.isFinite(attacker?.currentLayer) ? attacker.currentLayer : 0,
     effectKey: effectKeyFor(proc.key, d),
     effectPhasesSpawned: new Set(),
-    damage: Math.max(1, Math.trunc(finalDamage * mult)),
+    damage: Math.max(1, Math.trunc(projectileBaseDamage * mult)),
+    projectileBaseDamage: Math.max(0, Math.trunc(projectileBaseDamage)),
+    projectileDamageScale: mult,
     t: 0,
     aliveTime,
     animType: 'START',
@@ -422,14 +424,14 @@ function process(scene) {
 }
 
 function enqueueFromResult(scene, attacker, target, event, calc, result, meta = {}) {
-  if (!result?.accepted || meta?.bcuSurge || meta?.bcuWave) return;
+  if (!result?.accepted || meta?.bcuSurge || meta?.bcuWave || meta?.bcuBlast) return;
   const items = surgeItems(calc);
   if (!items.length) return;
-  const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage || 0)));
-  if (finalDamage <= 0) return;
+  const projectileBaseDamage = Math.max(0, Math.trunc(Number(calc?.bcuProjectileBaseDamage ?? calc?.rawAttackDamage ?? calc?.rawBaseDamage ?? event?.damage ?? attacker?.damage ?? 0)));
+  if (projectileBaseDamage <= 0) return;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
   const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${target?.instanceId || 'target'}:${hitIndex}`;
-  for (const proc of items) enqueue(scene, buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target));
+  for (const proc of items) enqueue(scene, buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target));
 }
 
 export function enqueueBcuSurgeFromPayload(scene, attacker, {
@@ -443,9 +445,9 @@ export function enqueueBcuSurgeFromPayload(scene, attacker, {
 } = {}) {
   if (!scene || !attacker) return null;
   const kind = key === 'miniSurge' ? 'miniSurge' : 'surge';
-  const finalDamage = Math.max(1, Math.trunc(Number(damage ?? event?.damage ?? attacker?.damage ?? 1) || 1));
+  const projectileBaseDamage = Math.max(1, Math.trunc(Number(damage ?? event?.damage ?? attacker?.damage ?? 1) || 1));
   const proc = { key: kind, payload: kind === 'miniSurge' ? { miniVolcano: payload, ...payload } : { volcano: payload, ...payload } };
-  const surge = buildSurge(attacker, proc, finalDamage, id || `${scene.logicFrame || 0}:${attacker?.instanceId || 'actor'}:explicit-${kind}`, event, hitIndex, target);
+  const surge = buildSurge(attacker, proc, projectileBaseDamage, id || `${scene.logicFrame || 0}:${attacker?.instanceId || 'actor'}:explicit-${kind}`, event, hitIndex, target);
   enqueue(scene, surge);
   return surge;
 }

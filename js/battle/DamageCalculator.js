@@ -89,6 +89,7 @@ export class DamageCalculator {
     const strengthenBase = this.applyBcuStrengthenToBaseDamage(rawBaseDamage, attacker);
     const weakenBase = this.applyBcuWeakenToBaseDamage(strengthenBase.damage, attacker);
     const baseDamage = weakenBase.damage;
+    const bcuProjectileBaseDamage = rawBaseDamage;
     const eventAbilitySemantic = event?.abilities || event?.ability?.semantic || {};
     const modifiers = this.buildDefaultModifiers({ attacker, target, targetType, event });
     if (strengthenBase.applied) {
@@ -117,13 +118,16 @@ export class DamageCalculator {
     return {
       baseDamage,
       rawBaseDamage,
+      rawAttackDamage: rawBaseDamage,
+      bcuProjectileBaseDamage,
+      bcuProjectileStatusAdjustedDamage: baseDamage,
       finalDamage,
       multiplier,
       modifiers,
       targetType,
       hitIndex: event?.hitIndex ?? null,
       attackEventKey: context?.attackEventKey ?? null,
-      source: 'DamageCalculator.v6-bcu-weaken-base-damage',
+      source: 'DamageCalculator.v7-bcu-projectile-raw-attack-basis',
       abilityDebug: {
         eventAbilitySemantic,
         eventRawAbi: event?.rawAbi ?? null,

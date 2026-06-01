@@ -243,8 +243,8 @@ function enqueueFromResult(scene, attacker, target, targetType, event, calc, res
   };
   if (!items.length) return;
   const rawDamage = fallbackDamage(attacker, event);
-  const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage ?? rawDamage)));
-  if (finalDamage <= 0) return;
+  const projectileBaseDamage = Math.max(0, Math.trunc(Number(calc?.bcuProjectileBaseDamage ?? calc?.rawAttackDamage ?? calc?.rawBaseDamage ?? rawDamage)));
+  if (projectileBaseDamage <= 0) return;
   const d = dire(attacker);
   const random = meta.random || scene.getBcuRandom?.() || Math.random;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
@@ -264,7 +264,8 @@ function enqueueFromResult(scene, attacker, target, targetType, event, calc, res
       layer: Number.isFinite(attacker?.currentLayer) ? attacker.currentLayer : 0,
       effectKey: effectKeyFor(d),
       t: 0,
-      damage: finalDamage,
+      damage: projectileBaseDamage,
+      projectileBaseDamage,
       capturedByLevel: [new Set(), new Set(), new Set()],
       source: targetType === 'base'
         ? 'BCU AttackSimple.excuse -> ContBlast from captured base hit'

@@ -137,7 +137,7 @@ function effectKeyFor(kind, direction) {
   return enemy ? 'enemyWave' : 'unitWave';
 }
 
-function buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, target) {
+function buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
   const payload = proc.payload || {};
   const d = dire(attacker);
   const origin = pos(attacker);
@@ -169,7 +169,9 @@ function buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, tar
     attackFrame: isMini ? 4 : 6,
     spawnFrame: isMini ? W_MINI_TIME : W_TIME,
     remainingLevel: Math.max(0, level - 1),
-    damage: Math.max(1, Math.trunc(finalDamage * mult)),
+    damage: Math.max(1, Math.trunc(projectileBaseDamage * mult)),
+    projectileBaseDamage: Math.max(0, Math.trunc(projectileBaseDamage)),
+    projectileDamageScale: mult,
     group,
     incl: group.incl,
     inverted,
@@ -358,14 +360,14 @@ function process(scene) {
 }
 
 function enqueueFromResult(scene, attacker, target, event, calc, result, meta = {}) {
-  if (!result?.accepted || meta?.bcuWave || meta?.bcuSurge) return;
+  if (!result?.accepted || meta?.bcuWave || meta?.bcuSurge || meta?.bcuBlast) return;
   const items = waveItems(calc);
   if (!items.length) return;
-  const finalDamage = Math.max(0, Math.trunc(Number(calc?.finalDamage || 0)));
-  if (finalDamage <= 0) return;
+  const projectileBaseDamage = Math.max(0, Math.trunc(Number(calc?.bcuProjectileBaseDamage ?? calc?.rawAttackDamage ?? calc?.rawBaseDamage ?? event?.damage ?? attacker?.damage ?? 0)));
+  if (projectileBaseDamage <= 0) return;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
   const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${target?.instanceId || 'target'}:${hitIndex}`;
-  for (const proc of items) enqueue(scene, buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, target));
+  for (const proc of items) enqueue(scene, buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target));
 }
 
 export function installBattleWaveRuntimePatch() {

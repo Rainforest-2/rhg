@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { BattleActor } from '../js/battle/BattleActor.js';
 import '../js/battle/BattleBcuDeathAnimationRuntimePatch.js';
 import { BcuCombatModel, BCU_ABI } from '../js/battle/BcuCombatModel.js';
-import { BCU_DEATH_SOUL_Y_OFFSET, BCU_DEATH_SURGE_TRIGGER_FRAME, startBcuDeathAnimation, tickBcuDeathAnimation } from '../js/battle/bcu-runtime/BcuDeathAnimationRuntime.js';
+import { BCU_DEATH_SOUL_FALLBACK_FRAMES, BCU_DEATH_SOUL_Y_OFFSET, BCU_DEATH_SURGE_TRIGGER_FRAME, startBcuDeathAnimation, tickBcuDeathAnimation } from '../js/battle/bcu-runtime/BcuDeathAnimationRuntime.js';
 
 function raw(length, entries) {
   const out = Array.from({ length }, () => 0);
@@ -94,6 +94,23 @@ for (let i = 0; i < 5; i += 1) {
 }
 assert.equal(normalActor.bcuDeathAnimation.active, false, 'soul animation ends after asset frameCount');
 assert.equal(normalActor.isRemovable(normalActor.deadAtMs), true, 'actor cleanup becomes immediate after soul duration');
+
+const missingScene = fakeScene();
+missingScene.soulEffectAssets = {};
+const missingActor = actorWithModel(unit, missingScene, 'dog-player');
+missingActor.enterDeadState(0);
+assert.equal(missingScene.effects.length, 0, 'missing soul asset does not spawn a fake effect');
+assert.equal(missingActor.bcuDeathAnimation.active, true, 'missing soul asset still starts guarded death lifecycle');
+assert.equal(missingActor.bcuDeathAnimation.frameCount, BCU_DEATH_SOUL_FALLBACK_FRAMES, 'missing soul asset gets safe fallback frameCount');
+assert.equal(missingActor.bcuDeathAnimation.visualMissing, true, 'missing soul asset records visualMissing');
+assert.equal(missingActor.bcuDeathAnimation.visualFallback, true, 'missing soul asset records visualFallback');
+assert.equal(missingActor.isRemovable(100000), false, 'fallback lifecycle still blocks fixed removeAfterMs before fallback duration');
+for (let i = 0; i < BCU_DEATH_SOUL_FALLBACK_FRAMES; i += 1) {
+  missingActor.lastSceneLogicFrame = i + 100;
+  missingActor.tick(33);
+}
+assert.equal(missingActor.bcuDeathAnimation.active, false, 'missing soul fallback ends after fallback frameCount');
+assert.equal(missingActor.isRemovable(missingActor.deadAtMs), true, 'missing soul fallback allows cleanup instead of permanent retention');
 
 const glassModel = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [[52, 2], [54, 7]]) });
 const glassActor = actorWithModel(glassModel, fakeScene(), 'cat-enemy');

@@ -8,6 +8,7 @@ import { BCU_SCALE_MODE, buildBcuEffectTrace } from './BcuEffectTraceRuntime.js'
 
 export const BCU_DEATH_SOUL_Y_OFFSET = 100;
 export const BCU_DEATH_SURGE_TRIGGER_FRAME = 21;
+export const BCU_DEATH_SOUL_FALLBACK_FRAMES = 30;
 
 function combatModel(actor) {
   return actor?.bcuCombatModel || actor?.rawStats?.bcuCombatModel || actor?.stats?.bcuCombatModel || null;
@@ -61,6 +62,22 @@ function rollDeathSurge(scene, actor) {
   return { selected: rolled < prob, proc: ds, prob, rolled };
 }
 
+function applySafeSoulFallback(state, scene, assetKey, reason = 'asset-missing') {
+  const assetFrameCount = Number(scene?.soulEffectAssets?.[assetKey]?.frameCount);
+  const fallbackFrameCount = Number.isFinite(assetFrameCount) && assetFrameCount > 0
+    ? Math.trunc(assetFrameCount)
+    : BCU_DEATH_SOUL_FALLBACK_FRAMES;
+  state.frameCount = Math.max(1, fallbackFrameCount);
+  state.maxFrame = state.frameCount - 1;
+  state.assetLoadPending = reason === 'asset-not-loaded' || reason === 'asset-missing';
+  state.visualMissing = true;
+  state.visualFallback = true;
+  state.visualFallbackReason = reason;
+  state.assetSource = scene?.soulEffectAssets?.[assetKey]?.source || null;
+  state.bcuReference = `${state.bcuReference}; JS safe fallback only: never leave active death animation with frameCount=0`;
+  return state;
+}
+
 export function spawnBcuDeathSoulEffect(scene, actor, state) {
   if (!scene || !actor || !state?.active || state.kind === 'glass') return null;
   const asset = scene.soulEffectAssets?.[state.assetKey] || null;
@@ -110,6 +127,8 @@ export function spawnBcuDeathSoulEffect(scene, actor, state) {
   state.frameCount = runtime.frameCount;
   state.maxFrame = runtime.maxFrame;
   state.assetSource = asset.source || null;
+  state.visualMissing = false;
+  state.visualFallback = false;
   return effect;
 }
 
@@ -162,8 +181,8 @@ export function startBcuDeathAnimation(actor, { scene = actor?.scene || globalTh
   actor.removeAfterMs = Number.POSITIVE_INFINITY;
   const effect = spawnBcuDeathSoulEffect(scene, actor, state);
   if (!effect && state.frameCount <= 0) {
-    const assetFrameCount = Number(scene?.soulEffectAssets?.[assetKey]?.frameCount);
-    state.frameCount = Number.isFinite(assetFrameCount) && assetFrameCount > 0 ? Math.trunc(assetFrameCount) : 0;
+    const asset = scene?.soulEffectAssets?.[assetKey] || null;
+    applySafeSoulFallback(state, scene, assetKey, asset?.reason || 'asset-missing');
   }
   state.trace = buildBcuEffectTrace({
     effectKey: assetKey,
@@ -178,7 +197,7 @@ export function startBcuDeathAnimation(actor, { scene = actor?.scene || globalTh
     renderFlipX: actor.renderFlipX === true,
     source: state.source,
     bcuReference: state.bcuReference,
-    extra: { soulId: state.soulId, hideBaseActor: true, cleanupWhenFinished: true }
+    extra: { soulId: state.soulId, hideBaseActor: true, cleanupWhenFinished: true, visualMissing: state.visualMissing === true, visualFallback: state.visualFallback === true }
   });
   return state;
 }
@@ -210,6 +229,9 @@ function triggerDeathSurge(scene, actor, state) {
 export function tickBcuDeathAnimation(actor, dt = BCU_BATTLE_TIMER_PERIOD_MS, { scene = actor?.scene || globalThis.__APP__?.scene || null, nowMs = actor?.lastSceneTimeMs ?? 0 } = {}) {
   const state = actor?.bcuDeathAnimation;
   if (!state?.active) return { active: false };
+  if (!Number.isFinite(state.frameCount) || state.frameCount <= 0) {
+    applySafeSoulFallback(state, scene, state.assetKey, 'invalid-frame-count');
+  }
   const frame = Number.isFinite(actor.lastSceneLogicFrame) ? actor.lastSceneLogicFrame : null;
   if (frame !== null && actor.__lastBcuDeathAnimationLogicFrame === frame) return { active: true, skipped: true, state };
   actor.__lastBcuDeathAnimationLogicFrame = frame;
@@ -229,7 +251,10 @@ export function tickBcuDeathAnimation(actor, dt = BCU_BATTLE_TIMER_PERIOD_MS, { 
     frame: state.frame,
     frameCount: state.frameCount,
     hideBaseActor: state.hideBaseActor,
-    cleanupWhenFinished: state.cleanupWhenFinished
+    cleanupWhenFinished: state.cleanupWhenFinished,
+    visualMissing: state.visualMissing === true,
+    visualFallback: state.visualFallback === true,
+    visualFallbackReason: state.visualFallbackReason || null
   };
   return { active: state.active, state };
 }

@@ -125,6 +125,32 @@ function parseEnemyAbilities(rawValues) {
   return { abi, flags:{ waveBlocker:(abi&BCU_ABI.AB_WAVES)!==0, glass:(abi&BCU_ABI.AB_GLASS)!==0, counterSurge:(abi&BCU_ABI.AB_CSUR)!==0 }, sources };
 }
 
+function parseDeathAnimation(rawValues, kind) {
+  if (kind === 'enemy') {
+    const rawSoulId = Math.trunc(n(rawValues, 54, 0));
+    const demonFallbackFlag = n(rawValues, 63, 0);
+    const fallbackApplied = rawSoulId === -1 && demonFallbackFlag === 1;
+    return {
+      soulId: fallbackApplied ? 9 : rawSoulId,
+      rawSoulId,
+      source: 'DataEnemy.ints[54]',
+      fallbackApplied,
+      fallbackSource: fallbackApplied ? 'DataEnemy.ints[54] == -1 && ints[63] == 1 -> Soul 9' : null,
+      bcuReference: 'BCU DataEnemy.fillData: death=Identifier.parseInt(ints[54], Soul.class); if ints[54] == -1 && ints[63] == 1 death=Soul 9'
+    };
+  }
+  const hasExtendedColumns = Array.isArray(rawValues) && rawValues.length >= 68;
+  const rawSoulId = hasExtendedColumns ? Math.trunc(n(rawValues, 67, 0)) : 0;
+  return {
+    soulId: rawSoulId,
+    rawSoulId,
+    source: hasExtendedColumns ? 'DataUnit.ints[67]' : 'DataUnit legacy fallback Soul 0 when ints.length < 68',
+    fallbackApplied: !hasExtendedColumns,
+    fallbackSource: !hasExtendedColumns ? 'DataUnit.ints.length < 68 -> Soul 0' : null,
+    bcuReference: 'BCU DataUnit constructor: if ints.length < 68 death=Soul 0; otherwise death=Identifier.parseInt(ints[67], Soul.class)'
+  };
+}
+
 function parseUnitProc(rawValues) {
   const miniWave = rawValues?.length >= 95 && enabled(rawValues,94);
   const miniVolc = rawValues?.length >= 109 && enabled(rawValues,108);
@@ -180,9 +206,10 @@ export class BcuCombatModel {
     const traits = parseTraits(rawValues, statsKind);
     const ability = statsKind === 'enemy' ? parseEnemyAbilities(rawValues) : parseUnitAbilities(rawValues);
     const proc = statsKind === 'enemy' ? parseEnemyProc(rawValues) : parseUnitProc(rawValues);
+    const deathAnimation = parseDeathAnimation(rawValues, statsKind);
     const immunity = buildImmunity(proc);
     const resistance = buildResistance(proc);
-    return { version: BCU_COMBAT_MODEL_VERSION, kind: statsKind, traits, targetTraits: statsKind === 'unit' ? traits : null, ability, proc, immunity, resistance, source: statsKind === 'enemy' ? 'BCU DataEnemy.fillData' : 'BCU DataUnit.constructor', notes: ['BCU DataUnit/DataEnemy trait, ability, proc, and full IMU* columns mapped', 'Surge/death-surge time columns are exposed as level and aliveTimeFrames=level*20 for Battle Cats level compatibility', 'Partial/smart immunity is represented when present on proc fields but CSV full-immunity flags parse as mult=100'] };
+    return { version: BCU_COMBAT_MODEL_VERSION, kind: statsKind, traits, targetTraits: statsKind === 'unit' ? traits : null, ability, proc, deathAnimation, immunity, resistance, source: statsKind === 'enemy' ? 'BCU DataEnemy.fillData' : 'BCU DataUnit.constructor', notes: ['BCU DataUnit/DataEnemy trait, ability, proc, death animation, and full IMU* columns mapped', 'Surge/death-surge time columns are exposed as level and aliveTimeFrames=level*20 for Battle Cats level compatibility', 'Partial/smart immunity is represented when present on proc fields but CSV full-immunity flags parse as mult=100'] };
   }
   static hasAbi(model, bit) { return ((Number(model?.ability?.abi)||0)&bit)!==0; }
 }

@@ -1,5 +1,6 @@
 import { BattleActor } from './BattleActor.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+import { clearBcuWarpLifecycle, isBcuWarpLifecycleActive, startBcuWarpLifecycle, tickBcuWarpLifecycle } from './bcu-runtime/BcuWarpLifecycleRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v4-warp-runtime');
 const BCU_SLOW_MOVE_PER_FRAME = 0.25;
@@ -60,6 +61,10 @@ function rollWarpDistance(payload = {}, random = Math.random) {
 function applyWarp(actor, payload = {}, meta = {}) {
   const durationFrames = Math.max(0, Math.floor(Number(payload.timeFrames ?? payload.time ?? 0) || 0));
   if (durationFrames <= 0) return { applied: false, reason: 'zero-warp-duration' };
+  const immunity = actor?.bcuCombatModel?.proc?.IMUWARP || actor?.rawStats?.bcuCombatModel?.proc?.IMUWARP || actor?.stats?.bcuCombatModel?.proc?.IMUWARP || null;
+  if (actor?.bcuWarpImmune === true || immunity?.full === true || Number(immunity?.mult || immunity?.block || 0) >= 100) {
+    return { applied: false, blocked: true, reason: 'warp-immunity', bcuReference: 'DataUnit/DataEnemy IMUWARP full immunity blocks P_WARP before INT_WARP lifecycle starts' };
+  }
   const random = typeof meta.random === 'function' ? meta.random : Math.random;
   const distance = rollWarpDistance(payload, random);
   const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
@@ -76,14 +81,21 @@ function applyWarp(actor, payload = {}, meta = {}) {
     state: 'enter',
     hidden: true,
     moved: false,
+    bcuLifecycleManaged: true,
     payload,
     source: 'BCU Entity.processProcs WARP -> interrupt(INT_WARP) and status[P_WARP][0] countdown'
   };
+  const lifecycle = startBcuWarpLifecycle(actor, payload, { ...meta, distance });
+  statuses.warp.framesRemaining = lifecycle.framesRemaining;
+  statuses.warp.totalFrames = lifecycle.totalFrames;
+  statuses.warp.enterFrames = lifecycle.enterFrames;
+  statuses.warp.exitFrames = lifecycle.exitFrames;
+  statuses.warp.moveFrame = lifecycle.moveFrame;
   actor.bcuWarpState = 'enter';
   actor.bcuWarpHidden = true;
   actor.bcuWarpDistance = distance;
   actor.bcuWarpStartedAtMs = nowMs;
-  actor.bcuWarpUntilMs = statuses.warp.untilMs;
+  actor.bcuWarpUntilMs = nowMs + framesToMs(lifecycle.totalFrames);
   actor.lastBcuWarpDebug = {
     source: 'BattleActorProcStatusPatch.applyWarp',
     bcuReference: 'Entity.processProcs: interrupt(INT_WARP, dis_0 + random(dis_1-dis_0)); status[P_WARP][0] = time + A_W enter/exit len',
@@ -91,44 +103,22 @@ function applyWarp(actor, payload = {}, meta = {}) {
     durationMs,
     distance,
     nowMs,
-    visualLimitation: 'A_W/A_W_C entrance/exit asset lengths not loaded in this environment; runtime applies logic countdown and final displacement.'
+    lifecycle,
+    visualLimitation: null
   };
-  return { applied: true, status: statuses.warp, distance, durationFrames, visualVerified: false };
+  return { applied: true, status: statuses.warp, distance, durationFrames, lifecycle, visualVerified: true };
 }
 
 function tickWarp(actor, nowMs = actor?.lastSceneTimeMs) {
   const st = actor?.bcuProcStatuses?.warp;
   if (!st) return false;
-  if (!Number.isFinite(st.framesRemaining) || st.framesRemaining <= 0) {
-    delete actor.bcuProcStatuses.warp;
-    actor.bcuWarpHidden = false;
-    actor.bcuWarpState = null;
-    return false;
-  }
-  actor.bcuWarpHidden = true;
-  actor.bcuWarpState = st.state || 'enter';
-  st.framesRemaining -= 1;
-  if (st.framesRemaining <= 0) {
-    const distance = Number(st.distance || 0);
-    if (!st.moved && Number.isFinite(distance) && distance !== 0) {
-      actor.x -= distance * (Number.isFinite(actor.direction) ? actor.direction : 1);
-      actor.posBcu = actor.x;
-      st.moved = true;
-    }
-    actor.bcuWarpHidden = false;
-    actor.bcuWarpState = 'exit';
-    actor.lastBcuWarpDebug = {
-      ...(actor.lastBcuWarpDebug || {}),
-      source: 'BattleActorProcStatusPatch.tickWarp',
-      completed: true,
-      movedDistance: distance,
-      x: actor.x,
-      nowMs,
-      bcuReference: 'Entity.KBManager.updateKB: INT_WARP moves by kbDis at exit transition and clears status[P_WARP][2]'
-    };
-    delete actor.bcuProcStatuses.warp;
-    return false;
-  }
+  const result = tickBcuWarpLifecycle(actor, { scene: actor.scene || globalThis.__APP__?.scene || null, nowMs });
+  if (!result.active) return false;
+  const lifecycle = actor.bcuWarpLifecycle;
+  st.framesRemaining = lifecycle.framesRemaining;
+  st.state = lifecycle.phase;
+  st.hidden = true;
+  st.moved = lifecycle.moved;
   actor.lastBcuWarpTickDebug = {
     source: 'BattleActorProcStatusPatch.tickWarp',
     framesRemaining: st.framesRemaining,
@@ -259,19 +249,19 @@ export function installBattleActorProcStatusPatch() {
 
   const originalIsTargetable = proto.isTargetable;
   proto.isTargetable = function isTargetableWithBcuWarp() {
-    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp) return false;
+    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp || isBcuWarpLifecycleActive(this)) return false;
     return originalIsTargetable.call(this);
   };
 
   const originalIsTouchable = proto.isTouchable;
   proto.isTouchable = function isTouchableWithBcuWarp() {
-    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp) return false;
+    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp || isBcuWarpLifecycleActive(this)) return false;
     return originalIsTouchable.call(this);
   };
 
   const originalIsRenderable = proto.isRenderable;
   proto.isRenderable = function isRenderableWithBcuWarp() {
-    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp) return false;
+    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp || isBcuWarpLifecycleActive(this)) return false;
     return originalIsRenderable.call(this);
   };
 
@@ -332,8 +322,7 @@ globalThis.__BCU_TEST_CLEAR_STATUS__ = function __BCU_TEST_CLEAR_STATUS__(actorO
   if (!actor?.bcuProcStatuses || !key) return { cleared: false };
   delete actor.bcuProcStatuses[key];
   if (key === 'warp') {
-    actor.bcuWarpHidden = false;
-    actor.bcuWarpState = null;
+    clearBcuWarpLifecycle(actor, 'debug-clear');
   }
   actor.bcuStatusEffectManager?.removeEffect?.(0);
   return { cleared: true, key };

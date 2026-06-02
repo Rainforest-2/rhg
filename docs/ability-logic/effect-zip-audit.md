@@ -10,6 +10,7 @@ This file records only entries proven by `unzip -l` against the current checkout
 unzip -l public/assets/bundles/effect/status-effects.zip
 unzip -l public/assets/bundles/effect/wave.zip
 unzip -l public/assets/bundles/effect/kbeff.zip
+unzip -l public/assets/bundles/effect/soul.zip
 ```
 
 ## `effect/status-effects.zip`
@@ -89,3 +90,14 @@ Stable hit/knockback entries proven present:
 | raw copies | `raw/000_a.imgcut`, `raw/000_a.png`, `raw/kb.mamodel`, `raw/kb_hb.maanim`, `raw/kb_sw.maanim`, `raw/kb_ass.maanim`, `raw/critical.mamodel`, `raw/critical.maanim`, `raw/boss_welcome.mamodel`, `raw/boss_welcome.maanim` | copied raw paths inside kbeff bundle |
 
 No status, wave, surge, blast, barrier, demon shield, warp, wave invalid, wave stop, wave guard, counter, summon, poison, curse, seal, metal killer, or attack-nullify entries are present here beyond kbeff/critical/hit assets.
+
+## `effect/soul.zip`
+
+Stable death animation entries proven present after running `node scripts/build-bcu-soul-effect-bundle.mjs`:
+
+| Topic | ZIP entries | Runtime alias status |
+|---|---|---|
+| normal death souls | `soul-000/image.png`, `soul-000/imgcut.imgcut`, `soul-000/model.mamodel`, `soul-000/anim.maanim`; same structure for `soul-001` through `soul-012` | stable runtime aliases used by `BcuSoulEffectLoader` from `BcuCombatModel.deathAnimation.soulId` |
+| demon/death-surge soul | `demon-soul-enemy/image.png`, `demon-soul-enemy/imgcut.imgcut`, `demon-soul-enemy/model.mamodel`, `demon-soul-enemy/anim.maanim`; `demon-soul-unit/image.png`, `demon-soul-unit/imgcut.imgcut`, `demon-soul-unit/model.mamodel`, `demon-soul-unit/anim.maanim` | stable runtime aliases for BCU `DemonSoul`; used by death-surge soul branch |
+
+The runtime uses `effect:soul` through the semantic provider only. Loose `public/assets/bcu/**/org/battle/soul/*` files remain build-time inputs for `scripts/build-bcu-soul-effect-bundle.mjs`.

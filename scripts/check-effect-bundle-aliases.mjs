@@ -12,6 +12,7 @@ function zipEntries(path) {
 const waveEntries = zipEntries('public/assets/bundles/effect/wave.zip');
 const statusEntries = zipEntries('public/assets/bundles/effect/status-effects.zip');
 const kbEntries = zipEntries('public/assets/bundles/effect/kbeff.zip');
+const soulEntries = zipEntries('public/assets/bundles/effect/soul.zip');
 const loader = new BattleWaveEffectLoader();
 
 for (const def of Object.values(loader.entries)) {
@@ -22,6 +23,19 @@ for (const def of Object.values(loader.entries)) {
   if (def.anim) assert.equal(waveEntries.has(`${base}/anim.maanim`), true, `effect:wave contains ${base}/anim.maanim`);
   for (const phase of Object.keys(def.phases || {})) {
     assert.equal(waveEntries.has(`${base}/anim-${phase}.maanim`), true, `effect:wave contains ${base}/anim-${phase}.maanim`);
+  }
+}
+
+for (const dir of ['warp', 'warp-chara']) {
+  assert.equal(waveEntries.has(`${dir}/image.png`), true, `effect:wave contains ${dir}/image.png`);
+  assert.equal(waveEntries.has(`${dir}/model.mamodel`), true, `effect:wave contains ${dir}/model.mamodel`);
+  assert.equal(waveEntries.has(`${dir}/anim-entrance.maanim`), true, `effect:wave contains ${dir}/anim-entrance.maanim`);
+  assert.equal(waveEntries.has(`${dir}/anim-exit.maanim`), true, `effect:wave contains ${dir}/anim-exit.maanim`);
+}
+
+for (const dir of ['soul-000', 'soul-003', 'soul-009', 'demon-soul-enemy', 'demon-soul-unit']) {
+  for (const file of ['image.png', 'imgcut.imgcut', 'model.mamodel', 'anim.maanim']) {
+    assert.equal(soulEntries.has(`${dir}/${file}`), true, `effect:soul contains ${dir}/${file}`);
   }
 }
 

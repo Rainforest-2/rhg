@@ -17,6 +17,7 @@ const unit = BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, [
   [33, 1], [105, 1], [106, 20], [107, 45],
   [112, 12], [75, 160], [76, 200],
   [84, 25], [85, 70],
+  [67, 3],
   [46, 1], [91, 1], [116, 1],
   [111, 1]
 ]) });
@@ -49,6 +50,7 @@ assert.equal((unit.ability.abi & BCU_ABI.AB_SKILL) !== 0, true, 'unit AB_SKILL i
 assert.equal(unit.proc.IMUWAVE.full, true, 'unit IMUWAVE index 46');
 assert.equal(unit.proc.IMUVOLC.full, true, 'unit IMUVOLC index 91');
 assert.equal(unit.proc.IMUBLAST.full, true, 'unit IMUBLAST index 116');
+assert.equal(unit.deathAnimation.soulId, 3, 'unit death animation index 67');
 
 const enemy = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [
   [27, 90], [28, 5], [86, 1],
@@ -56,6 +58,7 @@ const enemy = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [
   [89, 100], [90, 40], [91, 120], [92, 3],
   [106, 65], [107, 20], [108, 40],
   [64, 2666], [87, 3000], [88, 50],
+  [54, 7],
   [65, 44], [66, 22], [67, 160], [68, 240],
   [79, 100], [80, 35],
   [77, 30], [78, 90],
@@ -84,5 +87,9 @@ assert.equal(enemy.proc.attackNullify.prob, 30, 'enemy attack-nullify prob index
 assert.equal(enemy.proc.burrow.dis, 100, 'enemy burrow distance index 44 is /4');
 assert.equal(enemy.proc.delay.prob, 45, 'enemy delay prob index 111');
 assert.equal(enemy.proc.delay.strength, 8, 'enemy delay strength index 112');
+assert.equal(enemy.deathAnimation.soulId, 7, 'enemy death animation index 54');
+
+const enemySoulFallback = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [[54, -1], [63, 1]]) });
+assert.equal(enemySoulFallback.deathAnimation.soulId, 9, 'enemy death animation fallback -1 and index 63 == 1 maps to Soul 9');
 
 console.log('check-bcu-parser-indexes: OK');

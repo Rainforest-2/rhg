@@ -5,6 +5,8 @@ import { getBlastVisualOffset, spawnBlastEffect } from '../js/battle/BattleBlast
 import { spawnWaveBundleEffect } from '../js/battle/BcuWaveBundleEffectSpawner.js';
 import { resolveBcuEffectScale } from '../js/battle/BattleSceneRendererEffectGlowPatch.js';
 import { BCU_SCALE_MODE } from '../js/battle/bcu-runtime/BcuEffectTraceRuntime.js';
+import { startBcuDeathAnimation } from '../js/battle/bcu-runtime/BcuDeathAnimationRuntime.js';
+import { startBcuWarpLifecycle } from '../js/battle/bcu-runtime/BcuWarpLifecycleRuntime.js';
 
 function fakeAsset(kind, phases = null) {
   const anim = { tracks: [], maxFrame: 2 };
@@ -48,6 +50,11 @@ function fakeScene() {
       enemyWaveStop: fakeAsset('waveStop'),
       unitCounterSurge: fakeAsset('counterSurge'),
       enemyCounterSurge: fakeAsset('counterSurge')
+    },
+    soulEffectAssets: {
+      'soul-003': fakeAsset('deathSoul'),
+      demonSoulEnemy: fakeAsset('demonSoul'),
+      demonSoulUnit: fakeAsset('demonSoul')
     },
     pushEvent(event) { events.push(event); },
     ensureWaveEffectLoading() {},
@@ -145,5 +152,24 @@ for (const fixture of [
   });
   assertSpawnTrace(effect, { effectKey: key, phase, mode, sourceIncludes: /bcu-effanim/ });
 }
+
+unit.rawStats = { bcuCombatModel: { deathAnimation: { soulId: 3, rawSoulId: 3, source: 'DataUnit.ints[67]', bcuReference: 'DataUnit.ints[67]' }, ability: { abi: 0, flags: {} }, proc: {} } };
+unit.hp = 0;
+unit.state = 'dead';
+const deathState = startBcuDeathAnimation(unit, { scene, nowMs: 0 });
+assert.equal(deathState.hideBaseActor, true, 'death soul hides base actor');
+assert.equal(deathState.trace.effectKey, 'soul-003', 'death soul trace uses parsed soul effect key');
+assert.equal(deathState.trace.bcuSmokeYOffset, 100, 'death soul trace keeps BCU p.y - 100*siz offset');
+assertSpawnTrace(scene.effects.at(-1), { effectKey: 'soul-003', phase: 'normal', mode: BCU_SCALE_MODE.ENTITY_STATUS, sourceIncludes: /death-soul/ });
+
+const warpActor = actor({ side: 'dog-player', x: 300, direction: -1, layer: 2, label: 'warpActor' });
+const warpLifecycle = startBcuWarpLifecycle(warpActor, { timeFrames: 3, time: 3, dis0: 120, dis1: 120 }, { scene, distance: 120 });
+assert.equal(warpLifecycle.hideBaseActor, true, 'warp lifecycle hides base actor');
+assert.equal(warpLifecycle.trace.effectKey, 'warp', 'warp lifecycle trace includes hole effect key');
+assert.equal(warpLifecycle.trace.charaEffectKey, 'warpChara', 'warp lifecycle trace includes chara effect key');
+const warpEntranceHole = scene.effects.find((effect) => traceOf(effect).effectKey === 'warp' && traceOf(effect).phase === 'entrance' && traceOf(effect).source === 'bcu-effanim-warp-lifecycle');
+const warpEntranceChara = scene.effects.find((effect) => traceOf(effect).effectKey === 'warpChara' && traceOf(effect).phase === 'entrance' && traceOf(effect).source === 'bcu-effanim-warp-lifecycle');
+assertSpawnTrace(warpEntranceHole, { effectKey: 'warp', phase: 'entrance', mode: BCU_SCALE_MODE.WARP_HOLE, sourceIncludes: /warp-lifecycle/ });
+assertSpawnTrace(warpEntranceChara, { effectKey: 'warpChara', phase: 'entrance', mode: BCU_SCALE_MODE.WARP_HOLE, sourceIncludes: /warp-lifecycle/ });
 
 console.log('check-effect-coordinate-traces: OK');

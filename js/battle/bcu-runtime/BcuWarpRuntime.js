@@ -2,11 +2,21 @@ import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 
 function currentWarpState(target) {
   const st = target?.bcuProcStatuses?.warp || null;
+  const lifecycle = target?.bcuWarpLifecycle || null;
   return {
-    state: st?.state ?? target?.bcuWarpState ?? null,
-    hidden: target?.bcuWarpHidden === true || !!st?.hidden,
-    framesRemaining: Number.isFinite(st?.framesRemaining) ? st.framesRemaining : null,
-    distance: Number.isFinite(st?.distance) ? st.distance : (Number.isFinite(target?.bcuWarpDistance) ? target.bcuWarpDistance : null)
+    state: lifecycle?.phase ?? st?.state ?? target?.bcuWarpState ?? null,
+    hidden: target?.bcuWarpHidden === true || !!st?.hidden || lifecycle?.hideBaseActor === true,
+    framesRemaining: Number.isFinite(lifecycle?.framesRemaining) ? lifecycle.framesRemaining : (Number.isFinite(st?.framesRemaining) ? st.framesRemaining : null),
+    distance: Number.isFinite(lifecycle?.distance) ? lifecycle.distance : (Number.isFinite(st?.distance) ? st.distance : (Number.isFinite(target?.bcuWarpDistance) ? target.bcuWarpDistance : null)),
+    lifecycle: lifecycle ? {
+      phase: lifecycle.phase,
+      frame: lifecycle.frame,
+      totalFrames: lifecycle.totalFrames,
+      procFrames: lifecycle.procFrames,
+      enterFrames: lifecycle.enterFrames,
+      exitFrames: lifecycle.exitFrames,
+      moved: lifecycle.moved
+    } : null
   };
 }
 

@@ -143,6 +143,7 @@ function warpEffectPlacement(actor, key) {
 function spawnWarpVisuals(scene, target, result) {
   const applied = (result?.procApply || []).find((p) => p?.key === 'warp' && (p?.applied === true || p?.result?.applied === true));
   const status = applied?.result?.status || target?.bcuProcStatuses?.warp || null;
+  if (status?.bcuLifecycleManaged === true || target?.bcuWarpLifecycle?.active === true) return;
   if (!applied || !status || status.__bcuWarpVisualQueued) return;
   status.__bcuWarpVisualQueued = true;
   const exitDelay = warpExitDelay(scene, status);
@@ -230,6 +231,7 @@ function processCounterSurgeQueue(scene) {
 
 function maybeDeathSurge(scene, actor) {
   if (!actor || actor.__bcuDeathSurgeDone) return;
+  if (actor.__bcuDeathSurgeManagedByDeathRuntime === true || actor.bcuDeathAnimation?.active === true) return;
   if (!(actor.hp <= 0 || actor.deathPending || actor.state === 'dead' || actor.state === 'dying')) return;
   const ds = procModel(actor)?.deathSurge || null;
   const prob = Number(ds?.prob || 0);

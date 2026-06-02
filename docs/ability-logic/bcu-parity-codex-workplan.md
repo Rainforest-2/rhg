@@ -431,6 +431,15 @@ To be decided after BCU source extraction. Do not guess.
 
 - No lifecycle system is marked code-complete until field, runtime owner, visual owner, and tests are all proven.
 
+### Current lifecycle addendum: death soul and warp
+
+This pass implements two lifecycle rows because the task explicitly scoped them and local BCU references identify exact owners:
+
+- Death soul animation: BCU refs `DataUnit.ints[67]`, `DataEnemy.ints[54]`, enemy fallback `ints[54] == -1 && ints[63] == 1 -> Soul 9`, `Entity.AnimManager.kill/draw/update`, `PackData.loadSoul`, `Soul`, and `DemonSoul`. Runtime: `BcuCombatModel.deathAnimation`, `BcuDeathAnimationRuntime`, `BattleBcuDeathAnimationRuntimePatch`, `BcuSoulEffectLoader`, and `effect:soul`. Evidence: `node scripts/check-bcu-death-animation-parity.mjs`, `node scripts/check-effect-bundle-aliases.mjs`, and `node scripts/check-effect-coordinate-traces.mjs`.
+- Warp lifecycle: BCU refs `INT_WARP`, `Entity.AnimManager.kbAnim`, `Entity.KBManager.updateKB`, `WaprCont`, `A_W`, `A_W_C`, and Android `BattleBox` WaprCont offsets. Runtime: `BcuWarpLifecycleRuntime` and `BattleActorProcStatusPatch` lifecycle delegation. Evidence: `node scripts/check-bcu-warp-lifecycle-parity.mjs`, `node scripts/check-effect-bundle-aliases.mjs`, and `node scripts/check-effect-coordinate-traces.mjs`.
+
+Both rows remain `human-visual-review-needed` after deterministic checks pass. Death surge is only partial beyond the BCU 21-frame soul trigger because full damage/capture ordering and mini-death-surge split are not fully audited.
+
 ## W10 — remove or gate redundant debug allocation without changing logic
 
 ### Current risk

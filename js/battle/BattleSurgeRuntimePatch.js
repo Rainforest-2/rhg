@@ -5,6 +5,7 @@ import { EffectRuntime } from './EffectRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
+import { BCU_SCALE_MODE, appendBoundedDebugTrace } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.surge-runtime-patch.v4.bcu-point-capture');
 const W_VOLC_INNER = 250;
@@ -106,7 +107,7 @@ function cloneEvent(event = {}, damage, kind, attacker = null) {
 function trace(scene, entry) {
   const payload = { sceneFrame: scene?.logicFrame ?? null, ...entry };
   BcuTraceRuntime.push('surge', payload);
-  globalThis.__BCU_SURGE_TRACE__ = [...(globalThis.__BCU_SURGE_TRACE__ || []), payload].slice(-240);
+  appendBoundedDebugTrace('__BCU_SURGE_TRACE__', payload, 240);
   scene?.pushEvent?.({ type: 'bcuSurgeTrace', ...payload });
 }
 
@@ -127,7 +128,7 @@ function createSurgeEffectRuntime(asset, phase = 'start') {
   return { model, animator, frameCount: Math.max(1, maxFrame + 1), maxFrame, phase, source: asset.source || null };
 }
 
-function spawnSurgeEffect(scene, item, phase = 'start') {
+export function spawnSurgeEffect(scene, item, phase = 'start') {
   if (!scene || !item) return null;
   if (!item.effectPhasesSpawned) item.effectPhasesSpawned = new Set();
   if (item.effectPhasesSpawned.has(phase)) return null;
@@ -175,6 +176,7 @@ function spawnSurgeEffect(scene, item, phase = 'start') {
     createdAtMs: scene.timeMs,
     layer: item.layer,
     bcuSmokeYOffset: 0,
+    bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE,
     debug: {
       source: BCU_SURGE_EFFECT_SOURCE,
       bcuReference: 'BCU ContVolcano draws VolcEff START/DURING/END via A_VOLC/A_E_VOLC/A_MINIVOLC/A_E_MINIVOLC',
@@ -182,7 +184,9 @@ function spawnSurgeEffect(scene, item, phase = 'start') {
       kind: item.kind,
       effectKey: item.effectKey,
       phase,
+      bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE,
       pos: item.pos,
+      worldX: item.pos,
       startX: item.startX,
       endX: item.endX,
       direction: item.direction,
@@ -206,7 +210,9 @@ function spawnSurgeEffect(scene, item, phase = 'start') {
     effectKey: item.effectKey,
     phase,
     pos: item.pos,
+    worldX: item.pos,
     layer: item.layer,
+    bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE,
     frameCount: runtime.frameCount,
     t: item.t
   });
@@ -265,7 +271,7 @@ function resolveAliveTime(volc) {
   return base;
 }
 
-function buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
+export function buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
   const payload = proc.payload || {};
   const isMini = proc.key === 'miniSurge';
   const volc = extractVolc(payload, isMini);
@@ -347,7 +353,7 @@ function updateProc(scene, item) {
   return filter;
 }
 
-function attackTick(scene, item) {
+export function attackTick(scene, item) {
   const targets = targetsInRange(scene, item.attacker, item.startX, item.endX, item.vcapt);
   item.volcTime -= 1;
   const clearedBeforeProcess = item.volcTime === 0;

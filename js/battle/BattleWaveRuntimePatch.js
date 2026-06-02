@@ -8,6 +8,7 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleWaveEffectLoader } from './BattleWaveEffectLoader.js';
 import { directionForActor, spawnWaveBundleEffect } from './BcuWaveBundleEffectSpawner.js';
+import { BCU_SCALE_MODE, appendBoundedDebugTrace } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v5-explicit-proc-resolve');
 const W_PROG = 200;
@@ -102,7 +103,7 @@ function makeGroup() {
 function trace(scene, entry) {
   const payload = { sceneFrame: scene?.logicFrame ?? null, ...entry };
   BcuTraceRuntime.push('wave', payload);
-  globalThis.__BCU_WAVE_TRACE__ = [...(globalThis.__BCU_WAVE_TRACE__ || []), payload].slice(-200);
+  appendBoundedDebugTrace('__BCU_WAVE_TRACE__', payload, 200);
   scene?.pushEvent?.({ type: 'bcuWaveTrace', ...payload });
 }
 
@@ -137,7 +138,7 @@ function effectKeyFor(kind, direction) {
   return enemy ? 'enemyWave' : 'unitWave';
 }
 
-function buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
+export function buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
   const payload = proc.payload || {};
   const d = dire(attacker);
   const origin = pos(attacker);
@@ -240,7 +241,7 @@ function createWaveEffectRuntime(asset) {
   return { model, animator, frameCount: asset.frameCount || Math.max(1, (Number(asset.anim?.maxFrame) || 0) + 1), maxFrame: asset.maxFrame || Number(asset.anim?.maxFrame) || 0 };
 }
 
-function spawnWaveEffect(scene, item) {
+export function spawnWaveEffect(scene, item) {
   if (!scene || !item || item.effectSpawned) return null;
   item.effectSpawned = true;
   const assets = scene.waveEffectAssets || null;
@@ -277,13 +278,17 @@ function spawnWaveEffect(scene, item) {
     createdAtMs: scene.timeMs,
     layer: item.layer,
     bcuSmokeYOffset: 0,
+    bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE,
     debug: {
       source: BCU_WAVE_EFFECT_SOURCE,
       bcuReference: 'BCU ContWaveDef.draw uses A_WAVE/A_E_WAVE/A_MINIWAVE/A_E_MINIWAVE once t >= 0',
       id: item.id,
       kind: item.kind,
       effectKey: item.effectKey,
+      phase: item.kind,
+      bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE,
       pos: item.pos,
+      worldX: item.pos,
       width: item.width,
       direction: item.direction,
       t: item.t,
@@ -297,11 +302,11 @@ function spawnWaveEffect(scene, item) {
   effect.frameDurationMs = BCU_BATTLE_TIMER_PERIOD_MS;
   effect.elapsedMs = -BCU_BATTLE_TIMER_PERIOD_MS;
   scene.effects.push(effect);
-  trace(scene, { source: 'BattleWaveRuntimePatch.spawnWaveEffect', event: 'effect-spawned', id: item.id, effectId: effect.id, kind: item.kind, effectKey: item.effectKey, pos: item.pos, layer: item.layer, frameCount: runtime.frameCount, t: item.t });
+  trace(scene, { source: 'BattleWaveRuntimePatch.spawnWaveEffect', event: 'effect-spawned', id: item.id, effectId: effect.id, kind: item.kind, effectKey: item.effectKey, phase: item.kind, pos: item.pos, worldX: item.pos, layer: item.layer, bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE, frameCount: runtime.frameCount, t: item.t });
   return effect;
 }
 
-function attackAtFrame(scene, item) {
+export function attackAtFrame(scene, item) {
   const event = cloneEvent(item.event, item.damage, item.kind);
   const startX = item.pos - item.width / 2;
   const endX = item.pos + item.width / 2;

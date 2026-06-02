@@ -1,3 +1,5 @@
+import { BCU_SCALE_MODE } from './BcuEffectTraceRuntime.js';
+
 export function getActorBattleDrawList(actor) {
   if (!actor?.model) return null;
   if (typeof actor.model.getBattleDrawList === 'function') {
@@ -55,6 +57,9 @@ export function getBcuStatusEffectPosition({ renderer, scene, actor, iconIndex =
     drawList,
     bounds,
     bcuOffsetY,
+    bcuScaleMode: BCU_SCALE_MODE.ENTITY_STATUS,
+    effectScale: 0.75,
+    finalScale: scale,
     renderScale: siz,
     bcuReference: 'Entity.AnimManager.drawEff: eae.draw(P(x,p.y+offset), siz*0.75); x -= EWID*dire*siz'
   };

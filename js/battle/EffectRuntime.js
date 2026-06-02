@@ -1,14 +1,37 @@
 import { BattleEffect } from './BattleEffect.js';
+import { BCU_SCALE_MODE, buildBcuEffectTrace, isBcuHeavyEffectDebugEnabled, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const SUPPRESS_NON_BCU_EFFECTS = true;
 
 export class EffectRuntime {
-  static createHitEffect({ id, x, y, asset = null, model = null, animator = null, imgcut = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false } = {}) {
-    return this.createEffect({ id, type: 'hit', x, y, frameParts: asset?.parts || [], image: asset?.image || null, imgcut: imgcut || asset?.imgcut || null, model, animator, scale, source, createdAtMs, layer, debug, bcuSmokeYOffset, bcuScreenOffsetX, renderFlipX });
+  static createHitEffect({ id, x, y, asset = null, model = null, animator = null, imgcut = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false, bcuScaleMode = BCU_SCALE_MODE.HIT_SMOKE } = {}) {
+    return this.createEffect({ id, type: 'hit', x, y, frameParts: asset?.parts || [], image: asset?.image || null, imgcut: imgcut || asset?.imgcut || null, model, animator, scale, source, createdAtMs, layer, debug, bcuSmokeYOffset, bcuScreenOffsetX, renderFlipX, bcuScaleMode });
   }
 
   static createEffect(payload = {}) {
-    const { id, type = 'hit', x = 0, y = 0, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect-runtime', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false } = payload;
+    const { id, type = 'hit', x = 0, y = 0, frameParts = [], image = null, imgcut = null, model = null, animator = null, scale = 1, source = 'effect-runtime', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false, bcuScaleMode = debug?.bcuScaleMode || debug?.scaleMode || BCU_SCALE_MODE.LEGACY } = payload;
+    const mode = normalizeBcuScaleMode(bcuScaleMode);
+    const trace = buildBcuEffectTrace({
+      effectKey: debug?.effectKey ?? debug?.key ?? null,
+      phase: debug?.phase ?? null,
+      worldX: x,
+      worldY: y,
+      screenOffsetX: bcuScreenOffsetX,
+      bcuSmokeYOffset,
+      layer,
+      bcuScaleMode: mode,
+      effectScale: scale,
+      renderFlipX,
+      source,
+      bcuReference: debug?.bcuReference ?? null,
+      extra: {
+        type,
+        hasImage: !!image,
+        frameCount: Array.isArray(frameParts) ? frameParts.length : 0,
+        hasModel: !!model,
+        hasAnimator: !!animator
+      }
+    });
     return new BattleEffect({
       id: id || `fx-${Date.now()}-${Math.random()}`,
       type, x, y, frameParts, image, imgcut, model, animator, scale, source, createdAtMs,
@@ -16,7 +39,8 @@ export class EffectRuntime {
       bcuSmokeYOffset,
       bcuScreenOffsetX,
       renderFlipX,
-      debug: { source, type, worldX: x, worldY: y, hasImage: !!image, frameCount: Array.isArray(frameParts) ? frameParts.length : 0, hasModel: !!model, hasAnimator: !!animator, layer, bcuSmokeYOffset, bcuScreenOffsetX, renderFlipX, ...(debug || {}) }
+      bcuScaleMode: mode,
+      debug: { ...trace, ...(debug || {}), bcuScaleMode: mode, scaleMode: mode, screenOffsetX: bcuScreenOffsetX }
     });
   }
 
@@ -31,14 +55,17 @@ export class EffectRuntime {
     const list = Array.isArray(effects) ? effects : [];
     const active = list.filter((e) => !e?.finished && (!SUPPRESS_NON_BCU_EFFECTS || this.isBcuEffect(e)));
     const suppressed = SUPPRESS_NON_BCU_EFFECTS ? list.filter((e) => !this.isBcuEffect(e)).length : 0;
-    globalThis.__BATTLE_EFFECT_DEBUG__ = {
+    const debug = {
       source: 'EffectRuntime.cleanupEffects',
       policy: SUPPRESS_NON_BCU_EFFECTS ? 'suppress-non-bcu-placeholder-effects' : 'render-all-effects',
       input: list.length,
       active: active.length,
-      suppressed,
-      examples: list.slice(0, 6).map((e) => ({ id: e?.id || null, type: e?.type || null, source: e?.source || e?.effectRuntimeDebug?.source || null, hasImage: !!e?.image, frameCount: e?.frameParts?.length || 0, hasModel: !!e?.model, hasAnimator: !!e?.animator, renderFlipX: e?.renderFlipX === true, bcuScreenOffsetX: e?.bcuScreenOffsetX ?? 0 }))
+      suppressed
     };
+    if (isBcuHeavyEffectDebugEnabled()) {
+      debug.examples = list.slice(0, 6).map((e) => ({ id: e?.id || null, type: e?.type || null, source: e?.source || e?.effectRuntimeDebug?.source || null, hasImage: !!e?.image, frameCount: e?.frameParts?.length || 0, hasModel: !!e?.model, hasAnimator: !!e?.animator, renderFlipX: e?.renderFlipX === true, bcuScreenOffsetX: e?.bcuScreenOffsetX ?? 0, bcuScaleMode: e?.bcuScaleMode || e?.effectRuntimeDebug?.bcuScaleMode || null }));
+    }
+    globalThis.__BATTLE_EFFECT_DEBUG__ = debug;
     return { effects: active, removed: Math.max(0, list.length - active.length), active: active.length, suppressed };
   }
 

@@ -89,6 +89,8 @@ if (!BattleActor.prototype[PATCH_FLAG]) {
         bcuReference: 'Entity.processProcs checks target getProc().IMU* before applying STOP/SLOW/WEAK/CURSE/KB/WARP/etc; full immunity mult=100 blocks proc and shows INV effect in BCU',
         item,
         result,
+        resistanceBreakdown: immunity.resistance?.breakdown || null,
+        unsupportedResistanceSources: immunity.resistance?.unsupportedSources || [],
         target: this.instanceId || this.label || null,
         nowMs: meta.nowMs ?? null
       };
@@ -102,6 +104,8 @@ if (!BattleActor.prototype[PATCH_FLAG]) {
         field: immunity.field,
         mult: immunity.mult,
         source: 'BcuResistRuntime partial resistance',
+        breakdown: immunity.resistance?.breakdown || null,
+        unsupportedSources: immunity.resistance?.unsupportedSources || [],
         bcuReference: 'Entity.processProcs getResistValue / POIATK mult * (100-rst)'
       };
     }
@@ -113,6 +117,8 @@ if (!BattleActor.prototype[PATCH_FLAG]) {
       immune: false,
       partial: immunity.partial,
       adjusted: adjusted.adjusted,
+      resistanceBreakdown: immunity.resistance?.breakdown || null,
+      unsupportedResistanceSources: immunity.resistance?.unsupportedSources || [],
       delegatedResult: result
     };
     return result;

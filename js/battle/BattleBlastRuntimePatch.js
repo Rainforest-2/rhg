@@ -5,6 +5,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { DamageCalculator } from './DamageCalculator.js';
+import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.blast-runtime-patch.v4-proc-resolver-model-candidates');
 const BLAST_SHIFT = 100;
@@ -12,6 +13,8 @@ const BLAST_HALF_WIDTH = 75;
 const BLAST_PRE_FRAME = 11;
 const BLAST_DURATION_FRAME = 44;
 const BLAST_SOURCE = 'bcu-effanim-cont-blast';
+const BCU_BLAST_UNIT_VISUAL_OFFSET_X = 100;
+const BCU_BLAST_ENEMY_VISUAL_OFFSET_X = -30;
 
 function pos(actor) {
   const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
@@ -123,7 +126,15 @@ function createRuntime(asset, phase = 'start') {
   return { model, animator, frameCount: Math.max(1, (Number(anim?.maxFrame) || 0) + 1), maxFrame: Number(anim?.maxFrame) || 0 };
 }
 
-function spawnBlastEffect(scene, item, phase = 'start') {
+export function getBlastVisualOffset(direction) {
+  return {
+    blastVisualOffsetX: direction === -1 ? BCU_BLAST_UNIT_VISUAL_OFFSET_X : BCU_BLAST_ENEMY_VISUAL_OFFSET_X,
+    blastVisualOffsetY: 0,
+    bcuReference: 'BCU ContBlast.draw: atk.dire == -1 ? p.x + 100*psiz : p.x - 30*psiz'
+  };
+}
+
+export function spawnBlastEffect(scene, item, phase = 'start') {
   if (!scene || !item) return null;
   const asset = scene.waveEffectAssets?.[item.effectKey] || null;
   if (!asset?.loaded) {
@@ -132,11 +143,14 @@ function spawnBlastEffect(scene, item, phase = 'start') {
   }
   const runtime = createRuntime(asset, phase);
   if (!runtime) return null;
+  const visual = getBlastVisualOffset(item.direction);
+  const worldX = item.pos + visual.blastVisualOffsetX;
+  const worldY = visual.blastVisualOffsetY;
   const effect = EffectRuntime.createEffect({
     id: `bcu-blast-${phase}-${scene.logicFrame || 0}-${scene.effects.length}-${Math.random().toString(36).slice(2)}`,
     type: 'blast',
-    x: item.pos,
-    y: 0,
+    x: worldX,
+    y: worldY,
     image: asset.image,
     imgcut: asset.imgcut,
     model: runtime.model,
@@ -146,14 +160,22 @@ function spawnBlastEffect(scene, item, phase = 'start') {
     createdAtMs: scene.timeMs,
     layer: item.layer,
     bcuSmokeYOffset: 0,
+    bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE,
     debug: {
       source: BLAST_SOURCE,
-      bcuReference: 'BCU ContBlast A_BLAST/A_E_BLAST START then EXPLODE at t=11',
+      bcuReference: 'BCU ContBlast.draw offsets visual by +100 friendly / -30 enemy and changes START->EXPLODE at t=11; AttackBlast damage ticks at t=10/20/30',
       id: item.id,
       phase,
       pos: item.pos,
+      worldX,
+      worldY,
+      blastVisualOffsetX: visual.blastVisualOffsetX,
+      blastVisualOffsetY: visual.blastVisualOffsetY,
       direction: item.direction,
       t: item.t,
+      level: levelAt(item.t),
+      band: levelAt(item.t),
+      bcuScaleMode: BCU_SCALE_MODE.STAGE_PROJECTILE,
       frameCount: runtime.frameCount,
       maxFrame: runtime.maxFrame,
       effectKey: item.effectKey,
@@ -174,7 +196,7 @@ function levelAt(t) {
   return -1;
 }
 
-function rangesFor(item, level) {
+export function rangesFor(item, level) {
   if (level === 0) return [[item.pos - BLAST_HALF_WIDTH, item.pos + BLAST_HALF_WIDTH]];
   if (level > 0) {
     const leftEnd = item.pos - BLAST_HALF_WIDTH - BLAST_SHIFT * (level - 1);
@@ -186,17 +208,16 @@ function rangesFor(item, level) {
   return [];
 }
 
-function targetsInRanges(scene, attacker, ranges, seen) {
+export function targetsInRanges(scene, attacker, ranges, seen) {
   return (scene.actors || []).filter((target) => {
     if (!target || target.side === attacker?.side || seen?.has(target)) return false;
     if (!(target.isTargetable?.() ?? target.isAlive?.())) return false;
     const p = pos(target);
-    const half = Number(target.width || target.rawStats?.width || 0) / 2;
-    return ranges.some(([lo, hi]) => (p + half) >= Math.min(lo, hi) && (p - half) <= Math.max(lo, hi));
+    return ranges.some(([lo, hi]) => p >= Math.min(lo, hi) && p <= Math.max(lo, hi));
   });
 }
 
-function attackBlast(scene, item, level) {
+export function attackBlast(scene, item, level) {
   const ranges = rangesFor(item, level);
   const seen = item.capturedByLevel[level] || new Set();
   item.capturedByLevel[level] = seen;
@@ -218,7 +239,7 @@ function attackBlast(scene, item, level) {
   scene.pushEvent?.({ type: 'bcuBlastAttackFrame', ...scene.lastBlastAttackDebug });
 }
 
-function enqueue(scene, item) {
+export function enqueueBlastContainer(scene, item) {
   if (!scene.__bcuBlastContainers) scene.__bcuBlastContainers = [];
   scene.__bcuBlastContainers.push(item);
   scene.ensureWaveEffectLoading?.();
@@ -253,7 +274,7 @@ function enqueueFromResult(scene, attacker, target, targetType, event, calc, res
   for (const proc of items) {
     const addp = rollOffset(proc.payload || {}, random);
     const blastPos = pos(attacker) + d * addp;
-    enqueue(scene, {
+    enqueueBlastContainer(scene, {
       id: `${key}:blast`,
       attacker,
       target,

@@ -32,6 +32,22 @@ function getAttackTraitList(attack = null, attacker = null) {
   return [];
 }
 
+function getTalentOrbResistance(entity, procName) {
+  const sources = [
+    entity?.bcuTalentOrbResistance,
+    entity?.talentOrbResistance,
+    entity?.rawStats?.bcuTalentOrbResistance,
+    entity?.rawStats?.talentOrbResistance
+  ];
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') continue;
+    const value = source[procName] ?? source[String(procName || '').toLowerCase()];
+    const n = Number(value);
+    if (Number.isFinite(n)) return clampPercent(n);
+  }
+  return null;
+}
+
 function hasTrait(entity, trait) {
   return getTraitFlags(entity)?.[trait] === true || (Array.isArray(entity?.traits) && entity.traits.includes(trait));
 }
@@ -49,16 +65,57 @@ export function getBcuResistValue({ target, attacker = null, attack = null, proc
   const side = target?.side || null;
   const kind = sideKind(target);
   const resist = clampPercent(procResist ?? target?.bcuProcResist?.[procName] ?? 0);
-  let factor = Math.max(0, 1 - resist / 100);
+  const fieldFactor = Math.max(0, 1 - resist / 100);
+  let factor = fieldFactor;
   const notes = [];
+  const unsupportedSources = [];
+  const talentOrbValue = getTalentOrbResistance(target, procName);
+  if (talentOrbValue !== null) unsupportedSources.push('talent-orb-resistance');
+
+  const breakdown = {
+    fieldImmunity: {
+      source: 'target getProc().IMU*.mult / combatModel.immunity proc field',
+      value: resist >= 100 ? resist : 0,
+      factor: resist >= 100 ? fieldFactor : 1
+    },
+    partialResistance: {
+      source: 'target getProc().IMU*.mult / combatModel.immunity proc field',
+      value: resist > 0 && resist < 100 ? resist : 0,
+      factor: resist > 0 && resist < 100 ? fieldFactor : 1
+    },
+    sageResistance: {
+      source: 'Data.SUPER_SAGE_RESIST / Data.SUPER_SAGE_HUNTER_RESIST',
+      value: 0,
+      factor: 1,
+      bypassedBySkill: false
+    },
+    talentOrbResistance: {
+      source: 'future combo/orb/talent resistance holder',
+      value: talentOrbValue,
+      factor: 1,
+      implemented: false
+    }
+  };
 
   if (SUPER_SAGE_RESIST_TYPES.has(String(procName || ''))) {
-    if (kind === 'enemy' && hasTrait(target, BCU_TRAITS.sage) && (getAbi(attacker || attack?.attacker) & BCU_ABI.AB_SKILL) === 0) {
-      factor *= Math.max(0, 100 - SUPER_SAGE_RESIST) / 100;
-      notes.push('enemy-sage-status-resist-applied');
+    const attackerHasSkill = (getAbi(attacker || attack?.attacker) & BCU_ABI.AB_SKILL) !== 0;
+    if (kind === 'enemy' && hasTrait(target, BCU_TRAITS.sage)) {
+      if (attackerHasSkill) {
+        breakdown.sageResistance.bypassedBySkill = true;
+        notes.push('enemy-sage-status-resist-bypassed-by-AB_SKILL');
+      } else {
+        const sageFactor = Math.max(0, 100 - SUPER_SAGE_RESIST) / 100;
+        factor *= sageFactor;
+        breakdown.sageResistance.value = SUPER_SAGE_RESIST;
+        breakdown.sageResistance.factor = sageFactor;
+        notes.push('enemy-sage-status-resist-applied');
+      }
     }
     if (kind === 'unit' && getAttackTraitList(attack, attacker).includes(BCU_TRAITS.sage) && (getAbi(target) & BCU_ABI.AB_SKILL) !== 0) {
-      factor *= 1 - SUPER_SAGE_HUNTER_RESIST;
+      const sageFactor = 1 - SUPER_SAGE_HUNTER_RESIST;
+      factor *= sageFactor;
+      breakdown.sageResistance.value = SUPER_SAGE_HUNTER_RESIST * 100;
+      breakdown.sageResistance.factor = sageFactor;
       notes.push('unit-sage-hunter-status-resist-applied');
     }
   }
@@ -72,6 +129,9 @@ export function getBcuResistValue({ target, attacker = null, attack = null, proc
     factor,
     effectiveBlock,
     implemented: true,
+    implementationScope: 'supported-field-immunity-partial-resistance-and-sage-resistance-only',
+    breakdown,
+    unsupportedSources,
     notes,
     bcuReference: side === 'cat-enemy' ? 'EEnemy.getResistValue' : 'EUnit.getResistValue'
   };

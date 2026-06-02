@@ -79,8 +79,9 @@ Add small Node scripts under `scripts/`:
    - Assert `BattleWaveEffectLoader` aliases line up with ZIP directories.
 
 5. `scripts/check-effect-coordinate-traces.mjs`
-   - Exercise pure coordinate helpers without a browser.
-   - Assert effect trace records include `effectKey`, `phase`, `worldX`, `screenOffsetX`, `bcuSmokeYOffset`, `layer`, `scaleMode`, `renderFlipX`, and `bcuReference`.
+   - Exercise real runtime spawn helpers without a browser.
+   - Assert effect trace records include `effectKey`, `phase`, `worldX`, `worldY`, `screenOffsetX`, `bcuSmokeYOffset`, `layer`, `bcuScaleMode`, `effectScale`, `renderFlipX`, `source`, and `bcuReference`.
+   - Include wave, mini-wave, surge start/during/end, mini-surge start/during/end, blast start/explode, barrier, demon shield, warp entrance/exit, wave invalid, wave stop, and counter-surge fixtures.
 
 6. `scripts/check-debug-allocation-guards.mjs`
    - Ensure heavy debug globals are gated behind an explicit debug flag or reduced to counters.
@@ -295,7 +296,7 @@ Stage/projectile effects are drawn through a generic renderer path that multipli
 ### Tests
 
 - `node scripts/check-effect-coordinate-traces.mjs`
-- Verify each effect class emits scale mode and coordinate trace.
+- Verify each effect class emits `bcuScaleMode`, coordinate trace, and renderer scale trace through real spawn helpers.
 - Verify status effects do not accidentally use actor sprite scale if BCU does not.
 - Verify projectile effects do not inherit actor sprite scale unless BCU does.
 
@@ -330,6 +331,7 @@ Blast logic includes BCU-like frame bands, but visual creation currently risks u
 - `node scripts/check-projectile-damage-parity.mjs`
 - `node scripts/check-effect-coordinate-traces.mjs`
 - Cases for unit blast and enemy blast offsets.
+- Runtime-level blast fixture proving `queueAttackDamage` receives `[base, 70%, 40%]` falloff and BCU point-position capture does not expand by target half-width.
 
 ### Code-complete criteria
 
@@ -448,6 +450,7 @@ Some performance patches suppress verbose traces but allocate debug objects whil
 3. Write large debug objects only when debug is enabled.
 4. Do not remove behavior-bearing events, effect creation, wrapper calls, or renderer metadata.
 5. Do not change wave/surge smoke kind, offsets, layer, lifetime, or effect filtering.
+6. Ensure `check-debug-allocation-guards.mjs` treats heavy examples/trace arrays as debug-only, not as a normal success condition.
 
 ### Tests
 

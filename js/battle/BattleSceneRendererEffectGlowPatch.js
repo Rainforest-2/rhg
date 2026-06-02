@@ -1,12 +1,14 @@
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { drawBcuImagePart } from '../bcu/BcuCanvasComposite.js';
+import { BCU_SCALE_MODE, buildBcuEffectTrace, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v1');
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BCU_SMOKE_SCALE = 1.2;
 const BCU_STAGE_EFFECT_SOURCES = new Set([
   'bcu-effanim-wave-cont-wave-def',
-  'bcu-effanim-surge-cont-volcano'
+  'bcu-effanim-surge-cont-volcano',
+  'bcu-effanim-cont-blast'
 ]);
 
 function finiteNumber(...values) {
@@ -24,6 +26,7 @@ function getEffectLayer(effect) {
 function isBcuStageLayeredEffect(effect) {
   if (!effect || effect.finished) return false;
   if (effect.bcuProjectileStageObject === true) return true;
+  if (normalizeBcuScaleMode(effect.bcuScaleMode || effect.effectRuntimeDebug?.bcuScaleMode) === BCU_SCALE_MODE.STAGE_PROJECTILE) return true;
   if (BCU_STAGE_EFFECT_SOURCES.has(String(effect.source || ''))) return true;
   if (BCU_STAGE_EFFECT_SOURCES.has(String(effect.effectRuntimeDebug?.source || ''))) return true;
   return false;
@@ -71,13 +74,54 @@ function drawBcuModelEffectWithGlow(renderer, ctx, effect, x, y, scale) {
   return drawn > 0;
 }
 
+export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1 } = {}) {
+  const mode = normalizeBcuScaleMode(effect?.bcuScaleMode || effect?.effectRuntimeDebug?.bcuScaleMode);
+  const effectScale = Number.isFinite(Number(effect?.scale)) ? Number(effect.scale) : 1;
+  const camera = Number.isFinite(Number(cameraScale)) ? Number(cameraScale) : 1;
+  const sprite = Number.isFinite(Number(spriteScale)) ? Number(spriteScale) : 1;
+  let finalScale;
+  let spriteScaleUsed = 0;
+  switch (mode) {
+    case BCU_SCALE_MODE.STAGE_PROJECTILE:
+      finalScale = camera * effectScale;
+      break;
+    case BCU_SCALE_MODE.ENTITY_STATUS:
+      finalScale = camera * effectScale;
+      break;
+    case BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT:
+      finalScale = camera * effectScale;
+      break;
+    case BCU_SCALE_MODE.WARP_HOLE:
+      finalScale = camera * effectScale;
+      break;
+    case BCU_SCALE_MODE.HIT_SMOKE:
+      finalScale = camera * effectScale;
+      break;
+    default:
+      finalScale = camera * sprite * effectScale;
+      spriteScaleUsed = sprite;
+      break;
+  }
+  return {
+    bcuScaleMode: mode,
+    cameraScale: camera,
+    spriteScaleUsed,
+    effectScale,
+    finalScale,
+    bcuReference: mode === BCU_SCALE_MODE.LEGACY
+      ? 'legacy renderer path retains cameraScale * spriteScale * effect.scale'
+      : 'BCU ContAb/EAnimCont draws with psiz; Entity.AnimManager.drawEff encodes its 0.75 multiplier in effect.scale'
+  };
+}
+
 function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
   if (!effect?.image) return false;
   const scene = renderer._scene;
   const cameraScale = typeof renderer.getCameraScale === 'function' ? renderer.getCameraScale(scene) : 1;
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
-  const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
+  const scaleTrace = resolveBcuEffectScale({ effect, cameraScale, spriteScale });
+  const scale = scaleTrace.finalScale;
   const screenOffsetX = finiteNumber(effect.bcuScreenOffsetX, 0) ?? 0;
   const x = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0) + screenOffsetX * cameraScale;
   const layer = getEffectLayer(effect);
@@ -109,16 +153,29 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
   }
 
   effect.lastBcuStageLayerRenderDebug = {
-    source: 'BattleSceneRendererEffectGlowPatch.drawOneBcuEffectWithGlow',
+    ...buildBcuEffectTrace({
+      effectKey: effect.effectRuntimeDebug?.effectKey || effect.effectRuntimeDebug?.key || null,
+      phase: effect.effectRuntimeDebug?.phase || null,
+      worldX: effect.worldX ?? effect.x ?? 0,
+      worldY: effect.worldY ?? effect.y ?? 0,
+      screenOffsetX,
+      bcuSmokeYOffset: yOffset,
+      layer,
+      bcuScaleMode: scaleTrace.bcuScaleMode,
+      effectScale: scaleTrace.effectScale,
+      renderFlipX: effect.renderFlipX === true,
+      source: 'BattleSceneRendererEffectGlowPatch.drawOneBcuEffectWithGlow',
+      bcuReference: scaleTrace.bcuReference,
+      cameraScale: scaleTrace.cameraScale,
+      spriteScaleUsed: scaleTrace.spriteScaleUsed,
+      finalScale: scaleTrace.finalScale
+    }),
     x,
     y,
     baseY,
     yOffset,
-    screenOffsetX,
-    layer,
     scale,
-    renderFlipX: effect.renderFlipX === true,
-    bcuReference: 'BCU BattleBox draws WaprCont at getX(pos)+dx and y-24*siz, then WaprCont.draw offsets A_W by another -275*siz before drawing A_W_C at the WaprCont anchor'
+    rendererReference: 'BCU BattleBox draws ContAb/EAnimCont stage effects with psiz; WaprCont applies y offsets before drawing A_W/A_W_C'
   };
   return drawn;
 }

@@ -1,8 +1,9 @@
 import { BattleScene } from './BattleScene.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.custom-stage-base-hp-policy.v2-hardened');
+const PATCH_FLAG = Symbol.for('wanko-battle.custom-stage-base-hp-policy.v3-merged-config');
 const FIXED_HP = 10000000;
 const DRAIN_PER_FRAME = 100;
+const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
 
 function stageHp(stageState) {
   const hp = Number(stageState?.runtime?.enemyBaseHp ?? stageState?.definition?.enemyBaseHp ?? stageState?.definition?.meta?.enemyBaseHp);
@@ -21,11 +22,43 @@ function snapshotBases(scene) {
   return (scene?.bases || []).map((b) => ({ side: b.side, hp: b.hp, maxHp: b.maxHp, destroyed: b.destroyed === true }));
 }
 
+function getMergedCustomStageHpConfig(scene) {
+  const globalConfig = globalThis[GLOBAL_CONFIG_KEY] || {};
+  const optionConfig = scene?.options?.customStageBattle || {};
+  const runtimeConfig = scene?.customStageBattle?.config || {};
+  const merged = { ...globalConfig, ...optionConfig, ...runtimeConfig };
+
+  // BattleSceneCustomStageBattlePatch.normalizeConfig intentionally keeps only stage-routing fields.
+  // Preserve HP policy fields from the richer UI/global config when that normalized runtime config is present.
+  for (const key of ['fixedBaseHpEnabled', 'fixedBaseHpValue', 'baseHpDrainEnabled', 'baseHpDrainPerFrame', 'baseHpPolicySource']) {
+    if (runtimeConfig[key] === undefined) {
+      if (optionConfig[key] !== undefined) merged[key] = optionConfig[key];
+      else if (globalConfig[key] !== undefined) merged[key] = globalConfig[key];
+    }
+  }
+
+  merged.fixedBaseHpEnabled = merged.fixedBaseHpEnabled === true;
+  merged.fixedBaseHpValue = Number.isFinite(Number(merged.fixedBaseHpValue)) ? Math.floor(Number(merged.fixedBaseHpValue)) : FIXED_HP;
+  merged.baseHpDrainEnabled = merged.fixedBaseHpEnabled && merged.baseHpDrainEnabled === true;
+  merged.baseHpDrainPerFrame = Number.isFinite(Number(merged.baseHpDrainPerFrame)) ? Math.floor(Number(merged.baseHpDrainPerFrame)) : DRAIN_PER_FRAME;
+  return {
+    config: merged,
+    sources: {
+      runtimeConfig,
+      optionConfig,
+      globalConfig,
+      note: 'HP flags are merged because BattleSceneCustomStageBattlePatch.normalizeConfig drops HP-only fields.'
+    }
+  };
+}
+
 function publishDebug(scene, source, extra = {}) {
+  const { config, sources } = getMergedCustomStageHpConfig(scene);
   const debug = {
     source,
     logicFrame: scene?.logicFrame ?? null,
-    config: scene?.customStageBattle?.config || scene?.options?.customStageBattle || null,
+    config,
+    configSources: sources,
     customEnabled: scene?.customStageBattle?.enabled === true,
     bases: snapshotBases(scene),
     ...extra
@@ -57,9 +90,9 @@ function setBaseHp(base, hp, source, extra = {}) {
 }
 
 function ensureFixedMaxHp(scene) {
-  const cfg = scene?.customStageBattle?.config || scene?.options?.customStageBattle || globalThis.__CUSTOM_STAGE_BATTLE_CONFIG__ || {};
+  const { config: cfg } = getMergedCustomStageHpConfig(scene);
   if (!scene?.customStageBattle?.enabled || cfg.fixedBaseHpEnabled !== true) return null;
-  const fixedHp = Number.isFinite(Number(cfg.fixedBaseHpValue)) ? Math.floor(Number(cfg.fixedBaseHpValue)) : FIXED_HP;
+  const fixedHp = cfg.fixedBaseHpValue;
   const changed = [];
   for (const side of ['cat-enemy', 'dog-player']) {
     const base = findBase(scene, side);
@@ -89,7 +122,7 @@ function ensureFixedMaxHp(scene) {
 }
 
 export function applyCustomStageBattleBaseHpPolicy(scene) {
-  const cfg = scene?.customStageBattle?.config || scene?.options?.customStageBattle || globalThis.__CUSTOM_STAGE_BATTLE_CONFIG__ || {};
+  const { config: cfg } = getMergedCustomStageHpConfig(scene);
   if (!scene?.customStageBattle?.enabled) {
     return publishDebug(scene, 'BattleSceneCustomStageBaseHpPatch.applyCustomStageBattleBaseHpPolicy:not-custom-enabled');
   }
@@ -98,15 +131,18 @@ export function applyCustomStageBattleBaseHpPolicy(scene) {
   const enemyStage = firstStageForSide(scene, 'cat-enemy');
   const playerStage = firstStageForSide(scene, 'dog-player');
   const fixed = cfg.fixedBaseHpEnabled === true;
-  const enemyHp = fixed ? Number(cfg.fixedBaseHpValue || FIXED_HP) : stageHp(enemyStage);
-  const playerHp = fixed ? Number(cfg.fixedBaseHpValue || FIXED_HP) : stageHp(playerStage);
+  const enemyHp = fixed ? cfg.fixedBaseHpValue : stageHp(enemyStage);
+  const playerHp = fixed ? cfg.fixedBaseHpValue : stageHp(playerStage);
   const applied = {
     source: 'BattleSceneCustomStageBaseHpPatch.applyCustomStageBattleBaseHpPolicy',
     fixedBaseHpEnabled: fixed,
+    fixedBaseHpValue: cfg.fixedBaseHpValue,
     baseHpDrainEnabled: fixed && cfg.baseHpDrainEnabled === true,
+    baseHpDrainPerFrame: cfg.baseHpDrainPerFrame,
     enemy: setBaseHp(enemyBase, enemyHp, fixed ? 'custom-stage-fixed-10000000' : 'first-enemy-custom-stage.enemyBaseHp', { sourceStageId: enemyStage?.stageId || null, sourceStageKey: enemyStage?.stageKey || null }),
     player: setBaseHp(playerBase, playerHp, fixed ? 'custom-stage-fixed-10000000' : 'first-player-custom-stage.enemyBaseHp', { sourceStageId: playerStage?.stageId || null, sourceStageKey: playerStage?.stageKey || null })
   };
+  scene.customStageBattle.config = { ...(scene.customStageBattle.config || {}), fixedBaseHpEnabled: cfg.fixedBaseHpEnabled, fixedBaseHpValue: cfg.fixedBaseHpValue, baseHpDrainEnabled: cfg.baseHpDrainEnabled, baseHpDrainPerFrame: cfg.baseHpDrainPerFrame, baseHpPolicySource: cfg.baseHpPolicySource || 'BattleSceneCustomStageBaseHpPatch.merged-config' };
   scene.customStageBattle.baseHpPolicy = applied;
   scene.customStageBattle.initDebug = { ...(scene.customStageBattle.initDebug || {}), baseHpPolicy: applied };
   scene.pushEvent?.({ type: 'customStageBattleBaseHpPolicyApplied', ...applied });
@@ -115,20 +151,20 @@ export function applyCustomStageBattleBaseHpPolicy(scene) {
 }
 
 export function tickCustomStageBattleBaseHpDrain(scene) {
-  const cfg = scene?.customStageBattle?.config || scene?.options?.customStageBattle || globalThis.__CUSTOM_STAGE_BATTLE_CONFIG__ || {};
+  const { config: cfg } = getMergedCustomStageHpConfig(scene);
   if (!scene?.customStageBattle?.enabled || cfg.fixedBaseHpEnabled !== true) return null;
   ensureFixedMaxHp(scene);
   if (cfg.baseHpDrainEnabled !== true) {
     publishDebug(scene, 'BattleSceneCustomStageBaseHpPatch.tick:no-drain');
     return null;
   }
-  const amount = Number.isFinite(Number(cfg.baseHpDrainPerFrame)) ? Number(cfg.baseHpDrainPerFrame) : DRAIN_PER_FRAME;
+  const amount = cfg.baseHpDrainPerFrame;
   const changed = [];
   for (const side of ['cat-enemy', 'dog-player']) {
     const base = findBase(scene, side);
     if (!base || base.destroyed || !Number.isFinite(base.hp)) continue;
     const before = base.hp;
-    base.maxHp = Number.isFinite(Number(cfg.fixedBaseHpValue)) ? Math.floor(Number(cfg.fixedBaseHpValue)) : FIXED_HP;
+    base.maxHp = cfg.fixedBaseHpValue;
     base.hp = Math.max(0, base.hp - amount);
     if (base.hp <= 0) base.destroyed = true;
     changed.push({ side, before, after: base.hp, maxHp: base.maxHp, destroyed: base.destroyed });

@@ -62,6 +62,17 @@ function rollDeathSurge(scene, actor) {
   return { selected: rolled < prob, proc: ds, prob, rolled };
 }
 
+function resolveBcuDeathSoulLayer(actor, kind) {
+  if (kind === 'normal') return {
+    layer: 0,
+    source: 'BCU Entity.AnimManager.kill normal branch sets currentLayer = 0 before Soul draw'
+  };
+  return {
+    layer: Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0,
+    source: 'BCU Entity.AnimManager.kill death-surge branch keeps current layer before demon soul draw'
+  };
+}
+
 function applySafeSoulFallback(state, scene, assetKey, reason = 'asset-missing') {
   const assetFrameCount = Number(scene?.soulEffectAssets?.[assetKey]?.frameCount);
   const fallbackFrameCount = Number.isFinite(assetFrameCount) && assetFrameCount > 0
@@ -88,6 +99,9 @@ export function spawnBcuDeathSoulEffect(scene, actor, state) {
   }
   const runtime = createSoulRuntime(asset);
   if (!runtime) return null;
+  const effectLayer = Number.isFinite(state.layer)
+    ? state.layer
+    : (Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0);
   const effect = EffectRuntime.createEffect({
     id: `bcu-death-soul-${actor.instanceId || actor.label || 'actor'}-${scene.logicFrame || 0}`,
     type: 'deathSoul',
@@ -100,7 +114,7 @@ export function spawnBcuDeathSoulEffect(scene, actor, state) {
     scale: 1,
     source: 'bcu-effanim-death-soul',
     createdAtMs: scene.timeMs,
-    layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
+    layer: effectLayer,
     bcuSmokeYOffset: BCU_DEATH_SOUL_Y_OFFSET,
     bcuScreenOffsetX: 0,
     renderFlipX: actor.renderFlipX === true,
@@ -113,6 +127,8 @@ export function spawnBcuDeathSoulEffect(scene, actor, state) {
       actor: actor.instanceId || actor.label || null,
       soulId: state.soulId,
       bcuYOffset: BCU_DEATH_SOUL_Y_OFFSET,
+      layer: effectLayer,
+      layerSource: state.layerSource || null,
       frameCount: runtime.frameCount,
       maxFrame: runtime.maxFrame,
       bcuReference: 'Entity.AnimManager.draw: dead > 0 draws soul at p.y - 100*siz and returns before base actor draw'
@@ -152,6 +168,7 @@ export function startBcuDeathAnimation(actor, { scene = actor?.scene || globalTh
   const spec = getBcuDeathAnimationSpec(actor);
   const surge = rollDeathSurge(scene, actor);
   const kind = surge.selected ? 'deathSurge' : 'normal';
+  const layerSpec = resolveBcuDeathSoulLayer(actor, kind);
   if (surge.proc) actor.__bcuDeathSurgeManagedByDeathRuntime = true;
   if (surge.proc && !surge.selected) actor.__bcuDeathSurgeDone = true;
   const assetKey = soulAssetKey(actor, kind, spec);
@@ -163,7 +180,8 @@ export function startBcuDeathAnimation(actor, { scene = actor?.scene || globalTh
     assetKey,
     frame: 0,
     frameCount: 0,
-    layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
+    layer: layerSpec.layer,
+    layerSource: layerSpec.source,
     worldX: Number.isFinite(actor.posBcu) ? actor.posBcu : (Number.isFinite(actor.x) ? actor.x : 0),
     worldY: 0,
     bcuYOffset: BCU_DEATH_SOUL_Y_OFFSET,
@@ -173,7 +191,7 @@ export function startBcuDeathAnimation(actor, { scene = actor?.scene || globalTh
     source: 'BCU Entity.AnimManager.kill/draw',
     bcuReference: kind === 'deathSurge'
       ? 'Entity.AnimManager.kill: DEATHSURGE uses demonSouls; update triggers death surge when soul.len()-dead == 21'
-      : spec.bcuReference,
+      : `${spec.bcuReference}; normal death branch sets e.currentLayer = 0 before soul draw`,
     startedAtMs: Number.isFinite(nowMs) ? nowMs : 0
   };
   actor.bcuDeathAnimation = state;
@@ -197,7 +215,7 @@ export function startBcuDeathAnimation(actor, { scene = actor?.scene || globalTh
     renderFlipX: actor.renderFlipX === true,
     source: state.source,
     bcuReference: state.bcuReference,
-    extra: { soulId: state.soulId, hideBaseActor: true, cleanupWhenFinished: true, visualMissing: state.visualMissing === true, visualFallback: state.visualFallback === true }
+    extra: { soulId: state.soulId, hideBaseActor: true, cleanupWhenFinished: true, visualMissing: state.visualMissing === true, visualFallback: state.visualFallback === true, layerSource: state.layerSource }
   });
   return state;
 }

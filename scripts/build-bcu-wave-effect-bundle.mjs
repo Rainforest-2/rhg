@@ -70,7 +70,8 @@ const EFFECT_DEFS = Object.freeze([
   single({ key: 'enemyWaveStop', role: 'bcu-A_E_WAVE_STOP', dir: 'public/assets/bcu/000001/org/battle/s0/wave_stop', out: 'enemy-wave-stop', image: '../skill000.png', imgcut: '../skill000.imgcut', model: 'skill_wave_stop_e.mamodel', anim: 'skill_wave_stop_e.maanim' }),
   namedPhased({ key: 'enemyWaveGuard', role: 'bcu-A_E_GUARD', dir: 'public/assets/bcu/130200/org/battle/s19', out: 'enemy-wave-guard', image: 'skill019.png', imgcut: 'skill019.imgcut', model: 'skill_guard_e.mamodel', phases: { none: 'skill_guard_e.maanim', breaker: 'skill_guard_e_breaker.maanim' } }),
   single({ key: 'unitCounterSurge', role: 'bcu-A_COUNTERSURGE', dir: 'public/assets/bcu/130000/org/battle/s18', out: 'unit-counter-surge', image: 'skill018.png', imgcut: 'skill018.imgcut', model: 'skill_demonsummon.mamodel', anim: 'skill_demonsummon.maanim' }),
-  single({ key: 'enemyCounterSurge', role: 'bcu-A_E_COUNTERSURGE', dir: 'public/assets/bcu/130000/org/battle/s17', out: 'enemy-counter-surge', image: '../../../../120400/org/battle/s17/skill017.png', imgcut: '../../../../120400/org/battle/s17/skill017.imgcut', model: 'skill_demonsummon_e.mamodel', anim: 'skill_demonsummon_e.maanim' })
+  single({ key: 'enemyCounterSurge', role: 'bcu-A_E_COUNTERSURGE', dir: 'public/assets/bcu/130000/org/battle/s17', out: 'enemy-counter-surge', image: '../../../../120400/org/battle/s17/skill017.png', imgcut: '../../../../120400/org/battle/s17/skill017.imgcut', model: 'skill_demonsummon_e.mamodel', anim: 'skill_demonsummon_e.maanim' }),
+  single({ key: 'enemyDelay', role: 'bcu-A_E_DELAY', dir: 'public/assets/bcu/150300/org/battle/s23', out: 'enemy-delay', image: 'skill023.png', imgcut: 'skill023.imgcut', model: 'skill_recast_decrease_e.mamodel', anim: 'skill_recast_decrease_e.maanim' })
 ]);
 
 function addEntry(entries, entry) {
@@ -159,7 +160,8 @@ function makeBundleJson({ aliases, missingRequired, allSkillEffectFiles }) {
         A_E_DEMON_SHIELD: './org/battle/s14/skill_demonshield',
         A_COUNTERSURGE: './org/battle/s18/skill_demonsummon',
         A_E_COUNTERSURGE: './org/battle/s17/skill_demonsummon_e',
-        A_E_GUARD: './org/battle/s19/skill_guard_e'
+        A_E_GUARD: './org/battle/s19/skill_guard_e',
+        A_E_DELAY: './org/battle/s23/skill_recast_decrease_e'
       },
       timing: {
         normalWave: { initialT: -3, effectAtT: 0, attackAtT: 6, nextWaveAtT: 3 },

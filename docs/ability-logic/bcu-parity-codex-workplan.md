@@ -186,6 +186,8 @@ BCU projectile containers carry attack data equivalent to raw attack power plus 
 
 ## W3 — implement P_DELAY runtime or explicitly block it with proof
 
+2026-06-03 status: `P_DELAY` runtime/effect evidence is now `human-visual-review-needed`. `BcuDelayRuntime` queues same-tick delay and flushes once per tick; `A_E_DELAY` is bundled as `effect:wave` `enemy-delay/*`; deterministic delay, bundle alias, and coordinate trace checks pass. No direct `DataUnit`/`DataEnemy` CSV `IMUDELAY` column was found in inspected BCU constructors; `IMUDELAY` remains supported as a `Proc.IMUAD` holder when present from custom/proc-object sources.
+
 ### Current risk
 
 Enemy `delay` is parsed, but there is no confirmed runtime application path equivalent to BCU.

@@ -10,6 +10,14 @@ function int(value, fallback = 0) {
 }
 
 export function buildBcuDelayVector(payload = {}) {
+  if (Array.isArray(payload.delay)) {
+    const delay = [int(payload.delay[0], 0), int(payload.delay[1], 0), int(payload.delay[2], 0)];
+    const explicitType = Number(payload.type ?? payload.delayType);
+    const type = Number.isFinite(explicitType)
+      ? Math.max(0, Math.min(2, Math.trunc(explicitType)))
+      : Math.max(0, delay.findIndex((value) => value !== 0));
+    return { type, strength: delay[type] || 0, delay };
+  }
   const type = Math.max(0, Math.min(2, int(payload.type ?? payload.delayType ?? 0, 0)));
   const strength = int(payload.strength ?? payload.mult ?? payload.value ?? 0, 0);
   const delay = [0, 0, 0];
@@ -72,6 +80,21 @@ function setEconomyCooldownFrames(economy, slotId, frames) {
   return true;
 }
 
+function aggregateDelayItems(items = []) {
+  const delay = [0, 0, 0];
+  for (const item of items) {
+    const vector = buildBcuDelayVector(item?.payload || {});
+    for (let i = 0; i < 3; i += 1) delay[i] += int(vector.delay[i], 0);
+  }
+  return delay;
+}
+
+function ensureDelayQueue(scene) {
+  if (!scene) return null;
+  if (!Array.isArray(scene.__bcuDelayProcQueue)) scene.__bcuDelayProcQueue = [];
+  return scene.__bcuDelayProcQueue;
+}
+
 function findProductionUnit(scene, slotId) {
   if (!scene || !slotId) return null;
   if (typeof scene.findPlayerProductionUnit === 'function') return scene.findPlayerProductionUnit(slotId) || null;
@@ -105,7 +128,7 @@ export function applyBcuPlayerCooldownDelay({ actor, scene = actor?.scene || nul
   };
   economy.lastBcuDelayDebug = debug;
   actor.lastBcuDelayDebug = debug;
-  scene?.pushEvent?.({ type: 'bcuDelayCooldownApplied', ...debug });
+  scene?.pushEvent?.({ ...debug, type: 'bcuDelayCooldownApplied', delayType: type });
   return { applied: inc !== 0 || next !== current, ...debug };
 }
 
@@ -181,7 +204,7 @@ export function applyBcuStageLineDelay({ actor, scene = actor?.scene || null, pa
       runtimeSource: entry.source
     };
     actor.lastBcuDelayDebug = rowState.lastBcuDelayDebug;
-    scene.pushEvent?.({ type: 'bcuDelayStageLineApplied', ...rowState.lastBcuDelayDebug });
+    scene.pushEvent?.({ ...rowState.lastBcuDelayDebug, type: 'bcuDelayStageLineApplied', delayType: type });
     return { applied: inc !== 0 || nextRemaining !== current, ...rowState.lastBcuDelayDebug };
   }
   return { applied: false, reason: 'stage-spawn-runtime-missing', target: 'stage-line-delay', rowIndex };
@@ -193,4 +216,86 @@ export function applyBcuDelayProc(actor, item = {}, meta = {}) {
   if (actor.side === 'dog-player') return applyBcuPlayerCooldownDelay({ actor, scene: meta.scene || actor.scene || null, payload });
   if (actor.side === 'cat-enemy') return applyBcuStageLineDelay({ actor, scene: meta.scene || actor.scene || null, payload });
   return { applied: false, reason: 'unsupported-side-for-delay', side: actor.side || null };
+}
+
+export function queueBcuDelayProc(actor, item = {}, meta = {}) {
+  if (!actor || item?.key !== 'delay') return { applied: false, reason: 'not-delay' };
+  const scene = meta.scene || actor.scene || null;
+  const queue = ensureDelayQueue(scene);
+  if (!queue) return applyBcuDelayProc(actor, item, meta);
+  const vector = buildBcuDelayVector(item.payload || {});
+  if (!vector.delay.some((value) => value !== 0)) return { applied: false, reason: 'zero-delay-strength', item };
+  const entry = {
+    actor,
+    item: { ...item, payload: { ...(item.payload || {}), delay: vector.delay, type: vector.type, strength: vector.strength } },
+    meta,
+    frame: int(scene.logicFrame, 0),
+    source: 'BcuDelayRuntime.queueBcuDelayProc',
+    bcuReference: 'EUnit/EEnemy.processProcs accumulates status[P_DELAY][type]; postUpdate later routes aggregate delay to StageBasis cdDelay/lineDelay'
+  };
+  queue.push(entry);
+  actor.lastBcuDelayQueueDebug = {
+    source: entry.source,
+    queued: true,
+    frame: entry.frame,
+    delay: vector.delay,
+    queueSize: queue.length,
+    bcuReference: entry.bcuReference
+  };
+  scene.pushEvent?.({
+    type: 'bcuDelayQueued',
+    source: entry.source,
+    target: actor.instanceId || actor.label || null,
+    frame: entry.frame,
+    delayType: vector.type,
+    strength: vector.strength,
+    delay: vector.delay,
+    queueSize: queue.length
+  });
+  return { applied: true, queued: true, target: actor.side === 'dog-player' ? 'player-cooldown' : 'stage-line-delay', delay: vector.delay, item: entry.item };
+}
+
+export function flushBcuDelayProcQueues(scene, reason = 'proc-resolve') {
+  const queue = ensureDelayQueue(scene);
+  if (!queue || queue.length === 0) return { processed: 0, applied: 0, skipped: 0, reason, source: 'BcuDelayRuntime.flushBcuDelayProcQueues' };
+  const batch = queue.splice(0, queue.length);
+  const groups = new Map();
+  for (const entry of batch) {
+    const actor = entry.actor;
+    if (!actor) continue;
+    const current = groups.get(actor) || { actor, entries: [] };
+    current.entries.push(entry);
+    groups.set(actor, current);
+  }
+  let applied = 0;
+  let skipped = 0;
+  const results = [];
+  for (const group of groups.values()) {
+    const delay = aggregateDelayItems(group.entries.map((entry) => entry.item));
+    const item = { key: 'delay', payload: { delay, type: Math.max(0, delay.findIndex((value) => value !== 0)), strength: delay.find((value) => value !== 0) || 0 } };
+    const result = applyBcuDelayProc(group.actor, item, { ...(group.entries.at(-1)?.meta || {}), scene });
+    if (result?.applied) applied += 1;
+    else skipped += 1;
+    group.actor.lastBcuDelayFlushDebug = {
+      source: 'BcuDelayRuntime.flushBcuDelayProcQueues',
+      bcuReference: 'StageBasis.update applies accumulated cdDelay/lineDelay once per tick after EUnit/EEnemy.postUpdate',
+      reason,
+      entryCount: group.entries.length,
+      delay,
+      result
+    };
+    results.push({ target: group.actor.instanceId || group.actor.label || null, entryCount: group.entries.length, delay, result });
+  }
+  scene.pushEvent?.({
+    type: 'bcuDelayQueueFlushed',
+    source: 'BcuDelayRuntime.flushBcuDelayProcQueues',
+    bcuReference: 'StageBasis.update cdDelay/lineDelay aggregate flush',
+    reason,
+    processed: batch.length,
+    groups: groups.size,
+    applied,
+    skipped,
+    results
+  });
+  return { processed: batch.length, groups: groups.size, applied, skipped, results, reason, source: 'BcuDelayRuntime.flushBcuDelayProcQueues' };
 }

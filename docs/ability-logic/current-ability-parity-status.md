@@ -22,7 +22,7 @@ These areas have meaningful JS runtime wiring and focused regression tests:
 | freeze / slow / weaken / knockback proc | `code-complete-candidate` | `ProcResolver.getProcCatalog()` marks these implemented and actor-targeted. Existing status runtime applies actor proc status. |
 | curse / seal / toxic | `code-complete-candidate` | Proc catalog and runtime status paths exist; immunity/resistance still needs continued coverage for edge sources. |
 | warp lifecycle | `code-complete-candidate` | `BcuWarpLifecycleRuntime` replaces simple countdown with entrance/exit lifecycle; `scripts/check-bcu-warp-lifecycle-parity.mjs` covers normal lifecycle, IMUWARP, replacement lifecycle, and death during exit. |
-| `P_DELAY` core runtime | `code-complete-candidate` | BCU source shows `EUnit.postUpdate -> basis.cdDelay -> ELineUp.delay` and `EEnemy.postUpdate -> basis.lineDelay -> EStage.delay`; `BcuDelayRuntime` maps those owners to `BattleEconomy` cooldown frames and `BcuStageSpawnRuntime` row `nextFrame`; `scripts/check-bcu-delay-runtime.mjs` covers `getDelayStrength`, player cooldown delay, stage row delay, and catalog registration. |
+| `P_DELAY` runtime/effect | `human-visual-review-needed` | BCU source shows `EUnit/EEnemy.processProcs -> status[P_DELAY]`, `EUnit.postUpdate -> basis.cdDelay -> ELineUp.delay`, and `EEnemy.postUpdate -> basis.lineDelay -> EStage.delay`; `BcuDelayRuntime` maps those owners to `BattleEconomy` cooldown frames and stage row `nextFrame`; `BcuDelayRuntimePatch` queues same-tick delay and flushes once in `proc-resolve`; `A_E_DELAY` is bundled as `effect:wave` `enemy-delay/*`; `scripts/check-bcu-delay-runtime.mjs`, `scripts/check-effect-bundle-aliases.mjs`, and `scripts/check-effect-coordinate-traces.mjs` cover runtime, ZIP alias, and coordinate trace. |
 | wave / mini-wave | `code-complete-candidate` | Projectile base damage model and runtime helper tests exist; effect coordinate traces use runtime helpers. |
 | surge / mini-surge | `code-complete-candidate` | Runtime container, raw projectile damage basis, and coordinate trace checks exist. |
 | blast | `code-complete-candidate` | Blast damage bands, point-position capture, side-specific visual offset, and tests exist. |
@@ -35,7 +35,7 @@ These must not be marked code-complete until the listed blocker is resolved.
 
 | Area | Current status | Blocking issue | Safe next step |
 |---|---|---|---|
-| `P_DELAY` visual / exact edge parity | `partial` | Core BCU runtime owner is implemented, but `A_E_DELAY` effect placement and exact same-tick multi-delay aggregation are not fully traced. Exact IMUDELAY CSV holder columns are also not fully mapped. | Add effect alias/coordinate trace for `A_E_DELAY`, add multi-delay aggregation tests, and map exact IMUDELAY holders from BCU source before claiming full completion. |
+| `P_DELAY` remaining manual visual review | `human-visual-review-needed` | Code/effect/coordinate evidence exists, but exact browser appearance has not been manually inspected by a human. BCU `DataUnit`/`DataEnemy` CSV constructors do not expose a direct `IMUDELAY` column in inspected source; `IMUDELAY` remains a `Proc.IMUAD` holder for custom/proc-object sources and is supported by runtime when present. | Human/manual visual review only; do not mark `fully-complete` until recorded. |
 | burrow | `parsed-only` | Enemy burrow fields are parsed, but lifecycle is not implemented. It affects movement, targetability, collision, reappearance, zombie revive, and soulstrike. | Implement only after BCU state machine and capture/collision semantics are proven. |
 | summon | `blocked` | Holder fields, runtime owner, effect owner, and target/collision interactions are not proven in current docs/tests. | Extract BCU summon fields and runtime before coding. |
 | spirit | `blocked` | Actor lifecycle and visual/runtime ownership are not proven. | Extract BCU spirit lifecycle and testable owner path. |
@@ -50,7 +50,7 @@ These must not be marked code-complete until the listed blocker is resolved.
 
 ### Parser does not imply runtime completion
 
-`BcuCombatModel` still parses fields whose owners are not yet fully implemented. `burrow` remains `parsed-only`. `P_DELAY` is no longer parsed-only for its core owner path because BCU source proves the owner and `BcuDelayRuntime` implements it, but its visual and exact edge parity still remain partial.
+`BcuCombatModel` still parses fields whose owners are not yet fully implemented. `burrow` remains `parsed-only`. `P_DELAY` is no longer parsed-only: BCU source proves the owner path, same-tick aggregation is implemented, `A_E_DELAY` is bundled and traced, and remaining work is human/manual visual review rather than code evidence.
 
 ### Damage resolver scope is intentionally limited
 

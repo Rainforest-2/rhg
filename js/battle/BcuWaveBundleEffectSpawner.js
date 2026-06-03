@@ -26,7 +26,7 @@ function inferScaleMode(key, type, source) {
   const t = String(type || '');
   const s = String(source || '');
   if (k === 'warp' || k === 'warpChara' || t === 'warp' || s.includes('warp')) return BCU_SCALE_MODE.WARP_HOLE;
-  if (t === 'barrier' || t === 'demonShield' || t === 'waveInvalid' || t === 'waveStop') return BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT;
+  if (t === 'barrier' || t === 'demonShield' || t === 'waveInvalid' || t === 'waveStop' || t === 'delay') return BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT;
   if (t === 'counterSurge') return BCU_SCALE_MODE.HIT_SMOKE;
   return BCU_SCALE_MODE.LEGACY;
 }

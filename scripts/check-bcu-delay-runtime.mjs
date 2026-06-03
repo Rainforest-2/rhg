@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import '../js/battle/BcuDelayRuntimePatch.js';
+import { BattleActor } from '../js/battle/BattleActor.js';
 import { BattleEconomy } from '../js/battle/BattleEconomy.js';
 import { BcuCombatModel } from '../js/battle/BcuCombatModel.js';
 import { ProcResolver } from '../js/battle/ProcResolver.js';
@@ -8,7 +9,9 @@ import {
   applyBcuPlayerCooldownDelay,
   applyBcuStageLineDelay,
   buildBcuDelayVector,
-  getBcuDelayStrength
+  flushBcuDelayProcQueues,
+  getBcuDelayStrength,
+  queueBcuDelayProc
 } from '../js/battle/bcu-runtime/BcuDelayRuntime.js';
 
 function raw(length, entries) {
@@ -23,7 +26,8 @@ assert.deepEqual(buildBcuDelayVector({ strength: 25, type: 2 }), { type: 2, stre
 assert.equal(getBcuDelayStrength(40, 100, [50, 0, 0]), 30, 'BCU getDelayStrength type0 uses progress percentage');
 assert.equal(getBcuDelayStrength(40, 100, [0, 8, 0]), 8, 'BCU getDelayStrength type1 uses direct value capped by current');
 assert.equal(getBcuDelayStrength(40, 100, [0, 0, 25]), 25, 'BCU getDelayStrength type2 uses max percentage');
-assert.equal(getBcuDelayStrength(1, 100, [-50, 0, 0]), -1, 'BCU getDelayStrength preserves minimum -1 for negative percentage delay');
+assert.equal(getBcuDelayStrength(1, 100, [-50, 0, 0]), -49, 'BCU getDelayStrength keeps Java integer percentage result when nonzero');
+assert.equal(getBcuDelayStrength(99, 100, [-50, 0, 0]), -1, 'BCU getDelayStrength preserves minimum -1 for zero negative percentage delay');
 
 const catalog = ProcResolver.getProcCatalog();
 assert.equal(catalog.delay.implemented, true, 'ProcResolver catalog exposes delay after BcuDelayRuntimePatch import');
@@ -66,6 +70,57 @@ assert.equal(enemyDelay.max, 100, 'stage line delay uses max respawn as BCU ESta
 assert.equal(enemyDelay.inc, 30, 'stage line delay increment follows BCU getDelayStrength');
 assert.equal(stageRuntime.rows[0].nextFrame, 80, 'stage row nextFrame updated by delay');
 assert.equal(stageScene.events.some((event) => event.type === 'bcuDelayStageLineApplied'), true, 'stage line delay emits debug event');
+
+const aggregateEconomy = new BattleEconomy({ startMoney: 1000, maxMoney: 1000, incomePerSecond: 0 });
+aggregateEconomy.cooldownFrames.set('prod-agg', 40);
+aggregateEconomy.cooldowns.set('prod-agg', 40 * 33);
+const aggregateScene = {
+  economy: aggregateEconomy,
+  logicFrame: 20,
+  timeMs: 660,
+  findPlayerProductionUnit: (slotId) => slotId === 'prod-agg' ? { slotId, bcuRespawnFrames: 100 } : null,
+  events: [],
+  pushEvent(event) { this.events.push(event); }
+};
+const aggregateActor = { side: 'dog-player', slotId: 'prod-agg', scene: aggregateScene, instanceId: 'unit-delay-aggregate' };
+assert.equal(queueBcuDelayProc(aggregateActor, { key: 'delay', payload: { strength: 25, type: 0 } }, { scene: aggregateScene }).queued, true, 'first same-tick delay queues');
+assert.equal(queueBcuDelayProc(aggregateActor, { key: 'delay', payload: { strength: 25, type: 0 } }, { scene: aggregateScene }).queued, true, 'second same-tick delay queues');
+const aggregateFlush = flushBcuDelayProcQueues(aggregateScene, 'test-same-tick');
+assert.equal(aggregateFlush.processed, 2, 'same-tick delay flush processes both queued procs');
+assert.equal(aggregateEconomy.getCooldownFrames('prod-agg'), 70, 'same-tick type0 delays aggregate before applying percentage to current cooldown');
+assert.equal(aggregateScene.events.some((event) => event.type === 'bcuDelayQueueFlushed' && event.processed === 2), true, 'same-tick delay emits aggregate flush trace');
+
+const immuneActor = new BattleActor({ side: 'dog-player', x: 0, y: 0, stats: { hp: 100 } });
+immuneActor.instanceId = 'delay-immune';
+immuneActor.slotId = 'prod-u';
+immuneActor.bcuCombatModel = { kind: 'unit', proc: { IMUDELAY: { mult: 100, block: 100 } }, immunity: { delay: { mult: 100 } }, ability: { abi: 0 } };
+const immuneResult = immuneActor.applyBcuProc({ key: 'delay', payload: { strength: 50, type: 0 } }, { scene: playerScene });
+assert.equal(immuneResult.immune, true, 'full IMUDELAY blocks delay runtime');
+assert.equal(economy.getCooldownFrames('prod-u'), 70, 'full IMUDELAY does not change cooldown');
+
+const partialEconomy = new BattleEconomy({ startMoney: 1000, maxMoney: 1000, incomePerSecond: 0 });
+partialEconomy.cooldownFrames.set('prod-partial', 40);
+partialEconomy.cooldowns.set('prod-partial', 40 * 33);
+const partialScene = {
+  economy: partialEconomy,
+  logicFrame: 21,
+  timeMs: 693,
+  effects: [],
+  waveEffectAssets: {},
+  ensureWaveEffectLoading() {},
+  findPlayerProductionUnit: (slotId) => slotId === 'prod-partial' ? { slotId, bcuRespawnFrames: 100 } : null,
+  events: [],
+  pushEvent(event) { this.events.push(event); }
+};
+const partialActor = new BattleActor({ side: 'dog-player', x: 0, y: 0, stats: { hp: 100 } });
+partialActor.instanceId = 'delay-partial';
+partialActor.slotId = 'prod-partial';
+partialActor.scene = partialScene;
+partialActor.bcuCombatModel = { kind: 'unit', proc: { IMUDELAY: { mult: 50, block: 50 } }, immunity: { delay: { mult: 50 } }, ability: { abi: 0 } };
+const partialResult = partialActor.applyBcuProc({ key: 'delay', payload: { strength: 60, type: 0 } }, { scene: partialScene });
+assert.equal(partialResult.queued, true, 'partial IMUDELAY still queues adjusted delay');
+flushBcuDelayProcQueues(partialScene, 'test-partial-resistance');
+assert.equal(partialEconomy.getCooldownFrames('prod-partial'), 58, 'partial IMUDELAY reduces delay strength before aggregate application');
 
 const noCooldown = applyBcuDelayProc({ side: 'dog-player', slotId: 'missing', scene: playerScene, isAlive: () => true }, { key: 'delay', payload: { strength: 50, type: 0 } }, { scene: playerScene });
 assert.equal(noCooldown.applied, false, 'delay does not apply when no active cooldown/rem target exists');

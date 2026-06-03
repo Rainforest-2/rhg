@@ -2,12 +2,15 @@ import { BattleActor } from './BattleActor.js';
 import { BattleScene } from './BattleScene.js';
 import { ProcResolver } from './ProcResolver.js';
 import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
-import { applyBcuDelayProc } from './bcu-runtime/BcuDelayRuntime.js';
+import { flushBcuDelayProcQueues, queueBcuDelayProc } from './bcu-runtime/BcuDelayRuntime.js';
 import { applyBcuProcPercent, resolveBcuProcResistance } from './bcu-runtime/BcuResistRuntime.js';
+import { spawnWaveBundleEffect } from './BcuWaveBundleEffectSpawner.js';
+import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-delay-runtime-patch.v1');
 const PROC_RESOLVER_FLAG = Symbol.for('wanko-battle.proc-resolver-delay-patch.v1');
 const SCENE_ROW_FLAG = Symbol.for('wanko-battle.bcu-delay-stage-row-metadata.v1');
+const SCENE_FLUSH_FLAG = Symbol.for('wanko-battle.bcu-delay-proc-flush.v1');
 
 function getCombatModel(entity) {
   return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
@@ -98,6 +101,22 @@ function annotateSpawnedStageEnemy(scene, beforeCount, row) {
     bcuReference: 'EEnemy.processProcs stores its stage line index; postUpdate routes P_DELAY to basis.lineDelay[line]'
   };
   return actor;
+}
+
+function spawnDelayEffect(actor, scene) {
+  if (!actor || !scene) return null;
+  return spawnWaveBundleEffect(scene, {
+    key: 'enemyDelay',
+    actor,
+    layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
+    type: 'delay',
+    source: 'bcu-effanim-delay-proc',
+    bcuSmokeYOffset: -50,
+    bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
+    debug: {
+      bcuReference: 'EUnit/EEnemy.processProcs: basis.lea.add(new EAnimCont(pos, currentLayer, effas().A_E_DELAY.getEAnim(DefEff.DEF), -50f))'
+    }
+  });
 }
 
 export function installBcuDelayRuntimePatch() {
@@ -210,7 +229,8 @@ export function installBcuDelayRuntimePatch() {
       }
       const adjusted = adjustDelayPayloadForResistance(item.payload || {}, resistance);
       const adjustedItem = { ...item, payload: adjusted.payload, bcuProcResistance: resistance };
-      const result = applyBcuDelayProc(this, adjustedItem, meta);
+      spawnDelayEffect(this, meta.scene || this.scene || null);
+      const result = queueBcuDelayProc(this, adjustedItem, meta);
       if (adjusted.adjusted) result.bcuProcResistance = { field: 'IMUDELAY', mult: resistance.mult, breakdown: resistance.breakdown || null };
       this.lastBcuDelayProcDebug = { source: 'BcuDelayRuntimePatch.applyBcuProc', item: adjustedItem, result, resistance };
       this.lastBcuProcApplyDebug = { item: adjustedItem, result, nowMs: meta.nowMs ?? null, source: 'BcuDelayRuntimePatch.applyBcuProc' };
@@ -231,6 +251,29 @@ export function installBcuDelayRuntimePatch() {
           this.pushEvent?.({ type: 'bcuDelayStageRowAnnotated', actor: actor.instanceId || actor.label || null, rowIndex: actor.stageSpawnRowIndex });
         }
         return ok;
+      };
+    }
+  }
+
+  if (sceneProto && !sceneProto[SCENE_FLUSH_FLAG]) {
+    sceneProto[SCENE_FLUSH_FLAG] = true;
+    const originalRunTickPhase = sceneProto.runTickPhase;
+    if (typeof originalRunTickPhase === 'function') {
+      sceneProto.runTickPhase = function runTickPhaseWithBcuDelayFlush(phase, fn = () => {}) {
+        if (phase === 'proc-resolve') {
+          return originalRunTickPhase.call(this, phase, () => {
+            const result = fn();
+            flushBcuDelayProcQueues(this, 'proc-resolve');
+            return result;
+          });
+        }
+        if (phase === 'knockback-death' || phase === 'cleanup') {
+          return originalRunTickPhase.call(this, phase, () => {
+            flushBcuDelayProcQueues(this, `pre-${phase}-safety`);
+            return fn();
+          });
+        }
+        return originalRunTickPhase.call(this, phase, fn);
       };
     }
   }

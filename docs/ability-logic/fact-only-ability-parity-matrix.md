@@ -224,12 +224,21 @@ BCU common/Android 参照、現行 JS、ローカル asset、ZIP bundle、builde
 - W5/W6 effect evidence follow-up: `EffectRuntime.createEffect` preserves `bcuScaleMode`; `BattleSceneRendererEffectGlowPatch.resolveBcuEffectScale` branches stage projectile / actor priority / warp / hit smoke / legacy formulas with scale trace fields. `check-effect-coordinate-traces` now verifies real wave, mini-wave, surge start/during/end, mini-surge start/during/end, blast start/explode, barrier, demon shield, warp entrance/exit, wave invalid, wave stop, and counter-surge spawn paths.
 - ZIP/effect evidence: `check-effect-bundle-aliases` verifies every `BattleWaveEffectLoader` alias against `public/assets/bundles/effect/wave.zip`, required status aliases from `BcuStatusEffectSpec`, and critical/hit smoke/boss/kb entries against `status-effects.zip` and `kbeff.zip`.
 
+## Implemented in 2026-06-03 P_DELAY pass
+
+- P_DELAY source evidence: `DataEnemy.fillData` maps `ints[111]` / `ints[112]` to `Proc.DELAY.prob` / `strength`; `Proc.DELAY.type` is a proc-object/editor field; no direct `DataUnit` or `DataEnemy` CSV holder for `IMUDELAY` was found in inspected constructors.
+- P_DELAY runtime owner: `EUnit.processProcs` and `EEnemy.processProcs` accumulate accepted delay into `status[P_DELAY][type]`; `EUnit.postUpdate` adds into `basis.cdDelay`; `EEnemy.postUpdate` writes `basis.lineDelay`; `StageBasis.update` flushes those arrays once per tick through `ELineUp.delay` / `EStage.delay`.
+- JS runtime update: `BcuDelayRuntime` now queues same-tick delay procs and `BcuDelayRuntimePatch` flushes the aggregate in `proc-resolve`, matching BCU's status-to-basis handoff instead of applying each accepted hit immediately.
+- A_E_DELAY visual evidence: `EffAnim.A_E_DELAY` maps to `./org/battle/s23/skill_recast_decrease_e`; BCU spawns `EAnimCont(pos, currentLayer, A_E_DELAY DEF, -50f)` on nonzero accepted delay. `effect:wave` now has the stable alias `enemy-delay/image.png`, `enemy-delay/imgcut.imgcut`, `enemy-delay/model.mamodel`, and `enemy-delay/anim.maanim`.
+- Tests: `scripts/check-bcu-delay-runtime.mjs` covers exact `getDelayStrength`, full `IMUDELAY`, partial `IMUDELAY`, same-tick multi-delay aggregation, player cooldown, enemy stage line, and no-op paths. `scripts/check-effect-bundle-aliases.mjs` and `scripts/check-effect-coordinate-traces.mjs` cover the `A_E_DELAY` bundle and coordinate/effect trace.
+- Status: `P_DELAY` is `human-visual-review-needed`; code/effect/coordinate evidence passes, but exact browser appearance has not been manually reviewed.
+
 ## Deferred / `fact-partial` rows and blockers
 
 - `AB_VKILL`: BCU bit/trait/damage rule known, but playable holder source appears combo/orb-based locally; no safe parser path found.
 - Wave guard / castle guard: `A_E_GUARD` alias is bundled and loader-resolvable, but current JS has no completed castle/base guard state equivalent to BCU `ECastle.activeGuard`; row remains partial for runtime hook.
 - Warp no-KB suppression: lifecycle timing is implemented and tested, but broader proc-vs-HP-KB cancellation ordering is only covered through existing proc application ordering and remains a residual audit item.
-- Burrow, summon, spirit: holder/runtime identity and movement/spawn state are not sufficiently mapped.
+- Burrow, summon, spirit: holder/runtime identity and movement/spawn state are not sufficiently mapped. `docs/ability-logic/bcu-ability-source-evidence.md` records the BCU owner files found so far; no JS lifecycle was implemented in the 2026-06-03 P_DELAY pass.
 - Partial resistances: supported IMU/sage math is centralized in `BcuResistRuntime`, but exact source fields beyond current combat model IMU fields and sage hunter remain unresolved.
 
 ## Run 2 changed files

@@ -49,7 +49,8 @@ function fakeScene() {
       unitWaveStop: fakeAsset('waveStop'),
       enemyWaveStop: fakeAsset('waveStop'),
       unitCounterSurge: fakeAsset('counterSurge'),
-      enemyCounterSurge: fakeAsset('counterSurge')
+      enemyCounterSurge: fakeAsset('counterSurge'),
+      enemyDelay: fakeAsset('delay')
     },
     soulEffectAssets: {
       'soul-003': fakeAsset('deathSoul'),
@@ -137,7 +138,8 @@ for (const fixture of [
   ['warpChara', 'exit', 'warp', BCU_SCALE_MODE.WARP_HOLE],
   ['unitWaveInvalid', null, 'waveInvalid', BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT],
   ['enemyWaveStop', null, 'waveStop', BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT],
-  ['unitCounterSurge', null, 'counterSurge', BCU_SCALE_MODE.HIT_SMOKE]
+  ['unitCounterSurge', null, 'counterSurge', BCU_SCALE_MODE.HIT_SMOKE],
+  ['enemyDelay', null, 'delay', BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT]
 ]) {
   const [key, phase, type, mode] = fixture;
   const effect = spawnWaveBundleEffect(scene, {
@@ -147,7 +149,7 @@ for (const fixture of [
     type,
     source: `bcu-effanim-${type}`,
     bcuScreenOffsetX: key === 'warp' ? -27 : 0,
-    bcuSmokeYOffset: key === 'warp' ? 299 : 0,
+    bcuSmokeYOffset: key === 'warp' ? 299 : key === 'enemyDelay' ? -50 : 0,
     debug: { bcuReference: `runtime fixture for ${key}` }
   });
   assertSpawnTrace(effect, { effectKey: key, phase, mode, sourceIncludes: /bcu-effanim/ });

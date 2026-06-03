@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { BcuCombatModel } from '../js/battle/BcuCombatModel.js';
+import { ProcResolver } from '../js/battle/ProcResolver.js';
+import { DamageAbilityResolver } from '../js/battle/DamageAbilityResolver.js';
+
+function raw(length, entries) {
+  const out = Array.from({ length }, () => 0);
+  for (const [index, value] of entries) out[index] = value;
+  return out;
+}
+
+const enemy = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [
+  [43, 2], [44, 400],
+  [111, 45], [112, 8]
+]) });
+
+assert.equal(enemy.proc.burrow.count, 2, 'enemy burrow parser reads DataEnemy.ints[43]');
+assert.equal(enemy.proc.burrow.dis, 100, 'enemy burrow distance parser applies /4 to DataEnemy.ints[44]');
+assert.equal(enemy.proc.delay.prob, 45, 'enemy delay parser reads DataEnemy.ints[111]');
+assert.equal(enemy.proc.delay.strength, 8, 'enemy delay parser reads DataEnemy.ints[112]');
+
+const catalog = ProcResolver.getProcCatalog();
+assert.equal(Object.hasOwn(catalog, 'delay'), false, 'delay should stay non-complete until its production/cooldown owner is proven');
+assert.equal(Object.hasOwn(catalog, 'burrow'), false, 'burrow should stay non-complete until its movement lifecycle is proven');
+
+const probe = DamageAbilityResolver.resolve({
+  attacker: { side: 'dog-player', traits: ['red'], stats: { bcuCombatModel: BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, []) }) } },
+  target: { side: 'cat-enemy', traits: ['red'], stats: { bcuCombatModel: BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, []) }) } },
+  targetType: 'actor',
+  baseDamage: 100,
+  context: { random: () => 1 }
+});
+
+const omitted = probe.implementationStatus?.omittedRuntimeState || [];
+assert.ok(omitted.includes('orbs'), 'damage resolver still reports missing orb runtime state');
+assert.ok(omitted.includes('combos'), 'damage resolver still reports missing combo runtime state');
+assert.ok(omitted.includes('full Trait targetForms special cases'), 'damage resolver still reports missing targetForms cases');
+assert.ok(omitted.includes('sage status resistance'), 'damage resolver still reports missing sage status-resistance scope');
+
+const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 'utf8');
+for (const phrase of [
+  '`P_DELAY` | `parsed-only`',
+  'burrow | `parsed-only`',
+  'combo / orb / treasure damage modifiers | `partial`',
+  'AB_SKILL status resistance side | `partial`',
+  'death surge / zombie corpse interaction | `partial`'
+]) {
+  assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
+}
+
+console.log('check-ability-partial-blockers: OK');

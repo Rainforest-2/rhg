@@ -68,6 +68,7 @@ async function boot() {
     await import('./battle/BattleSceneStageSpawnHeaderPatch.js');
     await import('./battle/BattleSceneBcuAttackPhasePatch.js');
     await import('./battle/BattleSceneProcApplyPatch.js');
+    await import('./battle/BattleSceneBcuWaveInvalidApplyPatch.js');
     await import('./battle/BattleSceneBcuProcRuntimePatch.js');
     await import('./battle/BattleSceneBcuStageBasisPhaseBridgePatch.js');
     await import('./battle/BattleBountyRuntimePatch.js');

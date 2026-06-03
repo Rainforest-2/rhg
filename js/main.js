@@ -38,6 +38,7 @@ async function boot() {
     await import('./ui/NyankoUiBehaviorPatch.js');
     await import('./ui/ProductionCardDogIconFitPatch.js');
     await import('./ui/FormationCustomStageBattlePatch.js');
+    await import('./ui/FormationCustomStageBattleHpPatch.js');
     await import('./battle/bcu-runtime/BcuTraceRuntime.js');
     await import('./battle/BattleBcuStrictConfigPatch.js');
     await import('./battle/StageDefinitionNegativeSpawnPatch.js');
@@ -63,6 +64,7 @@ async function boot() {
     await import('./battle/BattleSceneBcuLineupPatch.js');
     await import('./battle/BattleSceneBcuStageSpawnPatch.js');
     await import('./battle/BattleSceneCustomStageBattlePatch.js');
+    await import('./battle/BattleSceneCustomStageBaseHpPatch.js');
     await import('./battle/BattleSceneStageSpawnHeaderPatch.js');
     await import('./battle/BattleSceneBcuAttackPhasePatch.js');
     await import('./battle/BattleSceneProcApplyPatch.js');

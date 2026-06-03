@@ -105,6 +105,7 @@ async function boot() {
     const db = await BcuBootLoader.loadGame({ assetRoot: './public/assets', bcuRoot: './public/assets/bcu', locale: 'jp', preloadMode: 'metadata-and-current-battle' });
     setBcuAssetDatabase(db);
     showBootStatus('出撃準備中…');
+    await import('./preview/PreviewAppCustomStageBattleConfigPatch.js');
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     const app = new PreviewApp({ bcuDb: db });
     globalThis.__APP__ = app;

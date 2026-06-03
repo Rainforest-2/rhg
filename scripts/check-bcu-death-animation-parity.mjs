@@ -81,10 +81,14 @@ assert.equal(fallbackEnemy.deathAnimation.fallbackApplied, true, 'enemy fallback
 
 const scene = fakeScene();
 const normalActor = actorWithModel(unit, scene, 'dog-player');
+normalActor.currentLayer = 5;
 normalActor.enterDeadState(0);
 assert.equal(normalActor.bcuDeathAnimation.active, true, 'normal death starts BCU soul animation');
 assert.equal(normalActor.bcuDeathAnimation.hideBaseActor, true, 'normal death hides base actor');
 assert.equal(normalActor.bcuDeathAnimation.bcuYOffset, BCU_DEATH_SOUL_Y_OFFSET, 'normal death uses BCU soul y offset');
+assert.equal(normalActor.bcuDeathAnimation.layer, 0, 'normal death soul resets to BCU currentLayer 0');
+assert.equal(scene.effects[0].currentLayer, 0, 'normal death soul effect uses layer 0, not pre-death actor layer');
+assert.ok(normalActor.bcuDeathAnimation.layerSource.includes('currentLayer = 0'), 'normal death layer source cites BCU currentLayer reset');
 assert.equal(normalActor.bcuDeathAnimation.frameCount, 5, 'normal death frameCount comes from loaded soul asset');
 assert.equal(scene.effects.length, 1, 'normal death spawns one soul effect');
 assert.equal(scene.effects[0].effectRuntimeDebug.effectKey, 'soul-003', 'soul effect uses parsed soul id');
@@ -139,9 +143,12 @@ assert.equal(glassScene.events.some((event) => event.type === 'bcuGlassSelfRemov
 const dsModel = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [[54, 7], [89, 100], [90, 40], [91, 120], [92, 3]]) });
 const dsScene = fakeScene();
 const dsActor = actorWithModel(dsModel, dsScene, 'cat-enemy');
+dsActor.currentLayer = 4;
 const dsState = startBcuDeathAnimation(dsActor, { scene: dsScene, nowMs: 0 });
 assert.equal(dsState.kind, 'deathSurge', 'death surge success uses demon soul branch');
 assert.equal(dsState.assetKey, 'demonSoulEnemy', 'enemy death surge uses enemy demon soul asset');
+assert.equal(dsState.layer, 4, 'death surge demon soul keeps actor current layer');
+assert.equal(dsScene.effects[0].currentLayer, 4, 'death surge soul effect keeps actor current layer');
 for (let i = 0; i < BCU_DEATH_SURGE_TRIGGER_FRAME; i += 1) {
   dsActor.lastSceneLogicFrame = i + 1;
   tickBcuDeathAnimation(dsActor, 33, { scene: dsScene, nowMs: i * 33 });

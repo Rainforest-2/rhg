@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import '../js/battle/BcuDelayRuntimePatch.js';
 import { BcuCombatModel } from '../js/battle/BcuCombatModel.js';
 import { ProcResolver } from '../js/battle/ProcResolver.js';
 import { DamageAbilityResolver } from '../js/battle/DamageAbilityResolver.js';
@@ -21,7 +22,8 @@ assert.equal(enemy.proc.delay.prob, 45, 'enemy delay parser reads DataEnemy.ints
 assert.equal(enemy.proc.delay.strength, 8, 'enemy delay parser reads DataEnemy.ints[112]');
 
 const catalog = ProcResolver.getProcCatalog();
-assert.equal(Object.hasOwn(catalog, 'delay'), false, 'delay should stay non-complete until its production/cooldown owner is proven');
+assert.equal(catalog.delay?.implemented, true, 'delay runtime owner is proven and registered after BcuDelayRuntimePatch import');
+assert.ok(String(catalog.delay?.runtime || '').includes('BcuDelayRuntime'), 'delay catalog records BcuDelayRuntime owner');
 assert.equal(Object.hasOwn(catalog, 'burrow'), false, 'burrow should stay non-complete until its movement lifecycle is proven');
 
 const probe = DamageAbilityResolver.resolve({
@@ -40,7 +42,8 @@ assert.ok(omitted.includes('sage status resistance'), 'damage resolver still rep
 
 const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 'utf8');
 for (const phrase of [
-  '`P_DELAY` | `parsed-only`',
+  '`P_DELAY`',
+  'code-complete-candidate',
   'burrow | `parsed-only`',
   'combo / orb / treasure damage modifiers | `partial`',
   'AB_SKILL status resistance side | `partial`',

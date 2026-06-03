@@ -112,6 +112,33 @@ deadActor.tick(33);
 assert.equal(isBcuWarpLifecycleActive(deadActor), false, 'dead actor clears stale warp lifecycle');
 assert.equal(deadActor.bcuWarpHidden, false, 'dead actor does not stay permanently hidden');
 
+const rewarpScene = fakeScene();
+const rewarpActor = makeActor(rewarpScene);
+rewarpActor.applyBcuProc({ key: 'warp', payload: { timeFrames: 8, time: 8, dis0: 120, dis1: 120 } }, { scene: rewarpScene, nowMs: 0 });
+const firstLifecycle = rewarpActor.bcuWarpLifecycle;
+assert.equal(isBcuWarpLifecycleActive(rewarpActor), true, 'first warp lifecycle starts');
+rewarpActor.applyBcuProc({ key: 'warp', payload: { timeFrames: 2, time: 2, dis0: 40, dis1: 40 } }, { scene: rewarpScene, nowMs: 33 });
+assert.notEqual(rewarpActor.bcuWarpLifecycle, firstLifecycle, 'second warp proc replaces stale lifecycle state');
+assert.equal(rewarpActor.bcuWarpLifecycle.procFrames, 2, 'replacement warp lifecycle uses new proc time');
+assert.equal(rewarpActor.bcuWarpLifecycle.distance, 40, 'replacement warp lifecycle uses new distance');
+assert.equal(rewarpActor.bcuWarpHidden, true, 'replacement warp keeps actor hidden');
+
+const exitDeathScene = fakeScene();
+const exitDeathActor = makeActor(exitDeathScene);
+exitDeathActor.applyBcuProc({ key: 'warp', payload: { timeFrames: 1, time: 1, dis0: 80, dis1: 80 } }, { scene: exitDeathScene, nowMs: 0 });
+while (isBcuWarpLifecycleActive(exitDeathActor) && !exitDeathActor.bcuWarpLifecycle.moved) {
+  exitDeathActor.lastSceneLogicFrame += 1;
+  exitDeathActor.tick(33);
+}
+assert.equal(exitDeathActor.bcuWarpLifecycle?.phase, 'exit', 'exit-death fixture reaches exit phase');
+exitDeathActor.hp = 0;
+exitDeathActor.state = 'dead';
+exitDeathActor.lastSceneLogicFrame += 1;
+exitDeathActor.tick(33);
+assert.equal(isBcuWarpLifecycleActive(exitDeathActor), false, 'death during exit clears warp lifecycle');
+assert.equal(exitDeathActor.bcuWarpHidden, false, 'death during exit does not leave actor permanently hidden');
+assert.equal(exitDeathActor.bcuRenderOverride?.mode === 'warp-cont', false, 'death during exit clears warp render override');
+
 const trace = getBcuWarpLifecycleTrace(actor) || actor.lastBcuWarpLifecycleDoneDebug;
 assert.ok(trace, 'warp lifecycle exposes deterministic trace');
 

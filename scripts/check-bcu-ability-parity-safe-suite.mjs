@@ -1,7 +1,10 @@
 import { spawnSync } from 'node:child_process';
 
 const commands = [
+  ['node', ['--check', 'js/battle/bcu-runtime/BcuDelayRuntime.js']],
+  ['node', ['--check', 'js/battle/BcuDelayRuntimePatch.js']],
   ['node', ['--check', 'scripts/check-bcu-parser-indexes.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-delay-runtime.mjs']],
   ['node', ['--check', 'scripts/check-projectile-damage-parity.mjs']],
   ['node', ['--check', 'scripts/check-proc-immunity-resistance-parity.mjs']],
   ['node', ['--check', 'scripts/check-effect-bundle-aliases.mjs']],
@@ -11,6 +14,7 @@ const commands = [
   ['node', ['--check', 'scripts/check-bcu-warp-lifecycle-parity.mjs']],
   ['node', ['--check', 'scripts/check-ability-partial-blockers.mjs']],
   ['node', ['scripts/check-bcu-parser-indexes.mjs']],
+  ['node', ['scripts/check-bcu-delay-runtime.mjs']],
   ['node', ['scripts/check-projectile-damage-parity.mjs']],
   ['node', ['scripts/check-proc-immunity-resistance-parity.mjs']],
   ['node', ['scripts/check-effect-bundle-aliases.mjs']],

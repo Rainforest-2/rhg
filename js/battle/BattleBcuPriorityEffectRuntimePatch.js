@@ -3,8 +3,9 @@ import { BattleActor } from './BattleActor.js';
 import { BCU_ABI } from './BcuCombatModel.js';
 import { directionForActor, spawnWaveBundleEffect } from './BcuWaveBundleEffectSpawner.js';
 import { enqueueBcuSurgeFromPayload } from './BattleSurgeRuntimePatch.js';
+import { processBcuBarrierShieldEffectQueue, spawnBcuBarrierShieldVisual } from './bcu-runtime/BcuBarrierShieldEffectRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.priority-effect-runtime.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.priority-effect-runtime.v2-barrier-shield-runtime');
 const ACTOR_PATCH_FLAG = Symbol.for('wanko-battle.priority-effect-actor-runtime.v1');
 const COUNTER_SURGE_FORESWING = 50;
 const BCU_WARP_BATTLEBOX_Y_OFFSET = 24;
@@ -31,10 +32,6 @@ function roll(scene) {
   return typeof rng === 'function' ? rng() : Math.random();
 }
 
-function barrierKey(actor) {
-  return directionForActor(actor) === 1 ? 'enemyBarrier' : 'unitBarrier';
-}
-
 function shouldMirrorUnitSide(actor) {
   return directionForActor(actor) === -1;
 }
@@ -44,38 +41,7 @@ function counterKey(actor) {
 }
 
 function spawnBarrierShieldVisual(scene, actor, event) {
-  if (!event?.type) return null;
-  if (event.type.startsWith('barrier')) {
-    const phase = event.type === 'barrier-breaker' ? 'breaker' : event.type === 'barrier-broken-by-damage' ? 'destruction' : 'none';
-    return spawnWaveBundleEffect(scene, {
-      key: barrierKey(actor),
-      phase,
-      actor,
-      type: 'barrier',
-      source: 'bcu-effanim-barrier',
-      renderFlipX: shouldMirrorUnitSide(actor),
-      debug: {
-        bcuReference: 'Entity.Barrier.breakBarrier / anim.getEff(BREAK_NON|BREAK_ABI|BREAK_ATK); side-specific draw mirrors friendly-side effect orientation',
-        barrierEvent: event
-      }
-    });
-  }
-  if (event.type.startsWith('shield')) {
-    const phase = event.type === 'shield-pierced' ? 'breaker' : event.type === 'shield-broken-by-damage' ? 'destruction' : event.type === 'shield-regen' ? 'revive' : (Number(event.after || 0) > 0 && Number(event.before || 0) > Number(event.after || 0) && Number(event.after || 0) < Number(actor.bcuDemonShieldMaxHp || 0) / 2 ? 'half' : 'full');
-    return spawnWaveBundleEffect(scene, {
-      key: 'demonShield',
-      phase,
-      actor,
-      type: 'demonShield',
-      source: 'bcu-effanim-demon-shield',
-      renderFlipX: shouldMirrorUnitSide(actor),
-      debug: {
-        bcuReference: 'Entity.getEff(P_DEMONSHIELD): ShieldEff FULL/HALF/BROKEN/BREAKER/REGENERATION; friendly-side shield is mirrored to distinguish side orientation',
-        shieldEvent: event
-      }
-    });
-  }
-  return null;
+  return spawnBcuBarrierShieldVisual(scene, actor, event, { source: 'BattleBcuPriorityEffectRuntimePatch' });
 }
 
 function spawnInvalidIfNeeded(scene, target, result, event, meta) {
@@ -88,8 +54,9 @@ function spawnInvalidIfNeeded(scene, target, result, event, meta) {
     actor: target,
     type: 'waveInvalid',
     source: 'bcu-effanim-wave-invalid',
+    bcuSmokeYOffset: 25,
     debug: {
-      bcuReference: 'Entity.damaged IMUWAVE/IMUVOLC/IMUBLAST/IMUPOIATK mult>0 calls anim.getEff(P_WAVE)',
+      bcuReference: 'Entity.damaged IMUWAVE/IMUVOLC/IMUBLAST/IMUPOIATK mult>0 calls anim.getEff(P_WAVE); drawEff uses p.y - 25*siz',
       guard,
       kind
     }
@@ -125,9 +92,6 @@ function effectPhaseLength(scene, key, phase) {
 function warpExitDelay(scene, status) {
   const effectEnterLen = effectPhaseLength(scene, 'warp', 'entrance');
   const baseFrames = Math.max(1, Math.trunc(Number(status?.durationFrames || status?.timeFrames || 1)));
-  // BCU sets status[P_WARP][0] = procTime + A_W ENTER + A_W EXIT, starts ENTER immediately,
-  // and starts EXIT when kbTime + 1 == A_W EXIT length. Therefore the visual delay from ENTER
-  // creation to EXIT creation is procTime + A_W ENTER + 1.
   return Math.max(1, baseFrames + effectEnterLen + 1);
 }
 
@@ -191,7 +155,7 @@ function queueCounterSurge(scene, target, incomingEvent, meta = {}) {
     kind: incomingKind,
     delay: COUNTER_SURGE_FORESWING,
     damage: Math.max(1, Math.trunc(Number(target.damage || incomingEvent?.damage || 1) || 1)),
-    id: `${scene.logicFrame || 0}:${target.instanceId || target.label || 'counter'}:counter-surge`,
+    id: `${scene.logicFrame || 0}:${target.instanceId || target.label || 'actor'}:counter-surge`,
     source: 'BCU SurgeSummoner COUNTER_SURGE_FORESWING'
   };
   scene.__bcuCounterSurgeQueue.push(item);
@@ -288,6 +252,7 @@ export function installBattleBcuPriorityEffectRuntimePatch() {
             type: 'shield-regen',
             before,
             after,
+            max: maxShield,
             source: 'BCU KBManager INT_HB regenerates DEMONSHIELD hp * regen / 100 and anim.getEff(SHIELD_REGEN)'
           };
           result.bcuBarrierShieldEvents = [...(result.bcuBarrierShieldEvents || []), this.lastBcuDemonShieldRegenEvent];
@@ -325,6 +290,7 @@ export function installBattleBcuPriorityEffectRuntimePatch() {
           maybeDeathSurge(this, actor);
         }
         if (phase === 'proc-resolve') {
+          processBcuBarrierShieldEffectQueue(this);
           processDelayedEffects(this);
           processCounterSurgeQueue(this);
         }

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { BattleActor } from '../js/battle/BattleActor.js';
+import { BattleScene } from '../js/battle/BattleScene.js';
 import '../js/battle/BattleBcuDeathAnimationRuntimePatch.js';
+import '../js/battle/BattleActorGlassPatch.js';
 import { BcuCombatModel, BCU_ABI } from '../js/battle/BcuCombatModel.js';
 import { BCU_DEATH_SOUL_FALLBACK_FRAMES, BCU_DEATH_SOUL_Y_OFFSET, BCU_DEATH_SURGE_TRIGGER_FRAME, startBcuDeathAnimation, tickBcuDeathAnimation } from '../js/battle/bcu-runtime/BcuDeathAnimationRuntime.js';
 
@@ -118,6 +120,21 @@ glassActor.enterDeadState(0);
 assert.equal(glassActor.bcuDeathAnimation.kind, 'glass', 'AB_GLASS records glass death branch');
 assert.equal(glassActor.bcuDeathAnimation.active, false, 'AB_GLASS skips soul animation');
 assert.equal(glassActor.isRemovable(0), true, 'AB_GLASS remains immediate cleanup');
+
+const glassScene = Object.create(BattleScene.prototype);
+glassScene.timeMs = 1234;
+glassScene.events = [];
+glassScene.pushEvent = function pushEvent(event) { this.events.push(event); };
+const glassPathActor = actorWithModel(glassModel, fakeScene(), 'cat-enemy');
+glassPathActor.hp = 1;
+glassPathActor.isAliveFlag = true;
+glassPathActor.state = 'attack';
+glassPathActor.bcuAttacksLeft = 0;
+glassScene.enterAttackWait(glassPathActor, 'attack-complete');
+assert.equal(glassPathActor.bcuGlassSelfRemoved, true, 'AB_GLASS self-remove path runs from BattleScene.enterAttackWait attack-complete');
+assert.equal(glassPathActor.bcuDeathAnimation?.active === true, false, 'AB_GLASS self-remove path does not start normal soul animation');
+assert.equal(glassPathActor.removeAfterMs, 0, 'AB_GLASS self-remove path remains immediate cleanup');
+assert.equal(glassScene.events.some((event) => event.type === 'bcuGlassSelfRemoved'), true, 'AB_GLASS self-remove path emits debug event');
 
 const dsModel = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [[54, 7], [89, 100], [90, 40], [91, 120], [92, 3]]) });
 const dsScene = fakeScene();

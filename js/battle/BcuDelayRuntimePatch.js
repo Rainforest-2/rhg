@@ -1,4 +1,5 @@
 import { BattleActor } from './BattleActor.js';
+import { BattleScene } from './BattleScene.js';
 import { ProcResolver } from './ProcResolver.js';
 import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
 import { applyBcuDelayProc } from './bcu-runtime/BcuDelayRuntime.js';
@@ -6,6 +7,7 @@ import { applyBcuProcPercent, resolveBcuProcResistance } from './bcu-runtime/Bcu
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-delay-runtime-patch.v1');
 const PROC_RESOLVER_FLAG = Symbol.for('wanko-battle.proc-resolver-delay-patch.v1');
+const SCENE_ROW_FLAG = Symbol.for('wanko-battle.bcu-delay-stage-row-metadata.v1');
 
 function getCombatModel(entity) {
   return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
@@ -78,6 +80,24 @@ function adjustDelayPayloadForResistance(payload = {}, resistance = null) {
   const rawStrength = number(out.strength, 0);
   out.strength = Math.trunc(applyBcuProcPercent({ rawPercent: rawStrength, resist: resistance.mult }));
   return { payload: out, adjusted: true };
+}
+
+function annotateSpawnedStageEnemy(scene, beforeCount, row) {
+  const after = scene?.actors?.length || 0;
+  if (!scene || after <= beforeCount) return null;
+  const actor = scene.actors[after - 1] || null;
+  if (!actor) return null;
+  const rowIndex = Number(row?.rowIndex ?? row?.row?.rowIndex);
+  if (!Number.isFinite(rowIndex)) return actor;
+  actor.stageSpawnRowIndex = Math.trunc(rowIndex);
+  actor.stageSpawn = row?.row || row;
+  actor.stageSpawnSource = 'BcuDelayRuntimePatch.spawnStageEnemy row metadata for EStage.delay parity';
+  actor.lastBcuDelayStageRowDebug = {
+    source: actor.stageSpawnSource,
+    rowIndex: actor.stageSpawnRowIndex,
+    bcuReference: 'EEnemy.processProcs stores its stage line index; postUpdate routes P_DELAY to basis.lineDelay[line]'
+  };
+  return actor;
 }
 
 export function installBcuDelayRuntimePatch() {
@@ -196,6 +216,23 @@ export function installBcuDelayRuntimePatch() {
       this.lastBcuProcApplyDebug = { item: adjustedItem, result, nowMs: meta.nowMs ?? null, source: 'BcuDelayRuntimePatch.applyBcuProc' };
       return result;
     };
+  }
+
+  const sceneProto = BattleScene?.prototype;
+  if (sceneProto && !sceneProto[SCENE_ROW_FLAG]) {
+    sceneProto[SCENE_ROW_FLAG] = true;
+    const originalSpawnStageEnemy = sceneProto.spawnStageEnemy;
+    if (typeof originalSpawnStageEnemy === 'function') {
+      sceneProto.spawnStageEnemy = function spawnStageEnemyWithBcuDelayRowMetadata(unitDef, row) {
+        const before = this.actors?.length || 0;
+        const ok = originalSpawnStageEnemy.call(this, unitDef, row);
+        const actor = annotateSpawnedStageEnemy(this, before, row);
+        if (actor?.stageSpawnRowIndex !== undefined) {
+          this.pushEvent?.({ type: 'bcuDelayStageRowAnnotated', actor: actor.instanceId || actor.label || null, rowIndex: actor.stageSpawnRowIndex });
+        }
+        return ok;
+      };
+    }
   }
 }
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { BattleActor } from '../js/battle/BattleActor.js';
 import { BcuCombatModel } from '../js/battle/BcuCombatModel.js';
 import '../js/battle/BattleActorBarrierShieldPatch.js';
+import '../js/battle/BattleActorBarrierShieldVisualPatch.js';
 import '../js/battle/BattleBcuPriorityEffectRuntimePatch.js';
 import { BCU_SCALE_MODE } from '../js/battle/bcu-runtime/BcuEffectTraceRuntime.js';
 import {

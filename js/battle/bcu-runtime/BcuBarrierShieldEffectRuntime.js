@@ -125,7 +125,14 @@ export function spawnBcuBarrierShieldVisual(scene, actor, event = {}, options = 
       phase: spec.phase,
       actor: actorLabel(actor),
       eventType: event.type,
-      bcuSmokeYOffset: BCU_BARRIER_SHIELD_ICON_Y_OFFSET
+      scale: effect.scale,
+      layer: effect.currentLayer,
+      lifetimeMs: effect.durationMs,
+      frameDurationMs: effect.frameDurationMs,
+      renderFlipX: effect.renderFlipX === true,
+      bcuScaleMode: effect.bcuScaleMode,
+      bcuSmokeYOffset: BCU_BARRIER_SHIELD_ICON_Y_OFFSET,
+      bcuReference: spec.bcuReference
     };
     return effect;
   }

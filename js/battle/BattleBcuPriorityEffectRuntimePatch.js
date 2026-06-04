@@ -12,6 +12,7 @@ const BCU_WARP_BATTLEBOX_Y_OFFSET = 24;
 const BCU_WARP_HOLE_EXTRA_Y_OFFSET = 275;
 const BCU_WARP_UNIT_SCREEN_OFFSET_X = -27;
 const BCU_WARP_ENEMY_SCREEN_OFFSET_X = -24;
+const DEMON_SHIELD_REGEN_BCU_REFERENCE = 'BCU Entity.KBManager.updateKB: when kbTime reaches 0, kbType == INT_HB, health > 0, and DEMONSHIELD.hp > 0, currentShield = (int)(hp * regen * shieldMagnification / 100.0), then anim.getEff(SHIELD_REGEN).';
 
 function combatModel(actor) {
   return actor?.bcuCombatModel || actor?.rawStats?.bcuCombatModel || actor?.stats?.bcuCombatModel || null;
@@ -229,6 +230,105 @@ function maybeSpawnShieldRegen(scene, actor) {
   spawnBarrierShieldVisual(scene, actor, event);
 }
 
+function demonShieldBasis(actor) {
+  const proc = procModel(actor);
+  const maxShield = Number(actor?.bcuDemonShieldMaxHp ?? proc?.demonShield?.hp ?? 0) || 0;
+  const regenPercent = Number(actor?.bcuDemonShieldRegenPercent ?? proc?.demonShield?.regen ?? 0) || 0;
+  return {
+    maxShield: Math.max(0, Math.trunc(maxShield)),
+    regenPercent
+  };
+}
+
+function queuePendingDemonShieldRegen(actor, result, args = {}) {
+  const { maxShield, regenPercent } = demonShieldBasis(actor);
+  const hpKb = result?.knockedBack === true
+    && result?.deathPending !== true
+    && result?.dead !== true
+    && actor?.hp > 0
+    && actor?.kbBcuType === 'INT_HB';
+  if (!hpKb || maxShield <= 0) return;
+  actor.bcuDemonShieldMaxHp = maxShield;
+  actor.bcuDemonShieldRegenPercent = regenPercent;
+  actor.bcuDemonShieldRegenPending = {
+    source: 'BattleBcuPriorityEffectRuntimePatch.resolvePostDamage',
+    triggerReason: result?.knockbackReason || actor?.knockbackReason || 'hp-threshold',
+    queuedLogicFrame: actor?.scene?.logicFrame ?? null,
+    queuedTimeMs: args?.nowMs ?? actor?.lastSceneTimeMs ?? null,
+    beforeShieldHp: Number(actor?.bcuDemonShieldHp || 0),
+    maxShieldHp: maxShield,
+    regenPercent,
+    bcuReference: DEMON_SHIELD_REGEN_BCU_REFERENCE
+  };
+  actor.lastBcuDemonShieldRegenTimingDebug = {
+    ...actor.bcuDemonShieldRegenPending,
+    pending: true,
+    delayed: true,
+    phase: 'queued-after-post-damage',
+    visualEffectId: null,
+    revivePhase: 'revive'
+  };
+}
+
+function consumePendingDemonShieldRegen(actor, stepResult = {}) {
+  const pending = actor?.bcuDemonShieldRegenPending;
+  if (!pending || stepResult?.done !== true) return null;
+  if (actor?.kbBcuType !== 'INT_HB' || actor?.hp <= 0 || actor?.deathPending === true || actor?.deathAfterKnockback === true || actor?.state === 'dead') {
+    actor.bcuDemonShieldRegenPending = null;
+    actor.lastBcuDemonShieldRegenTimingDebug = {
+      ...(actor.lastBcuDemonShieldRegenTimingDebug || pending),
+      pending: false,
+      skipped: true,
+      skipReason: 'not-live-INT_HB-at-kb-end',
+      hp: actor?.hp ?? null,
+      state: actor?.state || null,
+      bcuReference: DEMON_SHIELD_REGEN_BCU_REFERENCE
+    };
+    return null;
+  }
+  const before = Number(actor.bcuDemonShieldHp || 0);
+  const maxShield = Math.max(0, Math.trunc(Number(pending.maxShieldHp || 0) || 0));
+  const regenPercent = Number(pending.regenPercent || 0) || 0;
+  const after = Math.min(maxShield, Math.max(0, Math.trunc(maxShield * regenPercent / 100)));
+  actor.bcuDemonShieldHp = after;
+  actor.bcuDemonShieldMaxHp = Math.max(maxShield, after);
+  actor.bcuDemonShieldRegenPercent = regenPercent;
+  actor.bcuDemonShieldRegenPending = null;
+  const event = {
+    type: 'shield-regen',
+    before,
+    after,
+    max: actor.bcuDemonShieldMaxHp,
+    regenPercent,
+    triggerReason: pending.triggerReason,
+    phase: 'revive',
+    delayed: true,
+    pendingUsed: true,
+    logicFrame: actor?.scene?.logicFrame ?? null,
+    visualEffectId: 'demonShield:revive',
+    source: 'BattleBcuPriorityEffectRuntimePatch.stepKnockbackFrame',
+    bcuReference: DEMON_SHIELD_REGEN_BCU_REFERENCE
+  };
+  actor.lastBcuDemonShieldRegenEvent = event;
+  actor.lastBcuDemonShieldRegenTimingDebug = {
+    source: 'BattleBcuPriorityEffectRuntimePatch.stepKnockbackFrame',
+    logicFrame: event.logicFrame,
+    beforeShieldHp: before,
+    afterShieldHp: after,
+    maxShieldHp: actor.bcuDemonShieldMaxHp,
+    regenPercent,
+    triggerReason: pending.triggerReason,
+    bcuReference: DEMON_SHIELD_REGEN_BCU_REFERENCE,
+    visualEffectId: event.visualEffectId,
+    phase: 'revive',
+    delayed: true,
+    pendingUsed: true,
+    bcuKbTimeAtFire: actor?.bcuKbTime ?? null,
+    kbMotionFrameIndex: actor?.kbMotionFrameIndex ?? null
+  };
+  return event;
+}
+
 export function installBattleBcuPriorityEffectRuntimePatch() {
   const proto = BattleScene?.prototype;
   const actorProto = BattleActor?.prototype;
@@ -236,27 +336,17 @@ export function installBattleBcuPriorityEffectRuntimePatch() {
     actorProto[ACTOR_PATCH_FLAG] = true;
     const originalResolvePostDamage = actorProto.resolvePostDamage;
     if (typeof originalResolvePostDamage === 'function') {
-      actorProto.resolvePostDamage = function resolvePostDamageWithLateDemonShieldRegen(args = {}) {
+      actorProto.resolvePostDamage = function resolvePostDamageWithPendingDemonShieldRegen(args = {}) {
         const result = originalResolvePostDamage.call(this, args);
-        const proc = procModel(this);
-        const maxShield = Number(this.bcuDemonShieldMaxHp || proc?.demonShield?.hp || 0) || 0;
-        const regenPercent = Number(this.bcuDemonShieldRegenPercent ?? proc?.demonShield?.regen ?? 0) || 0;
-        const hpKb = result?.knockedBack === true && result?.deathPending !== true && result?.dead !== true && this.hp > 0;
-        if (hpKb && maxShield > 0 && regenPercent > 0) {
-          const before = Number(this.bcuDemonShieldHp || 0);
-          const after = Math.min(maxShield, Math.max(0, Math.trunc(maxShield * regenPercent / 100)));
-          this.bcuDemonShieldMaxHp = maxShield;
-          this.bcuDemonShieldRegenPercent = regenPercent;
-          this.bcuDemonShieldHp = after;
-          this.lastBcuDemonShieldRegenEvent = {
-            type: 'shield-regen',
-            before,
-            after,
-            max: maxShield,
-            source: 'BCU KBManager INT_HB regenerates DEMONSHIELD hp * regen / 100 and anim.getEff(SHIELD_REGEN)'
-          };
-          result.bcuBarrierShieldEvents = [...(result.bcuBarrierShieldEvents || []), this.lastBcuDemonShieldRegenEvent];
-        }
+        queuePendingDemonShieldRegen(this, result, args);
+        return result;
+      };
+    }
+    const originalStepKnockbackFrame = actorProto.stepKnockbackFrame;
+    if (typeof originalStepKnockbackFrame === 'function') {
+      actorProto.stepKnockbackFrame = function stepKnockbackFrameWithDemonShieldRegen(...args) {
+        const result = originalStepKnockbackFrame.call(this, ...args);
+        consumePendingDemonShieldRegen(this, result);
         return result;
       };
     }

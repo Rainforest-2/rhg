@@ -345,6 +345,8 @@ Blast logic includes BCU-like frame bands, but visual creation currently risks u
 
 Barrier and demon shield logic are advanced, but exact gate order, pass-through behavior, regen timing, guard/base state, and visual placement still need strict proof.
 
+2026-06-04 update: barrier and demon shield actor gate order, shield pierce pass-through, damage-break blocking, full/half/destruction/breaker/revive phases, y offset 25, actor-priority scale 0.75, layer trace, and demon shield regen at the BCU KB end tick are covered by deterministic checks. Manual browser visual review is still not recorded, and base/castle guard remains partial.
+
 ### Target files
 
 - `js/battle/BattleActorBarrierShieldPatch.js`
@@ -372,6 +374,7 @@ Barrier and demon shield logic are advanced, but exact gate order, pass-through 
 - Demon shield pierce vs damage break behavior.
 - Shield regen on HP knockback only.
 - Effect alias and phase trace for all phases.
+- `node scripts/check-bcu-demon-shield-regen-timing.mjs`
 
 ### Code-complete criteria
 

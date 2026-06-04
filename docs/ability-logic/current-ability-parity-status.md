@@ -26,6 +26,7 @@ These areas have meaningful JS runtime wiring and focused regression tests:
 | wave / mini-wave | `code-complete-candidate` | Projectile base damage model and runtime helper tests exist; effect coordinate traces use runtime helpers. |
 | surge / mini-surge | `code-complete-candidate` | Runtime container, raw projectile damage basis, and coordinate trace checks exist. |
 | blast | `code-complete-candidate` | Blast damage bands, point-position capture, side-specific visual offset, and tests exist. |
+| barrier / demon shield / shield breaker | `human-visual-review-needed` | BCU `Entity.damaged`, `AnimManager.getEff`, and `KBManager.updateKB` behavior is wired; `scripts/check-bcu-barrier-shield-effect-parity.mjs` and `scripts/check-bcu-demon-shield-regen-timing.mjs` cover gate order, phases, y offset 25, scale 0.75, layer, and delayed `SHIELD_REGEN`. Manual browser visual review is not recorded. |
 | death soul core | `code-complete-candidate` | Parser fields, soul ZIP loader, death runtime, fallback cleanup, and `scripts/check-bcu-death-animation-parity.mjs` exist. |
 | AB_GLASS skip-soul behavior | `code-complete-candidate` | Death runtime branch and BattleScene attack-complete self-remove test exist. |
 
@@ -74,6 +75,8 @@ node scripts/check-effect-coordinate-traces.mjs
 node scripts/check-debug-allocation-guards.mjs
 node scripts/check-bcu-death-animation-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
+node scripts/check-bcu-barrier-shield-effect-parity.mjs
+node scripts/check-bcu-demon-shield-regen-timing.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```
 

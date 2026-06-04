@@ -91,7 +91,7 @@ const row5Delay = applyBcuStageLineDelay({ actor: row5Actor, scene, payload: { s
 assert.equal(row5Delay.applied, true, 'delay applies to row 5 actor line');
 assert.equal(row5Delay.rowIndex, 5, 'delay result targets row 5 line');
 assert.equal(spawnRuntime.rows[0].nextFrame, 170, 'row 0 remains unchanged after row 5 actor delay');
-assert.equal(spawnRuntime.rows[1].nextFrame, 190, 'row 5 nextFrame delayed independently despite same enemyId');
+assert.equal(spawnRuntime.rows[1].nextFrame, 180, 'row 5 nextFrame delayed independently using BCU percent-of-progress delay despite same enemyId');
 
 assert.deepEqual(scene.events.map((event) => event.rowIndex), [0, 5], 'debug events preserve rowIndex, not only enemyId');
 

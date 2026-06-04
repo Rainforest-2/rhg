@@ -97,7 +97,10 @@ assert.equal(scene.effects[0].effectRuntimeDebug.effectKey, 'enemyBarrier', 'bar
 assert.equal(scene.effects[0].effectRuntimeDebug.phase, 'none', 'barrier block uses none phase');
 assert.equal(scene.effects[0].bcuSmokeYOffset, BCU_BARRIER_SHIELD_ICON_Y_OFFSET, 'barrier visual uses BCU p.y -25*siz offset');
 assert.equal(scene.effects[0].scale, 0.75, 'barrier visual uses BCU actor priority scale 0.75');
+assert.notEqual(scene.effects[0].scale, 0, 'barrier visual default scale must not regress to 0');
 assert.equal(scene.effects[0].bcuScaleMode, BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT, 'barrier visual uses actor priority effect scale mode');
+assert.equal(scene.lastBcuBarrierShieldEffectDebug.scale, 0.75, 'barrier effect debug records resolved scale');
+assert.equal(scene.lastBcuBarrierShieldEffectDebug.layer, 2, 'barrier effect debug records actor priority layer');
 
 const shieldScene = fakeScene(true);
 const shieldActor = actorWithModel(enemyShieldModel, shieldScene, 'cat-enemy');
@@ -108,6 +111,32 @@ assert.equal(shieldScene.effects.length, 1, 'demon shield hit spawns visual imme
 assert.equal(shieldScene.effects[0].effectRuntimeDebug.effectKey, 'demonShield', 'demon shield visual uses demonShield key');
 assert.equal(shieldScene.effects[0].effectRuntimeDebug.phase, 'half', 'demon shield visual picks half when remaining shield is under half');
 assert.equal(shieldScene.effects[0].bcuSmokeYOffset, BCU_BARRIER_SHIELD_ICON_Y_OFFSET, 'demon shield visual uses BCU p.y -25*siz offset');
+assert.equal(shieldScene.effects[0].scale, 0.75, 'demon shield visual uses BCU actor priority scale 0.75');
+assert.notEqual(shieldScene.effects[0].scale, 0, 'demon shield visual default scale must not regress to 0');
+
+const shieldBreakScene = fakeScene(true);
+const shieldBreakActor = actorWithModel(enemyShieldModel, shieldBreakScene, 'cat-enemy');
+const shieldBreak = shieldBreakActor.takeDamage(500, { scene: shieldBreakScene });
+assert.equal(shieldBreak.accepted, false, 'demon shield break by damage cancels body damage like BCU');
+assert.equal(shieldBreak.blockedBy, 'shield', 'demon shield break by damage is still a shield block');
+assert.equal(shieldBreakScene.effects[0].effectRuntimeDebug.phase, 'destruction', 'demon shield break by damage spawns destruction phase');
+
+const shieldPierceScene = fakeScene(true);
+const shieldPierceActor = actorWithModel(enemyShieldModel, shieldPierceScene, 'cat-enemy');
+const shieldPierce = shieldPierceActor.takeDamage(200, {
+  scene: shieldPierceScene,
+  damageCalculation: { proc: { applied: [{ key: 'shieldPierce' }] } }
+});
+assert.equal(shieldPierce.accepted, true, 'shield pierce breaks shield and lets body damage through like BCU');
+assert.equal(shieldPierceActor.bcuDemonShieldHp, 0, 'shield pierce clears current shield HP');
+assert.equal(shieldPierceScene.effects[0].effectRuntimeDebug.phase, 'breaker', 'shield pierce spawns breaker phase');
+
+const friendlyBarrierScene = fakeScene(true);
+const friendlyBarrierActor = actorWithModel(enemyBarrierModel, friendlyBarrierScene, 'dog-player');
+const friendlyBarrier = friendlyBarrierActor.takeDamage(100, { scene: friendlyBarrierScene });
+assert.equal(friendlyBarrier.accepted, false, 'friendly barrier blocks insufficient damage');
+assert.equal(friendlyBarrierScene.effects[0].effectRuntimeDebug.effectKey, 'unitBarrier', 'friendly barrier uses unitBarrier key');
+assert.equal(friendlyBarrierScene.effects[0].renderFlipX, true, 'friendly barrier keeps unit-side render flip');
 
 const missingScene = fakeScene(false);
 const missingActor = actorWithModel(enemyBarrierModel, missingScene, 'cat-enemy');

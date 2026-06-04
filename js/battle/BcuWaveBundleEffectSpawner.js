@@ -37,6 +37,11 @@ function defaultScaleForMode(mode, type) {
   return 1;
 }
 
+function resolveEffectScale(scale, mode, type) {
+  if (scale !== null && scale !== undefined && Number.isFinite(Number(scale))) return Number(scale);
+  return defaultScaleForMode(mode, type);
+}
+
 export function directionForActor(actor) {
   if (Number.isFinite(actor?.direction)) return actor.direction < 0 ? -1 : 1;
   return actor?.side === 'dog-player' ? -1 : 1;
@@ -75,10 +80,11 @@ export function spawnWaveBundleEffect(scene, {
   if (!runtime) return null;
   const effectX = Number.isFinite(x) ? x : actorPos(actor);
   const mode = normalizeBcuScaleMode(bcuScaleMode || debug?.bcuScaleMode || inferScaleMode(key, type || asset.kind || key, source));
-  const effectScale = Number.isFinite(Number(scale)) ? Number(scale) : defaultScaleForMode(mode, type || asset.kind || key);
+  const resolvedType = type || asset.kind || key;
+  const effectScale = resolveEffectScale(scale, mode, resolvedType);
   const effect = EffectRuntime.createEffect({
     id: `bcu-${key}-${phase || 'def'}-${scene.logicFrame || 0}-${Math.random().toString(36).slice(2)}`,
-    type: type || asset.kind || key,
+    type: resolvedType,
     x: effectX,
     y,
     image: asset.image,
@@ -109,6 +115,9 @@ export function spawnWaveBundleEffect(scene, {
       frameCount: runtime.frameCount,
       maxFrame: runtime.maxFrame,
       assetSource: asset.source || null,
+      requestedScale: scale,
+      resolvedScale: effectScale,
+      defaultScaleApplied: scale === null || scale === undefined,
       ...debug
     }
   });

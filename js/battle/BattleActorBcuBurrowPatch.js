@@ -1,17 +1,43 @@
 import { BattleActor } from './BattleActor.js';
 import { BattleScene } from './BattleScene.js';
+import { TEMPLATE_LOAD_LEVEL } from './BattleActorFactory.js';
 import {
   clearBcuBurrow,
   canStartBcuBurrow,
   getBcuBurrowTouchMask,
+  getRequiredBcuBurrowAnimationIds,
+  hasBcuBurrowTemplateAnimations,
+  hydrateBcuBurrowActorAnimations,
   isBcuBurrowNormallyTargetable,
   isBcuBurrowTargetableForEvent,
   startBcuBurrow,
   tickBcuBurrow
 } from './bcu-runtime/BcuBurrowLifecycleRuntime.js';
 
-const ACTOR_PATCH_FLAG = Symbol.for('wanko-battle.actor-bcu-burrow.v1');
-const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.scene-bcu-burrow.v1');
+const ACTOR_PATCH_FLAG = Symbol.for('wanko-battle.actor-bcu-burrow.v2');
+const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.scene-bcu-burrow.v2');
+
+function templateHasBurrow(template) {
+  return !!template?.stats?.bcuCombatModel?.proc?.burrow?.count;
+}
+
+function actorTemplate(scene, actor) {
+  return scene?.actorFactory?.templates?.get?.(actor?.slotId || actor?.templateId) || null;
+}
+
+function preloadBurrowAnimations(scene, unitDef, reason = 'burrow-animation-preload') {
+  if (!scene?.actorFactory?.preloadTemplate || !unitDef) return null;
+  const ids = getRequiredBcuBurrowAnimationIds();
+  const promise = scene.actorFactory.preloadTemplate(unitDef, { level: TEMPLATE_LOAD_LEVEL.FULL_VISUAL, animIds: ids });
+  scene.pushEvent?.({ type: 'bcuBurrowAnimationPreloadRequested', slotId: unitDef.slotId || null, animIds: ids, reason });
+  return promise;
+}
+
+function ensureActorBurrowAnimations(scene, actor) {
+  const tpl = actorTemplate(scene, actor);
+  if (tpl) hydrateBcuBurrowActorAnimations(actor, tpl);
+  return tpl;
+}
 
 export function installBattleActorBcuBurrowPatch() {
   const proto = BattleActor?.prototype;
@@ -59,12 +85,49 @@ export function installBattleActorBcuBurrowPatch() {
   const sceneProto = BattleScene?.prototype;
   if (sceneProto && !sceneProto[SCENE_PATCH_FLAG]) {
     sceneProto[SCENE_PATCH_FLAG] = true;
+
+    const originalSpawnStageEnemy = sceneProto.spawnStageEnemy;
+    if (typeof originalSpawnStageEnemy === 'function') {
+      sceneProto.spawnStageEnemy = function spawnStageEnemyWithBurrowAnimations(unitDef, row) {
+        const tpl = this.actorFactory?.templates?.get?.(unitDef?.slotId);
+        if (templateHasBurrow(tpl) && !hasBcuBurrowTemplateAnimations(tpl)) {
+          preloadBurrowAnimations(this, unitDef, 'stage-enemy-burrow-required');
+          this.pushEvent?.({ type: 'stageEnemySpawnDeferred', rowIndex: row?.rowIndex, slotId: unitDef?.slotId, reason: 'bcu-burrow-animation-loading' });
+          return false;
+        }
+        const before = this.actors?.length || 0;
+        const result = originalSpawnStageEnemy.call(this, unitDef, row);
+        if (result) {
+          for (const actor of (this.actors || []).slice(before)) {
+            ensureActorBurrowAnimations(this, actor);
+          }
+        }
+        return result;
+      };
+    }
+
+    const originalSpawnActor = sceneProto.spawnActor;
+    if (typeof originalSpawnActor === 'function') {
+      sceneProto.spawnActor = function spawnActorHydratingBurrowAnimations(unitDef, side, isPlayerProduced = false, options = {}) {
+        const actor = originalSpawnActor.call(this, unitDef, side, isPlayerProduced, options);
+        if (actor) ensureActorBurrowAnimations(this, actor);
+        return actor;
+      };
+    }
+
     const originalStartActorAttack = sceneProto.startActorAttack;
     sceneProto.startActorAttack = function startActorAttackWithBcuBurrow(actor, target, targetType) {
+      ensureActorBurrowAnimations(this, actor);
       const start = canStartBcuBurrow(this, actor, target);
       if (start.ok) {
         startBcuBurrow(actor, { scene: this });
         return true;
+      }
+      if (start.reason === 'burrow-animation-missing') {
+        const tpl = actorTemplate(this, actor);
+        preloadBurrowAnimations(this, tpl?.unitDef || { slotId: actor?.slotId }, 'attack-start-burrow-required');
+        this.pushEvent?.({ type: 'bcuBurrowStartDeferred', actor: actor?.instanceId || actor?.label || null, missingAnimations: start.missingAnimations || [] });
+        return false;
       }
       return originalStartActorAttack.call(this, actor, target, targetType);
     };

@@ -24,7 +24,7 @@ assert.equal(enemy.proc.delay.strength, 8, 'enemy delay parser reads DataEnemy.i
 const catalog = ProcResolver.getProcCatalog();
 assert.equal(catalog.delay?.implemented, true, 'delay runtime owner is proven and registered after BcuDelayRuntimePatch import');
 assert.ok(String(catalog.delay?.runtime || '').includes('BcuDelayRuntime'), 'delay catalog records BcuDelayRuntime owner');
-assert.equal(Object.hasOwn(catalog, 'burrow'), false, 'burrow should stay non-complete until its movement lifecycle is proven');
+assert.equal(Object.hasOwn(catalog, 'burrow'), false, 'burrow is an Entity lifecycle, not an attack ProcResolver runtime catalog entry');
 
 const probe = DamageAbilityResolver.resolve({
   attacker: { side: 'dog-player', traits: ['red'], stats: { bcuCombatModel: BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, []) }) } },
@@ -44,8 +44,8 @@ const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 
 for (const phrase of [
   '`P_DELAY`',
   'code-complete-candidate',
-  'burrow | `parsed-only`',
-  'combo / orb / treasure damage modifiers | `partial`',
+  'burrow | `code-complete-candidate`',
+  'combo / orb / treasure / talent / PCoin damage modifiers | `needs-loader-backed-fixtures`',
   'AB_SKILL status resistance side | `partial`',
   'death surge / zombie corpse interaction | `partial`'
 ]) {

@@ -20,12 +20,13 @@ Implemented evidence:
 - `BcuDeathAnimationRuntime` hides the base actor while death soul is active.
 - `BcuSoulEffectLoader` loads death soul entries from `public/assets/bundles/effect/soul.zip`.
 - `BCU_DEATH_SOUL_FALLBACK_FRAMES` is a JS safety fallback only, not a claimed BCU visual frame value. It prevents permanent actor retention when a soul asset is missing or not loaded.
-- `scripts/check-bcu-death-animation-parity.mjs` covers parser indexes, normal soul death, missing-asset fallback cleanup, AB_GLASS skip-soul behavior, death-surge trigger frame, and the current zombie-corpse partial marker.
+- `scripts/check-bcu-death-animation-parity.mjs` covers parser indexes, normal soul death, missing-asset fallback cleanup, AB_GLASS skip-soul behavior, and death-surge trigger frame.
+- `scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs` covers zombie revive indexes, `AB_ZKILL`, `AB_CKILL`, `REVIVE_SHOW_TIME` corpse targetability, non-soulstrike exclusion, soulstrike cancellation, zombie killer suppression, revive HP, death-surge frame 21, and no double-spawn.
 
 Known remaining partials:
 
-- Zombie corpse / soulstrike interaction remains partial.
-- Death surge has deterministic 21-frame trigger coverage, but full interaction with zombie revive/corpse cleanup remains partial.
+- Zombie corpse / soulstrike logic is now covered for BCU show-window targetability and revive cancellation, but the row remains `partial` because zombie revive visual trace and extra-reviver interactions are not proven.
+- Death surge has deterministic 21-frame trigger and zombie-corpse cleanup coverage, but mini-death-surge split remains `partial`.
 
 ## Warp lifecycle
 
@@ -56,8 +57,10 @@ Run these commands after edits touching death or warp behavior:
 node --check js/battle/bcu-runtime/BcuDeathAnimationRuntime.js
 node --check js/battle/bcu-runtime/BcuWarpLifecycleRuntime.js
 node --check scripts/check-bcu-death-animation-parity.mjs
+node --check scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node --check scripts/check-bcu-warp-lifecycle-parity.mjs
 node scripts/check-bcu-death-animation-parity.mjs
+node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
 ```
 

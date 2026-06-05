@@ -1,9 +1,12 @@
 import { BattleActor } from './BattleActor.js';
 import { BattleAttackResolver } from './BattleAttackResolver.js';
+import { BattleScene } from './BattleScene.js';
 import { bcuTraitCompatible, describeBcuTraitCompatibility, hasTargetOnly } from './BcuTraitCompatibility.js';
+import { clearBcuZombieCorpse, isBcuZombieCorpse, isBcuZombieCorpseTargetable } from './bcu-runtime/BcuZombieCorpseRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.soulstrike-patch.v1');
 const RESOLVER_PATCH_FLAG = Symbol.for('wanko-battle.attack-resolver-soulstrike.v1');
+const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.scene-soulstrike-meta.v1');
 
 function hasSoulstrike(event = null, attacker = null) {
   return event?.abilities?.soulstrike === true
@@ -13,12 +16,13 @@ function hasSoulstrike(event = null, attacker = null) {
 }
 
 function isZombieCorpse(target) {
-  return !!target?.bcuZombieRevivePending || !!target?.bcuZombieCorpse;
+  return isBcuZombieCorpse(target);
 }
 
 function isActorTargetableForEvent(target, event, attacker) {
   if (!target) return false;
-  if (isZombieCorpse(target)) return hasSoulstrike(event, attacker);
+  if (typeof target.isBcuTargetableForEvent === 'function') return target.isBcuTargetableForEvent(event, attacker);
+  if (isZombieCorpse(target)) return isBcuZombieCorpseTargetable(target) && hasSoulstrike(event, attacker);
   if (typeof target.isTargetable === 'function') return !!target.isTargetable();
   if (typeof target.isAlive === 'function') return !!target.isAlive();
   return false;
@@ -30,6 +34,15 @@ function isBcuTraitAllowed(target, event, attacker) {
 }
 
 export function installBattleSoulstrikePatch() {
+  const sceneProto = BattleScene?.prototype;
+  if (sceneProto && !sceneProto[SCENE_PATCH_FLAG]) {
+    sceneProto[SCENE_PATCH_FLAG] = true;
+    const originalQueueAttackDamage = sceneProto.queueAttackDamage;
+    sceneProto.queueAttackDamage = function queueAttackDamageWithSoulstrikeMeta(attacker, target, targetType, event, meta = {}) {
+      return originalQueueAttackDamage.call(this, attacker, target, targetType, event, { ...meta, event, attackerActor: attacker });
+    };
+  }
+
   if (!BattleAttackResolver[RESOLVER_PATCH_FLAG]) {
     BattleAttackResolver[RESOLVER_PATCH_FLAG] = true;
     BattleAttackResolver.captureTargets = function captureTargetsSoulstrikeAware({ attacker, enemyActors, enemyBase, event }) {
@@ -71,13 +84,10 @@ export function installBattleSoulstrikePatch() {
 
   proto.takeDamage = function takeDamageWithSoulstrikeCorpse(amount, meta = {}) {
     const event = meta.event || meta.attackEvent || null;
-    const attacker = meta.attacker || null;
+    const attacker = meta.attackerActor || meta.attacker || null;
     const soul = hasSoulstrike(event, attacker) || meta?.damageCalculation?.proc?.pending?.some?.((p) => p?.key === 'soulstrike');
-    if (isZombieCorpse(this) && soul) {
-      this.bcuZombieRevivePending = false;
-      this.bcuZombieCorpse = false;
-      this.bcuZombieReviveReadyAtMs = null;
-      this.bcuZombieReviveHealthPercent = null;
+    if (isZombieCorpse(this) && soul && isBcuZombieCorpseTargetable(this)) {
+      clearBcuZombieCorpse(this, 'soulstrike');
       this.isAliveFlag = false;
       this.deathPending = false;
       this.deathResolved = true;

@@ -17,6 +17,7 @@ const unit = BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, [
   [33, 1], [105, 1], [106, 20], [107, 45],
   [112, 12], [75, 160], [76, 200],
   [84, 25], [85, 70],
+  [110, 42],
   [67, 3],
   [46, 1], [91, 1], [116, 1],
   [111, 1]
@@ -46,6 +47,7 @@ assert.equal(unit.proc.beastHunter.active, 1, 'unit beast hunter active index 10
 assert.equal(unit.proc.metalKiller.mult, 12, 'unit metal killer index 112');
 assert.equal(unit.proc.attackNullify.prob, 25, 'unit attack-nullify prob index 84');
 assert.equal(unit.proc.attackNullify.time, 70, 'unit attack-nullify time index 85');
+assert.equal(unit.proc.spirit.id, 42, 'unit spirit id index 110');
 assert.equal((unit.ability.abi & BCU_ABI.AB_SKILL) !== 0, true, 'unit AB_SKILL index 111');
 assert.equal(unit.proc.IMUWAVE.full, true, 'unit IMUWAVE index 46');
 assert.equal(unit.proc.IMUVOLC.full, true, 'unit IMUVOLC index 91');
@@ -65,6 +67,7 @@ const enemy = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [
   [29, 25], [30, 120], [31, 40],
   [32, 50], [33, 150], [34, 10],
   [43, 2], [44, 400],
+  [45, 1], [46, 120], [47, 50],
   [111, 45], [112, 8]
 ]) });
 
@@ -85,6 +88,9 @@ assert.equal(enemy.proc.toxic.prob, 100, 'enemy toxic prob index 79');
 assert.equal(enemy.proc.toxic.mult, 35, 'enemy toxic mult index 80');
 assert.equal(enemy.proc.attackNullify.prob, 30, 'enemy attack-nullify prob index 77');
 assert.equal(enemy.proc.burrow.dis, 100, 'enemy burrow distance index 44 is /4');
+assert.equal(enemy.proc.revive.count, 1, 'enemy revive count index 45');
+assert.equal(enemy.proc.revive.time, 120, 'enemy revive time index 46');
+assert.equal(enemy.proc.revive.health, 50, 'enemy revive health index 47');
 assert.equal(enemy.proc.delay.prob, 45, 'enemy delay prob index 111');
 assert.equal(enemy.proc.delay.strength, 8, 'enemy delay strength index 112');
 assert.equal(enemy.deathAnimation.soulId, 7, 'enemy death animation index 54');

@@ -159,6 +159,7 @@ function parseUnitProc(rawValues) {
   const volcLevel = n(rawValues,89,0);
   const blastStart = n(rawValues,114,0)/4;
   const blastLength = n(rawValues,115,0)/4;
+  const spiritRaw = n(rawValues, 110, -1);
   return {
     knockback:{prob:n(rawValues,24,0),dis:BCU_PROC_KB_DEFAULT.dis,time:BCU_PROC_KB_DEFAULT.time}, freeze:{prob:n(rawValues,25,0),time:n(rawValues,26,0)}, slow:{prob:n(rawValues,27,0),time:n(rawValues,28,0)}, critical:{prob:n(rawValues,31,0),mult:200}, bounty:{mult:enabled(rawValues,33)?100:0}, baseDestroyer:{mult:enabled(rawValues,34)?300:0},
     wave:{prob:miniWave?0:n(rawValues,35,0),level:miniWave?0:n(rawValues,36,0)}, miniWave:{prob:miniWave?n(rawValues,35,0):0,level:miniWave?n(rawValues,36,0):0,mult:miniWave?20:0}, IMUWAVE:fullImu(rawValues,46,{source:'DataUnit.ints[46]'}),
@@ -170,6 +171,7 @@ function parseUnitProc(rawValues) {
     volcano:volcanoProc({prob:miniVolc?0:n(rawValues,86,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
     miniVolcano:volcanoProc({prob:miniVolc?n(rawValues,86,0):0,dis0:miniVolc?volcStart:0,dis1:miniVolc?rangeEnd(volcStart,volcLength):0,level:miniVolc?volcLevel:0,mult:miniVolc?20:0}),
     beastHunter:{active:enabled(rawValues,105)?1:0,prob:n(rawValues,106,0),time:n(rawValues,107,0)}, bsthunt:{active:enabled(rawValues,105)?1:0,prob:n(rawValues,106,0),time:n(rawValues,107,0)}, BSTHUNT:{active:enabled(rawValues,105)?1:0,prob:n(rawValues,106,0),time:n(rawValues,107,0)},
+    spirit:{id:spiritRaw>=0?Math.trunc(spiritRaw):null,exists:spiritRaw>=0,source:'DataUnit.ints[110]'},
     metalKiller:{mult:n(rawValues,112,0)}, blast:{prob:n(rawValues,113,0),dis0:blastStart,dis1:rangeEnd(blastStart,blastLength)}
   };
 }

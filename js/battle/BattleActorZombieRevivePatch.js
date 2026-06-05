@@ -1,5 +1,6 @@
 import { BattleActor } from './BattleActor.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+import { initializeBcuZombieCorpse, updateBcuZombieCorpseWindow } from './bcu-runtime/BcuZombieCorpseRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.actor-zombie-revive-patch.v1');
 
@@ -65,7 +66,6 @@ function scheduleRevive(actor, spec, nowMs) {
   actor.bcuZombieRevivePending = true;
   actor.bcuZombieReviveReadyAtMs = nowMs + spec.timeFrames * BCU_BATTLE_TIMER_PERIOD_MS;
   actor.bcuZombieReviveHealthPercent = spec.healthPercent;
-  actor.bcuZombieCorpse = true;
   actor.state = 'dead';
   actor.isAliveFlag = false;
   actor.deathPending = false;
@@ -74,11 +74,13 @@ function scheduleRevive(actor, spec, nowMs) {
   actor.deadAtMs = nowMs;
   actor.removeAfterMs = Math.max(actor.removeAfterMs || 0, spec.timeFrames * BCU_BATTLE_TIMER_PERIOD_MS + 1000);
   clearReviveStatuses(actor);
+  initializeBcuZombieCorpse(actor, { nowMs, reviveTimeFrames: spec.timeFrames, healthPercent: spec.healthPercent });
   actor.lastBcuZombieReviveDebug = {
     source: 'BCU ZombX.prekill/doRevive parity',
     scheduled: true,
     readyAtMs: actor.bcuZombieReviveReadyAtMs,
     timeFrames: spec.timeFrames,
+    reviveHp: actor.hp,
     healthPercent: spec.healthPercent,
     remaining: actor.bcuZombieReviveRemaining,
     zombieKillerBlocked: false
@@ -88,7 +90,7 @@ function scheduleRevive(actor, spec, nowMs) {
 
 function performRevive(actor, nowMs) {
   if (!actor.bcuZombieRevivePending || nowMs < actor.bcuZombieReviveReadyAtMs) return false;
-  const hp = Math.max(1, Math.trunc(actor.maxHp * actor.bcuZombieReviveHealthPercent / 100));
+  const hp = Math.trunc(actor.maxHp * actor.bcuZombieReviveHealthPercent / 100);
   actor.hp = hp;
   actor.isAliveFlag = true;
   actor.state = 'move';
@@ -151,6 +153,7 @@ export function installBattleActorZombieRevivePatch() {
   proto.tick = function tickWithZombieRevive(dt) {
     const nowMs = Number.isFinite(this.lastSceneTimeMs) ? this.lastSceneTimeMs : null;
     if (this.bcuZombieRevivePending && Number.isFinite(nowMs)) {
+      updateBcuZombieCorpseWindow(this, dt);
       if (performRevive(this, nowMs)) return originalTick.call(this, dt);
       this.deathElapsedMs += dt;
       this.lastBcuZombieCorpseDebug = { source: 'BCU status[P_REVIVE][1] corpse countdown', nowMs, readyAtMs: this.bcuZombieReviveReadyAtMs };

@@ -80,14 +80,14 @@ node scripts/check-ability-partial-blockers.mjs
 | Area | BCU holder source | BCU runtime owner | Timing/order | Formula | Visual/effect | JS current state | Existing tests | Missing tests | Implementation readiness | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | damage families: strong/massive/resistant/insane/base destroyer/metal/killer family | `DataUnit` indexes 23/29/30/34/43/52/53/77/80/81/97/111/112; `DataEnemy` traits and base flag; `EUnit.getAbi` combo `C_VKILL` | `EEnemy.getDamage`, `EUnit.getDamage`, `Entity.critCalc`, `Entity.damaged` | after raw attack and strengthen/weaken, before final damage storage and proc application | Java `(int)` truncation after each family; fruit/treasure/combo/orb/talent slots are in `BasisLU`, `Treasure`, `EUnit.OrbHandler`, `AtkModelUnit`, `PCoin` | critical, strongAttack, metalKiller have `EAnimCont(..., -75f)`; most damage families have no separate visual | `DamageAbilityResolver` covers core CSV and fixed killer paths but explicitly omits orbs, combos, full targetForms, barrier/shield, sage status-resistance scope | safe suite, projectile, proc immunity checks OK | exact combo/orb/treasure/talent fixture tests for every affected family; AB_VKILL holder tests | needs-test-first | Existing resolver is not enough to mark external modifier rows code-complete. |
-| attack capture: multi-hit/area/single/LD/omni/target only/base/corpse | `DataUnit/DataEnemy` raw attack arrays, `AB_ONLY`, `AB_CKILL`; `AtkModelEntity.inRange`; `AttackSimple.capture` | `AttackSimple.capture`, `AttackSimple.excuse`, `BattleAttackResolver.captureTargets` equivalent | capture before damage/proc; single chooses front candidate; `AB_CKILL` expands touch to `TCH_CORPSE` | range uses BCU entity position and BCU point intervals; LD/omni use short/long points | hit smoke only | `BattleAttackTimeline`, `BattleAttackResolver`, `BattleSoulstrikePatch` exist | parser/projectile/soulstrike partial checks OK | BCU fixtures for multi-hit attack arrays, base fallback, burrow/warp hidden targetability, targetForms | needs-test-first | Burrow and warp hidden states must be included before broad capture parity. |
+| attack capture: multi-hit/area/single/LD/omni/target only/base/corpse | `DataUnit/DataEnemy` raw attack arrays, `AB_ONLY`, `AB_CKILL`; `AtkModelEntity.inRange`; `AttackSimple.capture` | `AttackSimple.capture`, `AttackSimple.excuse`, `BattleAttackResolver.captureTargets` equivalent | capture before damage/proc; single chooses front candidate; `AB_CKILL` expands touch to `TCH_CORPSE` | range uses BCU entity position and BCU point intervals; LD/omni use short/long points | hit smoke only | `BattleAttackTimeline`, `BattleAttackResolver`, `BattleSoulstrikePatch`, and `BattleActorBcuBurrowPatch` exist | parser/projectile/soulstrike/burrow checks OK | BCU fixtures for multi-hit attack arrays, base fallback, targetForms | needs-test-first | Burrow underground and zombie corpse targetability are now covered; broad capture parity still needs multi-hit/base/targetForms fixtures. |
 | projectiles: wave/mini-wave/surge/mini-surge/blast/counter/death surge | `P_WAVE`, `MINIWAVE`, `VOLC`, `MINIVOLC`, `P_BLAST`, `AB_CSUR`, `DEATHSURGE`, `MINIDEATHSURGE` holders | `AttackSimple.excuse`, `AttackWave`, `AttackVolcano`, `AttackBlast`, `ContWaveDef`, `ContVolcano`, `ContBlast`, `SurgeSummoner`, `AtkModelEntity.getDeathSurge` | spawned after accepted hit; projectile object captures and damages later; death surge from soul frame 21 | mini-wave/mini-surge 20%; blast 100/70/40 bands; surge/death surge random start range; Java truncation in target damage | `EffAnim` wave/surge/blast/counter-surge mappings; ZIP aliases present | wave/surge/blast runtime and traces exist; counter-surge queue exists; death surge trigger exists | projectile/effect/death checks OK | full counter-surge damage/capture test; full death-surge zombie corpse cleanup and mini-death-surge split test | needs-test-first | Direct projectile families are human-visual-review-needed; death/counter interactions remain partial. |
 | status/proc/immunity/resistance | `DataUnit` full IMU indexes 46/48/49/50/51/75/79/90/91/116; `DataEnemy` 37/39/40/41/42/70/85/105/109; `Proc.IMUAD` custom holders; `EUnit.processAbilityOrbs`; combo `C_IMUWAVE/C_IMUVOLC` | `Entity.processProcs`, `EUnit.getResistValue`, `EEnemy.getResistValue`, `BcuProcImmunityPatch` equivalent | after damage accepted and guard path; full immunity produces invalid effect; partial resistance adjusts duration/distance/percent | `1 - procResist / 100`; sage enemy adds 70% unless attacker has `AB_SKILL`; unit `AB_SKILL` vs sage source multiplies by 0.3; fruit modifies duration and distance | invalid uses `anim.getEff(INV)` / `anim.getEff(P_WAVE)`; status icons use `AnimManager.getEff/checkEff/drawEff` | `BcuResistRuntime` centralizes supported field/sage math; talent/orb sources are unsupportedSources; status icons exist for core rows | proc immunity and coordinate checks OK | orb/talent/PCoin resistance holder tests; invalid visual timing tests for every full immunity family | needs-test-first | `IMUPOIATK` enemy CSV holder negative evidence remains: no direct `DataEnemy` full-immunity column found. |
-| guard/lifecycle: barrier/demon shield/base guard | `DataEnemy` barrier 64, demon shield 87/88; `DataUnit` breaker 70/95; base guard in `StageBasis.activeGuard` and `ECastle.guard` | `Entity.damaged`, `Entity.postUpdate`, `KBManager.updateKB`, `StageBasis.update/checkGuard`, `ECastle.damaged/updateAnimation/guardBreak` | barrier/shield gates before HP damage/procs; base guard blocks base damage in postUpdate while `activeGuard == 1`; guard breaks after boss condition clears | demon shield regen `(int)(maxShield * regen * shieldMagnification / 100.0)`; base guard has no HP reduction while active | barrier/demon shield aliases present; base guard alias `enemy-wave-guard/*` present | barrier/demon shield actor runtime tested; base/castle guard runtime hook missing | barrier/shield tests OK | base guard state test for `activeGuard` activation, damage hold, break, `ECastle.guard` phases | ready-for-implementation after test-first | Base guard owner is now proven; JS hook target is `BattleBase`/`BattleScene` stage state, not actor proc status. |
-| zombie corpse/soulstrike/zombie killer/revive/death soul | `DataEnemy` revive 45/46/47, death soul 54, death surge 89-92; `DataUnit` `AB_ZKILL` 52, `AB_CKILL` 98 | `Entity.ZombX`, `Entity.touchable`, `Entity.getTouch`, `preKill`, `updateRevive`, `AtkModelEntity.getDeathSurge` | `postUpdate` calls `zx.postUpdate`; last-breathe calls `zx.prekill`; corpse touch after `REVIVE_SHOW_TIME`; soulstrike touch includes `TCH_CORPSE`; death surge at demon soul frame 21 | revive HP `maxH * health / 100`; revive time min across applicable revivers plus zombie revive anim; zombie killer blocks unless `imu_zkill` | `A_ZOMBIE/A_U_ZOMBIE`, `effect:soul`, demon soul; revive visual not fully traced | core revive/soulstrike/death animation exists; full corpse targetability and death-surge cleanup remain partial | death/warp checks OK | end-to-end corpse targetability windows, soulstrike cancellation, ZK immunity, death surge during corpse, revive visual trace | needs-test-first | JS currently schedules corpse by ms and does not document `REVIVE_SHOW_TIME` targetability split. |
-| burrow | `DataEnemy` indexes 43 count and 44 `/4` distance; custom summon `anim_type == 3` can initialize burrow state | `Entity.update/update2`, `startBurrow`, `updateBurrow`, `touchable`, `updateMove` | starts in `update2` only when touching, not frozen, not spawned burrow skip, base still ahead; `kbTime -2/-3/-4` for down/move/up | count decremented on start; `bdist = BURROW.dis`; underground moves by normal move until distance consumed or base reached; distance is BCU units `/4` | entity animation `BURROW_DOWN/MOVE/UP`; no ZIP micro-effect proven | parser exists; no JS lifecycle owner | parser/blocker checks OK | burrow state machine, targetability/collision/capture, renderability, base clamp, revive/soulstrike/warp/death interactions | ready-for-implementation after test-first | Owner is proven enough for pass 2, but tests must be written before runtime edits. |
+| guard/lifecycle: barrier/demon shield/base guard | `DataEnemy` barrier 64, demon shield 87/88; `DataUnit` breaker 70/95; base guard in `StageBasis.activeGuard` and `ECastle.guard` | `Entity.damaged`, `Entity.postUpdate`, `KBManager.updateKB`, `StageBasis.update/checkGuard`, `ECastle.damaged/updateAnimation/guardBreak` | barrier/shield gates before HP damage/procs; base guard blocks base damage in postUpdate while `activeGuard == 1`; guard breaks after boss condition clears | demon shield regen `(int)(maxShield * regen * shieldMagnification / 100.0)`; base guard has no HP reduction while active | barrier/demon shield aliases present; base guard alias `enemy-wave-guard/*` present | barrier/demon shield actor runtime tested; base/castle guard state and damage gate now implemented | barrier/shield/guard tests OK | manual visual review for exact guard appearance | human-visual-review-needed | Base guard is `BattleBase`/`BattleScene` stage state, not actor proc status. |
+| zombie corpse/soulstrike/zombie killer/revive/death soul | `DataEnemy` revive 45/46/47, death soul 54, death surge 89-92; `DataUnit` `AB_ZKILL` 52, `AB_CKILL` 98 | `Entity.ZombX`, `Entity.touchable`, `Entity.getTouch`, `preKill`, `updateRevive`, `AtkModelEntity.getDeathSurge` | `postUpdate` calls `zx.postUpdate`; last-breathe calls `zx.prekill`; corpse touch after `REVIVE_SHOW_TIME`; soulstrike touch includes `TCH_CORPSE`; death surge at demon soul frame 21 | revive HP `maxH * health / 100`; revive time min across applicable revivers plus zombie revive anim; zombie killer blocks unless `imu_zkill` | `A_ZOMBIE/A_U_ZOMBIE`, `effect:soul`, demon soul; revive visual not fully traced | corpse targetability window, soulstrike cancellation, ZK suppression, revive HP, and death-surge single-spawn now implemented | death/warp/zombie checks OK | revive visual trace; mini-death-surge split; extra reviver timer/range fixtures | partial | BCU `REVIVE_SHOW_TIME` split is now deterministic; remaining gaps are visual and custom/mini holder coverage. |
+| burrow | `DataEnemy` indexes 43 count and 44 `/4` distance; custom summon `anim_type == 3` can initialize burrow state | `Entity.update/update2`, `startBurrow`, `updateBurrow`, `touchable`, `updateMove` | starts in `update2` only when touching, not frozen, not spawned burrow skip, base still ahead; `kbTime -2/-3/-4` for down/move/up | count decremented on start; `bdist = BURROW.dis`; underground moves by normal move until distance consumed or base reached; distance is BCU units `/4` | entity animation `BURROW_DOWN/MOVE/UP`; no ZIP micro-effect proven | `BcuBurrowLifecycleRuntime`, `BattleActorBcuBurrowPatch`, and capture targetability hook implemented | burrow lifecycle check OK | exact human/browser actor animation review if desired | code-complete-candidate | `ProcResolver` still has no burrow row because BCU owner is entity lifecycle, not attack proc catalog. |
 | summon | no direct normal unit/enemy CSV holder; `Proc.SUMMON` proc-object/custom attack holder in `AtkModelEntity` and `CustomEnemy`; `IMUSUMMON` target proc | `AtkModelEntity.setProc/invokeLater`, `AtkModelUnit.summon`, `AtkModelEnemy.summon`, `Entity.setSummon`, `EntCont` | immediate summon for non-hit/kill config; deferred token after hit/kill in `Entity.postUpdate`; can be resisted by `IMUSUMMON` | random distance inclusive `dis..max_dis`; level/magnification scaled by `(100-resist)/100`; layer fallback to current/spawn layer; optional same_health/bond_hp | counter-surge/summon-adjacent source paths in `wave.zip`; no stable summon runtime alias | not parsed in JS; no runtime hook | no focused summon check | proc-object loader, actor creation contract, limit/allow semantics, bond tree damage propagation | blocked | Not safe to implement from BC CSV parser alone. |
-| spirit | `DataUnit` index 110 `SPIRIT.id`; `LineUp` builds spirit form; no enemy holder | `StageBasis.act_spawn`, `StageBasis.update`, `StageBasis` flags `spiritCooldown/summonerSummoned/spiritSummoned`, `EUnit.isSpirit`, `EUnit.damaged/added/update` | normal summoner spawn sets cooldown 15; manual spawn after cooldown creates one spirit per living summoner; spirit starts attack on added and self-kills when attack ends | spawn position `max(ebase.pos + range, min(summoner.pos + 150, ubase.pos))`; damage rejected and `P_IMUATK` effect shown | uses normal unit animation plus `A_IMUATK`; no separate spirit ZIP alias proven | parser missing; runtime missing | no focused spirit check | parser index 110, stage production/spirit flags, actor role, attack-nullify visual, cleanup | ready-for-implementation after test-first | Owner is `StageBasis`/production, not proc status. |
+| spirit | `DataUnit` index 110 `SPIRIT.id`; `LineUp` builds spirit form; no enemy holder | `StageBasis.act_spawn`, `StageBasis.update`, `StageBasis` flags `spiritCooldown/summonerSummoned/spiritSummoned`, `EUnit.isSpirit`, `EUnit.damaged/added/update` | normal summoner spawn sets cooldown 15; manual spawn after cooldown creates one spirit per living summoner; spirit starts attack on added and self-kills when attack ends | spawn position `max(ebase.pos + range, min(summoner.pos + 150, ubase.pos))`; damage rejected and `P_IMUATK` effect shown | uses normal unit animation plus `A_IMUATK`; no separate spirit ZIP alias proven | parser and production/spirit lifecycle runtime implemented | spirit lifecycle check OK | manual visual review of exact actor/A_IMUATK appearance | human-visual-review-needed | Owner is `StageBasis`/production, not proc status. |
 | combo/orb/treasure/talent/PCoin | `LineUp`, `BasisLU.getInc`, `ELineUp`, `Treasure`, `EUnit.OrbHandler`, `PCoin`, `AtkModelUnit` | battle basis and entity construction, not per-hit parser only | attack construction and getDamage/getResistValue | combo/talent applied before or inside `getDamage`; orb attack adds flat percent of raw attack; orb resistance modifies incoming damage; ability orbs mutate proc IMU fields at spawn | no general visual | JS resolver omits or approximates these sources | partial blocker check asserts omissions | deterministic source loaders and fixtures per family | needs-holder-source-confirmation | This is the main blocker for damage family code-complete. |
 | status/effect visual ordering | `Entity.AnimManager.getEff/checkEff/drawEff`; `EffAnim` mappings | actor anim manager and `basis.lea` effect list | status effect set at proc acceptance; `checkEff` removes when status counter hits 0; priority effects draw at actor layer/offset | y offsets: proc-hit `-75f`, delay `-50f`, barrier/shield actor priority y `-25*siz`; status branch chooses buff/debuff variants | ZIP aliases proven for status/wave/kbeff/soul; no loose runtime fallback | status manager/positioner/effect traces exist for covered rows | effect bundle/coordinate checks OK | positive weaken/strengthen branch, bounty money, zombie revive, knockback smoke visual parity tests | needs-test-first | Appearance still human-visual-review-needed where deterministic traces pass. |
 
@@ -295,9 +295,9 @@ node scripts/check-ability-partial-blockers.mjs
 - BCU holder: `StageBasis.activeGuard`, initialized from stage/enemy guard state; no actor proc holder.
 - BCU runtime: `StageBasis.update` sets `activeGuard = 1` when `activeGuard == 0 && est.hasBoss(true, false)`; `Entity.postUpdate` blocks base damage and calls `anim.getEff(GUARD_HOLD)` while active; `StageBasis.checkGuard` clears to 0 and calls `ECastle.guardBreak` after boss disappears.
 - BCU visual: `EffAnim.A_E_GUARD` maps `./org/battle/s19/skill_guard_e`; `ECastle.guard` uses `GuardEff.NONE` and `GuardEff.BREAK`.
-- JS current: `BattleBase` and `BattleScene` do not have proven equivalent `activeGuard` state; `wave.zip` has `enemy-wave-guard/*`.
-- Readiness: ready-for-implementation after test-first.
-- tests to add: base damage hold while active, guard hold visual trace, boss removal guard break, no actor proc status pollution.
+- JS current: `BcuCastleGuardRuntime` and `BattleSceneBcuCastleGuardPatch` keep `activeGuard` as scene/base state, block base damage while active, and use `enemy-wave-guard/*` hold/break phases.
+- Status: `human-visual-review-needed`; deterministic state/damage/effect trace passes, but exact browser appearance is not manually reviewed.
+- Test: `scripts/check-bcu-castle-guard-parity.mjs`.
 
 ### Burrow
 
@@ -339,14 +339,13 @@ node scripts/check-ability-partial-blockers.mjs
 #### 6. JS implementation
 
 - Parser: `BcuCombatModel.parseEnemyProc().burrow`.
-- Runtime: none; `ProcResolver.getProcCatalog()` intentionally has no burrow row.
-- Test: `check-ability-partial-blockers.mjs` asserts parser only and no catalog entry.
+- Runtime: `BcuBurrowLifecycleRuntime` and `BattleActorBcuBurrowPatch` implement start gating, phase transitions, movement distance, base clamp, targetability/touchability, renderability, and death cleanup. `BattleAttackResolver.captureTargets` delegates to `isBcuTargetableForEvent`.
+- Test: `check-bcu-burrow-lifecycle-parity.mjs`; `check-ability-partial-blockers.mjs` still asserts no `ProcResolver` catalog row because BCU burrow is entity lifecycle, not attack proc runtime.
 
 #### 7. Readiness
 
-- ready-for-implementation: yes, but test-first.
-- exact implementation hook: new actor lifecycle patch around `BattleActor.tick`, `BattleAttackResolver.captureTargets`, movement/collision code.
-- tests to add: start trigger, count decrement, hidden/targetability/touchability, base clamp, frozen pause, death/revive/soulstrike/warp interactions, actor animation state.
+- Status: `code-complete-candidate`.
+- Remaining: exact human/browser review of actor `BURROW_DOWN/MOVE/UP` appearance if visual sign-off is needed.
 
 ### Zombie corpse / soulstrike / zombie killer / revive / death surge
 
@@ -385,15 +384,14 @@ node scripts/check-ability-partial-blockers.mjs
 
 #### 6. JS implementation
 
-- Parser and runtime: `BcuCombatModel`, `BattleActorZombieRevivePatch`, `BattleSoulstrikePatch`, `BcuDeathAnimationRuntime`.
-- Test: death animation check includes a current zombie-corpse partial marker.
-- Mismatch: JS schedules corpse by `readyAtMs` and does not prove BCU `REVIVE_SHOW_TIME` capture window or `ZombieEff.REVIVE` visual transition.
+- Parser and runtime: `BcuCombatModel`, `BcuZombieCorpseRuntime`, `BattleActorZombieRevivePatch`, `BattleSoulstrikePatch`, `BcuDeathAnimationRuntime`.
+- Test: `check-bcu-zombie-corpse-soulstrike-parity.mjs` covers revive indexes, `AB_ZKILL`, `AB_CKILL`, BCU `REVIVE_SHOW_TIME` targetability, non-soulstrike exclusion, soulstrike cancellation, zombie killer suppression, revive HP, death-surge frame 21, and no double spawn.
+- Remaining mismatch: `ZombieEff.REVIVE` visual transition and mini-death-surge split are still not proven in JS.
 
 #### 7. Readiness
 
-- ready-for-implementation: needs-test-first.
-- exact implementation hook: `BattleActorZombieRevivePatch`, `BattleSoulstrikePatch`, `BcuDeathAnimationRuntime`, future zombie effect loader.
-- tests to add: revive show time targetability, soulstrike corpse hit cancels revive, zombie killer immunity branch, death surge during corpse and cleanup order, mini-death-surge split.
+- Status: `partial`.
+- Remaining tests/work: revive visual trace, extra-reviver timer/range fixtures, and mini-death-surge holder/runtime split after source-backed loader evidence.
 
 ### Summon
 
@@ -476,15 +474,15 @@ node scripts/check-ability-partial-blockers.mjs
 
 #### 6. JS implementation
 
-- Parser: missing for unit index 110.
-- Runtime: missing `StageBasis` production/spirit flags.
-- Visual: `A_IMUATK` exists, but no spirit actor role.
+- Parser: `BcuCombatModel.parseUnitProc().spirit` reads unit index 110.
+- Runtime: `BcuSpiritLifecycleRuntime` and `BattleSceneBcuSpiritPatch` implement summoner cooldown, manual spirit spawn, one spirit per living summoner, spawn clamp, damage rejection, self-kill, and cleanup flags.
+- Visual: damage rejection routes through existing `P_IMUATK` / `A_IMUATK` status path; no separate spirit ZIP alias is proven.
 
 #### 7. Readiness
 
-- ready-for-implementation after test-first.
-- exact implementation hook: `BcuCombatModel.parseUnitProc`, `BattleSceneBcuLineupPatch`/production runtime, `BattleActor` spirit role.
-- tests to add: parser index 110, cooldown/manual spawn, one spirit per summoner, attack-nullify on damage, self-kill cleanup.
+- Status: `human-visual-review-needed`.
+- Test: `scripts/check-bcu-spirit-lifecycle-parity.mjs`.
+- Remaining: manual browser review of exact spirit actor animation and attack-nullify effect appearance.
 
 ### Castle/base guard
 
@@ -518,14 +516,15 @@ node scripts/check-ability-partial-blockers.mjs
 
 #### 6. JS implementation
 
-- `BattleBase` and `BattleScene` do not expose proven `activeGuard` equivalent.
-- `BattleWaveEffectLoader` has `enemyWaveGuard`, but loader presence is not runtime completion.
+- `BcuCastleGuardRuntime` stores `activeGuard` equivalent in stage/base runtime state.
+- `BattleSceneBcuCastleGuardPatch` wires boss activation, base damage hold, guard break, and guard effect phases without actor proc status.
+- `BattleWaveEffectLoader` `enemyWaveGuard` alias is used for hold and break traces.
 
 #### 7. Readiness
 
-- ready-for-implementation after test-first.
-- exact implementation hook: stage runtime state plus base damage gate, not actor proc system.
-- tests to add: `check-bcu-castle-guard-parity.mjs`.
+- Status: `human-visual-review-needed`.
+- Test: `check-bcu-castle-guard-parity.mjs`.
+- Remaining: manual browser review of exact guard appearance.
 
 ## Evidence not found after exhaustive search
 
@@ -594,15 +593,15 @@ node scripts/check-ability-partial-blockers.mjs
   - reason: `AtkModelEntity.setProc` and `invokeLater` prove summon is an attack proc, but holder is not standard unit/enemy CSV.
   - what must be proven next: map BCU custom/proc-object data to JS before implementing.
 
-## Ready for pass 2 implementation
+## Ready / completed pass 2 implementation
 
 | Item | Reason | Target JS hook | Tests to add first |
 |---|---|---|---|
-| Burrow lifecycle | BCU holder, owner, states, targetability, movement, and formulas are now source-backed | `BattleActor.tick`/movement, `BattleAttackResolver.captureTargets`, future burrow lifecycle patch | `check-bcu-burrow-lifecycle-parity.mjs` |
-| Castle/base guard | BCU owner is `StageBasis.activeGuard`/`ECastle.guard`, ZIP alias exists | `BattleBase`, `BattleScene` stage state, base damage gate, priority effect runtime | `check-bcu-castle-guard-parity.mjs` |
-| Spirit | BCU holder and production owner are source-backed | `BcuCombatModel`, lineup/production runtime, `BattleActor` spirit role | `check-bcu-spirit-lifecycle-parity.mjs` |
+| Burrow lifecycle | BCU holder, owner, states, targetability, movement, and formulas are now source-backed and implemented | `BcuBurrowLifecycleRuntime`, `BattleActorBcuBurrowPatch`, `BattleAttackResolver.captureTargets` | `check-bcu-burrow-lifecycle-parity.mjs` |
+| Castle/base guard | BCU owner is `StageBasis.activeGuard`/`ECastle.guard`, ZIP alias exists, and stage/base state is implemented | `BcuCastleGuardRuntime`, `BattleSceneBcuCastleGuardPatch`, `BattleBase` damage gate | `check-bcu-castle-guard-parity.mjs` |
+| Spirit | BCU holder and production owner are source-backed and implemented | `BcuCombatModel`, `BcuSpiritLifecycleRuntime`, `BattleSceneBcuSpiritPatch` | `check-bcu-spirit-lifecycle-parity.mjs` |
 | External modifiers | BCU source paths for combo/orb/treasure/talent/PCoin are identified | data loaders plus `DamageAbilityResolver` | `check-bcu-external-damage-modifiers.mjs` |
-| Zombie corpse/death surge interaction | Owner and ordering are identified, but existing JS has partial lifecycle | `BattleActorZombieRevivePatch`, `BattleSoulstrikePatch`, `BcuDeathAnimationRuntime` | `check-bcu-zombie-corpse-soulstrike-parity.mjs`, `check-bcu-death-surge-zombie-corpse-parity.mjs` |
+| Zombie corpse/death surge interaction | Owner and ordering are identified; core corpse/soulstrike/ZK/death-surge interaction is implemented, while visual/mini split remains partial | `BcuZombieCorpseRuntime`, `BattleActorZombieRevivePatch`, `BattleSoulstrikePatch`, `BcuDeathAnimationRuntime` | `check-bcu-zombie-corpse-soulstrike-parity.mjs` |
 
 ## Still blocked / partial
 

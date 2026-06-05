@@ -1,4 +1,7 @@
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+
+const BCU_ENEMY_ANIMATION_SUFFIXES = Object.freeze(['00', '01', '02', '03', '04', '05', '06']);
+
 export function formatBcuId(id) {
   const n = Number(id);
   if (!Number.isFinite(n)) return '000';
@@ -25,6 +28,10 @@ function getEnemySemanticEntry(enemyId) {
   return null;
 }
 
+function enemyAnimations(bcuId) {
+  return BCU_ENEMY_ANIMATION_SUFFIXES.map((n) => ({ id: `anim${n}`, file: `${bcuId}_e${n}.maanim` }));
+}
+
 export function buildBcuEnemyAssetDef(enemyId) {
   const bcuId = formatBcuId(enemyId);
   const semanticKey = `enemy:${Number(enemyId)}`;
@@ -33,7 +40,7 @@ export function buildBcuEnemyAssetDef(enemyId) {
     const resolved = db?.assets?.resolveEnemyAsset?.(enemyId);
     const entry = db?.semanticProvider?.getActorEntry?.(semanticKey) || db?.semanticIndexes?.actors?.byKey?.[semanticKey] || null;
     if (resolved?.semanticKey && resolved?.bundleRef) {
-      return { ...resolved, id: `enemy-${bcuId}`, label: `敵${bcuId}`, role: 'stage-enemy', group: 'stage-enemies', renderMode: 'animated-unit', semanticKey, bundleRef: resolved.bundleRef, assetAvailable: true, assetAvailabilitySource: 'bcu-db-resolveEnemyAsset' };
+      return { ...resolved, id: `enemy-${bcuId}`, label: `敵${bcuId}`, role: 'stage-enemy', group: 'stage-enemies', renderMode: 'animated-unit', semanticKey, bundleRef: resolved.bundleRef, animations: enemyAnimations(bcuId), assetAvailable: true, assetAvailabilitySource: 'bcu-db-resolveEnemyAsset' };
     }
     if (entry?.bundleRef) {
       return {
@@ -47,7 +54,7 @@ export function buildBcuEnemyAssetDef(enemyId) {
         image: `${bcuId}_e.png`,
         imgcut: `${bcuId}_e.imgcut`,
         model: `${bcuId}_e.mamodel`,
-        animations: ['00', '01', '02', '03'].map((n) => ({ id: `anim${n}`, file: `${bcuId}_e${n}.maanim` })),
+        animations: enemyAnimations(bcuId),
         assetAvailable: true,
         assetAvailabilitySource: 'semantic-actor-index-bundle'
       };
@@ -68,7 +75,7 @@ export function buildBcuEnemyAssetDef(enemyId) {
     image: `${bcuId}_e.png`,
     imgcut: `${bcuId}_e.imgcut`,
     model: `${bcuId}_e.mamodel`,
-    animations: ['00', '01', '02', '03'].map((n) => ({ id: `anim${n}`, file: `${bcuId}_e${n}.maanim` })),
+    animations: enemyAnimations(bcuId),
     assetAvailable: true,
     assetAvailabilitySource: 'raw-path-deferred-check'
   };
@@ -110,6 +117,9 @@ export function buildStageEnemyUnitDef(row) {
     moveAnimId: 'anim00',
     attackAnimId: 'anim02',
     knockbackAnimId: 'anim03',
+    burrowDownAnimId: 'anim04',
+    burrowMoveAnimId: 'anim05',
+    burrowUpAnimId: 'anim06',
     unavailable,
     assetAvailabilitySource: assetDef.assetAvailabilitySource || null,
     stageSpawn: { ...row },

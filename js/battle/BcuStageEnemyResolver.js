@@ -1,7 +1,5 @@
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
-const BCU_ENEMY_ANIMATION_SUFFIXES = Object.freeze(['00', '01', '02', '03', '04', '05', '06']);
-
 export function formatBcuId(id) {
   const n = Number(id);
   if (!Number.isFinite(n)) return '000';
@@ -29,7 +27,17 @@ function getEnemySemanticEntry(enemyId) {
 }
 
 function enemyAnimations(bcuId) {
-  return BCU_ENEMY_ANIMATION_SUFFIXES.map((n) => ({ id: `anim${n}`, file: `${bcuId}_e${n}.maanim` }));
+  return [
+    { id: 'anim00', file: `${bcuId}_e00.maanim` },
+    { id: 'anim01', file: `${bcuId}_e01.maanim` },
+    { id: 'anim02', file: `${bcuId}_e02.maanim` },
+    { id: 'anim03', file: `${bcuId}_e03.maanim` },
+    // BCU AnimUD.DefImgLoader#getMA maps *_zombie00/01/02 to
+    // AnimU.TYPE7 indexes 4/5/6: BURROW_DOWN/BURROW_MOVE/BURROW_UP.
+    { id: 'anim04', file: `${bcuId}_e_zombie00.maanim` },
+    { id: 'anim05', file: `${bcuId}_e_zombie01.maanim` },
+    { id: 'anim06', file: `${bcuId}_e_zombie02.maanim` }
+  ];
 }
 
 function commonEnemyAssetFields(bcuId, semanticKey) {

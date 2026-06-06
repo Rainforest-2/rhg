@@ -8,6 +8,7 @@ export class BattleEffect {
     this.worldY = y;
     this.source = source;
     this.currentLayer = Number.isFinite(Number(layer)) ? Number(layer) : 0;
+    this.layer = this.currentLayer;
     this.bcuRenderLayer = this.currentLayer;
     this.bcuRenderLayerSource = Number.isFinite(Number(layer)) ? 'effect-runtime-layer' : 'effect-runtime-default-layer';
     this.bcuSmokeYOffset = Number.isFinite(Number(bcuSmokeYOffset)) ? Number(bcuSmokeYOffset) : null;

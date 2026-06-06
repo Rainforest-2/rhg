@@ -1,10 +1,17 @@
 import { BattleActor } from './BattleActor.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+import { BATTLE_CONFIG } from './BattleConfig.js';
+import { EffectRuntime } from './EffectRuntime.js';
+import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
+import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { clearBcuWarpLifecycle, isBcuWarpLifecycleActive, startBcuWarpLifecycle, tickBcuWarpLifecycle } from './bcu-runtime/BcuWarpLifecycleRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v5-toxic-visual');
+const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v6-bcu-toxic-eanimcont');
 const BCU_SLOW_MOVE_PER_FRAME = 0.25;
-const BCU_TOXIC_EFFECT_FRAMES = 60;
+const BCU_TOXIC_EFFECT_KEY = 'toxic';
+const BCU_TOXIC_EFFECT_SOURCE = 'bcu-effanim-A_POISON-poiatk';
+const BCU_TOXIC_EFFECT_OFFSET_Y = 0;
+const BCU_TOXIC_EFFECT_SCALE = 1.2;
 
 function framesToMs(frames) {
   const n = Number(frames);
@@ -131,37 +138,86 @@ function tickWarp(actor, nowMs = actor?.lastSceneTimeMs) {
   return true;
 }
 
-function armToxicVisual(actor, payload = {}, meta = {}, damage = 0, result = null) {
-  const durationFrames = Math.max(1, Math.trunc(Number(payload.effectFrames ?? payload.visualFrames ?? BCU_TOXIC_EFFECT_FRAMES) || BCU_TOXIC_EFFECT_FRAMES));
-  const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
-  const statuses = ensureStatuses(actor);
-  statuses.toxic = {
-    key: 'toxic',
-    framesRemaining: durationFrames,
-    durationFrames,
-    untilMs: nowMs + framesToMs(durationFrames),
-    payload,
-    effectKey: 'A_POISON',
-    damage,
-    source: 'BCU Entity.processProcs P_POIATK -> AnimManager.getEff(A_POISON) visual window'
+function createEffectRuntime(asset) {
+  if (!asset?.loaded || !asset?.model || !asset?.anim) return null;
+  const model = new BcuModelInstance(asset.model);
+  const animator = new BcuAnimator(asset.anim);
+  animator.setLoop?.(false);
+  animator.restart?.();
+  return {
+    model,
+    animator,
+    frameCount: asset.frameCount || Math.max(1, (Number(asset.anim?.maxFrame) || 0) + 1),
+    maxFrame: asset.maxFrame || Number(asset.anim?.maxFrame) || 0
   };
-  actor.lastBcuToxicEffectDebug = {
-    source: 'BattleActorProcStatusPatch.armToxicVisual',
-    effectKey: 'A_POISON',
-    durationFrames,
-    damage,
-    result,
-    bcuReference: 'EffAnim.A_POISON / Entity.AnimManager.drawEff status-effect rendering at entity origin, scale 0.75'
-  };
-  meta.scene?.pushEvent?.({
-    type: 'bcuToxicEffectArmed',
-    actor: actor.instanceId || actor.label || null,
-    effectKey: 'A_POISON',
-    durationFrames,
-    damage,
-    source: 'BattleActorProcStatusPatch'
+}
+
+function actorWorldX(actor) {
+  return Number.isFinite(actor?.posBcu) ? actor.posBcu : (Number.isFinite(actor?.x) ? actor.x : 0);
+}
+
+function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 0, damageResult = null) {
+  if (!scene || !actor) return null;
+  const asset = scene.waveEffectAssets?.[BCU_TOXIC_EFFECT_KEY] || null;
+  if (!asset?.loaded) {
+    scene.ensureWaveEffectLoading?.();
+    const debug = {
+      source: 'BattleActorProcStatusPatch.spawnBcuToxicHitEffect',
+      spawned: false,
+      reason: asset?.reason || 'effect-asset-not-ready',
+      effectKey: BCU_TOXIC_EFFECT_KEY,
+      bcuReference: 'BCU Entity.processProcs POIATK uses basis.lea.add(new EAnimCont(pos,currentLayer,effas().A_POISON.getEAnim(DEF)))'
+    };
+    actor.lastBcuToxicEffectDebug = debug;
+    scene.pushEvent?.({ type: 'bcuToxicEffectSkipped', actor: actor.instanceId || actor.label || null, reason: debug.reason, effectKey: BCU_TOXIC_EFFECT_KEY });
+    return null;
+  }
+  if ((scene.effects?.length || 0) >= (BATTLE_CONFIG.tuning?.maxEffects ?? 40)) return null;
+  const runtime = createEffectRuntime(asset);
+  if (!runtime) return null;
+  const worldX = actorWorldX(actor);
+  const layer = Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0;
+  const effect = EffectRuntime.createHitEffect({
+    id: `bcu-toxic-A_POISON-${scene.logicFrame || 0}-${scene.effects?.length || 0}-${Math.random().toString(36).slice(2)}`,
+    type: 'toxic',
+    x: worldX,
+    y: 0,
+    image: asset.image,
+    imgcut: asset.imgcut,
+    model: runtime.model,
+    animator: runtime.animator,
+    scale: BCU_TOXIC_EFFECT_SCALE,
+    source: BCU_TOXIC_EFFECT_SOURCE,
+    createdAtMs: scene.timeMs,
+    layer,
+    bcuSmokeYOffset: BCU_TOXIC_EFFECT_OFFSET_Y,
+    debug: {
+      source: BCU_TOXIC_EFFECT_SOURCE,
+      key: BCU_TOXIC_EFFECT_KEY,
+      effectKey: 'A_POISON',
+      target: actor.instanceId || actor.label || null,
+      attacker: meta.attacker?.instanceId || meta.attacker?.label || null,
+      worldX,
+      layer,
+      damage,
+      payload,
+      damageResult,
+      frameCount: runtime.frameCount,
+      maxFrame: runtime.maxFrame,
+      assetSource: asset.source || null,
+      bcuReference: 'BCU Entity.processProcs: POIATK -> damage += maxH * mult * (100-rst)/10000; basis.lea.add(new EAnimCont(pos,currentLayer,effas().A_POISON.getEAnim(DefEff.DEF))); offsetY=0'
+    }
   });
-  return statuses.toxic;
+  effect.durationMs = runtime.frameCount * BCU_BATTLE_TIMER_PERIOD_MS;
+  effect.frameDurationMs = BCU_BATTLE_TIMER_PERIOD_MS;
+  effect.elapsedMs = -BCU_BATTLE_TIMER_PERIOD_MS;
+  scene.effects ||= [];
+  scene.effects.push(effect);
+  const debug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id, effectKey: 'A_POISON' };
+  actor.lastBcuToxicEffectDebug = debug;
+  scene.lastBcuToxicEffectDebug = debug;
+  scene.pushEvent?.({ type: 'bcuToxicEffectSpawned', actor: actor.instanceId || actor.label || null, effectKey: 'A_POISON', worldX: Math.round(worldX), layer, damage, source: BCU_TOXIC_EFFECT_SOURCE });
+  return effect;
 }
 
 function applyToxic(actor, payload = {}, meta = {}) {
@@ -173,7 +229,7 @@ function applyToxic(actor, payload = {}, meta = {}) {
     attacker: meta.attacker?.instanceId || meta.attacker || null,
     timeMs: meta.nowMs ?? null,
     damageCalculation: {
-      source: 'BCU processProcs POIATK/toxic maxH percent',
+      source: 'BCU Entity.processProcs POIATK maxH percent direct damage',
       finalDamage: damage,
       baseDamage: damage,
       proc: { applied: [], pending: [], skipped: [], notes: ['toxic-direct-damage'] }
@@ -184,11 +240,17 @@ function applyToxic(actor, payload = {}, meta = {}) {
     bcuToxic: true,
     attackKind: 'toxic'
   }) || { accepted: false, reason: 'target-takeDamage-missing' };
-  const toxicVisual = result.accepted === true && actor?.isAlive?.() !== false
-    ? armToxicVisual(actor, payload, meta, damage, result)
-    : null;
-  actor.lastBcuToxicDebug = { source: 'BCU processProcs POIATK/toxic maxH percent', mult, damage, nowMs: meta.nowMs ?? null, result, toxicVisual };
-  return { applied: result.accepted === true, damage, mult, result, toxicVisual, effectKey: toxicVisual?.effectKey || null };
+  const effect = result.accepted === true ? spawnBcuToxicHitEffect(meta.scene, actor, payload, meta, damage, result) : null;
+  actor.lastBcuToxicDebug = {
+    source: 'BCU Entity.processProcs POIATK maxH percent direct damage',
+    mult,
+    damage,
+    nowMs: meta.nowMs ?? null,
+    result,
+    effectId: effect?.id || null,
+    bcuReference: 'Entity.processProcs POIATK adds A_POISON to basis.lea immediately; this is not status[P_POISON] and does not create a persistent POISON icon slot.'
+  };
+  return { applied: result.accepted === true, damage, mult, result, effectId: effect?.id || null, effectKey: effect ? 'A_POISON' : null };
 }
 
 function applyStatus(actor, key, payload = {}, meta = {}) {
@@ -224,12 +286,8 @@ function applyStatus(actor, key, payload = {}, meta = {}) {
     actor.sealUntilMs = statuses.seal.untilMs;
     return { applied: true, status: statuses.seal };
   }
-  if (key === 'warp') {
-    return applyWarp(actor, payload, meta);
-  }
-  if (key === 'toxic') {
-    return applyToxic(actor, payload, meta);
-  }
+  if (key === 'warp') return applyWarp(actor, payload, meta);
+  if (key === 'toxic') return applyToxic(actor, payload, meta);
   return { applied: false, reason: 'unsupported-status' };
 }
 
@@ -241,9 +299,7 @@ function applyProc(actor, item, meta = {}) {
     actor.startKnockback?.({ type: 'proc', reason: 'proc-kb', tuning: meta.tuning || {}, nowMs: meta.nowMs });
     return { applied: actor.state === 'knockback', reason: 'proc-kb', proc: item };
   }
-  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken' || item.key === 'curse' || item.key === 'seal' || item.key === 'toxic' || item.key === 'warp') {
-    return applyStatus(actor, item.key, item.payload || {}, meta);
-  }
+  if (item.key === 'freeze' || item.key === 'slow' || item.key === 'weaken' || item.key === 'curse' || item.key === 'seal' || item.key === 'toxic' || item.key === 'warp') return applyStatus(actor, item.key, item.payload || {}, meta);
   return { applied: false, reason: 'proc-not-runtime-applied' };
 }
 
@@ -265,14 +321,7 @@ export function installBattleActorProcStatusPatch() {
   proto.getBcuMoveDistanceForDt = function getBcuMoveDistanceForDt(defaultDistance, dt, nowMs = this.lastSceneTimeMs) {
     if (isActive(this, 'slow', nowMs)) {
       const distance = BCU_SLOW_MOVE_PER_FRAME * (Number(dt) || BCU_BATTLE_TIMER_PERIOD_MS) / BCU_BATTLE_TIMER_PERIOD_MS;
-      this.lastBcuSlowMoveDebug = {
-        source: 'BCU Entity.updateMove status[P_SLOW] parity',
-        defaultDistance,
-        slowDistance: distance,
-        dt,
-        nowMs,
-        untilMs: this.bcuProcStatuses?.slow?.untilMs ?? null
-      };
+      this.lastBcuSlowMoveDebug = { source: 'BCU Entity.updateMove status[P_SLOW] parity', defaultDistance, slowDistance: distance, dt, nowMs, untilMs: this.bcuProcStatuses?.slow?.untilMs ?? null };
       return distance;
     }
     return defaultDistance;
@@ -340,9 +389,7 @@ function resolveDebugActor(actorOrSelector) {
   const app = globalThis.__APP__ || globalThis.app;
   const actors = app?.scene?.actors || app?.battleScene?.actors || [];
   if (typeof actorOrSelector === 'function') return actors.find(actorOrSelector) || null;
-  if (typeof actorOrSelector === 'string') {
-    return actors.find((a) => a.instanceId === actorOrSelector || a.label === actorOrSelector || a.side === actorOrSelector) || null;
-  }
+  if (typeof actorOrSelector === 'string') return actors.find((a) => a.instanceId === actorOrSelector || a.label === actorOrSelector || a.side === actorOrSelector) || null;
   return actors.find((a) => a?.isAlive?.()) || null;
 }
 
@@ -350,7 +397,7 @@ globalThis.__BCU_TEST_APPLY_STATUS__ = function __BCU_TEST_APPLY_STATUS__(actorO
   const actor = resolveDebugActor(actorOrSelector);
   const key = DEBUG_STATUS_MAP[statusKey] || DEBUG_STATUS_MAP[String(statusKey || '').toUpperCase()];
   if (!actor || !key) return { applied: false, reason: 'actor-or-status-not-found' };
-  return actor.applyBcuProc?.({ key, payload: { timeFrames: frames, time: frames, visualFrames: frames, mult: key === 'weaken' ? 50 : key === 'toxic' ? 25 : undefined, dis0: key === 'warp' ? 200 : undefined, dis1: key === 'warp' ? 200 : undefined } }, { nowMs: actor.lastSceneTimeMs ?? globalThis.__APP__?.scene?.timeMs ?? 0, scene: globalThis.__APP__?.scene || globalThis.app?.scene || null }) || { applied: false, reason: 'applyBcuProc-missing' };
+  return actor.applyBcuProc?.({ key, payload: { timeFrames: frames, time: frames, mult: key === 'weaken' ? 50 : key === 'toxic' ? 25 : undefined, dis0: key === 'warp' ? 200 : undefined, dis1: key === 'warp' ? 200 : undefined } }, { nowMs: actor.lastSceneTimeMs ?? globalThis.__APP__?.scene?.timeMs ?? 0, scene: globalThis.__APP__?.scene || globalThis.app?.scene || null }) || { applied: false, reason: 'applyBcuProc-missing' };
 };
 
 globalThis.__BCU_TEST_CLEAR_STATUS__ = function __BCU_TEST_CLEAR_STATUS__(actorOrSelector, statusKey) {
@@ -358,9 +405,7 @@ globalThis.__BCU_TEST_CLEAR_STATUS__ = function __BCU_TEST_CLEAR_STATUS__(actorO
   const key = DEBUG_STATUS_MAP[statusKey] || DEBUG_STATUS_MAP[String(statusKey || '').toUpperCase()];
   if (!actor?.bcuProcStatuses || !key) return { cleared: false };
   delete actor.bcuProcStatuses[key];
-  if (key === 'warp') {
-    clearBcuWarpLifecycle(actor, 'debug-clear');
-  }
+  if (key === 'warp') clearBcuWarpLifecycle(actor, 'debug-clear');
   actor.bcuStatusEffectManager?.removeEffect?.(0);
   return { cleared: true, key };
 };

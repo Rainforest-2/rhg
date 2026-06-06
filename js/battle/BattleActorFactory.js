@@ -6,11 +6,18 @@ import { BattleActor } from './BattleActor.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { bcuRangeToWorld, bcuSpeedToWorldPerSecond, bcuWidthToWorld } from './BattleWorldUnits.js';
 import { ActorStatsModel } from './ActorStatsModel.js';
+import { applyBcuUnitLevelToStats } from './bcu-runtime/BcuUnitLevelRuntime.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 export const TEMPLATE_LOAD_LEVEL = { STATS:'stats', RENDER_CORE:'render-core', SPAWN_READY:'spawn-ready', FULL_VISUAL:'full-visual' };
 const LEVEL_RANK = { 'stats':1, 'render-core':2, 'spawn-ready':3, 'full-visual':4 };
 const BCU_TIMER_FPS = 1000 / 33;
+
+function resolveTemplateStats(statsLoader, unitDef, baseStats) {
+  if (unitDef.statsType === 'enemy' && unitDef.stageStatModifiers) return statsLoader.applyStageEnemyMagnification(baseStats, unitDef.stageStatModifiers);
+  if (unitDef.statsType === 'unit' && unitDef.bcuUnitLevel) return applyBcuUnitLevelToStats(baseStats, unitDef.bcuUnitLevel);
+  return baseStats;
+}
 
 export class BattleActorFactory {
   constructor(statsLoader, tuning) { this.loader = new BcuAssetLoader(); this.statsLoader = statsLoader; this.tuning = tuning || {}; this.templates = new Map(); this.upgradePromises = new Map(); }
@@ -64,7 +71,7 @@ export class BattleActorFactory {
     if(!tpl.stats){
       const baseStats = unitDef.statsType === 'unit' ? await this.statsLoader.loadUnitStats(unitDef.statsId, 'f', unitDef.formRow || 0) : await this.statsLoader.loadEnemyStats(unitDef.statsId);
       tpl.baseStats = baseStats;
-      tpl.stats = unitDef.statsType === 'enemy' && unitDef.stageStatModifiers ? this.statsLoader.applyStageEnemyMagnification(baseStats, unitDef.stageStatModifiers) : baseStats;
+      tpl.stats = resolveTemplateStats(this.statsLoader, unitDef, baseStats);
       tpl.baseStatsSourceSummary=this.statsLoader.describeStats?.(tpl.baseStats)||null;
       tpl.statsSourceSummary=this.statsLoader.describeStats?.(tpl.stats)||null;
       tpl.actorStatsModel = tpl.stats?.actorStatsModel || null;
@@ -126,6 +133,6 @@ export class BattleActorFactory {
     a.sourcePack=t.assetSetSemantic?.sourcePack || null;
     a.bundlePath=t.assetSetSemantic?.bundleRef?.bundlePath || null;
     a.timingParity=parity;
-    a.moveSpeedWorldPerSecond=bcuSpeedToWorldPerSecond(t.stats.speed); a.moveSpeed=a.moveSpeedWorldPerSecond; a.detectionRangeWorld=bcuRangeToWorld(t.stats.detectionRange); a.detectionRangePx=a.detectionRangeWorld; a.attackWidthWorld=bcuWidthToWorld(t.stats.width||0); a.attackWidthPx=a.attackWidthWorld; BattleCombatCoordinateRuntime.attachActor(a,{stats:t.stats,source:'BattleActorFactory.createActor'}); a.refreshAttackProfile?.(); a.slotId=u.slotId; a.templateId=templateId; a.unitId=u.assetId; a.statsSourceSummary=t.statsSourceSummary||this.statsLoader.describeStats?.(t.stats)||null; a.baseStats=t.baseStats||null; a.stageMagnification=t.stats?.stageMagnification||null; a.actorStatsModel=t.stats?.actorStatsModel||t.actorStatsModel||null; a.actorStatsModelDebug=t.stats?.statsModelDebug||t.statsModelDebug||(a.actorStatsModel?ActorStatsModel.describe(a.actorStatsModel):null); a.abilityModel=t.stats?.abilityModel||null; a.abilities=t.stats?.abilities||{}; a.traits=t.stats?.traits||[]; a.traitFlags=t.stats?.traitFlags||{}; a.abilityDebug={hasRawAbi:!!t.stats?.abilityModel?.hasRawAbi,mappingStatus:t.stats?.abilityModel?.mappingStatus||'none',attackAbilityCount:Array.isArray(t.stats?.abilityModel?.attackAbilities)?t.stats.abilityModel.attackAbilities.length:0}; a.statScalingDebug={...(a.actorStatsModelDebug||{}),baseHp:a.actorStatsModelDebug?.baseHp??t.baseStats?.hp??null,scaledHp:a.actorStatsModelDebug?.scaledHp??t.stats?.hp??null,baseDamage:a.actorStatsModelDebug?.baseDamage??t.baseStats?.damage??null,scaledDamage:a.actorStatsModelDebug?.scaledDamage??t.stats?.damage??null,stageMagnification:a.actorStatsModelDebug?.stageMagnification||t.stats?.stageMagnification||null}; return a;
+    a.moveSpeedWorldPerSecond=bcuSpeedToWorldPerSecond(t.stats.speed); a.moveSpeed=a.moveSpeedWorldPerSecond; a.detectionRangeWorld=bcuRangeToWorld(t.stats.detectionRange); a.detectionRangePx=a.detectionRangeWorld; a.attackWidthWorld=bcuWidthToWorld(t.stats.width||0); a.attackWidthPx=a.attackWidthWorld; BattleCombatCoordinateRuntime.attachActor(a,{stats:t.stats,source:'BattleActorFactory.createActor'}); a.refreshAttackProfile?.(); a.slotId=u.slotId; a.templateId=templateId; a.unitId=u.assetId; a.statsSourceSummary=t.statsSourceSummary||this.statsLoader.describeStats?.(t.stats)||null; a.baseStats=t.baseStats||null; a.stageMagnification=t.stats?.stageMagnification||null; a.bcuUnitLevel=t.stats?.bcuUnitLevel||null; a.actorStatsModel=t.stats?.actorStatsModel||t.actorStatsModel||null; a.actorStatsModelDebug=t.stats?.statsModelDebug||t.statsModelDebug||(a.actorStatsModel?ActorStatsModel.describe(a.actorStatsModel):null); a.abilityModel=t.stats?.abilityModel||null; a.abilities=t.stats?.abilities||{}; a.traits=t.stats?.traits||[]; a.traitFlags=t.stats?.traitFlags||{}; a.abilityDebug={hasRawAbi:!!t.stats?.abilityModel?.hasRawAbi,mappingStatus:t.stats?.abilityModel?.mappingStatus||'none',attackAbilityCount:Array.isArray(t.stats?.abilityModel?.attackAbilities)?t.stats.abilityModel.attackAbilities.length:0}; a.statScalingDebug={...(a.actorStatsModelDebug||{}),baseHp:a.actorStatsModelDebug?.baseHp??t.baseStats?.hp??null,scaledHp:a.actorStatsModelDebug?.scaledHp??t.stats?.hp??null,baseDamage:a.actorStatsModelDebug?.baseDamage??t.baseStats?.damage??null,scaledDamage:a.actorStatsModelDebug?.scaledDamage??t.stats?.damage??null,stageMagnification:a.actorStatsModelDebug?.stageMagnification||t.stats?.stageMagnification||null,bcuUnitLevel:t.stats?.bcuUnitLevel||null}; return a;
   }
 }

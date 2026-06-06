@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
 import { EFFECT_KBEFF_BUNDLE_KEY, EFFECT_KBEFF_BUNDLE_PATH, rebuildKbeffEffectBundle } from './build-bcu-effect-bundle.mjs';
 import { BCU_BATTLE_UI_BUNDLE_KEY, BCU_BATTLE_UI_BUNDLE_PATH, rebuildBcuBattleUiBundle } from './build-bcu-ui-bundle.mjs';
@@ -13,6 +14,7 @@ const language = await readJson('public/assets/generated/bcu-language-index.json
 const manifest = { schemaVersion: 1, generatedAt: FIXED_DATE, zipFormat: 'store-only', generationMode: all ? 'all' : 'sample', bundles: {} };
 const diagnostics = { schemaVersion: 1, generatedAt: FIXED_DATE, summary: { generated: 0, skipped: 0, sampleMode: !all }, skipped: [], oversized: [] };
 const limit = 50 * 1024 * 1024;
+const ZOMBIE_BURROW_ANIM_ROLES = Object.freeze({ '00': 'anim04', '01': 'anim05', '02': 'anim06' });
 
 async function addBundle(bundleKey, kind, key, bundlePath, status, entries) {
   const requiredMissing = entries.filter((e) => e?.required && e.data == null).map((e) => e.name);
@@ -40,6 +42,28 @@ function sampleActors(entries) {
   return entries.filter((e) => wanted.includes(e.key)).slice(0, 8);
 }
 
+function selectedSourcePrefix(entry) {
+  const pack = entry?.selected?.sourcePack;
+  if (!pack || entry?.kind !== 'enemy') return null;
+  return `public/assets/bcu/${pack}/org/enemy/${entry.id3}/`;
+}
+
+function zombieBurrowAnimationEntries(entry) {
+  const prefix = selectedSourcePrefix(entry);
+  if (!prefix) return [];
+  const rawPaths = entry?.diagnostics?.sourceRawPaths || [];
+  const out = [];
+  for (const rawPath of rawPaths) {
+    if (!String(rawPath).startsWith(prefix)) continue;
+    const file = path.basename(rawPath);
+    const m = file.match(/_zombie(0[0-2])\.maanim$/i);
+    if (!m) continue;
+    out.push({ animId: ZOMBIE_BURROW_ANIM_ROLES[m[1]], file, rawPath });
+  }
+  out.sort((a, b) => a.animId.localeCompare(b.animId));
+  return out;
+}
+
 for (const entry of sampleActors(actor.entries || [])) {
   if (!entry.selected) continue;
   const files = entry.selected.files;
@@ -50,12 +74,15 @@ for (const entry of sampleActors(actor.entries || [])) {
     diagnostics.summary.skipped += 1;
     continue;
   }
+  const zombieBurrow = zombieBurrowAnimationEntries(entry);
+  const extraActorAnimations = Object.fromEntries(zombieBurrow.map((e) => [e.animId, e.file]));
   const items = [
-    { name: 'bundle.json', required: true, data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, missing: entry.missing, fallbackPolicy: 'no-raw-runtime-fallback', sourcePack: entry.selected.sourcePack, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], entries: { image: files.image, imgcut: files.imgcut, model: files.model, animations: files.animations || {}, icon: files.icon || null } }, null, 2)) },
+    { name: 'bundle.json', required: true, data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, missing: entry.missing, fallbackPolicy: 'no-raw-runtime-fallback', sourcePack: entry.selected.sourcePack, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], entries: { image: files.image, imgcut: files.imgcut, model: files.model, animations: files.animations || {}, extraActorAnimations, icon: files.icon || null } }, null, 2)) },
     { name: 'image.png', required: true, data: await fileBufferOrNull(files.image) },
     { name: 'imgcut.imgcut', required: true, data: await fileBufferOrNull(files.imgcut) },
     { name: 'model.mamodel', required: true, data: await fileBufferOrNull(files.model) },
     ...Object.entries(files.animations || {}).map(async ([role, file]) => ({ name: `${role}.maanim`, required: true, data: await fileBufferOrNull(file) })),
+    ...zombieBurrow.map(async (entry) => ({ name: entry.file, data: await fileBufferOrNull(entry.rawPath) })),
     { name: 'icon.png', data: await fileBufferOrNull(files.icon) }
   ];
   await addBundle(entry.bundleRef.bundleKey, 'actor', entry.key, entry.bundleRef.bundlePath, entry.status, await Promise.all(items));
@@ -93,7 +120,7 @@ for (const entry of enemyCastles) {
     { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, numericKey: entry.numericKey, selected: entry.selected, variants: entry.variants }, null, 2)) },
     { name: 'image.png', data: await fileBufferOrNull(entry.selected.image) }
   ];
-  await addBundle(entry.bundleRef.bundleKey, 'enemyCastle', entry.key, entry.bundleRef.bundlePath, entry.selected.image ? 'full' : 'partial', files);
+  await addBundle(entry.bundleRef.bundleKey, 'enemyCastle', entry.key, entry.bundlePath, entry.selected.image ? 'full' : 'partial', files);
 }
 
 const nyankoCastles = all ? (castle.nyanko || []) : (castle.nyanko || []).filter((e) => ['000', '002', '003'].includes(e.partId));
@@ -104,7 +131,7 @@ for (const entry of nyankoCastles) {
     ...(await Promise.all(sourceFiles.map(async (file) => ({ name: file.split('/').pop(), data: await fileBufferOrNull(file) }))))
   ];
   const hasPng = sourceFiles.some((file) => file.endsWith('.png'));
-  await addBundle(entry.bundleRef.bundleKey, 'nyankoCastle', entry.key, entry.bundleRef.bundlePath, hasPng ? 'full' : 'partial', files);
+  await addBundle(entry.bundleRef.bundleKey, 'nyankoCastle', entry.key, entry.bundlePath, hasPng ? 'full' : 'partial', files);
 }
 
 for (const entry of language.entries || []) {
@@ -112,7 +139,7 @@ for (const entry of language.entries || []) {
     { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, locale: entry.locale, files: entry.files }, null, 2)) },
     ...(await Promise.all((entry.files || []).map(async (file) => ({ name: file.split('/').pop(), data: await fileBufferOrNull(file) }))))
   ];
-  await addBundle(entry.bundleRef.bundleKey, 'language', entry.key, entry.bundleRef.bundlePath, entry.status, files);
+  await addBundle(entry.bundleRef.bundleKey, 'language', entry.key, entry.bundlePath, entry.status, files);
 }
 
 const effectBundle = await rebuildKbeffEffectBundle();
@@ -124,10 +151,10 @@ manifest.bundles[BCU_BATTLE_UI_BUNDLE_KEY] = { kind: 'ui', key: BCU_BATTLE_UI_BU
 diagnostics.summary.generated += 1;
 
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);
-await writeJson('public/assets/generated/bcu-diagnostics.json', diagnostics);
 await import('./build-bcu-core-db-bundle.mjs');
 manifest.bundles['core:db'] = { kind: 'core', key: 'core:db', bundlePath: 'public/assets/bundles/core/core-db.zip', status: 'full', sizeBytes: (await fs.stat('public/assets/bundles/core/core-db.zip')).size, hash: await hashFile('public/assets/bundles/core/core-db.zip') };
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', manifest);
+await writeJson('public/assets/generated/bcu-diagnostics.json', diagnostics);
 console.log(`wrote bcu-bundle-manifest bundles=${Object.keys(manifest.bundles).length} mode=${manifest.generationMode}`);
 await import('./audit-bcu-icon-sources.mjs');
 await import('./build-bcu-icon-index.mjs');

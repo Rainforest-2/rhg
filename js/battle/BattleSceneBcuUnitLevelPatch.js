@@ -32,7 +32,7 @@ function withBcuCatUnitLevel(scene, unitDef) {
   if (!opt.enabled) return { ...unitDef, bcuUnitLevel: null, bcuUnitLevelDebug: { enabled: false, source: opt.source } };
   const metadata = levelMetadataFor(scene, unitDef) || {};
   const requested = { prefLevel: opt.prefLevel, source: opt.source, metadata };
-  const resolved = resolveBcuUnitLevelConfig(requested);
+  const resolved = resolveBcuUnitLevelConfig({ requested, metadata, source: opt.source });
   return {
     ...unitDef,
     bcuUnitLevelMeta: metadata,

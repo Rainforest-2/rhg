@@ -2,7 +2,7 @@ const DEFAULT_INDEX_ROOT = './public/assets/generated';
 
 function normalizeFetchPath(path) {
   if (!path) return null;
-  const s = String(path).replace(/\/g, '/');
+  const s = String(path).replace(/\\/g, '/');
   if (s.startsWith('http') || s.startsWith('/') || s.startsWith('./')) return s;
   return `./${s}`;
 }
@@ -74,12 +74,10 @@ async function inflateRawBytes(data) {
     const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
-
   if (typeof window === 'undefined') {
     const zlib = await import('node:zlib');
     return new Uint8Array(zlib.inflateRawSync(Buffer.from(data)));
   }
-
   throw new Error('ZIP deflate is not supported in this runtime');
 }
 
@@ -99,29 +97,22 @@ async function parseStoreZip(buffer) {
     const nameStart = offset + 30;
     const dataStart = nameStart + nameLen + extraLen;
     const dataEnd = dataStart + compressedSize;
-
     if (dataEnd > bytes.length) throw new Error(`Truncated ZIP entry for ${nameStart}`);
-
     const name = decoder.decode(bytes.slice(nameStart, nameStart + nameLen));
     const compressed = bytes.slice(dataStart, dataEnd);
-
     let data;
     if (method === 0) {
       if (compressedSize !== uncompressedSize) throw new Error(`Invalid STORE ZIP sizes for ${name}`);
       data = compressed;
     } else if (method === 8) {
       data = await inflateRawBytes(compressed);
-      if (uncompressedSize !== 0 && data.length !== uncompressedSize) {
-        throw new Error(`Invalid DEFLATE ZIP size for ${name}: expected ${uncompressedSize}, got ${data.length}`);
-      }
+      if (uncompressedSize !== 0 && data.length !== uncompressedSize) throw new Error(`Invalid DEFLATE ZIP size for ${name}: expected ${uncompressedSize}, got ${data.length}`);
     } else {
       throw new Error(`Unsupported ZIP compression method ${method} for ${name}`);
     }
-
     files.set(name, data);
     offset = dataEnd;
   }
-
   return files;
 }
 

@@ -1,4 +1,5 @@
 export const BCU_DEFAULT_PREF_LEVEL = 50;
+export const BCU_DEFAULT_UNIT_MAX_LEVEL = 20;
 export const BCU_UNIT_LEVEL_SOURCE = 'BCU Unit.getPrefLvs / UnitLevel.getMult / EForm.getEntity';
 
 const DEFAULT_LEVEL_CURVE = Object.freeze(Array(20).fill(0));
@@ -55,16 +56,12 @@ export function getBcuPreferredPlusLevel({ prefLevel = BCU_DEFAULT_PREF_LEVEL, r
 }
 
 export function resolveBcuUnitLevelConfig({ requested = {}, metadata = {}, source = 'runtime' } = {}) {
-  const maxLevel = Math.max(1, truncInt(metadata.maxLevel ?? metadata.max, BCU_DEFAULT_PREF_LEVEL));
+  const maxLevel = Math.max(1, truncInt(metadata.maxLevel ?? metadata.max, BCU_DEFAULT_UNIT_MAX_LEVEL));
   const maxPlusLevel = Math.max(0, truncInt(metadata.maxPlusLevel ?? metadata.maxp, 0));
   const rarity = truncInt(metadata.rarity, 0);
   const prefLevel = Math.max(1, truncInt(requested.prefLevel ?? requested.level ?? BCU_DEFAULT_PREF_LEVEL, BCU_DEFAULT_PREF_LEVEL));
   const level = clampInt(requested.level ?? Math.min(prefLevel, maxLevel), 1, maxLevel);
-  const plusLevel = clampInt(
-    requested.plusLevel ?? getBcuPreferredPlusLevel({ prefLevel, rarity, maxPlusLevel }),
-    0,
-    maxPlusLevel
-  );
+  const plusLevel = clampInt(requested.plusLevel ?? getBcuPreferredPlusLevel({ prefLevel, rarity, maxPlusLevel }), 0, maxPlusLevel);
   const effectiveLevel = level + plusLevel;
   const lvs = normalizeBcuUnitLevelCurve(metadata.levelCurve?.lvs || metadata.lvs);
   const multiplier = getBcuUnitLevelMultiplier(effectiveLevel, lvs);

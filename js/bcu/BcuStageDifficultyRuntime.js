@@ -20,6 +20,14 @@ function keyFromStageKey(value) {
   return parseTripletToken(noPrefix)?.key || null;
 }
 
+function keyFromNumericAddress(stage = {}) {
+  const mapColcId = toInt(stage.mapColcId ?? stage.numericAddress?.mapColcId, null);
+  const mapId = toInt(stage.mapId ?? stage.mapNo ?? stage.numericAddress?.mapId ?? stage.numericAddress?.mapNo, null);
+  const stageId = toInt(stage.stageIdNumeric ?? stage.stageNo ?? stage.stageNoRaw ?? stage.numericAddress?.stageId ?? stage.numericAddress?.stageNo, null);
+  if ([mapColcId, mapId, stageId].every(Number.isFinite)) return stageKey(mapColcId, mapId, stageId);
+  return null;
+}
+
 export function parseBcuStageDifficultyLang(text, { source = 'lang/Difficulty.txt' } = {}) {
   const table = new Map();
   const diagnostics = { source, parsed: 0, skipped: 0, errors: [] };
@@ -47,6 +55,8 @@ export function formatBcuStageDifficulty(diff, { noneLabel = NONE_LABEL } = {}) 
 }
 
 export function stageDifficultyKeyFromStageOption(stage = {}) {
+  const numeric = keyFromNumericAddress(stage);
+  if (numeric) return numeric;
   const candidates = [stage.stageKey, stage.key, stage.semanticEntry?.key, stage.legacyStageKey, stage.semanticEntry?.legacyStageKey];
   for (const candidate of candidates) {
     const key = keyFromStageKey(candidate);

@@ -7,6 +7,7 @@ const FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v1');
 const STYLE_ID = 'formation-stage-difficulty-style';
 const DEFAULT_LIMIT = 80;
 const FILTER_LIMIT = 240;
+const CUSTOM_LEVEL = 'custom-stage-battle';
 
 function esc(v) { return String(v ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])); }
 function ensureStyle() {
@@ -95,7 +96,7 @@ export function installFormationStageDifficultyPatch() {
   p[FLAG] = true;
   p.loadStageOptions = function loadStageOptionsWithDifficulty() { return loadStages(this); };
   const rr = p.renderStageSelector;
-  p.renderStageSelector = function renderStageSelectorWithDifficulty(...args) { void ensureDifficulty(this); const prev = this.stageOptions; const all = this.__bcuAllStageOptions || prev || []; this.stageOptions = choose(this); const res = rr.apply(this, args); this.stageOptions = all; decorate(this); return res; };
+  p.renderStageSelector = function renderStageSelectorWithDifficulty(...args) { void ensureDifficulty(this); const prev = this.stageOptions; const all = this.__bcuAllStageOptions || prev || []; const custom = this.stageSelectorState?.level === CUSTOM_LEVEL; this.stageOptions = custom ? all : choose(this); const res = rr.apply(this, args); this.stageOptions = all; decorate(this); return res; };
   const oi = p.onInput;
   p.onInput = function onInputWithStageDifficulty(e) { const q = e.target.closest?.('[data-stage-search-input]'), min = e.target.closest?.('[data-stage-difficulty-min]'), max = e.target.closest?.('[data-stage-difficulty-max]'); if ((q || min || max) && this.root?.contains(e.target)) { const f = this.__bcuStageDifficultyFilter || {}; this.__bcuStageDifficultyFilter = { ...f, ...(q ? { q: q.value } : {}), ...(min ? { min: min.value } : {}), ...(max ? { max: max.value } : {}) }; this.renderStageSelector(); return; } return oi.call(this, e); };
 }

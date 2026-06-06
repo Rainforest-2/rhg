@@ -40,6 +40,7 @@ async function boot() {
     await import('./ui/FormationCustomStageBattlePatch.js');
     await import('./ui/FormationCustomStageBattleHpPatch.js');
     await import('./ui/FormationCustomStageBattleApplyHpConfigPatch.js');
+    await import('./bcu/BcuExtraActorAnimationBundlePatch.js');
     await import('./battle/bcu-runtime/BcuTraceRuntime.js');
     await import('./battle/BattleBcuStrictConfigPatch.js');
     await import('./battle/StageDefinitionNegativeSpawnPatch.js');

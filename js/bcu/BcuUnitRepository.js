@@ -11,6 +11,22 @@ function getRawStatsForCoreRecord(record) {
   return [];
 }
 
+function unitLevelMetaFromRecord(record, coreDb) {
+  return record?.levelMeta || record?.stats?.bcuUnitLevelMeta || record?.stats?.source?.unitLevelMeta || coreDb?.units?.levelMetadata?.[record?.unitId] || null;
+}
+
+function attachUnitLevelMeta(stats, levelMeta) {
+  if (!stats || !levelMeta) return stats;
+  return {
+    ...stats,
+    bcuUnitLevelMeta: levelMeta,
+    source: {
+      ...(stats.source || {}),
+      unitLevelMeta: levelMeta
+    }
+  };
+}
+
 function markMissingCombatModel(record, unitId, index, code, reason) {
   const stats = record?.stats || null;
   return {
@@ -27,14 +43,15 @@ function markMissingCombatModel(record, unitId, index, code, reason) {
   };
 }
 
-function ensureCoreUnitStatsCombatModel(record, loader, unitId, index, code, diagnostics) {
+function ensureCoreUnitStatsCombatModel(record, loader, unitId, index, code, diagnostics, coreDb) {
   const stats = record?.stats || null;
-  if (stats?.abilityModel?.mappingStatus === 'semantic-mapped' && stats?.bcuCombatModel) return stats;
+  const levelMeta = unitLevelMetaFromRecord(record, coreDb);
+  if (stats?.abilityModel?.mappingStatus === 'semantic-mapped' && stats?.bcuCombatModel) return attachUnitLevelMeta(stats, levelMeta);
   const raw = getRawStatsForCoreRecord(record);
   if (!raw.length) {
     const reason = `CoreDB unit stats missing raw stats needed for BCU combat model: unit=${unitId} form=${code}`;
     diagnostics?.units?.missingStats?.push?.({ unitId, formIndex: index, form: code, file: 'core-db', reason });
-    return markMissingCombatModel(record, unitId, index, code, reason);
+    return attachUnitLevelMeta(markMissingCombatModel(record, unitId, index, code, reason), levelMeta);
   }
   const normalized = loader.normalizeUnitStats(raw, {
     file: record?.sourceFile || stats?.source?.file || 'core-db',
@@ -43,9 +60,10 @@ function ensureCoreUnitStatsCombatModel(record, loader, unitId, index, code, dia
     form: code,
     formRow: index,
     type: 'unit',
-    mappingStatus: 'valid-coredb-normalized'
+    mappingStatus: 'valid-coredb-normalized',
+    unitLevelMeta: levelMeta
   });
-  return { ...normalized, ...(stats || {}), rawValues: normalized.rawValues, bcuCombatModel: normalized.bcuCombatModel, traits: normalized.traits, traitFlags: normalized.traitFlags, bcuAbi: normalized.bcuAbi, bcuAbilityFlags: normalized.bcuAbilityFlags, bcuProc: normalized.bcuProc, abilityModel: normalized.abilityModel, abilities: normalized.abilities };
+  return attachUnitLevelMeta({ ...normalized, ...(stats || {}), rawValues: normalized.rawValues, bcuCombatModel: normalized.bcuCombatModel, traits: normalized.traits, traitFlags: normalized.traitFlags, bcuAbi: normalized.bcuAbi, bcuAbilityFlags: normalized.bcuAbilityFlags, bcuProc: normalized.bcuProc, abilityModel: normalized.abilityModel, abilities: normalized.abilities }, levelMeta);
 }
 
 export class BcuUnitRepository {
@@ -85,12 +103,14 @@ export class BcuUnitRepository {
     const byUnit = new Map();
     for (const record of Object.values(coreDb?.units?.forms || {})) {
       const unitId = toInt(record.unitId, null); if (!Number.isFinite(unitId)) continue;
-      if (!byUnit.has(unitId)) byUnit.set(unitId, { id: unitId, id3: record.id3 || pad3(unitId), key: unitKey(unitId), sourcePack: record.sourcePack || 'core-db', folder: null, forms: [] });
+      const levelMeta = unitLevelMetaFromRecord(record, coreDb);
+      if (!byUnit.has(unitId)) byUnit.set(unitId, { id: unitId, id3: record.id3 || pad3(unitId), key: unitKey(unitId), sourcePack: record.sourcePack || 'core-db', folder: null, levelMeta, forms: [] });
       const unit = byUnit.get(unitId);
+      if (!unit.levelMeta && levelMeta) unit.levelMeta = levelMeta;
       const index = normalizeFormIndex(record.formIndex ?? record.form);
       const code = record.form || formCodeFromIndex(index);
-      const stats = ensureCoreUnitStatsCombatModel(record, repo.statsLoader, unitId, index, code, diagnostics);
-      unit.forms[index] = { index, code, key: record.key || unitFormKey(unitId, index), name: record.name || names.unitForm(unitId, index, locale), stats, rawStats: getRawStatsForCoreRecord(record), asset: record.asset || null };
+      const stats = ensureCoreUnitStatsCombatModel(record, repo.statsLoader, unitId, index, code, diagnostics, coreDb);
+      unit.forms[index] = { index, code, key: record.key || unitFormKey(unitId, index), name: record.name || names.unitForm(unitId, index, locale), stats, rawStats: getRawStatsForCoreRecord(record), levelMeta, asset: record.asset || null };
     }
     for (const [unitId, unit] of byUnit) { unit.forms = unit.forms.filter(Boolean); repo.units.set(unitId, unit); }
     return repo;

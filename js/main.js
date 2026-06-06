@@ -37,6 +37,7 @@ async function boot() {
     await import('./ui/FormationJapaneseBootPatch.js');
     await import('./ui/NyankoUiBehaviorPatch.js');
     await import('./ui/ProductionCardDogIconFitPatch.js');
+    await import('./ui/FormationEditorBcuUnitLevelPatch.js');
     await import('./ui/FormationCustomStageBattlePatch.js');
     await import('./ui/FormationCustomStageBattleHpPatch.js');
     await import('./ui/FormationCustomStageBattleApplyHpConfigPatch.js');

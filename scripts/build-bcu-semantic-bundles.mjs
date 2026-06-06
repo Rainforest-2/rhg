@@ -120,7 +120,7 @@ for (const entry of enemyCastles) {
     { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, numericKey: entry.numericKey, selected: entry.selected, variants: entry.variants }, null, 2)) },
     { name: 'image.png', data: await fileBufferOrNull(entry.selected.image) }
   ];
-  await addBundle(entry.bundleRef.bundleKey, 'enemyCastle', entry.key, entry.bundlePath, entry.selected.image ? 'full' : 'partial', files);
+  await addBundle(entry.bundleRef.bundleKey, 'enemyCastle', entry.key, entry.bundleRef.bundlePath, entry.selected.image ? 'full' : 'partial', files);
 }
 
 const nyankoCastles = all ? (castle.nyanko || []) : (castle.nyanko || []).filter((e) => ['000', '002', '003'].includes(e.partId));
@@ -131,7 +131,7 @@ for (const entry of nyankoCastles) {
     ...(await Promise.all(sourceFiles.map(async (file) => ({ name: file.split('/').pop(), data: await fileBufferOrNull(file) }))))
   ];
   const hasPng = sourceFiles.some((file) => file.endsWith('.png'));
-  await addBundle(entry.bundleRef.bundleKey, 'nyankoCastle', entry.key, entry.bundlePath, hasPng ? 'full' : 'partial', files);
+  await addBundle(entry.bundleRef.bundleKey, 'nyankoCastle', entry.key, entry.bundleRef.bundlePath, hasPng ? 'full' : 'partial', files);
 }
 
 for (const entry of language.entries || []) {
@@ -139,7 +139,7 @@ for (const entry of language.entries || []) {
     { name: 'bundle.json', data: Buffer.from(JSON.stringify({ key: entry.key, locale: entry.locale, files: entry.files }, null, 2)) },
     ...(await Promise.all((entry.files || []).map(async (file) => ({ name: file.split('/').pop(), data: await fileBufferOrNull(file) }))))
   ];
-  await addBundle(entry.bundleRef.bundleKey, 'language', entry.key, entry.bundlePath, entry.status, files);
+  await addBundle(entry.bundleRef.bundleKey, 'language', entry.key, entry.bundleRef.bundlePath, entry.status, files);
 }
 
 const effectBundle = await rebuildKbeffEffectBundle();

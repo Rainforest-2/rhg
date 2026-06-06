@@ -2,7 +2,7 @@ const DEFAULT_INDEX_ROOT = './public/assets/generated';
 
 function normalizeFetchPath(path) {
   if (!path) return null;
-  const s = String(path).replace(/\\/g, '/');
+  const s = String(path).replace(/\/g, '/');
   if (s.startsWith('http') || s.startsWith('/') || s.startsWith('./')) return s;
   return `./${s}`;
 }
@@ -19,7 +19,7 @@ function inferAggregateIconEntry(actorKey) {
   if (m) {
     const id3 = pad3(Number(m[1]));
     if (!id3) return null;
-    return { key, kind: 'enemy', id: Number(m[1]), id3, bundleRef: { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' }, internalPath: `enemy/${Number(m[1])}.png`, sourceStatus: 'inferred-canonical-enemy-icon-entry' };
+    return { key, kind: 'enemy', id: Number(m[1]), id3, bundleRef: { bundleKey: 'icon:enemy', bundlePath: 'public/assets/bundles/icon/enemy.zip' }, internalPath: `enemy/${id3}.png`, sourceStatus: 'inferred-canonical-enemy-icon-entry' };
   }
   m = key.match(/^unit:(\d+):(f|c|s|u)$/);
   if (m) {
@@ -338,6 +338,4 @@ export class SemanticAssetProvider {
   async readCastleBundle(castleKey) { const entry = this.getCastleEntry(castleKey); if (!entry?.bundleRef) { this.diagnostics.missingBundles.push({ semanticKey: castleKey, kind: 'castle' }); throw new Error(`Unknown castle semantic key: ${castleKey}`); } return { entry, archive: await this.archive(entry.bundleRef), bundleRef: entry.bundleRef }; }
   async readLanguageJson(locale, internalPath) { return JSON.parse(await this.readLanguageFile(locale, internalPath)); }
   async readLanguageFile(locale, internalPath) { if (locale !== 'jp') throw new Error(`Unsupported BCU language locale: ${locale}`); const entry = this.getLanguageEntry('lang:jp'); if (!entry?.bundleRef) throw new Error('Missing lang:jp bundle'); return await this.readTextByBundleRef(entry.bundleRef, internalPath); }
-  assertNoRawBcuUrl(url, context = 'runtime') { const raw = /(?:^|\/|\.)public\/assets\/bcu(?:\/|-manifest\.json)|public\/assets\/bcu-manifest\.json/.test(String(url || '').replace(/\\/g, '/')); if (!raw) return; const detail = { type: 'blockedRawBcuUrl', url: String(url), context }; this.diagnostics.blockedRawReads.push(detail); if (!this.allowRawFallback) throw new Error(`Raw BCU URL blocked in ${context}: ${url}`); this.diagnostics.rawOnlyReads.push(detail); }
-  recordRawFallback(reason, detail = {}) { if (!this.allowRawFallback) throw new Error(`Raw fallback disabled: ${reason}`); const item = { reason, ...detail }; this.diagnostics.rawFallbacks.push(item); this.diagnostics.rawOnlyReads.push(item); }
 }

@@ -45,9 +45,10 @@ if (diff < 0) none else "★$diff"
   - canonicalizes `000-000-000` to `stage:0-0-0`
   - maps catalog numeric addresses such as mapColcId / mapNo / stageNo to canonical stage keys
   - maps `stageRN###_## -> stage:0-###-##`
-  - maps `stageRNA###_## -> stage:1-###-##`
+  - maps `stageRNA###_## -> stage:13-###-##` when no catalog numeric address is available; BCU `MapColc.DefMapColc.read` maps collection code `A` to id `13`
   - maps `stageEX###_## -> stage:4-###-##`
   - formats difficulty as `★N`, and missing difficulty as `---`
+  - records fallback reason as `stage-address-unresolved` or `difficulty-key-not-found-in-source-table` when displaying `---`
 
 - `js/ui/FormationStageDifficultyPatch.js`
   - preserves the existing category -> map -> stage navigation
@@ -55,6 +56,7 @@ if (diff < 0) none else "★$diff"
   - map-list level filters only maps inside the currently opened category, e.g. イベントステージ
   - stage-list level filters only stages inside the currently opened map
   - adds difficulty badges to map cards and stage cards
+  - resolves catalog wrapper `mapColcId/mapNo/stageNo` before raw stage filename fallback so scoped category/map UI does not collapse to `---`
 
 ## Tests
 
@@ -67,3 +69,5 @@ if (diff < 0) none else "★$diff"
 - stageRN / stageRNA / stageEX stage id mapping
 - catalog numeric address mapping
 - runtime difficulty resolution
+- real `public/assets/bcu/lang/Difficulty.txt` representative stages: `stage:0-0-0 -> ★1`, `stage:13-0-0 -> ★10`, `stage:1-0-0 -> ★2`
+- current category/map scoped filter candidates without all-stage leakage

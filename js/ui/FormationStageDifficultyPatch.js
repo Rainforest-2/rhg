@@ -12,7 +12,7 @@ function ensureStyle() {
   if (document.getElementById(STYLE_ID)) return;
   const s = document.createElement('style');
   s.id = STYLE_ID;
-  s.textContent = `.formation-stage-difficulty-tools{display:grid;grid-template-columns:minmax(150px,1fr) 84px 84px;gap:8px;margin:0 0 10px;padding:10px;border:1px solid rgba(96,165,250,.32);border-radius:14px;background:rgba(15,23,42,.72)}.formation-stage-difficulty-tools input{min-width:0;height:36px;border-radius:10px;border:1px solid rgba(147,197,253,.45);background:#06101f;color:#e5f0ff;font-weight:800;padding:0 10px}.formation-stage-difficulty-summary{grid-column:1/-1;color:#bfdbfe;font-size:.72rem;font-weight:800}.formation-stage-difficulty-badge{display:inline-flex;width:max-content;margin-top:5px;padding:3px 8px;border-radius:999px;background:rgba(250,204,21,.16);border:1px solid rgba(250,204,21,.42);color:#fde68a;font-weight:1000;text-shadow:0 1px 0 #000}.formation-stage-card.is-difficulty-filtered{display:none!important}`;
+  s.textContent = `.formation-stage-difficulty-tools{grid-column:1/-1;display:grid;grid-template-columns:minmax(120px,1fr) 72px 72px auto;align-items:center;gap:6px;margin:0 0 6px;padding:6px 8px;border:1px solid rgba(96,165,250,.28);border-radius:10px;background:rgba(15,23,42,.64)}.formation-stage-difficulty-tools input{min-width:0;height:30px;border-radius:8px;border:1px solid rgba(147,197,253,.42);background:#06101f;color:#e5f0ff;font-size:.72rem;font-weight:800;padding:0 8px}.formation-stage-difficulty-summary{color:#bfdbfe;font-size:.66rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-difficulty-badge{display:inline-flex;justify-self:start;max-width:100%;padding:2px 6px;border-radius:999px;background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.36);color:#fde68a;font-size:.58rem;line-height:1;font-weight:1000;text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-card.is-difficulty-filtered{display:none!important}@media(max-width:640px){.formation-stage-difficulty-tools{grid-template-columns:1fr 58px 58px}.formation-stage-difficulty-summary{grid-column:1/-1}}`;
   document.head.appendChild(s);
 }
 function filterState(ed) {
@@ -22,7 +22,23 @@ function filterState(ed) {
 function isFiltering(f) { return !!f.q || Number.isFinite(f.min) || Number.isFinite(f.max); }
 function table(ed) { return ed.__bcuStageDifficultyTable || null; }
 function db() { try { return getBcuAssetDatabase(); } catch { return null; } }
-function stageOptionOf(item) { return item?.stage || item || {}; }
+function stageOptionOf(item) {
+  if (!item?.stage) return item || {};
+  return {
+    ...item.stage,
+    mapColcId: item.mapColcId ?? item.stage.mapColcId,
+    mapId: item.mapNo ?? item.mapId ?? item.stage.mapId,
+    mapNo: item.mapNo ?? item.stage.mapNo,
+    stageNo: item.stageNo ?? item.stage.stageNo,
+    stageIdNumeric: item.stageNo ?? item.stage.stageIdNumeric,
+    numericAddress: {
+      ...(item.stage.numericAddress || {}),
+      mapColcId: item.mapColcId ?? item.stage.numericAddress?.mapColcId,
+      mapId: item.mapNo ?? item.mapId ?? item.stage.numericAddress?.mapId,
+      stageNo: item.stageNo ?? item.stage.numericAddress?.stageNo
+    }
+  };
+}
 function diffOf(ed, item) { return resolveStageDifficulty(stageOptionOf(item), { table: table(ed), db: db() }); }
 function stageText(item, d) { return norm([item?.key, item?.id, item?.label, item?.mapLabel, item?.collectionLabel, item?.stageNoRaw, item?.rawId, stageOptionOf(item)?.stageId, stageOptionOf(item)?.stageKey, d?.diff >= 0 ? `★${d.diff}` : ''].filter(Boolean).join(' ')); }
 function stageMatches(ed, item, f = filterState(ed)) {
@@ -73,7 +89,7 @@ function insertControls(ed, scope, matched, shown) {
   const crumb = list.querySelector('.formation-stage-breadcrumb');
   const box = document.createElement('div');
   box.className = 'formation-stage-difficulty-tools';
-  box.innerHTML = `<input data-stage-search-input='1' placeholder='この${scope.type === 'map' ? 'カテゴリ内のマップ' : 'マップ内のステージ'}を検索' value='${esc(f.q)}'><input type='number' data-stage-difficulty-min='1' placeholder='★min' value='${f.min ?? ''}'><input type='number' data-stage-difficulty-max='1' placeholder='★max' value='${f.max ?? ''}'><div class='formation-stage-difficulty-summary'>範囲: ${esc(scope.label)} / 表示 ${shown} / 一致 ${matched} / 全 ${scope.items.length}</div>`;
+  box.innerHTML = `<input data-stage-search-input='1' placeholder='${scope.type === 'map' ? 'カテゴリ内検索' : 'マップ内検索'}' value='${esc(f.q)}'><input type='number' data-stage-difficulty-min='1' placeholder='★min' value='${f.min ?? ''}'><input type='number' data-stage-difficulty-max='1' placeholder='★max' value='${f.max ?? ''}'><div class='formation-stage-difficulty-summary'>${esc(scope.label)} ${shown}/${scope.items.length} (${matched})</div>`;
   if (crumb?.nextSibling) list.insertBefore(box, crumb.nextSibling);
   else list.prepend(box);
 }
@@ -109,7 +125,7 @@ function decorate(ed) {
   if (!scope) return;
   if (scope.type === 'map') decorateMapLevel(ed, scope);
   else if (scope.type === 'stage') decorateStageLevel(ed, scope);
-  globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ = { source: 'FormationStageDifficultyPatch', scoped: true, scopeType: scope.type, scopeLabel: scope.label, total: scope.items.length, filter: filterState(ed), diagnostics: ed.__bcuStageDifficultyDiagnostics || null };
+  globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ = { source: 'FormationStageDifficultyPatch', scoped: true, scopeType: scope.type, scopeLabel: scope.label, total: scope.items.length, candidateKeys: scope.items.map((item) => item.key).slice(0, 20), filter: filterState(ed), diagnostics: ed.__bcuStageDifficultyDiagnostics || null };
 }
 export function installFormationStageDifficultyPatch() {
   const p = FormationEditor?.prototype;

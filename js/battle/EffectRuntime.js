@@ -4,8 +4,8 @@ import { BCU_SCALE_MODE, buildBcuEffectTrace, isBcuHeavyEffectDebugEnabled, norm
 const SUPPRESS_NON_BCU_EFFECTS = true;
 
 export class EffectRuntime {
-  static createHitEffect({ id, type = 'hit', x, y, asset = null, model = null, animator = null, imgcut = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false, bcuScaleMode = BCU_SCALE_MODE.HIT_SMOKE } = {}) {
-    return this.createEffect({ id, type, x, y, frameParts: asset?.parts || [], image: asset?.image || null, imgcut: imgcut || asset?.imgcut || null, model, animator, scale, source, createdAtMs, layer, debug, bcuSmokeYOffset, bcuScreenOffsetX, renderFlipX, bcuScaleMode });
+  static createHitEffect({ id, type = 'hit', x, y, asset = null, image = null, model = null, animator = null, imgcut = null, scale = 1, source = 'hit-effect', createdAtMs = null, layer = null, debug = null, bcuSmokeYOffset = null, bcuScreenOffsetX = 0, renderFlipX = false, bcuScaleMode = BCU_SCALE_MODE.HIT_SMOKE } = {}) {
+    return this.createEffect({ id, type, x, y, frameParts: asset?.parts || [], image: image || asset?.image || null, imgcut: imgcut || asset?.imgcut || null, model, animator, scale, source, createdAtMs, layer, debug, bcuSmokeYOffset, bcuScreenOffsetX, renderFlipX, bcuScaleMode });
   }
 
   static createEffect(payload = {}) {

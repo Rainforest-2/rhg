@@ -17,10 +17,17 @@ const loader = new BattleWaveEffectLoader();
 
 for (const def of Object.values(loader.entries)) {
   const base = def.bundleDir;
-  for (const required of [`${base}/image.png`, `${base}/imgcut.imgcut`, `${base}/model.mamodel`]) {
+  const sourceStyle = String(base || '').startsWith('all-skill-effects/');
+  const coreFiles = sourceStyle
+    ? [def.image, def.imgcut, def.model].map((file) => `${base}/${file}`)
+    : [`${base}/image.png`, `${base}/imgcut.imgcut`, `${base}/model.mamodel`];
+  for (const required of coreFiles) {
     assert.equal(waveEntries.has(required), true, `effect:wave contains ${required}`);
   }
-  if (def.anim) assert.equal(waveEntries.has(`${base}/anim.maanim`), true, `effect:wave contains ${base}/anim.maanim`);
+  if (def.anim) {
+    const animPath = sourceStyle ? `${base}/${def.anim}` : `${base}/anim.maanim`;
+    assert.equal(waveEntries.has(animPath), true, `effect:wave contains ${animPath}`);
+  }
   for (const phase of Object.keys(def.phases || {})) {
     assert.equal(waveEntries.has(`${base}/anim-${phase}.maanim`), true, `effect:wave contains ${base}/anim-${phase}.maanim`);
   }

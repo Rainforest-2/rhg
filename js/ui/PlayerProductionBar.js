@@ -42,6 +42,7 @@ function configureProductionCardCanvas(canvas) {
 function productionIconDebug() {
   if (!globalThis.__PRODUCTION_ICON_DEBUG__) {
     globalThis.__PRODUCTION_ICON_DEBUG__ = {
+      cards: [],
       failures: [],
       lastUpdate: { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 }
     };
@@ -335,27 +336,43 @@ export class PlayerProductionBar {
       try {
         const provider = getBcuAssetDatabase()?.semanticProvider;
         if (!provider || !semanticKey) {
-          const detail = { semanticKey: semanticKey || null, reason: provider ? 'missing-semantic-key' : 'missing-semantic-provider', characterId: unitDef.characterId || null, slotId: unitDef.slotId || null };
+          const detail = { sourceType: null, semanticKey: semanticKey || null, reason: provider ? 'missing-semantic-key' : 'missing-semantic-provider', characterId: unitDef.characterId || null, slotId: unitDef.slotId || null };
           recordProductionIconFailure(detail);
           this.iconCache.delete(key);
           stats && (stats.failed += 1, stats.retryableFailures += 1);
           return { icon: null, failed: true, errorDetail: detail };
         }
+        const entry = provider.getActorIconEntry?.(semanticKey) || null;
+        const sourceType = entry?.kind === 'unit' ? 'unit-icon-bundle' : entry?.kind === 'enemy' ? 'enemy-icon-bundle' : 'icon-bundle';
         const url = await provider.getActorUiIconUrl(semanticKey);
         const image = await loadImage(url);
         stats && (stats.loaded += 1);
-        return { icon: image, failed: false };
+        return {
+          icon: image,
+          failed: false,
+          sourceType,
+          semanticKey,
+          bundlePath: entry?.bundleRef?.bundlePath || null,
+          bundleRef: entry?.bundleRef || null,
+          internalPath: entry?.internalPath || entry?.bundleRef?.internalPath || null,
+          rawSourcePath: entry?.sourcePath || null,
+          fallbackReason: null
+        };
       } catch (error) {
         this.iconCache.delete(key);
         const provider = getBcuAssetDatabase()?.semanticProvider;
         const entry = provider?.getActorIconEntry?.(semanticKey) || provider?.iconIndex?.byKey?.[semanticKey] || null;
         const detail = {
+          sourceType: entry?.kind === 'unit' ? 'unit-icon-bundle' : entry?.kind === 'enemy' ? 'enemy-icon-bundle' : null,
           semanticKey: semanticKey || null,
           characterId: unitDef.characterId || null,
           slotId: unitDef.slotId || null,
           bundlePath: entry?.bundleRef?.bundlePath || entry?.bundlePath || null,
+          bundleRef: entry?.bundleRef || null,
           internalPath: entry?.internalPath || null,
+          rawSourcePath: entry?.sourcePath || null,
           reason: error?.message || String(error),
+          fallbackReason: error?.message || String(error),
           retryable: true
         };
         recordProductionIconFailure(detail);
@@ -428,6 +445,7 @@ export class PlayerProductionBar {
     this.drawMoney(scene);
     const iconDebug = productionIconDebug();
     const stats = { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 };
+    const cardDebug = [];
     const model = getLineupRenderModel(scene);
     for (const stack of this.cardStacks) {
       const m = model[stack.col];
@@ -437,8 +455,31 @@ export class PlayerProductionBar {
       const frontEntry = { ...m.front, icon: frontAsset?.icon || null, iconLoadFailed: frontAsset?.failed === true, affordable: m.front?.affordable !== false, cooldownReady: m.front?.cooldownReady !== false, cooldownProgressRatio: m.front?.cooldownProgressRatio ?? 1 };
       this.drawCard(stack.backCtx, backEntry, true);
       this.drawCard(stack.frontCtx, frontEntry, false);
+      for (const [slot, modelEntry, asset] of [['back', m.back, backAsset], ['front', m.front, frontAsset]]) {
+        if (!modelEntry?.unitDef) continue;
+        cardDebug.push({
+          col: stack.col,
+          slot,
+          kind: modelEntry.unitDef.faction === 'cat' ? 'cat' : 'dog',
+          characterId: modelEntry.unitDef.characterId || modelEntry.unitDef.assetId || null,
+          sourceType: asset?.sourceType || null,
+          semanticKey: asset?.semanticKey || modelEntry.unitDef.uiIcon?.semanticKey || modelEntry.unitDef.assetDef?.semanticKey || null,
+          bundlePath: asset?.bundlePath || null,
+          bundleRef: asset?.bundleRef || null,
+          internalPath: asset?.internalPath || null,
+          rawSourcePath: asset?.rawSourcePath || null,
+          fallbackReason: asset?.fallbackReason || asset?.errorDetail?.fallbackReason || asset?.errorDetail?.reason || null,
+          backgroundMode: modelEntry.unitDef.faction === 'cat' ? 'bcu-unit-icon-full-card' : 'light-dog-card-face',
+          priceDebug: {
+            cost: modelEntry.cost ?? modelEntry.unitDef.cost ?? 0,
+            source: 'ProductionCardSkin.drawCost',
+            bcuSpriteCostText: !!this.spriteText?.drawCostRight
+          }
+        });
+      }
       stack.frontCanvas.classList.toggle('is-disabled', !frontEntry.interactive);
     }
     iconDebug.lastUpdate = stats;
+    iconDebug.cards = cardDebug;
   }
 }

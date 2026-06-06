@@ -1,6 +1,23 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { BattleActor } from '../js/battle/BattleActor.js';
+import { readStoreZipEntries } from './bcu-semantic-utils.mjs';
 import '../js/battle/BattleActorProcStatusPatch.js';
+
+const loaderSource = fs.readFileSync('js/battle/BattleWaveEffectLoader.js', 'utf8');
+assert.match(loaderSource, /key: 'toxic'.+all-skill-effects\/000001\/org\/battle\/s8/s, 'BattleWaveEffectLoader maps toxic to existing A_POISON s8 bundle entries');
+assert.match(loaderSource, /usesSourceNamedBundleFiles\(def\)/, 'BattleWaveEffectLoader recognizes source-named all-skill-effects bundle entries');
+assert.match(loaderSource, /bundleAssetPath\(def, 'image'\)/, 'BattleWaveEffectLoader resolves bundle image paths through entry filenames');
+assert.match(loaderSource, /kind === 'image'\) return `\$\{base\}\/\$\{def\.image\}`/, 'A_POISON bundle image lookup uses skill008.png instead of image.png');
+const waveZip = await readStoreZipEntries('public/assets/bundles/effect/wave.zip');
+for (const internalPath of [
+  'all-skill-effects/000001/org/battle/s8/skill008.png',
+  'all-skill-effects/000001/org/battle/s8/skill008.imgcut',
+  'all-skill-effects/000001/org/battle/s8/skill_percentage_attack.mamodel',
+  'all-skill-effects/000001/org/battle/s8/skill_percentage_attack.maanim'
+]) {
+  assert.ok(waveZip.has(internalPath), `wave.zip contains A_POISON internalPath ${internalPath}`);
+}
 
 function makeActor() {
   const actor = new BattleActor({
@@ -52,9 +69,20 @@ const effect = scene.effects[0];
 assert.equal(effect.type, 'toxic', 'effect type is toxic');
 assert.equal(effect.source, 'bcu-effanim-A_POISON-poiatk', 'effect source identifies BCU A_POISON POIATK');
 assert.equal(effect.x, 321, 'effect uses target/entity pos');
+assert.ok(Number.isFinite(effect.y), 'effect y is finite');
 assert.equal(effect.layer, 3, 'effect uses target currentLayer');
 assert.equal(effect.bcuSmokeYOffset, 0, 'BCU EAnimCont(pos,currentLayer,eanim) has offsetY=0 for A_POISON');
+assert.notEqual(effect.scale, 0, 'effect scale is non-zero');
+assert.ok(effect.image, 'effect has image');
+assert.ok(effect.model, 'effect has model');
+assert.ok(effect.animator, 'effect has animator');
+assert.ok(effect.durationMs > 0, 'effect durationMs is positive');
 assert.equal(effect.effectRuntimeDebug?.effectKey, 'A_POISON', 'debug effectKey is A_POISON');
+assert.equal(effect.effectRuntimeDebug?.assetLoaded, true, 'debug records assetLoaded');
+assert.equal(effect.effectRuntimeDebug?.hasImage, true, 'debug records hasImage');
+assert.equal(effect.effectRuntimeDebug?.hasModel, true, 'debug records hasModel');
+assert.equal(effect.effectRuntimeDebug?.hasAnimator, true, 'debug records hasAnimator');
+assert.equal(effect.effectRuntimeDebug?.rendererReached, false, 'spawn debug starts rendererReached=false until renderer draws it');
 assert.match(effect.effectRuntimeDebug?.bcuReference || '', /Entity\.processProcs.*POIATK.*A_POISON/, 'debug cites BCU POIATK A_POISON path');
 
 console.log('check-bcu-toxic-effect-parity: OK');

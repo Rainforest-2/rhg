@@ -177,6 +177,15 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     scale,
     rendererReference: 'BCU BattleBox draws ContAb/EAnimCont stage effects with psiz; WaprCont applies y offsets before drawing A_W/A_W_C'
   };
+  effect.effectRuntimeDebug = {
+    ...(effect.effectRuntimeDebug || {}),
+    rendererReached: true,
+    rendererDrawn: drawn,
+    rendererX: x,
+    rendererY: y,
+    rendererScale: scale,
+    rendererLayer: layer
+  };
   return drawn;
 }
 

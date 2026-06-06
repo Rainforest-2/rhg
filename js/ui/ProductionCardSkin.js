@@ -202,9 +202,15 @@ export class ProductionCardSkin {
   drawDogIconBackground(ctx) {
     const r = PRODUCTION_CARD_SKIN.dogContentBackgroundRect;
     ctx.save();
-    ctx.fillStyle = '#111';
+    ctx.fillStyle = '#f8fafc';
     ctx.fillRect(r.x, r.y, r.w, r.h);
     ctx.restore();
+    globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+      ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
+      dogCardBackgroundMode: 'light-dog-card-face',
+      dogCardBackgroundColor: '#f8fafc',
+      dogCardBlackBackground: false
+    };
   }
 
   drawCost(ctx, cost) {

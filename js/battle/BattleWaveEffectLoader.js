@@ -30,6 +30,7 @@ const WAVE_EFFECT_ENTRIES = Object.freeze({
   enemyBlast: phasedEntry({ key: 'enemyBlast', kind: 'blast', direction: 1, baseDir: './public/assets/bcu/130700/org/battle/s22/', bundleDir: 'enemy-blast', image: 'skill022.png', imgcut: 'skill022.imgcut', model: 'skill_explosion_e.mamodel', phases: { start: 'skill_explosion00.maanim', explode: 'skill_explosion01.maanim', dummy: 'skill_explosion02.maanim' } }),
 
   strongAttack: singleEntry({ key: 'strongAttack', kind: 'strongAttack', direction: -1, baseDir: './public/assets/bcu/000001/org/battle/s6/', bundleDir: 'strong-attack', image: 'skill006.png', imgcut: 'skill006.imgcut', model: 'strong_attack.mamodel', anim: 'strong_attack.maanim' }),
+  toxic: singleEntry({ key: 'toxic', kind: 'toxic', direction: 1, baseDir: './public/assets/bcu/000001/org/battle/s8/', bundleDir: 'all-skill-effects/000001/org/battle/s8', image: 'skill008.png', imgcut: 'skill008.imgcut', model: 'skill_percentage_attack.mamodel', anim: 'skill_percentage_attack.maanim' }),
   metalKiller: singleEntry({ key: 'metalKiller', kind: 'metalKiller', direction: -1, baseDir: './public/assets/bcu/130300/org/battle/s20/', bundleDir: 'metal-killer', image: 'skill020.png', imgcut: 'skill020.imgcut', model: 'skill_metal_strong.mamodel', anim: 'skill_metal_strong.maanim' }),
 
   unitBarrier: phasedEntry({ key: 'unitBarrier', kind: 'barrier', direction: -1, baseDir: './public/assets/bcu/000001/org/battle/s2/', bundleDir: 'unit-barrier', image: 'skill002.png', imgcut: 'skill002.imgcut', model: 'skill_barrier_e.mamodel', phases: { none: 'skill_barrier_e.maanim', breaker: 'skill_barrier_e_breaker.maanim', destruction: 'skill_barrier_e_destruction.maanim' } }),
@@ -108,6 +109,25 @@ function phaseBundleName(phase) {
   return `anim-${phase}.maanim`;
 }
 
+function usesSourceNamedBundleFiles(def) {
+  return String(def?.bundleDir || '').startsWith('all-skill-effects/');
+}
+
+function bundleAssetPath(def, kind) {
+  const base = def.bundleDir;
+  if (usesSourceNamedBundleFiles(def)) {
+    if (kind === 'image') return `${base}/${def.image}`;
+    if (kind === 'imgcut') return `${base}/${def.imgcut}`;
+    if (kind === 'model') return `${base}/${def.model}`;
+    if (kind === 'anim') return `${base}/${def.anim}`;
+  }
+  if (kind === 'image') return `${base}/image.png`;
+  if (kind === 'imgcut') return `${base}/imgcut.imgcut`;
+  if (kind === 'model') return `${base}/model.mamodel`;
+  if (kind === 'anim') return `${base}/anim.maanim`;
+  return `${base}/${kind}`;
+}
+
 async function readPhaseTextsFromBundle(provider, bundleRef, base, phases) {
   if (!phases) return null;
   return Object.fromEntries(await Promise.all(Object.keys(phases).map(async (phase) => [
@@ -138,15 +158,14 @@ export class BattleWaveEffectLoader {
   }
 
   async loadDefinitionFromBundle(provider, def) {
-    const base = def.bundleDir;
     const [image, imgcutText, modelText, animText, phaseTexts] = await Promise.all([
-      imageFromBundle(provider, this.bundleRef, `${base}/image.png`),
-      provider.readTextByBundleRef(this.bundleRef, `${base}/imgcut.imgcut`),
-      provider.readTextByBundleRef(this.bundleRef, `${base}/model.mamodel`),
-      def.anim ? provider.readTextByBundleRef(this.bundleRef, `${base}/anim.maanim`) : Promise.resolve(null),
-      readPhaseTextsFromBundle(provider, this.bundleRef, base, def.phases)
+      imageFromBundle(provider, this.bundleRef, bundleAssetPath(def, 'image')),
+      provider.readTextByBundleRef(this.bundleRef, bundleAssetPath(def, 'imgcut')),
+      provider.readTextByBundleRef(this.bundleRef, bundleAssetPath(def, 'model')),
+      def.anim ? provider.readTextByBundleRef(this.bundleRef, bundleAssetPath(def, 'anim')) : Promise.resolve(null),
+      readPhaseTextsFromBundle(provider, this.bundleRef, def.bundleDir, def.phases)
     ]);
-    return parseDefinition(def, { image, imgcutText, modelText, animText, phaseTexts, source: `semantic-bundle:${this.bundleRef.bundleKey}:${base}` });
+    return parseDefinition(def, { image, imgcutText, modelText, animText, phaseTexts, source: `semantic-bundle:${this.bundleRef.bundleKey}:${def.bundleDir}` });
   }
 
   async loadDefinitionFromRawForDiagnostics(def) {

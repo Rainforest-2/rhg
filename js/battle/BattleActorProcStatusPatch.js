@@ -166,6 +166,16 @@ function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 
       spawned: false,
       reason: asset?.reason || 'effect-asset-not-ready',
       effectKey: BCU_TOXIC_EFFECT_KEY,
+      assetLoaded: asset?.loaded === true,
+      hasImage: !!asset?.image,
+      hasModel: !!asset?.model,
+      hasAnimator: false,
+      scale: BCU_TOXIC_EFFECT_SCALE,
+      layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
+      x: actorWorldX(actor),
+      y: 0,
+      durationMs: 0,
+      rendererReached: false,
       bcuReference: 'BCU Entity.processProcs POIATK uses basis.lea.add(new EAnimCont(pos,currentLayer,effas().A_POISON.getEAnim(DEF)))'
     };
     actor.lastBcuToxicEffectDebug = debug;
@@ -174,7 +184,27 @@ function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 
   }
   if ((scene.effects?.length || 0) >= (BATTLE_CONFIG.tuning?.maxEffects ?? 40)) return null;
   const runtime = createEffectRuntime(asset);
-  if (!runtime) return null;
+  if (!runtime) {
+    const debug = {
+      source: 'BattleActorProcStatusPatch.spawnBcuToxicHitEffect',
+      spawned: false,
+      reason: 'effect-runtime-create-failed',
+      effectKey: 'A_POISON',
+      assetLoaded: asset?.loaded === true,
+      hasImage: !!asset?.image,
+      hasModel: !!asset?.model,
+      hasAnimator: false,
+      scale: BCU_TOXIC_EFFECT_SCALE,
+      layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
+      x: actorWorldX(actor),
+      y: 0,
+      durationMs: 0,
+      rendererReached: false
+    };
+    actor.lastBcuToxicEffectDebug = debug;
+    scene.lastBcuToxicEffectDebug = debug;
+    return null;
+  }
   const worldX = actorWorldX(actor);
   const layer = Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0;
   const effect = EffectRuntime.createHitEffect({
@@ -205,6 +235,15 @@ function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 
       frameCount: runtime.frameCount,
       maxFrame: runtime.maxFrame,
       assetSource: asset.source || null,
+      assetLoaded: asset.loaded === true,
+      hasImage: !!asset.image,
+      hasModel: !!runtime.model,
+      hasAnimator: !!runtime.animator,
+      scale: BCU_TOXIC_EFFECT_SCALE,
+      x: worldX,
+      y: 0,
+      durationMs: runtime.frameCount * BCU_BATTLE_TIMER_PERIOD_MS,
+      rendererReached: false,
       bcuReference: 'BCU Entity.processProcs: POIATK -> damage += maxH * mult * (100-rst)/10000; basis.lea.add(new EAnimCont(pos,currentLayer,effas().A_POISON.getEAnim(DefEff.DEF))); offsetY=0'
     }
   });
@@ -213,7 +252,7 @@ function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 
   effect.elapsedMs = -BCU_BATTLE_TIMER_PERIOD_MS;
   scene.effects ||= [];
   scene.effects.push(effect);
-  const debug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id, effectKey: 'A_POISON' };
+  const debug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id, effectKey: 'A_POISON', durationMs: effect.durationMs, rendererReached: false };
   actor.lastBcuToxicEffectDebug = debug;
   scene.lastBcuToxicEffectDebug = debug;
   scene.pushEvent?.({ type: 'bcuToxicEffectSpawned', actor: actor.instanceId || actor.label || null, effectKey: 'A_POISON', worldX: Math.round(worldX), layer, damage, source: BCU_TOXIC_EFFECT_SOURCE });

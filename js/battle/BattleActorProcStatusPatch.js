@@ -2,8 +2,9 @@ import { BattleActor } from './BattleActor.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { clearBcuWarpLifecycle, isBcuWarpLifecycleActive, startBcuWarpLifecycle, tickBcuWarpLifecycle } from './bcu-runtime/BcuWarpLifecycleRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v4-warp-runtime');
+const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v5-toxic-visual');
 const BCU_SLOW_MOVE_PER_FRAME = 0.25;
+const BCU_TOXIC_EFFECT_FRAMES = 60;
 
 function framesToMs(frames) {
   const n = Number(frames);
@@ -130,6 +131,39 @@ function tickWarp(actor, nowMs = actor?.lastSceneTimeMs) {
   return true;
 }
 
+function armToxicVisual(actor, payload = {}, meta = {}, damage = 0, result = null) {
+  const durationFrames = Math.max(1, Math.trunc(Number(payload.effectFrames ?? payload.visualFrames ?? BCU_TOXIC_EFFECT_FRAMES) || BCU_TOXIC_EFFECT_FRAMES));
+  const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
+  const statuses = ensureStatuses(actor);
+  statuses.toxic = {
+    key: 'toxic',
+    framesRemaining: durationFrames,
+    durationFrames,
+    untilMs: nowMs + framesToMs(durationFrames),
+    payload,
+    effectKey: 'A_POISON',
+    damage,
+    source: 'BCU Entity.processProcs P_POIATK -> AnimManager.getEff(A_POISON) visual window'
+  };
+  actor.lastBcuToxicEffectDebug = {
+    source: 'BattleActorProcStatusPatch.armToxicVisual',
+    effectKey: 'A_POISON',
+    durationFrames,
+    damage,
+    result,
+    bcuReference: 'EffAnim.A_POISON / Entity.AnimManager.drawEff status-effect rendering at entity origin, scale 0.75'
+  };
+  meta.scene?.pushEvent?.({
+    type: 'bcuToxicEffectArmed',
+    actor: actor.instanceId || actor.label || null,
+    effectKey: 'A_POISON',
+    durationFrames,
+    damage,
+    source: 'BattleActorProcStatusPatch'
+  });
+  return statuses.toxic;
+}
+
 function applyToxic(actor, payload = {}, meta = {}) {
   const mult = Number(payload.mult ?? payload.damage ?? 0);
   if (!Number.isFinite(mult) || mult <= 0) return { applied: false, reason: 'zero-toxic-mult' };
@@ -150,8 +184,11 @@ function applyToxic(actor, payload = {}, meta = {}) {
     bcuToxic: true,
     attackKind: 'toxic'
   }) || { accepted: false, reason: 'target-takeDamage-missing' };
-  actor.lastBcuToxicDebug = { source: 'BCU processProcs POIATK/toxic maxH percent', mult, damage, nowMs: meta.nowMs ?? null, result };
-  return { applied: result.accepted === true, damage, mult, result };
+  const toxicVisual = result.accepted === true && actor?.isAlive?.() !== false
+    ? armToxicVisual(actor, payload, meta, damage, result)
+    : null;
+  actor.lastBcuToxicDebug = { source: 'BCU processProcs POIATK/toxic maxH percent', mult, damage, nowMs: meta.nowMs ?? null, result, toxicVisual };
+  return { applied: result.accepted === true, damage, mult, result, toxicVisual, effectKey: toxicVisual?.effectKey || null };
 }
 
 function applyStatus(actor, key, payload = {}, meta = {}) {
@@ -313,7 +350,7 @@ globalThis.__BCU_TEST_APPLY_STATUS__ = function __BCU_TEST_APPLY_STATUS__(actorO
   const actor = resolveDebugActor(actorOrSelector);
   const key = DEBUG_STATUS_MAP[statusKey] || DEBUG_STATUS_MAP[String(statusKey || '').toUpperCase()];
   if (!actor || !key) return { applied: false, reason: 'actor-or-status-not-found' };
-  return actor.applyBcuProc?.({ key, payload: { timeFrames: frames, time: frames, mult: key === 'weaken' ? 50 : undefined, dis0: key === 'warp' ? 200 : undefined, dis1: key === 'warp' ? 200 : undefined } }, { nowMs: actor.lastSceneTimeMs ?? globalThis.__APP__?.scene?.timeMs ?? 0 }) || { applied: false, reason: 'applyBcuProc-missing' };
+  return actor.applyBcuProc?.({ key, payload: { timeFrames: frames, time: frames, visualFrames: frames, mult: key === 'weaken' ? 50 : key === 'toxic' ? 25 : undefined, dis0: key === 'warp' ? 200 : undefined, dis1: key === 'warp' ? 200 : undefined } }, { nowMs: actor.lastSceneTimeMs ?? globalThis.__APP__?.scene?.timeMs ?? 0, scene: globalThis.__APP__?.scene || globalThis.app?.scene || null }) || { applied: false, reason: 'applyBcuProc-missing' };
 };
 
 globalThis.__BCU_TEST_CLEAR_STATUS__ = function __BCU_TEST_CLEAR_STATUS__(actorOrSelector, statusKey) {
@@ -335,6 +372,7 @@ globalThis.__BCU_TEST_LIST_STATUS_EFFECTS__ = function __BCU_TEST_LIST_STATUS_EF
     actor: actor.instanceId || actor.label || null,
     statuses: actor.bcuProcStatuses || {},
     warp: { hidden: actor.bcuWarpHidden === true, state: actor.bcuWarpState || null, debug: actor.lastBcuWarpDebug || null },
+    toxic: { debug: actor.lastBcuToxicDebug || null, effectDebug: actor.lastBcuToxicEffectDebug || null },
     effects: actor.bcuStatusEffectManager?.getRenderableEffects?.() || []
   }));
 };

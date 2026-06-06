@@ -39,6 +39,7 @@ async function boot() {
     await import('./ui/ProductionCardDogIconFitPatch.js');
     await import('./ui/FormationEditorBcuUnitLevelPatch.js');
     await import('./ui/FormationCustomStageBattlePatch.js');
+    await import('./ui/FormationStageDifficultyPatch.js');
     await import('./ui/FormationCustomStageBattleHpPatch.js');
     await import('./ui/FormationCustomStageBattleApplyHpConfigPatch.js');
     await import('./bcu/BcuExtraActorAnimationBundlePatch.js');

@@ -32,6 +32,23 @@ function enemyAnimations(bcuId) {
   return BCU_ENEMY_ANIMATION_SUFFIXES.map((n) => ({ id: `anim${n}`, file: `${bcuId}_e${n}.maanim` }));
 }
 
+function commonEnemyAssetFields(bcuId, semanticKey) {
+  return {
+    id: `enemy-${bcuId}`,
+    label: `敵${bcuId}`,
+    role: 'stage-enemy',
+    group: 'stage-enemies',
+    renderMode: 'animated-unit',
+    semanticKey,
+    allowExtraRawAnimations: true,
+    baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`,
+    image: `${bcuId}_e.png`,
+    imgcut: `${bcuId}_e.imgcut`,
+    model: `${bcuId}_e.mamodel`,
+    animations: enemyAnimations(bcuId)
+  };
+}
+
 export function buildBcuEnemyAssetDef(enemyId) {
   const bcuId = formatBcuId(enemyId);
   const semanticKey = `enemy:${Number(enemyId)}`;
@@ -40,45 +57,16 @@ export function buildBcuEnemyAssetDef(enemyId) {
     const resolved = db?.assets?.resolveEnemyAsset?.(enemyId);
     const entry = db?.semanticProvider?.getActorEntry?.(semanticKey) || db?.semanticIndexes?.actors?.byKey?.[semanticKey] || null;
     if (resolved?.semanticKey && resolved?.bundleRef) {
-      return { ...resolved, id: `enemy-${bcuId}`, label: `敵${bcuId}`, role: 'stage-enemy', group: 'stage-enemies', renderMode: 'animated-unit', semanticKey, bundleRef: resolved.bundleRef, animations: enemyAnimations(bcuId), assetAvailable: true, assetAvailabilitySource: 'bcu-db-resolveEnemyAsset' };
+      return { ...resolved, ...commonEnemyAssetFields(bcuId, semanticKey), bundleRef: resolved.bundleRef, assetAvailable: true, assetAvailabilitySource: 'bcu-db-resolveEnemyAsset' };
     }
     if (entry?.bundleRef) {
-      return {
-        id: `enemy-${bcuId}`,
-        label: `敵${bcuId}`,
-        role: 'stage-enemy',
-        group: 'stage-enemies',
-        renderMode: 'animated-unit',
-        semanticKey,
-        bundleRef: entry.bundleRef,
-        image: `${bcuId}_e.png`,
-        imgcut: `${bcuId}_e.imgcut`,
-        model: `${bcuId}_e.mamodel`,
-        animations: enemyAnimations(bcuId),
-        assetAvailable: true,
-        assetAvailabilitySource: 'semantic-actor-index-bundle'
-      };
+      return { ...commonEnemyAssetFields(bcuId, semanticKey), bundleRef: entry.bundleRef, assetAvailable: true, assetAvailabilitySource: 'semantic-actor-index-bundle' };
     }
     if (entry && entry.status !== 'rawOnly') throw new Error(`BCU semantic actor exists without bundle: ${semanticKey}`);
   } catch (error) {
     if (!String(error?.message || error).includes('BCU asset database is not loaded')) throw error;
   }
-  return {
-    id: `enemy-${bcuId}`,
-    label: `敵${bcuId}`,
-    role: 'stage-enemy',
-    group: 'stage-enemies',
-    renderMode: 'animated-unit',
-    semanticKey,
-    allowRawOnly: true,
-    baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`,
-    image: `${bcuId}_e.png`,
-    imgcut: `${bcuId}_e.imgcut`,
-    model: `${bcuId}_e.mamodel`,
-    animations: enemyAnimations(bcuId),
-    assetAvailable: true,
-    assetAvailabilitySource: 'raw-path-deferred-check'
-  };
+  return { ...commonEnemyAssetFields(bcuId, semanticKey), allowRawOnly: true, assetAvailable: true, assetAvailabilitySource: 'raw-path-deferred-check' };
 }
 
 function isEnemyAssetUnavailable(enemyId, assetDef) {

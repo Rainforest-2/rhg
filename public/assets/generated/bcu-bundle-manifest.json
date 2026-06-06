@@ -33738,8 +33738,8 @@
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
       "iconCount": 762,
-      "sizeBytes": 1454336,
-      "hash": "33311cefa97becc429f71927092b48b9c573d0cb5fc3a05cfe3c74f16acc63dd"
+      "sizeBytes": 28722552,
+      "hash": "3fc50e874f672a562c2cf2f20fb7370c1acf36d32f61a06fb434b4feeeb8d69f"
     },
     "icon:unit:c": {
       "kind": "icon",
@@ -33747,8 +33747,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-c.zip",
       "status": "full",
       "iconCount": 814,
-      "sizeBytes": 4424054,
-      "hash": "e37a601e76f465c022a5358a098667bcee66a474df1e8758587b70702b020a56"
+      "sizeBytes": 4487589,
+      "hash": "0e0f800007a48d9bc4607314250585a72be7d4029a7cdc74234f238f21cffe19"
     },
     "icon:unit:f": {
       "kind": "icon",
@@ -33756,8 +33756,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-f.zip",
       "status": "full",
       "iconCount": 837,
-      "sizeBytes": 4327729,
-      "hash": "00905e154d2e1481f844d6dc5f6fdd6d2437a53fd7348e342de76bc9af348198"
+      "sizeBytes": 4393055,
+      "hash": "1ad8630273d2fbf9758634b763539684829ef096ff25e152ad5b16c0f3a7a933"
     },
     "icon:unit:s": {
       "kind": "icon",
@@ -33765,8 +33765,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-s.zip",
       "status": "full",
       "iconCount": 407,
-      "sizeBytes": 2137711,
-      "hash": "d2da58f8f5b2fd6cf3e11410bda1c0311697513bf4748f18ffd5481a13055e85"
+      "sizeBytes": 2169507,
+      "hash": "8411b98619f6ec0e713dfe7c5d059cb4c964b99d80087757871794c71c4b1264"
     },
     "icon:unit:u": {
       "kind": "icon",
@@ -33774,8 +33774,8 @@
       "bundlePath": "public/assets/bundles/icon/unit-u.zip",
       "status": "full",
       "iconCount": 19,
-      "sizeBytes": 107181,
-      "hash": "980a2a900cdf674c3a0e5509ae50c34b629bdbfd42b015736fc596532de6837b"
+      "sizeBytes": 108713,
+      "hash": "9c4642504ce344722f2fa2776df2a32c951bd774cf71ed8b23ea4a7d1eb70a92"
     },
     "effect:wave": {
       "kind": "effect",

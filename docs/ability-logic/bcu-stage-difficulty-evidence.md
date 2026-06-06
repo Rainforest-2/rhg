@@ -43,16 +43,18 @@ if (diff < 0) none else "★$diff"
 - `js/bcu/BcuStageDifficultyRuntime.js`
   - parses `public/assets/bcu/lang/Difficulty.txt`
   - canonicalizes `000-000-000` to `stage:0-0-0`
+  - maps catalog numeric addresses such as mapColcId / mapNo / stageNo to canonical stage keys
   - maps `stageRN###_## -> stage:0-###-##`
   - maps `stageRNA###_## -> stage:1-###-##`
   - maps `stageEX###_## -> stage:4-###-##`
   - formats difficulty as `★N`, and missing difficulty as `---`
 
 - `js/ui/FormationStageDifficultyPatch.js`
-  - loads all available stage options for selector filtering
-  - keeps the default visible list capped to 80 entries
-  - when search/min/max filter is active, searches the full stage list and displays up to 240 matches
-  - adds difficulty badges to stage cards
+  - preserves the existing category -> map -> stage navigation
+  - category root remains category-only
+  - map-list level filters only maps inside the currently opened category, e.g. イベントステージ
+  - stage-list level filters only stages inside the currently opened map
+  - adds difficulty badges to map cards and stage cards
 
 ## Tests
 
@@ -63,4 +65,5 @@ if (diff < 0) none else "★$diff"
 - `★N` formatting
 - missing difficulty formatting
 - stageRN / stageRNA / stageEX stage id mapping
+- catalog numeric address mapping
 - runtime difficulty resolution

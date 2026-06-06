@@ -225,6 +225,8 @@ function applyToxic(actor, payload = {}, meta = {}) {
   if (!Number.isFinite(mult) || mult <= 0) return { applied: false, reason: 'zero-toxic-mult' };
   const damage = Math.max(1, Math.trunc((actor.maxHp || actor.maxH || 0) * mult / 100));
   if (damage <= 0) return { applied: false, reason: 'zero-toxic-damage' };
+  const pendingDamageBefore = Number(actor.pendingDamage || 0);
+  const pendingHitCountBefore = Array.isArray(actor.pendingHits) ? actor.pendingHits.length : 0;
   const result = actor.takeDamage?.(damage, {
     attacker: meta.attacker?.instanceId || meta.attacker || null,
     timeMs: meta.nowMs ?? null,
@@ -240,17 +242,28 @@ function applyToxic(actor, payload = {}, meta = {}) {
     bcuToxic: true,
     attackKind: 'toxic'
   }) || { accepted: false, reason: 'target-takeDamage-missing' };
-  const effect = result.accepted === true ? spawnBcuToxicHitEffect(meta.scene, actor, payload, meta, damage, result) : null;
+  let postDamageResult = null;
+  if (result.accepted === true && pendingDamageBefore <= 0 && pendingHitCountBefore === 0 && typeof actor.resolvePostDamage === 'function') {
+    postDamageResult = actor.resolvePostDamage({
+      nowMs: Number.isFinite(meta.nowMs) ? meta.nowMs : 0,
+      tuning: meta.tuning || BATTLE_CONFIG.tuning || {}
+    });
+  }
+  const effect = result.accepted === true ? spawnBcuToxicHitEffect(meta.scene, actor, payload, meta, damage, postDamageResult || result) : null;
   actor.lastBcuToxicDebug = {
     source: 'BCU Entity.processProcs POIATK maxH percent direct damage',
     mult,
     damage,
     nowMs: meta.nowMs ?? null,
     result,
+    postDamageResult,
+    pendingDamageBefore,
+    pendingHitCountBefore,
+    hpAfter: actor.hp,
     effectId: effect?.id || null,
     bcuReference: 'Entity.processProcs POIATK adds A_POISON to basis.lea immediately; this is not status[P_POISON] and does not create a persistent POISON icon slot.'
   };
-  return { applied: result.accepted === true, damage, mult, result, effectId: effect?.id || null, effectKey: effect ? 'A_POISON' : null };
+  return { applied: result.accepted === true, damage, mult, result, postDamageResult, effectId: effect?.id || null, effectKey: effect ? 'A_POISON' : null };
 }
 
 function applyStatus(actor, key, payload = {}, meta = {}) {

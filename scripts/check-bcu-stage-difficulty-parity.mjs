@@ -11,6 +11,8 @@ assert.equal(stageDifficultyKeyFromStageOption({ stageId: 'stageRN000_01' }), 's
 assert.equal(stageDifficultyKeyFromStageOption({ stageId: 'stageRNA012_03' }), 'stage:1-12-3');
 assert.equal(stageDifficultyKeyFromStageOption({ stageId: 'stageEX004_02' }), 'stage:4-4-2');
 assert.equal(stageDifficultyKeyFromStageOption({ stageKey: 'stage:1-12-3' }), 'stage:1-12-3');
+assert.equal(stageDifficultyKeyFromStageOption({ mapColcId: 1, mapNo: 12, stageNo: 3 }), 'stage:1-12-3');
 assert.equal(resolveStageDifficulty({ stageId: 'stageRNA012_03' }, { table: parsed.table }).diff, 7);
+assert.equal(resolveStageDifficulty({ mapColcId: 1, mapNo: 12, stageNo: 3 }, { table: parsed.table }).diff, 7);
 assert.equal(resolveStageDifficulty({ stageId: 'unknown' }, { table: parsed.table }).diff, -1);
 console.log('check-bcu-stage-difficulty-parity: OK');

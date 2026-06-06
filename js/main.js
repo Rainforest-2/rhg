@@ -56,6 +56,7 @@ async function boot() {
     await import('./battle/BattleDeterministicRandomPatch.js');
     await import('./battle/BattleActorAttackNullifyPatch.js');
     await import('./battle/BattleWaveRuntimePatch.js');
+    await import('./battle/BattleSceneBcuWaveOnBlockedHitPatch.js');
     await import('./battle/BattleSurgeRuntimePatch.js');
     await import('./battle/BattleBlastRuntimePatch.js');
     await import('./battle/BattleBaseProjectileProcPatch.js');
@@ -114,6 +115,7 @@ async function boot() {
     setBcuAssetDatabase(db);
     showBootStatus('出撃準備中…');
     await import('./preview/PreviewAppCustomStageBattleConfigPatch.js');
+    await import('./preview/PreviewAppBattleResultOverlayPatch.js');
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     const app = new PreviewApp({ bcuDb: db });
     globalThis.__APP__ = app;

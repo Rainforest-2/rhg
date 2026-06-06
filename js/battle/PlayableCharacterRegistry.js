@@ -1,6 +1,6 @@
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 
-export const PLAYABLE_REGISTRY_VERSION = '0.14.1';
+export const PLAYABLE_REGISTRY_VERSION = '0.15.0-bcu-unit-level';
 export const DOG_DEFAULT_COST = 100;
 export const DOG_DEFAULT_COOLDOWN_MS = 3500;
 export const DOG_ENEMY_ID_RANGE = Object.freeze({ start: 0, end: 777 });
@@ -45,12 +45,20 @@ function resolveName({ db, kind, id, locale = 'jp' }) {
   return { label: key, labelSource: 'fallback-id', labelLocale: locale, labelKey: key, labelWarnings: ['bcu-db-not-loaded'] };
 }
 
+function getCatFormRecord(db, unitId, form = 'f') {
+  if (!db?.units?.getForm) return null;
+  try { return db.units.getForm(unitId, form); } catch { return null; }
+}
+
 function getCatStats(db, unitId, form = 'f') {
   if (!db?.units?.getFormStats) return null;
   try { return db.units.getFormStats(unitId, form); }
-  catch (error) {
-    return { __statsError: error?.message || String(error) };
-  }
+  catch (error) { return { __statsError: error?.message || String(error) }; }
+}
+
+function getCatUnitLevelMeta(db, unitId, form = 'f') {
+  const record = getCatFormRecord(db, unitId, form);
+  return record?.levelMeta || record?.stats?.bcuUnitLevelMeta || record?.stats?.source?.unitLevelMeta || db?.units?.get?.(unitId)?.levelMeta || null;
 }
 
 function getCatEconomyFromStats(stats) {
@@ -117,6 +125,7 @@ export function buildCatSpecs(options = {}) {
         baseCharacterId: `cat-unit-${formatBcuId(unitId)}`,
         form,
         ...getCatEconomy({ db, unitId, form }),
+        bcuUnitLevelMeta: getCatUnitLevelMeta(db, unitId, form),
         collisionRadius: 44,
         scale: 1.12
       };
@@ -190,6 +199,7 @@ export function buildCatRosterEntry(spec, options = {}) {
   const form = spec.form ?? 'f';
   const name = resolveName({ db, kind: 'unit', id: spec.unitId, locale });
   const economy = getCatEconomy({ db, unitId: spec.unitId, form });
+  const bcuUnitLevelMeta = spec.bcuUnitLevelMeta || getCatUnitLevelMeta(db, spec.unitId, form);
   return {
     slotId: spec.characterId,
     baseCharacterId: spec.baseCharacterId,
@@ -211,6 +221,7 @@ export function buildCatRosterEntry(spec, options = {}) {
     bcuPrice: economy.bcuPrice,
     bcuRespawnFrames: economy.bcuRespawnFrames,
     bcuRespawnMs: economy.bcuRespawnMs,
+    bcuUnitLevelMeta,
     productionCostSource: economy.productionCostSource,
     productionCooldownSource: economy.productionCooldownSource,
     productionSourceDebug: economy.productionSourceDebug,
@@ -236,7 +247,7 @@ export const buildDogCatalogEntry = (spec, options = {}) => {
 
 export const buildCatCatalogEntry = (spec, options = {}) => {
   const e = buildCatRosterEntry(spec, options);
-  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, bcuPrice: e.bcuPrice, bcuRespawnFrames: e.bcuRespawnFrames, bcuRespawnMs: e.bcuRespawnMs, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
+  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, bcuPrice: e.bcuPrice, bcuRespawnFrames: e.bcuRespawnFrames, bcuRespawnMs: e.bcuRespawnMs, bcuUnitLevelMeta: e.bcuUnitLevelMeta, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
 };
 
 export const buildDogPreviewAsset = (spec, ANIM4_E, options = {}) => {

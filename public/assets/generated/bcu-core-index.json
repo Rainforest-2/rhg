@@ -27,6 +27,8 @@
       "diagnostics": {
         "sourceRawPaths": [
           "public/assets/bcu/**/org/data/t_unit.csv",
+          "public/assets/bcu/**/org/data/unitbuy.csv",
+          "public/assets/bcu/**/org/data/unitlevel.csv",
           "public/assets/bcu/**/UnitName.txt",
           "public/assets/bcu/**/EnemyName.txt"
         ]
@@ -59,6 +61,8 @@
       "diagnostics": {
         "sourceRawPaths": [
           "public/assets/bcu/**/org/data/t_unit.csv",
+          "public/assets/bcu/**/org/data/unitbuy.csv",
+          "public/assets/bcu/**/org/data/unitlevel.csv",
           "public/assets/bcu/**/UnitName.txt",
           "public/assets/bcu/**/EnemyName.txt"
         ]

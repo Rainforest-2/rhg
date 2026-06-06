@@ -13,7 +13,7 @@ const loadImage = (src) => new Promise((res, rej) => {
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const imageWidth = (img) => img?.naturalWidth || img?.width || 0;
 const imageHeight = (img) => img?.naturalHeight || img?.height || 0;
-const DOG_CARD_ICON_SCALE = 1.2;
+const DOG_CARD_ICON_SCALE = 1.1;
 
 export const BCU_UNI_IMGCUT_PATH = './public/assets/bcu/000001/org/data/uni.imgcut';
 export const BCU_SLOT_FRAME_PATH = './public/assets/bcu/000001/org/page/uni.png';
@@ -161,133 +161,97 @@ export class ProductionCardSkin {
     return true;
   }
 
-  warnCatFallbackOnce(state, reason) {
-    const key = state.unitDef?.slotId || state.unitDef?.assetDef?.semanticKey || state.unitDef?.uiIcon?.semanticKey || 'unknown-cat-card';
-    if (this.warnedFallbackKeys.has(key)) return;
-    this.warnedFallbackKeys.add(key);
-    this.log.warn?.('[ProductionCardSkin] cat card image unavailable; drawing BCU uni frame fallback', key, reason);
+  drawContainedIcon(ctx, icon, rect, options = {}) {
+    const sw = imageWidth(icon);
+    const sh = imageHeight(icon);
+    if (!icon || sw <= 0 || sh <= 0) return false;
+    const fitMode = options.fitMode || 'contain';
+    const baseScale = fitMode === 'cover' ? Math.max(rect.w / sw, rect.h / sh) : Math.min(rect.w / sw, rect.h / sh);
+    const fit = baseScale * (Number(options.scale) || 1);
+    const dw = sw * fit;
+    const dh = sh * fit;
+    const dx = rect.x + (rect.w - dw) / 2;
+    const dy = rect.y + (rect.h - dh) / 2;
+    if (options.clip !== false) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
+      ctx.drawImage(icon, dx, dy, dw, dh);
+      ctx.restore();
+    } else {
+      ctx.drawImage(icon, dx, dy, dw, dh);
+    }
+    return true;
   }
 
-  drawCatCard(ctx, icon, state) {
-    if (this.drawBcuCardPart(ctx, icon)) return;
-    if (this.drawBundledCatCardImage(ctx, icon)) return;
-    this.warnCatFallbackOnce(state, state.iconLoadFailed ? 'icon-load-failed' : 'icon-missing');
-    this.drawSlotFrame(ctx);
-  }
-
-  drawDogCard(ctx, icon, state) {
-    this.drawSlotFrame(ctx);
-    this.drawDogIconBackground(ctx);
-    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, {
-      scale: PRODUCTION_CARD_SKIN.dogIconScale,
-      fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode,
-      clip: true
-    });
-    if (!state?.iconLoadFailed) return;
-    const key = state.unitDef?.slotId || state.unitDef?.assetDef?.semanticKey || state.unitDef?.uiIcon?.semanticKey || 'unknown-dog-card';
-    if (!this.warnedFallbackKeys.has(key)) {
-      this.warnedFallbackKeys.add(key);
-      this.log.warn?.('[ProductionCardSkin] dog card uses BCU uni frame but icon unavailable', key);
+  drawCatCard(ctx, icon) {
+    if (!this.drawBundledCatCardImage(ctx, icon)) {
+      this.drawSlotFrame(ctx);
+      this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect, { scale: 1, fitMode: 'contain' });
     }
   }
 
+  drawDogCard(ctx, icon) {
+    this.drawSlotFrame(ctx);
+    this.drawDogIconBackground(ctx);
+    this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, { scale: PRODUCTION_CARD_SKIN.dogIconScale, fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode });
+  }
+
+  drawSlotFrame(ctx) { this.drawBcuCardPart(ctx, this.slotFrame); }
   drawDogIconBackground(ctx) {
     const r = PRODUCTION_CARD_SKIN.dogContentBackgroundRect;
     ctx.save();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#111';
     ctx.fillRect(r.x, r.y, r.w, r.h);
     ctx.restore();
   }
 
-  drawEmptyCard(ctx) { this.drawSlotFrame(ctx); }
-
-  drawSlotFrame(ctx) {
-    if (this.drawBcuCardPart(ctx, this.slotFrame)) return;
-    if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') {
-      const reason = this.loadError?.message || 'missing ui:battle uni.png/uni.imgcut part[0]';
-      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
-        ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
-        ready: false,
-        strictFailure: true,
-        source: this.source,
-        reason
-      };
-      throw new Error(`BCU production card skin unavailable in semantic-strict: ${reason}`);
-    }
-    this.drawManualFrameFallback(ctx);
-  }
-
-  drawManualFrameFallback(ctx) {
-    const { w, h } = PRODUCTION_CARD_CANVAS;
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(2, 2, w - 4, h - 4);
-  }
-
-  drawContainedIcon(ctx, icon, rect, options = {}) {
-    const sw = imageWidth(icon);
-    const sh = imageHeight(icon);
-    if (!icon || sw <= 0 || sh <= 0) return;
-    const scale = Number.isFinite(Number(options.scale)) ? Number(options.scale) : 1;
-    const fitBase = options.fitMode === 'cover'
-      ? Math.max(rect.w / sw, rect.h / sh)
-      : Math.min(rect.w / sw, rect.h / sh);
-    const fit = fitBase * Math.max(0.01, scale);
-    const dw = Math.max(1, sw * fit);
-    const dh = Math.max(1, sh * fit);
-    const dx = rect.x + (rect.w - dw) / 2;
-    const dy = rect.y + (rect.h - dh) / 2;
+  drawCost(ctx, cost) {
     ctx.save();
-    if (options.clip) {
-      ctx.beginPath();
-      ctx.rect(rect.x, rect.y, rect.w, rect.h);
-      ctx.clip();
-    }
-    ctx.drawImage(icon, 0, 0, sw, sh, dx, dy, dw, dh);
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.strokeText(String(cost ?? 0), PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY);
+    ctx.fillText(String(cost ?? 0), PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY);
+    ctx.restore();
+  }
+
+  drawCooldown(ctx, progress, state) {
+    const r = PRODUCTION_CARD_SKIN.cooldownTrackRect;
+    const f = PRODUCTION_CARD_SKIN.cooldownFillRect;
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.fillStyle = PRODUCTION_CARD_SKIN.cooldownFillColor;
+    ctx.fillRect(f.x, f.y, f.w * clamp01(progress), f.h);
+    if (state?.isBack) this.drawBackOverlay(ctx);
     ctx.restore();
   }
 
   drawAvailabilityOverlay(ctx, state) {
-    if (state.isBack) return this.drawBackOverlay(ctx);
-    if (!state.interactive || !state.affordable) {
-      ctx.fillStyle = 'rgba(0,0,0,.12)';
-      ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
-    }
+    if (state?.affordable) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.45)';
+    ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+    ctx.restore();
   }
 
   drawBackOverlay(ctx) {
-    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
     ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+    ctx.restore();
   }
 
-  drawCost(ctx, cost, state) {
-    const disabled = !state.interactive || !state.affordable || state.isBack;
-    const value = Number(cost || 0);
-    if (this.spriteText?.drawCostRight) return this.spriteText.drawCostRight(ctx, value, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY, { disabled, scale: 1 });
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#000';
-    ctx.fillStyle = disabled ? '#999' : '#ffd400';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'right';
-    const text = `${Math.floor(value)}円`;
-    ctx.strokeText(text, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY + 12);
-    ctx.fillText(text, PRODUCTION_CARD_SKIN.costRightX, PRODUCTION_CARD_SKIN.costY + 12);
-  }
-
-  drawCooldown(ctx, cooldownProgressRatio) {
-    const track = PRODUCTION_CARD_SKIN.cooldownTrackRect;
-    const fill = PRODUCTION_CARD_SKIN.cooldownFillRect;
-    const progress = clamp01(cooldownProgressRatio);
-    ctx.fillStyle = 'rgba(0,0,0,.32)';
+  drawEmptyCard(ctx) {
+    this.drawSlotFrame(ctx);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
     ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
-    ctx.fillStyle = PRODUCTION_CARD_SKIN.cooldownTrackColor;
-    ctx.fillRect(track.x, track.y, track.w, track.h);
-    const fillW = Math.floor(fill.w * progress);
-    if (fillW > 0) {
-      ctx.fillStyle = PRODUCTION_CARD_SKIN.cooldownFillColor;
-      ctx.fillRect(fill.x, fill.y, fillW, fill.h);
-    }
+    ctx.restore();
   }
 }

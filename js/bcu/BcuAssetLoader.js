@@ -220,4 +220,4 @@ export class BcuAssetLoader {
     return { loaded: [], missing: files, errors: [], file: files[0], anim: null, status: 'missing' };
   }
 }
-export function __getBcuAssetCaches(){return {assetSetCacheSize:cache.size,animationCacheSize:animationCache.size,imageCacheSize:counters, counters, cache, animationCache, imageCache};}
+export function __getBcuAssetCaches(){return {assetSetCacheSize:cache.size,animationCacheSize:animationCache.size,imageCacheSize:imageCache.size,counters,cache,animationCache,imageCache};}

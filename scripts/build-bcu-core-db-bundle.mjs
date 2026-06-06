@@ -6,6 +6,8 @@ import { createBcuDiagnostics } from '../js/bcu/BcuDiagnostics.js';
 import { comparePackId, FIXED_DATE, hashFile, loadManifest, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
 
 const BASE_T_UNIT_CSV = 'public/assets/bcu/000001/org/data/t_unit.csv';
+const BASE_UNITBUY_CSV = 'public/assets/bcu/000001/org/data/unitbuy.csv';
+const BASE_UNITLEVEL_CSV = 'public/assets/bcu/000001/org/data/unitlevel.csv';
 
 const parseCsvRows = (text) => String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)
   .map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean)
@@ -60,17 +62,52 @@ async function loadEnemyStatSources(manifest) {
   return { sources, byPack, newestFirst };
 }
 
+async function readCsvIfPresent(file) {
+  try { return parseCsvRows(await readText(file)).map(toNumbers); } catch { return []; }
+}
+
+async function loadUnitLevelMetadata(manifest) {
+  const files = new Set(manifest.files || []);
+  const unitbuyPath = files.has(BASE_UNITBUY_CSV) ? BASE_UNITBUY_CSV : [...files].find((p) => /\/org\/data\/unitbuy\.csv$/i.test(p)) || BASE_UNITBUY_CSV;
+  const unitlevelPath = files.has(BASE_UNITLEVEL_CSV) ? BASE_UNITLEVEL_CSV : [...files].find((p) => /\/org\/data\/unitlevel\.csv$/i.test(p)) || BASE_UNITLEVEL_CSV;
+  const unitbuyRows = await readCsvIfPresent(unitbuyPath);
+  const unitlevelRows = await readCsvIfPresent(unitlevelPath);
+  const byUnitId = {};
+  for (const idRaw of manifest.indexes?.unitIds || []) {
+    const unitId = Number(idRaw);
+    if (!Number.isFinite(unitId)) continue;
+    const buy = unitbuyRows[unitId] || [];
+    const lvs = Array.from({ length: 20 }, (_, i) => Number.isFinite(unitlevelRows[unitId]?.[i]) ? unitlevelRows[unitId][i] : 0);
+    byUnitId[unitId] = {
+      unitId,
+      rarity: Number.isFinite(buy[13]) ? buy[13] : 0,
+      maxLevel: Number.isFinite(buy[50]) && buy[50] > 0 ? buy[50] : 50,
+      maxPlusLevel: Number.isFinite(buy[51]) && buy[51] > 0 ? buy[51] : 0,
+      trueFormLevel: Number.isFinite(buy[25]) && buy[25] !== -1 ? buy[25] : (Number.isFinite(buy[20]) && buy[20] !== -1 ? buy[20] : null),
+      zeroFormLevel: Number.isFinite(buy[26]) && buy[26] !== -1 ? buy[26] : null,
+      levelCurve: {
+        lvs,
+        source: 'org/data/unitlevel.csv',
+        bcuReference: 'UnitLevel.getMult(int lv): d = 1 - lvs[0]*0.01; each 10-level block adds lvs[i]*0.1, remainder adds lvs[i]*dec*0.01'
+      },
+      source: {
+        unitbuyPath,
+        unitlevelPath,
+        row: unitId,
+        bcuReference: 'PackData.loadUnits: Unit.rarity=strs[13], Unit.max=strs[50], Unit.maxp=strs[51], Unit.lv from org/data/unitlevel.csv row order'
+      }
+    };
+  }
+  return { byUnitId, unitbuyPath, unitlevelPath, unitbuyRows: unitbuyRows.length, unitlevelRows: unitlevelRows.length };
+}
+
 function enemyPackPriority(enemyId, actorIndex, enemyStatsSources) {
   const priority = [];
   const actor = actorIndex.byKey?.[`enemy:${enemyId}`] || null;
   addUnique(priority, actor?.selected?.sourcePack);
   for (const candidate of actor?.sourceCandidates || []) addUnique(priority, candidate?.sourcePack);
   for (const rawPath of actor?.diagnostics?.sourceRawPaths || []) addUnique(priority, packIdFromBcuPath(rawPath));
-
-  // Preserve legacy results for enemies whose only known data is the base pack.
   addUnique(priority, '000001');
-
-  // Then allow newer official/update packs to fill enemies that the base CSV cannot describe.
   for (const source of enemyStatsSources.newestFirst) addUnique(priority, source.packId);
   return priority;
 }
@@ -100,6 +137,7 @@ const names = new BcuLangStore({ locale: 'jp', diagnostics });
 await names.loadFromManifest(manifest, readText);
 const statsLoader = new BattleStatsLoader({ bcuDb: null });
 const enemyStatsSources = await loadEnemyStatSources(manifest);
+const unitLevelMetadata = await loadUnitLevelMetadata(manifest);
 
 function serializeNames() {
   const tables = {};
@@ -165,9 +203,15 @@ for (const idRaw of manifest.indexes?.unitIds || []) {
   const id3 = pad3(unitId);
   const statsPath = (manifest.files || []).find((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`));
   const rows = statsPath ? parseCsvRows(await readText(statsPath)).map(toNumbers) : [];
+  const levelMeta = unitLevelMetadata.byUnitId[unitId] || null;
   for (let index = 0; index < Math.max(1, rows.length); index += 1) {
     const form = formCode(index);
     const rawStats = rows[index] || rows[0] || [];
+    const stats = rawStats.length ? statsLoader.normalizeUnitStats(rawStats, { file: 'core-db.zip:units.json', row: index, unitId, form, formRow: index, type: 'unit', mappingStatus: 'valid', unitLevelMeta: levelMeta }) : null;
+    if (stats) {
+      stats.bcuUnitLevelMeta = levelMeta;
+      stats.source = { ...(stats.source || {}), unitLevelMeta: levelMeta };
+    }
     units[`unit:${unitId}:${form}`] = {
       unitId,
       id3,
@@ -175,8 +219,9 @@ for (const idRaw of manifest.indexes?.unitIds || []) {
       formIndex: index,
       key: `unit:${unitId}:form:${index}`,
       name: names.unitForm(unitId, index, 'jp'),
-      stats: rawStats.length ? statsLoader.normalizeUnitStats(rawStats, { file: 'core-db.zip:units.json', row: index, unitId, form, formRow: index, type: 'unit', mappingStatus: 'valid' }) : null,
+      stats,
       rawStats,
+      levelMeta,
       asset: actorAsset('unit', unitId, form)
     };
   }
@@ -258,7 +303,7 @@ const manifestLite = {
 const entries = [
   jsonEntry('bundle.json', { schemaVersion: 1, key: 'core:db', generatedAt: FIXED_DATE }),
   jsonEntry('manifest-lite.json', manifestLite),
-  jsonEntry('units.json', { schemaVersion: 1, forms: units }),
+  jsonEntry('units.json', { schemaVersion: 1, forms: units, levelMetadata: unitLevelMetadata.byUnitId, levelMetadataSource: { unitbuyPath: unitLevelMetadata.unitbuyPath, unitlevelPath: unitLevelMetadata.unitlevelPath } }),
   jsonEntry('enemies.json', { schemaVersion: 1, enemies }),
   jsonEntry('names-jp.json', serializeNames()),
   jsonEntry('backgrounds.json', { schemaVersion: 1, backgrounds }),
@@ -272,10 +317,10 @@ const entries = [
     source: 'build-bcu-core-db-bundle',
     counts: { units: Object.keys(units).length, enemies: Object.keys(enemies).length, backgrounds: Object.keys(backgrounds).length, castles: Object.keys(enemyCastles).length, stages: Object.keys(stages).length },
     enemyStats: { sources: enemyStatsSources.sources.length, sourceFilesUsed: enemyStatsSourceFiles.size, hits: enemyStatsHitCount, missing: enemyStatsMissingCount },
+    unitLevelMetadata: { rows: Object.keys(unitLevelMetadata.byUnitId).length, unitbuyRows: unitLevelMetadata.unitbuyRows, unitlevelRows: unitLevelMetadata.unitlevelRows, unitbuyPath: unitLevelMetadata.unitbuyPath, unitlevelPath: unitLevelMetadata.unitlevelPath },
     bundleCount: Object.keys(bundleManifest.bundles || {}).length
   })
 ];
-
 
 const crcTable = new Uint32Array(256).map((_, n) => {
   let c = n;
@@ -383,10 +428,10 @@ const coreIndex = {
     files: entries.map((e) => e.name),
     status: 'full',
     bundleRef: { bundleKey: 'core:db', bundlePath, readMode: 'zip-json' },
-    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
+    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/org/data/unitbuy.csv', 'public/assets/bcu/**/org/data/unitlevel.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
   }],
   byKey: {}
 };
 coreIndex.byKey['core:db'] = coreIndex.entries[0];
 await writeJson('public/assets/generated/bcu-core-index.json', coreIndex);
-console.log(`wrote ${bundlePath} entries=${entries.length} hash=${await hashFile(bundlePath)} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length}`);
+console.log(`wrote ${bundlePath} entries=${entries.length} hash=${await hashFile(bundlePath)} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length} unitLevelRows=${Object.keys(unitLevelMetadata.byUnitId).length}`);

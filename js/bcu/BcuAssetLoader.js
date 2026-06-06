@@ -11,15 +11,20 @@ const imageCache=new Map();
 
 function asArray(v) { return v == null ? [] : (Array.isArray(v) ? v : [v]); }
 function join(base, file) { return `${base}${file}`; }
-
 function isNotFoundError(e) { return String(e.message || '').includes('HTTP 404'); }
+function isExtraRawActorAnimation(def, animDef) {
+  if (def?.allowExtraRawAnimations !== true) return false;
+  const id = String(animDef?.id || '');
+  if (!/^anim0[4-6]$/.test(id)) return false;
+  return asArray(animDef?.file).every((file) => /_e0[4-6]\.maanim$/i.test(String(file || '')));
+}
 
 function loadImage(url) {
   counters.imageRequested++;
   if(imageCache.has(url)){ counters.imageCacheHit++; return imageCache.get(url); }
   const p=new Promise((res, rej) => {
     const img = new Image();
-    img.onload = async () => { try { if (typeof img.decode === "function") await img.decode(); } catch(_e) {} res(img); };
+    img.onload = async () => { try { if (typeof img.decode === 'function') await img.decode(); } catch(_e) {} res(img); };
     img.onerror = () => rej(new Error(`Image load failed: ${url}`));
     img.src = url;
   });
@@ -28,20 +33,14 @@ function loadImage(url) {
 }
 
 function makeActorDiagnostic({ kind='actor', semanticKey, bundlePath=null, internalPath=null, sourcePack=null, sourceRawPaths=null, role=null, reason, error }) {
-  return {
-    kind,
-    semanticKey,
-    role: role || undefined,
-    bundlePath,
-    internalPath,
-    sourcePack: sourcePack || null,
-    sourceRawPaths: sourceRawPaths || [],
-    reason,
-    originalErrorName: error?.name || null,
-    originalErrorMessage: error?.message || (error ? String(error) : null),
-    originalErrorStack: error?.stack || null,
-    message: error?.message || reason || 'actor-bundle-error'
-  };
+  return { kind, semanticKey, role: role || undefined, bundlePath, internalPath, sourcePack: sourcePack || null, sourceRawPaths: sourceRawPaths || [], reason, originalErrorName: error?.name || null, originalErrorMessage: error?.message || (error ? String(error) : null), originalErrorStack: error?.stack || null, message: error?.message || reason || 'actor-bundle-error' };
+}
+
+function normalizeModelPartRefs(model, imgcut) {
+  const partCount = imgcut?.parts?.length || 0;
+  if (!model || !partCount) return model;
+  for (const part of model.parts || []) if (Number.isInteger(part.partIndex) && part.partIndex >= partCount) part.partIndex = 0;
+  return model;
 }
 
 function validateActorCore({ semanticKey, bundlePath, sourcePack, sourceRawPaths, image, imgcut, model }) {
@@ -49,8 +48,6 @@ function validateActorCore({ semanticKey, bundlePath, sourcePack, sourceRawPaths
   const imageWidth = Number(image?.naturalWidth || image?.width || 0);
   const imageHeight = Number(image?.naturalHeight || image?.height || 0);
   if (!imageWidth || !imageHeight) failures.push({ internalPath: 'image.png', reason: 'invalid-image-dimensions' });
-  // BCU util/anim/ImgCut.cut clamps malformed or edge-overflowing cuts before getSubimage.
-  // Keep them diagnostic-only here; parser part count and model/animation references are the hard compatibility gate.
   normalizeModelPartRefs(model, imgcut);
   if (failures.length) {
     const f = failures[0];
@@ -59,16 +56,6 @@ function validateActorCore({ semanticKey, bundlePath, sourcePack, sourceRawPaths
     error.invalidEntries = failures.map((x) => x.internalPath);
     throw error;
   }
-}
-
-function normalizeModelPartRefs(model, imgcut) {
-  const partCount = imgcut?.parts?.length || 0;
-  if (!model || !partCount) return model;
-  for (const part of model.parts || []) {
-    // BCU util/anim/MaModel.check clamps initial model part image refs >= imgcut.n to 0.
-    if (Number.isInteger(part.partIndex) && part.partIndex >= partCount) part.partIndex = 0;
-  }
-  return model;
 }
 
 function validateActorAnimation({ semanticKey, bundlePath, sourcePack, sourceRawPaths, role, internalPath, anim, model }) {
@@ -83,9 +70,7 @@ function validateActorAnimation({ semanticKey, bundlePath, sourcePack, sourceRaw
   }
 }
 
-async function loadImageFromObjectUrl(provider, bundleRef, internalPath) {
-  return await loadImage(await provider.createObjectUrl(bundleRef, internalPath, 'image/png'));
-}
+async function loadImageFromObjectUrl(provider, bundleRef, internalPath) { return await loadImage(await provider.createObjectUrl(bundleRef, internalPath, 'image/png')); }
 
 async function tryLoadSemanticActor(def) {
   if (!def?.semanticKey) return null;
@@ -116,10 +101,7 @@ async function tryLoadSemanticActor(def) {
     validateActorCore({ semanticKey: def.semanticKey, bundlePath: bundleRef.bundlePath, sourcePack: r.semantic.sourcePack, sourceRawPaths: r.semantic.sourceRawPaths, image: r.image, imgcut: r.imgcut, model: r.model });
     return r;
   } catch (error) {
-    if (provider.allowRawFallback) {
-      provider.recordRawFallback('actor-bundle-load-failed', { actorKey: def.semanticKey, message: error?.message || String(error) });
-      return null;
-    }
+    if (provider.allowRawFallback) { provider.recordRawFallback('actor-bundle-load-failed', { actorKey: def.semanticKey, message: error?.message || String(error) }); return null; }
     const entry = provider.getActorEntry(def.semanticKey);
     provider.diagnostics.bundleErrors.push(error?.detail || makeActorDiagnostic({ semanticKey: def.semanticKey, bundlePath: entry?.bundleRef?.bundlePath || null, sourcePack: entry?.selected?.sourcePack || null, sourceRawPaths: entry?.diagnostics?.sourceRawPaths || [], reason: 'actor-bundle-load-failed', error }));
     throw error;
@@ -144,9 +126,7 @@ function assertRawAllowed(def) {
   const rawPath = def?.baseDir || def?.imagePath || null;
   provider.assertNoRawForBundledKey(semanticKey, rawPath);
   const entry = provider.getActorEntry(semanticKey);
-  if (entry && entry.status !== 'rawOnly' && def.allowRawOnly !== true) {
-    throw new Error(`Raw actor access requires explicit rawOnly entry: ${semanticKey}`);
-  }
+  if (entry && entry.status !== 'rawOnly' && def.allowRawOnly !== true) throw new Error(`Raw actor access requires explicit rawOnly entry: ${semanticKey}`);
 }
 
 async function tryLoadText(baseDir, candidates, parser, field) {
@@ -154,12 +134,8 @@ async function tryLoadText(baseDir, candidates, parser, field) {
   for (const file of asArray(candidates)) {
     const url = join(baseDir, file);
     tried.push(file);
-    try {
-      const parsed = parser(await fetchBcuText(url));
-      return { ok: true, file, parsed, tried };
-    } catch (e) {
-      if (!isNotFoundError(e)) return { ok: false, file, error: `${field} parse error ${file}: ${e.message}`, tried };
-    }
+    try { return { ok: true, file, parsed: parser(await fetchBcuText(url)), tried }; }
+    catch (e) { if (!isNotFoundError(e)) return { ok: false, file, error: `${field} parse error ${file}: ${e.message}`, tried }; }
   }
   return { ok: false, missing: true, tried };
 }
@@ -181,57 +157,29 @@ export class BcuAssetLoader {
     cache.set(def.id,p);
     try{return await p;}catch(e){cache.delete(def.id); throw e;}
   }
-
   async loadAssetSetUncached(def) {
-    if (!def.semanticKey) {
-      const derived = deriveActorSemanticKey(def);
-      if (derived) def = { ...def, semanticKey: derived };
-    }
+    if (!def.semanticKey) { const derived = deriveActorSemanticKey(def); if (derived) def = { ...def, semanticKey: derived }; }
     const semantic = await tryLoadSemanticActor(def);
     if (semantic && (semantic.image || semantic.imgcut || semantic.model)) return semantic;
     assertRawAllowed(def);
     const r = { loaded: [], missing: [], errors: [], status: { image: 'missing', imgcut: 'missing', model: 'missing' }, imageFile: null, imgcutFile: null, modelFile: null, renderMode: def.renderMode || 'model', modelRequired: def.model != null && (def.renderMode || 'model') !== 'static-imgcut', animationRequired: (def.renderMode || 'model') === 'model' && (def.animations?.length || 0) > 0 };
-
-    const [img,ic,md] = await Promise.allSettled([
-      tryLoadImage(def.baseDir, def.image),
-      tryLoadText(def.baseDir, def.imgcut, parseImgcut, "imgcut"),
-      def.model == null ? Promise.resolve({skip:true}) : tryLoadText(def.baseDir, def.model, parseModel, "model")
-    ]);
+    const [img,ic,md] = await Promise.allSettled([tryLoadImage(def.baseDir, def.image), tryLoadText(def.baseDir, def.imgcut, parseImgcut, 'imgcut'), def.model == null ? Promise.resolve({skip:true}) : tryLoadText(def.baseDir, def.model, parseModel, 'model')]);
     const imgv=img.status==='fulfilled'?img.value:{ok:false,tried:[]};
     const icv=ic.status==='fulfilled'?ic.value:{ok:false,error:String(ic.reason),tried:[]};
     const mdv=md.status==='fulfilled'?md.value:{ok:false,error:String(md.reason),tried:[]};
-
-    const imgRes = imgv;
-    if (imgRes.ok) { r.image = imgRes.image; r.imageFile = imgRes.file; r.loaded.push(imgRes.file); r.status.image = 'loaded'; }
-    else { r.missing.push(...imgRes.tried); r.status.image = 'missing'; }
-
-    const icRes = icv;
-    if (icRes.ok) { r.imgcut = icRes.parsed; r.imgcutFile = icRes.file; r.loaded.push(icRes.file); r.status.imgcut = 'loaded'; }
-    else if (icRes.error) { r.errors.push(icRes.error); r.status.imgcut = 'error'; } else { r.missing.push(...icRes.tried); r.status.imgcut = 'missing'; }
-
-    if (def.model == null) {
-      r.status.model = 'skipped';
-    } else {
-      const mdRes = mdv;
-      if (mdRes.ok) { r.model = mdRes.parsed; r.modelFile = mdRes.file; r.loaded.push(mdRes.file); r.status.model = 'loaded'; }
-      else if (mdRes.error) { r.errors.push(mdRes.error); r.status.model = 'error'; }
-      else {
-        r.status.model = 'missing';
-        if (r.modelRequired) r.missing.push(...mdRes.tried);
-      }
-    }
-
+    if (imgv.ok) { r.image = imgv.image; r.imageFile = imgv.file; r.loaded.push(imgv.file); r.status.image = 'loaded'; } else { r.missing.push(...imgv.tried); r.status.image = 'missing'; }
+    if (icv.ok) { r.imgcut = icv.parsed; r.imgcutFile = icv.file; r.loaded.push(icv.file); r.status.imgcut = 'loaded'; } else if (icv.error) { r.errors.push(icv.error); r.status.imgcut = 'error'; } else { r.missing.push(...icv.tried); r.status.imgcut = 'missing'; }
+    if (def.model == null) r.status.model = 'skipped';
+    else if (mdv.ok) { r.model = mdv.parsed; r.modelFile = mdv.file; r.loaded.push(mdv.file); r.status.model = 'loaded'; }
+    else if (mdv.error) { r.errors.push(mdv.error); r.status.model = 'error'; }
+    else { r.status.model = 'missing'; if (r.modelRequired) r.missing.push(...mdv.tried); }
     return r;
   }
-
   async loadAnimation(def, animDef) {
     if (!animDef) return { loaded: [], missing: [], errors: [], file: null, anim: null, status: 'skipped' };
     counters.animationRequested++;
     const files = asArray(animDef.file);
-    if (!def.semanticKey) {
-      const derived = deriveActorSemanticKey(def);
-      if (derived) def = { ...def, semanticKey: derived };
-    }
+    if (!def.semanticKey) { const derived = deriveActorSemanticKey(def); if (derived) def = { ...def, semanticKey: derived }; }
     if (def?.semanticKey) {
       let provider = null;
       try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
@@ -255,18 +203,16 @@ export class BcuAssetLoader {
         }
       }
     }
-    assertRawAllowed(def);
+    if (!isExtraRawActorAnimation(def, animDef)) assertRawAllowed(def);
+    else {
+      try { getBcuAssetDatabase()?.semanticProvider?.recordRawFallback?.('extra-actor-animation-raw-load', { actorKey: def.semanticKey || deriveActorSemanticKey(def), animId: animDef.id, files }); } catch {}
+    }
     for (const file of files) {
       const key=`${def.id}:${file}`;
       if(animationCache.has(key)){ counters.animationCacheHit++; return await animationCache.get(key); }
       const p=(async()=>{
-        try {
-          const anim = parseAnim(await fetchBcuText(`${def.baseDir}${file}`));
-          return { loaded: [file], missing: [], errors: [], file, anim, status: 'loaded' };
-        } catch (e) {
-          if (isNotFoundError(e)) return null;
-          throw e;
-        }
+        try { const anim = parseAnim(await fetchBcuText(`${def.baseDir}${file}`)); return { loaded: [file], missing: [], errors: [], file, anim, status: 'loaded' }; }
+        catch (e) { if (isNotFoundError(e)) return null; throw e; }
       })();
       animationCache.set(key,p);
       try{ const r=await p; if(r) return r; animationCache.delete(key);}catch(e){animationCache.delete(key); return { loaded: [], missing: [], errors: [`${file}: ${e.message}`], file, anim: null, status: 'error' }; }
@@ -274,4 +220,4 @@ export class BcuAssetLoader {
     return { loaded: [], missing: files, errors: [], file: files[0], anim: null, status: 'missing' };
   }
 }
-export function __getBcuAssetCaches(){return {assetSetCacheSize:cache.size,animationCacheSize:animationCache.size,imageCacheSize:imageCache.size,counters,cache,animationCache,imageCache};}
+export function __getBcuAssetCaches(){return {assetSetCacheSize:cache.size,animationCacheSize:animationCache.size,imageCacheSize:counters, counters, cache, animationCache, imageCache};}

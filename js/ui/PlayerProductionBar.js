@@ -346,6 +346,11 @@ export class PlayerProductionBar {
         const sourceType = entry?.kind === 'unit' ? 'unit-icon-bundle' : entry?.kind === 'enemy' ? 'enemy-icon-bundle' : 'icon-bundle';
         const url = await provider.getActorUiIconUrl(semanticKey);
         const image = await loadImage(url);
+        image.bcuIconSource = sourceType;
+        image.bcuSemanticKey = semanticKey;
+        image.bcuBundlePath = entry?.bundleRef?.bundlePath || null;
+        image.bcuInternalPath = entry?.internalPath || entry?.bundleRef?.internalPath || null;
+        image.bcuRawSourcePath = entry?.sourcePath || null;
         stats && (stats.loaded += 1);
         return {
           icon: image,
@@ -385,7 +390,7 @@ export class PlayerProductionBar {
     return p;
   }
   drawCard(ctx, entry, isBack = false) {
-    this.cardSkin.drawCard(ctx, {
+    return this.cardSkin.drawCard(ctx, {
       unitDef: entry.unitDef,
       icon: entry.icon,
       iconLoadFailed: entry.iconLoadFailed === true,
@@ -453,10 +458,11 @@ export class PlayerProductionBar {
       const frontAsset = await this.ensureCardAssets(m.front.unitDef, stats);
       const backEntry = { ...m.back, icon: backAsset?.icon || null, iconLoadFailed: backAsset?.failed === true, interactive: false, affordable: m.back?.affordable !== false, cooldownReady: m.back?.cooldownReady !== false, cooldownProgressRatio: m.back?.cooldownProgressRatio ?? 1 };
       const frontEntry = { ...m.front, icon: frontAsset?.icon || null, iconLoadFailed: frontAsset?.failed === true, affordable: m.front?.affordable !== false, cooldownReady: m.front?.cooldownReady !== false, cooldownProgressRatio: m.front?.cooldownProgressRatio ?? 1 };
-      this.drawCard(stack.backCtx, backEntry, true);
-      this.drawCard(stack.frontCtx, frontEntry, false);
+      const backRender = this.drawCard(stack.backCtx, backEntry, true);
+      const frontRender = this.drawCard(stack.frontCtx, frontEntry, false);
       for (const [slot, modelEntry, asset] of [['back', m.back, backAsset], ['front', m.front, frontAsset]]) {
         if (!modelEntry?.unitDef) continue;
+        const render = slot === 'back' ? backRender : frontRender;
         cardDebug.push({
           col: stack.col,
           slot,
@@ -469,7 +475,14 @@ export class PlayerProductionBar {
           internalPath: asset?.internalPath || null,
           rawSourcePath: asset?.rawSourcePath || null,
           fallbackReason: asset?.fallbackReason || asset?.errorDetail?.fallbackReason || asset?.errorDetail?.reason || null,
-          backgroundMode: modelEntry.unitDef.faction === 'cat' ? 'bcu-unit-icon-full-card' : 'light-dog-card-face',
+          renderMode: render?.renderMode || null,
+          imageSize: render?.imageSize || null,
+          iconSource: asset?.sourceType || null,
+          renderFallbackReason: render?.fallbackReason || null,
+          priceDrawn: render?.priceDrawn ?? null,
+          backgroundMode: modelEntry.unitDef.faction === 'cat'
+            ? (render?.renderMode === 'bundled-card-image' ? 'bcu-unit-icon-full-card' : 'bcu-unit-frame-contained-icon')
+            : 'light-dog-card-face',
           priceDebug: {
             cost: modelEntry.cost ?? modelEntry.unitDef.cost ?? 0,
             source: 'ProductionCardSkin.drawCost',

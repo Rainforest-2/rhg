@@ -33737,9 +33737,14 @@
       "key": "icon:enemy",
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
-      "iconCount": 762,
-      "sizeBytes": 28722552,
-      "hash": "3fc50e874f672a562c2cf2f20fb7370c1acf36d32f61a06fb434b4feeeb8d69f"
+      "iconCount": 878,
+      "sizeBytes": 32423022,
+      "hash": "ddcac90f60f7cd6e1dde16d8d822e0ef1b68b5528d467b50aead006f75dec564",
+      "width": 512,
+      "height": 512,
+      "frame": 0,
+      "animationRole": "idle",
+      "generationSource": "actor-assets-initial-pose"
     },
     "icon:unit:c": {
       "kind": "icon",

@@ -14,6 +14,7 @@ const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const imageWidth = (img) => img?.naturalWidth || img?.width || 0;
 const imageHeight = (img) => img?.naturalHeight || img?.height || 0;
 const DOG_CARD_ICON_SCALE = 1.1;
+const CARD_IMAGE_ASPECT_EPSILON = 0.02;
 
 export const BCU_UNI_IMGCUT_PATH = './public/assets/bcu/000001/org/data/uni.imgcut';
 export const BCU_SLOT_FRAME_PATH = './public/assets/bcu/000001/org/page/uni.png';
@@ -53,6 +54,32 @@ function getCanvasPixelRatio(ctx) {
   const ry = Number(canvas.height || 0) / PRODUCTION_CARD_CANVAS.h;
   const ratio = Math.min(rx, ry);
   return Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
+}
+
+export function getProductionCardIconImageSize(icon) {
+  return { width: imageWidth(icon), height: imageHeight(icon) };
+}
+
+export function isBundledCatCardImage(icon) {
+  const { width, height } = getProductionCardIconImageSize(icon);
+  if (width <= 0 || height <= 0) return false;
+  if (width === PRODUCTION_CARD_CANVAS.w && height === PRODUCTION_CARD_CANVAS.h) return true;
+  if (width === height) return false;
+  const aspect = width / height;
+  const cardAspect = PRODUCTION_CARD_CANVAS.w / PRODUCTION_CARD_CANVAS.h;
+  return Math.abs(aspect - cardAspect) <= CARD_IMAGE_ASPECT_EPSILON
+    && width >= PRODUCTION_CARD_CANVAS.w
+    && height >= PRODUCTION_CARD_CANVAS.h;
+}
+
+export function resolveCatCardRenderMode(icon) {
+  const imageSize = getProductionCardIconImageSize(icon);
+  const renderMode = isBundledCatCardImage(icon) ? 'bundled-card-image' : 'contained-icon';
+  const fallbackReason = renderMode === 'bundled-card-image' ? null
+    : imageSize.width <= 0 || imageSize.height <= 0 ? 'missing-icon'
+      : imageSize.width === imageSize.height ? 'square-unit-icon'
+        : 'non-card-image-size';
+  return { renderMode, imageSize, fallbackReason };
 }
 
 async function loadBundleImage(provider, internalPath) {
@@ -130,20 +157,22 @@ export class ProductionCardSkin {
 
     if (isEmpty || !unitDef) {
       this.drawEmptyCard(ctx);
-      return;
+      return { renderMode: 'empty-card', imageSize: { width: 0, height: 0 }, fallbackReason: 'empty-slot' };
     }
 
-    if (unitDef.faction === 'cat') this.drawCatCard(ctx, icon, state);
-    else this.drawDogCard(ctx, icon, state);
+    const renderResult = unitDef.faction === 'cat'
+      ? this.drawCatCard(ctx, icon, state)
+      : this.drawDogCard(ctx, icon, state);
 
     if (!cooldownReady) {
       this.drawCooldown(ctx, cooldownProgressRatio, state);
       if (isBack) this.drawBackOverlay(ctx);
-      return;
+      return { ...renderResult, priceDrawn: false, cooldownDrawn: true };
     }
 
     this.drawAvailabilityOverlay(ctx, state);
     this.drawCost(ctx, cost, state);
+    return { ...renderResult, priceDrawn: true, cooldownDrawn: false };
   }
 
   drawBcuCardPart(ctx, image) {
@@ -185,17 +214,38 @@ export class ProductionCardSkin {
     return true;
   }
 
-  drawCatCard(ctx, icon) {
-    if (!this.drawBundledCatCardImage(ctx, icon)) {
-      this.drawSlotFrame(ctx);
-      this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect, { scale: 1, fitMode: 'contain' });
+  drawCatCard(ctx, icon, state = {}) {
+    const detail = {
+      source: 'ProductionCardSkin.drawCatCard',
+      semanticKey: state?.unitDef?.assetDef?.semanticKey || state?.unitDef?.uiIcon?.semanticKey || null,
+      iconSource: icon?.bcuIconSource || null,
+      rawSourcePath: icon?.bcuRawSourcePath || null,
+      bundlePath: icon?.bcuBundlePath || null,
+      internalPath: icon?.bcuInternalPath || null,
+      ...resolveCatCardRenderMode(icon)
+    };
+    if (detail.renderMode === 'bundled-card-image' && this.drawBundledCatCardImage(ctx, icon)) {
+      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+        ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
+        lastCatCard: detail
+      };
+      return detail;
     }
+
+    this.drawSlotFrame(ctx);
+    if (icon) this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect, { scale: 1, fitMode: 'contain' });
+    globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+      ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
+      lastCatCard: detail
+    };
+    return detail;
   }
 
   drawDogCard(ctx, icon) {
     this.drawSlotFrame(ctx);
     this.drawDogIconBackground(ctx);
     this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.dogContentRect, { scale: PRODUCTION_CARD_SKIN.dogIconScale, fitMode: PRODUCTION_CARD_SKIN.dogIconFitMode });
+    return { renderMode: 'dog-contained-icon', imageSize: getProductionCardIconImageSize(icon), fallbackReason: null };
   }
 
   drawSlotFrame(ctx) { this.drawBcuCardPart(ctx, this.slotFrame); }

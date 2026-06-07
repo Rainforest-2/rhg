@@ -51,7 +51,7 @@ function mapDifficultyStats(ed, map) {
   const resolutions = (map?.stages || []).map((st) => diffOf(ed, st));
   const values = resolutions.map((r) => r.diff).filter((n) => Number.isFinite(n) && n >= 0);
   const unresolved = resolutions.find((r) => !(Number.isFinite(r?.diff) && r.diff >= 0));
-  if (!values.length) return { min: -1, max: -1, label: '---', candidateCount: resolutions.length, matchedCount: 0, unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || 'difficulty-not-defined' };
+  if (!values.length) return { min: -1, max: -1, label: '', candidateCount: resolutions.length, matchedCount: 0, unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || 'difficulty-not-defined' };
   const min = Math.min(...values), max = Math.max(...values);
   return { min, max, label: min === max ? `★${min}` : `★${min}-${max}`, candidateCount: resolutions.length, matchedCount: values.length, unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || null };
 }
@@ -88,14 +88,14 @@ function insertControls(ed, scope, matched, shown) {
   ensureStyle();
   list.querySelector('.formation-stage-difficulty-tools')?.remove();
   const f = filterState(ed);
-  const crumb = list.querySelector('.formation-stage-breadcrumb');
+  const anchor = list.querySelector('.formation-stage-backbar') || list.querySelector('.formation-stage-breadcrumb');
   const box = document.createElement('div');
   const itemLabel = scope.type === 'map' ? 'マップ' : 'ステージ';
   const placeholder = scope.type === 'map' ? 'マップ名でさがす' : 'ステージ名でさがす';
   const summary = isFiltering(f) ? `表示中 ${matched} / ${scope.items.length}` : `表示中 ${shown} / ${scope.items.length}`;
   box.className = 'formation-stage-difficulty-tools';
   box.innerHTML = `<label class='formation-stage-search-field'><span>${itemLabel}検索</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(f.q)}'></label><div class='formation-stage-difficulty-range' aria-label='難易度の範囲'><span class='formation-stage-filter-label'>難易度</span><label><span>下限</span><input type='number' inputmode='numeric' data-stage-difficulty-min='1' placeholder='★1' min='0' max='12' value='${f.min ?? ''}'></label><span class='formation-stage-range-sep'>から</span><label><span>上限</span><input type='number' inputmode='numeric' data-stage-difficulty-max='1' placeholder='★12' min='0' max='12' value='${f.max ?? ''}'></label></div><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>条件リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
-  if (crumb?.nextSibling) list.insertBefore(box, crumb.nextSibling);
+  if (anchor?.nextSibling) list.insertBefore(box, anchor.nextSibling);
   else list.prepend(box);
 }
 function setScopeDebug(ed, scope, detail = {}) {
@@ -126,8 +126,13 @@ function decorateMapLevel(ed, scope) {
     const stats = mapDifficultyStats(ed, map);
     if (stats.unresolvedReason) unresolved.push(stats.unresolvedReason);
     let b = card.querySelector('.formation-stage-difficulty-badge');
-    if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
-    b.textContent = stats.label;
+    if (stats.label) {
+      if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
+      b.textContent = stats.label;
+      b.hidden = false;
+    } else if (b) {
+      b.remove();
+    }
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
   }
   const shown = scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length;
@@ -143,8 +148,13 @@ function decorateStageLevel(ed, scope) {
     const d = diffOf(ed, st || { key: card.dataset.stageId });
     if (d.unresolvedReason || d.fallbackReason) unresolved.push(d.unresolvedReason || d.fallbackReason);
     let b = card.querySelector('.formation-stage-difficulty-badge');
-    if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
-    b.textContent = formatBcuStageDifficulty(d.diff);
+    if (d.diff >= 0) {
+      if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
+      b.textContent = formatBcuStageDifficulty(d.diff);
+      b.hidden = false;
+    } else if (b) {
+      b.remove();
+    }
     card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageId));
   }

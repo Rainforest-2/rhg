@@ -106,6 +106,10 @@
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 12px 26px rgba(0,0,0,.22)!important;
 }
 
+.formation-stage-card.is-difficulty-filtered{
+  display:none!important;
+}
+
 .formation-stage-card.is-active{
   border-color:rgba(250,204,21,.9)!important;
   background:linear-gradient(180deg,rgba(92,68,18,.82),rgba(15,23,42,.96))!important;

@@ -28,6 +28,17 @@ function keyFromNumericAddress(stage = {}) {
   return null;
 }
 
+function difficultyFromDbRecord(record, key) {
+  const diff = Number(record?.difficulty?.diff ?? record?.diff);
+  if (!Number.isFinite(diff)) return null;
+  return { diff: Math.trunc(diff), source: record?.difficulty?.source || 'core-db:stages.json', key: record?.key || key };
+}
+
+function resolveDbDifficulty(db, key) {
+  if (!key || typeof db?.stages?.get !== 'function') return null;
+  return difficultyFromDbRecord(db.stages.get(key), key);
+}
+
 export function parseBcuStageDifficultyLang(text, { source = 'lang/Difficulty.txt' } = {}) {
   const table = new Map();
   const diagnostics = { source, parsed: 0, skipped: 0, errors: [] };
@@ -78,10 +89,13 @@ export function stageDifficultyKeyFromStageOption(stage = {}) {
 
 export function resolveStageDifficulty(stage, { table = null, db = null } = {}) {
   const directKey = stage?.stageKey || stage?.key || stage?.semanticEntry?.key;
-  const dbRecord = directKey && typeof db?.stages?.get === 'function' ? db.stages.get(directKey) : null;
-  const dbDiff = Number(dbRecord?.difficulty?.diff ?? dbRecord?.diff);
-  if (Number.isFinite(dbDiff)) return { diff: Math.trunc(dbDiff), source: dbRecord?.difficulty?.source || 'core-db:stages.json', key: dbRecord?.key || directKey };
+  const directDb = resolveDbDifficulty(db, directKey);
+  if (directDb) return directDb;
+
   const key = stageDifficultyKeyFromStageOption(stage);
+  const computedDb = resolveDbDifficulty(db, key);
+  if (computedDb) return computedDb;
+
   const hit = key ? table?.get?.(key) : null;
   if (hit) return hit;
   return {

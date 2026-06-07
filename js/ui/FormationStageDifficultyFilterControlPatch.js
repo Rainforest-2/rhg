@@ -1,6 +1,7 @@
 import { FormationEditor } from './FormationEditor.js';
 
-const FLAG = Symbol.for('wanko-ui.formation-stage-difficulty-filter-controls.v1');
+const PATCH_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty-filter-controls.v2');
+const DIFFICULTY_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
 
 function updateFilterFromTarget(editor, target) {
   const q = target?.closest?.('[data-stage-search-input]');
@@ -37,8 +38,9 @@ function wireFilterControls(editor) {
 
 export function installFormationStageDifficultyFilterControlPatch() {
   const proto = FormationEditor?.prototype;
-  if (!proto || proto[FLAG]) return;
-  proto[FLAG] = true;
+  if (!proto || proto[PATCH_FLAG]) return !!proto?.[PATCH_FLAG];
+  if (!proto[DIFFICULTY_FLAG]) return false;
+  proto[PATCH_FLAG] = true;
 
   const render = proto.renderStageSelector;
   proto.renderStageSelector = function renderStageSelectorWithDifficultyFilterControls(...args) {
@@ -52,6 +54,13 @@ export function installFormationStageDifficultyFilterControlPatch() {
     if (updateFilterFromTarget(this, event.target)) return;
     return onInput.call(this, event);
   };
+  return true;
 }
 
-installFormationStageDifficultyFilterControlPatch();
+if (!installFormationStageDifficultyFilterControlPatch()) {
+  let attempts = 0;
+  const timer = setInterval(() => {
+    attempts += 1;
+    if (installFormationStageDifficultyFilterControlPatch() || attempts >= 120) clearInterval(timer);
+  }, 50);
+}

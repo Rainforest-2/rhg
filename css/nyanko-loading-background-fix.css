@@ -1,0 +1,19 @@
+/*
+ * Keep the initial boot/loading screen on the generated menu artwork.
+ * nyanko-nonbattle-polish.css has an older brown #boot-status-panel fallback with
+ * higher load order/specificity, so this final guard prevents the first screen
+ * from degrading into a plain brown gradient.
+ */
+body.nyanko-ui-polish #boot-status-panel,
+body.nyanko-ui-polish .app-loading-overlay{
+  background:
+    linear-gradient(180deg,rgba(45,19,6,.08),rgba(45,19,6,.18)),
+    url('../public/assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
+  color:#1b1207!important;
+}
+
+body.nyanko-ui-polish .app-loading-overlay[data-loading-mode="battle"]{
+  background:
+    linear-gradient(180deg,rgba(34,14,5,.04),rgba(34,14,5,.14)),
+    url('../public/assets/ui/nyanko-battle-load-bg.png') center/cover no-repeat!important;
+}

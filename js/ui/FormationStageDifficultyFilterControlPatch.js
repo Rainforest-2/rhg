@@ -42,7 +42,11 @@ function cardMatchesFilter(card, f) {
 function setCardFiltered(card, hidden) {
   card.classList.toggle('is-difficulty-filtered', hidden);
   card.hidden = hidden;
-  card.style.display = hidden ? 'none' : '';
+  if (hidden) {
+    card.style.setProperty('display', 'none', 'important');
+  } else {
+    card.style.removeProperty('display');
+  }
 }
 
 function applyDomDifficultyFilter(editor) {

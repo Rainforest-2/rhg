@@ -12,7 +12,7 @@ function ensureStyle() {
   if (document.getElementById(STYLE_ID)) return;
   const s = document.createElement('style');
   s.id = STYLE_ID;
-  s.textContent = `.formation-stage-difficulty-tools{grid-column:1/-1;display:grid;grid-template-columns:minmax(96px,1fr) 54px 54px auto;align-items:center;gap:4px;margin:0 0 4px;padding:4px 6px;border:1px solid rgba(96,165,250,.24);border-radius:8px;background:rgba(15,23,42,.56)}.formation-stage-difficulty-tools input{min-width:0;height:24px;border-radius:7px;border:1px solid rgba(147,197,253,.38);background:#06101f;color:#e5f0ff;font-size:.66rem;font-weight:800;padding:0 6px}.formation-stage-difficulty-summary{color:#bfdbfe;font-size:.6rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-difficulty-badge{display:inline-flex;justify-self:end;align-self:start;max-width:100%;padding:1px 5px;border-radius:7px;background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.36);color:#fde68a;font-size:.56rem;line-height:1.15;font-weight:1000;text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-card.is-difficulty-filtered{display:none!important}@media(max-width:640px){.formation-stage-difficulty-tools{grid-template-columns:1fr 48px 48px}.formation-stage-difficulty-summary{grid-column:1/-1}}`;
+  s.textContent = `.formation-stage-card.is-difficulty-filtered{display:none!important}`;
   document.head.appendChild(s);
 }
 function filterState(ed) {
@@ -90,8 +90,11 @@ function insertControls(ed, scope, matched, shown) {
   const f = filterState(ed);
   const crumb = list.querySelector('.formation-stage-breadcrumb');
   const box = document.createElement('div');
+  const itemLabel = scope.type === 'map' ? 'マップ' : 'ステージ';
+  const placeholder = scope.type === 'map' ? 'マップ名でさがす' : 'ステージ名でさがす';
+  const summary = isFiltering(f) ? `条件に合う${itemLabel}：${matched}件 / 全${scope.items.length}件` : `表示中：${shown}件 / 全${scope.items.length}件`;
   box.className = 'formation-stage-difficulty-tools';
-  box.innerHTML = `<input data-stage-search-input='1' placeholder='${scope.type === 'map' ? 'カテゴリ内検索' : 'マップ内検索'}' value='${esc(f.q)}'><input type='number' data-stage-difficulty-min='1' placeholder='★min' value='${f.min ?? ''}'><input type='number' data-stage-difficulty-max='1' placeholder='★max' value='${f.max ?? ''}'><div class='formation-stage-difficulty-summary'>${esc(scope.label)} ${shown}/${scope.items.length} (${matched})</div>`;
+  box.innerHTML = `<label class='formation-stage-search-field'><span>さがす</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(f.q)}'></label><div class='formation-stage-difficulty-range'><span class='formation-stage-filter-label'>難易度</span><label><span>★min</span><input type='number' inputmode='numeric' data-stage-difficulty-min='1' placeholder='1' min='0' max='12' value='${f.min ?? ''}'></label><span class='formation-stage-range-sep'>〜</span><label><span>★max</span><input type='number' inputmode='numeric' data-stage-difficulty-max='1' placeholder='7' min='0' max='12' value='${f.max ?? ''}'></label></div><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
   if (crumb?.nextSibling) list.insertBefore(box, crumb.nextSibling);
   else list.prepend(box);
 }
@@ -124,7 +127,7 @@ function decorateMapLevel(ed, scope) {
     if (stats.unresolvedReason) unresolved.push(stats.unresolvedReason);
     let b = card.querySelector('.formation-stage-difficulty-badge');
     if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
-    b.textContent = `難易度 ${stats.label}`;
+    b.textContent = stats.label;
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
   }
   const shown = scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length;
@@ -141,7 +144,7 @@ function decorateStageLevel(ed, scope) {
     if (d.unresolvedReason || d.fallbackReason) unresolved.push(d.unresolvedReason || d.fallbackReason);
     let b = card.querySelector('.formation-stage-difficulty-badge');
     if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
-    b.textContent = `難易度 ${formatBcuStageDifficulty(d.diff)}`;
+    b.textContent = formatBcuStageDifficulty(d.diff);
     card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageId));
   }
@@ -170,5 +173,7 @@ export function installFormationStageDifficultyPatch() {
   p.renderStageSelector = function renderStageSelectorWithScopedDifficulty(...args) { void ensureDifficulty(this); const r = render.apply(this, args); decorate(this); return r; };
   const input = p.onInput;
   p.onInput = function onInputWithScopedStageDifficulty(e) { const q = e.target.closest?.('[data-stage-search-input]'), min = e.target.closest?.('[data-stage-difficulty-min]'), max = e.target.closest?.('[data-stage-difficulty-max]'); if ((q || min || max) && this.root?.contains(e.target)) { const f = this.__bcuStageDifficultyFilter || {}; this.__bcuStageDifficultyFilter = { ...f, ...(q ? { q: q.value } : {}), ...(min ? { min: min.value } : {}), ...(max ? { max: max.value } : {}) }; this.renderStageSelector(); return; } return input.call(this, e); };
+  const click = p.onClick;
+  p.onClick = function onClickWithScopedStageDifficulty(e) { const reset = e.target.closest?.('[data-stage-filter-reset]'); if (reset && this.root?.contains(reset)) { e.preventDefault(); e.stopPropagation(); this.__bcuStageDifficultyFilter = { q: '', min: null, max: null }; this.renderStageSelector(); return; } return click.call(this, e); };
 }
 installFormationStageDifficultyPatch();

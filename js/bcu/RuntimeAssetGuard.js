@@ -3,8 +3,30 @@ export function isRawBcuUrl(url) {
   return /(^|\/|\.\/)public\/assets\/bcu\//.test(s) || /(^|\/|\.\/)public\/assets\/bcu-manifest\.json$/.test(s);
 }
 
+function normalizeGuardUrl(url) {
+  const s = String(url || '').replace(/\\/g, '/');
+  const noHash = s.split('#')[0];
+  return noHash.split('?')[0];
+}
+
+export function isWhitelistedRawBcuUrl(url) {
+  const s = normalizeGuardUrl(url);
+  return /(^|\/|\.\/)public\/assets\/bcu\/lang\/Difficulty\.txt$/.test(s);
+}
+
+function recordRawWhitelistRead(provider, context, url) {
+  if (!provider?.diagnostics) return;
+  if (!Array.isArray(provider.diagnostics.rawWhitelistReads)) provider.diagnostics.rawWhitelistReads = [];
+  provider.diagnostics.rawWhitelistReads.push({ type: 'runtime-raw-url-whitelist', context, url: String(url) });
+  provider.diagnostics.rawWhitelistReads.splice(80);
+}
+
 export function assertRuntimeUrlAllowed(url, context = 'runtime', provider = null) {
   if (!isRawBcuUrl(url)) return;
+  if (isWhitelistedRawBcuUrl(url)) {
+    recordRawWhitelistRead(provider, context, url);
+    return;
+  }
   provider?.diagnostics?.blockedRawReads?.push?.({ type: 'runtime-raw-url', context, url: String(url) });
   if (!provider?.allowRawFallback) throw new Error(`Raw BCU URL blocked in ${context}: ${url}`);
   provider?.diagnostics?.rawOnlyReads?.push?.({ type: 'runtime-raw-url', context, url: String(url) });

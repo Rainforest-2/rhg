@@ -58,3 +58,237 @@ body.nyanko-ui-polish .formation-page-tab.is-active span{
   -webkit-user-select:none;
   -webkit-touch-callout:none;
 }
+
+/*
+ * Non-battle visual alignment guard.
+ * This file is loaded after the base UI CSS; selectors intentionally outrank the
+ * dynamically appended stage-selector skin without changing data-action or runtime state.
+ */
+html body .app-loading-overlay .app-loading-card{
+  align-self:center!important;
+  justify-self:center!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
+  transform:translateY(clamp(8px,2.4vh,28px))!important;
+  max-height:calc(100dvh - 64px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+}
+
+html body .app-loading-overlay[data-loading-mode="battle"] .app-loading-card{
+  transform:translateY(clamp(6px,2vh,24px))!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog{
+  grid-template-rows:minmax(72px,auto) minmax(0,1fr)!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog::before{
+  inset:92px 14px 16px!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog header{
+  min-height:72px!important;
+  align-items:flex-start!important;
+  padding:4px 4px 10px!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog header > div{
+  display:grid!important;
+  gap:6px!important;
+  min-width:0!important;
+  max-width:calc(100% - 132px)!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog header strong{
+  line-height:1.05!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog header span{
+  display:inline-flex!important;
+  align-items:center!important;
+  width:max-content!important;
+  max-width:min(560px,54vw)!important;
+  min-height:27px!important;
+  margin-top:0!important;
+  padding:5px 12px!important;
+  font-size:clamp(.72rem,1.05vw,.86rem)!important;
+  line-height:1!important;
+  text-shadow:none!important;
+  transform:none!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog header button{
+  align-self:center!important;
+  margin-top:0!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-map),
+html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-stage){
+  grid-template-columns:repeat(auto-fit,minmax(276px,1fr))!important;
+  gap:clamp(12px,1.1vw,16px)!important;
+  padding:18px 12px 12px!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage{
+  min-height:138px!important;
+  grid-template-rows:26px minmax(36px,auto) 20px 30px!important;
+  gap:5px!important;
+  padding:12px 12px 10px!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.58),transparent 24%),
+    linear-gradient(180deg,#fffdf0 0%,#fff0b8 calc(100% - 42px),#141414 calc(100% - 41px),#030303 100%)!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map > span.formation-stage-card-kicker,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage > span.formation-stage-card-kicker,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map .formation-stage-card-kicker,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .formation-stage-card-kicker{
+  align-self:start!important;
+  max-width:calc(100% - 86px)!important;
+  min-height:24px!important;
+  padding:4px 9px!important;
+  font-size:.68rem!important;
+  line-height:1!important;
+  text-shadow:none!important;
+  box-sizing:border-box!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map strong,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage strong,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map .formation-stage-card-title,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .formation-stage-card-title{
+  align-self:start!important;
+  min-height:36px!important;
+  padding-right:0!important;
+  font-size:clamp(1rem,1.08vw,1.2rem)!important;
+  line-height:1.16!important;
+  text-shadow:none!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map > span.formation-stage-card-desc,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage > span.formation-stage-card-desc,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map .formation-stage-card-desc,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .formation-stage-card-desc{
+  align-self:start!important;
+  color:#5a2a14!important;
+  -webkit-text-fill-color:#5a2a14!important;
+  font-size:.78rem!important;
+  line-height:1.18!important;
+  text-shadow:none!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map > span.formation-stage-card-meta,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage > span.formation-stage-card-meta,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map .formation-stage-card-meta,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .formation-stage-card-meta{
+  align-self:end!important;
+  min-height:30px!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:8px!important;
+  overflow:hidden!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map .formation-stage-card-meta b,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map .formation-stage-card-meta i,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map small,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .formation-stage-card-meta b,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .formation-stage-card-meta i,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage small{
+  flex:0 0 auto!important;
+  min-height:24px!important;
+  padding:4px 9px!important;
+  font-size:.7rem!important;
+  line-height:1!important;
+  text-shadow:none!important;
+  box-sizing:border-box!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map .formation-stage-difficulty-badge,
+html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .formation-stage-difficulty-badge{
+  top:12px!important;
+  right:12px!important;
+  min-width:54px!important;
+  max-width:76px!important;
+  min-height:26px!important;
+  padding:0 8px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:.72rem!important;
+  line-height:1!important;
+  text-shadow:none!important;
+  transform:none!important;
+  box-sizing:border-box!important;
+}
+
+@media (max-width:760px){
+  html body .app-loading-overlay .app-loading-card{
+    transform:none!important;
+    max-height:calc(100dvh - 28px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-dialog{
+    grid-template-rows:minmax(54px,auto) minmax(0,1fr)!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-dialog::before{
+    inset:70px 8px 10px!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-dialog header{
+    min-height:52px!important;
+    align-items:center!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-dialog header > div{
+    max-width:calc(100% - 90px)!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-dialog header span{
+    display:none!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-map),
+  html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-stage){
+    grid-template-columns:repeat(auto-fit,minmax(218px,1fr))!important;
+    padding:10px 4px 4px!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map,
+  html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage{
+    min-height:116px!important;
+    grid-template-rows:24px minmax(32px,auto) 18px 28px!important;
+    padding:10px!important;
+  }
+}
+
+@media (max-height:560px) and (orientation:landscape){
+  html body .app-loading-overlay .app-loading-card{
+    transform:none!important;
+    margin-bottom:0!important;
+    max-height:calc(100dvh - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+  }
+}
+
+@media (max-height:470px) and (orientation:landscape){
+  html body.nyanko-ui-polish .formation-stage-dialog{
+    grid-template-rows:minmax(48px,auto) minmax(0,1fr)!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-dialog::before{
+    inset:62px 8px 9px!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-dialog header{
+    min-height:46px!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-map,
+  html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage{
+    min-height:108px!important;
+  }
+}

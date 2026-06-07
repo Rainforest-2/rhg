@@ -303,3 +303,65 @@ html body.nyanko-ui-polish .formation-stage-card.formation-stage-card-stage .for
     min-height:108px!important;
   }
 }
+
+/* Stage selector declutter pass: remove the marked redundant chrome. */
+html body.nyanko-ui-polish .formation-stage-breadcrumb,
+html body.nyanko-ui-polish .formation-stage-dialog header span,
+html body.nyanko-ui-polish .formation-stage-card-kicker,
+html body.nyanko-ui-polish .formation-stage-card-desc,
+html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-icon,
+html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta i{
+  display:none!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card-category{
+  min-height:132px!important;
+  grid-template-rows:minmax(0,1fr) 30px!important;
+  gap:10px!important;
+  padding:18px 18px 14px!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card-category strong{
+  align-self:center!important;
+  padding-right:0!important;
+  font-size:clamp(1.08rem,1.42vw,1.34rem)!important;
+  line-height:1.16!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta{
+  align-self:end!important;
+  flex-wrap:nowrap!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card-map,
+html body.nyanko-ui-polish .formation-stage-card-stage{
+  min-height:118px!important;
+  grid-template-rows:minmax(0,1fr) 30px!important;
+  gap:8px!important;
+  padding:14px 12px 10px!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.58),transparent 24%),
+    linear-gradient(180deg,#fffdf0 0%,#fff0b8 calc(100% - 44px),#141414 calc(100% - 43px),#030303 100%)!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card-map strong,
+html body.nyanko-ui-polish .formation-stage-card-stage strong{
+  align-self:center!important;
+  min-height:0!important;
+  padding-right:86px!important;
+  -webkit-line-clamp:2!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-card-map .formation-stage-card-meta,
+html body.nyanko-ui-polish .formation-stage-card-stage .formation-stage-card-meta{
+  align-self:end!important;
+}
+
+@media (max-width:760px){
+  html body.nyanko-ui-polish .formation-stage-card-category,
+  html body.nyanko-ui-polish .formation-stage-card-map,
+  html body.nyanko-ui-polish .formation-stage-card-stage{
+    min-height:104px!important;
+    grid-template-rows:minmax(0,1fr) 28px!important;
+  }
+}

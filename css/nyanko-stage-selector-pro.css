@@ -1,6 +1,4 @@
-/* Professional Battle Cats-like stage selector refinement.
- * Focus: hierarchy, touch readability, search/filter usability, compact header, and card information density.
- */
+/* Stage selector UI polish: compact header, clearer hierarchy, game-like filters, stronger cards. */
 
 body.nyanko-ui-polish .formation-stage-dialog{
   width:min(1160px,calc(100vw - 22px))!important;
@@ -10,32 +8,24 @@ body.nyanko-ui-polish .formation-stage-dialog{
   padding:10px 14px 12px!important;
   border-width:5px!important;
   border-radius:24px!important;
-  background:
-    linear-gradient(180deg,#b86c34 0 56px,#5b2912 56px 68px,#fff5ca 69px calc(100% - 16px),#6b3014 calc(100% - 16px) 100%)!important;
+  background:linear-gradient(180deg,#b86c34 0 56px,#5b2912 56px 68px,#fff5ca 69px calc(100% - 16px),#6b3014 calc(100% - 16px) 100%)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-dialog::before{
   inset:74px 14px 14px!important;
   border-width:4px!important;
   border-radius:18px!important;
-  background:
-    radial-gradient(circle at 18% 14%,rgba(255,255,255,.20),transparent 18%),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.10) 0 2px,transparent 2px 44px),
-    linear-gradient(180deg,#a7c7b1,#759b83)!important;
+  background:radial-gradient(circle at 18% 14%,rgba(255,255,255,.20),transparent 18%),repeating-linear-gradient(90deg,rgba(255,255,255,.10) 0 2px,transparent 2px 44px),linear-gradient(180deg,#a7c7b1,#759b83)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-dialog header{
   min-height:48px!important;
   padding:0 4px 6px!important;
   gap:10px!important;
 }
-
 body.nyanko-ui-polish .formation-stage-dialog header strong{
   font-size:clamp(1.18rem,1.9vw,1.78rem)!important;
   line-height:1!important;
   letter-spacing:.035em!important;
 }
-
 body.nyanko-ui-polish .formation-stage-dialog header span{
   margin-top:3px!important;
   padding:3px 10px!important;
@@ -43,7 +33,6 @@ body.nyanko-ui-polish .formation-stage-dialog header span{
   font-size:.7rem!important;
   box-shadow:0 2px 0 rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.9)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-dialog header button{
   min-width:86px!important;
   min-height:36px!important;
@@ -61,67 +50,37 @@ body.nyanko-ui-polish .formation-stage-list{
 
 body.nyanko-ui-polish .formation-stage-breadcrumb{
   grid-column:1/-1!important;
-  display:grid!important;
-  grid-template-columns:auto minmax(0,1fr)!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
   align-items:center!important;
-  gap:10px!important;
+  gap:8px!important;
   margin:0!important;
   padding:0 0 2px!important;
 }
-
-body.nyanko-ui-polish .formation-stage-back-placeholder,
-body.nyanko-ui-polish .formation-stage-current-path{
+body.nyanko-ui-polish .formation-stage-crumb{
   min-height:34px!important;
-  display:flex!important;
-  align-items:center!important;
-  min-width:0!important;
-  border:3px solid #050505!important;
-  border-radius:999px!important;
-  background:linear-gradient(180deg,#fffdf0,#ffe9a4)!important;
-  color:#3c1908!important;
-  -webkit-text-fill-color:#3c1908!important;
-  font-size:.82rem!important;
-  font-weight:1000!important;
-  letter-spacing:.025em!important;
-  box-shadow:0 3px 0 rgba(0,0,0,.56),inset 0 1px 0 rgba(255,255,255,.86)!important;
-}
-
-body.nyanko-ui-polish .formation-stage-back-placeholder{
-  padding:5px 12px!important;
-  opacity:.72!important;
-}
-
-body.nyanko-ui-polish .formation-stage-current-path{
-  justify-content:flex-start!important;
-  gap:8px!important;
-  padding:5px 14px!important;
-  overflow:hidden!important;
-  white-space:nowrap!important;
-}
-
-body.nyanko-ui-polish .formation-stage-path-part{
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-
-body.nyanko-ui-polish .formation-stage-path-part.is-current{
-  color:#111!important;
-  -webkit-text-fill-color:#111!important;
-}
-
-body.nyanko-ui-polish .formation-stage-path-separator{
-  color:#8a3b17!important;
-  -webkit-text-fill-color:#8a3b17!important;
-  flex:0 0 auto!important;
-}
-
-body.nyanko-ui-polish .formation-stage-back{
-  min-width:120px!important;
-  min-height:34px!important;
-  padding:5px 12px!important;
   border-width:3px!important;
   font-size:.8rem!important;
   box-shadow:0 3px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;
+}
+body.nyanko-ui-polish .formation-stage-breadcrumb .formation-stage-crumb:first-child:not(.is-active){
+  min-width:120px!important;
+  font-size:0!important;
+}
+body.nyanko-ui-polish .formation-stage-breadcrumb .formation-stage-crumb:first-child:not(.is-active)::after{
+  content:"カテゴリへ戻る";
+  font-size:.8rem!important;
+  font-weight:1000!important;
+}
+body.nyanko-ui-polish .formation-stage-breadcrumb .formation-stage-crumb.is-active{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  justify-content:flex-start!important;
+  background:linear-gradient(180deg,#fffdf0,#ffe9a4)!important;
+  color:#261005!important;
+  -webkit-text-fill-color:#261005!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.72)!important;
+  box-shadow:0 3px 0 rgba(0,0,0,.56),inset 0 1px 0 rgba(255,255,255,.86)!important;
 }
 
 body.nyanko-ui-polish .formation-stage-difficulty-tools{
@@ -137,7 +96,6 @@ body.nyanko-ui-polish .formation-stage-difficulty-tools{
   background:linear-gradient(180deg,#fff7cf,#f5d98b)!important;
   box-shadow:0 5px 0 rgba(0,0,0,.56),inset 0 2px 0 rgba(255,255,255,.82)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-search-field,
 body.nyanko-ui-polish .formation-stage-difficulty-range{
   min-width:0!important;
@@ -151,7 +109,6 @@ body.nyanko-ui-polish .formation-stage-difficulty-range{
   background:linear-gradient(180deg,#fffdf0,#ffeaa9)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-search-field > span,
 body.nyanko-ui-polish .formation-stage-filter-label,
 body.nyanko-ui-polish .formation-stage-difficulty-range label > span{
@@ -162,7 +119,6 @@ body.nyanko-ui-polish .formation-stage-difficulty-range label > span{
   font-weight:1000!important;
   text-shadow:0 1px 0 rgba(255,255,255,.8)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-search-field input,
 body.nyanko-ui-polish .formation-stage-difficulty-range input{
   min-width:0!important;
@@ -178,28 +134,10 @@ body.nyanko-ui-polish .formation-stage-difficulty-range input{
   padding:0 10px!important;
   box-shadow:inset 0 2px 0 rgba(0,0,0,.12)!important;
 }
-
-body.nyanko-ui-polish .formation-stage-search-field input{
-  width:100%!important;
-}
-
-body.nyanko-ui-polish .formation-stage-difficulty-range label{
-  display:flex!important;
-  align-items:center!important;
-  gap:4px!important;
-}
-
-body.nyanko-ui-polish .formation-stage-difficulty-range input{
-  width:58px!important;
-  text-align:center!important;
-}
-
-body.nyanko-ui-polish .formation-stage-range-sep{
-  color:#050505!important;
-  -webkit-text-fill-color:#050505!important;
-  font-weight:1000!important;
-}
-
+body.nyanko-ui-polish .formation-stage-search-field input{width:100%!important;}
+body.nyanko-ui-polish .formation-stage-difficulty-range label{display:flex!important;align-items:center!important;gap:4px!important;}
+body.nyanko-ui-polish .formation-stage-difficulty-range input{width:58px!important;text-align:center!important;}
+body.nyanko-ui-polish .formation-stage-range-sep{color:#050505!important;-webkit-text-fill-color:#050505!important;font-weight:1000!important;}
 body.nyanko-ui-polish .formation-stage-filter-reset{
   min-width:82px!important;
   min-height:38px!important;
@@ -213,12 +151,7 @@ body.nyanko-ui-polish .formation-stage-filter-reset{
   font-weight:1000!important;
   box-shadow:0 4px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;
 }
-
-body.nyanko-ui-polish .formation-stage-filter-reset:active{
-  transform:translateY(3px)!important;
-  box-shadow:0 1px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;
-}
-
+body.nyanko-ui-polish .formation-stage-filter-reset:active{transform:translateY(3px)!important;box-shadow:0 1px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;}
 body.nyanko-ui-polish .formation-stage-difficulty-summary{
   min-width:0!important;
   color:#3c1908!important;
@@ -239,18 +172,11 @@ body.nyanko-ui-polish .formation-stage-card{
   padding:12px 12px 11px!important;
   border-width:4px!important;
   border-radius:15px!important;
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.60),transparent 26%),
-    linear-gradient(180deg,#fffdf0 0%,#fff0b8 66%,#151515 67%,#030303 100%)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.60),transparent 26%),linear-gradient(180deg,#fffdf0 0%,#fff0b8 66%,#151515 67%,#030303 100%)!important;
   box-shadow:0 6px 0 rgba(0,0,0,.68),inset 0 2px 0 rgba(255,255,255,.85)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-card::before,
-body.nyanko-ui-polish .formation-stage-card::after{
-  display:none!important;
-  content:none!important;
-}
-
+body.nyanko-ui-polish .formation-stage-card::after{display:none!important;content:none!important;}
 body.nyanko-ui-polish .formation-stage-card strong,
 body.nyanko-ui-polish .formation-stage-card .formation-stage-card-title{
   align-self:start!important;
@@ -268,25 +194,14 @@ body.nyanko-ui-polish .formation-stage-card .formation-stage-card-title{
   -webkit-box-orient:vertical!important;
   text-shadow:0 1px 0 rgba(255,255,255,.82)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-card > span{
-  display:none!important;
-}
-
-body.nyanko-ui-polish .formation-stage-card > .formation-stage-card-meta{
-  display:flex!important;
-  align-items:flex-end!important;
-  flex-wrap:wrap!important;
-  gap:6px!important;
-  align-self:end!important;
-  min-width:0!important;
-}
-
-body.nyanko-ui-polish .formation-stage-card-meta b,
-body.nyanko-ui-polish .formation-stage-card-meta i{
   display:inline-flex!important;
   align-items:center!important;
+  justify-content:center!important;
+  justify-self:start!important;
+  align-self:end!important;
   min-height:25px!important;
+  max-width:100%!important;
   padding:4px 8px!important;
   border:2px solid #050505!important;
   border-radius:999px!important;
@@ -294,18 +209,24 @@ body.nyanko-ui-polish .formation-stage-card-meta i{
   color:#1b1207!important;
   -webkit-text-fill-color:#1b1207!important;
   font-size:.68rem!important;
-  font-style:normal!important;
   font-weight:1000!important;
   line-height:1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
   box-shadow:0 2px 0 rgba(0,0,0,.68),inset 0 1px 0 rgba(255,255,255,.8)!important;
 }
-
+body.nyanko-ui-polish .formation-stage-card > .formation-stage-card-meta{display:flex!important;align-items:flex-end!important;flex-wrap:wrap!important;gap:6px!important;align-self:end!important;min-width:0!important;}
+body.nyanko-ui-polish .formation-stage-card-meta b,
+body.nyanko-ui-polish .formation-stage-card-meta i{
+  display:inline-flex!important;align-items:center!important;min-height:25px!important;padding:4px 8px!important;border:2px solid #050505!important;border-radius:999px!important;background:linear-gradient(180deg,#fffdf0,#ffe9a4)!important;color:#1b1207!important;-webkit-text-fill-color:#1b1207!important;font-size:.68rem!important;font-style:normal!important;font-weight:1000!important;line-height:1!important;box-shadow:0 2px 0 rgba(0,0,0,.68),inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
 body.nyanko-ui-polish .formation-stage-card small,
 body.nyanko-ui-polish .formation-stage-card .formation-stage-card-tag{
   justify-self:start!important;
   align-self:end!important;
   min-width:0!important;
-  max-width:100%!important;
+  max-width:calc(100% - 92px)!important;
   padding:5px 9px!important;
   border:2px solid #050505!important;
   border-radius:999px!important;
@@ -320,7 +241,6 @@ body.nyanko-ui-polish .formation-stage-card .formation-stage-card-tag{
   text-overflow:ellipsis!important;
   box-shadow:0 2px 0 rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.18)!important;
 }
-
 body.nyanko-ui-polish .formation-stage-difficulty-badge{
   position:absolute!important;
   top:10px!important;
@@ -346,115 +266,13 @@ body.nyanko-ui-polish .formation-stage-difficulty-badge{
   overflow:hidden!important;
   text-overflow:ellipsis!important;
 }
-
-body.nyanko-ui-polish .formation-stage-card.is-active{
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.65),transparent 28%),
-    linear-gradient(180deg,#fffbe8 0%,#ffd531 66%,#151515 67%,#030303 100%)!important;
-  box-shadow:0 8px 0 rgba(0,0,0,.72),0 0 0 5px rgba(255,213,49,.38),inset 0 2px 0 rgba(255,255,255,.88)!important;
-}
-
-body.nyanko-ui-polish .formation-stage-card.is-active::after{
-  content:"選択中"!important;
-  display:inline-flex!important;
-  position:absolute!important;
-  right:10px!important;
-  bottom:9px!important;
-  z-index:2!important;
-  min-height:24px!important;
-  align-items:center!important;
-  padding:4px 8px!important;
-  border:2px solid #050505!important;
-  border-radius:999px!important;
-  background:linear-gradient(180deg,#ffffff,#2fed6b 52%,#159633)!important;
-  color:#050505!important;
-  -webkit-text-fill-color:#050505!important;
-  font-size:.66rem!important;
-  font-weight:1000!important;
-  box-shadow:0 2px 0 rgba(0,0,0,.65)!important;
-}
-
+body.nyanko-ui-polish .formation-stage-card.is-active{background:linear-gradient(180deg,rgba(255,255,255,.65),transparent 28%),linear-gradient(180deg,#fffbe8 0%,#ffd531 66%,#151515 67%,#030303 100%)!important;box-shadow:0 8px 0 rgba(0,0,0,.72),0 0 0 5px rgba(255,213,49,.38),inset 0 2px 0 rgba(255,255,255,.88)!important;}
+body.nyanko-ui-polish .formation-stage-card.is-active::after{content:"選択中"!important;display:inline-flex!important;position:absolute!important;right:10px!important;bottom:9px!important;z-index:2!important;min-height:24px!important;align-items:center!important;padding:4px 8px!important;border:2px solid #050505!important;border-radius:999px!important;background:linear-gradient(180deg,#ffffff,#2fed6b 52%,#159633)!important;color:#050505!important;-webkit-text-fill-color:#050505!important;font-size:.66rem!important;font-weight:1000!important;box-shadow:0 2px 0 rgba(0,0,0,.65)!important;}
 body.nyanko-ui-polish .formation-stage-card:hover,
-body.nyanko-ui-polish .formation-stage-card:focus-visible{
-  transform:translateY(-1px)!important;
-  box-shadow:0 8px 0 rgba(0,0,0,.72),0 0 0 4px rgba(255,213,49,.26),inset 0 2px 0 rgba(255,255,255,.86)!important;
-}
+body.nyanko-ui-polish .formation-stage-card:focus-visible{transform:translateY(-1px)!important;box-shadow:0 8px 0 rgba(0,0,0,.72),0 0 0 4px rgba(255,213,49,.26),inset 0 2px 0 rgba(255,255,255,.86)!important;}
+body.nyanko-ui-polish .formation-stage-card:active{transform:translateY(4px)!important;box-shadow:0 2px 0 rgba(0,0,0,.72),inset 0 2px 0 rgba(255,255,255,.78)!important;}
+body.nyanko-ui-polish .formation-stage-card.is-difficulty-filtered{display:none!important;}
 
-body.nyanko-ui-polish .formation-stage-card:active{
-  transform:translateY(4px)!important;
-  box-shadow:0 2px 0 rgba(0,0,0,.72),inset 0 2px 0 rgba(255,255,255,.78)!important;
-}
-
-body.nyanko-ui-polish .formation-stage-card.is-difficulty-filtered{
-  display:none!important;
-}
-
-@media (max-width:900px){
-  body.nyanko-ui-polish .formation-stage-difficulty-tools{
-    grid-template-columns:minmax(180px,1fr) auto auto!important;
-  }
-  body.nyanko-ui-polish .formation-stage-difficulty-summary{
-    grid-column:1/-1!important;
-    text-align:left!important;
-  }
-}
-
-@media (max-width:760px){
-  body.nyanko-ui-polish .formation-stage-dialog{
-    height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
-    padding:8px!important;
-    border-width:4px!important;
-    border-radius:20px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-dialog::before{
-    inset:66px 9px 10px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-breadcrumb{
-    grid-template-columns:1fr!important;
-    gap:6px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-difficulty-tools{
-    grid-template-columns:1fr!important;
-    gap:6px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-difficulty-range{
-    justify-content:space-between!important;
-  }
-  body.nyanko-ui-polish .formation-stage-list{
-    grid-template-columns:1fr!important;
-    padding:8px 3px 4px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-card{
-    min-height:96px!important;
-  }
-}
-
-@media (max-height:620px) and (orientation:landscape){
-  body.nyanko-ui-polish .formation-stage-dialog{
-    height:calc(100dvh - 12px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
-    gap:6px!important;
-    padding:7px 10px 9px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-dialog::before{
-    inset:58px 9px 9px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-dialog header{
-    min-height:42px!important;
-    padding-bottom:4px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-dialog header span{
-    display:none!important;
-  }
-  body.nyanko-ui-polish .formation-stage-list{
-    grid-template-columns:repeat(auto-fill,minmax(210px,1fr))!important;
-    gap:8px!important;
-    padding:7px 4px 4px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-difficulty-tools{
-    padding:5px 7px!important;
-  }
-  body.nyanko-ui-polish .formation-stage-card{
-    min-height:90px!important;
-    padding:10px!important;
-  }
-}
+@media (max-width:900px){body.nyanko-ui-polish .formation-stage-difficulty-tools{grid-template-columns:minmax(180px,1fr) auto auto!important;}body.nyanko-ui-polish .formation-stage-difficulty-summary{grid-column:1/-1!important;text-align:left!important;}}
+@media (max-width:760px){body.nyanko-ui-polish .formation-stage-dialog{height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;padding:8px!important;border-width:4px!important;border-radius:20px!important;}body.nyanko-ui-polish .formation-stage-dialog::before{inset:66px 9px 10px!important;}body.nyanko-ui-polish .formation-stage-breadcrumb{flex-wrap:wrap!important;gap:6px!important;}body.nyanko-ui-polish .formation-stage-breadcrumb .formation-stage-crumb{flex:1 1 auto!important;}body.nyanko-ui-polish .formation-stage-difficulty-tools{grid-template-columns:1fr!important;gap:6px!important;}body.nyanko-ui-polish .formation-stage-difficulty-range{justify-content:space-between!important;}body.nyanko-ui-polish .formation-stage-list{grid-template-columns:1fr!important;padding:8px 3px 4px!important;}body.nyanko-ui-polish .formation-stage-card{min-height:96px!important;}}
+@media (max-height:620px) and (orientation:landscape){body.nyanko-ui-polish .formation-stage-dialog{height:calc(100dvh - 12px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;gap:6px!important;padding:7px 10px 9px!important;}body.nyanko-ui-polish .formation-stage-dialog::before{inset:58px 9px 9px!important;}body.nyanko-ui-polish .formation-stage-dialog header{min-height:42px!important;padding-bottom:4px!important;}body.nyanko-ui-polish .formation-stage-dialog header span{display:none!important;}body.nyanko-ui-polish .formation-stage-list{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))!important;gap:8px!important;padding:7px 4px 4px!important;}body.nyanko-ui-polish .formation-stage-difficulty-tools{padding:5px 7px!important;}body.nyanko-ui-polish .formation-stage-card{min-height:90px!important;padding:10px!important;}}

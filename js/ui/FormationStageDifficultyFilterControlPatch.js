@@ -2,6 +2,16 @@ import { FormationEditor } from './FormationEditor.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty-filter-controls.v3');
 const DIFFICULTY_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
+const PRO_STYLE_ID = 'nyanko-stage-selector-pro-css';
+
+function ensureProStyles() {
+  if (document.getElementById(PRO_STYLE_ID)) return;
+  const link = document.createElement('link');
+  link.id = PRO_STYLE_ID;
+  link.rel = 'stylesheet';
+  link.href = './css/nyanko-stage-selector-pro.css';
+  document.head.appendChild(link);
+}
 
 function norm(value) {
   return String(value ?? '').normalize('NFKC').toLowerCase().trim();
@@ -42,6 +52,7 @@ function cardMatchesFilter(card, f) {
 function setCardFiltered(card, hidden) {
   card.classList.toggle('is-difficulty-filtered', hidden);
   card.hidden = hidden;
+
   if (hidden) {
     card.style.setProperty('display', 'none', 'important');
   } else {
@@ -50,6 +61,7 @@ function setCardFiltered(card, hidden) {
 }
 
 function applyDomDifficultyFilter(editor) {
+  ensureProStyles();
   const root = editor.root;
   if (!root) return;
   const f = filterState(editor);
@@ -75,7 +87,7 @@ function applyDomDifficultyFilter(editor) {
       range: parseDifficultyRange(card),
       hidden: card.hidden,
       classHidden: card.classList.contains('is-difficulty-filtered'),
-      display: card.style.display || null
+      display: getComputedStyle(card).display
     }))
   };
   editor.__bcuStageDifficultyDomFilterDebug = debug;
@@ -101,6 +113,7 @@ function updateFilterFromTarget(editor, target) {
 }
 
 function wireFilterControls(editor) {
+  ensureProStyles();
   const root = editor.root;
   if (!root) return;
   const selector = '[data-stage-search-input],[data-stage-difficulty-min],[data-stage-difficulty-max]';
@@ -117,6 +130,7 @@ function wireFilterControls(editor) {
 }
 
 export function installFormationStageDifficultyFilterControlPatch() {
+  ensureProStyles();
   const proto = FormationEditor?.prototype;
   if (!proto || proto[PATCH_FLAG]) return !!proto?.[PATCH_FLAG];
   if (!proto[DIFFICULTY_FLAG]) return false;

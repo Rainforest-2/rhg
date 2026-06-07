@@ -12,7 +12,7 @@ function ensureStyle() {
   if (document.getElementById(STYLE_ID)) return;
   const s = document.createElement('style');
   s.id = STYLE_ID;
-  s.textContent = `.formation-stage-difficulty-tools{grid-column:1/-1;display:grid;grid-template-columns:minmax(120px,1fr) 72px 72px auto;align-items:center;gap:6px;margin:0 0 6px;padding:6px 8px;border:1px solid rgba(96,165,250,.28);border-radius:10px;background:rgba(15,23,42,.64)}.formation-stage-difficulty-tools input{min-width:0;height:30px;border-radius:8px;border:1px solid rgba(147,197,253,.42);background:#06101f;color:#e5f0ff;font-size:.72rem;font-weight:800;padding:0 8px}.formation-stage-difficulty-summary{color:#bfdbfe;font-size:.66rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-difficulty-badge{display:inline-flex;justify-self:start;max-width:100%;padding:2px 6px;border-radius:999px;background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.36);color:#fde68a;font-size:.58rem;line-height:1;font-weight:1000;text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-card.is-difficulty-filtered{display:none!important}@media(max-width:640px){.formation-stage-difficulty-tools{grid-template-columns:1fr 58px 58px}.formation-stage-difficulty-summary{grid-column:1/-1}}`;
+  s.textContent = `.formation-stage-difficulty-tools{grid-column:1/-1;display:grid;grid-template-columns:minmax(96px,1fr) 54px 54px auto;align-items:center;gap:4px;margin:0 0 4px;padding:4px 6px;border:1px solid rgba(96,165,250,.24);border-radius:8px;background:rgba(15,23,42,.56)}.formation-stage-difficulty-tools input{min-width:0;height:24px;border-radius:7px;border:1px solid rgba(147,197,253,.38);background:#06101f;color:#e5f0ff;font-size:.66rem;font-weight:800;padding:0 6px}.formation-stage-difficulty-summary{color:#bfdbfe;font-size:.6rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-difficulty-badge{display:inline-flex;justify-self:end;align-self:start;max-width:100%;padding:1px 5px;border-radius:7px;background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.36);color:#fde68a;font-size:.56rem;line-height:1.15;font-weight:1000;text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.formation-stage-card.is-difficulty-filtered{display:none!important}@media(max-width:640px){.formation-stage-difficulty-tools{grid-template-columns:1fr 48px 48px}.formation-stage-difficulty-summary{grid-column:1/-1}}`;
   document.head.appendChild(s);
 }
 function filterState(ed) {
@@ -48,10 +48,12 @@ function stageMatches(ed, item, f = filterState(ed)) {
   return !f.q || stageText(item, d).includes(f.q);
 }
 function mapDifficultyStats(ed, map) {
-  const values = (map?.stages || []).map((st) => diffOf(ed, st).diff).filter((n) => Number.isFinite(n) && n >= 0);
-  if (!values.length) return { min: -1, max: -1, label: '---' };
+  const resolutions = (map?.stages || []).map((st) => diffOf(ed, st));
+  const values = resolutions.map((r) => r.diff).filter((n) => Number.isFinite(n) && n >= 0);
+  const unresolved = resolutions.find((r) => !(Number.isFinite(r?.diff) && r.diff >= 0));
+  if (!values.length) return { min: -1, max: -1, label: '---', candidateCount: resolutions.length, matchedCount: 0, unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || 'difficulty-not-defined' };
   const min = Math.min(...values), max = Math.max(...values);
-  return { min, max, label: min === max ? `★${min}` : `★${min}-${max}` };
+  return { min, max, label: min === max ? `★${min}` : `★${min}-${max}`, candidateCount: resolutions.length, matchedCount: values.length, unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || null };
 }
 function mapText(map, stats) { return norm([map?.key, map?.label, map?.collectionLabel, ...(map?.collectionLabels || []), map?.mapNoRaw, stats.label].filter(Boolean).join(' ')); }
 function mapMatches(ed, map, f = filterState(ed)) {
@@ -93,39 +95,65 @@ function insertControls(ed, scope, matched, shown) {
   if (crumb?.nextSibling) list.insertBefore(box, crumb.nextSibling);
   else list.prepend(box);
 }
+function setScopeDebug(ed, scope, detail = {}) {
+  const debug = {
+    source: 'FormationStageDifficultyPatch',
+    scoped: !!scope,
+    scopeType: scope?.type || 'none',
+    scopeLabel: scope?.label || null,
+    total: scope?.items?.length || 0,
+    candidateCount: detail.candidateCount ?? scope?.items?.length ?? 0,
+    matchedCount: detail.matchedCount ?? 0,
+    shownCount: detail.shownCount ?? 0,
+    unresolvedReason: detail.unresolvedReason || (scope ? null : 'category-root-or-custom-stage'),
+    candidateKeys: (scope?.items || []).map((item) => item.key).slice(0, 20),
+    filter: filterState(ed),
+    diagnostics: ed.__bcuStageDifficultyDiagnostics || null
+  };
+  ed.__bcuStageDifficultyLastScopeDebug = debug;
+  globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ = debug;
+  return debug;
+}
 function decorateMapLevel(ed, scope) {
   const f = filterState(ed);
   const matched = new Set(scope.items.filter((m) => mapMatches(ed, m, f)).map((m) => m.key));
+  const unresolved = [];
   for (const card of ed.root.querySelectorAll('.formation-stage-card-map[data-stage-map]')) {
     const map = scope.items.find((m) => m.key === card.dataset.stageMap);
     const stats = mapDifficultyStats(ed, map);
+    if (stats.unresolvedReason) unresolved.push(stats.unresolvedReason);
     let b = card.querySelector('.formation-stage-difficulty-badge');
     if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
     b.textContent = `難易度 ${stats.label}`;
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
   }
-  insertControls(ed, scope, matched.size, scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length);
+  const shown = scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length;
+  insertControls(ed, scope, matched.size, shown);
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown, unresolvedReason: unresolved[0] || null });
 }
 function decorateStageLevel(ed, scope) {
   const f = filterState(ed);
   const matched = new Set(scope.items.filter((s) => stageMatches(ed, s, f)).map((s) => s.key));
+  const unresolved = [];
   for (const card of ed.root.querySelectorAll('.formation-stage-card-stage[data-stage-id]')) {
     const st = scope.items.find((s) => s.key === card.dataset.stageId || s.id === card.dataset.stageId);
     const d = diffOf(ed, st || { key: card.dataset.stageId });
+    if (d.unresolvedReason || d.fallbackReason) unresolved.push(d.unresolvedReason || d.fallbackReason);
     let b = card.querySelector('.formation-stage-difficulty-badge');
     if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
     b.textContent = `難易度 ${formatBcuStageDifficulty(d.diff)}`;
     card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageId));
   }
-  insertControls(ed, scope, matched.size, scope.items.filter((s) => !isFiltering(f) || matched.has(s.key)).length);
+  const shown = scope.items.filter((s) => !isFiltering(f) || matched.has(s.key)).length;
+  insertControls(ed, scope, matched.size, shown);
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown, unresolvedReason: unresolved[0] || null });
 }
 function decorate(ed) {
   const scope = currentScope(ed);
-  if (!scope) return;
+  if (!scope) { setScopeDebug(ed, null); return; }
   if (scope.type === 'map') decorateMapLevel(ed, scope);
   else if (scope.type === 'stage') decorateStageLevel(ed, scope);
-  globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ = { source: 'FormationStageDifficultyPatch', scoped: true, scopeType: scope.type, scopeLabel: scope.label, total: scope.items.length, candidateKeys: scope.items.map((item) => item.key).slice(0, 20), filter: filterState(ed), diagnostics: ed.__bcuStageDifficultyDiagnostics || null };
 }
 export function installFormationStageDifficultyPatch() {
   const p = FormationEditor?.prototype;

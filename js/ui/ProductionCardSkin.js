@@ -26,6 +26,8 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   cardPart: BCU_UNI_CARD_PART,
   cardCanvasSize: PRODUCTION_CARD_CANVAS,
   contentRect: Object.freeze({ x: 4, y: 4, w: 102, h: 57 }),
+  framedUnitIconRect: Object.freeze({ x: 4, y: 4, w: 102, h: 77 }),
+  framedUnitIconFitMode: 'cover',
   dogContentRect: Object.freeze({ x: 6, y: 4, w: 98, h: 58 }),
   dogIconScale: DOG_CARD_ICON_SCALE,
   dogIconFitMode: 'cover',
@@ -72,14 +74,54 @@ export function isBundledCatCardImage(icon) {
     && height >= PRODUCTION_CARD_CANVAS.h;
 }
 
+export function resolveContainedIconPlacement(icon, rect, options = {}) {
+  const sw = imageWidth(icon);
+  const sh = imageHeight(icon);
+  if (!rect || sw <= 0 || sh <= 0 || rect.w <= 0 || rect.h <= 0) return null;
+  const fitMode = options.fitMode === 'cover' ? 'cover' : 'contain';
+  const optionScale = Number(options.scale);
+  const scaleMultiplier = Number.isFinite(optionScale) && optionScale > 0 ? optionScale : 1;
+  const baseScale = fitMode === 'cover' ? Math.max(rect.w / sw, rect.h / sh) : Math.min(rect.w / sw, rect.h / sh);
+  const fit = baseScale * scaleMultiplier;
+  const dw = sw * fit;
+  const dh = sh * fit;
+  const dx = rect.x + (rect.w - dw) / 2;
+  const dy = rect.y + (rect.h - dh) / 2;
+  return {
+    sourceWidth: sw,
+    sourceHeight: sh,
+    fitMode,
+    scale: fit,
+    scaleMultiplier,
+    rect: { x: rect.x, y: rect.y, w: rect.w, h: rect.h },
+    drawRect: { x: dx, y: dy, w: dw, h: dh },
+    clip: options.clip !== false
+  };
+}
+
 export function resolveCatCardRenderMode(icon) {
   const imageSize = getProductionCardIconImageSize(icon);
-  const renderMode = isBundledCatCardImage(icon) ? 'bundled-card-image' : 'contained-icon';
+  const bundled = isBundledCatCardImage(icon);
+  const renderMode = bundled ? 'bundled-card-image' : 'framed-unit-icon';
   const fallbackReason = renderMode === 'bundled-card-image' ? null
     : imageSize.width <= 0 || imageSize.height <= 0 ? 'missing-icon'
       : imageSize.width === imageSize.height ? 'square-unit-icon'
         : 'non-card-image-size';
-  return { renderMode, imageSize, fallbackReason };
+  if (bundled) return { renderMode, imageSize, fallbackReason };
+  const placement = resolveContainedIconPlacement(imageSize, PRODUCTION_CARD_SKIN.framedUnitIconRect, {
+    fitMode: PRODUCTION_CARD_SKIN.framedUnitIconFitMode,
+    scale: 1
+  });
+  return {
+    renderMode,
+    imageSize,
+    fallbackReason,
+    fitMode: placement?.fitMode || PRODUCTION_CARD_SKIN.framedUnitIconFitMode,
+    scale: placement?.scale ?? null,
+    rect: placement?.rect || PRODUCTION_CARD_SKIN.framedUnitIconRect,
+    drawRect: placement?.drawRect || null,
+    clip: placement?.clip ?? true
+  };
 }
 
 async function loadBundleImage(provider, internalPath) {
@@ -127,6 +169,8 @@ export class ProductionCardSkin {
         ready: true,
         source: this.source,
         cardPart: this.cardPart,
+        framedUnitIconRect: PRODUCTION_CARD_SKIN.framedUnitIconRect,
+        framedUnitIconFitMode: PRODUCTION_CARD_SKIN.framedUnitIconFitMode,
         dogContentBackground: PRODUCTION_CARD_SKIN.dogContentBackgroundRect,
         dogIconScale: PRODUCTION_CARD_SKIN.dogIconScale,
         dogIconFitMode: PRODUCTION_CARD_SKIN.dogIconFitMode,
@@ -191,27 +235,20 @@ export class ProductionCardSkin {
   }
 
   drawContainedIcon(ctx, icon, rect, options = {}) {
-    const sw = imageWidth(icon);
-    const sh = imageHeight(icon);
-    if (!icon || sw <= 0 || sh <= 0) return false;
-    const fitMode = options.fitMode || 'contain';
-    const baseScale = fitMode === 'cover' ? Math.max(rect.w / sw, rect.h / sh) : Math.min(rect.w / sw, rect.h / sh);
-    const fit = baseScale * (Number(options.scale) || 1);
-    const dw = sw * fit;
-    const dh = sh * fit;
-    const dx = rect.x + (rect.w - dw) / 2;
-    const dy = rect.y + (rect.h - dh) / 2;
-    if (options.clip !== false) {
+    const placement = resolveContainedIconPlacement(icon, rect, options);
+    if (!placement) return false;
+    const { drawRect } = placement;
+    if (placement.clip) {
       ctx.save();
       ctx.beginPath();
       ctx.rect(rect.x, rect.y, rect.w, rect.h);
       ctx.clip();
-      ctx.drawImage(icon, dx, dy, dw, dh);
+      ctx.drawImage(icon, drawRect.x, drawRect.y, drawRect.w, drawRect.h);
       ctx.restore();
     } else {
-      ctx.drawImage(icon, dx, dy, dw, dh);
+      ctx.drawImage(icon, drawRect.x, drawRect.y, drawRect.w, drawRect.h);
     }
-    return true;
+    return placement;
   }
 
   drawCatCard(ctx, icon, state = {}) {
@@ -233,7 +270,10 @@ export class ProductionCardSkin {
     }
 
     this.drawSlotFrame(ctx);
-    if (icon) this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.contentRect, { scale: 1, fitMode: 'contain' });
+    if (icon) this.drawContainedIcon(ctx, icon, PRODUCTION_CARD_SKIN.framedUnitIconRect, {
+      scale: 1,
+      fitMode: PRODUCTION_CARD_SKIN.framedUnitIconFitMode
+    });
     globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
       ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
       lastCatCard: detail

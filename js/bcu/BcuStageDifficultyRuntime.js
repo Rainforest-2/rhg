@@ -88,7 +88,8 @@ export function resolveStageDifficulty(stage, { table = null, db = null } = {}) 
     diff: -1,
     source: key ? 'difficulty-missing' : 'stage-key-unresolved',
     key,
-    fallbackReason: key ? 'difficulty-key-not-found-in-source-table' : 'stage-address-unresolved'
+    fallbackReason: key ? 'difficulty-key-not-found-in-source-table' : 'stage-address-unresolved',
+    unresolvedReason: key ? 'difficulty-key-not-found-in-source-table' : 'stage-address-unresolved'
   };
 }
 
@@ -130,14 +131,23 @@ export function buildScopedDifficultyFilterCandidates(items = [], {
   const out = [];
   for (const item of items || []) {
     const stages = kind === 'map' ? (item?.stages || []) : [item];
-    const diffs = stages.map((stage) => resolveStageDifficulty(stage?.stage ? { ...stage.stage, ...stage } : stage, { table, db }).diff).filter((n) => Number.isFinite(n) && n >= 0);
+    const resolutions = stages.map((stage) => resolveStageDifficulty(stage?.stage ? { ...stage.stage, ...stage } : stage, { table, db }));
+    const diffs = resolutions.map((r) => r.diff).filter((n) => Number.isFinite(n) && n >= 0);
     const diff = kind === 'map' ? (diffs.length ? Math.min(...diffs) : -1) : (diffs[0] ?? -1);
     const diffMax = kind === 'map' && diffs.length ? Math.max(...diffs) : diff;
     if (Number.isFinite(lo) && !(diffMax >= lo)) continue;
     if (Number.isFinite(hi) && !(diff >= 0 && diff <= hi)) continue;
     const text = [item?.key, item?.id, item?.label, item?.mapLabel, item?.collectionLabel, diff >= 0 ? `★${diff}` : ''].filter(Boolean).join(' ').normalize('NFKC').toLowerCase();
     if (q && !text.includes(q)) continue;
-    out.push({ item, diff, diffMax });
+    const unresolved = resolutions.find((r) => !(Number.isFinite(r?.diff) && r.diff >= 0));
+    out.push({
+      item,
+      diff,
+      diffMax,
+      candidateCount: stages.length,
+      matchedCount: diffs.length,
+      unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || null
+    });
   }
   return out;
 }

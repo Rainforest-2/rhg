@@ -36,7 +36,7 @@ assert.ok(!dogPatchSource.includes('drawCatCardWithComposedIcon'), 'cat producti
 assert.ok(dogPatchSource.includes('iconZipOnly: true'), 'production card patch declares icon zip only mode');
 assert.ok(skinSource.includes('resolveCatCardRenderMode'), 'cat card render mode is resolved from image dimensions');
 assert.ok(skinSource.includes("'bundled-card-image'"), 'completed unit card image render mode is named');
-assert.ok(skinSource.includes("'contained-icon'"), 'square unit icon render mode is named');
+assert.ok(skinSource.includes("'framed-unit-icon'"), 'square unit icon render mode is named');
 assert.ok(skinSource.includes("ctx.fillStyle = '#f8fafc'"), 'dog card background is light, not black');
 assert.ok(!skinSource.includes("ctx.fillStyle = '#111'"), 'dog card black background fill is absent');
 assert.ok(bundleBuilderSource.includes('generateEnemyIconForEntry'), 'enemy icon bundle builder generates enemy icons from actor assets');

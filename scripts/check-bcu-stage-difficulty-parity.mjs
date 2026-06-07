@@ -27,6 +27,7 @@ assert.equal(resolveStageDifficulty({ mapColcId: 1, mapNo: 0, stageNo: 0 }, { ta
 const missing = resolveStageDifficulty({ mapColcId: 999, mapNo: 999, stageNo: 999 }, { table: real.table });
 assert.equal(missing.diff, -1, 'nonexistent stage resolves to missing difficulty');
 assert.equal(missing.fallbackReason, 'difficulty-key-not-found-in-source-table', 'missing difficulty reports fallback reason');
+assert.equal(missing.unresolvedReason, 'difficulty-key-not-found-in-source-table', 'missing difficulty reports debug unresolvedReason');
 
 const stageIndex = JSON.parse(fs.readFileSync('public/assets/generated/bcu-stage-index.json', 'utf8'));
 const catalog = buildBcuStageCatalog(stageIndex.entries, { bcuDb: null });
@@ -38,6 +39,8 @@ const eventMapCandidates = buildScopedDifficultyFilterCandidates(eventCategory.m
 const legendMapCandidates = buildScopedDifficultyFilterCandidates(legendCategory.maps, { kind: 'map', table: real.table });
 assert.equal(eventMapCandidates.length, eventCategory.maps.length, 'event map filter candidates come from current event category only');
 assert.equal(legendMapCandidates.length, legendCategory.maps.length, 'legend map filter candidates come from current legend category only');
+assert.ok(eventMapCandidates.every((c) => c.candidateCount === c.item.stages.length), 'map difficulty candidate debug counts current map stages only');
+assert.ok(eventMapCandidates.some((c) => c.matchedCount > 0), 'map difficulty candidate debug reports resolved stage count');
 assert.notEqual(eventMapCandidates.length, legendMapCandidates.length, 'category switch changes filter candidate set');
 const eventKeys = new Set(eventMapCandidates.map((c) => c.item.key));
 assert.ok(legendMapCandidates.some((c) => !eventKeys.has(c.item.key)), 'legend candidates are not mixed into event scope');
@@ -45,5 +48,8 @@ const firstEventMap = eventCategory.maps.find((m) => m.stages?.length > 2);
 const stageCandidates = buildScopedDifficultyFilterCandidates(firstEventMap.stages, { kind: 'stage', table: real.table });
 assert.equal(stageCandidates.length, firstEventMap.stages.length, 'stage-level candidates come from the current map only');
 assert.ok(stageCandidates.every((c) => c.item.mapKey === firstEventMap.key), 'stage-level candidates do not include stages from other maps');
+assert.ok(stageCandidates.every((c) => c.candidateCount === 1), 'stage-level candidate debug counts one stage per candidate');
+const unresolvedCandidate = buildScopedDifficultyFilterCandidates([{ key: 'missing-stage', mapColcId: 999, mapNo: 999, stageNo: 999, label: 'missing' }], { kind: 'stage', table: real.table })[0];
+assert.equal(unresolvedCandidate.unresolvedReason, 'difficulty-key-not-found-in-source-table', 'filter candidate exposes unresolved reason for missing stage');
 
 console.log('check-bcu-stage-difficulty-parity: OK');

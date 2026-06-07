@@ -4,14 +4,15 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
+import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 import { clearBcuWarpLifecycle, isBcuWarpLifecycleActive, startBcuWarpLifecycle, tickBcuWarpLifecycle } from './bcu-runtime/BcuWarpLifecycleRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v6-bcu-toxic-eanimcont');
+const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v7-bcu-toxic-load-retry');
 const BCU_SLOW_MOVE_PER_FRAME = 0.25;
 const BCU_TOXIC_EFFECT_KEY = 'toxic';
 const BCU_TOXIC_EFFECT_SOURCE = 'bcu-effanim-A_POISON-poiatk';
 const BCU_TOXIC_EFFECT_OFFSET_Y = 0;
-const BCU_TOXIC_EFFECT_SCALE = 1.2;
+const BCU_TOXIC_EFFECT_SCALE = 1;
 
 function framesToMs(frames) {
   const n = Number(frames);
@@ -156,53 +157,97 @@ function actorWorldX(actor) {
   return Number.isFinite(actor?.posBcu) ? actor.posBcu : (Number.isFinite(actor?.x) ? actor.x : 0);
 }
 
+function setToxicEffectDebug(scene, actor, debug) {
+  if (actor) actor.lastBcuToxicEffectDebug = debug;
+  if (scene) scene.lastBcuToxicEffectDebug = debug;
+  globalThis.__BCU_TOXIC_EFFECT_DEBUG__ = debug;
+  return debug;
+}
+
+function toxicEffectDebugBase(scene, actor, asset, reason) {
+  return {
+    source: 'BattleActorProcStatusPatch.spawnBcuToxicHitEffect',
+    spawned: false,
+    reason,
+    effectKey: 'A_POISON',
+    assetKey: BCU_TOXIC_EFFECT_KEY,
+    assetLoaded: asset?.loaded === true,
+    hasImage: !!asset?.image,
+    hasModel: !!asset?.model,
+    hasAnimator: false,
+    scale: BCU_TOXIC_EFFECT_SCALE,
+    bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
+    layer: Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0,
+    x: actorWorldX(actor),
+    y: 0,
+    durationMs: 0,
+    rendererReached: false,
+    effectsBefore: scene?.effects?.length || 0,
+    bcuReference: 'BCU Entity.processProcs POIATK uses basis.lea.add(new EAnimCont(pos,currentLayer,effas().A_POISON.getEAnim(DEF))); EAnimCont default offsetY=0'
+  };
+}
+
+function scheduleToxicEffectRetry(scene, actor, payload, meta, damage, damageResult, debug) {
+  if (meta?.toxicEffectRetry === true) return false;
+  const promise = scene?.ensureWaveEffectLoading?.();
+  if (!promise || typeof promise.then !== 'function') return false;
+  const retryToken = `toxic-A_POISON-${scene.logicFrame || 0}-${actor?.instanceId || actor?.label || 'actor'}`;
+  debug.retryScheduled = true;
+  debug.retryToken = retryToken;
+  promise.then(() => {
+    const asset = scene.waveEffectAssets?.[BCU_TOXIC_EFFECT_KEY] || null;
+    if (asset?.loaded) {
+      spawnBcuToxicHitEffect(scene, actor, payload, { ...meta, toxicEffectRetry: true, toxicEffectRetryToken: retryToken }, damage, damageResult);
+      if (scene.lastBcuToxicEffectDebug) {
+        setToxicEffectDebug(scene, actor, {
+          ...scene.lastBcuToxicEffectDebug,
+          retry: true,
+          retryToken,
+          retryResolved: true
+        });
+      }
+      return;
+    }
+    setToxicEffectDebug(scene, actor, {
+      ...debug,
+      retryResolved: true,
+      spawned: false,
+      reason: asset?.reason || 'effect-asset-load-failed-after-retry',
+      assetLoaded: false,
+      hasImage: !!asset?.image,
+      hasModel: !!asset?.model
+    });
+  }).catch((error) => {
+    setToxicEffectDebug(scene, actor, {
+      ...debug,
+      retryResolved: false,
+      spawned: false,
+      reason: `effect-asset-load-error:${String(error?.message || error)}`
+    });
+  });
+  return true;
+}
+
 function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 0, damageResult = null) {
   if (!scene || !actor) return null;
   const asset = scene.waveEffectAssets?.[BCU_TOXIC_EFFECT_KEY] || null;
   if (!asset?.loaded) {
-    scene.ensureWaveEffectLoading?.();
-    const debug = {
-      source: 'BattleActorProcStatusPatch.spawnBcuToxicHitEffect',
-      spawned: false,
-      reason: asset?.reason || 'effect-asset-not-ready',
-      effectKey: BCU_TOXIC_EFFECT_KEY,
-      assetLoaded: asset?.loaded === true,
-      hasImage: !!asset?.image,
-      hasModel: !!asset?.model,
-      hasAnimator: false,
-      scale: BCU_TOXIC_EFFECT_SCALE,
-      layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
-      x: actorWorldX(actor),
-      y: 0,
-      durationMs: 0,
-      rendererReached: false,
-      bcuReference: 'BCU Entity.processProcs POIATK uses basis.lea.add(new EAnimCont(pos,currentLayer,effas().A_POISON.getEAnim(DEF)))'
-    };
-    actor.lastBcuToxicEffectDebug = debug;
+    const debug = toxicEffectDebugBase(scene, actor, asset, asset?.reason || 'effect-asset-not-ready');
+    const retryScheduled = scheduleToxicEffectRetry(scene, actor, payload, meta, damage, damageResult, debug);
+    debug.retryScheduled = retryScheduled;
+    if (!retryScheduled && meta?.toxicEffectRetry === true) debug.reason = asset?.reason || 'effect-asset-not-ready-after-retry';
+    setToxicEffectDebug(scene, actor, debug);
     scene.pushEvent?.({ type: 'bcuToxicEffectSkipped', actor: actor.instanceId || actor.label || null, reason: debug.reason, effectKey: BCU_TOXIC_EFFECT_KEY });
     return null;
   }
-  if ((scene.effects?.length || 0) >= (BATTLE_CONFIG.tuning?.maxEffects ?? 40)) return null;
+  if ((scene.effects?.length || 0) >= (BATTLE_CONFIG.tuning?.maxEffects ?? 40)) {
+    setToxicEffectDebug(scene, actor, toxicEffectDebugBase(scene, actor, asset, 'max-effects'));
+    return null;
+  }
   const runtime = createEffectRuntime(asset);
   if (!runtime) {
-    const debug = {
-      source: 'BattleActorProcStatusPatch.spawnBcuToxicHitEffect',
-      spawned: false,
-      reason: 'effect-runtime-create-failed',
-      effectKey: 'A_POISON',
-      assetLoaded: asset?.loaded === true,
-      hasImage: !!asset?.image,
-      hasModel: !!asset?.model,
-      hasAnimator: false,
-      scale: BCU_TOXIC_EFFECT_SCALE,
-      layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
-      x: actorWorldX(actor),
-      y: 0,
-      durationMs: 0,
-      rendererReached: false
-    };
-    actor.lastBcuToxicEffectDebug = debug;
-    scene.lastBcuToxicEffectDebug = debug;
+    const debug = toxicEffectDebugBase(scene, actor, asset, 'effect-runtime-create-failed');
+    setToxicEffectDebug(scene, actor, debug);
     return null;
   }
   const worldX = actorWorldX(actor);
@@ -221,6 +266,7 @@ function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 
     createdAtMs: scene.timeMs,
     layer,
     bcuSmokeYOffset: BCU_TOXIC_EFFECT_OFFSET_Y,
+    bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
     debug: {
       source: BCU_TOXIC_EFFECT_SOURCE,
       key: BCU_TOXIC_EFFECT_KEY,
@@ -240,6 +286,7 @@ function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 
       hasModel: !!runtime.model,
       hasAnimator: !!runtime.animator,
       scale: BCU_TOXIC_EFFECT_SCALE,
+      bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
       x: worldX,
       y: 0,
       durationMs: runtime.frameCount * BCU_BATTLE_TIMER_PERIOD_MS,
@@ -253,8 +300,7 @@ function spawnBcuToxicHitEffect(scene, actor, payload = {}, meta = {}, damage = 
   scene.effects ||= [];
   scene.effects.push(effect);
   const debug = { ...effect.effectRuntimeDebug, spawned: true, effectId: effect.id, effectKey: 'A_POISON', durationMs: effect.durationMs, rendererReached: false };
-  actor.lastBcuToxicEffectDebug = debug;
-  scene.lastBcuToxicEffectDebug = debug;
+  setToxicEffectDebug(scene, actor, debug);
   scene.pushEvent?.({ type: 'bcuToxicEffectSpawned', actor: actor.instanceId || actor.label || null, effectKey: 'A_POISON', worldX: Math.round(worldX), layer, damage, source: BCU_TOXIC_EFFECT_SOURCE });
   return effect;
 }

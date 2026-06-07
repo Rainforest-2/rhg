@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { resolveCatCardRenderMode } from '../js/ui/ProductionCardSkin.js';
+import { PRODUCTION_CARD_SKIN, resolveCatCardRenderMode } from '../js/ui/ProductionCardSkin.js';
 import { readStoreZipEntries, validatePngBuffer } from './bcu-semantic-utils.mjs';
 
 const PNG_OPTIONS = { allowTrailingBytes: true };
@@ -35,18 +35,25 @@ const render001 = resolveCatCardRenderMode(fakeImage(unit001, {
   bcuSemanticKey: 'unit:1:f',
   bcuInternalPath: 'unit/001-f.png'
 }));
-assert.equal(render001.renderMode, 'contained-icon', 'unit/001-f.png uses contained icon render mode');
+assert.equal(render001.renderMode, 'framed-unit-icon', 'unit/001-f.png uses framed unit icon render mode');
 assert.equal(render001.fallbackReason, 'square-unit-icon', 'unit/001-f.png is not treated as a finished card image');
+assert.equal(render001.fitMode, 'cover', 'square unit icons fill the BCU card inner face instead of shrinking into the contentRect');
+assert.deepEqual(render001.rect, PRODUCTION_CARD_SKIN.framedUnitIconRect, 'square unit icons use the full BCU card inner face rect');
+assert.ok(render001.scale >= 0.79 && render001.scale < 1, 'unit/001-f.png is scaled from image and card rect, not by a hand-tuned tiny constant');
+assert.ok(render001.drawRect.w >= PRODUCTION_CARD_SKIN.framedUnitIconRect.w, 'unit/001-f.png draw rect fills card inner width');
+assert.ok(render001.drawRect.h >= PRODUCTION_CARD_SKIN.framedUnitIconRect.h, 'unit/001-f.png draw rect fills card inner height');
+assert.notDeepEqual(render001.rect, { x: 0, y: 0, w: 110, h: 85 }, 'unit/001-f.png is not stretched across the whole completed card canvas');
 
 const skinSource = fs.readFileSync('js/ui/ProductionCardSkin.js', 'utf8');
 const barSource = fs.readFileSync('js/ui/PlayerProductionBar.js', 'utf8');
 assert.ok(skinSource.includes('drawCost(ctx, cost, state)'), 'ProductionCardSkin still draws cost after card rendering');
-assert.ok(skinSource.includes('drawSlotFrame(ctx)'), 'contained cat icon path keeps the BCU slot frame');
-assert.ok(skinSource.includes('PRODUCTION_CARD_SKIN.contentRect'), 'contained cat icon path uses contentRect');
+assert.ok(skinSource.includes('drawSlotFrame(ctx)'), 'framed cat icon path keeps the BCU slot frame');
+assert.ok(skinSource.includes('PRODUCTION_CARD_SKIN.framedUnitIconRect'), 'framed cat icon path uses the full inner card face rect');
 assert.ok(!skinSource.includes("ctx.fillStyle = '#111'"), 'cat card path does not introduce fixed black background');
 assert.ok(barSource.includes('renderMode'), 'production card debug includes renderMode');
 assert.ok(barSource.includes('imageSize'), 'production card debug includes imageSize');
 assert.ok(barSource.includes('iconSource'), 'production card debug includes iconSource');
 assert.ok(barSource.includes('renderFallbackReason'), 'production card debug includes fallback reason');
+assert.ok(barSource.includes('bcu-unit-frame-framed-icon'), 'production card debug distinguishes framed unit icon background mode');
 
 console.log('check-production-card-render-mode-parity: OK');

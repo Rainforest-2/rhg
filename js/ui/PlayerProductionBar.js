@@ -481,7 +481,7 @@ export class PlayerProductionBar {
           renderFallbackReason: render?.fallbackReason || null,
           priceDrawn: render?.priceDrawn ?? null,
           backgroundMode: modelEntry.unitDef.faction === 'cat'
-            ? (render?.renderMode === 'bundled-card-image' ? 'bcu-unit-icon-full-card' : 'bcu-unit-frame-contained-icon')
+            ? (render?.renderMode === 'bundled-card-image' ? 'bcu-unit-icon-full-card' : 'bcu-unit-frame-framed-icon')
             : 'light-dog-card-face',
           priceDebug: {
             cost: modelEntry.cost ?? modelEntry.unitDef.cost ?? 0,

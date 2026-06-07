@@ -40,7 +40,14 @@ function selectedStageLabel(editor, catalog) {
   return selectedStage?.label || selectedStage?.stageId || editor.selectedStageId || '未選択';
 }
 
-function renderBreadcrumb() {
+function renderBackControl(state, category, map) {
+  if (state.level === 'map' && category) {
+    return `<div class='formation-stage-backbar'><button type='button' data-stage-root='1'>＜ カテゴリ</button><span>${safeHtml(category.label)}</span></div>`;
+  }
+  if (state.level === 'stage' && map) {
+    const categoryId = category?.id || map.categoryId || '';
+    return `<div class='formation-stage-backbar'><button type='button' data-stage-category='${safeHtml(categoryId)}'>＜ マップ</button><span>${safeHtml(map.label)}</span></div>`;
+  }
   return '';
 }
 
@@ -86,9 +93,9 @@ function renderStageSelectorBody(editor) {
   }
   if (map && !category) category = catalog.getCategory(map.categoryId);
 
-  if (state.level === 'stage' && map) return `${renderBreadcrumb(state, category, map)}${renderStageCards(editor, map)}`;
-  if (state.level === 'map' && category) return `${renderBreadcrumb(state, category, null)}${renderMapCards(category)}`;
-  return `${renderBreadcrumb(state, null, null)}${renderCategoryCards(catalog)}`;
+  if (state.level === 'stage' && map) return `${renderBackControl(state, category, map)}${renderStageCards(editor, map)}`;
+  if (state.level === 'map' && category) return `${renderBackControl(state, category, null)}${renderMapCards(category)}`;
+  return renderCategoryCards(catalog);
 }
 
 function updateStageHeader(editor) {

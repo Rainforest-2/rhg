@@ -1,33 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&display=swap');
+
 /*
- * Game-facing skin for the BCU stage selector.
- * Goal: convert the decluttered selector from a flat admin-card layout into
- * a Battle Cats-like signboard/ticket UI: thick black outlines, compact black
- * info bands, strong tap affordance, and no developer fallback labels.
+ * Battle Cats-style stage selector skin.
+ * Priorities:
+ * - no yellow text on yellow panels
+ * - no shadows on small metadata text
+ * - orange/red rounded buttons with white outlined lettering
+ * - compact back button, not a full-width category bar
  */
+html body.nyanko-ui-polish .formation-stage-dialog,
+html body.nyanko-ui-polish .formation-stage-dialog *{
+  font-family:"M PLUS Rounded 1c","Arial Rounded MT Bold","Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif!important;
+}
+
 html body.nyanko-ui-polish .formation-stage-dialog header{
   min-height:54px!important;
   padding:0 6px 8px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-dialog header strong{
-  letter-spacing:.02em!important;
+  letter-spacing:.01em!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-dialog::before{
   inset:78px 14px 16px!important;
 }
 
+html body.nyanko-ui-polish .formation-stage-dialog header button,
+html body.nyanko-ui-polish .formation-stage-filter-reset,
+html body.nyanko-ui-polish .formation-stage-backbar button{
+  min-height:40px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:4px solid #050505!important;
+  border-radius:999px!important;
+  background:
+    linear-gradient(180deg,#ffef68 0%,#ffb300 32%,#ff5b12 100%)!important;
+  color:#fff8e8!important;
+  -webkit-text-fill-color:#fff8e8!important;
+  font-weight:900!important;
+  letter-spacing:.02em!important;
+  line-height:1!important;
+  text-shadow:
+    2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,
+    2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000!important;
+  box-shadow:0 5px 0 #2a1207,inset 0 2px 0 rgba(255,255,255,.78)!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-dialog header button:active,
+html body.nyanko-ui-polish .formation-stage-filter-reset:active,
+html body.nyanko-ui-polish .formation-stage-backbar button:active{
+  transform:translateY(3px)!important;
+  box-shadow:0 2px 0 #2a1207,inset 0 2px 0 rgba(255,255,255,.65)!important;
+}
+
 html body.nyanko-ui-polish .formation-stage-list{
-  gap:clamp(14px,1.35vw,20px)!important;
-  padding:18px 18px 16px!important;
+  gap:clamp(12px,1.2vw,18px)!important;
+  padding:16px 18px 16px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-category){
-  grid-template-columns:repeat(auto-fit,minmax(270px,318px))!important;
+  grid-template-columns:repeat(auto-fit,minmax(268px,310px))!important;
   justify-content:center!important;
   align-content:center!important;
-  gap:clamp(16px,1.7vw,24px)!important;
-  padding:22px 18px 18px!important;
+  gap:clamp(14px,1.55vw,22px)!important;
+  padding:20px 18px 18px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-map){
@@ -42,65 +80,65 @@ html body.nyanko-ui-polish .formation-stage-card{
   position:relative!important;
   min-width:0!important;
   display:grid!important;
-  grid-template-rows:minmax(0,1fr) 34px!important;
+  grid-template-rows:minmax(0,1fr) 36px!important;
   gap:0!important;
   overflow:hidden!important;
-  border:5px solid #070707!important;
-  border-radius:13px!important;
+  border:5px solid #050505!important;
+  border-radius:12px!important;
   padding:0!important;
   text-align:left!important;
   background:
-    radial-gradient(circle at 14% 18%,rgba(255,255,255,.75) 0 11%,transparent 12%),
-    linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0) 34%),
-    linear-gradient(180deg,#fffdf2 0%,#fff2ae calc(100% - 35px),#141414 calc(100% - 34px),#020202 100%)!important;
-  box-shadow:0 7px 0 rgba(0,0,0,.78),inset 0 2px 0 rgba(255,255,255,.78)!important;
+    linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+    linear-gradient(180deg,#fffdf1 0%,#fff2bf calc(100% - 37px),#151515 calc(100% - 36px),#020202 100%)!important;
+  box-shadow:0 7px 0 rgba(0,0,0,.78),inset 0 2px 0 rgba(255,255,255,.82)!important;
   transform:translateZ(0)!important;
-  transition:transform .06s ease,box-shadow .06s ease,filter .08s ease!important;
+  transition:transform .06s ease,box-shadow .06s ease!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card:hover,
 html body.nyanko-ui-polish .formation-stage-card:focus-visible{
   transform:translateY(-2px)!important;
-  box-shadow:0 10px 0 rgba(0,0,0,.78),0 0 0 4px rgba(255,213,49,.32),inset 0 2px 0 rgba(255,255,255,.84)!important;
+  box-shadow:0 10px 0 rgba(0,0,0,.78),0 0 0 4px rgba(255,213,49,.32),inset 0 2px 0 rgba(255,255,255,.86)!important;
   outline:0!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card:active{
   transform:translateY(4px)!important;
-  box-shadow:0 2px 0 rgba(0,0,0,.78),inset 0 2px 0 rgba(255,255,255,.7)!important;
+  box-shadow:0 2px 0 rgba(0,0,0,.78),inset 0 2px 0 rgba(255,255,255,.72)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card.is-active{
-  box-shadow:0 7px 0 rgba(0,0,0,.78),0 0 0 5px rgba(255,213,49,.5),inset 0 2px 0 rgba(255,255,255,.9)!important;
+  box-shadow:0 7px 0 rgba(0,0,0,.78),0 0 0 5px rgba(255,213,49,.54),inset 0 2px 0 rgba(255,255,255,.9)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-category{
-  min-height:116px!important;
-  grid-template-rows:minmax(0,1fr) 34px!important;
+  min-height:108px!important;
+  grid-template-rows:minmax(0,1fr) 36px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-map{
-  min-height:118px!important;
-  grid-template-rows:minmax(0,1fr) 34px!important;
+  min-height:112px!important;
+  grid-template-rows:minmax(0,1fr) 36px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-stage{
-  min-height:92px!important;
-  grid-template-rows:minmax(0,1fr) 32px!important;
+  min-height:88px!important;
+  grid-template-rows:minmax(0,1fr) 34px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card strong,
 html body.nyanko-ui-polish .formation-stage-card .formation-stage-card-title{
+  grid-row:1!important;
   align-self:center!important;
   min-height:0!important;
-  padding:16px 22px 10px!important;
-  color:#0c0c0c!important;
-  -webkit-text-fill-color:#0c0c0c!important;
-  font-size:clamp(1.05rem,1.25vw,1.32rem)!important;
+  padding:14px 22px 8px!important;
+  color:#0b0b0b!important;
+  -webkit-text-fill-color:#0b0b0b!important;
+  font-size:clamp(1.04rem,1.18vw,1.28rem)!important;
   line-height:1.12!important;
-  font-weight:1000!important;
+  font-weight:900!important;
   letter-spacing:.01em!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.85)!important;
+  text-shadow:none!important;
   display:-webkit-box!important;
   -webkit-line-clamp:2!important;
   -webkit-box-orient:vertical!important;
@@ -109,21 +147,27 @@ html body.nyanko-ui-polish .formation-stage-card .formation-stage-card-title{
 
 html body.nyanko-ui-polish .formation-stage-card-map strong,
 html body.nyanko-ui-polish .formation-stage-card-stage strong{
-  padding-right:94px!important;
+  padding-right:96px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-meta{
+  grid-row:2!important;
   align-self:stretch!important;
+  justify-self:stretch!important;
+  width:100%!important;
+  min-width:0!important;
   min-height:0!important;
   height:auto!important;
   display:flex!important;
   flex-wrap:nowrap!important;
   align-items:center!important;
   justify-content:flex-start!important;
-  gap:16px!important;
+  gap:18px!important;
   padding:0 18px!important;
   margin:0!important;
   overflow:hidden!important;
+  box-sizing:border-box!important;
+  background:linear-gradient(180deg,#151515,#020202)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-meta b,
@@ -139,56 +183,52 @@ html body.nyanko-ui-polish .formation-stage-card small{
   border:0!important;
   border-radius:0!important;
   background:transparent!important;
-  color:#ffe75a!important;
-  -webkit-text-fill-color:#ffe75a!important;
-  font-size:clamp(.74rem,1vw,.88rem)!important;
+  color:#fff8d6!important;
+  -webkit-text-fill-color:#fff8d6!important;
+  font-size:clamp(.72rem,.9vw,.82rem)!important;
   font-style:normal!important;
-  font-weight:1000!important;
+  font-weight:900!important;
   line-height:1!important;
   white-space:nowrap!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
-  text-shadow:0 2px 0 #000!important;
+  text-shadow:none!important;
   box-shadow:none!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-meta i::before{
   content:"";
-  display:inline-block;
-  width:6px;
-  height:6px;
-  margin-right:10px;
-  border-radius:50%;
-  background:#ffe75a;
-  box-shadow:0 2px 0 #000;
+  flex:0 0 auto!important;
+  width:6px!important;
+  height:6px!important;
+  margin-right:10px!important;
+  border-radius:50%!important;
+  background:#fff8d6!important;
+  box-shadow:none!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-category.tone-red{
   background:
-    radial-gradient(circle at 14% 18%,rgba(255,255,255,.75) 0 11%,transparent 12%),
-    linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0) 34%),
-    linear-gradient(180deg,#fffdf2 0%,#ffd8c8 calc(100% - 35px),#141414 calc(100% - 34px),#020202 100%)!important;
+    linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+    linear-gradient(180deg,#fffdf1 0%,#ffd7c8 calc(100% - 37px),#151515 calc(100% - 36px),#020202 100%)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-category.tone-blue{
   background:
-    radial-gradient(circle at 14% 18%,rgba(255,255,255,.75) 0 11%,transparent 12%),
-    linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0) 34%),
-    linear-gradient(180deg,#fffdf2 0%,#d7f0ff calc(100% - 35px),#141414 calc(100% - 34px),#020202 100%)!important;
+    linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+    linear-gradient(180deg,#fffdf1 0%,#d8f0ff calc(100% - 37px),#151515 calc(100% - 36px),#020202 100%)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-category.tone-violet{
   background:
-    radial-gradient(circle at 14% 18%,rgba(255,255,255,.75) 0 11%,transparent 12%),
-    linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0) 34%),
-    linear-gradient(180deg,#fffdf2 0%,#eadcff calc(100% - 35px),#141414 calc(100% - 34px),#020202 100%)!important;
+    linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+    linear-gradient(180deg,#fffdf1 0%,#eadcff calc(100% - 37px),#151515 calc(100% - 36px),#020202 100%)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-custom{
   background:
-    radial-gradient(circle at 14% 18%,rgba(255,255,255,.75) 0 11%,transparent 12%),
-    linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0) 34%),
-    linear-gradient(180deg,#fffdf2 0%,#ffe05e calc(100% - 35px),#141414 calc(100% - 34px),#020202 100%)!important;
+    linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+    linear-gradient(180deg,#fffdf1 0%,#ffe066 calc(100% - 37px),#151515 calc(100% - 36px),#020202 100%)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-card-icon,
@@ -200,25 +240,28 @@ html body.nyanko-ui-polish .formation-stage-breadcrumb{
 
 html body.nyanko-ui-polish .formation-stage-difficulty-badge{
   position:absolute!important;
-  top:14px!important;
-  right:18px!important;
+  top:12px!important;
+  right:16px!important;
   min-width:62px!important;
-  max-width:86px!important;
-  min-height:34px!important;
+  max-width:88px!important;
+  min-height:30px!important;
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
   padding:0 12px!important;
-  border:4px solid #070707!important;
+  border:4px solid #050505!important;
   border-radius:999px!important;
-  background:linear-gradient(180deg,#fffdf2 0%,#ffd531 56%,#f1a51d 100%)!important;
-  color:#0a0a0a!important;
-  -webkit-text-fill-color:#0a0a0a!important;
-  font-size:.86rem!important;
-  font-weight:1000!important;
+  background:
+    linear-gradient(180deg,#ffef68 0%,#ffb300 34%,#ff5b12 100%)!important;
+  color:#fff8e8!important;
+  -webkit-text-fill-color:#fff8e8!important;
+  font-size:.82rem!important;
+  font-weight:900!important;
   line-height:1!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.7)!important;
-  box-shadow:0 4px 0 rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.9)!important;
+  text-shadow:
+    2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,
+    2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000!important;
+  box-shadow:0 4px 0 rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.86)!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-difficulty-badge:empty,
@@ -230,39 +273,31 @@ html body.nyanko-ui-polish .formation-stage-backbar{
   grid-column:1/-1!important;
   display:flex!important;
   align-items:center!important;
+  justify-content:flex-start!important;
   gap:12px!important;
   min-height:42px!important;
   margin:0 0 -2px!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-backbar button{
-  min-width:126px!important;
-  min-height:38px!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:190px!important;
+  min-width:116px!important;
   padding:6px 18px!important;
-  border:4px solid #070707!important;
-  border-radius:999px!important;
-  background:linear-gradient(180deg,#fffdf2 0%,#ffd531 54%,#f1a51d 100%)!important;
-  color:#140d05!important;
-  -webkit-text-fill-color:#140d05!important;
-  font-size:.86rem!important;
-  font-weight:1000!important;
-  line-height:1!important;
-  box-shadow:0 5px 0 rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.9)!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.65)!important;
-}
-
-html body.nyanko-ui-polish .formation-stage-backbar button:active{
-  transform:translateY(3px)!important;
-  box-shadow:0 2px 0 rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.82)!important;
+  font-size:.88rem!important;
+  white-space:nowrap!important;
 }
 
 html body.nyanko-ui-polish .formation-stage-backbar span{
   min-width:0!important;
-  color:#fffdf2!important;
-  -webkit-text-fill-color:#fffdf2!important;
-  font-size:.92rem!important;
-  font-weight:1000!important;
-  text-shadow:0 3px 0 #000,0 0 8px rgba(0,0,0,.55)!important;
+  color:#fff8e8!important;
+  -webkit-text-fill-color:#fff8e8!important;
+  font-size:.94rem!important;
+  font-weight:900!important;
+  text-shadow:
+    2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,
+    2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000!important;
   white-space:nowrap!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
@@ -274,6 +309,22 @@ html body.nyanko-ui-polish .formation-stage-difficulty-tools{
   padding:7px 9px!important;
   border-width:4px!important;
   border-radius:15px!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-search-field > span,
+html body.nyanko-ui-polish .formation-stage-filter-label,
+html body.nyanko-ui-polish .formation-stage-difficulty-range label > span,
+html body.nyanko-ui-polish .formation-stage-difficulty-summary,
+html body.nyanko-ui-polish .formation-stage-range-sep{
+  text-shadow:none!important;
+  color:#2a1207!important;
+  -webkit-text-fill-color:#2a1207!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-filter-reset{
+  min-width:112px!important;
+  padding:6px 14px!important;
+  font-size:.78rem!important;
 }
 
 @media (max-width:760px){
@@ -288,28 +339,38 @@ html body.nyanko-ui-polish .formation-stage-difficulty-tools{
   html body.nyanko-ui-polish .formation-stage-card-category,
   html body.nyanko-ui-polish .formation-stage-card-map{
     min-height:98px!important;
+    grid-template-rows:minmax(0,1fr) 34px!important;
   }
 
   html body.nyanko-ui-polish .formation-stage-card-stage{
-    min-height:82px!important;
+    min-height:78px!important;
+    grid-template-rows:minmax(0,1fr) 32px!important;
   }
 
   html body.nyanko-ui-polish .formation-stage-card strong,
   html body.nyanko-ui-polish .formation-stage-card .formation-stage-card-title{
-    padding:12px 14px 8px!important;
+    padding:11px 14px 7px!important;
     font-size:1rem!important;
   }
 
   html body.nyanko-ui-polish .formation-stage-card-map strong,
   html body.nyanko-ui-polish .formation-stage-card-stage strong{
-    padding-right:76px!important;
+    padding-right:78px!important;
   }
 
   html body.nyanko-ui-polish .formation-stage-difficulty-badge{
-    top:10px!important;
+    top:9px!important;
     right:10px!important;
     min-width:52px!important;
-    min-height:30px!important;
-    font-size:.72rem!important;
+    min-height:28px!important;
+    font-size:.7rem!important;
+  }
+
+  html body.nyanko-ui-polish .formation-stage-backbar button{
+    min-width:104px!important;
+    max-width:152px!important;
+    min-height:36px!important;
+    padding:6px 14px!important;
+    font-size:.78rem!important;
   }
 }

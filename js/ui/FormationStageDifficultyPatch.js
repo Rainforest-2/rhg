@@ -92,9 +92,9 @@ function insertControls(ed, scope, matched, shown) {
   const box = document.createElement('div');
   const itemLabel = scope.type === 'map' ? 'マップ' : 'ステージ';
   const placeholder = scope.type === 'map' ? 'マップ名でさがす' : 'ステージ名でさがす';
-  const summary = isFiltering(f) ? `条件に合う${itemLabel}：${matched}件 / 全${scope.items.length}件` : `表示中：${shown}件 / 全${scope.items.length}件`;
+  const summary = isFiltering(f) ? `表示中 ${matched} / ${scope.items.length}` : `表示中 ${shown} / ${scope.items.length}`;
   box.className = 'formation-stage-difficulty-tools';
-  box.innerHTML = `<label class='formation-stage-search-field'><span>さがす</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(f.q)}'></label><div class='formation-stage-difficulty-range'><span class='formation-stage-filter-label'>難易度</span><label><span>★min</span><input type='number' inputmode='numeric' data-stage-difficulty-min='1' placeholder='1' min='0' max='12' value='${f.min ?? ''}'></label><span class='formation-stage-range-sep'>〜</span><label><span>★max</span><input type='number' inputmode='numeric' data-stage-difficulty-max='1' placeholder='7' min='0' max='12' value='${f.max ?? ''}'></label></div><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
+  box.innerHTML = `<label class='formation-stage-search-field'><span>${itemLabel}検索</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(f.q)}'></label><div class='formation-stage-difficulty-range' aria-label='難易度の範囲'><span class='formation-stage-filter-label'>難易度</span><label><span>下限</span><input type='number' inputmode='numeric' data-stage-difficulty-min='1' placeholder='★1' min='0' max='12' value='${f.min ?? ''}'></label><span class='formation-stage-range-sep'>から</span><label><span>上限</span><input type='number' inputmode='numeric' data-stage-difficulty-max='1' placeholder='★12' min='0' max='12' value='${f.max ?? ''}'></label></div><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>条件リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
   if (crumb?.nextSibling) list.insertBefore(box, crumb.nextSibling);
   else list.prepend(box);
 }

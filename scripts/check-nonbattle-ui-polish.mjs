@@ -1,0 +1,127 @@
+import { mkdir } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PLAYWRIGHT_REQUIRE || 'playwright');
+
+const BASE_URL = process.env.UI_POLISH_URL || 'http://127.0.0.1:4173/';
+const OUT_DIR = 'tmp/ui-polish-screens';
+const VIEWPORTS = [
+  [667, 375],
+  [844, 390],
+  [932, 430],
+  [1024, 768],
+  [1180, 820],
+  [1366, 1024],
+  [1440, 900],
+];
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+async function visibleCount(page, selector) {
+  return await page.locator(selector).evaluateAll((nodes) => nodes.filter((node) => {
+    const style = getComputedStyle(node);
+    const box = node.getBoundingClientRect();
+    return style.display !== 'none' && style.visibility !== 'hidden' && box.width > 0 && box.height > 0;
+  }).length);
+}
+
+async function assertNoFatalHorizontalOverflow(page, label) {
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  assert(overflow <= 2, `${label}: horizontal overflow ${overflow}px`);
+}
+
+async function assertCloseButtonVisible(page, label) {
+  const box = await page.locator('.formation-stage-dialog header button').boundingBox();
+  assert(box, `${label}: close button missing`);
+  const vp = page.viewportSize();
+  assert(box.x >= -1 && box.y >= -1 && box.x + box.width <= vp.width + 1 && box.y + box.height <= vp.height + 1, `${label}: close button outside viewport`);
+}
+
+async function waitForFormation(page) {
+  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
+  await page.waitForFunction(() => !!document.body.classList.contains('nyanko-ui-polish'), null, { timeout: 30000 });
+}
+
+async function openSelector(page) {
+  await page.locator('[data-action="stage-open"]').click();
+  await page.waitForSelector('.formation-stage-overlay.is-open', { state: 'visible', timeout: 20000 });
+}
+
+async function checkViewport(browser, width, height) {
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
+  const consoleErrors = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  page.on('pageerror', (error) => consoleErrors.push(error.message));
+
+  const label = `${width}x${height}`;
+  await waitForFormation(page);
+  await page.screenshot({ path: `${OUT_DIR}/formation-${label}.png`, fullPage: false });
+  await assertNoFatalHorizontalOverflow(page, `${label} formation`);
+
+  await openSelector(page);
+  await assertCloseButtonVisible(page, `${label} category`);
+  await page.waitForSelector('.formation-stage-card-category', { state: 'visible', timeout: 15000 });
+  assert(await visibleCount(page, '.formation-stage-card-category') >= 5, `${label}: category cards not visible`);
+  await page.screenshot({ path: `${OUT_DIR}/category-${label}.png`, fullPage: false });
+
+  if (width === 1024 && height === 768) {
+    await page.locator('.formation-stage-card-category[data-stage-category]').first().click();
+    await page.waitForSelector('.formation-stage-card-map', { state: 'visible', timeout: 20000 });
+    const mapCountBefore = await visibleCount(page, '.formation-stage-card-map');
+    assert(mapCountBefore > 0, 'map cards did not render');
+    await page.screenshot({ path: `${OUT_DIR}/map-${label}.png`, fullPage: false });
+
+    const search = page.locator('[data-stage-search-input]').first();
+    await search.fill('zzzzzz-no-match');
+    await page.waitForTimeout(350);
+    const mapCountAfter = await visibleCount(page, '.formation-stage-card-map');
+    const hiddenDisplayCount = await page.locator('.formation-stage-card-map.is-difficulty-filtered').evaluateAll((nodes) => nodes.filter((node) => getComputedStyle(node).display === 'none').length);
+    assert(mapCountAfter < mapCountBefore, 'search filter did not reduce visible map cards');
+    assert(hiddenDisplayCount > 0, 'filtered map cards are not display:none');
+    await page.locator('[data-stage-filter-reset]').click();
+    await page.waitForTimeout(350);
+    assert(await visibleCount(page, '.formation-stage-card-map') === mapCountBefore, 'reset did not restore map cards');
+
+    await page.locator('.formation-stage-card-map[data-stage-map]').first().click();
+    await page.waitForSelector('.formation-stage-card-stage', { state: 'visible', timeout: 20000 });
+    assert(await visibleCount(page, '.formation-stage-card-stage') > 0, 'stage cards did not render');
+    await page.screenshot({ path: `${OUT_DIR}/stage-${label}.png`, fullPage: false });
+
+    await page.locator('.formation-stage-card-stage[data-stage-id]').first().click();
+    await page.waitForSelector('.formation-stage-overlay.is-open', { state: 'detached', timeout: 20000 }).catch(async () => {
+      await page.waitForSelector('.formation-stage-overlay.is-open', { state: 'hidden', timeout: 10000 });
+    });
+
+    await page.locator('.apply-battle-button').click();
+    await page.waitForSelector('.app-loading-overlay:not(.is-hidden)', { state: 'visible', timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('.app-loading-overlay')?.dataset.loadingMode === 'battle', null, { timeout: 15000 });
+    await page.screenshot({ path: `${OUT_DIR}/battle-loading-${label}.png`, fullPage: false });
+    await page.waitForSelector('.app-loading-overlay.is-hidden', { state: 'attached', timeout: 90000 });
+  }
+
+  const filteredVisible = await page.locator('.formation-stage-card.is-difficulty-filtered').evaluateAll((nodes) => nodes.filter((node) => getComputedStyle(node).display !== 'none').length);
+  assert(filteredVisible === 0, `${label}: filtered cards still visible`);
+
+  assert(consoleErrors.length === 0, `${label}: console errors:\n${consoleErrors.join('\n')}`);
+  await page.close();
+  return { viewport: label, ok: true };
+}
+
+await mkdir(OUT_DIR, { recursive: true });
+const browser = await chromium.launch({ headless: true });
+const results = [];
+try {
+  for (const [width, height] of VIEWPORTS) {
+    results.push(await checkViewport(browser, width, height));
+  }
+} finally {
+  await browser.close();
+}
+
+console.log(JSON.stringify({ ok: true, screenshots: OUT_DIR, results }, null, 2));

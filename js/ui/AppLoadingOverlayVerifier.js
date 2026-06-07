@@ -1,4 +1,5 @@
 import { AppLoadingOverlay } from './AppLoadingOverlay.js';
+import { GAME_VERSION } from '../AppVersion.js';
 
 function createNode() {
   return {
@@ -29,5 +30,5 @@ export async function verifyAppLoadingOverlayContract() {
   overlay.setError(new Error('boom'));
   overlay.hide();
   const html = mount.child?.innerHTML || '';
-  return { ok: !!mount.child && html.includes('v0.12.2') && html.includes('app-loading-error'), hidden: true };
+  return { ok: !!mount.child && html.includes(`v${GAME_VERSION}`) && html.includes('app-loading-error'), hidden: true };
 }

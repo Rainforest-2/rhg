@@ -545,3 +545,118 @@ body.nyanko-ui-polish .app-loading-overlay{
     height:54px;
   }
 }
+
+/* Final non-battle shell pass: generated background plus landscape-first spacing. */
+body.nyanko-ui-polish .formation-ui{
+  background:
+    linear-gradient(180deg,rgba(61,28,10,.08),rgba(61,28,10,.22)),
+    url('../public/assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
+}
+
+body.nyanko-ui-polish .formation-panel{
+  width:min(1320px,calc(100vw - 22px));
+  height:min(900px,calc(100dvh - 18px));
+  max-height:calc(100dvh - 18px);
+  margin:auto;
+  grid-template-columns:minmax(0,1fr) minmax(190px,250px);
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 2px,transparent 2px 48px),
+    linear-gradient(180deg,#b86b32 0%,#763714 10%,#f6db8f 10.5%,#ffeeb9 88%,#6f3214 89%,#ad602c 100%)!important;
+}
+
+body.nyanko-ui-polish .formation-header{
+  min-height:clamp(58px,8.5dvh,82px);
+}
+
+body.nyanko-ui-polish .formation-header p{
+  max-width:68ch;
+  line-height:1.25;
+}
+
+body.nyanko-ui-polish .formation-slots-wrap{
+  min-height:clamp(110px,18dvh,170px);
+}
+
+body.nyanko-ui-polish .formation-catalog-section{
+  min-height:0;
+}
+
+body.nyanko-ui-polish .formation-catalog-tabs button,
+body.nyanko-ui-polish .secondary-action{
+  min-height:42px;
+}
+
+body.nyanko-ui-polish .formation-search-input{
+  color:#1b1207!important;
+  -webkit-text-fill-color:#1b1207!important;
+  background:#fffdf0!important;
+}
+
+body.nyanko-ui-polish .formation-action-rail{
+  min-width:0;
+}
+
+body.nyanko-ui-polish .formation-current-stage{
+  min-height:58px;
+  padding:10px 12px;
+  white-space:normal;
+  line-height:1.18;
+}
+
+@media (max-width:980px){
+  body.nyanko-ui-polish .formation-panel{
+    width:calc(100vw - 14px);
+    height:calc(100dvh - 12px);
+    grid-template-columns:1fr;
+    grid-template-rows:minmax(0,1fr) auto;
+    gap:8px;
+  }
+  body.nyanko-ui-polish .formation-action-rail{
+    display:grid;
+    grid-template-columns:1.35fr 1fr 1fr 1fr;
+    align-items:stretch;
+    padding:8px;
+  }
+  body.nyanko-ui-polish .formation-action-hint,
+  body.nyanko-ui-polish .formation-current-stage{
+    display:none!important;
+  }
+  body.nyanko-ui-polish .apply-battle-button{
+    min-height:48px;
+  }
+}
+
+@media (max-height:470px) and (orientation:landscape){
+  body.nyanko-ui-polish .formation-panel{
+    height:calc(100dvh - 8px);
+    padding:7px;
+    gap:7px;
+    border-width:4px;
+  }
+  body.nyanko-ui-polish .formation-header{
+    min-height:44px;
+    padding:6px 10px;
+  }
+  body.nyanko-ui-polish .formation-header p,
+  body.nyanko-ui-polish .formation-header::before{
+    display:none;
+  }
+  body.nyanko-ui-polish .formation-slots-wrap{
+    min-height:82px;
+  }
+  body.nyanko-ui-polish .formation-catalog-tabs button,
+  body.nyanko-ui-polish .secondary-action{
+    min-height:34px;
+    border-width:3px;
+  }
+  body.nyanko-ui-polish .formation-search-input{
+    height:36px;
+  }
+  body.nyanko-ui-polish .formation-character-card{
+    min-height:136px;
+  }
+  body.nyanko-ui-polish .formation-action-rail{
+    padding:6px;
+    gap:6px;
+  }
+}

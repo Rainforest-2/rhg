@@ -25,6 +25,14 @@ function ensureSelectorState(editor) {
   return editor.stageSelectorState;
 }
 
+const CATEGORY_UI = {
+  main: { icon: '日の丸', short: '日本編・未来編・宇宙編', tone: 'mint' },
+  legend: { icon: '王冠', short: '長く遊べる常設マップ', tone: 'gold' },
+  event: { icon: '祭', short: '期間イベントと強襲', tone: 'red' },
+  collab: { icon: '握手', short: 'コラボ専用ステージ', tone: 'blue' },
+  special: { icon: '道場', short: '道場・迷宮・検定など', tone: 'violet' }
+};
+
 function selectedStageLabel(editor, catalog) {
   const selected = catalog.getStage(editor.selectedStageId);
   if (selected) return `${selected.mapLabel} - ${selected.label}`;
@@ -41,18 +49,24 @@ function renderBreadcrumb(state, category, map) {
 }
 
 function renderCategoryCards(catalog) {
-  return catalog.categories.map((category) => `<button type='button' class='formation-stage-card formation-stage-card-category' data-stage-category='${safeHtml(category.id)}'>
+  return catalog.categories.map((category) => {
+    const ui = CATEGORY_UI[category.id] || { icon: '選択', short: category.description || '', tone: 'mint' };
+    return `<button type='button' class='formation-stage-card formation-stage-card-category category-${safeHtml(category.id)} tone-${safeHtml(ui.tone)}' data-stage-category='${safeHtml(category.id)}'>
+    <span class='formation-stage-card-icon' aria-hidden='true'>${safeHtml(ui.icon)}</span>
+    <span class='formation-stage-card-kicker'>カテゴリ</span>
     <strong>${safeHtml(category.label)}</strong>
-    <small>${category.mapCount}マップ</small>
-    <span>${safeHtml(category.description || '')} / ${category.stageCount}ステージ</span>
-  </button>`).join('');
+    <span class='formation-stage-card-desc'>${safeHtml(ui.short || category.description || '')}</span>
+    <span class='formation-stage-card-meta'><b>${category.mapCount}マップ</b><i>${category.stageCount}ステージ</i></span>
+  </button>`;
+  }).join('');
 }
 
 function renderMapCards(category) {
   return (category?.maps || []).map((map) => `<button type='button' class='formation-stage-card formation-stage-card-map' data-stage-map='${safeHtml(map.key)}'>
+    <span class='formation-stage-card-kicker'>${safeHtml(map.collectionLabel)}</span>
     <strong>${safeHtml(map.label)}</strong>
-    <small>${safeHtml(map.collectionLabel)}</small>
-    <span>${map.stageCount}ステージ</span>
+    <span class='formation-stage-card-desc'>${safeHtml((map.collectionLabels || [map.collectionLabel]).slice(0, 2).join(' / '))}</span>
+    <span class='formation-stage-card-meta'><b>${map.stageCount}ステージ</b><i>${Number.isFinite(map.mapNo) ? `No.${map.mapNoRaw}` : 'マップ'}</i></span>
   </button>`).join('');
 }
 
@@ -60,9 +74,10 @@ function renderStageCards(editor, map) {
   return (map?.stages || []).map((stage) => {
     const active = stage.key === editor.selectedStageId || stage.stage?.stageId === editor.selectedStageId || stage.stage?.stageKey === editor.selectedStageId;
     return `<button type='button' class='formation-stage-card formation-stage-card-stage ${active ? 'is-active' : ''}' data-stage-id='${safeHtml(stage.key)}'>
+      <span class='formation-stage-card-kicker'>${safeHtml(stage.collectionLabel)}</span>
       <strong>${safeHtml(stage.label)}</strong>
-      <small>${active ? '選択中' : `No.${safeHtml(stage.stageNoRaw)}`}</small>
-      <span>${safeHtml(stage.collectionLabel)} / ${safeHtml(stage.mapLabel)}</span>
+      <span class='formation-stage-card-desc'>${safeHtml(stage.mapLabel)}</span>
+      <span class='formation-stage-card-meta'><b>${active ? '選択中' : `No.${safeHtml(stage.stageNoRaw)}`}</b><i>${safeHtml(stage.mapNoRaw ? `Map ${stage.mapNoRaw}` : 'Stage')}</i></span>
     </button>`;
   }).join('');
 }

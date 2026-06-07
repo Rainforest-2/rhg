@@ -121,9 +121,11 @@ function addCustomCategoryCard(editor) {
   const custom = ensureState(editor);
   const config = normalizedConfig(editor);
   list.insertAdjacentHTML('beforeend', `<button type='button' class='formation-stage-card formation-stage-card-category formation-stage-card-custom ${custom.enabled ? 'is-active' : ''}' data-custom-stage-category='1'>
+    <span class='formation-stage-card-icon' aria-hidden='true'>特</span>
+    <span class='formation-stage-card-kicker'>カスタム</span>
     <strong>カスタムステージ</strong>
-    <small>${custom.enemyStageIds.length}敵側 / ${custom.playerStageIds.length}味方側</small>
-    <span>${config.enabled ? 'ON' : 'OFF'} / 複数ステージ同士を戦わせる専用モード</span>
+    <span class='formation-stage-card-desc'>複数ステージ同士を戦わせる専用モード</span>
+    <span class='formation-stage-card-meta'><b>${config.enabled ? 'ON' : 'OFF'}</b><i>${custom.enemyStageIds.length}敵側 / ${custom.playerStageIds.length}味方側</i></span>
   </button>`);
 }
 

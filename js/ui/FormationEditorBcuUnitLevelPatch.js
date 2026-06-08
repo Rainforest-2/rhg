@@ -1,8 +1,9 @@
 import { FormationEditor } from './FormationEditor.js';
-import { FormationStore } from '../battle/FormationStore.js';
+import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT } from '../battle/FormationStore.js';
+import { getCharacterById } from '../battle/CharacterCatalog.js';
 import { BCU_DEFAULT_PREF_LEVEL } from '../battle/bcu-runtime/BcuUnitLevelRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-ui.formation-bcu-unit-level.v1');
+const PATCH_FLAG = Symbol.for('wanko-ui.formation-bcu-unit-level.v2-character-tuning-api');
 const STYLE_ID = 'formation-bcu-unit-level-style';
 
 function injectStyle() {
@@ -33,7 +34,7 @@ function ensureLevelControl(editor) {
   if (!box) {
     box = document.createElement('div');
     box.className = 'formation-bcu-level-box';
-    box.innerHTML = `<label>にゃんこ Lv<input type="number" inputmode="numeric" min="1" max="999" step="1" data-cat-pref-level="1"></label><small>BCU CommonStatic.prefLevel。Unit.getPrefLvsで通常Lv/＋値へ変換してステータス倍率に使います。</small>`;
+    box.innerHTML = `<label>にゃんこ Lv<input type="number" inputmode="numeric" min="1" max="999" step="1" data-cat-pref-level="1"></label><small>BCU CommonStatic.prefLevel。個別Lv未指定のにゃんこにだけ使います。</small>`;
     const stageButton = rail.querySelector('[data-action="stage-open"]');
     rail.insertBefore(box, stageButton || rail.firstChild);
   }
@@ -42,18 +43,64 @@ function ensureLevelControl(editor) {
   if (input && document.activeElement !== input && input.value !== value) input.value = value;
 }
 
+function syncFormation(editor, formation, hint = '') {
+  editor.formation = formation;
+  editor.onFormationChanged?.(formation);
+  if (hint) editor.setHint?.(hint);
+  ensureLevelControl(editor);
+  return formation;
+}
+
 function handleLevelInput(editor, input) {
   const next = FormationStore.setCatUnitPrefLevel(input.value);
-  editor.formation = next;
-  editor.onFormationChanged?.(next);
-  editor.setHint?.(`にゃんこLv ${currentPrefLevel(editor)} を保存`);
-  ensureLevelControl(editor);
+  syncFormation(editor, next, `にゃんこ既定Lv ${currentPrefLevel(editor)} を保存`);
+}
+
+function characterKind(characterId) {
+  const character = getCharacterById(characterId);
+  return character?.faction || null;
 }
 
 export function installFormationEditorBcuUnitLevelPatch() {
   const proto = FormationEditor?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
+
+  proto.getCharacterBattleTuning = function getCharacterBattleTuning(characterId) {
+    const character = getCharacterById(characterId);
+    const formation = FormationStore.load();
+    return {
+      characterId,
+      character,
+      faction: character?.faction || null,
+      globalCatPrefLevel: formation.options?.bcuCatUnitLevel || null,
+      catUnitLevel: FormationStore.getCatUnitLevel(characterId),
+      dogUnitMagnification: FormationStore.getDogUnitMagnification(characterId),
+      source: 'FormationEditorBcuUnitLevelPatch.getCharacterBattleTuning'
+    };
+  };
+
+  proto.setCatCharacterLevel = function setCatCharacterLevel(characterId, config = {}) {
+    if (characterKind(characterId) !== 'cat') return this.formation || FormationStore.load();
+    const next = FormationStore.setCatUnitLevel(characterId, config);
+    return syncFormation(this, next, `個別にゃんこLvを保存: ${characterId}`);
+  };
+
+  proto.clearCatCharacterLevel = function clearCatCharacterLevel(characterId) {
+    const next = FormationStore.clearCatUnitLevel(characterId);
+    return syncFormation(this, next, `個別にゃんこLvを解除: ${characterId}`);
+  };
+
+  proto.setDogCharacterMagnification = function setDogCharacterMagnification(characterId, percent = DOG_DEFAULT_MAGNIFICATION_PERCENT) {
+    if (characterKind(characterId) !== 'dog') return this.formation || FormationStore.load();
+    const next = FormationStore.setDogUnitMagnification(characterId, percent);
+    return syncFormation(this, next, `ワンコ倍率を保存: ${characterId}`);
+  };
+
+  proto.clearDogCharacterMagnification = function clearDogCharacterMagnification(characterId) {
+    const next = FormationStore.clearDogUnitMagnification(characterId);
+    return syncFormation(this, next, `ワンコ倍率を100%に戻す: ${characterId}`);
+  };
 
   const originalRefresh = proto.refresh;
   proto.refresh = function refreshWithBcuUnitLevel(...args) {

@@ -9,6 +9,18 @@ assert.match(loaderSource, /key: 'toxic'.+all-skill-effects\/000001\/org\/battle
 assert.match(loaderSource, /usesSourceNamedBundleFiles\(def\)/, 'BattleWaveEffectLoader recognizes source-named all-skill-effects bundle entries');
 assert.match(loaderSource, /bundleAssetPath\(def, 'image'\)/, 'BattleWaveEffectLoader resolves bundle image paths through entry filenames');
 assert.match(loaderSource, /kind === 'image'\) return `\$\{base\}\/\$\{def\.image\}`/, 'A_POISON bundle image lookup uses skill008.png instead of image.png');
+
+const evidence = fs.readFileSync('docs/ability-logic/bcu-toxic-effect-position-evidence.md', 'utf8');
+assert.match(evidence, /basis\.lea\.add\(new EAnimCont\(pos, currentLayer, effas\(\)\.A_POISON\.getEAnim\(DefEff\.DEF\)\)\)/, 'BCU evidence records POIATK A_POISON spawn as EAnimCont(pos,currentLayer,eanim)');
+assert.match(evidence, /offsetY = 0f/, 'BCU evidence records 3-arg EAnimCont offsetY=0f');
+assert.match(evidence, /float y = midh - \(road_h - dep\) \* bf\.sb\.siz/, 'BCU evidence records StageBasis.lea baseline y formula');
+assert.match(evidence, /psiz = siz \* sprite/, 'BCU evidence records EAnimCont psiz scale');
+
+const renderSource = fs.readFileSync('js/battle/BattleSceneAttackEffectPatch.js', 'utf8');
+assert.match(renderSource, /actorPriority \? baseY \+ yOffset \* scale\s*:\s*baseY - yOffset \* cameraScale/s, 'renderer uses BCU EAnimCont offset sign/scale for actor-priority effects');
+assert.match(renderSource, /actorPriorityEAnimCont: actorPriority/, 'renderer debug exposes actorPriorityEAnimCont classification');
+assert.match(renderSource, /source === 'bcu-effanim-A_POISON-poiatk'/, 'A_POISON toxic effect is force-classified as actor-priority EAnimCont');
+
 const waveZip = await readStoreZipEntries('public/assets/bundles/effect/wave.zip');
 for (const internalPath of [
   'all-skill-effects/000001/org/battle/s8/skill008.png',

@@ -7,11 +7,12 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v6-smoke-kind');
-const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v7-projectile-blast-offset');
+const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v8-actor-priority-eanimcont');
 const BCU_HIT_SOURCE = 'bcu-effanim-attack-smoke';
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BASE_SMOKE_Y_OFFSET = 100;
 const BCU_SMOKE_SCALE = 1.2;
+const BCU_ACTOR_PRIORITY_SCALE_MODE = 'actor-priority-effect';
 const PROJECTILE_EFFECT_SOURCES = new Set([
   'bcu-effanim-wave-cont-wave-def',
   'bcu-effanim-surge-cont-volcano',
@@ -39,6 +40,12 @@ function smokeReference(kind) {
 function isProjectileContAbEffect(effect) {
   const source = String(effect?.source || effect?.effectRuntimeDebug?.source || '');
   return effect?.bcuProjectileStageObject === true || PROJECTILE_EFFECT_SOURCES.has(source);
+}
+
+function isActorPriorityEAnimCont(effect) {
+  const mode = String(effect?.bcuScaleMode || effect?.effectRuntimeDebug?.bcuScaleMode || effect?.effectRuntimeDebug?.scaleMode || '');
+  const source = String(effect?.source || effect?.effectRuntimeDebug?.source || '');
+  return mode === BCU_ACTOR_PRIORITY_SCALE_MODE || source === 'bcu-effanim-A_POISON-poiatk';
 }
 
 function describeAsset(asset) {
@@ -260,9 +267,11 @@ function drawOneBcuEffect(renderer, ctx, effect) {
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
   const projectile = isProjectileContAbEffect(effect);
-  // BCU BattleBox.drawEff uses pSiz = siz * sprite for ContAb, including ContWaveDef/ContVolcano/ContBlast.
-  // Hit smoke additionally uses its own 1.2 effect.scale through Entity.damage smoke draw.
-  const scale = cameraScale * spriteScale * (Number.isFinite(effect.scale) ? effect.scale : BCU_SMOKE_SCALE);
+  const actorPriority = isActorPriorityEAnimCont(effect);
+  // BCU BattleBox draws StageBasis.lea EAnimCont with psiz = siz * sprite.
+  // Hit smoke is not a StageBasis.lea EAnimCont; it uses a separate +75/+100 road adjustment and a 1.2 scale.
+  const effectScale = Number.isFinite(effect.scale) ? effect.scale : (actorPriority || projectile ? 1 : BCU_SMOKE_SCALE);
+  const scale = cameraScale * spriteScale * effectScale;
   const baseX = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
   const screenOffsetX = finiteNumber(effect.bcuScreenOffsetX, effect.effectRuntimeDebug?.bcuScreenOffsetX, 0) ?? 0;
   const x = baseX + screenOffsetX * cameraScale;
@@ -270,8 +279,12 @@ function drawOneBcuEffect(renderer, ctx, effect) {
   const baseY = typeof renderer.getBcuLayerScreenY === 'function'
     ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
     : (effect.worldY ?? effect.y ?? 0);
-  const yOffset = finiteNumber(effect.bcuSmokeYOffset, projectile ? 0 : ACTOR_SMOKE_Y_OFFSET) ?? (projectile ? 0 : ACTOR_SMOKE_Y_OFFSET);
-  const y = baseY - yOffset * cameraScale;
+  const yOffset = actorPriority
+    ? finiteNumber(effect.bcuEAnimContOffsetY, effect.bcuSmokeYOffset, effect.effectRuntimeDebug?.bcuSmokeYOffset, 0) ?? 0
+    : (finiteNumber(effect.bcuSmokeYOffset, projectile ? 0 : ACTOR_SMOKE_Y_OFFSET) ?? (projectile ? 0 : ACTOR_SMOKE_Y_OFFSET));
+  const y = actorPriority
+    ? baseY + yOffset * scale
+    : baseY - yOffset * cameraScale;
 
   let drawn = false;
   if (effect.model && effect.animator) drawn = drawBcuModelEffect(renderer, ctx, effect, x, y, scale);
@@ -285,7 +298,25 @@ function drawOneBcuEffect(renderer, ctx, effect) {
     }
   }
 
-  effect.lastRenderDebug = { source: 'BattleSceneAttackEffectPatch.drawEffects', x, baseX, screenOffsetX, y, worldX: effect.worldX ?? effect.x ?? null, layer, baseY, yOffset, scale, projectileContAb: projectile, scaleSource: projectile ? 'BCU ContAb psiz = siz*sprite' : 'BCU smoke psiz*sprite*1.2', mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback', partName: effect.currentPart?.name || null, modelDraw: effect.lastModelDrawDebug || null };
+  effect.lastRenderDebug = {
+    source: 'BattleSceneAttackEffectPatch.drawEffects',
+    x,
+    baseX,
+    screenOffsetX,
+    y,
+    worldX: effect.worldX ?? effect.x ?? null,
+    layer,
+    baseY,
+    yOffset,
+    yFormula: actorPriority ? 'BCU EAnimCont.draw: baseY + offsetY * psiz' : 'BCU smoke/projectile draw path',
+    scale,
+    projectileContAb: projectile,
+    actorPriorityEAnimCont: actorPriority,
+    scaleSource: actorPriority ? 'BCU StageBasis.lea EAnimCont psiz = siz*sprite*effectScale' : (projectile ? 'BCU ContAb psiz = siz*sprite' : 'BCU smoke psiz*sprite*1.2'),
+    mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback',
+    partName: effect.currentPart?.name || null,
+    modelDraw: effect.lastModelDrawDebug || null
+  };
   return drawn;
 }
 
@@ -313,7 +344,23 @@ export function installBattleSceneRendererAttackEffectPatch() {
         errors.push({ id: effect?.id || null, message: String(error?.message || error) });
       }
     }
-    globalThis.__BATTLE_EFFECT_RENDER_DEBUG__ = { source: 'BattleSceneAttackEffectPatch.drawEffects', input: list.length, active: active.length, drawn, errors, examples: active.slice(0, 5).map((effect) => ({ id: effect.id, source: effect.source, layer: effect.currentLayer, mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback', projectileContAb: isProjectileContAbEffect(effect), part: effect.currentPart?.name || null, debug: effect.lastRenderDebug || null })) };
+    globalThis.__BATTLE_EFFECT_RENDER_DEBUG__ = {
+      source: 'BattleSceneAttackEffectPatch.drawEffects',
+      input: list.length,
+      active: active.length,
+      drawn,
+      errors,
+      examples: active.slice(0, 5).map((effect) => ({
+        id: effect.id,
+        source: effect.source,
+        layer: effect.currentLayer,
+        mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback',
+        projectileContAb: isProjectileContAbEffect(effect),
+        actorPriorityEAnimCont: isActorPriorityEAnimCont(effect),
+        part: effect.currentPart?.name || null,
+        debug: effect.lastRenderDebug || null
+      }))
+    };
   };
 }
 

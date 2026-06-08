@@ -170,6 +170,7 @@ export function getFormationSummary(formation) {
 function canUseStorage() { return !!globalThis?.localStorage || (typeof window !== 'undefined' && !!window.localStorage); }
 function saveWithOptions(mutator) { const current = FormationStore.load(); const options = cloneOptions(current.options); mutator(options, current); return FormationStore.save({ ...current, options }); }
 function getCharacterOptionKey(characterId) { return cleanCharacterKey(characterId); }
+function catLevelPayload(levelConfig) { return levelConfig && typeof levelConfig === 'object' ? { ...levelConfig } : { level: levelConfig }; }
 
 export const FormationStore = {
   load() {
@@ -206,7 +207,8 @@ export const FormationStore = {
   setCatUnitLevel(characterId, levelConfig = {}) {
     const key = getCharacterOptionKey(characterId);
     if (!key) return this.load();
-    const normalized = normalizeCatUnitLevelOverride({ ...levelConfig, source: levelConfig?.source || 'formation-ui-per-character-cat-level' });
+    const payload = catLevelPayload(levelConfig);
+    const normalized = normalizeCatUnitLevelOverride({ ...payload, source: payload.source || 'formation-ui-per-character-cat-level' });
     return saveWithOptions((options) => {
       if (normalized) options.bcuCatUnitLevels[key] = normalized;
       else delete options.bcuCatUnitLevels[key];

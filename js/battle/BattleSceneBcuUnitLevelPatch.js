@@ -1,6 +1,6 @@
 import { BattleScene } from './BattleScene.js';
-import { FormationStore, BCU_DEFAULT_PREF_LEVEL, DOG_DEFAULT_MAGNIFICATION_PERCENT } from './FormationStore.js';
-import { resolveBcuUnitLevelConfig } from './bcu-runtime/BcuUnitLevelRuntime.js';
+import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT } from './FormationStore.js';
+import { BCU_DEFAULT_PREF_LEVEL, resolveBcuUnitLevelConfig } from './bcu-runtime/BcuUnitLevelRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.scene-bcu-unit-level-production.v2-per-character');
 

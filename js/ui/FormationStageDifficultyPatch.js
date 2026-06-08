@@ -1,4 +1,5 @@
 import { FormationEditor } from './FormationEditor.js';
+import { debounce, withFocusRestore } from './UiMotion.mjs';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { loadBcuStageDifficultyTable, resolveStageDifficulty } from '../bcu/BcuStageDifficultyRuntime.js';
 
@@ -128,6 +129,8 @@ function decorateMapLevel(ed, scope) {
     const map = scope.items.find((m) => m.key === card.dataset.stageMap);
     const stats = mapDifficultyStats(ed, map);
     if (stats.unresolvedReason) unresolved.push(stats.unresolvedReason);
+    card.dataset.stageDifficultyMin = stats.min >= 0 ? String(stats.min) : '';
+    card.dataset.stageDifficultyMax = stats.max >= 0 ? String(stats.max) : '';
     removeHiddenDifficultyBadge(card);
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
   }
@@ -145,6 +148,8 @@ function decorateStageLevel(ed, scope) {
     if (d.unresolvedReason || d.fallbackReason) unresolved.push(d.unresolvedReason || d.fallbackReason);
     removeHiddenDifficultyBadge(card);
     card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
+    card.dataset.stageDifficultyMin = d.diff >= 0 ? String(d.diff) : '';
+    card.dataset.stageDifficultyMax = d.diff >= 0 ? String(d.diff) : '';
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageId));
   }
   const shown = scope.items.filter((s) => !isFiltering(f) || matched.has(s.key)).length;
@@ -156,6 +161,50 @@ function decorate(ed) {
   if (!scope) { setScopeDebug(ed, null); return; }
   if (scope.type === 'map') decorateMapLevel(ed, scope);
   else if (scope.type === 'stage') decorateStageLevel(ed, scope);
+}
+function updateSummary(ed, scope, matched, shown) {
+  const summary = ed.root?.querySelector?.('.formation-stage-difficulty-summary');
+  if (!summary || !scope) return;
+  const f = filterState(ed);
+  summary.textContent = isFiltering(f) ? `表示中 ${matched} / ${scope.items.length}` : `表示中 ${shown} / ${scope.items.length}`;
+}
+function applyFilterInPlace(ed) {
+  const scope = currentScope(ed);
+  if (!scope) { setScopeDebug(ed, null); return; }
+  const f = filterState(ed);
+  if (scope.type === 'map') {
+    const matched = new Set(scope.items.filter((m) => mapMatches(ed, m, f)).map((m) => m.key));
+    for (const card of ed.root.querySelectorAll('.formation-stage-card-map[data-stage-map]')) {
+      const map = scope.items.find((m) => m.key === card.dataset.stageMap);
+      const stats = mapDifficultyStats(ed, map);
+      card.dataset.stageDifficultyMin = stats.min >= 0 ? String(stats.min) : '';
+      card.dataset.stageDifficultyMax = stats.max >= 0 ? String(stats.max) : '';
+      card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
+    }
+    const shown = scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length;
+    updateSummary(ed, scope, matched.size, shown);
+    setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown });
+    return;
+  }
+  const matched = new Set(scope.items.filter((s) => stageMatches(ed, s, f)).map((s) => s.key));
+  for (const card of ed.root.querySelectorAll('.formation-stage-card-stage[data-stage-id]')) {
+    const st = scope.items.find((s) => s.key === card.dataset.stageId || s.id === card.dataset.stageId);
+    const d = diffOf(ed, st || { key: card.dataset.stageId });
+    card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
+    card.dataset.stageDifficultyMin = d.diff >= 0 ? String(d.diff) : '';
+    card.dataset.stageDifficultyMax = d.diff >= 0 ? String(d.diff) : '';
+    card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageId));
+  }
+  const shown = scope.items.filter((s) => !isFiltering(f) || matched.has(s.key)).length;
+  updateSummary(ed, scope, matched.size, shown);
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown });
+}
+function scheduleFilter(ed, target, immediate = false) {
+  if (!ed.__bcuStageDifficultyDebouncedApply) {
+    ed.__bcuStageDifficultyDebouncedApply = debounce((input) => withFocusRestore(input, () => applyFilterInPlace(ed)), 220);
+  }
+  if (immediate) return ed.__bcuStageDifficultyDebouncedApply.flush(target);
+  return ed.__bcuStageDifficultyDebouncedApply(target);
 }
 export function installFormationStageDifficultyPatch() {
   const p = FormationEditor?.prototype;
@@ -171,7 +220,7 @@ export function installFormationStageDifficultyPatch() {
   const render = p.renderStageSelector;
   p.renderStageSelector = function renderStageSelectorWithScopedDifficulty(...args) { void ensureDifficulty(this); const r = render.apply(this, args); decorate(this); return r; };
   const input = p.onInput;
-  p.onInput = function onInputWithScopedStageDifficulty(e) { const q = e.target.closest?.('[data-stage-search-input]'), min = e.target.closest?.('[data-stage-difficulty-min]'), max = e.target.closest?.('[data-stage-difficulty-max]'); if ((q || min || max) && this.root?.contains(e.target)) { const f = this.__bcuStageDifficultyFilter || {}; this.__bcuStageDifficultyFilter = { ...f, ...(q ? { q: q.value } : {}), ...(min ? { min: min.value } : {}), ...(max ? { max: max.value } : {}) }; this.renderStageSelector(); return; } return input.call(this, e); };
+  p.onInput = function onInputWithScopedStageDifficulty(e) { const q = e.target.closest?.('[data-stage-search-input]'), min = e.target.closest?.('[data-stage-difficulty-min]'), max = e.target.closest?.('[data-stage-difficulty-max]'); if ((q || min || max) && this.root?.contains(e.target)) { const f = this.__bcuStageDifficultyFilter || {}; this.__bcuStageDifficultyFilter = { ...f, ...(q ? { q: q.value } : {}), ...(min ? { min: min.value } : {}), ...(max ? { max: max.value } : {}) }; scheduleFilter(this, e.target); return; } return input.call(this, e); };
   const click = p.onClick;
   p.onClick = function onClickWithScopedStageDifficulty(e) { const reset = e.target.closest?.('[data-stage-filter-reset]'); if (reset && this.root?.contains(reset)) { e.preventDefault(); e.stopPropagation(); this.__bcuStageDifficultyFilter = { q: '', min: null, max: null }; this.renderStageSelector(); return; } return click.call(this, e); };
 }

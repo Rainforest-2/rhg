@@ -1,4 +1,5 @@
 import { FormationEditor } from './FormationEditor.js';
+import { debounce, withFocusRestore } from './UiMotion.mjs';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty-filter-controls.v3');
 const DIFFICULTY_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
@@ -31,6 +32,13 @@ function isFiltering(f) {
 }
 
 function parseDifficultyRange(card) {
+  const rawMin = card.dataset.stageDifficultyMin ?? card.dataset.stageDifficulty;
+  const rawMax = card.dataset.stageDifficultyMax ?? card.dataset.stageDifficulty;
+  const dataMin = rawMin === '' || rawMin == null ? NaN : Number(rawMin);
+  const dataMax = rawMax === '' || rawMax == null ? NaN : Number(rawMax);
+  if (Number.isFinite(dataMin) && Number.isFinite(dataMax)) {
+    return { min: Math.min(dataMin, dataMax), max: Math.max(dataMin, dataMax), text: `★${dataMin}${dataMax === dataMin ? '' : `-${dataMax}`}` };
+  }
   const text = card.querySelector('.formation-stage-difficulty-badge')?.textContent || '';
   const match = text.match(/★\s*(\d+)(?:\s*-\s*(\d+))?/);
   if (!match) return null;
@@ -74,6 +82,8 @@ function applyDomDifficultyFilter(editor) {
     else hidden += 1;
     setCardFiltered(card, isFiltering(f) && !ok);
   }
+  const summary = root.querySelector('.formation-stage-difficulty-summary');
+  if (summary) summary.textContent = isFiltering(f) ? `表示中 ${matched} / ${cards.length}` : `表示中 ${cards.length - hidden} / ${cards.length}`;
   const debug = {
     source: 'FormationStageDifficultyFilterControlPatch',
     filter: f,
@@ -107,9 +117,16 @@ function updateFilterFromTarget(editor, target) {
     ...(min ? { min: min.value } : {}),
     ...(max ? { max: max.value } : {})
   };
-  editor.renderStageSelector?.();
-  applyDomDifficultyFilter(editor);
+  scheduleDomDifficultyFilter(editor, target);
   return true;
+}
+
+function scheduleDomDifficultyFilter(editor, target, immediate = false) {
+  if (!editor.__bcuStageDifficultyDomFilterDebounced) {
+    editor.__bcuStageDifficultyDomFilterDebounced = debounce((input) => withFocusRestore(input, () => applyDomDifficultyFilter(editor)), 220);
+  }
+  if (immediate) return editor.__bcuStageDifficultyDomFilterDebounced.flush(target);
+  return editor.__bcuStageDifficultyDomFilterDebounced(target);
 }
 
 function wireFilterControls(editor) {
@@ -124,8 +141,21 @@ function wireFilterControls(editor) {
       event.stopPropagation();
       updateFilterFromTarget(editor, event.target);
     };
+    const immediate = (event) => {
+      event.stopPropagation();
+      const previous = editor.__bcuStageDifficultyFilter || {};
+      editor.__bcuStageDifficultyFilter = {
+        ...previous,
+        ...(input.matches('[data-stage-search-input]') ? { q: input.value } : {}),
+        ...(input.matches('[data-stage-difficulty-min]') ? { min: input.value } : {}),
+        ...(input.matches('[data-stage-difficulty-max]') ? { max: input.value } : {})
+      };
+      scheduleDomDifficultyFilter(editor, event.target, true);
+    };
     input.addEventListener('input', handler);
-    input.addEventListener('change', handler);
+    input.addEventListener('change', immediate);
+    input.addEventListener('blur', immediate);
+    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') immediate(event); });
   }
 }
 

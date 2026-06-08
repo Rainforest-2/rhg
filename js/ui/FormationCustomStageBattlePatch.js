@@ -1,9 +1,11 @@
 import { FormationEditor } from './FormationEditor.js';
+import { popIn, press, pulseAdded } from './UiMotion.mjs';
 
 const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v4-hide-internal-ids');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
 const STORAGE_KEY = 'wanko.customStageBattle.v1';
 const CUSTOM_LEVEL = 'custom-stage-battle';
+const STYLE_ID = 'formation-custom-stage-multi-add-style';
 
 function uniqueList(values) {
   return [...new Set((values || []).filter(Boolean).map(String))];
@@ -11,6 +13,23 @@ function uniqueList(values) {
 
 function safeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+
+function ensureStyle() {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+html body.nyanko-ui-polish .formation-custom-stage-pickbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:3px solid #000;border-radius:8px;background:#fff2a6;box-shadow:0 3px 0 #000}
+html body.nyanko-ui-polish .formation-custom-stage-pickbar strong{font-weight:1000;color:#120700}
+html body.nyanko-ui-polish .formation-custom-stage-pickbar span{font-size:.82rem;font-weight:900;color:#5b320c}
+html body.nyanko-ui-polish .formation-custom-stage-pickbar button{min-height:36px;padding:0 16px;border:3px solid #000;border-radius:999px;background:linear-gradient(180deg,#ff6a19,#f15212 52%,#e14008);color:#fff;-webkit-text-fill-color:#fff;font-weight:1000;box-shadow:0 3px 0 #000}
+html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added{position:relative;outline:4px solid #ffdf36;outline-offset:-6px;filter:saturate(1.05) brightness(1.03)}
+html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added::after{content:'追加済み';position:absolute;right:8px;bottom:7px;z-index:4;padding:3px 8px;border:2px solid #000;border-radius:999px;background:#ffdf36;color:#120700;font-size:.72rem;font-weight:1000;box-shadow:0 2px 0 #000;pointer-events:none}
+html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-just-added{filter:brightness(1.12) saturate(1.12)}
+html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-duplicate{filter:brightness(1.08) saturate(.9)}
+@media (max-width:680px){html body.nyanko-ui-polish .formation-custom-stage-pickbar{align-items:stretch;flex-direction:column}.formation-custom-stage-pickbar button{width:100%}}`;
+  document.head.appendChild(style);
 }
 
 function stateFromStorage() {
@@ -114,6 +133,7 @@ function updateCurrentStageLabel(editor, stageId) {
 }
 
 function addCustomCategoryCard(editor) {
+  ensureStyle();
   const state = editor.stageSelectorState || {};
   if (state.level !== 'category') return;
   const list = editor.root?.querySelector?.('.formation-stage-list');
@@ -132,6 +152,7 @@ function renderList(editor, side, ids) {
 }
 
 function renderCustomStageBattleView(editor) {
+  ensureStyle();
   const state = ensureState(editor);
   const config = normalizedConfig(editor);
   const baseStageId = currentBaseStageId(state);
@@ -176,12 +197,19 @@ function renderCustomStageBattleView(editor) {
 function addStage(editor, side, id) {
   const state = ensureState(editor);
   const key = side === 'player' ? 'playerStageIds' : 'enemyStageIds';
-  if (id && !state[key].includes(id)) state[key].push(id);
+  const added = !!id && !state[key].includes(id);
+  if (added) state[key].push(id);
   state[key] = uniqueList(state[key]);
-  state.pickingSide = null;
   persistState(editor);
-  editor.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
+  editor.__customStageLastPick = { id, side, added, timestamp: Date.now() };
   editor.renderStageSelector();
+  requestAnimationFrame(() => {
+    const card = [...(editor.root?.querySelectorAll?.('[data-stage-id]') || [])].find((item) => item.dataset.stageId === id);
+    if (!card) return;
+    card.classList.add(added ? 'is-custom-stage-just-added' : 'is-custom-stage-duplicate');
+    pulseAdded(card, !added);
+    setTimeout(() => card.classList.remove('is-custom-stage-just-added', 'is-custom-stage-duplicate'), 220);
+  });
 }
 
 function removeStage(editor, side, index) {
@@ -195,17 +223,38 @@ function removeStage(editor, side, index) {
 }
 
 function updateCustomUiAfterRender(editor) {
+  ensureStyle();
   const state = ensureState(editor);
   if (editor.stageSelectorState?.level === CUSTOM_LEVEL) {
     renderCustomStageBattleView(editor);
+    popIn(editor.root?.querySelector?.('.formation-custom-stage-battle'), { duration: 135 });
     return;
   }
   updateCurrentStageLabel(editor, currentBaseStageId(state) || editor.selectedStageId);
   addCustomCategoryCard(editor);
+  decoratePickingMode(editor, state);
   const lead = editor.root?.querySelector?.('.formation-stage-dialog header span');
   if (lead && state.pickingSide && editor.stageSelectorState?.level !== CUSTOM_LEVEL) {
     lead.textContent = '';
     lead.hidden = true;
+  }
+}
+
+function decoratePickingMode(editor, state = ensureState(editor)) {
+  if (!state.pickingSide || editor.stageSelectorState?.level === CUSTOM_LEVEL) return;
+  const list = editor.root?.querySelector?.('.formation-stage-list');
+  if (!list) return;
+  const label = state.pickingSide === 'player' ? '味方側' : '敵側';
+  if (!list.querySelector('[data-custom-stage-pick-done]')) {
+    list.insertAdjacentHTML('afterbegin', `<div class='formation-custom-stage-pickbar'>
+      <div><strong>${safeHtml(label)}にステージを追加</strong><span>ステージをタップすると追加します。続けて複数追加できます。</span></div>
+      <button type='button' data-custom-stage-pick-done='1'>完了</button>
+    </div>`);
+    popIn(list.querySelector('.formation-custom-stage-pickbar'), { duration: 130 });
+  }
+  const selected = new Set(state.pickingSide === 'player' ? state.playerStageIds : state.enemyStageIds);
+  for (const card of list.querySelectorAll('.formation-stage-card-stage[data-stage-id]')) {
+    card.classList.toggle('is-custom-stage-added', selected.has(card.dataset.stageId));
   }
 }
 
@@ -231,6 +280,7 @@ function patchFormationEditor() {
     if (customCategory && this.root?.contains(customCategory)) {
       e.preventDefault();
       e.stopPropagation();
+      press(customCategory);
       ensureState(this).pickingSide = null;
       persistState(this);
       this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
@@ -242,8 +292,21 @@ function patchFormationEditor() {
     if (pick && this.root?.contains(pick)) {
       e.preventDefault();
       e.stopPropagation();
+      press(pick);
       ensureState(this).pickingSide = pick.dataset.customStagePickSide === 'player' ? 'player' : 'enemy';
       this.stageSelectorState = { level: 'category', categoryId: null, mapKey: null };
+      this.renderStageSelector();
+      return;
+    }
+
+    const done = e.target.closest?.('[data-custom-stage-pick-done]');
+    if (done && this.root?.contains(done)) {
+      e.preventDefault();
+      e.stopPropagation();
+      press(done);
+      ensureState(this).pickingSide = null;
+      persistState(this);
+      this.stageSelectorState = { level: CUSTOM_LEVEL, categoryId: null, mapKey: null };
       this.renderStageSelector();
       return;
     }
@@ -252,6 +315,7 @@ function patchFormationEditor() {
     if (remove && this.root?.contains(remove)) {
       e.preventDefault();
       e.stopPropagation();
+      press(remove);
       removeStage(this, remove.dataset.customStageRemoveSide, remove.dataset.customStageRemoveIndex);
       return;
     }
@@ -260,6 +324,7 @@ function patchFormationEditor() {
     if (toggle && this.root?.contains(toggle)) {
       e.preventDefault();
       e.stopPropagation();
+      press(toggle);
       const state = ensureState(this);
       state.enabled = !state.enabled;
       persistState(this);
@@ -271,6 +336,7 @@ function patchFormationEditor() {
     if (baseEnemy && this.root?.contains(baseEnemy)) {
       e.preventDefault();
       e.stopPropagation();
+      press(baseEnemy);
       ensureState(this).baseSource = 'enemy';
       persistState(this);
       this.renderStageSelector();
@@ -281,6 +347,7 @@ function patchFormationEditor() {
     if (basePlayer && this.root?.contains(basePlayer)) {
       e.preventDefault();
       e.stopPropagation();
+      press(basePlayer);
       ensureState(this).baseSource = 'player';
       persistState(this);
       this.renderStageSelector();
@@ -291,6 +358,7 @@ function patchFormationEditor() {
     if (clear && this.root?.contains(clear)) {
       e.preventDefault();
       e.stopPropagation();
+      press(clear);
       const state = ensureState(this);
       state.enemyStageIds = [];
       state.playerStageIds = [];
@@ -306,6 +374,7 @@ function patchFormationEditor() {
     if (stageCard && state.pickingSide && this.root?.contains(stageCard)) {
       e.preventDefault();
       e.stopPropagation();
+      press(stageCard);
       addStage(this, state.pickingSide, stageCard.dataset.stageId);
       return;
     }

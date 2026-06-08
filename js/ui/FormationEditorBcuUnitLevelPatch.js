@@ -1,5 +1,6 @@
 import { FormationEditor } from './FormationEditor.js';
-import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT } from '../battle/FormationStore.js';
+import { fadeIn, fadeOut, popIn, popOut, press } from './UiMotion.mjs';
+import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT, LINEUP_COLS } from '../battle/FormationStore.js';
 import { getCharacterById } from '../battle/CharacterCatalog.js';
 import {
   BCU_DEFAULT_PREF_LEVEL,
@@ -89,19 +90,19 @@ function injectStyle() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-@font-face{font-family:OedoKanteiryuLocal;src:url('./public/assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf') format('opentype');font-weight:900;font-style:normal;font-display:block}
+@font-face{font-family:HakusyuTuningLocal;src:url('./public/assets/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block}
 html body.nyanko-ui-polish .formation-slot{position:relative!important;overflow:visible!important}
-html body.nyanko-ui-polish .formation-tuning-badge{position:absolute;right:5px;bottom:5px;z-index:6;min-width:46px;height:22px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;border:3px solid #000;border-radius:999px;background:#f15212;color:#fff;-webkit-text-fill-color:#fff;font-family:OedoKanteiryuLocal,"Hiragino Kaku Gothic ProN",system-ui,sans-serif;font-size:.72rem;font-weight:900;line-height:1;letter-spacing:.01em;box-shadow:0 2px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;pointer-events:none}
+html body.nyanko-ui-polish .formation-tuning-badge{position:absolute;right:5px;bottom:5px;z-index:6;min-width:46px;height:22px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;border:3px solid #000;border-radius:999px;background:#f15212;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.72rem;font-weight:900;line-height:1;letter-spacing:.01em;box-shadow:0 2px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-tuning-overlay{position:fixed;inset:0;z-index:99980;display:none;place-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:rgba(0,0,0,.48);backdrop-filter:blur(2px);touch-action:none}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid;animation:formationTuningFade .12s ease-out both}
 @keyframes formationTuningFade{from{opacity:0}to{opacity:1}}
 html body.nyanko-ui-polish .formation-tuning-panel{width:min(920px,calc(100vw - 28px));max-height:calc(100dvh - 20px);display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:6px solid #000;border-radius:22px;background:#fff4c2;box-shadow:0 10px 0 #160804,0 0 0 4px rgba(255,255,255,.12);transform-origin:center;animation:formationTuningPop .14s cubic-bezier(.2,1.18,.2,1) both}
 @keyframes formationTuningPop{from{transform:scale(.94) translateY(8px)}to{transform:scale(1) translateY(0)}}
 html body.nyanko-ui-polish .formation-tuning-header{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px 9px;border-bottom:5px solid #000;background:linear-gradient(180deg,#ff6a19 0%,#f15212 48%,#e14008 100%)}
-html body.nyanko-ui-polish .formation-tuning-title{min-width:0;display:grid;gap:2px;color:#fff;-webkit-text-fill-color:#fff;font-family:OedoKanteiryuLocal,"Hiragino Mincho ProN",system-ui,sans-serif;font-weight:900;text-shadow:3px 0 #000,-3px 0 #000,0 3px #000,0 -3px #000,2px 2px #000,-2px 2px #000,2px -2px #000,-2px -2px #000}
+html body.nyanko-ui-polish .formation-tuning-title{min-width:0;display:grid;gap:2px;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:900;text-shadow:3px 0 #000,-3px 0 #000,0 3px #000,0 -3px #000,2px 2px #000,-2px 2px #000,2px -2px #000,-2px -2px #000}
 html body.nyanko-ui-polish .formation-tuning-title strong{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(1.35rem,2vw,2.05rem);line-height:1.05;letter-spacing:.02em}
 html body.nyanko-ui-polish .formation-tuning-title span{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.74rem;font-weight:900;color:#fff9e8;-webkit-text-fill-color:#fff9e8;text-shadow:none;letter-spacing:.04em}
-html body.nyanko-ui-polish .formation-tuning-close{min-width:72px;height:40px;border:4px solid #000;border-radius:999px;background:#fff3a9;color:#100500;-webkit-text-fill-color:#100500;font-family:OedoKanteiryuLocal,"Hiragino Mincho ProN",system-ui,sans-serif;font-size:1rem;font-weight:900;box-shadow:0 4px 0 #000;text-shadow:none}
+html body.nyanko-ui-polish .formation-tuning-close{min-width:72px;height:40px;border:4px solid #000;border-radius:999px;background:#fff3a9;color:#100500;-webkit-text-fill-color:#100500;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1rem;font-weight:900;box-shadow:0 4px 0 #000;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-close:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
 html body.nyanko-ui-polish .formation-tuning-hero{grid-row:2/4;display:grid;grid-template-rows:1fr auto;gap:10px;align-items:center;justify-items:center;padding:14px;border-right:5px solid #000;background:radial-gradient(circle at 50% 34%,#fffdf0 0 36%,#ffd85a 37% 58%,#c88418 59% 100%)}
 html body.nyanko-ui-polish .formation-tuning-portrait{width:min(166px,28vw);aspect-ratio:1;border:5px solid #000;border-radius:18px;background:#fffdf0;display:grid;place-items:center;box-shadow:0 6px 0 #000,inset 0 2px 0 rgba(255,255,255,.8);overflow:hidden}
@@ -115,14 +116,14 @@ html body.nyanko-ui-polish .formation-tuning-control-head{display:flex;align-ite
 html body.nyanko-ui-polish .formation-tuning-control-head strong{font-size:.96rem;letter-spacing:.04em}
 html body.nyanko-ui-polish .formation-tuning-control-head span{font-size:.75rem;color:#5c3510;-webkit-text-fill-color:#5c3510;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-stepper{display:grid;grid-template-columns:58px 52px minmax(86px,1fr) 52px 58px;gap:8px;align-items:center}
-html body.nyanko-ui-polish .formation-tuning-btn,html body.nyanko-ui-polish .formation-tuning-save,html body.nyanko-ui-polish .formation-tuning-reset{min-height:44px;border:4px solid #000;border-radius:999px;background:linear-gradient(180deg,#ff6a19,#f15212 52%,#e14008);color:#fff;-webkit-text-fill-color:#fff;font-family:OedoKanteiryuLocal,"Hiragino Mincho ProN",system-ui,sans-serif;font-size:1.05rem;font-weight:900;line-height:1;box-shadow:0 4px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000}
+html body.nyanko-ui-polish .formation-tuning-btn,html body.nyanko-ui-polish .formation-tuning-save,html body.nyanko-ui-polish .formation-tuning-reset{min-height:44px;border:4px solid #000;border-radius:999px;background:linear-gradient(180deg,#ff6a19,#f15212 52%,#e14008);color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.05rem;font-weight:900;line-height:1;box-shadow:0 4px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000}
 html body.nyanko-ui-polish .formation-tuning-btn:disabled{opacity:.42;filter:saturate(.55);transform:none;box-shadow:0 2px 0 #000}
 html body.nyanko-ui-polish .formation-tuning-btn:active:not(:disabled),html body.nyanko-ui-polish .formation-tuning-save:active,html body.nyanko-ui-polish .formation-tuning-reset:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
-html body.nyanko-ui-polish .formation-tuning-readout{min-width:0;height:50px;border:4px solid #000;border-radius:16px;background:#111;color:#fff;-webkit-text-fill-color:#fff;font-family:OedoKanteiryuLocal,"Hiragino Mincho ProN",system-ui,sans-serif;font-size:1.55rem;font-weight:900;text-align:center;box-shadow:inset 0 2px 6px rgba(0,0,0,.7);text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}
+html body.nyanko-ui-polish .formation-tuning-readout{min-width:0;height:50px;border:4px solid #000;border-radius:16px;background:#111;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.55rem;font-weight:900;text-align:center;box-shadow:inset 0 2px 6px rgba(0,0,0,.7);text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}
 html body.nyanko-ui-polish .formation-tuning-meter{height:12px;border:3px solid #000;border-radius:999px;background:#2a1207;overflow:hidden}
 html body.nyanko-ui-polish .formation-tuning-meter span{display:block;height:100%;width:calc(var(--value,0)*1%);background:linear-gradient(90deg,#ffe25a,#ff8f1c)}
 html body.nyanko-ui-polish .formation-tuning-presets{display:flex;flex-wrap:wrap;gap:8px}.formation-tuning-presets .formation-tuning-btn{min-width:76px;font-size:.92rem;background:#fff2a6;color:#140700;-webkit-text-fill-color:#140700;text-shadow:none}
-html body.nyanko-ui-polish .formation-tuning-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.formation-tuning-stat{min-width:0;padding:8px 9px;border:3px solid #000;border-radius:14px;background:#111;color:#fff8d8;-webkit-text-fill-color:#fff8d8;text-align:center;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:900;text-shadow:none}.formation-tuning-stat b{display:block;color:#fff;-webkit-text-fill-color:#fff;font-family:OedoKanteiryuLocal,"Hiragino Mincho ProN",system-ui,sans-serif;font-size:1.1rem;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}.formation-tuning-stat small{display:block;margin-top:2px;color:#ffe8a8;-webkit-text-fill-color:#ffe8a8;font-size:.66rem;text-shadow:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body.nyanko-ui-polish .formation-tuning-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.formation-tuning-stat{min-width:0;padding:8px 9px;border:3px solid #000;border-radius:14px;background:#111;color:#fff8d8;-webkit-text-fill-color:#fff8d8;text-align:center;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:900;text-shadow:none}.formation-tuning-stat b{display:block;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.1rem;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}.formation-tuning-stat small{display:block;margin-top:2px;color:#ffe8a8;-webkit-text-fill-color:#ffe8a8;font-size:.66rem;text-shadow:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body.nyanko-ui-polish .formation-tuning-footer{grid-column:2;display:grid;grid-template-columns:minmax(120px,.55fr) minmax(150px,1fr);gap:10px;padding:11px 13px;border-top:5px solid #000;background:#f6c240}.formation-tuning-reset{background:#fff2a6;color:#160800;-webkit-text-fill-color:#160800;text-shadow:none}.formation-tuning-save{font-size:1.25rem}
 @media (max-width:860px){html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) auto;width:min(560px,calc(100vw - 18px))}.formation-tuning-hero{grid-row:auto!important;border-right:0!important;border-bottom:5px solid #000!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-rows:auto!important;justify-items:start!important;padding:10px 12px!important}.formation-tuning-portrait{width:82px!important;border-radius:14px!important}.formation-tuning-hero-meta{text-align:left!important}.formation-tuning-footer{grid-column:1!important}.formation-tuning-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-height:520px) and (orientation:landscape){html body.nyanko-ui-polish .formation-tuning-overlay{padding:6px calc(8px + env(safe-area-inset-right,0px)) 6px calc(8px + env(safe-area-inset-left,0px))}.formation-tuning-panel{width:min(900px,calc(100vw - 16px))!important;max-height:calc(100dvh - 12px)!important;grid-template-columns:190px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;border-width:5px!important;border-radius:18px!important}.formation-tuning-header{padding:7px 10px 6px!important}.formation-tuning-title strong{font-size:1.28rem!important}.formation-tuning-hero{grid-row:2/4!important;border-right:5px solid #000!important;border-bottom:0!important;display:grid!important;grid-template-columns:1fr!important;padding:10px!important}.formation-tuning-portrait{width:112px!important}.formation-tuning-body{padding:9px!important;gap:8px!important}.formation-tuning-control{padding:8px!important;gap:6px!important}.formation-tuning-stepper{grid-template-columns:50px 46px minmax(76px,1fr) 46px 50px!important;gap:6px!important}.formation-tuning-btn,.formation-tuning-save,.formation-tuning-reset{min-height:38px!important;font-size:.9rem!important}.formation-tuning-readout{height:42px!important;font-size:1.28rem!important}.formation-tuning-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important}.formation-tuning-stat{padding:6px!important}.formation-tuning-footer{grid-column:2!important;padding:8px 10px!important}}
@@ -262,9 +263,16 @@ function renderTuningOverlay(editor) {
     overlay.innerHTML = '';
     return;
   }
+  const wasOpen = overlay.classList.contains('is-open');
+  const wasClosing = overlay.dataset.tuningClosing === '1';
+  delete overlay.dataset.tuningClosing;
   overlay.classList.add('is-open');
   overlay.innerHTML = draft.faction === 'cat' ? renderCatPanel(editor, draft) : renderDogPanel(editor, draft);
   editor.resolveSemanticIcons?.();
+  if (!wasOpen || wasClosing) {
+    fadeIn(overlay, { duration: 120, display: 'grid' });
+    popIn(overlay.querySelector('.formation-tuning-panel'), { duration: 145 });
+  }
 }
 
 function openTuningOverlay(editor, characterId, slotIndex = null) {
@@ -277,8 +285,18 @@ function openTuningOverlay(editor, characterId, slotIndex = null) {
 }
 
 function closeTuningOverlay(editor) {
+  const overlay = editor.root?.querySelector?.('.formation-tuning-overlay');
+  const panel = overlay?.querySelector?.('.formation-tuning-panel');
   editor.characterTuningDraft = null;
-  renderTuningOverlay(editor);
+  if (!overlay?.classList.contains('is-open')) return renderTuningOverlay(editor);
+  overlay.dataset.tuningClosing = '1';
+  popOut(panel, { duration: 105 });
+  fadeOut(overlay, { duration: 120, display: 'grid' }).then(() => {
+    if (editor.characterTuningDraft) return;
+    delete overlay.dataset.tuningClosing;
+    overlay.classList.remove('is-open');
+    overlay.innerHTML = '';
+  });
 }
 
 function stepDraft(editor, key, delta) {
@@ -382,6 +400,76 @@ function decorateSlotBadges(editor) {
   }
 }
 
+function cancelLongPress(editor) {
+  const state = editor.__formationTuningLongPress;
+  if (!state) return;
+  clearTimeout(state.timer);
+  editor.__formationTuningLongPress = null;
+}
+
+function armLongPress(editor, event) {
+  const slot = event.target.closest?.('[data-slot]');
+  if (!slot || !editor.root?.contains(slot)) return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  const slotIndex = Number(slot.dataset.slot);
+  const characterId = slotCharacterId(editor, slotIndex);
+  if (!characterId || !getCharacterById(characterId)) return;
+  cancelLongPress(editor);
+  const startX = Number(event.clientX) || 0;
+  const startY = Number(event.clientY) || 0;
+  const pointerId = event.pointerId;
+  editor.__formationTuningLongPress = {
+    pointerId,
+    slotIndex,
+    characterId,
+    startX,
+    startY,
+    fired: false,
+    timer: setTimeout(() => {
+      const state = editor.__formationTuningLongPress;
+      if (!state || state.pointerId !== pointerId) return;
+      state.fired = true;
+      editor.__formationTuningSuppressClickUntil = Date.now() + 700;
+      editor.activeSlot = slotIndex;
+      editor.activePage = Math.max(0, Math.floor(slotIndex / LINEUP_COLS));
+      decorateSlotBadges(editor);
+      press(slot);
+      openTuningOverlay(editor, characterId, slotIndex);
+    }, 520)
+  };
+}
+
+function moveLongPress(editor, event) {
+  const state = editor.__formationTuningLongPress;
+  if (!state || state.pointerId !== event.pointerId || state.fired) return;
+  const dx = (Number(event.clientX) || 0) - state.startX;
+  const dy = (Number(event.clientY) || 0) - state.startY;
+  if (Math.hypot(dx, dy) > 12) cancelLongPress(editor);
+}
+
+function finishLongPress(editor, event) {
+  const state = editor.__formationTuningLongPress;
+  if (state?.fired && state.pointerId === event.pointerId) {
+    editor.__formationTuningSuppressClickUntil = Date.now() + 700;
+  }
+  cancelLongPress(editor);
+}
+
+function wireLongPress(editor) {
+  if (!editor?.root || editor.__formationTuningLongPressWired) return;
+  editor.__formationTuningLongPressWired = true;
+  editor.root.addEventListener('pointerdown', (event) => armLongPress(editor, event), true);
+  editor.root.addEventListener('pointermove', (event) => moveLongPress(editor, event), true);
+  editor.root.addEventListener('pointerup', (event) => finishLongPress(editor, event), true);
+  editor.root.addEventListener('pointercancel', (event) => finishLongPress(editor, event), true);
+  editor.root.addEventListener('contextmenu', (event) => {
+    if (Date.now() <= (editor.__formationTuningSuppressClickUntil || 0) && event.target.closest?.('[data-slot]')) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+}
+
 export function installFormationEditorBcuUnitLevelPatch() {
   const proto = FormationEditor?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
@@ -436,6 +524,7 @@ export function installFormationEditorBcuUnitLevelPatch() {
     injectStyle();
     tuningOverlay(this);
     decorateSlotBadges(this);
+    wireLongPress(this);
     return result;
   };
 
@@ -469,6 +558,7 @@ export function installFormationEditorBcuUnitLevelPatch() {
     if ((close || save || reset || step || preset) && this.root?.contains(event.target)) {
       event.preventDefault();
       event.stopPropagation();
+      press(close || save || reset || step || preset);
       if (close) return closeTuningOverlay(this);
       if (save) return saveDraft(this);
       if (reset) return resetDraft(this);
@@ -483,15 +573,10 @@ export function installFormationEditorBcuUnitLevelPatch() {
     }
     const slot = event.target.closest?.('[data-slot]');
     if (slot && this.root?.contains(slot)) {
-      const slotIndex = Number(slot.dataset.slot);
-      const characterId = slotCharacterId(this, slotIndex);
-      if (characterId && getCharacterById(characterId)) {
+      if (Date.now() <= (this.__formationTuningSuppressClickUntil || 0)) {
         event.preventDefault();
         event.stopPropagation();
-        this.activeSlot = slotIndex;
-        this.activePage = Math.max(0, Math.floor(slotIndex / 5));
-        decorateSlotBadges(this);
-        return openTuningOverlay(this, characterId, slotIndex);
+        return;
       }
     }
     return originalOnClick.call(this, event);

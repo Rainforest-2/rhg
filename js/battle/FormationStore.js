@@ -4,8 +4,9 @@ import { BCU_DEFAULT_PREF_LEVEL } from './bcu-runtime/BcuUnitLevelRuntime.js';
 export const LINEUP_ROWS = 2;
 export const LINEUP_COLS = 5;
 export const LINEUP_TOTAL = LINEUP_ROWS * LINEUP_COLS;
-export const FORMATION_VERSION = 3;
+export const FORMATION_VERSION = 4;
 export const FORMATION_STORAGE_KEY = 'wanko-battle.formation.v2';
+export const DOG_DEFAULT_MAGNIFICATION_PERCENT = 100;
 
 export const DEFAULT_FLAT_SLOTS = Object.freeze([
   'dog-enemy-000', 'dog-enemy-001', 'dog-enemy-002', 'cat-unit-000-f', 'cat-unit-001-f',
@@ -17,7 +18,9 @@ export const DEFAULT_FORMATION_OPTIONS = Object.freeze({
     enabled: true,
     prefLevel: BCU_DEFAULT_PREF_LEVEL,
     source: 'BCU CommonStatic.Config.prefLevel default'
-  })
+  }),
+  bcuCatUnitLevels: Object.freeze({}),
+  dogUnitMagnifications: Object.freeze({})
 });
 
 export const DEFAULT_FORMATION = Object.freeze({
@@ -36,6 +39,9 @@ export const toFlatIndex = (row, col) => row * LINEUP_COLS + col;
 export const toRowCol = (flatIndex) => ({ row: Math.floor(flatIndex / LINEUP_COLS), col: flatIndex % LINEUP_COLS });
 
 const clonePages = (pages) => Array.from({ length: LINEUP_ROWS }, (_, row) => Array.from({ length: LINEUP_COLS }, (_, col) => pages?.[row]?.[col] ?? null));
+const cleanCharacterKey = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
+const toInt = (value, fallback = null) => { const n = Number(value); return Number.isFinite(n) ? Math.trunc(n) : fallback; };
+const clampMin = (value, min, fallback) => Math.max(min, toInt(value, fallback));
 
 function normalizeCatUnitLevelOptions(options = {}) {
   const raw = options?.bcuCatUnitLevel || {};
@@ -47,8 +53,56 @@ function normalizeCatUnitLevelOptions(options = {}) {
   };
 }
 
+function normalizeCatUnitLevelOverride(raw = {}) {
+  if (raw == null) return null;
+  const source = typeof raw === 'object' ? raw : { level: raw };
+  const level = source.level == null || source.level === '' ? null : clampMin(source.level, 1, null);
+  const plusLevel = source.plusLevel == null || source.plusLevel === '' ? null : clampMin(source.plusLevel, 0, null);
+  const prefLevel = source.prefLevel == null || source.prefLevel === '' ? null : clampMin(source.prefLevel, 1, BCU_DEFAULT_PREF_LEVEL);
+  if (level == null && plusLevel == null && prefLevel == null) return null;
+  return {
+    enabled: source.enabled !== false,
+    ...(level != null ? { level } : {}),
+    ...(plusLevel != null ? { plusLevel } : {}),
+    ...(prefLevel != null ? { prefLevel } : {}),
+    source: source.source || 'formation-store-per-character-cat-level'
+  };
+}
+
+function normalizeCatUnitLevelMap(options = {}) {
+  const raw = options?.bcuCatUnitLevels || options?.bcuCatUnitLevelByCharacter || options?.perCharacterCatLevels || {};
+  const out = {};
+  for (const [key, value] of Object.entries(raw || {})) {
+    const characterId = cleanCharacterKey(key);
+    const normalized = normalizeCatUnitLevelOverride(value);
+    if (characterId && normalized) out[characterId] = normalized;
+  }
+  return out;
+}
+
+function normalizeDogMagnificationOverride(raw) {
+  const source = raw && typeof raw === 'object' ? raw : { percent: raw };
+  const percentRaw = source.percent ?? source.magnification ?? source.value ?? DOG_DEFAULT_MAGNIFICATION_PERCENT;
+  const percent = Math.max(1, Math.min(999900, Math.trunc(Number(percentRaw) || DOG_DEFAULT_MAGNIFICATION_PERCENT)));
+  return { enabled: source.enabled !== false, percent, source: source.source || 'formation-store-dog-magnification' };
+}
+
+function normalizeDogMagnificationMap(options = {}) {
+  const raw = options?.dogUnitMagnifications || options?.dogMagnifications || options?.dogUnitMagnificationByCharacter || {};
+  const out = {};
+  for (const [key, value] of Object.entries(raw || {})) {
+    const characterId = cleanCharacterKey(key);
+    if (characterId) out[characterId] = normalizeDogMagnificationOverride(value);
+  }
+  return out;
+}
+
 function cloneOptions(options = {}) {
-  return { bcuCatUnitLevel: normalizeCatUnitLevelOptions(options) };
+  return {
+    bcuCatUnitLevel: normalizeCatUnitLevelOptions(options),
+    bcuCatUnitLevels: normalizeCatUnitLevelMap(options),
+    dogUnitMagnifications: normalizeDogMagnificationMap(options)
+  };
 }
 
 function cloneFormation(formation) { const pages=clonePages(formation?.pages); return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages, slots: pages[0].slice(), options: cloneOptions(formation?.options) }; }
@@ -114,6 +168,8 @@ export function getFormationSummary(formation) {
 }
 
 function canUseStorage() { return !!globalThis?.localStorage || (typeof window !== 'undefined' && !!window.localStorage); }
+function saveWithOptions(mutator) { const current = FormationStore.load(); const options = cloneOptions(current.options); mutator(options, current); return FormationStore.save({ ...current, options }); }
+function getCharacterOptionKey(characterId) { return cleanCharacterKey(characterId); }
 
 export const FormationStore = {
   load() {
@@ -137,12 +193,47 @@ export const FormationStore = {
   getFormationSummary(formation) { return getFormationSummary(formation); },
   getOptions() { return getFormationOptions(this.load()); },
   setCatUnitPrefLevel(prefLevel) {
-    const current = this.load();
-    const options = cloneOptions(current.options);
-    options.bcuCatUnitLevel.prefLevel = Math.max(1, Math.trunc(Number(prefLevel) || BCU_DEFAULT_PREF_LEVEL));
-    options.bcuCatUnitLevel.enabled = true;
-    options.bcuCatUnitLevel.source = 'formation-ui-pref-level';
-    return this.save({ ...current, options });
+    return saveWithOptions((options) => {
+      options.bcuCatUnitLevel.prefLevel = Math.max(1, Math.trunc(Number(prefLevel) || BCU_DEFAULT_PREF_LEVEL));
+      options.bcuCatUnitLevel.enabled = true;
+      options.bcuCatUnitLevel.source = 'formation-ui-pref-level';
+    });
+  },
+  getCatUnitLevel(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    return key ? (this.getOptions().bcuCatUnitLevels[key] || null) : null;
+  },
+  setCatUnitLevel(characterId, levelConfig = {}) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    const normalized = normalizeCatUnitLevelOverride({ ...levelConfig, source: levelConfig?.source || 'formation-ui-per-character-cat-level' });
+    return saveWithOptions((options) => {
+      if (normalized) options.bcuCatUnitLevels[key] = normalized;
+      else delete options.bcuCatUnitLevels[key];
+    });
+  },
+  clearCatUnitLevel(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    return saveWithOptions((options) => { delete options.bcuCatUnitLevels[key]; });
+  },
+  getDogUnitMagnification(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    return key ? (this.getOptions().dogUnitMagnifications[key] || { enabled: true, percent: DOG_DEFAULT_MAGNIFICATION_PERCENT, source: 'default' }) : null;
+  },
+  setDogUnitMagnification(characterId, percentOrConfig = DOG_DEFAULT_MAGNIFICATION_PERCENT) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    const normalized = normalizeDogMagnificationOverride(percentOrConfig);
+    return saveWithOptions((options) => {
+      if (normalized.percent === DOG_DEFAULT_MAGNIFICATION_PERCENT && normalized.enabled !== false) delete options.dogUnitMagnifications[key];
+      else options.dogUnitMagnifications[key] = { ...normalized, source: normalized.source || 'formation-ui-dog-magnification' };
+    });
+  },
+  clearDogUnitMagnification(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    return saveWithOptions((options) => { delete options.dogUnitMagnifications[key]; });
   },
   setSlot(index, characterId) {
     const i = Math.floor(index); if (i < 0 || i >= LINEUP_TOTAL) return this.load();

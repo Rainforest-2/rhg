@@ -41,6 +41,7 @@ async function boot() {
     await import('./ui/FormationCharacterTuningMobileLandscapePatch.js');
     await import('./ui/FormationCustomStageBattlePatch.js');
     await import('./ui/FormationStageDifficultyPatch.js');
+    await import('./ui/FormationUiRegressionFixPatch.js');
     await import('./ui/FormationCustomStageBattleHpPatch.js');
     await import('./ui/FormationCustomStageBattleApplyHpConfigPatch.js');
     await import('./bcu/BcuExtraActorAnimationBundlePatch.js');
@@ -48,7 +49,6 @@ async function boot() {
     await import('./battle/BattleBcuStrictConfigPatch.js');
     await import('./battle/StageDefinitionNegativeSpawnPatch.js');
     await import('./battle/BattleActorBcuKbTargetPatch.js');
-    await import('./battle/BattleActorProcStatusPatch.js');
     await import('./battle/BattleToxicEffectAssetPatch.js');
     await import('./battle/BattleSceneBcuUnitLevelPatch.js');
     await import('./battle/BcuDelayRuntimePatch.js');

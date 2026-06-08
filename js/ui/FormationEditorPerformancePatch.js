@@ -64,7 +64,6 @@ function renderCategoryCards(catalog) {
 function renderMapCards(category) {
   return (category?.maps || []).map((map) => `<button type='button' class='formation-stage-card formation-stage-card-map' data-stage-map='${safeHtml(map.key)}'>
     <strong>${safeHtml(map.label)}</strong>
-    <span class='formation-stage-card-meta'><b>${map.stageCount}ステージ</b><i>${Number.isFinite(map.mapNo) ? `No.${map.mapNoRaw}` : 'マップ'}</i></span>
   </button>`).join('');
 }
 
@@ -73,7 +72,6 @@ function renderStageCards(editor, map) {
     const active = stage.key === editor.selectedStageId || stage.stage?.stageId === editor.selectedStageId || stage.stage?.stageKey === editor.selectedStageId;
     return `<button type='button' class='formation-stage-card formation-stage-card-stage ${active ? 'is-active' : ''}' data-stage-id='${safeHtml(stage.key)}'>
       <strong>${safeHtml(stage.label)}</strong>
-      <span class='formation-stage-card-meta'><b>${active ? '選択中' : `No.${safeHtml(stage.stageNoRaw)}`}</b><i>${safeHtml(stage.mapNoRaw ? `Map ${stage.mapNoRaw}` : 'Stage')}</i></span>
     </button>`;
   }).join('');
 }

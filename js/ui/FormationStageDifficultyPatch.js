@@ -1,6 +1,6 @@
 import { FormationEditor } from './FormationEditor.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
-import { formatBcuStageDifficulty, loadBcuStageDifficultyTable, resolveStageDifficulty } from '../bcu/BcuStageDifficultyRuntime.js';
+import { loadBcuStageDifficultyTable, resolveStageDifficulty } from '../bcu/BcuStageDifficultyRuntime.js';
 
 const FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
 const STYLE_ID = 'formation-stage-difficulty-style';
@@ -117,6 +117,9 @@ function setScopeDebug(ed, scope, detail = {}) {
   globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ = debug;
   return debug;
 }
+function removeHiddenDifficultyBadge(card) {
+  card.querySelector('.formation-stage-difficulty-badge')?.remove();
+}
 function decorateMapLevel(ed, scope) {
   const f = filterState(ed);
   const matched = new Set(scope.items.filter((m) => mapMatches(ed, m, f)).map((m) => m.key));
@@ -125,14 +128,7 @@ function decorateMapLevel(ed, scope) {
     const map = scope.items.find((m) => m.key === card.dataset.stageMap);
     const stats = mapDifficultyStats(ed, map);
     if (stats.unresolvedReason) unresolved.push(stats.unresolvedReason);
-    let b = card.querySelector('.formation-stage-difficulty-badge');
-    if (stats.label) {
-      if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
-      b.textContent = stats.label;
-      b.hidden = false;
-    } else if (b) {
-      b.remove();
-    }
+    removeHiddenDifficultyBadge(card);
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
   }
   const shown = scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length;
@@ -147,14 +143,7 @@ function decorateStageLevel(ed, scope) {
     const st = scope.items.find((s) => s.key === card.dataset.stageId || s.id === card.dataset.stageId);
     const d = diffOf(ed, st || { key: card.dataset.stageId });
     if (d.unresolvedReason || d.fallbackReason) unresolved.push(d.unresolvedReason || d.fallbackReason);
-    let b = card.querySelector('.formation-stage-difficulty-badge');
-    if (d.diff >= 0) {
-      if (!b) { b = document.createElement('b'); b.className = 'formation-stage-difficulty-badge'; card.appendChild(b); }
-      b.textContent = formatBcuStageDifficulty(d.diff);
-      b.hidden = false;
-    } else if (b) {
-      b.remove();
-    }
+    removeHiddenDifficultyBadge(card);
     card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageId));
   }

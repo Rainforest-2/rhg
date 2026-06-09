@@ -4,11 +4,13 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
+import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-critical-effect-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-critical-effect-patch.v2-eanimcont');
 const BCU_CRIT_SOURCE = 'bcu-effanim-A_CRIT';
-const BCU_CRIT_Y_OFFSET = 75;
-const BCU_CRIT_SCALE = 1.2;
+const BCU_CRIT_OFFSET_Y = -75;
+const BCU_CRIT_SCALE = 1;
+const BCU_BASE_EFFECT_LAYER = 9;
 
 function finite(...values) {
   for (const value of values) {
@@ -42,7 +44,7 @@ function getTargetPos(target, targetType) {
 }
 
 function getTargetLayer(attacker, target, targetType) {
-  if (targetType === 'base') return finite(attacker?.currentLayer, target?.currentLayer, 0) ?? 0;
+  if (targetType === 'base') return BCU_BASE_EFFECT_LAYER;
   return finite(target?.currentLayer, attacker?.currentLayer, 0) ?? 0;
 }
 
@@ -94,16 +96,18 @@ function spawnCriticalEffect(scene, attacker, target, targetType, damageResult, 
     source: BCU_CRIT_SOURCE,
     createdAtMs: scene.timeMs,
     layer,
-    bcuSmokeYOffset: BCU_CRIT_Y_OFFSET,
+    bcuSmokeYOffset: BCU_CRIT_OFFSET_Y,
+    bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
     debug: {
       source: BCU_CRIT_SOURCE,
-      bcuReference: 'BCU Entity.damaged: lea.add(new EAnimCont(pos,currentLayer,effas().A_CRIT.getEAnim(DefEff.DEF),-75f)); CommonStatic.setSE(SE_CRIT)',
+      bcuReference: 'BCU Entity.damaged: lea.add(new EAnimCont(pos,currentLayer,effas().A_CRIT.getEAnim(DefEff.DEF),-75f)); ECastle uses layer 9; draw uses StageBasis.lea EAnimCont psiz=siz*sprite',
       targetType,
       attacker: attacker?.instanceId || attacker?.label || null,
       target: target?.instanceId || target?.label || target?.side || null,
       worldX,
       layer,
-      bcuYOffset: BCU_CRIT_Y_OFFSET,
+      bcuYOffset: BCU_CRIT_OFFSET_Y,
+      bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
       damageApplied: damageResult?.applied || null,
       abilityApplied: damageResult?.abilityResolver?.applied || null,
       hitIndex: meta?.hitIndex ?? null,

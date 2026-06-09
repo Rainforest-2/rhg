@@ -1,4 +1,5 @@
 import '../bcu/SemanticUnitIconNormalizePatch.js';
+import '../ui/ProductionCardCatIconCanvasCropPatch.js';
 import { BattleScene } from './BattleScene.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.unified-damage-debug-patch.v1');

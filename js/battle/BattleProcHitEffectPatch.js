@@ -4,11 +4,13 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
+import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.proc-hit-effect-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.proc-hit-effect-patch.v2-eanimcont');
 const PROC_EFFECT_SOURCE = 'bcu-effanim-proc-hit';
-const PROC_EFFECT_Y_OFFSET = 75;
-const PROC_EFFECT_SCALE = 1.2;
+const PROC_EFFECT_OFFSET_Y = -75;
+const PROC_EFFECT_SCALE = 1;
+const BCU_BASE_EFFECT_LAYER = 9;
 
 function hasApplied(calc, key) {
   return calc?.applied?.[key] === true || calc?.abilityResolver?.applied?.[key] === true;
@@ -34,8 +36,13 @@ function targetX(target, targetType) {
 }
 
 function targetLayer(attacker, target, targetType) {
-  if (targetType === 'base') return Number(attacker?.currentLayer ?? target?.currentLayer ?? 0) || 0;
+  if (targetType === 'base') return BCU_BASE_EFFECT_LAYER;
   return Number(target?.currentLayer ?? attacker?.currentLayer ?? 0) || 0;
+}
+
+function shouldMirrorMetalKiller(target) {
+  const direction = Number(target?.direction);
+  return Number.isFinite(direction) ? direction === 1 : false;
 }
 
 function spawnProcEffect(scene, attacker, target, targetType, key, calc, meta = {}) {
@@ -50,6 +57,7 @@ function spawnProcEffect(scene, attacker, target, targetType, key, calc, meta = 
   if (!runtime) return null;
   const worldX = targetX(target, targetType);
   const layer = targetLayer(attacker, target, targetType);
+  const metalMirror = key === 'metalKiller' && shouldMirrorMetalKiller(target);
   const effect = EffectRuntime.createHitEffect({
     id: `bcu-proc-${key}-${scene.logicFrame || 0}-${scene.effects.length}-${Math.random().toString(36).slice(2)}`,
     type: key,
@@ -63,18 +71,23 @@ function spawnProcEffect(scene, attacker, target, targetType, key, calc, meta = 
     source: PROC_EFFECT_SOURCE,
     createdAtMs: scene.timeMs,
     layer,
-    bcuSmokeYOffset: PROC_EFFECT_Y_OFFSET,
+    bcuSmokeYOffset: PROC_EFFECT_OFFSET_Y,
+    renderFlipX: metalMirror,
+    bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
     debug: {
       source: PROC_EFFECT_SOURCE,
       bcuReference: key === 'strongAttack'
-        ? 'BCU Entity.damaged A_SATK EAnimCont(pos,currentLayer,-75f)'
-        : 'BCU Entity.damaged A_METAL_KILLER/A_E_METAL_KILLER EAnimCont(pos,currentLayer,-75f)',
+        ? 'BCU Entity.damaged A_SATK EAnimCont(pos,currentLayer,-75f); ECastle uses layer 9; draw uses StageBasis.lea EAnimCont psiz=siz*sprite'
+        : 'BCU Entity.damaged A_METAL_KILLER/A_E_METAL_KILLER EAnimCont(pos,currentLayer,-75f); A_E_METAL_KILLER is the mirrored variant when damaged entity dire==1',
       key,
       targetType,
       attacker: attacker?.instanceId || attacker?.label || null,
       target: target?.instanceId || target?.label || target?.side || null,
       worldX,
       layer,
+      bcuYOffset: PROC_EFFECT_OFFSET_Y,
+      bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
+      renderFlipX: metalMirror,
       hitIndex: meta?.hitIndex ?? null,
       attackEventKey: meta?.attackEventKey ?? meta?.key ?? null,
       damageApplied: calc?.applied || null,

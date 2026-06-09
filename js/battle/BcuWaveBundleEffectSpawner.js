@@ -3,7 +3,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
-import { BCU_SCALE_MODE, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
+import { BCU_SCALE_MODE, classifyBcuEffect, describeBcuEffectYFormula, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 function actorPos(actor) {
   const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
@@ -82,6 +82,8 @@ export function spawnWaveBundleEffect(scene, {
   const mode = normalizeBcuScaleMode(bcuScaleMode || debug?.bcuScaleMode || inferScaleMode(key, type || asset.kind || key, source));
   const resolvedType = type || asset.kind || key;
   const effectScale = resolveEffectScale(scale, mode, resolvedType);
+  const bcuEffectClass = debug?.bcuEffectClass || classifyBcuEffect({ bcuScaleMode: mode });
+  const yFormula = debug?.yFormula || describeBcuEffectYFormula({ bcuScaleMode: mode });
   const effect = EffectRuntime.createEffect({
     id: `bcu-${key}-${phase || 'def'}-${scene.logicFrame || 0}-${Math.random().toString(36).slice(2)}`,
     type: resolvedType,
@@ -105,6 +107,7 @@ export function spawnWaveBundleEffect(scene, {
       effectKey: key,
       phase,
       bcuScaleMode: mode,
+      bcuEffectClass,
       actor: actor?.instanceId || actor?.label || null,
       x: effectX,
       worldX: effectX,
@@ -116,8 +119,11 @@ export function spawnWaveBundleEffect(scene, {
       maxFrame: runtime.maxFrame,
       assetSource: asset.source || null,
       requestedScale: scale,
+      effectScale,
       resolvedScale: effectScale,
       defaultScaleApplied: scale === null || scale === undefined,
+      layer: Number.isFinite(layer) ? layer : (Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0),
+      yFormula,
       ...debug
     }
   });

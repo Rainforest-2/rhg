@@ -1,4 +1,5 @@
-import '../bcu/SemanticUnitIconNormalizePatch.js';
+// Battle debug patch:
+// Kept separate because it observes the final damage/proc result without owning gameplay.
 import { BattleScene } from './BattleScene.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.unified-damage-debug-patch.v1');

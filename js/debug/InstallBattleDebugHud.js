@@ -1,5 +1,3 @@
-import '../battle/BattleUnifiedDamageDebugPatch.js';
-import '../battle/BattleCriticalEffectPatch.js';
 import { BattleDebugHud } from './BattleDebugHud.js';
 
 const INSTALL_FLAG = Symbol.for('wanko-battle.debug-hud.installed.v3');

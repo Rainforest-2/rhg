@@ -42,6 +42,7 @@ for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path}
 
 const main = fs.readFileSync(files.main, 'utf8');
 const indexHtml = fs.readFileSync(files.index, 'utf8');
+const bootBattle = fs.readFileSync('js/boot/installBattlePatches.js', 'utf8');
 const wiring = fs.readFileSync(files.wiring, 'utf8');
 const adapter = fs.readFileSync(files.adapter, 'utf8');
 const runtime = fs.readFileSync(files.runtime, 'utf8');
@@ -50,7 +51,7 @@ const spawnRuntime = fs.readFileSync(files.spawnRuntime, 'utf8');
 assert.ok(indexHtml.includes('./js/main.js'), 'index.html must load js/main.js');
 assert.ok(indexHtml.includes('preview-canvas'), 'index.html must render preview canvas host');
 assert.ok(main.includes('async function boot()'), 'main.js must use async boot()');
-assert.ok(main.includes("await import('./battle/BattleSceneStageRuntimeWiring.js')"), 'main.js must dynamically import stage runtime wiring before PreviewApp starts');
+assert.ok(main.includes('installBattlePatches') && bootBattle.includes("await import('../battle/BattleSceneStageRuntimeWiring.js')"), 'boot battle module must dynamically import stage runtime wiring before PreviewApp starts');
 assert.ok(main.includes("await import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp');
 assert.ok(main.includes('globalThis.__WAN_BOOT_ERROR__?.(error)'), 'main.js must report boot failures to the page overlay');
 assert.ok(wiring.includes("import { BattleScene } from './BattleScene.js'"), 'wiring must import BattleScene');
@@ -121,8 +122,8 @@ assert.ok(procResolverSrc.includes('resolve('));
 assert.ok(procResolverSrc.includes('getProcCatalog'));
 assert.ok(procResolverSrc.includes('pendingSupported'));
 assert.ok(procResolverSrc.includes('pendingType'));
-assert.ok(procResolverSrc.includes('ProcResolver.v3-bcu-proc-roll-contract'));
-assert.ok(procResolverSrc.includes('bcu-proc-roll-pending-apply-contract'));
+assert.ok(procResolverSrc.includes('ProcResolver.bcu-proc-roll-ready-to-runtime'));
+assert.ok(procResolverSrc.includes('bcu-proc-roll-pending-runtime-contract'));
 assert.ok(!procResolverSrc.includes('KBRuntime'));
 assert.ok(!procResolverSrc.includes('EffectRuntime'));
 assert.ok(!procResolverSrc.includes('target.hp ='));
@@ -184,7 +185,7 @@ assert.ok(battleEffectSrc.includes('source'));assert.ok(battleEffectSrc.includes
 assert.ok(battleSceneSrc2.includes("from './KBRuntime.js'"));
 assert.ok(battleSceneSrc2.includes("from './EffectRuntime.js'"));
 assert.ok(inspectorSrc.includes('kbRuntime'));assert.ok(inspectorSrc.includes('effectRuntime'));
-assert.ok(procResolverSrc.includes('wave') && procResolverSrc.includes('implemented: false'));
+assert.ok(procResolverSrc.includes("wave: { key: 'wave'") && procResolverSrc.includes('BattleWaveRuntimePatch ContWaveDef container'));
 assert.ok(!kbRuntimeSrc.includes('BattleScene'));assert.ok(!kbRuntimeSrc.includes('Renderer'));
 assert.ok(!effectRuntimeSrc.includes('BattleCamera'));assert.ok(!effectRuntimeSrc.includes('Renderer'));
 

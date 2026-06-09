@@ -87,11 +87,16 @@ function assertSpawnTrace(effect, { effectKey, phase, mode, sourceIncludes }) {
   for (const key of ['effectKey', 'phase', 'worldX', 'worldY', 'screenOffsetX', 'bcuSmokeYOffset', 'layer', 'bcuScaleMode', 'effectScale', 'renderFlipX', 'source', 'bcuReference']) {
     assert.equal(Object.prototype.hasOwnProperty.call(trace, key), true, `${effectKey} trace includes ${key}`);
   }
+  for (const key of ['bcuEffectClass', 'yFormula']) {
+    assert.equal(Object.prototype.hasOwnProperty.call(trace, key), true, `${effectKey} trace includes ${key}`);
+  }
   assert.equal(trace.effectKey, effectKey, `${effectKey} trace effectKey`);
   if (phase !== undefined) assert.equal(trace.phase, phase, `${effectKey} trace phase`);
   assert.equal(trace.bcuScaleMode, mode, `${effectKey} trace scale mode`);
   assert.equal(Number.isFinite(trace.worldX), true, `${effectKey} worldX is finite`);
   assert.equal(Number.isFinite(trace.worldY), true, `${effectKey} worldY is finite`);
+  assert.equal(typeof trace.bcuEffectClass, 'string', `${effectKey} effect class is classified`);
+  assert.equal(typeof trace.yFormula, 'string', `${effectKey} y formula is classified`);
   assert.match(String(trace.source), sourceIncludes, `${effectKey} source`);
   const scale = resolveBcuEffectScale({ effect, cameraScale: 2, spriteScale: 0.8 });
   assert.equal(scale.bcuScaleMode, mode, `${effectKey} renderer mode`);

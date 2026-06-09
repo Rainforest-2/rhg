@@ -5,6 +5,7 @@ import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
+import { classifyBcuEffect, describeBcuEffectYFormula } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v6-smoke-kind');
 const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v8-actor-priority-eanimcont');
@@ -282,9 +283,13 @@ function drawOneBcuEffect(renderer, ctx, effect) {
   const yOffset = actorPriority
     ? finiteNumber(effect.bcuEAnimContOffsetY, effect.bcuSmokeYOffset, effect.effectRuntimeDebug?.bcuSmokeYOffset, 0) ?? 0
     : (finiteNumber(effect.bcuSmokeYOffset, projectile ? 0 : ACTOR_SMOKE_Y_OFFSET) ?? (projectile ? 0 : ACTOR_SMOKE_Y_OFFSET));
-  const y = actorPriority
-    ? baseY + yOffset * scale
-    : baseY - yOffset * cameraScale;
+  const y = actorPriority ? baseY + yOffset * scale : baseY - yOffset * cameraScale;
+  const bcuEffectClass = actorPriority
+    ? 'stage-basis-lea-eanimcont'
+    : classifyBcuEffect({ bcuScaleMode: effect?.bcuScaleMode || effect?.effectRuntimeDebug?.bcuScaleMode });
+  const yFormula = actorPriority
+    ? 'BCU EAnimCont.draw: baseY + offsetY * psiz'
+    : describeBcuEffectYFormula({ bcuScaleMode: effect?.bcuScaleMode || effect?.effectRuntimeDebug?.bcuScaleMode });
 
   let drawn = false;
   if (effect.model && effect.animator) drawn = drawBcuModelEffect(renderer, ctx, effect, x, y, scale);
@@ -308,14 +313,25 @@ function drawOneBcuEffect(renderer, ctx, effect) {
     layer,
     baseY,
     yOffset,
-    yFormula: actorPriority ? 'BCU EAnimCont.draw: baseY + offsetY * psiz' : 'BCU smoke/projectile draw path',
+    yFormula,
     scale,
+    bcuEffectClass,
+    effectScale,
     projectileContAb: projectile,
     actorPriorityEAnimCont: actorPriority,
     scaleSource: actorPriority ? 'BCU StageBasis.lea EAnimCont psiz = siz*sprite*effectScale' : (projectile ? 'BCU ContAb psiz = siz*sprite' : 'BCU smoke psiz*sprite*1.2'),
     mode: effect.model && effect.animator ? 'bcu-model-effanim' : 'imgcut-frame-fallback',
     partName: effect.currentPart?.name || null,
     modelDraw: effect.lastModelDrawDebug || null
+  };
+  effect.effectRuntimeDebug = {
+    ...(effect.effectRuntimeDebug || {}),
+    rendererReached: true,
+    rendererDrawn: drawn,
+    bcuEffectClass,
+    layer,
+    effectScale,
+    yFormula
   };
   return drawn;
 }

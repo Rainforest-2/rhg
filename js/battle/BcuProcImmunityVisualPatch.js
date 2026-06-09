@@ -1,6 +1,8 @@
+// BCU parity patch:
+// Proc invalid remains actor-bound because it is emitted from BattleActor.applyBcuProc.
 import { BattleActor } from './BattleActor.js';
 import { spawnWaveBundleEffect } from './BcuWaveBundleEffectSpawner.js';
-import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
+import { BCU_EFFECT_CLASS, BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-proc-immunity-visual.v2-actor-layer');
 
@@ -22,6 +24,10 @@ function spawnProcInvalidEffect(actor, meta = {}, result = {}) {
     scale: 0.75,
     debug: {
       bcuReference: 'BCU actor drawEff path: actor-bound status effect uses entity layer baseline and 0.75 scale',
+      bcuEffectClass: BCU_EFFECT_CLASS.ENTITY_STATUS,
+      yFormula: 'baseY, actor drawEff/entity status baseline, no smoke offset',
+      layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
+      effectScale: 0.75,
       procKey: result?.item?.key || result?.key || meta?.procKey || null,
       immunityField: result?.field || null,
       reason: result?.reason || null
@@ -57,7 +63,16 @@ export function installBcuProcImmunityVisualPatch() {
     }
     return result;
   };
-  globalThis.__BCU_PROC_IMMUNITY_VISUAL_PATCH_DEBUG__ = { installed: true, source: 'BcuProcImmunityVisualPatch', effectKey: 'procInvalid', bcuScaleMode: BCU_SCALE_MODE.ENTITY_STATUS, offsetY: 0, scale: 0.75 };
+  globalThis.__BCU_PROC_IMMUNITY_VISUAL_PATCH_DEBUG__ = {
+    installed: true,
+    source: 'BcuProcImmunityVisualPatch',
+    effectKey: 'procInvalid',
+    bcuScaleMode: BCU_SCALE_MODE.ENTITY_STATUS,
+    bcuEffectClass: BCU_EFFECT_CLASS.ENTITY_STATUS,
+    yFormula: 'baseY, actor drawEff/entity status baseline, no smoke offset',
+    offsetY: 0,
+    scale: 0.75
+  };
 }
 
 installBcuProcImmunityVisualPatch();

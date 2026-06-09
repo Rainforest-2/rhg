@@ -33753,9 +33753,9 @@
       "status": "full",
       "iconCount": 799,
       "unitOnlyRegenerated": true,
-      "runtimeNormalize": true,
-      "sizeBytes": 4454491,
-      "hash": "56545f1782f9ec0b7cb8d133f381b6bc4fd743be4eab9b24c23764d6a372a613"
+      "runtimeNormalize": false,
+      "sizeBytes": 4455271,
+      "hash": "ebe9f69543bf983b288c313d130501b0b3b45966f46decfe3f81d654cf5d2e0f"
     },
     "icon:unit:f": {
       "kind": "icon",
@@ -33764,9 +33764,9 @@
       "status": "full",
       "iconCount": 822,
       "unitOnlyRegenerated": true,
-      "runtimeNormalize": true,
-      "sizeBytes": 4362610,
-      "hash": "af3153231fcb86caa4814592a42c84b8f34e7ed8093f46605ba134168ddde7fe"
+      "runtimeNormalize": false,
+      "sizeBytes": 4363413,
+      "hash": "561a70557fa2d52b60b870c65b484e48818e6758123aff5c1307e68f9ef2f541"
     },
     "icon:unit:s": {
       "kind": "icon",
@@ -33775,9 +33775,9 @@
       "status": "full",
       "iconCount": 393,
       "unitOnlyRegenerated": true,
-      "runtimeNormalize": true,
-      "sizeBytes": 2115998,
-      "hash": "1210e0ba86981d38a342ac23ef4939d3333e2803cec41456d3357fd3b44ff714"
+      "runtimeNormalize": false,
+      "sizeBytes": 2116372,
+      "hash": "9834242f2ebd124dff9b8cc53d3045216718144c2e90fc76a7cce583507b5ff0"
     },
     "icon:unit:u": {
       "kind": "icon",
@@ -33786,9 +33786,9 @@
       "status": "full",
       "iconCount": 18,
       "unitOnlyRegenerated": true,
-      "runtimeNormalize": true,
-      "sizeBytes": 103110,
-      "hash": "28b4bbb58468ad7490c9cabdc458fb8a67bdacc6e9299db4e8e4fe8f43748766"
+      "runtimeNormalize": false,
+      "sizeBytes": 103109,
+      "hash": "0ea1905cad2743f738114abbf8e206b606c7ee8cd3df03a0f3edbee4fdcedea6"
     },
     "effect:wave": {
       "kind": "effect",

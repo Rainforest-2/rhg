@@ -1,6 +1,8 @@
+// BCU parity patch:
+// Kept separate because renderer layer ordering must wrap the final BattleSceneRenderer.
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { drawBcuImagePart } from '../bcu/BcuCanvasComposite.js';
-import { BCU_SCALE_MODE, buildBcuEffectTrace, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
+import { BCU_SCALE_MODE, buildBcuEffectTrace, classifyBcuEffect, describeBcuEffectYFormula, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v2-lea-eanimcont');
 const ACTOR_SMOKE_Y_OFFSET = 75;
@@ -123,11 +125,13 @@ export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1
   }
   return {
     bcuScaleMode: mode,
+    bcuEffectClass: classifyBcuEffect({ bcuScaleMode: mode, leaEAnimCont }),
     cameraScale: camera,
     spriteScaleUsed,
     effectScale,
     finalScale,
     leaEAnimCont,
+    yFormula: describeBcuEffectYFormula({ bcuScaleMode: mode, leaEAnimCont }),
     bcuReference: leaEAnimCont ? 'BCU lea EAnimCont scale path' : mode === BCU_SCALE_MODE.ENTITY_STATUS ? 'BCU entity status scale path' : mode === BCU_SCALE_MODE.LEGACY ? 'legacy scale path' : 'BCU stage scale path'
   };
 }
@@ -146,11 +150,13 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
   const baseY = typeof renderer.getBcuLayerScreenY === 'function'
     ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
     : (effect.worldY ?? effect.y ?? 0);
-  const yOffset = scaleTrace.leaEAnimCont
+  const actorPriority = scaleTrace.leaEAnimCont;
+  const yOffset = actorPriority
     ? (finiteNumber(effect.bcuEAnimContOffsetY, effect.bcuSmokeYOffset, effect.effectRuntimeDebug?.bcuSmokeYOffset, 0) ?? 0)
     : scaleTrace.bcuScaleMode === BCU_SCALE_MODE.ENTITY_STATUS ? 0
       : (finiteNumber(effect.bcuSmokeYOffset, ACTOR_SMOKE_Y_OFFSET) ?? ACTOR_SMOKE_Y_OFFSET);
-  const y = scaleTrace.leaEAnimCont ? baseY + yOffset * scale : baseY - yOffset * cameraScale;
+  const y = actorPriority ? baseY + yOffset * scale : baseY - yOffset * cameraScale;
+  const yFormula = actorPriority ? 'baseY plus offset' : scaleTrace.bcuScaleMode === BCU_SCALE_MODE.ENTITY_STATUS ? 'baseY no offset' : 'baseY minus offset';
 
   let drawn = false;
   if (effect.model && effect.animator) {
@@ -183,10 +189,12 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
       bcuSmokeYOffset: yOffset,
       layer,
       bcuScaleMode: scaleTrace.bcuScaleMode,
+      bcuEffectClass: scaleTrace.bcuEffectClass,
       effectScale: scaleTrace.effectScale,
       renderFlipX: effect.renderFlipX === true,
       source: 'BattleSceneRendererEffectGlowPatch.drawOneBcuEffectWithGlow',
       bcuReference: scaleTrace.bcuReference,
+      yFormula,
       cameraScale: scaleTrace.cameraScale,
       spriteScaleUsed: scaleTrace.spriteScaleUsed,
       finalScale: scaleTrace.finalScale,
@@ -196,7 +204,7 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     y,
     baseY,
     yOffset,
-    yFormula: scaleTrace.leaEAnimCont ? 'baseY plus offset' : scaleTrace.bcuScaleMode === BCU_SCALE_MODE.ENTITY_STATUS ? 'baseY no offset' : 'baseY minus offset',
+    yFormula,
     scale,
     rendererReference: scaleTrace.bcuReference
   };
@@ -208,7 +216,13 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     rendererY: y,
     rendererScale: scale,
     rendererLayer: layer,
-    rendererLeaEAnimCont: scaleTrace.leaEAnimCont
+    rendererLeaEAnimCont: scaleTrace.leaEAnimCont,
+    bcuEffectClass: scaleTrace.bcuEffectClass,
+    effectScale: scaleTrace.effectScale,
+    layer,
+    yFormula,
+    rendererYFormula: yFormula,
+    rendererReference: scaleTrace.bcuReference
   };
   return drawn;
 }

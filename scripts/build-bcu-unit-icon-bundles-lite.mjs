@@ -24,9 +24,9 @@ for (const [bundleKey, group] of [...groups.entries()].sort()) {
     const png = validatePngBuffer(data, validationOptions);
     if (!png.valid) throw new Error(`unit icon source invalid:${entry.key}:${png.reason}`);
     files.push({ name: entry.internalPath, data });
-    entries.push({ key: entry.key, internalPath: entry.internalPath, sourceStatus: entry.sourceStatus, sourcePath: entry.sourcePath, runtimeNormalize: true });
+    entries.push({ key: entry.key, internalPath: entry.internalPath, sourceStatus: entry.sourceStatus, sourcePath: entry.sourcePath, runtimeNormalize: false });
   }
-  files.unshift({ name: 'bundle.json', data: Buffer.from(JSON.stringify({ bundleKey, kind: 'icon', generatedAt: FIXED_DATE, generationSource: 'audited-unit-icon-source-runtime-normalized', entries }, null, 2)) });
+  files.unshift({ name: 'bundle.json', data: Buffer.from(JSON.stringify({ bundleKey, kind: 'icon', generatedAt: FIXED_DATE, generationSource: 'audited-unit-icon-source', entries }, null, 2)) });
   await writeStoreZip(group.bundleRef.bundlePath, files);
   manifest.bundles[bundleKey] = {
     kind: 'icon',
@@ -35,7 +35,7 @@ for (const [bundleKey, group] of [...groups.entries()].sort()) {
     status: 'full',
     iconCount: group.entries.length,
     unitOnlyRegenerated: true,
-    runtimeNormalize: true,
+    runtimeNormalize: false,
     sizeBytes: (await fs.stat(group.bundleRef.bundlePath)).size,
     hash: await hashFile(group.bundleRef.bundlePath)
   };

@@ -128,11 +128,7 @@ export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1
     effectScale,
     finalScale,
     leaEAnimCont,
-    bcuReference: leaEAnimCont
-      ? 'BCU BattleBox.drawEntity: StageBasis.lea EAnimCont draws with psiz = siz * sprite and EAnimCont.draw applies offsetY * psiz'
-      : mode === BCU_SCALE_MODE.LEGACY
-        ? 'legacy renderer path retains cameraScale * spriteScale * effect.scale'
-        : 'BCU ContAb/EAnimCont draws with psiz; Entity.AnimManager.drawEff encodes its 0.75 multiplier in effect.scale'
+    bcuReference: leaEAnimCont ? 'BCU lea EAnimCont scale path' : mode === BCU_SCALE_MODE.ENTITY_STATUS ? 'BCU entity status scale path' : mode === BCU_SCALE_MODE.LEGACY ? 'legacy scale path' : 'BCU stage scale path'
   };
 }
 
@@ -152,7 +148,8 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     : (effect.worldY ?? effect.y ?? 0);
   const yOffset = scaleTrace.leaEAnimCont
     ? (finiteNumber(effect.bcuEAnimContOffsetY, effect.bcuSmokeYOffset, effect.effectRuntimeDebug?.bcuSmokeYOffset, 0) ?? 0)
-    : (finiteNumber(effect.bcuSmokeYOffset, ACTOR_SMOKE_Y_OFFSET) ?? ACTOR_SMOKE_Y_OFFSET);
+    : scaleTrace.bcuScaleMode === BCU_SCALE_MODE.ENTITY_STATUS ? 0
+      : (finiteNumber(effect.bcuSmokeYOffset, ACTOR_SMOKE_Y_OFFSET) ?? ACTOR_SMOKE_Y_OFFSET);
   const y = scaleTrace.leaEAnimCont ? baseY + yOffset * scale : baseY - yOffset * cameraScale;
 
   let drawn = false;
@@ -199,11 +196,9 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     y,
     baseY,
     yOffset,
-    yFormula: scaleTrace.leaEAnimCont ? 'BCU EAnimCont.draw: baseY + offsetY * psiz' : 'legacy/hit-smoke: baseY - yOffset * cameraScale',
+    yFormula: scaleTrace.leaEAnimCont ? 'baseY plus offset' : scaleTrace.bcuScaleMode === BCU_SCALE_MODE.ENTITY_STATUS ? 'baseY no offset' : 'baseY minus offset',
     scale,
-    rendererReference: scaleTrace.leaEAnimCont
-      ? 'BCU BattleBox.drawEntity StageBasis.lea loop draws normal EAnimCont at layer baseline and passes psiz=siz*sprite'
-      : 'BCU BattleBox draws ContAb/EAnimCont stage effects with psiz; WaprCont applies y offsets before drawing A_W/A_W_C'
+    rendererReference: scaleTrace.bcuReference
   };
   effect.effectRuntimeDebug = {
     ...(effect.effectRuntimeDebug || {}),
@@ -243,20 +238,15 @@ function drawRemainingStageEffects(renderer, ctx) {
 
 if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
   BattleSceneRenderer.prototype[PATCH_FLAG] = true;
-
   const originalRender = BattleSceneRenderer.prototype.render;
   if (typeof originalRender === 'function') {
     BattleSceneRenderer.prototype.render = function renderWithBcuStageEffectLayering(previewRenderer, scene, debugOptions = false) {
       const effects = (scene?.effects || []).filter((effect) => effect && !effect.finished && isBcuStageLayeredEffect(effect)).sort(compareEffectLayer);
       this.__bcuStageEffectLayerState = { effects, index: 0, drawn: new Set() };
-      try {
-        return originalRender.call(this, previewRenderer, scene, debugOptions);
-      } finally {
-        delete this.__bcuStageEffectLayerState;
-      }
+      try { return originalRender.call(this, previewRenderer, scene, debugOptions); }
+      finally { delete this.__bcuStageEffectLayerState; }
     };
   }
-
   const originalDrawActor = BattleSceneRenderer.prototype.drawActor;
   if (typeof originalDrawActor === 'function') {
     BattleSceneRenderer.prototype.drawActor = function drawActorWithBcuStageEffects(ctx, actor, ...rest) {
@@ -265,22 +255,13 @@ if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
       return originalDrawActor.call(this, ctx, actor, ...rest);
     };
   }
-
   BattleSceneRenderer.prototype.drawEffects = function drawEffectsBcuWithGlow(ctx, effects = []) {
     drawRemainingStageEffects(this, ctx);
     const drawnStage = this.__bcuStageEffectLayerState?.drawn || null;
     const list = Array.isArray(effects) ? effects : [];
-    const active = list
-      .filter((effect) => effect && !effect.finished)
-      .filter((effect) => !(drawnStage?.has(effect)))
-      .filter((effect) => !isBcuStageLayeredEffect(effect))
-      .sort(compareEffectLayer);
+    const active = list.filter((effect) => effect && !effect.finished).filter((effect) => !(drawnStage?.has(effect))).filter((effect) => !isBcuStageLayeredEffect(effect)).sort(compareEffectLayer);
     for (const effect of active) {
-      try {
-        drawOneBcuEffectWithGlow(this, ctx, effect);
-      } catch (error) {
-        // Keep renderer behavior unchanged: one bad effect should not abort the frame.
-      }
+      try { drawOneBcuEffectWithGlow(this, ctx, effect); } catch {}
     }
   };
 }

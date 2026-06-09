@@ -2,13 +2,18 @@ import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { drawBcuImagePart } from '../bcu/BcuCanvasComposite.js';
 import { BCU_SCALE_MODE, buildBcuEffectTrace, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v2-lea-eanimcont');
 const ACTOR_SMOKE_Y_OFFSET = 75;
 const BCU_SMOKE_SCALE = 1.2;
 const BCU_STAGE_EFFECT_SOURCES = new Set([
   'bcu-effanim-wave-cont-wave-def',
   'bcu-effanim-surge-cont-volcano',
   'bcu-effanim-cont-blast'
+]);
+const BCU_LEA_EANIMCONT_SOURCES = new Set([
+  'bcu-effanim-A_POISON-poiatk',
+  'bcu-effanim-A_CRIT',
+  'bcu-effanim-proc-hit'
 ]);
 
 function finiteNumber(...values) {
@@ -19,8 +24,16 @@ function finiteNumber(...values) {
   return null;
 }
 
+function getEffectSource(effect) {
+  return String(effect?.source || effect?.effectRuntimeDebug?.source || '');
+}
+
 function getEffectLayer(effect) {
   return finiteNumber(effect?.currentLayer, effect?.bcuRenderLayer, effect?.layer, 0) ?? 0;
+}
+
+function isBcuLeaEAnimContEffect(effect) {
+  return effect?.bcuStageLeaEAnimCont === true || BCU_LEA_EANIMCONT_SOURCES.has(getEffectSource(effect));
 }
 
 function isBcuStageLayeredEffect(effect) {
@@ -79,28 +92,34 @@ export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1
   const effectScale = Number.isFinite(Number(effect?.scale)) ? Number(effect.scale) : 1;
   const camera = Number.isFinite(Number(cameraScale)) ? Number(cameraScale) : 1;
   const sprite = Number.isFinite(Number(spriteScale)) ? Number(spriteScale) : 1;
+  const leaEAnimCont = isBcuLeaEAnimContEffect(effect);
   let finalScale;
   let spriteScaleUsed = 0;
-  switch (mode) {
-    case BCU_SCALE_MODE.STAGE_PROJECTILE:
-      finalScale = camera * effectScale;
-      break;
-    case BCU_SCALE_MODE.ENTITY_STATUS:
-      finalScale = camera * effectScale;
-      break;
-    case BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT:
-      finalScale = camera * effectScale;
-      break;
-    case BCU_SCALE_MODE.WARP_HOLE:
-      finalScale = camera * effectScale;
-      break;
-    case BCU_SCALE_MODE.HIT_SMOKE:
-      finalScale = camera * effectScale;
-      break;
-    default:
-      finalScale = camera * sprite * effectScale;
-      spriteScaleUsed = sprite;
-      break;
+  if (leaEAnimCont) {
+    finalScale = camera * sprite * effectScale;
+    spriteScaleUsed = sprite;
+  } else {
+    switch (mode) {
+      case BCU_SCALE_MODE.STAGE_PROJECTILE:
+        finalScale = camera * effectScale;
+        break;
+      case BCU_SCALE_MODE.ENTITY_STATUS:
+        finalScale = camera * effectScale;
+        break;
+      case BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT:
+        finalScale = camera * effectScale;
+        break;
+      case BCU_SCALE_MODE.WARP_HOLE:
+        finalScale = camera * effectScale;
+        break;
+      case BCU_SCALE_MODE.HIT_SMOKE:
+        finalScale = camera * effectScale;
+        break;
+      default:
+        finalScale = camera * sprite * effectScale;
+        spriteScaleUsed = sprite;
+        break;
+    }
   }
   return {
     bcuScaleMode: mode,
@@ -108,9 +127,12 @@ export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1
     spriteScaleUsed,
     effectScale,
     finalScale,
-    bcuReference: mode === BCU_SCALE_MODE.LEGACY
-      ? 'legacy renderer path retains cameraScale * spriteScale * effect.scale'
-      : 'BCU ContAb/EAnimCont draws with psiz; Entity.AnimManager.drawEff encodes its 0.75 multiplier in effect.scale'
+    leaEAnimCont,
+    bcuReference: leaEAnimCont
+      ? 'BCU BattleBox.drawEntity: StageBasis.lea EAnimCont draws with psiz = siz * sprite and EAnimCont.draw applies offsetY * psiz'
+      : mode === BCU_SCALE_MODE.LEGACY
+        ? 'legacy renderer path retains cameraScale * spriteScale * effect.scale'
+        : 'BCU ContAb/EAnimCont draws with psiz; Entity.AnimManager.drawEff encodes its 0.75 multiplier in effect.scale'
   };
 }
 
@@ -128,8 +150,10 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
   const baseY = typeof renderer.getBcuLayerScreenY === 'function'
     ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
     : (effect.worldY ?? effect.y ?? 0);
-  const yOffset = finiteNumber(effect.bcuSmokeYOffset, ACTOR_SMOKE_Y_OFFSET) ?? ACTOR_SMOKE_Y_OFFSET;
-  const y = baseY - yOffset * cameraScale;
+  const yOffset = scaleTrace.leaEAnimCont
+    ? (finiteNumber(effect.bcuEAnimContOffsetY, effect.bcuSmokeYOffset, effect.effectRuntimeDebug?.bcuSmokeYOffset, 0) ?? 0)
+    : (finiteNumber(effect.bcuSmokeYOffset, ACTOR_SMOKE_Y_OFFSET) ?? ACTOR_SMOKE_Y_OFFSET);
+  const y = scaleTrace.leaEAnimCont ? baseY + yOffset * scale : baseY - yOffset * cameraScale;
 
   let drawn = false;
   if (effect.model && effect.animator) {
@@ -168,14 +192,18 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
       bcuReference: scaleTrace.bcuReference,
       cameraScale: scaleTrace.cameraScale,
       spriteScaleUsed: scaleTrace.spriteScaleUsed,
-      finalScale: scaleTrace.finalScale
+      finalScale: scaleTrace.finalScale,
+      extra: { leaEAnimCont: scaleTrace.leaEAnimCont }
     }),
     x,
     y,
     baseY,
     yOffset,
+    yFormula: scaleTrace.leaEAnimCont ? 'BCU EAnimCont.draw: baseY + offsetY * psiz' : 'legacy/hit-smoke: baseY - yOffset * cameraScale',
     scale,
-    rendererReference: 'BCU BattleBox draws ContAb/EAnimCont stage effects with psiz; WaprCont applies y offsets before drawing A_W/A_W_C'
+    rendererReference: scaleTrace.leaEAnimCont
+      ? 'BCU BattleBox.drawEntity StageBasis.lea loop draws normal EAnimCont at layer baseline and passes psiz=siz*sprite'
+      : 'BCU BattleBox draws ContAb/EAnimCont stage effects with psiz; WaprCont applies y offsets before drawing A_W/A_W_C'
   };
   effect.effectRuntimeDebug = {
     ...(effect.effectRuntimeDebug || {}),
@@ -184,7 +212,8 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     rendererX: x,
     rendererY: y,
     rendererScale: scale,
-    rendererLayer: layer
+    rendererLayer: layer,
+    rendererLeaEAnimCont: scaleTrace.leaEAnimCont
   };
   return drawn;
 }

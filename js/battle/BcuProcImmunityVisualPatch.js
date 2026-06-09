@@ -2,7 +2,7 @@ import { BattleActor } from './BattleActor.js';
 import { spawnWaveBundleEffect } from './BcuWaveBundleEffectSpawner.js';
 import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-proc-immunity-visual.v1');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-proc-immunity-visual.v2-actor-layer');
 
 function resolveScene(actor, meta = {}) {
   return meta?.scene || actor?.scene || globalThis.__APP__?.scene || globalThis.app?.scene || null;
@@ -17,15 +17,20 @@ function spawnProcInvalidEffect(actor, meta = {}, result = {}) {
     layer: Number.isFinite(actor.currentLayer) ? actor.currentLayer : 0,
     type: 'procInvalid',
     source: 'bcu-effanim-proc-invalid',
-    bcuSmokeYOffset: -50,
-    bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
+    bcuSmokeYOffset: 0,
+    bcuScaleMode: BCU_SCALE_MODE.ENTITY_STATUS,
+    scale: 0.75,
     debug: {
-      bcuReference: 'BCU Entity.processProcs: full IMU* status immunity triggers INV effect instead of applying the proc',
+      bcuReference: 'BCU actor drawEff path: actor-bound status effect uses entity layer baseline and 0.75 scale',
       procKey: result?.item?.key || result?.key || meta?.procKey || null,
       immunityField: result?.field || null,
       reason: result?.reason || null
     }
   });
+  if (effect) {
+    effect.bcuEntityStatusEffect = true;
+    effect.bcuTargetActorId = actor.instanceId || actor.label || null;
+  }
   const debug = {
     source: 'BcuProcImmunityVisualPatch.spawnProcInvalidEffect',
     spawned: !!effect,
@@ -52,7 +57,7 @@ export function installBcuProcImmunityVisualPatch() {
     }
     return result;
   };
-  globalThis.__BCU_PROC_IMMUNITY_VISUAL_PATCH_DEBUG__ = { installed: true, source: 'BcuProcImmunityVisualPatch', effectKey: 'procInvalid' };
+  globalThis.__BCU_PROC_IMMUNITY_VISUAL_PATCH_DEBUG__ = { installed: true, source: 'BcuProcImmunityVisualPatch', effectKey: 'procInvalid', bcuScaleMode: BCU_SCALE_MODE.ENTITY_STATUS, offsetY: 0, scale: 0.75 };
 }
 
 installBcuProcImmunityVisualPatch();

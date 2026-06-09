@@ -15,6 +15,7 @@ const imageWidth = (img) => img?.naturalWidth || img?.width || 0;
 const imageHeight = (img) => img?.naturalHeight || img?.height || 0;
 const DOG_CARD_ICON_SCALE = 1.1;
 const CARD_IMAGE_ASPECT_EPSILON = 0.02;
+const UNIT_KEY_RE = /^unit:\d+:(f|c|s|u)$/;
 
 export const BCU_UNI_IMGCUT_PATH = './public/assets/bcu/000001/org/data/uni.imgcut';
 export const BCU_SLOT_FRAME_PATH = './public/assets/bcu/000001/org/page/uni.png';
@@ -60,6 +61,14 @@ function getCanvasPixelRatio(ctx) {
 
 export function getProductionCardIconImageSize(icon) {
   return { width: imageWidth(icon), height: imageHeight(icon) };
+}
+
+function isUnitSquareCardCanvas(icon, semanticKey = '') {
+  const { width, height } = getProductionCardIconImageSize(icon);
+  return UNIT_KEY_RE.test(String(semanticKey || icon?.bcuSemanticKey || ''))
+    && width === height
+    && width >= BCU_UNI_CARD_PART.x + BCU_UNI_CARD_PART.w
+    && height >= BCU_UNI_CARD_PART.y + BCU_UNI_CARD_PART.h;
 }
 
 export function isBundledCatCardImage(icon) {
@@ -252,9 +261,10 @@ export class ProductionCardSkin {
   }
 
   drawCatCard(ctx, icon, state = {}) {
+    const semanticKey = state?.unitDef?.assetDef?.semanticKey || state?.unitDef?.uiIcon?.semanticKey || icon?.bcuSemanticKey || null;
     const detail = {
       source: 'ProductionCardSkin.drawCatCard',
-      semanticKey: state?.unitDef?.assetDef?.semanticKey || state?.unitDef?.uiIcon?.semanticKey || null,
+      semanticKey,
       iconSource: icon?.bcuIconSource || null,
       rawSourcePath: icon?.bcuRawSourcePath || null,
       bundlePath: icon?.bcuBundlePath || null,
@@ -267,6 +277,21 @@ export class ProductionCardSkin {
         lastCatCard: detail
       };
       return detail;
+    }
+
+    if (isUnitSquareCardCanvas(icon, semanticKey) && this.drawBcuCardPart(ctx, icon)) {
+      const fixed = {
+        ...detail,
+        renderMode: 'bcu-square-card-canvas-crop',
+        fallbackReason: 'square-unit-card-canvas-cropped-by-uni-imgcut',
+        bcuCardPart: this.cardPart || BCU_UNI_CARD_PART,
+        note: '128x128 unit card canvases are cropped by BCU uni.imgcut part[0] before cost/cooldown overlays are drawn.'
+      };
+      globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+        ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
+        lastCatCard: fixed
+      };
+      return fixed;
     }
 
     this.drawSlotFrame(ctx);

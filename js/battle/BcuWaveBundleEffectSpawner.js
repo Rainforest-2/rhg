@@ -5,6 +5,8 @@ import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BCU_SCALE_MODE, classifyBcuEffect, describeBcuEffectYFormula, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
+const ACTOR_BOUND_STATUS_TYPES = new Set(['barrier', 'demonShield', 'waveInvalid', 'waveStop', 'delay', 'procInvalid']);
+
 function actorPos(actor) {
   const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
   return Number.isFinite(n) ? n : (Number.isFinite(actor?.x) ? actor.x : 0);
@@ -26,12 +28,14 @@ function inferScaleMode(key, type, source) {
   const t = String(type || '');
   const s = String(source || '');
   if (k === 'warp' || k === 'warpChara' || t === 'warp' || s.includes('warp')) return BCU_SCALE_MODE.WARP_HOLE;
-  if (t === 'barrier' || t === 'demonShield' || t === 'waveInvalid' || t === 'waveStop' || t === 'delay') return BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT;
+  if (ACTOR_BOUND_STATUS_TYPES.has(t) || ACTOR_BOUND_STATUS_TYPES.has(k)) return BCU_SCALE_MODE.ENTITY_STATUS;
+  if (s.includes('proc-invalid') || s.includes('wave-stop')) return BCU_SCALE_MODE.ENTITY_STATUS;
   if (t === 'counterSurge') return BCU_SCALE_MODE.HIT_SMOKE;
   return BCU_SCALE_MODE.LEGACY;
 }
 
 function defaultScaleForMode(mode, type) {
+  if (mode === BCU_SCALE_MODE.ENTITY_STATUS) return 0.75;
   if (mode === BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT) return 0.75;
   if (mode === BCU_SCALE_MODE.HIT_SMOKE && type === 'counterSurge') return 1;
   return 1;
@@ -84,6 +88,9 @@ export function spawnWaveBundleEffect(scene, {
   const effectScale = resolveEffectScale(scale, mode, resolvedType);
   const bcuEffectClass = debug?.bcuEffectClass || classifyBcuEffect({ bcuScaleMode: mode });
   const yFormula = debug?.yFormula || describeBcuEffectYFormula({ bcuScaleMode: mode });
+  const effectLayer = Number.isFinite(layer) ? layer : (Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0);
+  const actorId = actor?.instanceId || actor?.label || null;
+  const statusOffsetY = mode === BCU_SCALE_MODE.ENTITY_STATUS ? 0 : bcuSmokeYOffset;
   const effect = EffectRuntime.createEffect({
     id: `bcu-${key}-${phase || 'def'}-${scene.logicFrame || 0}-${Math.random().toString(36).slice(2)}`,
     type: resolvedType,
@@ -96,8 +103,8 @@ export function spawnWaveBundleEffect(scene, {
     scale: effectScale,
     source,
     createdAtMs: scene.timeMs,
-    layer: Number.isFinite(layer) ? layer : (Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0),
-    bcuSmokeYOffset,
+    layer: effectLayer,
+    bcuSmokeYOffset: statusOffsetY,
     bcuScreenOffsetX,
     renderFlipX: renderFlipX === true,
     bcuScaleMode: mode,
@@ -108,10 +115,11 @@ export function spawnWaveBundleEffect(scene, {
       phase,
       bcuScaleMode: mode,
       bcuEffectClass,
-      actor: actor?.instanceId || actor?.label || null,
+      actor: actorId,
+      targetActorId: actorId,
       x: effectX,
       worldX: effectX,
-      bcuSmokeYOffset,
+      bcuSmokeYOffset: statusOffsetY,
       screenOffsetX: bcuScreenOffsetX,
       bcuScreenOffsetX,
       renderFlipX: renderFlipX === true,
@@ -122,14 +130,21 @@ export function spawnWaveBundleEffect(scene, {
       effectScale,
       resolvedScale: effectScale,
       defaultScaleApplied: scale === null || scale === undefined,
-      layer: Number.isFinite(layer) ? layer : (Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0),
+      layer: effectLayer,
       yFormula,
+      bcuReference: mode === BCU_SCALE_MODE.ENTITY_STATUS
+        ? 'BCU actor-bound drawEff class: entity layer baseline, no smoke y offset, scale 0.75 by default'
+        : debug?.bcuReference,
       ...debug
     }
   });
   effect.durationMs = runtime.frameCount * BCU_BATTLE_TIMER_PERIOD_MS;
   effect.frameDurationMs = BCU_BATTLE_TIMER_PERIOD_MS;
   effect.elapsedMs = -BCU_BATTLE_TIMER_PERIOD_MS;
+  if (mode === BCU_SCALE_MODE.ENTITY_STATUS) {
+    effect.bcuEntityStatusEffect = true;
+    effect.bcuTargetActorId = actorId;
+  }
   scene.effects.push(effect);
   return effect;
 }

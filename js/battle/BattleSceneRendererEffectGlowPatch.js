@@ -4,9 +4,8 @@ import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { drawBcuImagePart } from '../bcu/BcuCanvasComposite.js';
 import { BCU_SCALE_MODE, buildBcuEffectTrace, classifyBcuEffect, describeBcuEffectYFormula, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v2-lea-eanimcont');
+const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v3-entity-status-actor-pass');
 const ACTOR_SMOKE_Y_OFFSET = 75;
-const BCU_SMOKE_SCALE = 1.2;
 const BCU_STAGE_EFFECT_SOURCES = new Set([
   'bcu-effanim-wave-cont-wave-def',
   'bcu-effanim-surge-cont-volcano',
@@ -34,12 +33,26 @@ function getEffectLayer(effect) {
   return finiteNumber(effect?.currentLayer, effect?.bcuRenderLayer, effect?.layer, 0) ?? 0;
 }
 
+function getActorId(actor) {
+  return actor?.instanceId || actor?.label || null;
+}
+
+function getEffectActorId(effect) {
+  return effect?.bcuTargetActorId || effect?.effectRuntimeDebug?.targetActorId || effect?.effectRuntimeDebug?.actor || null;
+}
+
 function isBcuLeaEAnimContEffect(effect) {
   return effect?.bcuStageLeaEAnimCont === true || BCU_LEA_EANIMCONT_SOURCES.has(getEffectSource(effect));
 }
 
+function isBcuEntityStatusEffect(effect) {
+  return effect?.bcuEntityStatusEffect === true
+    || normalizeBcuScaleMode(effect?.bcuScaleMode || effect?.effectRuntimeDebug?.bcuScaleMode) === BCU_SCALE_MODE.ENTITY_STATUS;
+}
+
 function isBcuStageLayeredEffect(effect) {
   if (!effect || effect.finished) return false;
+  if (isBcuEntityStatusEffect(effect)) return false;
   if (effect.bcuProjectileStageObject === true) return true;
   if (normalizeBcuScaleMode(effect.bcuScaleMode || effect.effectRuntimeDebug?.bcuScaleMode) === BCU_SCALE_MODE.STAGE_PROJECTILE) return true;
   if (BCU_STAGE_EFFECT_SOURCES.has(String(effect.source || ''))) return true;
@@ -103,17 +116,9 @@ export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1
   } else {
     switch (mode) {
       case BCU_SCALE_MODE.STAGE_PROJECTILE:
-        finalScale = camera * effectScale;
-        break;
       case BCU_SCALE_MODE.ENTITY_STATUS:
-        finalScale = camera * effectScale;
-        break;
       case BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT:
-        finalScale = camera * effectScale;
-        break;
       case BCU_SCALE_MODE.WARP_HOLE:
-        finalScale = camera * effectScale;
-        break;
       case BCU_SCALE_MODE.HIT_SMOKE:
         finalScale = camera * effectScale;
         break;
@@ -132,7 +137,7 @@ export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1
     finalScale,
     leaEAnimCont,
     yFormula: describeBcuEffectYFormula({ bcuScaleMode: mode, leaEAnimCont }),
-    bcuReference: leaEAnimCont ? 'BCU lea EAnimCont scale path' : mode === BCU_SCALE_MODE.ENTITY_STATUS ? 'BCU entity status scale path' : mode === BCU_SCALE_MODE.LEGACY ? 'legacy scale path' : 'BCU stage scale path'
+    bcuReference: leaEAnimCont ? 'BCU lea EAnimCont scale path' : mode === BCU_SCALE_MODE.ENTITY_STATUS ? 'BCU entity status actor-pass scale path' : mode === BCU_SCALE_MODE.LEGACY ? 'legacy scale path' : 'BCU stage scale path'
   };
 }
 
@@ -156,7 +161,7 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     : scaleTrace.bcuScaleMode === BCU_SCALE_MODE.ENTITY_STATUS ? 0
       : (finiteNumber(effect.bcuSmokeYOffset, ACTOR_SMOKE_Y_OFFSET) ?? ACTOR_SMOKE_Y_OFFSET);
   const y = actorPriority ? baseY + yOffset * scale : baseY - yOffset * cameraScale;
-  const yFormula = actorPriority ? 'baseY plus offset' : scaleTrace.bcuScaleMode === BCU_SCALE_MODE.ENTITY_STATUS ? 'baseY no offset' : 'baseY minus offset';
+  const yFormula = actorPriority ? 'BCU EAnimCont.draw: baseY + offsetY * psiz' : scaleTrace.yFormula;
 
   let drawn = false;
   if (effect.model && effect.animator) {
@@ -198,7 +203,7 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
       cameraScale: scaleTrace.cameraScale,
       spriteScaleUsed: scaleTrace.spriteScaleUsed,
       finalScale: scaleTrace.finalScale,
-      extra: { leaEAnimCont: scaleTrace.leaEAnimCont }
+      extra: { leaEAnimCont: scaleTrace.leaEAnimCont, entityStatusActorPass: isBcuEntityStatusEffect(effect) }
     }),
     x,
     y,
@@ -239,6 +244,23 @@ function drawPendingStageEffectsBeforeLayer(renderer, ctx, actorLayer) {
   }
 }
 
+function drawEntityStatusEffectsForActor(renderer, ctx, actor) {
+  const state = renderer.__bcuStageEffectLayerState;
+  if (!state) return;
+  const actorId = getActorId(actor);
+  const actorLayer = finiteNumber(actor?.currentLayer, actor?.layer, 0) ?? 0;
+  for (const effect of state.entityEffects) {
+    if (state.drawn.has(effect)) continue;
+    const targetId = getEffectActorId(effect);
+    if (targetId && actorId && targetId !== actorId) continue;
+    if (!targetId && getEffectLayer(effect) !== actorLayer) continue;
+    effect.bcuSmokeYOffset = 0;
+    effect.effectRuntimeDebug = { ...(effect.effectRuntimeDebug || {}), actorPassDraw: true, targetActorId: targetId || actorId || null };
+    drawOneBcuEffectWithGlow(renderer, ctx, effect);
+    state.drawn.add(effect);
+  }
+}
+
 function drawRemainingStageEffects(renderer, ctx) {
   const state = renderer.__bcuStageEffectLayerState;
   if (!state) return;
@@ -255,25 +277,33 @@ if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
   const originalRender = BattleSceneRenderer.prototype.render;
   if (typeof originalRender === 'function') {
     BattleSceneRenderer.prototype.render = function renderWithBcuStageEffectLayering(previewRenderer, scene, debugOptions = false) {
-      const effects = (scene?.effects || []).filter((effect) => effect && !effect.finished && isBcuStageLayeredEffect(effect)).sort(compareEffectLayer);
-      this.__bcuStageEffectLayerState = { effects, index: 0, drawn: new Set() };
+      const all = (scene?.effects || []).filter((effect) => effect && !effect.finished);
+      const effects = all.filter(isBcuStageLayeredEffect).sort(compareEffectLayer);
+      const entityEffects = all.filter(isBcuEntityStatusEffect).sort(compareEffectLayer);
+      this.__bcuStageEffectLayerState = { effects, entityEffects, index: 0, drawn: new Set() };
       try { return originalRender.call(this, previewRenderer, scene, debugOptions); }
       finally { delete this.__bcuStageEffectLayerState; }
     };
   }
   const originalDrawActor = BattleSceneRenderer.prototype.drawActor;
   if (typeof originalDrawActor === 'function') {
-    BattleSceneRenderer.prototype.drawActor = function drawActorWithBcuStageEffects(ctx, actor, ...rest) {
+    BattleSceneRenderer.prototype.drawActor = function drawActorWithBcuStageAndStatusEffects(ctx, actor, ...rest) {
       const layer = typeof this.getBcuEntityLayer === 'function' ? this.getBcuEntityLayer(actor) : finiteNumber(actor?.currentLayer, actor?.layer, 0) ?? 0;
       drawPendingStageEffectsBeforeLayer(this, ctx, layer);
-      return originalDrawActor.call(this, ctx, actor, ...rest);
+      const result = originalDrawActor.call(this, ctx, actor, ...rest);
+      drawEntityStatusEffectsForActor(this, ctx, actor);
+      return result;
     };
   }
   BattleSceneRenderer.prototype.drawEffects = function drawEffectsBcuWithGlow(ctx, effects = []) {
     drawRemainingStageEffects(this, ctx);
     const drawnStage = this.__bcuStageEffectLayerState?.drawn || null;
     const list = Array.isArray(effects) ? effects : [];
-    const active = list.filter((effect) => effect && !effect.finished).filter((effect) => !(drawnStage?.has(effect))).filter((effect) => !isBcuStageLayeredEffect(effect)).sort(compareEffectLayer);
+    const active = list
+      .filter((effect) => effect && !effect.finished)
+      .filter((effect) => !(drawnStage?.has(effect)))
+      .filter((effect) => !isBcuStageLayeredEffect(effect) && !isBcuEntityStatusEffect(effect))
+      .sort(compareEffectLayer);
     for (const effect of active) {
       try { drawOneBcuEffectWithGlow(this, ctx, effect); } catch {}
     }

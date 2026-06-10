@@ -39,6 +39,8 @@ export class BcuEnemyRepository {
   constructor({ manifest, names, diagnostics, readText, locale = 'jp' }) { this.manifest = manifest; this.names = names; this.diagnostics = diagnostics; this.readText = readText; this.locale = locale; this.enemies = new Map(); this.statsLoader = new BattleStatsLoader({ bcuDb: null }); }
 
   async build() {
+    // raw-only-diagnostics path: production boot uses fromCoreDb (ZIP core-db) and
+    // installRuntimeRawBcuGuard blocks Raw BCU fetches in semantic-strict mode.
     const files = new Set(this.manifest.files || []);
     const statsPath = 'public/assets/bcu/000001/org/data/t_unit.csv';
     let rows = [];

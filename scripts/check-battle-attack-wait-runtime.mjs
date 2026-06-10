@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { BattleAttackTimeline } from '../js/battle/BattleAttackTimeline.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from '../js/battle/BattleFrameClock.js';
 
 const timelinePath = 'js/battle/BattleAttackTimeline.js';
 const inspectorPath = 'js/battle/DebugBattleInspector.js';
@@ -9,18 +10,20 @@ for (const path of [timelinePath, inspectorPath]) {
   assert.ok(fs.existsSync(path), `${path} must exist`);
 }
 
+const frameMs = BCU_BATTLE_TIMER_PERIOD_MS;
+
 function makeActor() {
   return {
     state: 'move',
     fps: 30,
     attackWaitFrames: 27,
-    attackWaitMs: 900,
-    attackPostHitWaitMs: 900,
+    attackWaitMs: 27 * frameMs,
+    attackPostHitWaitMs: 27 * frameMs,
     attackCooldownUntilMs: 0,
     attackWaitActive: false,
     attackWaitSetCount: 0,
-    attackAnimDurationMs: 600,
-    attackStartupMs: 300,
+    attackAnimDurationMs: 18 * frameMs,
+    attackStartupMs: 9 * frameMs,
     rawStats: {
       attackHits: [{ hitIndex: 0, preFrames: 9, preFramesAbsolute: 9, damage: 100, abi: 1 }],
       tbaFrames: 27,
@@ -38,39 +41,56 @@ function makeActor() {
   };
 }
 
+// BCU contract (Entity.java): waitTime = data.getTBA() is assigned when the final hit
+// of the attack resolves (AtkManager.updateAttack), decremented once per battle frame
+// (Entity.update: if(waitTime > 0) waitTime--), and attack start requires waitTime == 0
+// with attacksLeft != 0. enterAttackWait/beginAttack never assign TBA themselves.
+
+// 1. beginAttack clears waitTime and does not pre-assign a cooldown.
 const actor = makeActor();
-BattleAttackTimeline.enterAttackWait(actor, { nowMs: 1000, reason: 'attack-complete' });
-assert.equal(actor.state, 'attack-wait');
-assert.equal(actor.attackCooldownUntilMs, 1900);
-assert.equal(actor.attackWaitReadyAtMs, 1900);
-assert.equal(actor.attackWaitSetCount, 1);
-assert.equal(actor.lastAttackWaitDebug.source, 'fallback-set-new-tba-on-attack-complete');
-
-actor.setState('move');
-BattleAttackTimeline.enterAttackWait(actor, { nowMs: 1200, reason: 'still-touching-not-ready' });
-assert.equal(actor.attackCooldownUntilMs, 1900, 're-entering attack-wait must not extend TBA');
-assert.equal(actor.attackWaitReadyAtMs, 1900, 'readyAt must be preserved');
-assert.equal(actor.attackWaitSetCount, 1, 'setCount must not increase when preserving wait');
-assert.equal(actor.lastAttackWaitDebug.source, 'preserved-existing-bcu-interval');
-assert.equal(BattleAttackTimeline.getAttackWaitState(actor, 1900).ready, true);
-
-BattleAttackTimeline.beginAttack(actor, { nowMs: 1900, target: { label: 'target' }, targetType: 'actor' });
+BattleAttackTimeline.beginAttack(actor, { nowMs: 1000, target: { label: 'target' }, targetType: 'actor' });
 assert.equal(actor.state, 'attack');
-assert.equal(actor.attackWaitActive, true, 'beginAttack should set BCU attack interval wait');
-assert.equal(actor.lastAttackWaitDebug.source, 'set-bcu-attack-interval-on-attack-start');
-assert.ok(actor.attackCooldownUntilMs > 1900, 'beginAttack should set a future ready time from attack start');
-const readyFromAttackStart = actor.attackCooldownUntilMs;
+assert.equal(actor.bcuWaitTimeFrames, 0, 'beginAttack must clear BCU waitTime');
+assert.equal(actor.attackCooldownUntilMs, 1000, 'beginAttack must not schedule a future cooldown');
+assert.equal(actor.attackWaitActive, false, 'BCU AtkManager.startAttack does not assign waitTime');
 
-BattleAttackTimeline.enterAttackWait(actor, { nowMs: 2100, reason: 'attack-complete' });
-assert.equal(actor.attackCooldownUntilMs, readyFromAttackStart, 'attack complete must reuse attack-start BCU interval, not add another TBA');
-assert.equal(actor.lastAttackWaitDebug.source, 'preserved-existing-bcu-interval');
-assert.equal(actor.attackWaitSetCount, 1, 'attack complete should not increment fallback TBA when attack-start interval exists');
+// 2. Final hit resolution assigns waitTime = TBA exactly once per attack cycle.
+actor.lastSceneTimeMs = 1000 + 9 * frameMs;
+const due = BattleAttackTimeline.getDueHitEvents(actor, 1000 + 9 * frameMs);
+assert.equal(due.length, 1, 'single hit must come due at preFrames');
+BattleAttackTimeline.markHitResolved(actor, due[0].key);
+assert.equal(actor.bcuWaitTimeFrames, 27, 'final hit must assign waitTime = TBA frames');
+assert.equal(actor.lastBcuWaitTimeDebug.reason, 'final-hit-resolved-set-TBA');
+const waitSetCount = actor.bcuWaitSetCount;
+BattleAttackTimeline.markHitResolved(actor, due[0].key);
+assert.equal(actor.bcuWaitSetCount, waitSetCount, 'TBA must be assigned once per attack cycle');
+
+// 3. enterAttackWait only changes state and preserves the assigned waitTime.
+BattleAttackTimeline.enterAttackWait(actor, { nowMs: 1000 + 18 * frameMs, reason: 'attack-complete' });
+assert.equal(actor.state, 'attack-wait');
+assert.equal(actor.bcuWaitTimeFrames, 27, 'enterAttackWait must not change waitTime');
+assert.equal(actor.lastAttackWaitDebug.canSetNewTba, false);
+assert.match(actor.lastAttackWaitDebug.source, /waitTime is assigned on final hit/);
+
+// 4. tickBcuWait decrements once per logic frame and is idempotent within a frame.
+BattleAttackTimeline.tickBcuWait(actor, { logicFrame: 100, nowMs: 0 });
+assert.equal(actor.bcuWaitTimeFrames, 26);
+BattleAttackTimeline.tickBcuWait(actor, { logicFrame: 100, nowMs: 0 });
+assert.equal(actor.bcuWaitTimeFrames, 26, 'same logicFrame must not double-decrement');
+for (let f = 101; f <= 126; f++) BattleAttackTimeline.tickBcuWait(actor, { logicFrame: f, nowMs: 0 });
+assert.equal(actor.bcuWaitTimeFrames, 0);
+assert.equal(BattleAttackTimeline.getAttackWaitState(actor, 0).ready, true, 'wait must be ready at waitTime == 0');
+
+// 5. A new attack cycle can begin once waitTime reaches 0.
+BattleAttackTimeline.beginAttack(actor, { nowMs: 5000, target: { label: 'target' }, targetType: 'actor' });
+assert.equal(actor.state, 'attack');
+assert.equal(actor.bcuWaitTimeFrames, 0);
 
 const timelineText = fs.readFileSync(timelinePath, 'utf8');
 const inspectorText = fs.readFileSync(inspectorPath, 'utf8');
-assert.match(timelineText, /set-bcu-attack-interval-on-attack-start/, 'timeline must set BCU interval on attack start');
-assert.match(timelineText, /reuse-attack-start-bcu-interval|preserved-existing-bcu-interval/, 'attack wait must reuse attack-start interval');
-assert.match(timelineText, /getBcuAttackIntervalMs/, 'timeline must use BCU interval helper');
+assert.match(timelineText, /final-hit-resolved-set-TBA/, 'timeline must assign TBA on final hit');
+assert.match(timelineText, /tickBcuWait/, 'timeline must decrement waitTime per frame');
+assert.match(timelineText, /getBcuAttackIntervalMs/, 'timeline must keep BCU interval helper for diagnostics');
 assert.match(inspectorText, /attackTiming/, 'debug inspector must expose attackTiming info');
 assert.match(inspectorText, /dog cycle/, 'DOM panel must show dog cycle timing');
 assert.match(inspectorText, /cat cycle/, 'DOM panel must show cat cycle timing');

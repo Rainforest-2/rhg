@@ -37,16 +37,16 @@ const actor = {
   getAttackProfile() { return { events: [{ atMs: 0, key: 'hit-0' }], source: 'test' }; }
 };
 
+// BCU contract: enterAttackWait never assigns TBA; waitTime is assigned on final hit
+// (Entity.AtkManager.updateAttack) and only decremented per battle frame.
 BattleAttackTimeline.enterAttackWait(actor, { nowMs: 1000, reason: 'attack-complete' });
-assert.equal(actor.attackWaitReadyAtMs, 1900, 'completed attack should set new TBA');
-assert.equal(actor.attackWaitSetCount, 1, 'completed attack should increment setCount');
+assert.equal(actor.state, 'attack-wait');
+assert.equal(actor.bcuWaitTimeFrames, 0, 'enterAttackWait must not assign TBA');
+assert.equal(actor.attackWaitReadyAtMs, 1000, 'no assigned waitTime means ready immediately');
 
-actor.attackWaitActive = false;
-actor.attackWaitReadyAtMs = 1900;
-actor.attackCooldownUntilMs = 1900;
+BattleAttackTimeline.setBcuWaitFrames(actor, 27, { nowMs: 1300, reason: 'final-hit-resolved-set-TBA' });
 BattleAttackTimeline.enterAttackWait(actor, { nowMs: 1300, reason: 'target-missing' });
-assert.equal(actor.attackWaitSetCount, 1, 'non-complete reason must not create new TBA');
-assert.equal(actor.lastAttackWaitDebug.source, 'no-new-tba-non-complete-reason');
+assert.equal(actor.bcuWaitTimeFrames, 27, 'non-complete reason must preserve assigned waitTime');
 assert.equal(actor.lastAttackWaitDebug.canSetNewTba, false);
 
 const attacker = {
@@ -88,8 +88,8 @@ assert.match(inspector, /attackIntervals/, 'DebugBattleInspector must collect at
 assert.match(inspector, /intervalLine/, 'DebugBattleInspector must render interval lines');
 assert.match(inspector, /dog atk/, 'DOM panel must include dog attack interval line');
 assert.match(inspector, /cat atk/, 'DOM panel must include cat attack interval line');
-assert.match(timeline, /isAttackCompleteReason/, 'Timeline must gate new TBA by reason');
-assert.match(timeline, /no-new-tba-non-complete-reason/, 'Timeline must report non-complete no-new-TBA source');
+assert.match(timeline, /isAttackCompleteReason/, 'Timeline must keep attack-complete reason classifier');
+assert.match(timeline, /final-hit-resolved-set-TBA/, 'Timeline must assign TBA on final hit');
 assert.match(runtime, /value === null/, 'Runtime must avoid Number(null) becoming 0');
 assert.doesNotMatch(inspector + timeline, /combatPositionMode\s*=\s*['"]bcu-pos['"]/, 'Task must not switch combat mode to bcu-pos');
 assert.doesNotMatch(timeline, /ProcResolver|KBRuntime|EffectRuntime/, 'Attack timeline must not expand into unrelated systems');

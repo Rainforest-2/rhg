@@ -58,14 +58,16 @@ function sortForBcuLayer(actors = []) {
 function moveActor(scene, actor, dt) {
   const defaultDistance = actor.moveSpeed * (dt / 1000);
   if (actor?.isBcuProcStatusActive?.('freeze', scene.timeMs)) {
-    actor.lastBcuStopMoveDebug = {
-      source: 'BCU Entity.update: status[P_STOP] prevents updateMove()',
-      frame: scene.logicFrame,
-      timeMs: scene.timeMs,
-      defaultDistance,
-      appliedDistance: 0,
-      x: actor.x
-    };
+    if (globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+      actor.lastBcuStopMoveDebug = {
+        source: 'BCU Entity.update: status[P_STOP] prevents updateMove()',
+        frame: scene.logicFrame,
+        timeMs: scene.timeMs,
+        defaultDistance,
+        appliedDistance: 0,
+        x: actor.x
+      };
+    }
     return;
   }
   const distance = typeof actor.getBcuMoveDistanceForDt === 'function'
@@ -82,13 +84,15 @@ function isBcuStopped(scene, actor) {
 function holdAttackForBcuStop(scene, actor, dt) {
   if (!isBcuStopped(scene, actor)) return false;
   actor.attackStartedAtMs = (actor.attackStartedAtMs || scene.timeMs) + dt;
-  actor.lastBcuStopAttackDebug = {
-    source: 'BCU Entity.update2: atkm.updateAttack() is gated by nstop',
-    frame: scene.logicFrame,
-    timeMs: scene.timeMs,
-    heldByMs: dt,
-    attackStartedAtMs: actor.attackStartedAtMs
-  };
+  if (globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+    actor.lastBcuStopAttackDebug = {
+      source: 'BCU Entity.update2: atkm.updateAttack() is gated by nstop',
+      frame: scene.logicFrame,
+      timeMs: scene.timeMs,
+      heldByMs: dt,
+      attackStartedAtMs: actor.attackStartedAtMs
+    };
+  }
   return true;
 }
 
@@ -104,20 +108,22 @@ function getSelection(scene, actor) {
 function attackWaitReady(actor, nowMs) {
   const state = BattleAttackTimeline.getAttackWaitState(actor, nowMs);
   const ready = state.ready && state.canStartAttack !== false;
-  actor.lastStageBasisAttackWaitDebug = {
-    source: 'BCU StageBasisTickPatch attack-start uses waitTime == 0 && attacksLeft != 0',
-    nowMs,
-    ready,
-    waitReady: state.ready,
-    canStartAttack: state.canStartAttack,
-    remainingMs: state.remainingMs,
-    remainingFrames: state.remainingFrames,
-    attacksLeft: state.attacksLeft,
-    readyAtMs: state.readyAtMs,
-    active: state.active,
-    reason: state.reason,
-    bcuReference: 'Entity.update2: waitTime == 0 && touchEnemy && atkm.attacksLeft != 0'
-  };
+  if (globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+    actor.lastStageBasisAttackWaitDebug = {
+      source: 'BCU StageBasisTickPatch attack-start uses waitTime == 0 && attacksLeft != 0',
+      nowMs,
+      ready,
+      waitReady: state.ready,
+      canStartAttack: state.canStartAttack,
+      remainingMs: state.remainingMs,
+      remainingFrames: state.remainingFrames,
+      attacksLeft: state.attacksLeft,
+      readyAtMs: state.readyAtMs,
+      active: state.active,
+      reason: state.reason,
+      bcuReference: 'Entity.update2: waitTime == 0 && touchEnemy && atkm.attacksLeft != 0'
+    };
+  }
   return ready;
 }
 

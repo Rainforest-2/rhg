@@ -29,7 +29,7 @@ assert.match(profile, /disableMinAttackStartup \? 0/, 'Profile must disable min 
 assert.match(profile, /disableMinAttackAnim \? 0/, 'Profile must disable min anim in parity mode');
 assert.match(profile, /disableAttackPhaseMultiplier \? 1/, 'Profile must disable attack phase multiplier in parity mode');
 assert.match(profile, /timingParity/, 'Profile must carry timingParity into bcuTiming');
-assert.match(timeline, /set-bcu-attack-interval-on-attack-start/, 'Timeline must keep attack-start BCU interval source');
+assert.match(timeline, /final-hit-resolved-set-TBA/, 'Timeline must assign BCU waitTime on final hit');
 assert.match(inspector, /dog cycle/, 'Inspector must still expose dog cycle timing');
 assert.match(inspector, /cat cycle/, 'Inspector must still expose cat cycle timing');
 
@@ -61,7 +61,8 @@ const actor = {
   }
 };
 const p = BattleAttackProfile.fromActor(actor);
-assert.equal(Math.round(p.maxEventAtMs), 333, 'preFrames must not be shortened by attackPhaseTimeMultiplier in parity mode');
+// BCU battle frame is BCU_BATTLE_TIMER_PERIOD_MS (33ms): 10 preFrames -> 330ms.
+assert.equal(Math.round(p.maxEventAtMs), 330, 'preFrames must not be shortened by attackPhaseTimeMultiplier in parity mode');
 assert.equal(Math.round(p.waitMs), 6000, 'TBA must not be inflated by attackWaitMultiplier inside profile');
 assert.ok(p.bcuTiming.timingParity.enabled, 'bcuTiming must carry parity debug info');
 

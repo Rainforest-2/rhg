@@ -12,7 +12,8 @@ const loader = new StageDefinitionLoader(() => {});
 const def = loader.parse(csv, './stage/test-stage.csv');
 
 assert.equal(def.castleId, 10);
-assert.equal(def.cannonId, 2);
+// BCU Stage.java castle row is `castleId,non_con` only; there is no cannon id column.
+assert.equal(def.cannonId, null);
 assert.equal(def.bgId, 5);
 assert.equal(def.stageLen, 4200);
 assert.equal(def.enemyBaseHp, 160000);

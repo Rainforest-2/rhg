@@ -140,15 +140,17 @@ export class BattleAttackTimeline {
     actor.bcuWaitLastTickFrame = logicFrame;
     if (actor.bcuWaitTimeFrames > 0) actor.bcuWaitTimeFrames -= 1;
     this.syncLegacyWaitFields(actor, nowMs, 'bcu-wait-tick');
-    actor.lastBcuWaitTickDebug = {
-      source: 'BattleAttackTimeline.tickBcuWait',
-      logicFrame,
-      nowMs,
-      remainingFrames: actor.bcuWaitTimeFrames,
-      remainingMs: bcuFrameToMs(actor.bcuWaitTimeFrames),
-      attacksLeft: actor.bcuAttacksLeft,
-      bcuReference: 'Entity.update first step: if(waitTime > 0) waitTime--'
-    };
+    if (globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+      actor.lastBcuWaitTickDebug = {
+        source: 'BattleAttackTimeline.tickBcuWait',
+        logicFrame,
+        nowMs,
+        remainingFrames: actor.bcuWaitTimeFrames,
+        remainingMs: bcuFrameToMs(actor.bcuWaitTimeFrames),
+        attacksLeft: actor.bcuAttacksLeft,
+        bcuReference: 'Entity.update first step: if(waitTime > 0) waitTime--'
+      };
+    }
     return actor.bcuWaitTimeFrames;
   }
 

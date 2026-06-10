@@ -72,10 +72,13 @@ export class BcuUnitRepository {
   }
 
   async build() {
+    // raw-only-diagnostics path: production boot uses fromCoreDb (ZIP core-db) and
+    // installRuntimeRawBcuGuard blocks Raw BCU fetches in semantic-strict mode.
     const files = new Set(this.manifest.files || []);
     await Promise.all((this.manifest.indexes?.unitIds || []).map(async (id) => {
       const unitId = toInt(id, null); if (!Number.isFinite(unitId)) return;
       const id3 = pad3(unitId);
+      // Raw BCU fallback path (raw-only-diagnostics).
       const statsPath = (this.manifest.files || []).find((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`)) || `public/assets/bcu/000004/org/unit/${id3}/unit${id3}.csv`;
       let rows = [];
       try { rows = parseCsvRows(await this.readText(statsPath)).map(toNumbers); } catch (error) { this.diagnostics.units.missingStats.push({ unitId, file: statsPath, reason: error?.message || String(error) }); }
@@ -93,6 +96,7 @@ export class BcuUnitRepository {
         const stats = raw.length ? this.statsLoader.normalizeUnitStats(raw, { file: toFetchPath(statsPath), row: index, unitId, form: code, formRow: index, type: 'unit', mappingStatus: 'valid' }) : null;
         forms.push({ index, code, key: unitFormKey(unitId, index), name, stats, rawStats: raw, asset });
       }
+      // Raw BCU folder metadata for raw-only-diagnostics; semantic-strict runtime fetches are blocked by installRuntimeRawBcuGuard.
       this.units.set(unitId, { id: unitId, id3, key: unitKey(unitId), sourcePack: '000004', folder: toFetchPath(`public/assets/bcu/000004/org/unit/${id3}/`), forms });
     }));
     return this;

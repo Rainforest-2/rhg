@@ -26,7 +26,9 @@ for (const entry of actor.entries || []) {
   const missingEntries = required.filter((name) => !files.has(name));
   const invalidPngEntries = [];
   if (files.has('image.png')) {
-    const png = validatePngBuffer(files.get('image.png'));
+    // BC source PNGs legitimately carry trailing bytes after IEND; browsers accept them
+    // and all other icon/actor build+check scripts validate with allowTrailingBytes.
+    const png = validatePngBuffer(files.get('image.png'), { allowTrailingBytes: true });
     if (!png.valid) invalidPngEntries.push({ internalPath: 'image.png', reason: png.reason });
   }
   if (missingEntries.length || invalidPngEntries.length) {

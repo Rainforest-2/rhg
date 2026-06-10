@@ -147,7 +147,10 @@ test('applyBcuProc applies partial resistance to status duration and toxic damag
   const toxic = target.applyBcuProc({ key: 'toxic', payload: { mult: 40 } }, { nowMs: 0, tuning: {} });
   assert.equal(toxic.applied, true);
   assert.equal(toxic.damage, 200);
-  assert.equal(target.pendingDamage, 200);
+  // Standalone toxic resolves immediately (BCU processProcs POIATK damage is applied in the
+  // same tick's postUpdate); pendingDamage is flushed into hp by resolvePostDamage.
+  assert.equal(target.pendingDamage, 0);
+  assert.equal(target.hp, 800);
 });
 
 test('IMUWEAK smartImu follows BCU checkSmartImu direction', () => {

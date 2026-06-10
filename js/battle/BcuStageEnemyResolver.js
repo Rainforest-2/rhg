@@ -49,6 +49,8 @@ function commonEnemyAssetFields(bcuId, semanticKey) {
     renderMode: 'animated-unit',
     semanticKey,
     allowExtraRawAnimations: true,
+    // Raw BCU baseDir is fallback metadata only; semanticKey ZIP bundles resolve first
+    // and installRuntimeRawBcuGuard blocks raw fetches in semantic-strict mode.
     baseDir: `./public/assets/bcu/000002/org/enemy/${bcuId}/`,
     image: `${bcuId}_e.png`,
     imgcut: `${bcuId}_e.imgcut`,

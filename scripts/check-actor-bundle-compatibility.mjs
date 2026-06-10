@@ -57,7 +57,9 @@ for (const entry of actor.entries || []) {
   try { zip = await readStoreZipEntries(bundlePath); } catch (error) { fail(entry, bundlePath, 'bundle.json', 'zip-read-failed', { message: error.message }); continue; }
   for (const name of required) if (!zip.has(name)) fail(entry, bundlePath, name, 'missing-entry');
   if (required.some((name) => !zip.has(name))) continue;
-  const png = validatePngBuffer(zip.get('image.png'));
+  // BC source PNGs legitimately carry trailing bytes after IEND; browsers accept them
+  // and all other icon/actor build+check scripts validate with allowTrailingBytes.
+  const png = validatePngBuffer(zip.get('image.png'), { allowTrailingBytes: true });
   if (!png.valid) { fail(entry, bundlePath, 'image.png', png.reason); continue; }
   let imgcut, model, bundleJson;
   try { bundleJson = JSON.parse(text(zip.get('bundle.json'))); } catch (error) { fail(entry, bundlePath, 'bundle.json', 'bundle-json-parse-failed', { message: error.message }); continue; }

@@ -115,7 +115,12 @@ export class StageBackgroundLoader {
     if (!bgRow && !this.db) bgRow = parseBgCsv(await this.fetchTextSafe(stage?.csvPath || bgResolved.csvPath), bgResolved.resolvedBgId || 0);
     bgRow = bgRow || { skyTop: { r: 0, g: 0, b: 0 }, skyBottom: { r: 0, g: 0, b: 0 }, groundTop: { r: 0, g: 0, b: 0 }, groundBottom: { r: 0, g: 0, b: 0 }, imgcutId: 1, showUpper: true, imageReferenceId: null, sourceFile: null, csvRowFound: false };
     const imageCandidates = bg?.assets?.imageCandidates || bgResolved.imageCandidates;
-    const imgcutCandidates = bg?.assets?.imgcutCandidates || (!this.db ? [`./public/assets/bcu/000001/org/battle/bg/bg${pad2(bgRow.imgcutId)}.imgcut`, ...bgResolved.imgcutCandidates] : bgResolved.imgcutCandidates);
+    // Raw BCU imgcut candidate below is the no-db fallback only; with a loaded db, bundle
+    // candidates are used and installRuntimeRawBcuGuard blocks Raw BCU fetches in semantic-strict mode.
+    const imgcutCandidates = bg?.assets?.imgcutCandidates ||
+      (!this.db
+        ? [`./public/assets/bcu/000001/org/battle/bg/bg${pad2(bgRow.imgcutId)}.imgcut`, ...bgResolved.imgcutCandidates]
+        : bgResolved.imgcutCandidates);
     let image = null;
     let imagePath = null;
     for (const candidate of imageCandidates) {

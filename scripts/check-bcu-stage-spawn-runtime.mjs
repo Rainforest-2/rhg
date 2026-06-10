@@ -25,7 +25,9 @@ assert.ok(String(ev[0].spawnWorldXSource).startsWith('stage-runtime-'));
 assert.equal(rt.rows[0].spawnedCount,0);
 rt.commitSpawn(ev[0],{random:()=>0});
 assert.equal(rt.rows[0].spawnedCount,1);
-ev=rt.tick(15,{logicFrame:15,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
+// BCU EStage.allow assigns rem = respawn (+1), so respawnMin 5 means next spawn at frame 16, not 15.
+assert.equal(rt.tick(15,{logicFrame:15,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100}).length,0);
+ev=rt.tick(16,{logicFrame:16,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
 rt.commitSpawn(ev[0],{random:()=>0});
 assert.equal(rt.rows[0].done,true);
 
@@ -44,7 +46,7 @@ rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
 ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
 rt.commitSpawn(ev[0],{random:()=>0.5});
 assert.equal(rt.rows[0].done,false);
-assert.equal(rt.rows[0].nextFrame,15);
+assert.equal(rt.rows[0].nextFrame,16);
 
 // 9,10
 row=mkRow({baseHpTriggerPercent:50});
@@ -123,12 +125,12 @@ ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercen
 rt.commitSpawn(ev[0],{random:()=>0});
 assert.equal(rt.rows[0].nextFrame,16);
 
-// 17H: default respawn behavior unchanged
+// 17H: default respawn behavior is BCU +1 (EStage.allow rem[i]++)
 row=mkRow({count:0,isInfinite:true,respawnMinFrame:5,respawnMaxFrame:5});
 rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
 ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:100});
 rt.commitSpawn(ev[0],{random:()=>0});
-assert.equal(rt.rows[0].nextFrame,15);
+assert.equal(rt.rows[0].nextFrame,16);
 
 // 18: StageDefinitionLoader preserves raw/capped stage header and SCDef aliases.
 assert.equal(BCU_STAGE_ENEMY_COLUMNS.S1, 10);
@@ -139,22 +141,26 @@ const parsed = loader.parse([
   '5,2,10,5,5,100,1,2,0,120,20,80,2,130,1,0'
 ].join('\n'), './stage-test.csv');
 assert.equal(parsed.castleId, 12);
-assert.equal(parsed.cannonId, 3);
-assert.equal(parsed.noContinue, 1);
+// BCU Stage.java castle row is `castleId,non_con`; there is no cannon column and
+// non_con is only set when column 1 is exactly "1".
+assert.equal(parsed.cannonId, null);
+assert.equal(parsed.noContinue, 0);
 assert.equal(parsed.bossGuard, 4);
-assert.equal(parsed.runtime.castleRowSource, 'bcu-stage-castle-row-extended-cannon');
+assert.equal(parsed.runtime.castleRowSource, 'bcu-stage-castle-row-castle-noncontinue');
 assert.equal(parsed.maxEnemyCountRaw, 99);
 assert.equal(parsed.maxEnemyCount, 50);
 assert.equal(parsed.runtime.maxEnemyCountRaw, 99);
 assert.equal(parsed.runtime.maxEnemyCount, 50);
 assert.equal(parsed.enemyRows[0].rawEnemyId, 5);
 assert.equal(parsed.enemyRows[0].enemyId, 3);
+// BC stage CSV: S0/R0/R1 are doubled (Stage.java data[2..4] *= 2), spawn_1 stays 0,
+// column 11 is mult_atk (M1), and C1 only activates via the >100 castle trigger swap.
 assert.equal(parsed.enemyRows[0].firstFrameMin, 20);
-assert.equal(parsed.enemyRows[0].firstFrameMax, 40);
+assert.equal(parsed.enemyRows[0].firstFrameMax, 0);
 assert.equal(parsed.enemyRows[0].respawnMinFrame, 10);
 assert.equal(parsed.enemyRows[0].respawnMaxFrame, 10);
-assert.equal(parsed.enemyRows[0].attackMagnification, 130);
-assert.equal(parsed.enemyRows[0].baseHpTriggerUpperPercent, 80);
+assert.equal(parsed.enemyRows[0].attackMagnification, 80);
+assert.equal(parsed.enemyRows[0].baseHpTriggerUpperPercent, null);
 assert.ok(parsed.enemyRows[0].debug?.scdefRaw);
 assert.ok(parsed.debug?.castleRawRow);
 
@@ -167,16 +173,22 @@ assert.equal(parsedBcuCastleRow.castleId, 12);
 assert.equal(parsedBcuCastleRow.cannonId, null);
 assert.equal(parsedBcuCastleRow.noContinue, 1);
 assert.equal(parsedBcuCastleRow.bossGuard, 1);
-assert.equal(parsedBcuCastleRow.runtime.castleRowSource, 'bcu-stage-castle-row');
-assert.equal(parsedBcuCastleRow.castle.source, 'bcu-stage-castle-row');
+assert.equal(parsedBcuCastleRow.runtime.castleRowSource, 'bcu-stage-castle-row-castle-noncontinue');
+assert.equal(parsedBcuCastleRow.castle.source, 'bcu-stage-castle-row-castle-noncontinue');
 
-// 19: C1 health-window hook is visible and enforced as a partial upper hook.
-row=mkRow({baseHpTriggerPercent:100,baseHpTriggerUpperPercent:80});
+// 19: BCU EStage.inHealth window: c0 >= c1 ? hp <= c0 : (hp > c0 && hp <= c1).
+// With castle_0=30 and castle_1=80, the row spawns only while 30 < hp <= 80.
+row=mkRow({baseHpTriggerPercent:30,baseHpTriggerUpperPercent:80});
 rt=new BcuStageSpawnRuntime(mkRuntime(row),[mkDef()]);
 assert.equal(rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:90}).length,0);
-assert.equal(rt.rows[0].lastBlockedReason,'base-hp-upper-trigger');
+assert.equal(rt.rows[0].lastBlockedReason,'base-hp-trigger');
 ev=rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:80});
 assert.equal(ev.length,1);
-assert.equal(ev[0].healthWindowDebug.upperPercent,80);
+assert.equal(ev[0].healthWindowDebug.castle1,80);
+assert.equal(ev[0].healthWindowDebug.rule,'hp > castle_0 && hp <= castle_1');
+assert.equal(ev[0].healthWindowDebug.inHealth,true);
+rt=new BcuStageSpawnRuntime(mkRuntime(mkRow({baseHpTriggerPercent:30,baseHpTriggerUpperPercent:80})),[mkDef()]);
+assert.equal(rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:25}).length,0);
+assert.equal(rt.rows[0].lastBlockedReason,'base-hp-trigger');
 
 console.log('check-bcu-stage-spawn-runtime: OK');

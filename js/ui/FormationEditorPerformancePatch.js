@@ -1,5 +1,6 @@
 import { getAvailableStages } from '../battle/StageRegistry.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+import { buildScopedDifficultyFilterCandidates } from '../bcu/BcuStageDifficultyRuntime.js';
 import { FormationEditor } from './FormationEditor.js';
 import { buildBcuStageCatalog } from './BcuStageCatalogBuilder.js';
 
@@ -33,6 +34,142 @@ const CATEGORY_UI = {
   special: { tone: 'violet' }
 };
 
+const STAGE_WINDOW_MIN_ITEMS = 72;
+const STAGE_WINDOW_ROW_HEIGHT = 92;
+const STAGE_WINDOW_MOBILE_ROW_HEIGHT = 74;
+const STAGE_WINDOW_OVERSCAN_ROWS = 8;
+
+function normalizeFilterValue(value) {
+  return String(value ?? '').normalize('NFKC').toLowerCase().trim();
+}
+
+function stageFilterState(editor) {
+  const raw = editor.__bcuStageDifficultyFilter || {};
+  return {
+    q: normalizeFilterValue(raw.q),
+    min: raw.min === '' || raw.min == null ? null : Number(raw.min),
+    max: raw.max === '' || raw.max == null ? null : Number(raw.max)
+  };
+}
+
+function isStageFiltering(filter) {
+  return !!filter.q || Number.isFinite(filter.min) || Number.isFinite(filter.max);
+}
+
+function stageFilterSignature(filter) {
+  return `${filter.q}|${Number.isFinite(filter.min) ? filter.min : ''}|${Number.isFinite(filter.max) ? filter.max : ''}`;
+}
+
+function stageSearchText(item) {
+  return normalizeFilterValue([
+    item?.key,
+    item?.id,
+    item?.label,
+    item?.mapLabel,
+    item?.collectionLabel,
+    item?.stageNoRaw,
+    item?.rawId,
+    item?.stage?.stageId,
+    item?.stage?.stageKey
+  ].filter(Boolean).join(' '));
+}
+
+function mapSearchText(map) {
+  return normalizeFilterValue([
+    map?.key,
+    map?.label,
+    map?.collectionLabel,
+    ...(map?.collectionLabels || []),
+    map?.mapNoRaw,
+    ...(map?.stages || []).map(stageSearchText)
+  ].filter(Boolean).join(' '));
+}
+
+function filteredStageItems(editor, kind, items) {
+  const filter = stageFilterState(editor);
+  if (!isStageFiltering(filter)) return items || [];
+  let bcuDb = null;
+  try { bcuDb = getBcuAssetDatabase(); } catch {}
+  return buildScopedDifficultyFilterCandidates(items || [], {
+    kind,
+    table: editor.__bcuStageDifficultyTable || null,
+    db: bcuDb,
+    query: kind === 'map' ? '' : filter.q,
+    min: filter.min,
+    max: filter.max
+  })
+    .map((candidate) => candidate.item)
+    .filter((item) => kind !== 'map' || !filter.q || mapSearchText(item).includes(filter.q));
+}
+
+function countStageColumns(list) {
+  if (!list || typeof getComputedStyle !== 'function') return 1;
+  const columns = getComputedStyle(list).gridTemplateColumns;
+  if (columns && columns !== 'none' && !columns.includes('repeat(')) {
+    const count = columns.split(/\s+/).filter((value) => value && !value.startsWith('[')).length;
+    if (count > 0) return count;
+  }
+  const width = list.clientWidth || 1;
+  if (width <= 760) return 1;
+  if (width <= 1180) return 2;
+  return 3;
+}
+
+function virtualSpacer(position, height) {
+  return `<div class='formation-stage-virtual-spacer' data-stage-virtual-spacer='${position}' aria-hidden='true' style='grid-column:1/-1;height:${Math.max(0, Math.round(height))}px'></div>`;
+}
+
+function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
+  const list = editor.root?.querySelector?.('.formation-stage-list');
+  const all = items || [];
+  if (!list || all.length < STAGE_WINDOW_MIN_ITEMS) {
+    editor.stageSelectorVirtual = {
+      active: false,
+      kind,
+      viewKey,
+      total: all.length,
+      rendered: all.length,
+      start: 0,
+      end: all.length
+    };
+    return all.map(renderItem).join('');
+  }
+
+  const previousKey = editor.__stageSelectorVirtualKey || '';
+  if (previousKey !== viewKey) {
+    editor.__stageSelectorVirtualKey = viewKey;
+    list.scrollTop = 0;
+  }
+
+  const columns = Math.max(1, countStageColumns(list));
+  const rowHeight = (list.clientWidth || 0) <= 760 ? STAGE_WINDOW_MOBILE_ROW_HEIGHT : STAGE_WINDOW_ROW_HEIGHT;
+  const totalRows = Math.ceil(all.length / columns);
+  const visibleRows = Math.max(1, Math.ceil((list.clientHeight || 520) / rowHeight));
+  const firstVisibleRow = Math.max(0, Math.floor((list.scrollTop || 0) / rowHeight));
+  const firstRow = Math.max(0, firstVisibleRow - STAGE_WINDOW_OVERSCAN_ROWS);
+  const lastRow = Math.min(totalRows, firstVisibleRow + visibleRows + STAGE_WINDOW_OVERSCAN_ROWS);
+  const start = firstRow * columns;
+  const end = Math.min(all.length, lastRow * columns);
+  const top = firstRow * rowHeight;
+  const bottom = Math.max(0, (totalRows - lastRow) * rowHeight);
+
+  editor.stageSelectorVirtual = {
+    active: true,
+    kind,
+    viewKey,
+    total: all.length,
+    rendered: end - start,
+    columns,
+    rowHeight,
+    start,
+    end,
+    firstVisibleRow,
+    lastVisibleRow: Math.min(totalRows, firstVisibleRow + visibleRows)
+  };
+
+  return `${virtualSpacer('top', top)}${all.slice(start, end).map(renderItem).join('')}${virtualSpacer('bottom', bottom)}`;
+}
+
 function selectedStageLabel(editor, catalog) {
   const selected = catalog.getStage(editor.selectedStageId);
   if (selected) return `${selected.mapLabel} - ${selected.label}`;
@@ -61,19 +198,31 @@ function renderCategoryCards(catalog) {
   }).join('');
 }
 
-function renderMapCards(category) {
-  return (category?.maps || []).map((map) => `<button type='button' class='formation-stage-card formation-stage-card-map' data-stage-map='${safeHtml(map.key)}'>
+function renderMapCard(map) {
+  return `<button type='button' class='formation-stage-card formation-stage-card-map' data-stage-map='${safeHtml(map.key)}'>
     <strong>${safeHtml(map.label)}</strong>
-  </button>`).join('');
+  </button>`;
 }
 
-function renderStageCards(editor, map) {
-  return (map?.stages || []).map((stage) => {
+function renderMapCards(editor, category) {
+  const filter = stageFilterState(editor);
+  const maps = filteredStageItems(editor, 'map', category?.maps || []);
+  const viewKey = `map:${category?.id || ''}:${stageFilterSignature(filter)}`;
+  return renderStageItemWindow(editor, 'map', viewKey, maps, renderMapCard);
+}
+
+function renderStageCard(editor, stage) {
     const active = stage.key === editor.selectedStageId || stage.stage?.stageId === editor.selectedStageId || stage.stage?.stageKey === editor.selectedStageId;
     return `<button type='button' class='formation-stage-card formation-stage-card-stage ${active ? 'is-active' : ''}' data-stage-id='${safeHtml(stage.key)}'>
       <strong>${safeHtml(stage.label)}</strong>
     </button>`;
-  }).join('');
+}
+
+function renderStageCards(editor, map) {
+  const filter = stageFilterState(editor);
+  const stages = filteredStageItems(editor, 'stage', map?.stages || []);
+  const viewKey = `stage:${map?.key || ''}:${stageFilterSignature(filter)}`;
+  return renderStageItemWindow(editor, 'stage', viewKey, stages, (stage) => renderStageCard(editor, stage));
 }
 
 function renderStageSelectorBody(editor) {
@@ -92,7 +241,8 @@ function renderStageSelectorBody(editor) {
   if (map && !category) category = catalog.getCategory(map.categoryId);
 
   if (state.level === 'stage' && map) return `${renderBackControl(state, category, map)}${renderStageCards(editor, map)}`;
-  if (state.level === 'map' && category) return `${renderBackControl(state, category, null)}${renderMapCards(category)}`;
+  if (state.level === 'map' && category) return `${renderBackControl(state, category, null)}${renderMapCards(editor, category)}`;
+  editor.stageSelectorVirtual = { active: false, kind: 'category', total: catalog.categories.length, rendered: catalog.categories.length };
   return renderCategoryCards(catalog);
 }
 
@@ -164,6 +314,20 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
     }
     if (event?.target?.closest?.('[data-character]')) this.__preserveCatalogScroll = true;
     return originalOnClick.call(this, event);
+  };
+
+  const originalOnScroll = FormationEditor.prototype.onScroll;
+  FormationEditor.prototype.onScroll = function patchedOnScroll(event) {
+    const stageList = event?.target?.closest?.('.formation-stage-list');
+    if (stageList && this.root?.contains(stageList)) {
+      if (this.__stageSelectorScrollFrame) return;
+      this.__stageSelectorScrollFrame = requestAnimationFrame(() => {
+        this.__stageSelectorScrollFrame = null;
+        this.renderStageSelector();
+      });
+      return;
+    }
+    return originalOnScroll.call(this, event);
   };
 
   FormationEditor.prototype.loadStageOptions = async function patchedLoadStageOptions() {

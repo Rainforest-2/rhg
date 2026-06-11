@@ -1,4 +1,5 @@
 import { BattleActor } from './BattleActor.js';
+import { BattleScene } from './BattleScene.js';
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { initializeBcuZombieCorpse, updateBcuZombieCorpseWindow } from './bcu-runtime/BcuZombieCorpseRuntime.js';
@@ -144,12 +145,19 @@ export function installBattleActorZombieRevivePatch() {
     const nowMs = Number.isFinite(args?.nowMs) ? args.nowMs : 0;
     const zk = killedByZombieKillerHits(pendingHitsBeforeResolve);
     if (isZombie(this) && spec && !zk) {
-      const scheduled = scheduleRevive(this, spec, nowMs);
-      if (scheduled) {
-        result.dead = false;
-        result.deathPending = false;
-        result.zombieReviveScheduled = true;
-        result.knockedBack = false;
+      if (result.knockedBack === true && result.deathPending === true) {
+        // BCU Entity.KBManager: the final KB plays fully; ZombX.preKill/doRevive only
+        // runs at updateKB kbTime==0. Arm here and schedule at finishKnockback.
+        this.__bcuZombieReviveArmed = { spec, armedAtMs: nowMs };
+        result.zombieReviveArmed = true;
+      } else {
+        const scheduled = scheduleRevive(this, spec, nowMs);
+        if (scheduled) {
+          result.dead = false;
+          result.deathPending = false;
+          result.zombieReviveScheduled = true;
+          result.knockedBack = false;
+        }
       }
     } else if (isZombie(this) && spec && zk) {
       this.lastBcuZombieReviveDebug = { source: 'BCU ZombX.prekill tempZK blocks revive', scheduled: false, zombieKillerBlocked: true };
@@ -166,6 +174,11 @@ export function installBattleActorZombieRevivePatch() {
       tickBcuZombieCorpseVisual(this, { remainingFrames });
       if (performRevive(this, nowMs)) return originalTick.call(this, dt);
       this.deathElapsedMs += dt;
+      // BCU keeps AnimManager updating through the P_REVIVE[1] countdown: the base
+      // actor shown under the corpse for the last REVIVE_SHOW_TIME frames walks in
+      // the WALK anim set at KB end instead of holding a frozen pose.
+      this.animator?.tick?.(dt);
+      this.applyCurrentAnimationFrame?.();
       this.lastBcuZombieCorpseDebug = { source: 'BCU status[P_REVIVE][1] corpse countdown', nowMs, readyAtMs: this.bcuZombieReviveReadyAtMs };
       return;
     }
@@ -188,6 +201,43 @@ export function installBattleActorZombieRevivePatch() {
   proto.isRemovable = function isRemovableWithZombieRevive(nowMs = 0) {
     if (this.bcuZombieRevivePending) return false;
     return originalIsRemovable.call(this, nowMs);
+  };
+}
+
+const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.actor-zombie-revive-scene-patch.v1');
+
+export function installBattleActorZombieReviveScenePatch() {
+  const proto = BattleScene?.prototype;
+  if (!proto || proto[SCENE_PATCH_FLAG]) return;
+  proto[SCENE_PATCH_FLAG] = true;
+  const originalFinishKnockback = proto.finishKnockback;
+  if (typeof originalFinishKnockback !== 'function') return;
+  proto.finishKnockback = function finishKnockbackWithZombieRevive(actor, target, ...rest) {
+    const armed = actor?.__bcuZombieReviveArmed;
+    if (armed && (actor.deathAfterKnockback || actor.deathPending || actor.hp <= 0)) {
+      actor.__bcuZombieReviveArmed = null;
+      actor.x = Number.isFinite(actor.knockbackToX) ? actor.knockbackToX : actor.x;
+      actor.kbEndedAtMs = this.timeMs;
+      actor.detachKbeff?.();
+      actor.resetKnockbackVisual?.();
+      // BCU Entity.KBManager.updateKB kbTime==0: anim.back=null + setAnim(WALK) runs
+      // before ZombX.preKill starts the corpse REVIVE countdown, so the base actor
+      // never holds a KB pose under the corpse anim.
+      actor.setAnimation?.(actor.moveAnimId, 'move', true);
+      const scheduled = scheduleRevive(actor, armed.spec, this.timeMs);
+      if (scheduled) {
+        actor.applyCurrentAnimationFrame?.();
+        this.pushEvent?.({
+          type: 'zombieReviveScheduledAfterFinalKnockback',
+          actor: actor.instanceId || actor.label,
+          readyAtMs: actor.bcuZombieReviveReadyAtMs,
+          x: Math.round(actor.x)
+        });
+        return;
+      }
+      // Revive count exhausted: fall through to the normal final-KB death path.
+    }
+    return originalFinishKnockback.call(this, actor, target, ...rest);
   };
 }
 
@@ -215,4 +265,5 @@ export function installBattleActorZombieReviveRenderPatch() {
 }
 
 installBattleActorZombieRevivePatch();
+installBattleActorZombieReviveScenePatch();
 installBattleActorZombieReviveRenderPatch();

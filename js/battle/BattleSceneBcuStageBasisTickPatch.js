@@ -170,7 +170,9 @@ export function installBattleSceneBcuStageBasisTickPatch() {
       for (const actor of this.actors) {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!isActorActive(actor)) continue;
-        if (actor.state === 'knockback' || actor.state === 'attack') continue;
+        // BCU Entity.update: kbTime < -1 (burrow) runs updateBurrow only —
+        // no normal walk movement or animation while underground.
+        if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
         const selection = this.findTargetForActor(actor);
         this.__bcuTargetSelections.set(actor, selection);
         if (!selection) {
@@ -202,7 +204,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
       for (const actor of this.actors) {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!isActorActive(actor)) continue;
-        if (actor.state === 'knockback' || actor.state === 'attack') continue;
+        if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
         if (this.__bcuTargetSelections.has(actor)) continue;
         const selection = this.findTargetForActor(actor);
         this.__bcuTargetSelections.set(actor, selection ? { ...selection, canAttack: this.canAttack(actor, selection.target) } : null);
@@ -213,7 +215,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
       for (const actor of this.actors) {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!isActorActive(actor)) continue;
-        if (actor.state === 'knockback' || actor.state === 'attack') continue;
+        if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
         if (isBcuStopped(this, actor)) continue;
         const selection = getSelection(this, actor);
         if (!selection?.target) continue;

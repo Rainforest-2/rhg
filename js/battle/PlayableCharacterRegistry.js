@@ -142,11 +142,35 @@ export function buildGeneratedCatSpecs(options = {}) { return buildCatSpecs(opti
 export const GENERATED_DOG_PLAYABLE_SPECS = ALL_DOG_PLAYABLE_SPECS;
 export const GENERATED_CAT_PLAYABLE_SPECS = ALL_CAT_PLAYABLE_SPECS;
 
+function enemyBurrowAnimationDefs(bcuId) {
+  // BCU AnimUD.DefImgLoader#getMA maps *_zombie00/01/02 to AnimU.TYPE7
+  // indexes 4/5/6: BURROW_DOWN/BURROW_MOVE/BURROW_UP.
+  return [
+    { id: 'anim04', file: `${bcuId}_e_zombie00.maanim` },
+    { id: 'anim05', file: `${bcuId}_e_zombie01.maanim` },
+    { id: 'anim06', file: `${bcuId}_e_zombie02.maanim` }
+  ];
+}
+
+function withEnemyBurrowAnimations(assetDef, bcuId) {
+  if (!assetDef) return assetDef;
+  const animations = Array.isArray(assetDef.animations) ? assetDef.animations : [];
+  const existing = new Set(animations.map((a) => a?.id));
+  return {
+    ...assetDef,
+    allowExtraRawAnimations: true,
+    // Raw BCU baseDir is fallback metadata only; semanticKey ZIP bundles resolve first
+    // and installRuntimeRawBcuGuard blocks raw fetches in semantic-strict mode.
+    baseDir: assetDef.baseDir || `./public/assets/bcu/000002/org/enemy/${bcuId}/`,
+    animations: [...animations, ...enemyBurrowAnimationDefs(bcuId).filter((a) => !existing.has(a.id))]
+  };
+}
+
 function unitAssetDef({ id, bcuId, kind, form = 'f' }) {
   const semanticKey = kind === 'enemy' ? `enemy:${Number(id)}` : `unit:${Number(id)}:${form}`;
   const entry = globalThis.__BCU_DB__?.semanticProvider?.getActorEntry?.(semanticKey) || null;
   if (kind === 'enemy') {
-    return { id: `enemy-${bcuId}`, kind: 'enemy', semanticKey, bundleRef: entry?.bundleRef || null, renderMode: 'animated-unit', image: 'image.png', imgcut: 'imgcut.imgcut', model: 'model.mamodel', animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` })) };
+    return withEnemyBurrowAnimations({ id: `enemy-${bcuId}`, kind: 'enemy', semanticKey, bundleRef: entry?.bundleRef || null, renderMode: 'animated-unit', image: 'image.png', imgcut: 'imgcut.imgcut', model: 'model.mamodel', animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` })) }, bcuId);
   }
   return { id: `unit-${bcuId}-${form}`, kind: 'unit', semanticKey, bundleRef: entry?.bundleRef || null, renderMode: 'animated-unit', image: 'image.png', imgcut: 'imgcut.imgcut', model: 'model.mamodel', animations: ['move', 'idle', 'attack', 'kb'].map((role, i) => ({ id: `anim0${i}`, file: `${role}.maanim` })) };
 }
@@ -162,7 +186,7 @@ export function buildDogRosterEntry(spec, options = {}) {
     baseCharacterId: spec.characterId,
     ...name,
     assetId: `enemy-${bcuId}`,
-    assetDef: db?.assets?.resolveEnemyAsset(spec.id) || unitAssetDef({ id: spec.id, bcuId, kind: 'enemy' }),
+    assetDef: withEnemyBurrowAnimations(db?.assets?.resolveEnemyAsset(spec.id) || unitAssetDef({ id: spec.id, bcuId, kind: 'enemy' }), bcuId),
     statsType: 'enemy',
     statsId: spec.id,
     faction: 'dog',

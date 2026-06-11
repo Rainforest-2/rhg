@@ -73,6 +73,7 @@ function applyDomDifficultyFilter(editor) {
   const root = editor.root;
   if (!root) return;
   const f = filterState(editor);
+  if (editor.stageSelectorVirtual?.active === true) return;
   const cards = [...root.querySelectorAll('.formation-stage-card-map[data-stage-map],.formation-stage-card-stage[data-stage-id]')];
   let matched = 0;
   let hidden = 0;
@@ -83,7 +84,10 @@ function applyDomDifficultyFilter(editor) {
     setCardFiltered(card, isFiltering(f) && !ok);
   }
   const summary = root.querySelector('.formation-stage-difficulty-summary');
-  if (summary) summary.textContent = isFiltering(f) ? `表示中 ${matched} / ${cards.length}` : `表示中 ${cards.length - hidden} / ${cards.length}`;
+  if (summary && editor.stageSelectorVirtual?.active !== true) {
+    summary.textContent = isFiltering(f) ? `表示中 ${matched} / ${cards.length}` : `表示中 ${cards.length - hidden} / ${cards.length}`;
+  }
+  if (globalThis.__BCU_STAGE_DIFFICULTY_DOM_FILTER_DEBUG_ENABLED__ !== true) return;
   const debug = {
     source: 'FormationStageDifficultyFilterControlPatch',
     filter: f,
@@ -123,7 +127,10 @@ function updateFilterFromTarget(editor, target) {
 
 function scheduleDomDifficultyFilter(editor, target, immediate = false) {
   if (!editor.__bcuStageDifficultyDomFilterDebounced) {
-    editor.__bcuStageDifficultyDomFilterDebounced = debounce((input) => withFocusRestore(input, () => applyDomDifficultyFilter(editor)), 220);
+    editor.__bcuStageDifficultyDomFilterDebounced = debounce((input) => withFocusRestore(input, () => {
+      if (editor.stageSelectorVirtual?.active === true) editor.renderStageSelector?.();
+      else applyDomDifficultyFilter(editor);
+    }), 220);
   }
   if (immediate) return editor.__bcuStageDifficultyDomFilterDebounced.flush(target);
   return editor.__bcuStageDifficultyDomFilterDebounced(target);

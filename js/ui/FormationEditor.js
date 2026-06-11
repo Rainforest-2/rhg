@@ -600,14 +600,16 @@ export class FormationEditor {
     this.updateFormationIconDebug();
     performance.mark?.('formation-render-end');
     performance.measure?.('formation-render', 'formation-render-start', 'formation-render-end');
-    console.debug?.('[FormationEditor] render diagnostics', {
-      catalogItemCount: chars.length,
-      renderedDomCardCount: Math.max(0, (this.catalogVirtual.end || 0) - (this.catalogVirtual.start || 0)),
-      iconQueueSize: this.iconQueue.length,
-      visibleIconCount: this.root.querySelectorAll('.formation-catalog-grid img[data-semantic-icon]').length,
-      activePage: this.activePage,
-      activeSlot: this.activeSlot
-    });
+    if (globalThis.__FORMATION_RENDER_DEBUG__ === true) {
+      console.debug?.('[FormationEditor] render diagnostics', {
+        catalogItemCount: chars.length,
+        renderedDomCardCount: Math.max(0, (this.catalogVirtual.end || 0) - (this.catalogVirtual.start || 0)),
+        iconQueueSize: this.iconQueue.length,
+        visibleIconCount: this.root.querySelectorAll('.formation-catalog-grid img[data-semantic-icon]').length,
+        activePage: this.activePage,
+        activeSlot: this.activeSlot
+      });
+    }
   }
 
   refresh() {

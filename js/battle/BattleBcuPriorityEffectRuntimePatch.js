@@ -289,7 +289,9 @@ function consumePendingDemonShieldRegen(actor, stepResult = {}) {
   const before = Number(actor.bcuDemonShieldHp || 0);
   const maxShield = Math.max(0, Math.trunc(Number(pending.maxShieldHp || 0) || 0));
   const regenPercent = Number(pending.regenPercent || 0) || 0;
-  const after = Math.min(maxShield, Math.max(0, Math.trunc(maxShield * regenPercent / 100)));
+  // BCU Entity.updateKB: currentShield = (int)(maxShield * regen / 100) with no cap;
+  // maxCurrentShield is raised instead when the result exceeds it.
+  const after = Math.max(0, Math.trunc(maxShield * regenPercent / 100));
   actor.bcuDemonShieldHp = after;
   actor.bcuDemonShieldMaxHp = Math.max(maxShield, after);
   actor.bcuDemonShieldRegenPercent = regenPercent;
@@ -365,6 +367,19 @@ export function installBattleBcuPriorityEffectRuntimePatch() {
         spawnWarpVisuals(this, target, result);
         if (result?.accepted) queueCounterSurge(this, target, event, meta);
       }
+      return result;
+    };
+  }
+
+  const originalFinishKnockback = proto.finishKnockback;
+  if (typeof originalFinishKnockback === 'function') {
+    proto.finishKnockback = function finishKnockbackWithDemonShieldRegen(actor, target, ...rest) {
+      const result = originalFinishKnockback.call(this, actor, target, ...rest);
+      // Production KB ticking exits via finishKnockback when kbMoveFramesRemaining
+      // hits 0 (bcuKbTime==1), so the stepKnockbackFrame done-branch never runs
+      // there. BCU Entity.KBManager.updateKB regenerates the demon shield at
+      // kbTime==0; consume the pending regen at this KB-end path as well.
+      consumePendingDemonShieldRegen(actor, { done: true });
       return result;
     };
   }

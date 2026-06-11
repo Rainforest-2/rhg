@@ -50,7 +50,9 @@ function fakeScene() {
       enemyWaveStop: fakeAsset('waveStop'),
       unitCounterSurge: fakeAsset('counterSurge'),
       enemyCounterSurge: fakeAsset('counterSurge'),
-      enemyDelay: fakeAsset('delay')
+      enemyDelay: fakeAsset('delay'),
+      unitWarpInvalid: fakeAsset('warpInvalid'),
+      enemyWarpInvalid: fakeAsset('warpInvalid')
     },
     soulEffectAssets: {
       'soul-003': fakeAsset('deathSoul'),
@@ -141,10 +143,14 @@ for (const fixture of [
   ['warp', 'entrance', 'warp', BCU_SCALE_MODE.WARP_HOLE],
   ['warp', 'exit', 'warp', BCU_SCALE_MODE.WARP_HOLE],
   ['warpChara', 'exit', 'warp', BCU_SCALE_MODE.WARP_HOLE],
-  ['unitWaveInvalid', null, 'waveInvalid', BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT],
-  ['enemyWaveStop', null, 'waveStop', BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT],
+  // BCU Entity.AnimManager.drawEff first loop draws A_WAVE_INVALID/A_WAVE_STOP at p.y + 0 (entity baseline), siz * 0.75.
+  ['unitWaveInvalid', null, 'waveInvalid', BCU_SCALE_MODE.ENTITY_STATUS],
+  ['enemyWaveStop', null, 'waveStop', BCU_SCALE_MODE.ENTITY_STATUS],
   ['unitCounterSurge', null, 'counterSurge', BCU_SCALE_MODE.HIT_SMOKE],
-  ['enemyDelay', null, 'delay', BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT]
+  ['enemyDelay', null, 'delay', BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT],
+  // BCU Entity.processProcs blocked WARP: anim.getEff(INVWARP) -> A_FARATTACK status icon, drawEff first loop at p.y + 0.
+  ['unitWarpInvalid', null, 'warpInvalid', BCU_SCALE_MODE.ENTITY_STATUS],
+  ['enemyWarpInvalid', null, 'warpInvalid', BCU_SCALE_MODE.ENTITY_STATUS]
 ]) {
   const [key, phase, type, mode] = fixture;
   const effect = spawnWaveBundleEffect(scene, {

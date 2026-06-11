@@ -101,7 +101,7 @@ body.nyanko-ui-polish .formation-header h3{
 }
 
 body.nyanko-ui-polish .formation-header h3::before{
-  content:"MENU";
+  content:"FORMATION";
   margin-right:.55em;
   border:3px solid var(--nyanko-black);
   background:linear-gradient(180deg,#fff4b8,var(--nyanko-gold) 54%,var(--nyanko-gold-2));

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk '{print $6, $7, $8, $9}')",
+      "Bash(git -C /workspaces/game status --short)",
+      "Bash(git -C /workspaces/game log --oneline -3)",
+      "Bash(git -C /workspaces/game diff --stat)",
+      "Bash(git -C /workspaces/game diff js/main.js)",
+      "Bash(git -C /workspaces/game diff css/nyanko-formation-layout-refine.css css/nyanko-nonbattle-polish.css)",
+      "Bash(git -C /workspaces/game diff --name-only)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

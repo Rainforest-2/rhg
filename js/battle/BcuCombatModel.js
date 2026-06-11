@@ -67,6 +67,8 @@ function surgeFramesFromLevel(level){const lv=Math.max(0,Math.trunc(Number(level
 function volcanoProc({prob=0,dis0=0,dis1=0,level=0,mult=0}={}){const lv=Math.max(0,Math.trunc(Number(level)||0));return {prob,dis0,dis1,level:lv,time:lv,timeFrames:surgeFramesFromLevel(lv),aliveTimeFrames:surgeFramesFromLevel(lv),mult};}
 function imu(mult=0, extra={}){const m=Math.max(0,Math.min(100,Math.trunc(Number(mult)||0)));return {mult:m,block:m,full:m>=100,partial:m>0&&m<100,...extra};}
 function fullImu(raw,index,extra={}){return imu(enabled(raw,index)?100:0,{index,...extra});}
+// BCU DataUnit.fillData ints[116] / DataEnemy.fillData ints[109] gate IMUBLAST with `!= 0`, unlike the `== 1` IMU columns.
+function fullImuNonZero(raw,index,extra={}){return imu(n(raw,index,0)!==0?100:0,{index,...extra});}
 
 function buildImmunity(proc = {}) {
   const out = {};
@@ -165,7 +167,7 @@ function parseUnitProc(rawValues) {
     wave:{prob:miniWave?0:n(rawValues,35,0),level:miniWave?0:n(rawValues,36,0)}, miniWave:{prob:miniWave?n(rawValues,35,0):0,level:miniWave?n(rawValues,36,0):0,mult:miniWave?20:0}, IMUWAVE:fullImu(rawValues,46,{source:'DataUnit.ints[46]'}),
     weaken:{prob:n(rawValues,37,0),time:n(rawValues,38,0),mult:n(rawValues,39,0)}, strengthen:{health:n(rawValues,40,0),mult:n(rawValues,41,0)}, lethal:{prob:n(rawValues,42,0)},
     IMUKB:fullImu(rawValues,48,{source:'DataUnit.ints[48]'}), IMUSTOP:fullImu(rawValues,49,{source:'DataUnit.ints[49]'}), IMUSLOW:fullImu(rawValues,50,{source:'DataUnit.ints[50]'}), IMUWEAK:fullImu(rawValues,51,{source:'DataUnit.ints[51]',smartImu:0}),
-    IMUWARP:fullImu(rawValues,75,{source:'DataUnit.ints[75]'}), IMUCURSE:fullImu(rawValues,79,{source:'DataUnit.ints[79]'}), IMUPOIATK:fullImu(rawValues,90,{source:'DataUnit.ints[90]'}), IMUVOLC:fullImu(rawValues,91,{source:'DataUnit.ints[91]'}), IMUBLAST:fullImu(rawValues,116,{source:'DataUnit.ints[116]'}),
+    IMUWARP:fullImu(rawValues,75,{source:'DataUnit.ints[75]'}), IMUCURSE:fullImu(rawValues,79,{source:'DataUnit.ints[79]'}), IMUPOIATK:fullImu(rawValues,90,{source:'DataUnit.ints[90]'}), IMUVOLC:fullImu(rawValues,91,{source:'DataUnit.ints[91]'}), IMUBLAST:fullImuNonZero(rawValues,116,{source:'DataUnit.ints[116] != 0'}),
     attackNullify:{prob:n(rawValues,84,0),time:n(rawValues,85,0)}, IMUATK:{prob:n(rawValues,84,0),time:n(rawValues,85,0)},
     barrierBreaker:{prob:n(rawValues,70,0)}, strongAttack:{prob:n(rawValues,82,0),mult:n(rawValues,83,0)}, curse:{prob:n(rawValues,92,0),time:n(rawValues,93,0)}, shieldBreaker:{prob:n(rawValues,95,0)},
     volcano:volcanoProc({prob:miniVolc?0:n(rawValues,86,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),
@@ -192,7 +194,7 @@ function parseEnemyProc(rawValues) {
     wave:{prob:miniWave?0:n(rawValues,27,0),level:miniWave?0:n(rawValues,28,0)}, miniWave:{prob:miniWave?n(rawValues,27,0):0,level:miniWave?n(rawValues,28,0):0,mult:miniWave?20:0}, IMUWAVE:fullImu(rawValues,37,{source:'DataEnemy.ints[37]'}),
     weaken:{prob:n(rawValues,29,0),time:n(rawValues,30,0),mult:n(rawValues,31,0)}, strengthen:{health:n(rawValues,32,0),mult:n(rawValues,33,0)}, lethal:{prob:n(rawValues,34,0)},
     IMUKB:fullImu(rawValues,39,{source:'DataEnemy.ints[39]'}), IMUSTOP:fullImu(rawValues,40,{source:'DataEnemy.ints[40]'}), IMUSLOW:fullImu(rawValues,41,{source:'DataEnemy.ints[41]'}), IMUWEAK:fullImu(rawValues,42,{source:'DataEnemy.ints[42]',smartImu:0}),
-    IMUWARP:fullImu(rawValues,70,{source:'DataEnemy.ints[70]'}), IMUVOLC:fullImu(rawValues,85,{source:'DataEnemy.ints[85]'}), IMUCURSE:fullImu(rawValues,105,{source:'DataEnemy.ints[105]'}), IMUBLAST:fullImu(rawValues,109,{source:'DataEnemy.ints[109]'}), IMUPOIATK:imu(0,{source:'DataEnemy has POIATK attack columns but no confirmed IMUPOIATK raw column in DataEnemy.fillData'}),
+    IMUWARP:fullImu(rawValues,70,{source:'DataEnemy.ints[70]'}), IMUVOLC:fullImu(rawValues,85,{source:'DataEnemy.ints[85]'}), IMUCURSE:fullImu(rawValues,105,{source:'DataEnemy.ints[105]'}), IMUBLAST:fullImuNonZero(rawValues,109,{source:'DataEnemy.ints[109] != 0'}), IMUPOIATK:imu(0,{source:'DataEnemy has POIATK attack columns but no confirmed IMUPOIATK raw column in DataEnemy.fillData'}),
     burrow:{count:n(rawValues,43,0),dis:n(rawValues,44,0)/4}, revive:{count:n(rawValues,45,0),time:n(rawValues,46,0),health:n(rawValues,47,0)}, barrier:{health:n(rawValues,64,0)},
     warp:{prob:n(rawValues,65,0),time:n(rawValues,66,0),dis0:n(rawValues,67,0)/4,dis1:n(rawValues,68,0)/4}, curse:{prob:n(rawValues,73,0),time:n(rawValues,74,0)}, strongAttack:{prob:n(rawValues,75,0),mult:n(rawValues,76,0)}, attackNullify:{prob:n(rawValues,77,0),time:n(rawValues,78,0)}, IMUATK:{prob:n(rawValues,77,0),time:n(rawValues,78,0)}, toxic:{prob:n(rawValues,79,0),mult:n(rawValues,80,0)},
     volcano:volcanoProc({prob:miniVolc?0:n(rawValues,81,0),dis0:miniVolc?0:volcStart,dis1:miniVolc?0:rangeEnd(volcStart,volcLength),level:miniVolc?0:volcLevel}),

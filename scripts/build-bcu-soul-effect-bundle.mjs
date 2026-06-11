@@ -42,10 +42,30 @@ function demonSoul(out) {
   };
 }
 
+// BCU EffAnim.read: A_ZOMBIE/A_U_ZOMBIE = './org/battle/e1/set_enemy001_zombie' with ZombieEff phases
+// _revive/_down/_back (A_U_ZOMBIE is the same asset mirrored, rev = true).
+// set_enemy001_zombie_back.maanim is not present in the local raw pack, so the BACK phase stays unbundled.
+function zombieCorpse() {
+  const dir = 'public/assets/bcu/000001/org/battle/e1';
+  return {
+    key: 'zombieCorpse',
+    role: 'bcu-A_ZOMBIE/A_U_ZOMBIE',
+    sourceDir: dir,
+    entries: [
+      { name: 'zombie-corpse/image.png', source: 'set_enemy001_zombie.png', required: true },
+      { name: 'zombie-corpse/imgcut.imgcut', source: 'set_enemy001_zombie.imgcut', required: true },
+      { name: 'zombie-corpse/model.mamodel', source: 'set_enemy001_zombie.mamodel', required: true },
+      { name: 'zombie-corpse/anim-down.maanim', source: 'set_enemy001_zombie_down.maanim', required: true },
+      { name: 'zombie-corpse/anim-revive.maanim', source: 'set_enemy001_zombie_revive.maanim', required: true }
+    ]
+  };
+}
+
 const EFFECT_DEFS = Object.freeze([
   ...Array.from({ length: 13 }, (_, id) => normalSoul(id)),
   demonSoul('demon-soul-enemy'),
-  demonSoul('demon-soul-unit')
+  demonSoul('demon-soul-unit'),
+  zombieCorpse()
 ]);
 
 function makeBundleJson({ aliases, missingRequired }) {

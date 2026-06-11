@@ -1,8 +1,11 @@
 import { BattleActor } from './BattleActor.js';
+import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { initializeBcuZombieCorpse, updateBcuZombieCorpseWindow } from './bcu-runtime/BcuZombieCorpseRuntime.js';
+import { clearBcuZombieCorpseVisual, getBcuZombieReviveAnimFrames, startBcuZombieCorpseVisual, tickBcuZombieCorpseVisual } from './bcu-runtime/BcuZombieReviveVisualRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.actor-zombie-revive-patch.v1');
+const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.actor-zombie-revive-render-patch.v1');
 
 function combatModel(actor) {
   return actor?.bcuCombatModel || actor?.rawStats?.bcuCombatModel || actor?.stats?.bcuCombatModel || null;
@@ -64,7 +67,10 @@ function scheduleRevive(actor, spec, nowMs) {
   if (actor.bcuZombieReviveRemaining === 0) return false;
   if (actor.bcuZombieReviveRemaining > 0) actor.bcuZombieReviveRemaining -= 1;
   actor.bcuZombieRevivePending = true;
-  actor.bcuZombieReviveReadyAtMs = nowMs + spec.timeFrames * BCU_BATTLE_TIMER_PERIOD_MS;
+  // BCU ZombX.doRevive: status[P_REVIVE][1] = revive.time + A_ZOMBIE REVIVE anim length.
+  const scene = actor.scene || globalThis.__APP__?.scene || null;
+  const reviveAnimFrames = getBcuZombieReviveAnimFrames(scene);
+  actor.bcuZombieReviveReadyAtMs = nowMs + (spec.timeFrames + reviveAnimFrames) * BCU_BATTLE_TIMER_PERIOD_MS;
   actor.bcuZombieReviveHealthPercent = spec.healthPercent;
   actor.state = 'dead';
   actor.isAliveFlag = false;
@@ -75,6 +81,7 @@ function scheduleRevive(actor, spec, nowMs) {
   actor.removeAfterMs = Math.max(actor.removeAfterMs || 0, spec.timeFrames * BCU_BATTLE_TIMER_PERIOD_MS + 1000);
   clearReviveStatuses(actor);
   initializeBcuZombieCorpse(actor, { nowMs, reviveTimeFrames: spec.timeFrames, healthPercent: spec.healthPercent });
+  startBcuZombieCorpseVisual(actor, { scene, reviveTimeFrames: spec.timeFrames });
   actor.lastBcuZombieReviveDebug = {
     source: 'BCU ZombX.prekill/doRevive parity',
     scheduled: true,
@@ -100,6 +107,7 @@ function performRevive(actor, nowMs) {
   actor.bcuZombieRevivePending = false;
   actor.bcuZombieCorpse = false;
   actor.deadAtMs = null;
+  clearBcuZombieCorpseVisual(actor, { reason: 'revived' });
   actor.setAnimation?.(actor.moveAnimId, 'move', true);
   actor.lastBcuZombieReviveDebug = {
     ...(actor.lastBcuZombieReviveDebug || {}),
@@ -154,6 +162,8 @@ export function installBattleActorZombieRevivePatch() {
     const nowMs = Number.isFinite(this.lastSceneTimeMs) ? this.lastSceneTimeMs : null;
     if (this.bcuZombieRevivePending && Number.isFinite(nowMs)) {
       updateBcuZombieCorpseWindow(this, dt);
+      const remainingFrames = Math.max(0, Math.ceil(((this.bcuZombieReviveReadyAtMs || 0) - nowMs) / BCU_BATTLE_TIMER_PERIOD_MS));
+      tickBcuZombieCorpseVisual(this, { remainingFrames });
       if (performRevive(this, nowMs)) return originalTick.call(this, dt);
       this.deathElapsedMs += dt;
       this.lastBcuZombieCorpseDebug = { source: 'BCU status[P_REVIVE][1] corpse countdown', nowMs, readyAtMs: this.bcuZombieReviveReadyAtMs };
@@ -181,4 +191,28 @@ export function installBattleActorZombieRevivePatch() {
   };
 }
 
+export function installBattleActorZombieReviveRenderPatch() {
+  const proto = BattleSceneRenderer?.prototype;
+  if (!proto || proto[RENDER_PATCH_FLAG]) return;
+  proto[RENDER_PATCH_FLAG] = true;
+  const originalDrawActor = proto.drawActor;
+  if (typeof originalDrawActor !== 'function') return;
+  proto.drawActor = function drawActorWithZombieCorpseOverride(ctx, actor, ...rest) {
+    // BCU Entity.AnimManager.draw: while corpse != null && status[P_REVIVE][1] >= REVIVE_SHOW_TIME
+    // the corpse effect replaces the base actor; below REVIVE_SHOW_TIME the base actor draws again.
+    if (actor?.bcuRenderOverride?.mode === 'zombie-corpse' && actor.bcuRenderOverride.hideBaseActor === true) {
+      actor.lastBcuRenderOverrideTrace = {
+        mode: 'zombie-corpse',
+        hideBaseActor: true,
+        renderable: actor.isRenderable?.() === true,
+        source: actor.bcuRenderOverride.source,
+        bcuReference: actor.bcuZombieCorpseVisual?.bcuReference || null
+      };
+      return;
+    }
+    return originalDrawActor.call(this, ctx, actor, ...rest);
+  };
+}
+
 installBattleActorZombieRevivePatch();
+installBattleActorZombieReviveRenderPatch();

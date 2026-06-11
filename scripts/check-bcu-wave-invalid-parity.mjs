@@ -89,9 +89,9 @@ const icon = spawnBcuWaveInvalidIcon(scene, partialTarget, partialWave, { test: 
 assert.ok(icon, 'wave invalid icon effect spawns when bundle asset is loaded');
 assert.equal(scene.effects.length, 1, 'wave invalid icon adds one effect');
 assert.equal(icon.effectRuntimeDebug.effectKey, 'unitWaveInvalid', 'icon uses unit wave invalid effect key');
-assert.equal(icon.bcuSmokeYOffset, BCU_WAVE_INVALID_ICON_Y_OFFSET, 'icon uses BCU p.y -25*siz status effect offset');
-assert.equal(icon.scale, 0.75, 'icon uses BCU status effect scale 0.75 through ACTOR_PRIORITY_EFFECT mode');
-assert.equal(icon.bcuScaleMode, BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT, 'icon uses actor priority effect scale mode');
+assert.equal(icon.bcuSmokeYOffset, BCU_WAVE_INVALID_ICON_Y_OFFSET, 'icon uses BCU drawEff first-loop p.y + 0 entity baseline');
+assert.equal(icon.scale, 0.75, 'icon uses BCU status effect scale 0.75 through ENTITY_STATUS mode');
+assert.equal(icon.bcuScaleMode, BCU_SCALE_MODE.ENTITY_STATUS, 'icon uses entity status scale mode');
 
 const fullScene = fakeScene();
 const fullTarget = {

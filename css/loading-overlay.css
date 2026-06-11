@@ -790,3 +790,198 @@
     font-size:.58rem!important;
   }
 }
+
+/* Boot failure panel: same visual family as #boot-status-panel, with retry action */
+#boot-error-panel{
+  position:fixed;
+  inset:0;
+  z-index:100001;
+  display:grid;
+  place-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) calc(env(safe-area-inset-right,0px) + 16px) calc(env(safe-area-inset-bottom,0px) + 16px) calc(env(safe-area-inset-left,0px) + 16px);
+  background:
+    radial-gradient(circle at 50% 42%,rgba(255,110,88,.18) 0 8%,transparent 30%),
+    radial-gradient(circle at 16% 82%,rgba(255,91,60,.16) 0 10%,transparent 34%),
+    linear-gradient(180deg,#120909 0%,#1a1012 46%,#0b0607 100%);
+  color:#f9e9bf;
+  overflow:hidden;
+  touch-action:none;
+  font-family:"Inter","SF Pro Display","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+}
+
+#boot-error-panel .boot-loading-card{
+  position:relative;
+  width:min(720px,calc(100vw - 42px));
+  max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  display:grid;
+  gap:14px;
+  padding:clamp(22px,3.4vw,38px);
+  border-radius:28px;
+  border:1px solid rgba(255,171,171,.3);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.035)),
+    linear-gradient(180deg,rgba(34,22,24,.9),rgba(15,9,10,.94));
+  box-shadow:0 30px 84px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.06) inset,0 1px 0 rgba(255,255,255,.16) inset;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+#boot-error-panel .boot-loading-kicker{
+  color:#ff9d7a;
+  font:850 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.28em;
+}
+
+#boot-error-panel .boot-loading-title{
+  color:#ffe3d6;
+  font:950 clamp(1.5rem,4.6vw,2.9rem)/1.04 "Inter","SF Pro Display","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  text-shadow:0 12px 40px rgba(0,0,0,.58),0 0 24px rgba(255,122,102,.22);
+}
+
+#boot-error-panel .boot-loading-message{
+  color:rgba(255,240,224,.9);
+  font:700 clamp(.92rem,1.9vw,1.05rem)/1.6 "Inter","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+}
+
+#boot-error-panel .boot-error-detail{
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.32);
+  color:rgba(255,214,196,.78);
+  font:600 .78rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  word-break:break-word;
+  max-height:7.5em;
+  overflow:auto;
+}
+
+#boot-error-panel .boot-error-actions{
+  display:flex;
+  gap:12px;
+  margin-top:2px;
+}
+
+#boot-error-panel .boot-error-retry{
+  min-height:48px;
+  min-width:180px;
+  padding:10px 28px;
+  border-radius:999px;
+  border:2px solid rgba(255,210,150,.6);
+  background:linear-gradient(180deg,#ffd166 0%,#ff9b3d 100%);
+  color:#33150a;
+  font:900 1rem/1 "Inter","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  letter-spacing:.06em;
+  cursor:pointer;
+  touch-action:manipulation;
+  box-shadow:0 6px 0 rgba(80,30,8,.65),0 14px 30px rgba(0,0,0,.4);
+}
+
+#boot-error-panel .boot-error-retry:active{
+  transform:translateY(3px);
+  box-shadow:0 3px 0 rgba(80,30,8,.65),0 8px 18px rgba(0,0,0,.36);
+}
+
+#boot-error-panel .boot-loading-meta{
+  color:rgba(255,246,221,.38);
+  font:750 .68rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.18em;
+  text-align:right;
+}
+
+@media (max-height:480px) and (orientation:landscape){
+  #boot-error-panel .boot-loading-card{
+    gap:8px;
+    padding:14px 18px;
+    border-radius:20px;
+  }
+  #boot-error-panel .boot-error-detail{
+    max-height:4.5em;
+  }
+  #boot-error-panel .boot-error-retry{
+    min-height:44px;
+  }
+}
+
+/* Error recovery actions: visible only while the overlay is in error state */
+.app-loading-actions{
+  position:relative;
+  z-index:1;
+  grid-column:1/-1;
+  display:none;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:2px;
+}
+
+.app-loading-overlay.is-error .app-loading-actions{
+  display:flex;
+}
+
+.app-loading-action-dismiss,
+.app-loading-action-reload{
+  min-height:48px;
+  min-width:160px;
+  flex:1 1 160px;
+  padding:10px 22px;
+  border-radius:999px;
+  font:900 .95rem/1 "Inter","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  letter-spacing:.05em;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+
+.app-loading-action-reload{
+  border:2px solid rgba(255,210,150,.6);
+  background:linear-gradient(180deg,#ffd166 0%,#ff9b3d 100%);
+  color:#33150a;
+  box-shadow:0 6px 0 rgba(80,30,8,.65),0 14px 30px rgba(0,0,0,.4);
+}
+
+.app-loading-action-reload:active{
+  transform:translateY(3px);
+  box-shadow:0 3px 0 rgba(80,30,8,.65),0 8px 18px rgba(0,0,0,.36);
+}
+
+.app-loading-action-dismiss{
+  display:none;
+  border:2px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.08);
+  color:#ffe9c9;
+  box-shadow:0 4px 0 rgba(0,0,0,.4),0 10px 22px rgba(0,0,0,.3);
+}
+
+.app-loading-action-dismiss:active{
+  transform:translateY(2px);
+  box-shadow:0 2px 0 rgba(0,0,0,.4),0 6px 14px rgba(0,0,0,.28);
+}
+
+.app-loading-overlay.is-error.can-dismiss .app-loading-action-dismiss{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+@media (max-height:480px) and (orientation:landscape){
+  .app-loading-action-dismiss,
+  .app-loading-action-reload{
+    min-height:44px;
+    min-width:130px;
+    font-size:.84rem;
+  }
+}
+
+/* Error state must keep recovery actions reachable on short landscape screens */
+.app-loading-overlay.is-error .app-loading-card{
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+@media (max-height:560px){
+  .app-loading-overlay.is-error .app-loading-steps,
+  .app-loading-overlay.is-error .app-loading-tip{
+    display:none!important;
+  }
+  .app-loading-overlay.is-error .app-loading-error{
+    max-height:22dvh;
+  }
+}

@@ -70,9 +70,16 @@ export class AppLoadingOverlay {
     const el = document.createElement('div');
     el.className = 'app-loading-overlay is-hidden';
     if (el.dataset) el.dataset.loadingMode = 'normal';
-    el.innerHTML = `<div class='app-loading-card' role='status' aria-live='polite'><div class='app-loading-kicker'>NOW LOADING</div><div class='app-loading-title'>ワンコ大戦争</div><div class='app-loading-version'>v${GAME_VERSION}</div><div class='app-loading-message'>起動中…</div><div class='app-loading-phase-time'>0ms</div><div class='app-loading-progress'><div class='app-loading-progress-bar'></div></div><div class='app-loading-tip'><b>TIP</b><span>${TIPS[0]}</span></div><div class='app-loading-steps'>${STEPS.map((s)=>`<div class='app-loading-step' data-phase='${s.phase}'>${s.label}</div>`).join('')}</div><pre class='app-loading-error'></pre></div>`;
+    el.innerHTML = `<div class='app-loading-card' role='status' aria-live='polite'><div class='app-loading-kicker'>NOW LOADING</div><div class='app-loading-title'>ワンコ大戦争</div><div class='app-loading-version'>v${GAME_VERSION}</div><div class='app-loading-message'>起動中…</div><div class='app-loading-phase-time'>0ms</div><div class='app-loading-progress'><div class='app-loading-progress-bar'></div></div><div class='app-loading-tip'><b>TIP</b><span>${TIPS[0]}</span></div><div class='app-loading-steps'>${STEPS.map((s)=>`<div class='app-loading-step' data-phase='${s.phase}'>${s.label}</div>`).join('')}</div><pre class='app-loading-error'></pre><div class='app-loading-actions'><button type='button' class='app-loading-action-dismiss'>編成にもどる</button><button type='button' class='app-loading-action-reload'>再読み込み</button></div></div>`;
     this.root = el;
     this.mount.appendChild(el);
+    el.querySelector('.app-loading-action-dismiss')?.addEventListener('click', () => {
+      this.hide();
+      overlayDebug().lastAction = { type: 'dismiss-error', hidden: true, timestamp: Date.now() };
+    });
+    el.querySelector('.app-loading-action-reload')?.addEventListener('click', () => {
+      globalThis.location?.reload();
+    });
     overlayDebug().lastAction = { type: 'ensureRoot', hidden: true, timestamp: Date.now() };
   }
   show() {
@@ -140,6 +147,7 @@ export class AppLoadingOverlay {
     this.stopTimer();
     this.root.classList.remove('is-hidden');
     this.root.classList.add('is-error');
+    this.root.classList.toggle('can-dismiss', !!document.querySelector('.formation-ui'));
     if (this.root.dataset) this.root.dataset.loadingMode = 'normal';
     const message = formatError(error);
     this.root.querySelector('.app-loading-message').textContent = '読み込みに失敗しました';
@@ -157,6 +165,7 @@ export class AppLoadingOverlay {
     if (this.root) {
       this.stopTimer();
       this.root.classList.add('is-hidden');
+      this.root.classList.remove('is-error');
       overlayDebug().lastAction = { type: 'hide', hidden: true, timestamp: Date.now() };
     }
   }

@@ -1,7 +1,8 @@
 import { BCU_DAMAGE_GUARD_FIELDS } from '../BcuCombatModel.js';
 import { directionForActor, spawnWaveBundleEffect } from '../BcuWaveBundleEffectSpawner.js';
 
-export const BCU_WAVE_INVALID_ICON_Y_OFFSET = 25;
+// BCU Entity.AnimManager.drawEff first loop draws A_WAVE_INVALID at p.y + 0 (entity baseline); only the second loop (A_B/A_DMGCUT/...) uses -25*siz.
+export const BCU_WAVE_INVALID_ICON_Y_OFFSET = 0;
 
 function combatModel(actor) {
   return actor?.bcuCombatModel || actor?.rawStats?.bcuCombatModel || actor?.stats?.bcuCombatModel || null;
@@ -80,7 +81,7 @@ export function spawnBcuWaveInvalidIcon(scene, target, invalid, extra = {}) {
     source: 'bcu-effanim-wave-invalid-projectile',
     bcuSmokeYOffset: BCU_WAVE_INVALID_ICON_Y_OFFSET,
     debug: {
-      bcuReference: 'BCU Entity.AnimManager.getEff(P_WAVE): direction selects A_WAVE_INVALID/A_E_WAVE_INVALID and status[P_WAVE][0] holds animation length; drawEff places status effects at p.y - 25*siz and scale 0.75.',
+      bcuReference: 'BCU Entity.AnimManager.getEff(P_WAVE): direction selects A_WAVE_INVALID/A_E_WAVE_INVALID and status[P_WAVE][0] holds animation length; drawEff first loop draws status icons at p.y + 0 (entity baseline) with scale siz * 0.75.',
       invalidKind: invalid.kind,
       field: invalid.field,
       percent: invalid.percent,

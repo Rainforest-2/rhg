@@ -55,9 +55,9 @@ function spawnInvalidIfNeeded(scene, target, result, event, meta) {
     actor: target,
     type: 'waveInvalid',
     source: 'bcu-effanim-wave-invalid',
-    bcuSmokeYOffset: 25,
+    bcuSmokeYOffset: 0,
     debug: {
-      bcuReference: 'Entity.damaged IMUWAVE/IMUVOLC/IMUBLAST/IMUPOIATK mult>0 calls anim.getEff(P_WAVE); drawEff uses p.y - 25*siz',
+      bcuReference: 'Entity.damaged IMUWAVE/IMUVOLC/IMUBLAST/IMUPOIATK mult>0 calls anim.getEff(P_WAVE); drawEff first loop draws status icons at p.y + 0 (entity baseline) with scale siz * 0.75',
       guard,
       kind
     }

@@ -5,7 +5,11 @@ import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { BCU_SCALE_MODE, classifyBcuEffect, describeBcuEffectYFormula, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
-const ACTOR_BOUND_STATUS_TYPES = new Set(['barrier', 'demonShield', 'waveInvalid', 'waveStop', 'delay', 'procInvalid']);
+// BCU Entity.AnimManager.drawEff second loop draws A_B/A_E_B/A_DEMON_SHIELD/... at p.y - 25*siz.
+const DRAWEFF_PRIORITY_STATUS_TYPES = new Set(['barrier', 'demonShield']);
+// BCU Entity.AnimManager.drawEff first loop draws the remaining status icons at p.y + 0.
+// warpInvalid = getEff(INVWARP) -> A_FARATTACK/A_E_FARATTACK, also a first-loop status icon.
+const DRAWEFF_BASELINE_STATUS_TYPES = new Set(['waveInvalid', 'waveStop', 'procInvalid', 'warpInvalid']);
 
 function actorPos(actor) {
   const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
@@ -27,9 +31,12 @@ function inferScaleMode(key, type, source) {
   const k = String(key || '');
   const t = String(type || '');
   const s = String(source || '');
+  if (DRAWEFF_PRIORITY_STATUS_TYPES.has(t) || DRAWEFF_PRIORITY_STATUS_TYPES.has(k)) return BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT;
+  if (DRAWEFF_BASELINE_STATUS_TYPES.has(t) || DRAWEFF_BASELINE_STATUS_TYPES.has(k)) return BCU_SCALE_MODE.ENTITY_STATUS;
   if (k === 'warp' || k === 'warpChara' || t === 'warp' || s.includes('warp')) return BCU_SCALE_MODE.WARP_HOLE;
-  if (ACTOR_BOUND_STATUS_TYPES.has(t) || ACTOR_BOUND_STATUS_TYPES.has(k)) return BCU_SCALE_MODE.ENTITY_STATUS;
   if (s.includes('proc-invalid') || s.includes('wave-stop')) return BCU_SCALE_MODE.ENTITY_STATUS;
+  // BCU EUnit/EEnemy.processProcs spawn A_E_DELAY via basis.lea EAnimCont(-50f), not drawEff.
+  if (t === 'delay' || k === 'delay') return BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT;
   if (t === 'counterSurge') return BCU_SCALE_MODE.HIT_SMOKE;
   return BCU_SCALE_MODE.LEGACY;
 }

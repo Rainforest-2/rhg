@@ -77,9 +77,10 @@ body.nyanko-ui-polish .formation-header h3{
 }
 
 body.nyanko-ui-polish .formation-header h3::before{
-  content:"MENU"!important;
+  content:"FORMATION"!important;
   min-width:84px!important;
   height:34px!important;
+  padding:0 14px!important;
   margin-right:14px!important;
   border:3px solid #050505!important;
   border-radius:999px!important;

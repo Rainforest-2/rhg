@@ -43,6 +43,7 @@ for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path}
 const main = fs.readFileSync(files.main, 'utf8');
 const indexHtml = fs.readFileSync(files.index, 'utf8');
 const bootBattle = fs.readFileSync('js/boot/installBattlePatches.js', 'utf8');
+const bootBattleProjectiles = fs.readFileSync('js/boot/battle/installBattleProjectilePatches.js', 'utf8');
 const wiring = fs.readFileSync(files.wiring, 'utf8');
 const adapter = fs.readFileSync(files.adapter, 'utf8');
 const runtime = fs.readFileSync(files.runtime, 'utf8');
@@ -51,7 +52,12 @@ const spawnRuntime = fs.readFileSync(files.spawnRuntime, 'utf8');
 assert.ok(indexHtml.includes('./js/main.js'), 'index.html must load js/main.js');
 assert.ok(indexHtml.includes('preview-canvas'), 'index.html must render preview canvas host');
 assert.ok(main.includes('async function boot()'), 'main.js must use async boot()');
-assert.ok(main.includes('installBattlePatches') && bootBattle.includes("await import('../battle/BattleSceneStageRuntimeWiring.js')"), 'boot battle module must dynamically import stage runtime wiring before PreviewApp starts');
+assert.ok(
+  main.includes('installBattlePatches')
+    && bootBattle.includes("runInstaller('./battle/installBattleProjectilePatches.js'")
+    && bootBattleProjectiles.includes("await import('../../battle/BattleSceneStageRuntimeWiring.js')"),
+  'boot battle module must dynamically import stage runtime wiring (via grouped projectile installer) before PreviewApp starts'
+);
 assert.ok(main.includes("await import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp');
 assert.ok(main.includes('globalThis.__WAN_BOOT_ERROR__?.(error)'), 'main.js must report boot failures to the page overlay');
 assert.ok(wiring.includes("import { BattleScene } from './BattleScene.js'"), 'wiring must import BattleScene');

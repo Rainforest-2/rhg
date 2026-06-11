@@ -18,7 +18,10 @@ const SOUL_EFFECT_ENTRIES = Object.freeze({
     return [entry.key, entry];
   })),
   demonSoulEnemy: { key: 'demonSoulEnemy', kind: 'demonSoul', soulId: 'demon-enemy', bundleDir: 'demon-soul-enemy' },
-  demonSoulUnit: { key: 'demonSoulUnit', kind: 'demonSoul', soulId: 'demon-unit', bundleDir: 'demon-soul-unit' }
+  demonSoulUnit: { key: 'demonSoulUnit', kind: 'demonSoul', soulId: 'demon-unit', bundleDir: 'demon-soul-unit' },
+  // BCU EffAnim A_ZOMBIE/A_U_ZOMBIE corpse phases; one shared model with per-phase maanim files.
+  zombieCorpseDown: { key: 'zombieCorpseDown', kind: 'zombieCorpse', soulId: 'zombie-down', bundleDir: 'zombie-corpse', animFile: 'anim-down.maanim' },
+  zombieCorpseRevive: { key: 'zombieCorpseRevive', kind: 'zombieCorpse', soulId: 'zombie-revive', bundleDir: 'zombie-corpse', animFile: 'anim-revive.maanim' }
 });
 
 function getGlobalSemanticProvider() {
@@ -78,7 +81,7 @@ export class BcuSoulEffectLoader {
       loadImageFromBundle(provider, this.bundleRef, `${base}/image.png`),
       provider.readTextByBundleRef(this.bundleRef, `${base}/imgcut.imgcut`),
       provider.readTextByBundleRef(this.bundleRef, `${base}/model.mamodel`),
-      provider.readTextByBundleRef(this.bundleRef, `${base}/anim.maanim`)
+      provider.readTextByBundleRef(this.bundleRef, `${base}/${def.animFile || 'anim.maanim'}`)
     ]);
     return parseSoulDefinition(def, { image, imgcutText, modelText, animText, source: `semantic-bundle:${this.bundleRef.bundleKey}:${base}` });
   }

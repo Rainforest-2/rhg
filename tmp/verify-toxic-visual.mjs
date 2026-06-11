@@ -1,0 +1,24 @@
+import { chromium } from 'playwright';
+const log = (...a) => console.log('[verify]', ...a);
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1180, height: 820 }, deviceScaleFactor: 2 });
+await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+await page.waitForSelector('.apply-battle-button', { timeout: 120000 });
+await page.waitForTimeout(1500);
+await page.click('.apply-battle-button');
+await page.waitForFunction(() => !!(globalThis.__APP__?.sceneReady && globalThis.__APP__?.battleScene), null, { timeout: 180000 });
+await page.waitForFunction(() => (globalThis.__APP__.battleScene.actors || []).some((a) => a.side === 'cat-enemy' && a.isAlive?.()), null, { timeout: 60000 });
+const res = await page.evaluate(() => {
+  const scene = globalThis.__APP__.battleScene;
+  const enemy = scene.actors.find((a) => a.side === 'cat-enemy' && a.isAlive?.());
+  const r = enemy.applyBcuProc({ key: 'toxic', payload: { mult: 30 } }, { nowMs: scene.timeMs, scene });
+  const fr = enemy.applyBcuProc({ key: 'freeze', payload: { time: 600, timeFrames: 600 } }, { nowMs: scene.timeMs, scene });
+  return { toxic: { applied: r.applied, effectId: r.effectId }, freeze: fr.applied, effects: scene.effects.map((e) => e.type) };
+});
+log(JSON.stringify(res));
+await page.waitForTimeout(120);
+await page.screenshot({ path: '/workspaces/game/tmp/verify-shots/toxic-visual.png' });
+await page.waitForTimeout(700);
+await page.screenshot({ path: '/workspaces/game/tmp/verify-shots/toxic-visual-2.png' });
+await browser.close();
+log('done');

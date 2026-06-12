@@ -7,6 +7,7 @@ It is intentionally conservative. A row is not treated as code-complete merely b
 Manual browser visual inspection is outside Codex hard requirements. Rows with complete code/effect traces but no manual visual inspection may be marked `human-visual-review-needed`, not `fully-complete`.
 
 Manual visual review tracking lives in [`bcu-visual-review-checklist.md`](./bcu-visual-review-checklist.md).
+BCU parity updates must follow [`bcu-fact-first-update-procedure.md`](./bcu-fact-first-update-procedure.md): fact collection, existing JS audit, minimal update, deterministic check, then docs/status update.
 
 ## Status vocabulary
 

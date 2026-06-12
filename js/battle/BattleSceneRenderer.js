@@ -402,15 +402,19 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
   }
   drawActorLegacy(c, actor, drawList) {
     const baseAngle = actor.model.baseAngle || 3600;
+    const paraOpacity = actor.bcuWarpParaTransform && Number.isFinite(actor.bcuWarpParaTransform.opacity) ? Math.max(0, Math.min(1, actor.bcuWarpParaTransform.opacity)) : 1;
     c.save(); c.translate(this.projectBattleX(this._scene,actor.x), this.getEntityRenderY(this._scene,actor,actor.y)); if (actor.renderFlipX) c.scale(-1, 1);
-    for (const p of drawList) { const w = p.world; const partIndex = p.current?.partIndex ?? p.partIndex; const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex; if (!Number.isInteger(partIndex) || partIndex < 0) continue; if ((imgcutIndex ?? 0) < 0) continue; if (!w || (w.o ?? 1) <= 0) continue; const part = actor.sprite?.imgcut?.parts?.[partIndex]; if (!part || part.w <= 0 || part.h <= 0) continue; c.save(); c.translate(w.x * actor.scale, w.y * actor.scale); c.rotate((w.a / baseAngle) * Math.PI * 2); c.globalAlpha = w.o ?? 1; const sx = w.sx * actor.scale; const sy = w.sy * actor.scale; actor.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy }); c.restore(); }
+    for (const p of drawList) { const w = p.world; const partIndex = p.current?.partIndex ?? p.partIndex; const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex; if (!Number.isInteger(partIndex) || partIndex < 0) continue; if ((imgcutIndex ?? 0) < 0) continue; if (!w || (w.o ?? 1) * paraOpacity <= 0) continue; const part = actor.sprite?.imgcut?.parts?.[partIndex]; if (!part || part.w <= 0 || part.h <= 0) continue; c.save(); c.translate(w.x * actor.scale, w.y * actor.scale); c.rotate((w.a / baseAngle) * Math.PI * 2); c.globalAlpha = (w.o ?? 1) * paraOpacity; const sx = w.sx * actor.scale; const sy = w.sy * actor.scale; actor.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy }); c.restore(); }
     c.restore();
   }
   drawActor(c, actor) {
     if (!actor?.sprite || !actor?.model) return;
     if (actor.isRenderable ? !actor.isRenderable() : !actor.isAlive?.()) return;
     const hasBattleDrawList = typeof actor.model.getBattleDrawList === 'function';
-    const drawList = hasBattleDrawList ? actor.model.getBattleDrawList({ parentMatrix: actor.kbeffEnabled ? actor.kbeffParentMatrix : null }) : actor.model.getDrawList();
+    // BCU WaprCont ent.paraTo(A_W_C): the warp chara anim parents the whole entity, like KBEff paraTo.
+    const warpPara = actor.bcuWarpParaTransform || null;
+    const parentMatrix = actor.kbeffEnabled ? actor.kbeffParentMatrix : (warpPara?.matrix || null);
+    const drawList = hasBattleDrawList ? actor.model.getBattleDrawList({ parentMatrix }) : actor.model.getDrawList();
     if (!hasBattleDrawList) { this.drawActorLegacy(c, actor, drawList); return; }
     const bounds = this.getBattleDrawListLocalBounds(actor, drawList);
     if (!actor.firstFrameBounds && bounds) actor.firstFrameBounds = bounds;
@@ -461,12 +465,14 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
       if (Number.isFinite(k.angleRad) && k.angleRad !== 0) c.rotate(k.angleRad);
       if (sx !== 1 || sy !== 1) c.scale(sx, sy);
     }
+    // BCU EPart.opa(): fa.opa() * opacity — the para parent opacity multiplies all parts.
+    const paraOpacity = warpPara && Number.isFinite(warpPara.opacity) ? Math.max(0, Math.min(1, warpPara.opacity)) : 1;
     for (const p of drawList) {
       const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
       const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
       if (!Number.isInteger(partIndex) || partIndex < 0) continue;
       if ((imgcutIndex ?? 0) < 0) continue;
-      const opacity = Number.isFinite(p.opacity) ? p.opacity : (p.world?.o ?? 1);
+      const opacity = (Number.isFinite(p.opacity) ? p.opacity : (p.world?.o ?? 1)) * paraOpacity;
       if (opacity <= 0) continue;
       const part = actor.sprite?.imgcut?.parts?.[partIndex];
       if (!part || part.w <= 0 || part.h <= 0) continue;

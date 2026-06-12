@@ -66,6 +66,7 @@ export class FormationEditor {
     this.renderFrame = null;
     this.root = document.createElement('div');
     this.root.className = 'formation-ui';
+    this.root.__formationEditor = this;
     this.mount.appendChild(this.root);
     this.root.addEventListener('pointerup', (e) => this.onPointerUpCapture(e), true);
     this.root.addEventListener('click', (e) => this.onClick(e));

@@ -181,8 +181,10 @@ assert.equal(warpLifecycle.hideBaseActor, true, 'warp lifecycle hides base actor
 assert.equal(warpLifecycle.trace.effectKey, 'warp', 'warp lifecycle trace includes hole effect key');
 assert.equal(warpLifecycle.trace.charaEffectKey, 'warpChara', 'warp lifecycle trace includes chara effect key');
 const warpEntranceHole = scene.effects.find((effect) => traceOf(effect).effectKey === 'warp' && traceOf(effect).phase === 'entrance' && traceOf(effect).source === 'bcu-effanim-warp-lifecycle');
-const warpEntranceChara = scene.effects.find((effect) => traceOf(effect).effectKey === 'warpChara' && traceOf(effect).phase === 'entrance' && traceOf(effect).source === 'bcu-effanim-warp-lifecycle');
 assertSpawnTrace(warpEntranceHole, { effectKey: 'warp', phase: 'entrance', mode: BCU_SCALE_MODE.WARP_HOLE, sourceIncludes: /warp-lifecycle/ });
-assertSpawnTrace(warpEntranceChara, { effectKey: 'warpChara', phase: 'entrance', mode: BCU_SCALE_MODE.WARP_HOLE, sourceIncludes: /warp-lifecycle/ });
+// BCU WaprCont never draws A_W_C standalone; it modulates the entity via ent.paraTo(chara).
+const warpEntranceChara = scene.effects.find((effect) => traceOf(effect).effectKey === 'warpChara' && traceOf(effect).source === 'bcu-effanim-warp-lifecycle');
+assert.equal(warpEntranceChara, undefined, 'warp lifecycle does not spawn a standalone A_W_C effect');
+assert.equal(warpActor.bcuWarpParaTransform?.phase, 'entrance', 'warp lifecycle attaches A_W_C para transform to the actor');
 
 console.log('check-effect-coordinate-traces: OK');

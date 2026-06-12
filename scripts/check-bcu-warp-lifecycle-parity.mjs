@@ -64,19 +64,26 @@ assert.equal(isBcuWarpLifecycleActive(actor), true, 'warp proc creates lifecycle
 assert.equal(actor.bcuWarpLifecycle.procFrames, 3, 'procFrames read from payload');
 assert.equal(actor.bcuWarpLifecycle.enterFrames, 31, 'enterFrames read from A_W entrance asset len');
 assert.equal(actor.bcuWarpLifecycle.exitHoleFrames, 31, 'exit hole frames read from A_W exit asset len');
-assert.equal(actor.bcuWarpLifecycle.exitFrames, BCU_WARP_DEFAULT_EXIT_HOLE_FRAMES - BCU_WARP_EXIT_KBTIME_SUBTRACT, 'exitFrames mirror BCU kbTime -= 11 post-move hidden duration');
+assert.equal(actor.bcuWarpLifecycle.exitFrames, BCU_WARP_DEFAULT_EXIT_HOLE_FRAMES - 1 - BCU_WARP_EXIT_KBTIME_SUBTRACT, 'exitFrames mirror BCU kbTime = len(EXIT) - 1 - 11 post-move duration');
 assert.equal(actor.bcuWarpLifecycle.totalFrames, 3 + BCU_WARP_DEFAULT_ENTER_FRAMES + 1 + actor.bcuWarpLifecycle.exitFrames, 'totalFrames uses BCU-equivalent INT_WARP formula');
-assert.equal(scene.effects.length, 2, 'entrance WaprCont spawns hole and chara at frame 0');
+assert.equal(scene.effects.length, 1, 'entrance WaprCont spawns only the A_W hole (A_W_C is a para transform)');
 assert.equal(actor.isTargetable(), false, 'actor untargetable during warp');
 assert.equal(actor.isTouchable(), false, 'actor untouchable during warp');
-assert.equal(actor.isRenderable(), false, 'base actor hidden during warp');
+assert.equal(actor.isRenderable(), true, 'actor renders with A_W_C ENTER para modulation at warp start');
+assert.equal(actor.bcuWarpParaTransform?.phase, 'entrance', 'entrance para transform attached at warp start');
 
 const xBefore = actor.x;
+const enterFrames = actor.bcuWarpLifecycle.enterFrames;
 for (let frame = 1; frame < actor.bcuWarpLifecycle.moveFrame; frame += 1) {
   actor.lastSceneLogicFrame = frame;
   actor.tick(33);
   assert.equal(actor.x, xBefore, `actor does not move/reappear before exit transition frame ${frame}`);
-  assert.equal(actor.isRenderable(), false, 'base actor remains hidden before move');
+  if (frame <= enterFrames - 1) {
+    assert.equal(actor.isRenderable(), true, `actor renders with ENTER para during A_W_C entrance frame ${frame}`);
+    assert.equal(actor.bcuWarpParaTransform?.frame, frame, 'entrance para frame follows lifecycle frame');
+  } else {
+    assert.equal(actor.isRenderable(), false, `actor fully hidden between ENTER cont end and move frame ${frame}`);
+  }
 }
 
 actor.lastSceneLogicFrame = actor.bcuWarpLifecycle.moveFrame;
@@ -84,8 +91,9 @@ actor.tick(33);
 assert.equal(actor.bcuWarpLifecycle.moved, true, 'actor moves when exit phase begins');
 assert.equal(actor.bcuWarpLifecycle.phase, 'exit', 'phase changes to exit on move frame');
 assert.equal(actor.x, xBefore + 120, 'unit-side warp distance follows x -= distance * dire');
-assert.equal(scene.effects.length, 4, 'exit WaprCont spawns hole and chara on move frame');
-assert.equal(actor.isRenderable(), false, 'base actor remains hidden during exit animation');
+assert.equal(scene.effects.length, 2, 'exit WaprCont spawns only the A_W hole on move frame');
+assert.equal(actor.isRenderable(), true, 'actor renders with A_W_C EXIT para modulation during exit');
+assert.equal(actor.bcuWarpParaTransform?.phase, 'exit', 'exit para transform attached on move frame');
 
 while (isBcuWarpLifecycleActive(actor)) {
   scene.logicFrame += 1;
@@ -138,6 +146,18 @@ exitDeathActor.tick(33);
 assert.equal(isBcuWarpLifecycleActive(exitDeathActor), false, 'death during exit clears warp lifecycle');
 assert.equal(exitDeathActor.bcuWarpHidden, false, 'death during exit does not leave actor permanently hidden');
 assert.equal(exitDeathActor.bcuRenderOverride?.mode === 'warp-cont', false, 'death during exit clears warp render override');
+
+const clampScene = fakeScene();
+const clampActor = makeActor(clampScene);
+clampActor.scene = clampScene;
+clampScene.stage = { runtime: { stageLen: 600 } };
+clampActor.rawStats = { limit: 0 };
+clampActor.applyBcuProc({ key: 'warp', payload: { timeFrames: 1, time: 1, dis0: 500, dis1: 500 } }, { scene: clampScene, nowMs: 0, random: () => 0 });
+while (isBcuWarpLifecycleActive(clampActor) && !clampActor.bcuWarpLifecycle.moved) {
+  clampActor.lastSceneLogicFrame += 1;
+  clampActor.tick(33);
+}
+assert.equal(clampActor.x, 600, 'warp move is clamped by EUnit.getLim (stageLen - pos - limit) like BCU kbmove');
 
 const trace = getBcuWarpLifecycleTrace(actor) || actor.lastBcuWarpLifecycleDoneDebug;
 assert.ok(trace, 'warp lifecycle exposes deterministic trace');

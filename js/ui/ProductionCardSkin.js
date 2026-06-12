@@ -218,6 +218,8 @@ export class ProductionCardSkin {
       : this.drawDogCard(ctx, icon, state);
 
     if (!cooldownReady) {
+      // BCU BattleBox: b = pri > sb.money || cool > 0 -> dark overlay, then cooldown gauge on top.
+      this.drawAvailabilityOverlay(ctx, state);
       this.drawCooldown(ctx, cooldownProgressRatio, state);
       if (isBack) this.drawBackOverlay(ctx);
       return { ...renderResult, priceDrawn: false, cooldownDrawn: true };
@@ -328,9 +330,10 @@ export class ProductionCardSkin {
     };
   }
 
-  drawCost(ctx, cost) {
+  drawCost(ctx, cost, state) {
     ctx.save();
-    ctx.fillStyle = '#fff';
+    // BCU Res.getCost(pri, enable, ...): disabled cost uses the gray digit sprite set (aux.num[4]).
+    ctx.fillStyle = state?.affordable === false ? '#9b9b9b' : '#fff';
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
     ctx.font = 'bold 13px sans-serif';
@@ -354,9 +357,10 @@ export class ProductionCardSkin {
   }
 
   drawAvailabilityOverlay(ctx, state) {
-    if (state?.affordable) return;
+    // BCU Android BattleBox: b = pri > sb.money || cool > 0 -> colRect(x, y, iw, ih, 0, 0, 0, 100).
+    if (state?.affordable !== false && state?.cooldownReady !== false) return;
     ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,.45)';
+    ctx.fillStyle = `rgba(0,0,0,${100 / 255})`;
     ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
     ctx.restore();
   }

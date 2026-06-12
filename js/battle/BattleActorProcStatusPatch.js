@@ -445,7 +445,12 @@ export function installBattleActorProcStatusPatch() {
 
   const originalIsRenderable = proto.isRenderable;
   proto.isRenderable = function isRenderableWithBcuWarp() {
-    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp || isBcuWarpLifecycleActive(this)) return false;
+    if (this.bcuWarpHidden || this.bcuProcStatuses?.warp || isBcuWarpLifecycleActive(this)) {
+      // BCU WaprCont draws the entity with ent.paraTo(A_W_C) during ENTER/EXIT,
+      // so the actor stays renderable while a warp para transform is active.
+      if (this.bcuWarpParaTransform) return originalIsRenderable.call(this);
+      return false;
+    }
     return originalIsRenderable.call(this);
   };
 

@@ -9,6 +9,7 @@ function showBootStatus(message) {
     el.id = 'boot-status-panel';
     el.style.cssText = 'position:fixed;inset:0;z-index:999999;display:grid;place-items:center';
     el.innerHTML = `<div class="boot-loading-card" role="status" aria-live="polite">
+      <img class="boot-loading-icon" src="./public/assets/ui/game-icon.png" alt="" decoding="async">
       <div class="boot-loading-kicker">WANKO BATTLE</div>
       <div class="boot-loading-title">起動準備中</div>
       <div class="boot-loading-message"></div>

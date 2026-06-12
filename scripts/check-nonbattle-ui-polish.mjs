@@ -40,6 +40,66 @@ async function assertCloseButtonVisible(page, label) {
   assert(box.x >= -1 && box.y >= -1 && box.x + box.width <= vp.width + 1 && box.y + box.height <= vp.height + 1, `${label}: close button outside viewport`);
 }
 
+async function assertInitialFormationIconsVisible(page, label) {
+  await page.waitForFunction(() => {
+    const visible = (node) => {
+      const style = getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && box.width > 0 && box.height > 0;
+    };
+    const slotImgs = [...document.querySelectorAll('.formation-slots img[data-semantic-icon]')].filter(visible);
+    const catalogImgs = [...document.querySelectorAll('.formation-catalog-grid .formation-character-card img[data-semantic-icon]')].filter(visible);
+    return slotImgs.length > 0
+      && slotImgs.every((img) => img.dataset.iconResolved === '1' && img.naturalWidth > 0 && !img.classList.contains('image-missing'))
+      && catalogImgs.slice(0, Math.min(3, catalogImgs.length)).every((img) => img.dataset.iconResolved === '1' && img.naturalWidth > 0 && !img.classList.contains('image-missing'));
+  }, null, { timeout: 20000 });
+}
+
+async function assertCatalogCardsVisible(page, label) {
+  await page.waitForFunction(() => {
+    const cards = [...document.querySelectorAll('.formation-catalog-grid .formation-character-card')];
+    return cards.some((node) => {
+      const style = getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && box.width > 0 && box.height > 0;
+    });
+  }, null, { timeout: 20000 });
+  assert(await visibleCount(page, '.formation-character-card') > 0, `${label}: catalog cards not initially visible`);
+}
+
+async function assertTuningOverlayStable(page, label) {
+  const slot = page.locator('.formation-slot[data-slot]').first();
+  const box = await slot.boundingBox();
+  assert(box, `${label}: first formation slot missing`);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(660);
+  await page.mouse.up();
+  await page.waitForSelector('.formation-tuning-overlay.is-open', { state: 'visible', timeout: 8000 });
+  await page.waitForTimeout(760);
+  const state = await page.evaluate(() => {
+    const overlay = document.querySelector('.formation-tuning-overlay.is-open');
+    const panel = overlay?.querySelector('.formation-tuning-panel');
+    const icon = overlay?.querySelector('.formation-tuning-portrait img[data-semantic-icon]');
+    const overlayStyle = overlay ? getComputedStyle(overlay) : null;
+    const panelStyle = panel ? getComputedStyle(panel) : null;
+    return {
+      overlayOpacity: Number(overlayStyle?.opacity || 0),
+      panelBackground: panelStyle?.backgroundColor || '',
+      iconReady: !!icon && icon.dataset.iconResolved === '1' && icon.naturalWidth > 0 && !icon.classList.contains('image-missing'),
+      overlayAnimations: [...(overlay?.getAnimations?.() || [])].map((a) => a.animationName),
+      panelAnimations: [...(panel?.getAnimations?.() || [])].map((a) => a.animationName)
+    };
+  });
+  assert(state.overlayOpacity >= 0.98, `${label}: tuning overlay faded/restarted after open (${state.overlayOpacity})`);
+  assert(state.panelBackground !== 'rgba(0, 0, 0, 0)', `${label}: tuning panel has transparent background`);
+  assert(state.iconReady, `${label}: tuning overlay icon did not resolve immediately`);
+  assert(!state.overlayAnimations.includes('gameUiFade'), `${label}: generic gameUiFade is still driving tuning overlay`);
+  assert(state.panelAnimations.length === 0, `${label}: tuning panel animation still running after settle: ${state.panelAnimations.join(',')}`);
+  await page.locator('[data-tuning-close]').click();
+  await page.waitForSelector('.formation-tuning-overlay.is-open', { state: 'hidden', timeout: 8000 });
+}
+
 async function waitForFormation(page) {
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
@@ -61,6 +121,9 @@ async function checkViewport(browser, width, height) {
 
   const label = `${width}x${height}`;
   await waitForFormation(page);
+  await assertCatalogCardsVisible(page, label);
+  await assertInitialFormationIconsVisible(page, label);
+  if (width <= 932 && height <= 430) await assertTuningOverlayStable(page, label);
   await page.screenshot({ path: `${OUT_DIR}/formation-${label}.png`, fullPage: false });
   await assertNoFatalHorizontalOverflow(page, `${label} formation`);
 

@@ -985,3 +985,132 @@
     max-height:22dvh;
   }
 }
+
+/* Commercial polish: stable brand anchor, clearer hierarchy, and less busy loading cards. */
+#boot-status-panel .boot-loading-card{
+  grid-template-columns:72px minmax(0,1fr)!important;
+  grid-template-areas:
+    "icon kicker"
+    "icon title"
+    "message message"
+    "rail rail"
+    "meta meta"!important;
+  align-items:center!important;
+}
+
+#boot-status-panel .boot-loading-icon,
+.app-loading-icon{
+  grid-area:icon!important;
+  width:64px!important;
+  height:64px!important;
+  object-fit:cover!important;
+  border:4px solid #050505!important;
+  border-radius:17px!important;
+  background:#fffdf0!important;
+  box-shadow:0 5px 0 rgba(0,0,0,.66),inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+
+#boot-status-panel .boot-loading-kicker{grid-area:kicker!important}
+#boot-status-panel .boot-loading-title{grid-area:title!important}
+#boot-status-panel .boot-loading-message{grid-area:message!important}
+#boot-status-panel .boot-loading-rail{grid-area:rail!important}
+#boot-status-panel .boot-loading-meta{grid-area:meta!important}
+
+.app-loading-card{
+  grid-template-columns:72px minmax(0,1fr) auto!important;
+  grid-template-areas:
+    "icon kicker version"
+    "icon title time"
+    "message message message"
+    "progress progress progress"
+    "tip tip tip"
+    "steps steps steps"
+    "error error error"
+    "actions actions actions"!important;
+  align-items:center!important;
+}
+
+.app-loading-actions{
+  grid-area:actions!important;
+}
+
+.app-loading-title{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.app-loading-message,
+.app-loading-tip{
+  min-width:0!important;
+}
+
+.app-loading-tip span{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.app-loading-progress{
+  height:22px!important;
+}
+
+.app-loading-step{
+  min-width:0!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+@media (max-width:760px){
+  #boot-status-panel .boot-loading-card{
+    grid-template-columns:58px minmax(0,1fr)!important;
+    grid-template-areas:
+      "icon kicker"
+      "icon title"
+      "message message"
+      "rail rail"
+      "meta meta"!important;
+  }
+  #boot-status-panel .boot-loading-icon,
+  .app-loading-icon{
+    width:52px!important;
+    height:52px!important;
+    border-width:3px!important;
+    border-radius:14px!important;
+  }
+  .app-loading-card{
+    grid-template-columns:58px minmax(0,1fr)!important;
+    grid-template-areas:
+      "icon kicker"
+      "icon title"
+      "version time"
+      "message message"
+      "progress progress"
+      "tip tip"
+      "steps steps"
+      "error error"
+      "actions actions"!important;
+  }
+  .app-loading-title{
+    white-space:normal!important;
+  }
+}
+
+@media (max-height:560px) and (orientation:landscape){
+  #boot-status-panel .boot-loading-icon,
+  .app-loading-icon{
+    width:46px!important;
+    height:46px!important;
+    border-width:3px!important;
+    border-radius:12px!important;
+  }
+  .app-loading-card{
+    grid-template-columns:52px minmax(0,1fr) auto!important;
+  }
+  .app-loading-tip{
+    display:none!important;
+  }
+}

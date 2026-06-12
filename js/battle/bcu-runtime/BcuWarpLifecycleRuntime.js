@@ -1,4 +1,5 @@
 import { directionForActor, spawnWaveBundleEffect } from '../BcuWaveBundleEffectSpawner.js';
+import { BcuKbeffRuntime } from '../BcuKbeffRuntime.js';
 
 export const BCU_WARP_DEFAULT_ENTER_FRAMES = 31;
 export const BCU_WARP_DEFAULT_EXIT_HOLE_FRAMES = 31;
@@ -31,10 +32,13 @@ function warpPlacement(actor, key) {
   };
 }
 
+// BCU WaprCont draws only the A_W hole as its own animation; A_W_C is never drawn
+// standalone — it modulates the entity via ent.paraTo(chara). The chara side is
+// therefore handled by the para transform below, not by a spawned effect.
 export function spawnBcuWarpContainerEffects(scene, actor, phase, lifecycle = actor?.bcuWarpLifecycle || null) {
   if (!scene || !actor || (phase !== 'entrance' && phase !== 'exit')) return [];
   const effects = [];
-  for (const key of ['warp', 'warpChara']) {
+  for (const key of ['warp']) {
     const placement = warpPlacement(actor, key);
     const effect = spawnWaveBundleEffect(scene, {
       key,
@@ -59,11 +63,63 @@ export function spawnBcuWarpContainerEffects(scene, actor, phase, lifecycle = ac
   return effects;
 }
 
+function warpCharaParaRuntime(scene, lifecycle, phase) {
+  if (!lifecycle.paraRuntimes) lifecycle.paraRuntimes = {};
+  if (phase in lifecycle.paraRuntimes) return lifecycle.paraRuntimes[phase];
+  const asset = scene?.waveEffectAssets?.warpChara || null;
+  const anim = asset?.phases?.[phase] || null;
+  const runtime = asset?.loaded && asset.model && anim ? new BcuKbeffRuntime({ anim, model: asset.model, bcuType: 'INT_WARP' }) : null;
+  lifecycle.paraRuntimes[phase] = runtime;
+  return runtime;
+}
+
+// BCU WaprCont.draw: ent.paraTo(chara) parents the entity root to A_W_C part 1,
+// so the entity inherits that part's position/scale/opacity curve (fade + suck-in
+// on ENTER, drop + pop-in on EXIT). The drawMatrix (graphicsMatrix * part size)
+// is required here because A_W_C animates scale through the part size chain.
+export function updateBcuWarpParaTransform(actor, lifecycle, scene) {
+  let phase = null;
+  let frame = 0;
+  if (!lifecycle.moved) {
+    if (lifecycle.frame <= lifecycle.enterFrames - 1) {
+      phase = 'entrance';
+      frame = lifecycle.frame;
+    }
+  } else {
+    phase = 'exit';
+    frame = lifecycle.frame - lifecycle.moveFrame;
+  }
+  if (!phase) {
+    actor.bcuWarpParaTransform = null;
+    return null;
+  }
+  const runtime = warpCharaParaRuntime(scene, lifecycle, phase);
+  let matrix = null;
+  let opacity = 1;
+  if (runtime) {
+    runtime.setFrame(Math.min(frame, runtime.animator?.anim?.maxFrame ?? frame));
+    const entry = runtime.getParentPartEntry();
+    matrix = entry?.matrix || null;
+    opacity = Number.isFinite(entry?.opacity) ? entry.opacity : 1;
+  }
+  const para = {
+    phase,
+    frame,
+    matrix,
+    opacity,
+    source: 'BCU WaprCont ent.paraTo(A_W_C) parent transform'
+  };
+  actor.bcuWarpParaTransform = para;
+  return para;
+}
+
 export function buildBcuWarpLifecycle(actor, payload = {}, { scene = actor?.scene || null, distance = null } = {}) {
   const procFrames = Math.max(0, finiteInt(payload.timeFrames ?? payload.time, 0));
   const enterFrames = getBcuWarpEffectFrames(scene, 'warp', 'entrance');
   const exitHoleFrames = getBcuWarpEffectFrames(scene, 'warp', 'exit');
-  const postMoveHiddenFrames = Math.max(1, exitHoleFrames - BCU_WARP_EXIT_KBTIME_SUBTRACT);
+  // BCU updateKB: move happens when kbTime + 1 == len(EXIT), i.e. kbTime == len - 1,
+  // then kbTime -= 11; the remaining (len - 1 - 11) decrements until kbTime == 0 end the warp.
+  const postMoveHiddenFrames = Math.max(1, exitHoleFrames - 1 - BCU_WARP_EXIT_KBTIME_SUBTRACT);
   const moveFrame = procFrames + enterFrames + 1;
   const totalFrames = moveFrame + postMoveHiddenFrames;
   const warpDistance = Number.isFinite(Number(distance)) ? Number(distance) : finiteInt(payload.distance ?? payload.dis0 ?? payload.dis_0, 0);
@@ -104,9 +160,10 @@ export function startBcuWarpLifecycle(actor, payload = {}, meta = {}) {
   actor.bcuWarpLifecycle = lifecycle;
   actor.bcuWarpHidden = true;
   actor.bcuWarpState = 'enter';
+  const para = updateBcuWarpParaTransform(actor, lifecycle, scene);
   actor.bcuRenderOverride = {
     mode: 'warp-cont',
-    hideBaseActor: true,
+    hideBaseActor: !para,
     targetable: false,
     touchable: false,
     source: lifecycle.source,
@@ -118,11 +175,30 @@ export function startBcuWarpLifecycle(actor, payload = {}, meta = {}) {
   return lifecycle;
 }
 
+// BCU Entity.kbmove: e.pos -= Math.min(mov, e.getLim()) * e.dire.
+// EUnit.getLim: max(0, st.len - pos - limit); EEnemy.getLim: max(0, pos - (limit + boss_spawn)).
+function warpMoveLimit(actor, pos) {
+  const raw = actor?.rawStats || {};
+  const limit = Number(raw.limit) || 0;
+  if (actor?.side === 'dog-player') {
+    const stageLen = Number(actor?.scene?.stage?.runtime?.stageLen ?? actor?.scene?.stage?.definition?.stageLen);
+    return Number.isFinite(stageLen) && stageLen > 0 ? Math.max(0, stageLen - pos - limit) : Infinity;
+  }
+  if (actor?.side === 'cat-enemy') {
+    const bossSpawn = Number(actor?.bcuBossSpawnOffset) || 0;
+    return Math.max(0, pos - (limit + bossSpawn));
+  }
+  return Infinity;
+}
+
 function moveActor(actor, lifecycle) {
   const distance = Number(lifecycle.distance || 0);
   const direction = Number.isFinite(actor?.direction) ? actor.direction : directionForActor(actor);
   const before = Number.isFinite(actor?.posBcu) ? actor.posBcu : (Number.isFinite(actor?.x) ? actor.x : 0);
-  const after = before - distance * direction;
+  // Math.min keeps negative distances (forward warp) unclamped, like BCU kbmove.
+  const limit = warpMoveLimit(actor, before);
+  const step = Math.min(distance, limit);
+  const after = before - step * direction;
   actor.x = after;
   actor.posBcu = after;
   lifecycle.worldXBefore = before;
@@ -131,7 +207,7 @@ function moveActor(actor, lifecycle) {
   lifecycle.exitStarted = true;
   lifecycle.phase = 'exit';
   actor.bcuWarpState = 'exit';
-  return { before, after, distance, direction };
+  return { before, after, distance, step, limit, direction };
 }
 
 export function clearBcuWarpLifecycle(actor, reason = 'clear') {
@@ -140,6 +216,7 @@ export function clearBcuWarpLifecycle(actor, reason = 'clear') {
   actor.bcuWarpHidden = false;
   actor.bcuWarpState = null;
   actor.bcuWarpLifecycle = null;
+  actor.bcuWarpParaTransform = null;
   if (actor.bcuRenderOverride?.mode === 'warp-cont') actor.bcuRenderOverride = null;
   actor.lastBcuWarpLifecycleClearDebug = { source: 'BcuWarpLifecycleRuntime.clear', reason };
 }
@@ -157,14 +234,6 @@ export function tickBcuWarpLifecycle(actor, { scene = actor?.scene || globalThis
   lifecycle.frame += 1;
   lifecycle.framesRemaining = Math.max(0, lifecycle.totalFrames - lifecycle.frame);
   actor.bcuWarpHidden = true;
-  actor.bcuRenderOverride = {
-    mode: 'warp-cont',
-    hideBaseActor: true,
-    targetable: false,
-    touchable: false,
-    source: lifecycle.source,
-    containerId: lifecycle.effectKey
-  };
   if (!lifecycle.moved && lifecycle.frame >= lifecycle.moveFrame) {
     const move = moveActor(actor, lifecycle);
     const effects = spawnBcuWarpContainerEffects(scene, actor, 'exit', lifecycle);
@@ -174,6 +243,15 @@ export function tickBcuWarpLifecycle(actor, { scene = actor?.scene || globalThis
     lifecycle.phase = lifecycle.frame <= lifecycle.enterFrames ? 'enter' : 'hidden';
     actor.bcuWarpState = lifecycle.phase;
   }
+  const para = updateBcuWarpParaTransform(actor, lifecycle, scene);
+  actor.bcuRenderOverride = {
+    mode: 'warp-cont',
+    hideBaseActor: !para,
+    targetable: false,
+    touchable: false,
+    source: lifecycle.source,
+    containerId: lifecycle.effectKey
+  };
   if (lifecycle.frame >= lifecycle.totalFrames) {
     lifecycle.active = false;
     lifecycle.phase = 'done';
@@ -207,6 +285,7 @@ export function getBcuWarpLifecycleTrace(actor) {
     targetable: actor?.isTargetable?.() === true,
     touchable: actor?.isTouchable?.() === true,
     renderable: actor?.isRenderable?.() === true,
+    para: actor?.bcuWarpParaTransform ? { phase: actor.bcuWarpParaTransform.phase, frame: actor.bcuWarpParaTransform.frame, opacity: actor.bcuWarpParaTransform.opacity } : null,
     effectKey: lifecycle.effectKey,
     charaEffectKey: lifecycle.charaEffectKey,
     bcuReference: lifecycle.bcuReference

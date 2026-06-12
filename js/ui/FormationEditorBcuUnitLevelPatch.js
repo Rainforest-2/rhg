@@ -2,6 +2,7 @@ import { FormationEditor } from './FormationEditor.js';
 import { press } from './UiMotion.mjs';
 import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT, LINEUP_COLS } from '../battle/FormationStore.js';
 import { getCharacterById } from '../battle/CharacterCatalog.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import {
   BCU_DEFAULT_PREF_LEVEL,
   resolveBcuUnitLevelConfig
@@ -101,9 +102,9 @@ function injectStyle() {
 html body.nyanko-ui-polish .formation-slot{position:relative!important;overflow:visible!important}
 html body.nyanko-ui-polish .formation-tuning-badge{position:absolute;right:5px;bottom:5px;z-index:6;min-width:46px;height:22px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;border:3px solid #000;border-radius:999px;background:#f15212;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.72rem;font-weight:900;line-height:1;letter-spacing:.01em;box-shadow:0 2px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-tuning-overlay{position:fixed;inset:0;z-index:99980;display:none;place-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:rgba(0,0,0,.48);backdrop-filter:blur(2px);touch-action:none}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening{animation:formationTuningFade .2s ease-out both}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{animation:formationTuningFadeOut .18s ease-in both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid;opacity:1!important;animation:none!important}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening{animation:formationTuningFade .2s ease-out both!important}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{animation:formationTuningFadeOut .18s ease-in both!important}
 @keyframes formationTuningFade{from{opacity:0}to{opacity:1}}
 @keyframes formationTuningFadeOut{from{opacity:1}to{opacity:0}}
 html body.nyanko-ui-polish .formation-tuning-panel{width:min(920px,calc(100vw - 28px));max-height:calc(100dvh - 20px);display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:6px solid #000;border-radius:22px;background:#fff4c2;box-shadow:0 10px 0 #160804,0 0 0 4px rgba(255,255,255,.12);transform-origin:center}
@@ -311,6 +312,33 @@ function renderDogPanel(editor, draft) {
   </div>`;
 }
 
+function primeTuningIconFromResolvedImage(editor, img) {
+  const key = img?.dataset?.semanticIcon || '';
+  if (!key) return false;
+  for (const candidate of editor.root.querySelectorAll('img[data-semantic-icon]')) {
+    if (candidate === img || candidate.dataset.semanticIcon !== key) continue;
+    if (candidate.dataset.iconResolved !== '1' || !candidate.currentSrc || candidate.naturalWidth <= 0) continue;
+    img.src = candidate.currentSrc;
+    img.classList.remove('image-missing');
+    img.dataset.iconResolved = '1';
+    delete img.dataset.iconPending;
+    return true;
+  }
+  return false;
+}
+
+function resolveTuningOverlayIcons(editor, overlay) {
+  if (!editor?.root || !overlay) return;
+  let provider = null;
+  try { provider = getBcuAssetDatabase()?.semanticProvider || null; } catch {}
+  for (const img of overlay.querySelectorAll('img[data-semantic-icon]')) {
+    if (!img.dataset.semanticIcon || img.dataset.iconResolved === '1') continue;
+    if (primeTuningIconFromResolvedImage(editor, img)) continue;
+    if (provider && typeof editor.enqueueIcon === 'function') editor.enqueueIcon(img, provider, true);
+  }
+  if (provider && typeof editor.pumpIconQueue === 'function') editor.pumpIconQueue(provider);
+}
+
 function renderTuningOverlay(editor) {
   const overlay = tuningOverlay(editor);
   const draft = editor.characterTuningDraft;
@@ -330,6 +358,7 @@ function renderTuningOverlay(editor) {
   // The regression-fix patch re-pops any panel it has not seen; renders here own their motion.
   const panel = overlay.querySelector('.formation-tuning-panel');
   if (panel) panel.dataset.motionFixSeen = '1';
+  resolveTuningOverlayIcons(editor, overlay);
   editor.resolveSemanticIcons?.();
   if (!wasOpen || wasClosing) {
     delete overlay.dataset.tuningSettled;

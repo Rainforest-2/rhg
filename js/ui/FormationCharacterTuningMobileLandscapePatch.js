@@ -9,7 +9,7 @@ function injectMobileLandscapeStyle() {
   style.id = STYLE_ID;
   style.textContent = `
 @font-face{font-family:FormationTuningOtf;src:url('./public/assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf') format('opentype');font-weight:900;font-style:normal;font-display:block}
-@media (orientation:landscape) and (max-height:520px) and (max-width:980px) and (pointer:coarse){
+@media (orientation:landscape) and (max-height:520px) and (max-width:980px){
   html body.nyanko-ui-polish .formation-tuning-overlay{padding:5px calc(7px + env(safe-area-inset-right,0px)) 5px calc(7px + env(safe-area-inset-left,0px))!important;place-items:center!important;background:rgba(0,0,0,.40)!important;backdrop-filter:blur(1px)!important}
   html body.nyanko-ui-polish .formation-tuning-panel{width:min(956px,calc(100vw - 14px))!important;height:min(438px,calc(100dvh - 10px))!important;max-height:calc(100dvh - 10px)!important;display:grid!important;grid-template-columns:92px minmax(0,1fr) 154px!important;grid-template-rows:36px minmax(0,1fr) 42px!important;border-width:4px!important;border-radius:15px!important;box-shadow:0 4px 0 #120603,0 0 0 2px rgba(255,255,255,.14)!important;overflow:hidden!important}
   html body.nyanko-ui-polish .formation-tuning-header{grid-column:1/-1!important;min-height:0!important;padding:4px 7px!important;gap:6px!important;border-bottom-width:4px!important}
@@ -45,7 +45,7 @@ function injectMobileLandscapeStyle() {
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-summary{grid-row:1!important}
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-presets{grid-row:2!important;align-self:start!important;align-content:start!important}
 }
-@media (orientation:landscape) and (max-height:390px) and (max-width:900px) and (pointer:coarse){
+@media (orientation:landscape) and (max-height:390px) and (max-width:900px){
   html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:78px minmax(0,1fr) 138px!important;grid-template-rows:32px minmax(0,1fr) 38px!important;border-width:3px!important;border-radius:13px!important}
   html body.nyanko-ui-polish .formation-tuning-header{padding:3px 6px!important;border-bottom-width:3px!important}
   html body.nyanko-ui-polish .formation-tuning-title strong{font-size:.94rem!important}

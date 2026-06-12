@@ -2,8 +2,8 @@ import { FormationEditor } from './FormationEditor.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-phone-landscape-layout.v1');
 const STYLE_ID = 'formation-phone-landscape-layout-style';
-const PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 520px) and (max-width: 980px) and (pointer: coarse)';
-const TINY_PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 390px) and (max-width: 900px) and (pointer: coarse)';
+const PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 520px) and (max-width: 980px)';
+const TINY_PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 390px) and (max-width: 900px)';
 
 function isPhoneLandscape() {
   return globalThis.matchMedia?.(PHONE_LANDSCAPE_QUERY)?.matches === true;
@@ -22,6 +22,20 @@ function applyMetrics(editor) {
       overscanRows: isTinyPhoneLandscape() ? 5 : 6
     };
   }
+}
+
+function stabilizeCatalogAfterLayout(editor) {
+  if (!isPhoneLandscape() || !editor?.root || editor.__phoneLandscapeCatalogFrame) return;
+  editor.__phoneLandscapeCatalogFrame = requestAnimationFrame(() => {
+    editor.__phoneLandscapeCatalogFrame = null;
+    if (!isPhoneLandscape() || !editor.root?.isConnected) return;
+    const scroller = editor.root.querySelector('.formation-catalog-scroll');
+    if (!scroller || scroller.clientWidth <= 0 || scroller.clientHeight <= 0) return;
+    applyMetrics(editor);
+    editor.renderCatalogWindow?.();
+    editor.resolveSemanticIcons?.();
+    editor.updateFormationIconDebug?.();
+  });
 }
 
 function injectStyle() {
@@ -129,6 +143,7 @@ export function installFormationPhoneLandscapeLayoutPatch() {
       applyMetrics(this);
       const result = refresh.apply(this, args);
       applyMetrics(this);
+      stabilizeCatalogAfterLayout(this);
       return result;
     };
   }
@@ -140,6 +155,7 @@ export function installFormationPhoneLandscapeLayoutPatch() {
       applyMetrics(this);
       const result = renderDynamic.apply(this, args);
       applyMetrics(this);
+      stabilizeCatalogAfterLayout(this);
       return result;
     };
   }

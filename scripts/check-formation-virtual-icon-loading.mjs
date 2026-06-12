@@ -1,12 +1,16 @@
 import fs from 'node:fs/promises';
 
 const src = await fs.readFile('js/ui/FormationEditor.js', 'utf8');
+const tuningSrc = await fs.readFile('js/ui/FormationEditorBcuUnitLevelPatch.js', 'utf8');
 const failures = [];
 
 const requireText = (needle, message) => { if (!src.includes(needle)) failures.push(message); };
+const requireTuningText = (needle, message) => { if (!tuningSrc.includes(needle)) failures.push(message); };
 
 requireText('resolveSelectedSlotIconsImmediately(provider)', 'selected slot icons must be loaded immediately');
 requireText('resolveVisibleCatalogIconsImmediately(provider)', 'visible catalog icons must be eagerly enqueued after virtual render');
+requireTuningText('resolveTuningOverlayIcons(editor, overlay)', 'tuning overlay icons must be queued during the opening render');
+requireTuningText('primeTuningIconFromResolvedImage(editor, img)', 'tuning overlay should reuse an already resolved icon before paint');
 requireText('__FORMATION_ICON_DEBUG__', 'formation icon debug global is missing');
 requireText('recentIconFailures', 'formation icon failure history is missing');
 requireText('waitForImageReady', 'images must be marked resolved only after load/decode');

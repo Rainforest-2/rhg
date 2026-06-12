@@ -55,6 +55,43 @@ assert.equal(drawResult.renderMode, 'bcu-square-card-canvas-crop');
 assert.equal(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__.lastCatCard.renderMode, 'bcu-square-card-canvas-crop');
 assert.ok(ctx.calls.some((call) => call[0] === 'drawImage' && call[2] === BCU_UNI_CARD_PART.x && call[3] === BCU_UNI_CARD_PART.y), '128x128 unit card must draw by uni.imgcut crop');
 
+function fakeStatefulContext() {
+  const ctx = fakeCanvasContext();
+  ctx._fillStyle = '';
+  Object.defineProperty(ctx, 'fillStyle', {
+    get() { return this._fillStyle; },
+    set(v) { this._fillStyle = v; this.calls.push(['fillStyle', v]); }
+  });
+  for (const prop of ['strokeStyle', 'lineWidth', 'font', 'textAlign', 'textBaseline']) {
+    Object.defineProperty(ctx, prop, { get() { return this[`_${prop}`]; }, set(v) { this[`_${prop}`] = v; } });
+  }
+  ctx.fillText = (...args) => ctx.calls.push(['fillText', ...args]);
+  ctx.strokeText = (...args) => ctx.calls.push(['strokeText', ...args]);
+  return ctx;
+}
+// BCU Android BattleBox: b = pri > sb.money || cool > 0 -> colRect(0,0,0,100); cost digits use the disabled sprite set when b.
+const BCU_DISABLED_OVERLAY = `rgba(0,0,0,${100 / 255})`;
+function overlayRects(ctx) {
+  let fill = '';
+  return ctx.calls.filter((call) => {
+    if (call[0] === 'fillStyle') { fill = call[1]; return false; }
+    return call[0] === 'fillRect' && fill === BCU_DISABLED_OVERLAY && call[1] === 0 && call[2] === 0;
+  });
+}
+const grayCardBase = { unitDef: { faction: 'cat', assetDef: { semanticKey: 'unit:1:f' } }, icon: fakeImage(unit000, { bcuSemanticKey: 'unit:0:f' }), cost: 100 };
+const unaffordableCtx = fakeStatefulContext();
+skin.drawCard(unaffordableCtx, { ...grayCardBase, affordable: false, cooldownReady: true });
+assert.equal(overlayRects(unaffordableCtx).length, 1, 'unaffordable card draws BCU 100/255 black overlay');
+const coolingCtx = fakeStatefulContext();
+skin.drawCard(coolingCtx, { ...grayCardBase, affordable: true, cooldownReady: false, cooldownProgressRatio: 0.5 });
+assert.equal(overlayRects(coolingCtx).length, 1, 'cooling card draws BCU 100/255 black overlay under the gauge');
+const readyCtx = fakeStatefulContext();
+skin.drawCard(readyCtx, { ...grayCardBase, affordable: true, cooldownReady: true });
+assert.equal(overlayRects(readyCtx).length, 0, 'ready card draws no disabled overlay');
+const grayCostCall = unaffordableCtx.calls.find((call) => call[0] === 'fillText');
+assert.ok(grayCostCall, 'unaffordable card still draws cost');
+assert.equal(unaffordableCtx._fillStyle === '#fff', false, 'unaffordable cost is not drawn with the enabled white digits');
+
 const skinSource = fs.readFileSync('js/ui/ProductionCardSkin.js', 'utf8');
 const debugSource = fs.readFileSync('js/battle/BattleUnifiedDamageDebugPatch.js', 'utf8');
 const barSource = fs.readFileSync('js/ui/PlayerProductionBar.js', 'utf8');

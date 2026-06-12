@@ -17,4 +17,6 @@ export async function installUiPatches() {
   await import('../ui/FormationCustomStageBattleHpPatch.js');
   await import('../ui/FormationCustomStageBattleApplyHpConfigPatch.js');
   await import('../ui/FormationStageNameBcuPatch.js');
+  // Must stay last: its motion wrappers need to run outermost around the patched prototype.
+  await import('../ui/FormationPremiumMotionPatch.js');
 }

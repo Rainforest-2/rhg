@@ -1,0 +1,229 @@
+/*
+ * Premium polish pass for the non-battle shell (formation editor, stage selector,
+ * action rail). Loaded last so equal-specificity rules here win over earlier sheets.
+ * Animation triggers (.is-page-enter, .is-catalog-enter, .is-view-enter,
+ * .is-opening, .is-closing) are applied transiently by FormationPremiumMotionPatch.js.
+ */
+:root{
+  --pm-ease-out:cubic-bezier(.16,1,.3,1);
+  --pm-spring:cubic-bezier(.18,1.25,.32,1);
+  --pm-ease-in:cubic-bezier(.55,0,.85,.36);
+}
+
+/* ---------------------------------------------------------------- *
+ * Interaction foundation: tap highlight, cursor, keyboard focus.
+ * ---------------------------------------------------------------- */
+body.nyanko-ui-polish .formation-ui button,
+body.nyanko-ui-polish .formation-tuning-overlay button{
+  -webkit-tap-highlight-color:transparent;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+
+body.nyanko-ui-polish .formation-ui button:focus-visible,
+body.nyanko-ui-polish .formation-tuning-overlay button:focus-visible{
+  outline:3px solid #fff;
+  outline-offset:2px;
+}
+
+/* The active page tab is the black plate; a gold ring makes the selection
+   unambiguous against the bright inactive tab. */
+body.nyanko-ui-polish .formation-page-tab.is-active{
+  box-shadow:0 5px 0 #3a1506,0 0 0 3px rgba(255,213,49,.6),inset 0 2px 0 rgba(255,255,255,.16)!important;
+}
+
+body.nyanko-ui-polish .formation-search-input{
+  transition:box-shadow .18s var(--pm-ease-out);
+}
+
+body.nyanko-ui-polish .formation-search-input:focus{
+  outline:0;
+  box-shadow:inset 0 3px 0 rgba(0,0,0,.12),0 4px 0 rgba(0,0,0,.62),0 0 0 4px rgba(255,213,49,.45);
+}
+
+/* ---------------------------------------------------------------- *
+ * Apply Battle button: idle sheen sweep + clear busy state.
+ * ---------------------------------------------------------------- */
+body.nyanko-ui-polish .apply-battle-button{
+  position:relative;
+  overflow:hidden;
+}
+
+body.nyanko-ui-polish .apply-battle-button::after{
+  content:"";
+  position:absolute;
+  top:-130%;
+  bottom:-130%;
+  left:0;
+  width:34%;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.5) 45%,rgba(255,255,255,.16) 62%,transparent 100%);
+  transform:translateX(-220%) rotate(12deg);
+  animation:pmSheen 3.8s ease-in-out infinite;
+}
+
+@keyframes pmSheen{
+  0%,62%{transform:translateX(-220%) rotate(12deg)}
+  100%{transform:translateX(420%) rotate(12deg)}
+}
+
+body.nyanko-ui-polish .apply-battle-button:disabled{
+  cursor:wait;
+  filter:saturate(.6) brightness(.88);
+}
+
+body.nyanko-ui-polish .apply-battle-button:disabled::after{
+  animation:none;
+}
+
+/* ---------------------------------------------------------------- *
+ * Slot row: direction-aware page-switch slide (staggered).
+ * ---------------------------------------------------------------- */
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot{
+  animation:pmPageFwd .3s var(--pm-ease-out) both;
+}
+
+body.nyanko-ui-polish .formation-slots.is-page-enter[data-page-dir='back'] .formation-slot{
+  animation-name:pmPageBack;
+}
+
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(2){animation-delay:30ms}
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(3){animation-delay:60ms}
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(4){animation-delay:90ms}
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(5){animation-delay:120ms}
+
+@keyframes pmPageFwd{
+  from{opacity:0;transform:translateX(26px)}
+  to{opacity:1;transform:translateX(0)}
+}
+
+@keyframes pmPageBack{
+  from{opacity:0;transform:translateX(-26px)}
+  to{opacity:1;transform:translateX(0)}
+}
+
+/* ---------------------------------------------------------------- *
+ * Catalog: staggered rise-in when the faction filter (or boot) swaps the list.
+ * Scroll-driven virtual re-renders never receive .is-catalog-enter.
+ * ---------------------------------------------------------------- */
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card{
+  animation:pmRiseIn .32s var(--pm-ease-out) 240ms both;
+}
+
+/* nth-child(1) is the virtual top spacer; cards start at 2. */
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(2){animation-delay:0ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(3){animation-delay:22ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(4){animation-delay:44ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(5){animation-delay:66ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(6){animation-delay:88ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(7){animation-delay:110ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(8){animation-delay:132ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(9){animation-delay:154ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(10){animation-delay:176ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(11){animation-delay:198ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(12){animation-delay:220ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(13){animation-delay:240ms}
+
+@keyframes pmRiseIn{
+  from{opacity:0;transform:translateY(14px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* ---------------------------------------------------------------- *
+ * Stage selector overlay: spring open, fade close, hierarchy stagger.
+ * ---------------------------------------------------------------- */
+body.nyanko-ui-polish .formation-stage-overlay.is-opening{
+  animation:pmOverlayIn .22s ease-out both;
+}
+
+body.nyanko-ui-polish .formation-stage-overlay.is-opening .formation-stage-dialog{
+  animation:pmDialogSpring .38s var(--pm-spring) both;
+}
+
+body.nyanko-ui-polish .formation-stage-overlay.is-closing{
+  animation:pmOverlayOut .17s var(--pm-ease-in) both;
+}
+
+body.nyanko-ui-polish .formation-stage-overlay.is-closing .formation-stage-dialog{
+  animation:pmDialogOut .17s var(--pm-ease-in) both;
+}
+
+@keyframes pmOverlayIn{from{opacity:0}to{opacity:1}}
+@keyframes pmOverlayOut{from{opacity:1}to{opacity:0}}
+
+@keyframes pmDialogSpring{
+  0%{opacity:0;transform:scale(.86) translateY(28px)}
+  55%{opacity:1}
+  100%{opacity:1;transform:scale(1) translateY(0)}
+}
+
+@keyframes pmDialogOut{
+  from{opacity:1;transform:scale(1) translateY(0)}
+  to{opacity:0;transform:scale(.92) translateY(12px)}
+}
+
+/* Category -> map -> stage transitions (virtual spacers animate invisibly). */
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > *{
+  animation:pmRiseIn .3s var(--pm-ease-out) 200ms both;
+}
+
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(1){animation-delay:0ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(2){animation-delay:22ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(3){animation-delay:44ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(4){animation-delay:66ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(5){animation-delay:88ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(6){animation-delay:110ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(7){animation-delay:132ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(8){animation-delay:154ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(9){animation-delay:176ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(10){animation-delay:198ms}
+
+@media (hover:hover){
+  body.nyanko-ui-polish .formation-stage-card:hover{
+    transform:translateY(-2px);
+    filter:brightness(1.05);
+  }
+}
+
+/* ---------------------------------------------------------------- *
+ * Themed scrollbars for the two big scroll regions.
+ * ---------------------------------------------------------------- */
+body.nyanko-ui-polish .formation-catalog-scroll,
+body.nyanko-ui-polish .formation-stage-list{
+  scrollbar-width:thin;
+  scrollbar-color:#f4a51f rgba(0,0,0,.22);
+}
+
+body.nyanko-ui-polish .formation-catalog-scroll::-webkit-scrollbar,
+body.nyanko-ui-polish .formation-stage-list::-webkit-scrollbar{
+  width:10px;
+}
+
+body.nyanko-ui-polish .formation-catalog-scroll::-webkit-scrollbar-track,
+body.nyanko-ui-polish .formation-stage-list::-webkit-scrollbar-track{
+  background:rgba(0,0,0,.18);
+  border-radius:999px;
+}
+
+body.nyanko-ui-polish .formation-catalog-scroll::-webkit-scrollbar-thumb,
+body.nyanko-ui-polish .formation-stage-list::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#ffd531,#f4a51f);
+  border:2px solid #3a1c0c;
+  border-radius:999px;
+}
+
+/* ---------------------------------------------------------------- *
+ * Reduced motion: every premium effect collapses to instant states.
+ * ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce){
+  body.nyanko-ui-polish .apply-battle-button::after,
+  body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot,
+  body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card,
+  body.nyanko-ui-polish .formation-stage-overlay.is-opening,
+  body.nyanko-ui-polish .formation-stage-overlay.is-closing,
+  body.nyanko-ui-polish .formation-stage-overlay.is-opening .formation-stage-dialog,
+  body.nyanko-ui-polish .formation-stage-overlay.is-closing .formation-stage-dialog,
+  body.nyanko-ui-polish .formation-stage-list.is-view-enter > *{
+    animation:none!important;
+  }
+}

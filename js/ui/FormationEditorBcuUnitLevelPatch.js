@@ -1,5 +1,5 @@
 import { FormationEditor } from './FormationEditor.js';
-import { fadeIn, fadeOut, popIn, popOut, press } from './UiMotion.mjs';
+import { press } from './UiMotion.mjs';
 import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT, LINEUP_COLS } from '../battle/FormationStore.js';
 import { getCharacterById } from '../battle/CharacterCatalog.js';
 import {
@@ -7,8 +7,15 @@ import {
   resolveBcuUnitLevelConfig
 } from '../battle/bcu-runtime/BcuUnitLevelRuntime.js';
 
-const PATCH_FLAG = Symbol.for('wanko-ui.formation-bcu-unit-level.v3-game-overlay');
+const PATCH_FLAG = Symbol.for('wanko-ui.formation-bcu-unit-level.v4-premium-motion');
 const STYLE_ID = 'formation-character-tuning-overlay-style';
+const LONG_PRESS_MS = 520;
+// Quick taps stay invisible: the ring only fades in after this delay.
+const LONG_PRESS_RING_DELAY_MS = 120;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
+const DOG_MAGNIFICATION_MAX = 999900;
+
+const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
@@ -94,15 +101,57 @@ function injectStyle() {
 html body.nyanko-ui-polish .formation-slot{position:relative!important;overflow:visible!important}
 html body.nyanko-ui-polish .formation-tuning-badge{position:absolute;right:5px;bottom:5px;z-index:6;min-width:46px;height:22px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;border:3px solid #000;border-radius:999px;background:#f15212;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.72rem;font-weight:900;line-height:1;letter-spacing:.01em;box-shadow:0 2px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-tuning-overlay{position:fixed;inset:0;z-index:99980;display:none;place-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:rgba(0,0,0,.48);backdrop-filter:blur(2px);touch-action:none}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid;animation:formationTuningFade .12s ease-out both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening{animation:formationTuningFade .2s ease-out both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{animation:formationTuningFadeOut .18s ease-in both}
 @keyframes formationTuningFade{from{opacity:0}to{opacity:1}}
-html body.nyanko-ui-polish .formation-tuning-panel{width:min(920px,calc(100vw - 28px));max-height:calc(100dvh - 20px);display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:6px solid #000;border-radius:22px;background:#fff4c2;box-shadow:0 10px 0 #160804,0 0 0 4px rgba(255,255,255,.12);transform-origin:center;animation:formationTuningPop .14s cubic-bezier(.2,1.18,.2,1) both}
-@keyframes formationTuningPop{from{transform:scale(.94) translateY(8px)}to{transform:scale(1) translateY(0)}}
+@keyframes formationTuningFadeOut{from{opacity:1}to{opacity:0}}
+html body.nyanko-ui-polish .formation-tuning-panel{width:min(920px,calc(100vw - 28px));max-height:calc(100dvh - 20px);display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:6px solid #000;border-radius:22px;background:#fff4c2;box-shadow:0 10px 0 #160804,0 0 0 4px rgba(255,255,255,.12);transform-origin:center}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-open .formation-tuning-panel{animation:none}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-panel{animation:formationTuningSpring .38s cubic-bezier(.18,1.25,.32,1) both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-closing .formation-tuning-panel{animation:formationTuningPopOut .18s cubic-bezier(.55,0,.85,.36) both}
+@keyframes formationTuningSpring{0%{opacity:0;transform:scale(.84) translateY(30px)}55%{opacity:1}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes formationTuningPopOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.9) translateY(14px)}}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-header{animation:formationTuningRise .26s cubic-bezier(.16,1,.3,1) 50ms both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-hero{animation:formationTuningRise .3s cubic-bezier(.16,1,.3,1) 90ms both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*{animation:formationTuningRise .3s cubic-bezier(.16,1,.3,1) 220ms both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(1){animation-delay:120ms}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(2){animation-delay:150ms}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(3){animation-delay:180ms}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-footer{animation:formationTuningRise .28s cubic-bezier(.16,1,.3,1) 210ms both}
+@keyframes formationTuningRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+html body.nyanko-ui-polish .formation-tuning-overlay[data-tuning-settled='1'] .formation-tuning-readout{animation:formationTuningTick .15s ease-out}
+@keyframes formationTuningTick{0%{transform:scale(1.06);filter:brightness(1.4)}100%{transform:scale(1);filter:brightness(1)}}
+@property --formation-slot-charge{syntax:'<percentage>';inherits:false;initial-value:0%}
+html body.nyanko-ui-polish .formation-slot-charge{position:absolute;inset:-8px;z-index:9;border-radius:17px;padding:6px;pointer-events:none;opacity:0;background:conic-gradient(from -90deg,#ffd531 0%,#ff7a12 calc(var(--formation-slot-charge,0%) - 1%),rgba(255,122,18,0) var(--formation-slot-charge,0%)),conic-gradient(rgba(21,8,2,.55) 0 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;filter:drop-shadow(0 1px 0 rgba(0,0,0,.65)) drop-shadow(0 0 7px rgba(255,150,40,.8))}
+html body.nyanko-ui-polish .formation-slot.is-charging{animation:formationSlotChargeSqueeze var(--formation-slot-charge-ms,520ms) cubic-bezier(.3,0,.6,1) forwards}
+html body.nyanko-ui-polish .formation-slot.is-charging .formation-slot-charge{animation:formationSlotChargeFade var(--formation-slot-charge-delay,120ms) ease-out forwards,formationSlotChargeSweep calc(var(--formation-slot-charge-ms,520ms) - var(--formation-slot-charge-delay,120ms)) linear var(--formation-slot-charge-delay,120ms) forwards}
+@keyframes formationSlotChargeSqueeze{0%{transform:scale(1)}18%{transform:scale(.985)}100%{transform:scale(.955)}}
+@keyframes formationSlotChargeFade{from{opacity:0}to{opacity:1}}
+@keyframes formationSlotChargeSweep{from{--formation-slot-charge:0%}to{--formation-slot-charge:100%}}
+html body.nyanko-ui-polish .formation-slot.is-charge-fired{animation:formationSlotChargeBurst .32s cubic-bezier(.2,1.3,.3,1) both}
+@keyframes formationSlotChargeBurst{0%{transform:scale(.955);filter:brightness(1.45) saturate(1.2)}55%{transform:scale(1.04);filter:brightness(1.2)}100%{transform:scale(1);filter:brightness(1)}}
+html body.nyanko-ui-polish .formation-slot.is-charge-fired .formation-slot-charge{opacity:1;--formation-slot-charge:100%;animation:formationSlotChargeFlash .3s ease-out forwards}
+@keyframes formationSlotChargeFlash{0%{opacity:1;filter:drop-shadow(0 0 12px rgba(255,228,92,1)) brightness(1.6)}100%{opacity:0;transform:scale(1.1)}}
+@media (prefers-reduced-motion: reduce){
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-opening,
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-closing,
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-panel,
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-closing .formation-tuning-panel,
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-header,
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-hero,
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*,
+  html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-footer,
+  html body.nyanko-ui-polish .formation-tuning-overlay .formation-tuning-readout,
+  html body.nyanko-ui-polish .formation-slot.is-charging,
+  html body.nyanko-ui-polish .formation-slot.is-charge-fired,
+  html body.nyanko-ui-polish .formation-slot-charge{animation:none!important}
+}
 html body.nyanko-ui-polish .formation-tuning-header{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px 9px;border-bottom:5px solid #000;background:linear-gradient(180deg,#ff6a19 0%,#f15212 48%,#e14008 100%)}
 html body.nyanko-ui-polish .formation-tuning-title{min-width:0;display:grid;gap:2px;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:900;text-shadow:3px 0 #000,-3px 0 #000,0 3px #000,0 -3px #000,2px 2px #000,-2px 2px #000,2px -2px #000,-2px -2px #000}
 html body.nyanko-ui-polish .formation-tuning-title strong{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(1.35rem,2vw,2.05rem);line-height:1.05;letter-spacing:.02em}
 html body.nyanko-ui-polish .formation-tuning-title span{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.74rem;font-weight:900;color:#fff9e8;-webkit-text-fill-color:#fff9e8;text-shadow:none;letter-spacing:.04em}
-html body.nyanko-ui-polish .formation-tuning-close{min-width:72px;height:40px;border:4px solid #000;border-radius:999px;background:#fff3a9;color:#100500;-webkit-text-fill-color:#100500;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1rem;font-weight:900;box-shadow:0 4px 0 #000;text-shadow:none}
+html body.nyanko-ui-polish .formation-tuning-close{min-width:72px;height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;line-height:1;border:4px solid #000;border-radius:999px;background:#fff3a9;color:#100500;-webkit-text-fill-color:#100500;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1rem;font-weight:900;box-shadow:0 4px 0 #000;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-close:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
 html body.nyanko-ui-polish .formation-tuning-hero{grid-row:2/4;display:grid;grid-template-rows:1fr auto;gap:10px;align-items:center;justify-items:center;padding:14px;border-right:5px solid #000;background:radial-gradient(circle at 50% 34%,#fffdf0 0 36%,#ffd85a 37% 58%,#c88418 59% 100%)}
 html body.nyanko-ui-polish .formation-tuning-portrait{width:min(166px,28vw);aspect-ratio:1;border:5px solid #000;border-radius:18px;background:#fffdf0;display:grid;place-items:center;box-shadow:0 6px 0 #000,inset 0 2px 0 rgba(255,255,255,.8);overflow:hidden}
@@ -116,13 +165,20 @@ html body.nyanko-ui-polish .formation-tuning-control-head{display:flex;align-ite
 html body.nyanko-ui-polish .formation-tuning-control-head strong{font-size:.96rem;letter-spacing:.04em}
 html body.nyanko-ui-polish .formation-tuning-control-head span{font-size:.75rem;color:#5c3510;-webkit-text-fill-color:#5c3510;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-stepper{display:grid;grid-template-columns:58px 52px minmax(86px,1fr) 52px 58px;gap:8px;align-items:center}
-html body.nyanko-ui-polish .formation-tuning-btn,html body.nyanko-ui-polish .formation-tuning-save,html body.nyanko-ui-polish .formation-tuning-reset{min-height:44px;border:4px solid #000;border-radius:999px;background:linear-gradient(180deg,#ff6a19,#f15212 52%,#e14008);color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.05rem;font-weight:900;line-height:1;box-shadow:0 4px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000}
+html body.nyanko-ui-polish .formation-tuning-btn,html body.nyanko-ui-polish .formation-tuning-save,html body.nyanko-ui-polish .formation-tuning-reset{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;border:4px solid #000;border-radius:999px;background:linear-gradient(180deg,#ff6a19,#f15212 52%,#e14008);color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.05rem;font-weight:900;line-height:1;box-shadow:0 4px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000}
 html body.nyanko-ui-polish .formation-tuning-btn:disabled{opacity:.42;filter:saturate(.55);transform:none;box-shadow:0 2px 0 #000}
 html body.nyanko-ui-polish .formation-tuning-btn:active:not(:disabled),html body.nyanko-ui-polish .formation-tuning-save:active,html body.nyanko-ui-polish .formation-tuning-reset:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
 html body.nyanko-ui-polish .formation-tuning-readout{min-width:0;height:50px;border:4px solid #000;border-radius:16px;background:#111;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.55rem;font-weight:900;text-align:center;box-shadow:inset 0 2px 6px rgba(0,0,0,.7);text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}
 html body.nyanko-ui-polish .formation-tuning-meter{height:12px;border:3px solid #000;border-radius:999px;background:#2a1207;overflow:hidden}
-html body.nyanko-ui-polish .formation-tuning-meter span{display:block;height:100%;width:calc(var(--value,0)*1%);background:linear-gradient(90deg,#ffe25a,#ff8f1c)}
-html body.nyanko-ui-polish .formation-tuning-presets{display:flex;flex-wrap:wrap;gap:8px}.formation-tuning-presets .formation-tuning-btn{min-width:76px;font-size:.92rem;background:#fff2a6;color:#140700;-webkit-text-fill-color:#140700;text-shadow:none}
+html body.nyanko-ui-polish .formation-tuning-meter span{display:block;height:100%;width:calc(var(--value,0)*1%);background:linear-gradient(90deg,#ffe25a,#ff8f1c);transition:width .25s cubic-bezier(.16,1,.3,1)}
+@media (hover:hover){
+  html body.nyanko-ui-polish .formation-tuning-btn:hover:not(:disabled),
+  html body.nyanko-ui-polish .formation-tuning-save:hover,
+  html body.nyanko-ui-polish .formation-tuning-reset:hover,
+  html body.nyanko-ui-polish .formation-tuning-close:hover{filter:brightness(1.08)}
+}
+html body.nyanko-ui-polish .formation-tuning-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+html body.nyanko-ui-polish .formation-tuning-presets .formation-tuning-btn{width:auto;min-width:0;font-size:.92rem;background:#fff2a6;color:#140700;-webkit-text-fill-color:#140700;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.formation-tuning-stat{min-width:0;padding:8px 9px;border:3px solid #000;border-radius:14px;background:#111;color:#fff8d8;-webkit-text-fill-color:#fff8d8;text-align:center;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:900;text-shadow:none}.formation-tuning-stat b{display:block;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.1rem;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}.formation-tuning-stat small{display:block;margin-top:2px;color:#ffe8a8;-webkit-text-fill-color:#ffe8a8;font-size:.66rem;text-shadow:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body.nyanko-ui-polish .formation-tuning-footer{grid-column:2;display:grid;grid-template-columns:minmax(120px,.55fr) minmax(150px,1fr);gap:10px;padding:11px 13px;border-top:5px solid #000;background:#f6c240}.formation-tuning-reset{background:#fff2a6;color:#160800;-webkit-text-fill-color:#160800;text-shadow:none}.formation-tuning-save{font-size:1.25rem}
 @media (max-width:860px){html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) auto;width:min(560px,calc(100vw - 18px))}.formation-tuning-hero{grid-row:auto!important;border-right:0!important;border-bottom:5px solid #000!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-rows:auto!important;justify-items:start!important;padding:10px 12px!important}.formation-tuning-portrait{width:82px!important;border-radius:14px!important}.formation-tuning-hero-meta{text-align:left!important}.formation-tuning-footer{grid-column:1!important}.formation-tuning-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -233,7 +289,7 @@ function renderDogPanel(editor, draft) {
     <header class='formation-tuning-header'><div class='formation-tuning-title'><strong>${esc(character.label || character.characterId)}</strong><span>ワンコ軍 倍率調整</span></div><button type='button' class='formation-tuning-close' data-tuning-close='1'>閉じる</button></header>
     ${renderHero(editor, character, 'ワンコ軍')}
     <main class='formation-tuning-body'>
-      <section class='formation-tuning-control'>
+      <section class='formation-tuning-control' data-tuning-control='percent'>
         <div class='formation-tuning-control-head'><strong>倍率</strong><span>初期値 100%</span></div>
         <div class='formation-tuning-stepper'>
           <button type='button' class='formation-tuning-btn' data-tuning-step='percent' data-delta='-50' ${percent <= 1 ? 'disabled' : ''}>-50</button>
@@ -259,19 +315,30 @@ function renderTuningOverlay(editor) {
   const overlay = tuningOverlay(editor);
   const draft = editor.characterTuningDraft;
   if (!draft?.characterId) {
-    overlay.classList.remove('is-open');
+    overlay.classList.remove('is-open', 'is-opening', 'is-closing');
+    delete overlay.dataset.tuningSettled;
     overlay.innerHTML = '';
     return;
   }
   const wasOpen = overlay.classList.contains('is-open');
   const wasClosing = overlay.dataset.tuningClosing === '1';
   delete overlay.dataset.tuningClosing;
+  clearTimeout(editor.__formationTuningCloseTimer);
+  overlay.classList.remove('is-closing');
   overlay.classList.add('is-open');
   overlay.innerHTML = draft.faction === 'cat' ? renderCatPanel(editor, draft) : renderDogPanel(editor, draft);
+  // The regression-fix patch re-pops any panel it has not seen; renders here own their motion.
+  const panel = overlay.querySelector('.formation-tuning-panel');
+  if (panel) panel.dataset.motionFixSeen = '1';
   editor.resolveSemanticIcons?.();
   if (!wasOpen || wasClosing) {
-    fadeIn(overlay, { duration: 120, display: 'grid' });
-    popIn(overlay.querySelector('.formation-tuning-panel'), { duration: 145 });
+    delete overlay.dataset.tuningSettled;
+    overlay.classList.add('is-opening');
+    clearTimeout(editor.__formationTuningOpenTimer);
+    editor.__formationTuningOpenTimer = setTimeout(() => overlay.classList.remove('is-opening'), 620);
+  } else {
+    overlay.classList.remove('is-opening');
+    overlay.dataset.tuningSettled = '1';
   }
 }
 
@@ -286,17 +353,19 @@ function openTuningOverlay(editor, characterId, slotIndex = null) {
 
 function closeTuningOverlay(editor) {
   const overlay = editor.root?.querySelector?.('.formation-tuning-overlay');
-  const panel = overlay?.querySelector?.('.formation-tuning-panel');
   editor.characterTuningDraft = null;
   if (!overlay?.classList.contains('is-open')) return renderTuningOverlay(editor);
   overlay.dataset.tuningClosing = '1';
-  popOut(panel, { duration: 105 });
-  fadeOut(overlay, { duration: 120, display: 'grid' }).then(() => {
+  overlay.classList.remove('is-opening');
+  overlay.classList.add('is-closing');
+  clearTimeout(editor.__formationTuningCloseTimer);
+  editor.__formationTuningCloseTimer = setTimeout(() => {
     if (editor.characterTuningDraft) return;
     delete overlay.dataset.tuningClosing;
-    overlay.classList.remove('is-open');
+    delete overlay.dataset.tuningSettled;
+    overlay.classList.remove('is-open', 'is-closing');
     overlay.innerHTML = '';
-  });
+  }, reduceMotion() ? 0 : 200);
 }
 
 function stepDraft(editor, key, delta) {
@@ -312,17 +381,52 @@ function stepDraft(editor, key, delta) {
   renderTuningOverlay(editor);
 }
 
-function setDraftInput(editor, key, value) {
+function setDraftInput(editor, key, value, { live = false } = {}) {
   const draft = editor.characterTuningDraft;
   if (!draft) return;
+  // While typing, ignore transient invalid text (empty/partial) and never replace
+  // the input element: a full re-render would steal focus after every keystroke.
+  if (live && !Number.isFinite(Number(value))) return;
   if (draft.faction === 'cat') {
     const state = resolveCatState(draft.characterId, draft);
     if (key === 'level') draft.level = clampInt(value, 1, state.resolved.maxLevel);
     if (key === 'plusLevel') draft.plusLevel = clampInt(value, 0, state.resolved.maxPlusLevel);
   } else if (key === 'percent') {
-    draft.percent = clampInt(value, 1, 999900);
+    draft.percent = clampInt(value, 1, DOG_MAGNIFICATION_MAX);
   }
-  renderTuningOverlay(editor);
+  if (live) updateTuningDynamic(editor);
+  else renderTuningOverlay(editor);
+}
+
+function updateStepperDom(overlay, key, value, min, max, meterValue) {
+  const control = overlay.querySelector(`[data-tuning-control='${key}']`);
+  if (!control) return;
+  for (const btn of control.querySelectorAll('[data-tuning-step]')) {
+    const delta = toInt(btn.dataset.delta, 0);
+    btn.disabled = delta < 0 ? value <= min : value >= max;
+  }
+  const meter = control.querySelector('.formation-tuning-meter');
+  if (meter) meter.style.setProperty('--value', String(meterValue));
+}
+
+function updateTuningDynamic(editor) {
+  const overlay = editor.root?.querySelector?.('.formation-tuning-overlay.is-open');
+  const draft = editor.characterTuningDraft;
+  if (!overlay || !draft) return;
+  const stats = overlay.querySelectorAll('.formation-tuning-summary .formation-tuning-stat b');
+  if (draft.faction === 'cat') {
+    const { resolved } = resolveCatState(draft.characterId, draft);
+    updateStepperDom(overlay, 'level', resolved.level, 1, resolved.maxLevel, meterPercent(resolved.level - 1, resolved.maxLevel - 1));
+    updateStepperDom(overlay, 'plusLevel', resolved.plusLevel, 0, resolved.maxPlusLevel, meterPercent(resolved.plusLevel, resolved.maxPlusLevel));
+    if (stats[0]) stats[0].textContent = `${resolved.level}+${resolved.plusLevel}`;
+    if (stats[1]) stats[1].textContent = String(resolved.effectiveLevel);
+    if (stats[2]) stats[2].textContent = `x${resolved.multiplier.toFixed(2)}`;
+  } else {
+    const percent = clampInt(draft.percent, 1, DOG_MAGNIFICATION_MAX);
+    updateStepperDom(overlay, 'percent', percent, 1, DOG_MAGNIFICATION_MAX, Math.min(100, Math.round(percent / 10)));
+    if (stats[0]) stats[0].textContent = `${percent}%`;
+    if (stats[1]) stats[1].textContent = `x${(percent / 100).toFixed(2)}`;
+  }
 }
 
 function applyPreset(editor, preset) {
@@ -400,10 +504,41 @@ function decorateSlotBadges(editor) {
   }
 }
 
+function startChargeVisual(slot) {
+  if (!slot || reduceMotion()) return;
+  if (!slot.querySelector('.formation-slot-charge')) {
+    const ring = document.createElement('i');
+    ring.className = 'formation-slot-charge';
+    ring.setAttribute('aria-hidden', 'true');
+    slot.appendChild(ring);
+  }
+  slot.style.setProperty('--formation-slot-charge-ms', `${LONG_PRESS_MS}ms`);
+  slot.style.setProperty('--formation-slot-charge-delay', `${LONG_PRESS_RING_DELAY_MS}ms`);
+  slot.classList.remove('is-charge-fired');
+  slot.classList.add('is-charging');
+}
+
+function stopChargeVisual(slot, fired = false) {
+  if (!slot?.isConnected) return;
+  slot.classList.remove('is-charging');
+  slot.style.removeProperty('--formation-slot-charge-ms');
+  slot.style.removeProperty('--formation-slot-charge-delay');
+  if (fired && !reduceMotion()) {
+    slot.classList.add('is-charge-fired');
+    setTimeout(() => {
+      slot.classList.remove('is-charge-fired');
+      slot.querySelector('.formation-slot-charge')?.remove();
+    }, 340);
+  } else {
+    slot.querySelector('.formation-slot-charge')?.remove();
+  }
+}
+
 function cancelLongPress(editor) {
   const state = editor.__formationTuningLongPress;
   if (!state) return;
   clearTimeout(state.timer);
+  if (!state.fired) stopChargeVisual(state.slotEl, false);
   editor.__formationTuningLongPress = null;
 }
 
@@ -418,10 +553,12 @@ function armLongPress(editor, event) {
   const startX = Number(event.clientX) || 0;
   const startY = Number(event.clientY) || 0;
   const pointerId = event.pointerId;
+  startChargeVisual(slot);
   editor.__formationTuningLongPress = {
     pointerId,
     slotIndex,
     characterId,
+    slotEl: slot,
     startX,
     startY,
     fired: false,
@@ -433,9 +570,10 @@ function armLongPress(editor, event) {
       editor.activeSlot = slotIndex;
       editor.activePage = Math.max(0, Math.floor(slotIndex / LINEUP_COLS));
       decorateSlotBadges(editor);
-      press(slot);
+      stopChargeVisual(slot, true);
+      try { navigator.vibrate?.(12); } catch {}
       openTuningOverlay(editor, characterId, slotIndex);
-    }, 520)
+    }, LONG_PRESS_MS)
   };
 }
 
@@ -444,7 +582,7 @@ function moveLongPress(editor, event) {
   if (!state || state.pointerId !== event.pointerId || state.fired) return;
   const dx = (Number(event.clientX) || 0) - state.startX;
   const dy = (Number(event.clientY) || 0) - state.startY;
-  if (Math.hypot(dx, dy) > 12) cancelLongPress(editor);
+  if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE_PX) cancelLongPress(editor);
 }
 
 function finishLongPress(editor, event) {
@@ -467,6 +605,19 @@ function wireLongPress(editor) {
       event.preventDefault();
       event.stopPropagation();
     }
+  }, true);
+  // Commit typed values on blur/Enter; live typing only patches numbers in place.
+  editor.root.addEventListener('change', (event) => {
+    const input = event.target.closest?.('[data-tuning-input]');
+    if (!input || !editor.root.contains(input) || !editor.characterTuningDraft) return;
+    setDraftInput(editor, input.dataset.tuningInput, input.value);
+  }, true);
+  editor.root.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const input = event.target.closest?.('[data-tuning-input]');
+    if (!input || !editor.root.contains(input)) return;
+    event.preventDefault();
+    input.blur();
   }, true);
 }
 
@@ -542,7 +693,7 @@ export function installFormationEditorBcuUnitLevelPatch() {
     if (tuningInput && this.root?.contains(tuningInput)) {
       event.preventDefault();
       event.stopPropagation();
-      setDraftInput(this, tuningInput.dataset.tuningInput, tuningInput.value);
+      setDraftInput(this, tuningInput.dataset.tuningInput, tuningInput.value, { live: true });
       return;
     }
     return originalOnInput.call(this, event);

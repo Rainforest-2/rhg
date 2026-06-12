@@ -23,7 +23,7 @@ function injectMobileLandscapeStyle() {
   html body.nyanko-ui-polish .formation-tuning-hero-meta{align-self:start!important;width:100%!important;display:grid!important;gap:4px!important;text-align:center!important}
   html body.nyanko-ui-polish .formation-tuning-hero-meta .formation-tuning-chip:nth-child(2){display:none!important}
   html body.nyanko-ui-polish .formation-tuning-chip{min-height:20px!important;padding:0 7px!important;border-width:2px!important;font-size:.54rem!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  html body.nyanko-ui-polish .formation-tuning-body{grid-column:2/4!important;grid-row:2!important;min-height:0!important;height:100%!important;display:grid!important;grid-template-columns:minmax(0,1fr) 154px!important;grid-auto-rows:min-content!important;align-content:start!important;gap:6px!important;padding:7px!important;overflow:auto!important;overscroll-behavior:contain!important;background:linear-gradient(180deg,#fff8d7,#ffe890)!important}
+  html body.nyanko-ui-polish .formation-tuning-body{grid-column:2/4!important;grid-row:2!important;min-height:0!important;height:100%!important;display:grid!important;grid-template-columns:minmax(0,1fr) 154px!important;grid-auto-rows:min-content!important;align-content:safe center!important;gap:6px!important;padding:7px!important;overflow:auto!important;overscroll-behavior:contain!important;background:linear-gradient(180deg,#fff8d7,#ffe890)!important}
   html body.nyanko-ui-polish .formation-tuning-body>.formation-tuning-control{grid-column:1!important;min-width:0!important;padding:6px!important;gap:4px!important;border-width:3px!important;border-radius:12px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important}
   html body.nyanko-ui-polish .formation-tuning-control-head{min-height:15px!important;gap:5px!important}
   html body.nyanko-ui-polish .formation-tuning-control-head strong{font-size:.72rem!important;letter-spacing:.03em!important;line-height:1!important}
@@ -42,7 +42,6 @@ function injectMobileLandscapeStyle() {
   html body.nyanko-ui-polish .formation-tuning-footer{grid-column:2/4!important;grid-row:3!important;display:grid!important;grid-template-columns:minmax(112px,.52fr) minmax(132px,1fr)!important;gap:6px!important;align-items:center!important;padding:5px 7px!important;border-top-width:4px!important;background:#f6c240!important}
   html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-reset{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,sans-serif!important;font-size:.66rem!important;font-weight:1000!important;text-shadow:none!important;color:#160800!important;-webkit-text-fill-color:#160800!important}
   html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-save{font-size:.94rem!important;min-height:34px!important}
-  html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-body{grid-template-rows:min-content minmax(0,1fr)!important}
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-summary{grid-row:1!important}
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-presets{grid-row:2!important;align-self:start!important;align-content:start!important}
 }

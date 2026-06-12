@@ -9,8 +9,9 @@ This cleanup keeps runtime behavior and visual output unchanged while separating
 1. `css/nyanko-stage-selector-game-ui.css`
 2. `css/nyanko-loading-background-fix.css`
 3. `css/nyanko-stage-selector-photo-ui.css`
+4. `css/nyanko-premium-polish.css`
 
-The last file, `nyanko-stage-selector-photo-ui.css`, owns the final red-bar appearance for map and stage cards.
+`nyanko-stage-selector-photo-ui.css` owns the final red-bar appearance for map and stage cards. `nyanko-premium-polish.css` loads after it but owns only motion/scrollbar/focus layers (see `docs/nonbattle-premium-motion.md`); it must not override card appearance.
 
 ## Ownership rules
 

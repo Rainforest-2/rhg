@@ -6,7 +6,7 @@
 - commit: docs refresh on `main`
 - scope: current BCU ZIP/runtime/ability parity status, plus pointers to focused ability evidence docs.
 
-This file is the current high-level status page. Older migration task logs were intentionally collapsed because a status page that preserves every stale intermediate claim is how humans invented archaeology inside Git repositories.
+This file is the current high-level status page. Older migration task logs were intentionally collapsed so this page reflects the current state instead of preserving stale intermediate claims.
 
 ## Current runtime baseline
 
@@ -81,7 +81,7 @@ The following older claims are no longer current:
 
 - Castle/base guard JS owner is **not** missing anymore. `BcuCastleGuardRuntime` / `BattleSceneBcuCastleGuardPatch` implement the `StageBasis.activeGuard`-equivalent state and `scripts/check-bcu-castle-guard-parity.mjs` covers active/hold/break behavior. Remaining blocker: manual browser appearance.
 - Zombie corpse / soulstrike is no longer just an unproven visual note. `scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs` covers revive indexes, corpse targetability, soulstrike cancellation, zombie-killer suppression, death-surge single spawn, DOWN/REVIVE phase timing, render override hide/show, cleanup, and HP restoration. Remaining blockers: manual browser acceptance, mini-death-surge holder proof, and extra/custom revive fixtures.
-- Summon runtime exists for explicit proc-object data, but normal unit/enemy CSV summon holder remains unproven. Do not collapse those two facts into one cheerful lie.
+- Summon runtime exists for explicit proc-object data, but normal unit/enemy CSV summon holder remains unproven. Keep those facts separate in future status updates.
 
 ## Required safe checks before parity status upgrades
 
@@ -126,4 +126,4 @@ When implementation catches up, update the focused docs first:
 3. `bcu-visual-review-checklist.md`, only after actual manual browser review
 4. this high-level `bcu-migration-status.md`
 
-Do not leave a blocker doc saying a runtime is missing after a runtime check has been added. That is not documentation; that is a haunted TODO list with markdown syntax.
+Do not leave a blocker doc saying a runtime is missing after a runtime check has been added.

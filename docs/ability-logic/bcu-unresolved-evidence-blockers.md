@@ -2,7 +2,7 @@
 
 This file lists only evidence that could not be fully resolved after the 2026-06-12 docs refresh.
 
-Rows here are blockers for `fully-complete` or broader implementation claims, not necessarily blockers for existing deterministic runtime checks. If a runtime is implemented but still lacks browser/manual visual acceptance, the row must say that explicitly instead of pretending the JS owner is missing. Because apparently documentation can lie with a straight face if nobody babysits it.
+Rows here are blockers for `fully-complete` or broader implementation claims, not necessarily blockers for existing deterministic runtime checks. If a runtime is implemented but still lacks browser/manual visual acceptance, the row must say that explicitly instead of marking the JS owner as missing.
 
 | Area | Missing evidence | Searches performed | Negative evidence | Best candidate | Required next step |
 |---|---|---|---|---|---|

@@ -6,6 +6,8 @@ It is intentionally conservative. A row is not treated as code-complete merely b
 
 Manual browser visual inspection is outside Codex hard requirements. Rows with complete code/effect traces but no manual visual inspection may be marked `human-visual-review-needed`, not `fully-complete`.
 
+Manual visual review tracking lives in [`bcu-visual-review-checklist.md`](./bcu-visual-review-checklist.md).
+
 ## Status vocabulary
 
 - `code-complete-candidate`: implementation and deterministic tests exist, but this document does not claim manual visual confirmation.
@@ -97,4 +99,4 @@ node scripts/check-bcu-summon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```
 
-If this repo gains CI, wire the command above or `scripts/check-bcu-ability-parity-safe-suite.mjs` into it.
+The GitHub Actions workflow `.github/workflows/bcu-parity-safe-suite.yml` runs `scripts/check-bcu-ability-parity-safe-suite.mjs` on push and pull request.

@@ -41,6 +41,7 @@ export const BCU_PROC_IMMUNITY_FIELDS = Object.freeze({
   curse: 'IMUCURSE',
   warp: 'IMUWARP',
   toxic: 'IMUPOIATK',
+  summon: 'IMUSUMMON',
   wave: 'IMUWAVE',
   miniWave: 'IMUWAVE',
   surge: 'IMUVOLC',

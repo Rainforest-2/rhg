@@ -6,6 +6,8 @@ Latest docs-only verification: 2026-06-04. No bundle, builder, manifest, generat
 
 2026-06-06 runtime wiring note: no bundle or manifest was regenerated. `BattleWaveEffectLoader` now exposes `toxic` by reading existing `effect/wave.zip` source-style entries under `all-skill-effects/000001/org/battle/s8/*` for BCU `A_POISON`.
 
+2026-06-12 summon runtime note: no bundle, builder, manifest, generated asset, or loose asset file was changed. `BcuSummonRuntime` uses normal actor ZIP bundles through the existing actor template loader and does not add or consume a stable summon-specific effect alias. Source-style summon-adjacent paths remain evidence only.
+
 This file records only entries proven by `unzip -l` against the current checkout. Builder definitions, raw files under `public/assets/bcu`, and older docs are not treated as bundle evidence.
 
 ## Commands
@@ -85,9 +87,9 @@ Post-builder audit additions proven by `unzip -l public/assets/bundles/effect/wa
 | counter surge | `unit-counter-surge/image.png`, `unit-counter-surge/imgcut.imgcut`, `unit-counter-surge/model.mamodel`, `unit-counter-surge/anim.maanim`; `enemy-counter-surge/image.png`, `enemy-counter-surge/imgcut.imgcut`, `enemy-counter-surge/model.mamodel`, `enemy-counter-surge/anim.maanim` | stable runtime aliases |
 | delay `A_E_DELAY` | `enemy-delay/image.png`, `enemy-delay/imgcut.imgcut`, `enemy-delay/model.mamodel`, `enemy-delay/anim.maanim`; source copy `all-skill-effects/150300/org/battle/s23/skill023.png`, `all-skill-effects/150300/org/battle/s23/skill023.imgcut`, `all-skill-effects/150300/org/battle/s23/skill_recast_decrease_e.mamodel`, `all-skill-effects/150300/org/battle/s23/skill_recast_decrease_e.maanim` | stable runtime alias for `P_DELAY` proc acceptance effect; verified by `check-effect-bundle-aliases` and `check-effect-coordinate-traces` |
 
-Summon-specific aliases are still not marked `code-complete-candidate`. The source-style summon paths remain present under `all-skill-effects/120400/org/battle/s17/*` and `all-skill-effects/130000/org/battle/s17/*`, but no summon runtime hook was implemented in that pass.
+Summon-specific aliases are still not marked `code-complete-candidate`. The source-style summon paths remain present under `all-skill-effects/120400/org/battle/s17/*` and `all-skill-effects/130000/org/battle/s17/*`, but current summon runtime uses actor bundles and no stable summon-specific effect alias.
 
-2026-06-04 docs-only guard note: `enemy-wave-guard/*` is a proven stable bundle alias for BCU `A_E_GUARD`, but castle/base guard remains a runtime partial because JS does not yet prove `StageBasis.activeGuard` / `ECastle.guard` equivalent state. Summon remains blocked: source-style summon-adjacent paths are present, but no stable summon-specific runtime alias or JS summon hook is proven.
+2026-06-04 docs-only guard note: `enemy-wave-guard/*` is a proven stable bundle alias for BCU `A_E_GUARD`, but castle/base guard remains a runtime partial because JS does not yet prove `StageBasis.activeGuard` / `ECastle.guard` equivalent state. Summon source-style summon-adjacent paths are present, but no stable summon-specific runtime alias is proven.
 
 ## `effect/kbeff.zip`
 

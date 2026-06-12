@@ -445,6 +445,14 @@ This pass implements two lifecycle rows because the task explicitly scoped them 
 
 Both rows remain `human-visual-review-needed` after deterministic checks pass. Death surge is only partial beyond the BCU 21-frame soul trigger because full damage/capture ordering and mini-death-surge split are not fully audited.
 
+### Current lifecycle addendum: summon
+
+This pass implements the JS runtime contract for explicitly supplied BCU `Proc.SUMMON` objects. BCU refs: `util/Data.java` `Proc.SUMMON` / `TYPE` / `IMUSUMMON`, `battle/attack/AtkModelEntity.java` `setProc` and `invokeLater`, `battle/attack/AtkModelUnit.java` `summon`, `battle/attack/AtkModelEnemy.java` `summon`, `battle/entity/Entity.java` `setSummon` / `SummonManager`, and `battle/entity/EntCont.java`.
+
+Runtime: `BcuSummonRuntime`, `BattleSceneBcuSummonPatch`, `BcuCombatModel` `summon -> IMUSUMMON`, and `BattleAttackProfile` per-hit `SUMMON` object carry-through. The deterministic check covers immediate / `on_hit` / `on_kill`, inclusive random distance, unit/enemy side resolution, unit-level inheritance, enemy-magnification inheritance, `IMUSUMMON`, layer fallback, side limit / `ignore_limit`, `same_health`, and `bond_hp`. Evidence: `node scripts/check-bcu-summon-runtime-parity.mjs`.
+
+The row remains `partial`: inspected normal `DataUnit`/`DataEnemy` CSV constructors still do not prove a direct summon holder, automatic BCU custom/proc-object source loading is not implemented, stage `allow` group semantics are represented as a hook/fallback rather than a source-backed stage model, and exact summon `anim_type` entry appearance still needs visual review.
+
 ## W10 — remove or gate redundant debug allocation without changing logic
 
 ### Current risk

@@ -66,6 +66,10 @@ function itemWithPartialResistance(item, immunity) {
     if (Object.prototype.hasOwnProperty.call(payload, 'damage')) payload.damage = applyBcuProcPercent({ rawPercent: payload.damage, resist: immunity.mult });
     return { item: { ...item, payload, bcuProcResistance: immunity }, adjusted: true };
   }
+  if (key === 'summon') {
+    if (Object.prototype.hasOwnProperty.call(payload, 'mult')) payload.mult = applyBcuProcPercent({ rawPercent: payload.mult, resist: immunity.mult });
+    return { item: { ...item, payload, bcuProcResistance: immunity }, adjusted: true };
+  }
   return { item, adjusted: false };
 }
 
@@ -129,6 +133,6 @@ if (!BattleActor.prototype[PATCH_FLAG]) {
     source: 'BcuProcImmunityPatch',
     immunityFieldByProc: IMMUNITY_FIELD_BY_PROC,
     fullImmunityOnly: false,
-    partialResistance: ['knockbackProc', 'freeze', 'slow', 'weaken', 'curse', 'warp', 'toxic']
+    partialResistance: ['knockbackProc', 'freeze', 'slow', 'weaken', 'curse', 'warp', 'toxic', 'summon']
   };
 }

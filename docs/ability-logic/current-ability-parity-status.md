@@ -44,7 +44,7 @@ These must not be marked code-complete until the listed blocker is resolved.
 |---|---|---|---|
 | `P_DELAY` remaining manual visual review | `human-visual-review-needed` | Code/effect/coordinate evidence exists, but exact browser appearance has not been manually inspected by a human. BCU `DataUnit`/`DataEnemy` CSV constructors do not expose a direct `IMUDELAY` column in inspected source; `IMUDELAY` remains a `Proc.IMUAD` holder for custom/proc-object sources and is supported by runtime when present. | Human/manual visual review only; do not mark `fully-complete` until recorded. |
 | burrow | `code-complete-candidate` | Source, parser, actor lifecycle, targetability/collision, renderability state, movement distance consumption, base clamp, freeze/KB/death start guards, and deterministic tests exist. | Human/manual visual review of exact `BURROW_DOWN/MOVE/UP` actor appearance remains optional before any `fully-complete` claim. |
-| summon | `blocked-by-js-loader-architecture` | BCU schema and runtime owner are now sufficiently proven: `Proc.SUMMON`, `IMUSUMMON`, `AtkModelEntity.setProc/invokeLater`, `AtkModelUnit.summon`, `AtkModelEnemy.summon`, `Entity.setSummon`, and `EntCont`. The blocker is no longer BCU source; it is that JS does not currently load custom/proc-object attack data or provide the side-specific actor creation contract. | Do not implement from normal CSV. First add custom/proc-object attack loading, summon target/entity resolution, side-specific actor factory, delayed spawn queue, `IMUSUMMON`, layer fallback, limit checks, `same_health`, and `bond_hp` damage propagation tests. |
+| summon | `partial` | BCU schema and runtime owner are proven: `Proc.SUMMON`, `IMUSUMMON`, `AtkModelEntity.setProc/invokeLater`, `AtkModelUnit.summon`, `AtkModelEnemy.summon`, `Entity.setSummon`, and `EntCont`. JS now implements explicit proc-object summon runtime via `BcuSummonRuntime` / `BattleSceneBcuSummonPatch`, carries per-hit `SUMMON` objects through `BattleAttackProfile`, maps `summon -> IMUSUMMON`, queues delayed spawn, handles immediate/on-hit/on-kill triggers, random inclusive distance, unit/enemy side resolution, unit-level and enemy-magnification inheritance, layer fallback, side limit/ignore_limit, same_health, bond_hp damage propagation, and full/partial `IMUSUMMON`. `scripts/check-bcu-summon-runtime-parity.mjs` passes. | Do not implement from normal CSV. Remaining blockers are automatic BCU custom/proc-object source loading, source-backed stage `allow`/group semantics for summoned enemies, and exact summon `anim_type` entry appearance review. |
 | spirit | `human-visual-review-needed` | Parser and production lifecycle are implemented and tested. `LineUp`-style spirit form resolution uses explicit `bcuSpiritUnitDefs` when present, or BCU DB unit asset resolution from `SPIRIT.id`; runtime is stage/production state, not proc status. | Human/manual review of exact normal spirit actor animation and A_IMUATK appearance remains. |
 | castle/base guard states | `human-visual-review-needed` | `StageBasis.activeGuard` equivalent scene state, enemy boss activation, base damage hold, guard break, and `enemy-wave-guard/*` hold/break effect phases are implemented and tested. | Human/manual review of exact guard appearance remains. |
 | combo / orb / treasure / talent / PCoin damage modifiers | `needs-loader-backed-fixtures` | BCU source paths are identified (`BasisLU.getInc`, `Treasure`, `EUnit.OrbHandler`, `PCoin`, `AtkModelUnit`, `EUnit.getDamage`, `EEnemy.getDamage`), but JS data loaders and exact fixtures are missing. `DamageAbilityResolver` intentionally omits these sources. | Add loader-backed fixtures for strong, massive, resistant, insane damage/resistant, AB_SKILL, AB_VKILL, killer families, partial resistance, attack construction, and bounty orb effects before broad resolver changes. |
@@ -67,7 +67,7 @@ These must not be marked code-complete until the listed blocker is resolved.
 
 ### Summon source evidence does not imply CSV implementation
 
-`Proc.SUMMON` and its runtime owner are now mapped, but inspected BCU evidence shows summon is proc-object/custom attack data, not a normal direct unit/enemy CSV field in the current JS parser path. The correct next step is custom/proc-object loading plus actor creation tests, not a CSV-only shortcut.
+`Proc.SUMMON` and its runtime owner are now mapped, and explicit proc-object runtime wiring exists. Inspected BCU evidence still shows summon is proc-object/custom attack data, not a normal direct unit/enemy CSV field in the current JS parser path. The correct next step is BCU custom/proc-object source loading and source-backed stage allow/group fixtures, not a CSV-only shortcut.
 
 ### Toxic immunity holder split
 
@@ -93,6 +93,7 @@ node scripts/check-bcu-death-animation-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
 node scripts/check-bcu-barrier-shield-effect-parity.mjs
 node scripts/check-bcu-demon-shield-regen-timing.mjs
+node scripts/check-bcu-summon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```
 

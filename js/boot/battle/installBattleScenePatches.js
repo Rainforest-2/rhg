@@ -10,6 +10,7 @@ export async function installBattleScenePatches() {
   await import('../../battle/BattleSceneProcApplyPatch.js');
   await import('../../battle/BattleSceneBcuWaveInvalidApplyPatch.js');
   await import('../../battle/BattleSceneBcuProcRuntimePatch.js');
+  await import('../../battle/BattleSceneBcuSummonPatch.js');
   await import('../../battle/BattleSceneBcuStageBasisPhaseBridgePatch.js');
   await import('../../battle/BattleBountyRuntimePatch.js');
   await import('../../battle/BattleSceneBcuStatusIconPatch.js');

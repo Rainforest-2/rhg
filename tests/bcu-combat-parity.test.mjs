@@ -325,3 +325,121 @@ test('critical BattleScene wrapper chain remains callable after parity imports',
   assert.equal(scene.started, 'smoke');
   assert.equal(scene.ended, 'smoke');
 });
+
+test('BattleAttackProfile maps per-hit abi flags onto attack events as bcuHitAbi', async () => {
+  const { BattleAttackProfile } = await import('../js/battle/BattleAttackProfile.js');
+  const hits = [
+    { hitIndex: 0, damage: 100, preFrames: 5, preFramesAbsolute: 5, abi: 0 },
+    { hitIndex: 1, damage: 100, preFrames: 8, preFramesAbsolute: 8, abi: 0 },
+    { hitIndex: 2, damage: 100, preFrames: 11, preFramesAbsolute: 11, abi: 1 }
+  ];
+  const profile = BattleAttackProfile.fromActor({ rawStats: { attackHits: hits, isRange: false, tbaFrames: 10 } });
+  assert.equal(profile.source, 'bcu-stats-attackHits');
+  assert.deepEqual(profile.events.map((e) => e.bcuHitAbi), [0, 0, 1]);
+});
+
+test('ProcResolver gates attack procs per hit on bcuHitAbi != 1 (BCU abis[ind] == 1 setProc gate)', () => {
+  const attacker = actor({ side: 'dog-player' });
+  attacker.bcuCombatModel = { kind: 'unit', proc: { wave: { prob: 100, level: 2 }, miniWave: { prob: 100, level: 1, mult: 20 } }, traits: { flags: {} } };
+  const target = actor({ side: 'enemy' });
+
+  const gated = ProcResolver.resolve({ attacker, target, targetType: 'actor', event: { hitIndex: 0, bcuHitAbi: 0 }, context: { random: () => 0 } });
+  assert.equal(gated.pending.length, 0);
+  assert.equal(gated.skipped.filter((item) => item.reason === 'bcu-hit-abi-disabled').map((item) => item.key).sort().join(','), 'miniWave,wave');
+  assert.equal(gated.notes.includes('bcu-hit-abi-disabled-attack-procs'), true);
+
+  const open = ProcResolver.resolve({ attacker, target, targetType: 'actor', event: { hitIndex: 2, bcuHitAbi: 1 }, context: { random: () => 0 } });
+  assert.equal(open.pending.some((item) => item.key === 'wave'), true);
+  assert.equal(open.pending.some((item) => item.key === 'miniWave'), true);
+
+  const legacyEventWithoutHitAbi = ProcResolver.resolve({ attacker, target, targetType: 'actor', event: { hitIndex: 0 }, context: { random: () => 0 } });
+  assert.equal(legacyEventWithoutHitAbi.pending.some((item) => item.key === 'wave'), true);
+});
+
+test('ProcResolver keeps entity-level zombieKiller/soulstrike exempt from the hit abi gate', () => {
+  const attacker = actor({ side: 'dog-player' });
+  attacker.bcuCombatModel = { kind: 'unit', proc: {}, traits: { flags: {} } };
+  const target = actor({ side: 'enemy' });
+  const result = ProcResolver.resolve({
+    attacker,
+    target,
+    targetType: 'actor',
+    event: { hitIndex: 1, bcuHitAbi: 0, abilities: { zombieKiller: true, soulstrike: true } },
+    context: { random: () => 0 }
+  });
+  assert.equal(result.pending.some((item) => item.key === 'zombieKiller'), true);
+  assert.equal(result.pending.some((item) => item.key === 'soulstrike'), true);
+  assert.equal(result.skipped.some((item) => item.key === 'zombieKiller'), false);
+});
+
+test('DamageAbilityResolver gates strongAttack/critical procs per hit on bcuHitAbi != 1', () => {
+  const target = { side: 'enemy', traits: [], traitFlags: {} };
+  const attacker = {
+    side: 'dog-player',
+    bcuCombatModel: {
+      kind: 'unit',
+      ability: { abi: 0 },
+      proc: {
+        strongAttack: { prob: 100, mult: 100 },
+        critical: { prob: 100, mult: 200 }
+      }
+    },
+    bcuProcStatuses: {}
+  };
+
+  const open = DamageAbilityResolver.resolve({ attacker, target, targetType: 'actor', event: { bcuHitAbi: 1 }, baseDamage: 100, context: { random: () => 0 } });
+  assert.equal(open.finalDamage, 400);
+
+  const gated = DamageAbilityResolver.resolve({ attacker, target, targetType: 'actor', event: { bcuHitAbi: 0 }, baseDamage: 100, context: { random: () => 0 } });
+  assert.equal(gated.finalDamage, 100);
+  assert.equal(gated.applied.strongAttack, false);
+  assert.equal(gated.applied.critical, false);
+  assert.equal(gated.notes.includes('bcu-hit-abi-disabled-strongAttack-proc'), true);
+  assert.equal(gated.notes.includes('bcu-hit-abi-disabled-critical-proc'), true);
+});
+
+test('zombie revive enters attack-wait immediately when an enemy is in touch range (BCU update2 checkTouch)', async () => {
+  await import('../js/battle/BattleActorZombieRevivePatch.js');
+  const enemyTarget = actor({ side: 'enemy' });
+  enemyTarget.instanceId = 'touch-enemy';
+
+  const makeRevivingZombie = () => {
+    const zombie = actor({ side: 'enemy', maxHp: 1000 });
+    zombie.maxHp = 1000;
+    zombie.state = 'dead';
+    zombie.isAliveFlag = false;
+    zombie.bcuZombieRevivePending = true;
+    zombie.bcuZombieReviveReadyAtMs = 50;
+    zombie.bcuZombieReviveHealthPercent = 100;
+    zombie.lastSceneTimeMs = 100;
+    return zombie;
+  };
+
+  const touching = makeRevivingZombie();
+  touching.scene = {
+    findTargetForActor: () => ({ target: enemyTarget, targetType: 'actor' }),
+    canAttack: () => true
+  };
+  touching.tick(1000 / 30);
+  assert.equal(touching.state, 'attack-wait');
+  assert.equal(touching.isAliveFlag, true);
+  assert.equal(touching.hp, 1000);
+  assert.equal(touching.lastBcuZombieReviveDebug.reviveTouchTarget, 'touch-enemy');
+
+  const alone = makeRevivingZombie();
+  alone.scene = {
+    findTargetForActor: () => null,
+    canAttack: () => false
+  };
+  alone.tick(1000 / 30);
+  assert.equal(alone.state, 'move');
+  assert.equal(alone.isAliveFlag, true);
+
+  const outOfRange = makeRevivingZombie();
+  outOfRange.scene = {
+    findTargetForActor: () => ({ target: enemyTarget, targetType: 'actor' }),
+    canAttack: () => false
+  };
+  outOfRange.tick(1000 / 30);
+  assert.equal(outOfRange.state, 'move');
+});

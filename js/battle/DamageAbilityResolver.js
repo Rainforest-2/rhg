@@ -1,4 +1,5 @@
 import { BCU_ABI, BCU_TRAITS } from './BcuCombatModel.js';
+import { isBcuHitProcDisabled } from './ProcResolver.js';
 
 const DEFAULT_MAX_FRUIT = 3;
 
@@ -237,6 +238,9 @@ export class DamageAbilityResolver {
     const sharedInfo = targetType === 'actor' ? makeSharedInfoForAttack(attacker, target) : { mode: 'base', attackTraits: [], targetTraits: [], shared: [], compatible: false };
     const attackerAbilitySuppressed = isBcuDamageAbilitySuppressed(attacker);
     const attackerSealProcSuppressed = isBcuStatusActive(attacker, 'seal');
+    // BCU CRIT/SATK/METALKILL live in the per-attack proc copied by setProc, which only runs
+    // for hits with abis[ind] == 1; trait/entity damage abilities (AB_GOOD etc.) are not gated.
+    const hitAbiProcDisabled = isBcuHitProcDisabled(event);
     const targetAbilitySuppressed = isBcuDamageAbilitySuppressed(target);
     let ans = bcuInt(baseDamage);
     const result = {
@@ -257,6 +261,8 @@ export class DamageAbilityResolver {
       },
       debug: {
         rawAbi: event?.rawAbi ?? null,
+        bcuHitAbi: event?.bcuHitAbi ?? null,
+        hitAbiProcDisabled,
         attackerKind: getStatsKind(attacker),
         targetKind: getStatsKind(target),
         attackerSide: getSide(attacker),
@@ -344,19 +350,22 @@ export class DamageAbilityResolver {
     }
 
     const strongAttackProb = Number(proc?.strongAttack?.prob || 0);
-    const strongAttackApplied = !attackerSealProcSuppressed && performProbability(strongAttackProb, rng);
+    const strongAttackApplied = !attackerSealProcSuppressed && !hitAbiProcDisabled && performProbability(strongAttackProb, rng);
     if (strongAttackApplied && (proc?.strongAttack?.mult || 0) !== 0) {
       const before = ans; ans = bcuInt(ans * (100 + Number(proc.strongAttack.mult)) * 0.01);
       result.modifiers.strongAttack *= before === 0 ? 1 : ans / before;
       pushStep(result, 'strongAttack', before, ans, 'BCU Entity.critCalc SATK before critical', { prob: strongAttackProb, mult: proc.strongAttack.mult });
     } else if (attackerSealProcSuppressed && strongAttackProb > 0) {
       result.notes.push('attacker-seal-suppressed-strongAttack-proc');
+    } else if (hitAbiProcDisabled && strongAttackProb > 0) {
+      result.notes.push('bcu-hit-abi-disabled-strongAttack-proc');
     }
 
     const targetIsMetal = isTargetMetalForDamage(attacker, target, targetType);
-    const criticalProb = attackerSealProcSuppressed ? 0 : Number(proc?.critical?.prob || 0);
+    const criticalProb = (attackerSealProcSuppressed || hitAbiProcDisabled) ? 0 : Number(proc?.critical?.prob || 0);
     const criticalApplied = performProbability(criticalProb, rng);
     if (attackerSealProcSuppressed && Number(proc?.critical?.prob || 0) > 0) result.notes.push('attacker-seal-suppressed-critical-proc');
+    if (hitAbiProcDisabled && !attackerSealProcSuppressed && Number(proc?.critical?.prob || 0) > 0) result.notes.push('bcu-hit-abi-disabled-critical-proc');
     if (targetIsMetal) {
       if (criticalApplied) {
         const before = ans; ans = bcuInt(ans * 0.01 * 200);
@@ -373,8 +382,9 @@ export class DamageAbilityResolver {
       pushStep(result, 'critical', before, ans, 'BCU critCalc non-metal critical CRIT.mult=200', { prob: criticalProb });
     }
 
-    const metalKillerMult = attackerSealProcSuppressed ? 0 : Number(proc?.metalKiller?.mult || 0);
+    const metalKillerMult = (attackerSealProcSuppressed || hitAbiProcDisabled) ? 0 : Number(proc?.metalKiller?.mult || 0);
     if (attackerSealProcSuppressed && Number(proc?.metalKiller?.mult || 0) > 0) result.notes.push('attacker-seal-suppressed-metalKiller-proc');
+    if (hitAbiProcDisabled && !attackerSealProcSuppressed && Number(proc?.metalKiller?.mult || 0) > 0) result.notes.push('bcu-hit-abi-disabled-metalKiller-proc');
     if (targetIsMetal && metalKillerMult > 0) {
       const before = ans;
       const targetHealth = Math.max(0, Number(target?.hp ?? target?.health ?? 0));

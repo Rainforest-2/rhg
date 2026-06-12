@@ -96,12 +96,19 @@ function scheduleRevive(actor, spec, nowMs) {
   return true;
 }
 
+function reviveTouchSelection(actor) {
+  const scene = actor.scene || globalThis.__APP__?.scene || null;
+  if (typeof scene?.findTargetForActor !== 'function' || typeof scene?.canAttack !== 'function') return null;
+  const selection = scene.findTargetForActor(actor);
+  if (!selection?.target || !scene.canAttack(actor, selection.target)) return null;
+  return selection;
+}
+
 function performRevive(actor, nowMs) {
   if (!actor.bcuZombieRevivePending || nowMs < actor.bcuZombieReviveReadyAtMs) return false;
   const hp = Math.trunc(actor.maxHp * actor.bcuZombieReviveHealthPercent / 100);
   actor.hp = hp;
   actor.isAliveFlag = true;
-  actor.state = 'move';
   actor.deathPending = false;
   actor.deathResolved = false;
   actor.deathAfterKnockback = false;
@@ -109,13 +116,27 @@ function performRevive(actor, nowMs) {
   actor.bcuZombieCorpse = false;
   actor.deadAtMs = null;
   clearBcuZombieCorpseVisual(actor, { reason: 'revived' });
-  actor.setAnimation?.(actor.moveAnimId, 'move', true);
+  // BCU Entity.update2: on the frame status[P_REVIVE][1] reaches 0 the normal flow resumes —
+  // checkTouch() true -> setAnim(IDLE) and atkm.startAttack() once waitTime == 0; WALK is only
+  // entered when no enemy is in touch range. The attack-start scene phase starts the attack in
+  // this same frame from the attack-wait state.
+  const touchSelection = reviveTouchSelection(actor);
+  if (touchSelection) {
+    actor.state = 'attack-wait';
+    actor.attackWaitElapsedMs = 0;
+    actor.setAnimation?.(actor.idleAnimId || actor.moveAnimId, 'attack-wait', true);
+  } else {
+    actor.state = 'move';
+    actor.setAnimation?.(actor.moveAnimId, 'move', true);
+  }
   actor.lastBcuZombieReviveDebug = {
     ...(actor.lastBcuZombieReviveDebug || {}),
     revived: true,
     revivedAtMs: nowMs,
     revivedHp: hp,
-    source: 'BCU status[P_REVIVE][1] countdown finished'
+    reviveTouchTarget: touchSelection?.target?.instanceId || touchSelection?.target?.label || null,
+    reviveState: actor.state,
+    source: 'BCU status[P_REVIVE][1] countdown finished; update2 checkTouch decides IDLE/attack vs WALK'
   };
   return true;
 }

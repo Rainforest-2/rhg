@@ -3,6 +3,17 @@ import { BCU_PROC_KB_DEFAULT } from './BcuCombatModel.js';
 
 const SEAL_SUPPRESSED_PROC_KEYS = new Set(['critical', 'barrierBreaker', 'shieldPierce', 'strongAttack', 'knockbackProc', 'freeze', 'slow', 'weaken', 'warp', 'curse', 'seal', 'toxic', 'wave', 'miniWave', 'surge', 'miniSurge', 'blast']);
 const CURSE_SUPPRESSED_PROC_KEYS = new Set(['knockbackProc', 'freeze', 'slow', 'weaken', 'warp', 'curse', 'seal', 'toxic']);
+// BCU AtkModelUnit/AtkModelEnemy.getAttack runs setProc(ind, proc) only when abis[ind] == 1
+// (DataUnit ints[63..65] / DataEnemy ints[59..61]); a hit with abi != 1 deals plain damage and
+// carries none of the setProc "par" procs. Entity-level kill abilities (AB_ZKILL, soulstrike)
+// and the always-copied BCShareable arr procs (P_BOUNTY/P_ATKBASE) plus P_BSTHUNT are exempt.
+const BCU_HIT_ABI_EXEMPT_PROC_KEYS = new Set(['zombieKiller', 'soulstrike']);
+const BCU_HIT_ABI_GATE_REFERENCE = 'AtkModelUnit/AtkModelEnemy.getAttack: if (abis[ind] == 1) setProc(ind, proc)';
+
+export function isBcuHitProcDisabled(event) {
+  const abi = Number(event?.bcuHitAbi);
+  return Number.isFinite(abi) && Math.trunc(abi) !== 1;
+}
 
 function getCombatModel(entity) {
   return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
@@ -151,13 +162,19 @@ export class ProcResolver {
     const hitIndex = event?.hitIndex ?? null;
     const attackEventKey = context?.attackEventKey ?? event?.key ?? null;
     const rawAbiUnverified = (event?.rawAbi ?? 0) > 0 && event?.abilityMappingStatus === 'raw-only-unverified';
+    const hitAbiDisabled = isBcuHitProcDisabled(event);
     const rng = typeof context?.random === 'function' ? context.random : Math.random;
 
     if (rawAbiUnverified) notes.push('raw-abi-present-proc-mapping-not-verified');
+    if (hitAbiDisabled) notes.push('bcu-hit-abi-disabled-attack-procs');
 
     for (const candidate of candidates) {
       const payload = payloadFor(candidate.key, proc);
       const prob = Number(payload.prob || 0);
+      if (hitAbiDisabled && !BCU_HIT_ABI_EXEMPT_PROC_KEYS.has(candidate.key)) {
+        skipped.push({ key: candidate.key, category: candidate.category, reason: 'bcu-hit-abi-disabled', payload, bcuHitAbi: event?.bcuHitAbi ?? null, hitIndex, bcuReference: BCU_HIT_ABI_GATE_REFERENCE });
+        continue;
+      }
       const suppressed = procSuppressionReason(candidate.key, attacker);
       if (suppressed) {
         skipped.push({ key: candidate.key, category: candidate.category, reason: suppressed, payload, bcuReference: 'AtkModelEnemy.getProc cursed proc / AtkModelUnit.getProc sealed proc and ContVolcano.updateProc suppression groups' });
@@ -211,6 +228,8 @@ export class ProcResolver {
       notes,
       debug: {
         eventRawAbi: event?.rawAbi ?? null,
+        eventBcuHitAbi: event?.bcuHitAbi ?? null,
+        hitAbiDisabled,
         abilityMappingStatus: event?.abilityMappingStatus || null,
         semantic,
         proc,

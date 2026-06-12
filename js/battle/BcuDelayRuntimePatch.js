@@ -1,6 +1,6 @@
 import { BattleActor } from './BattleActor.js';
 import { BattleScene } from './BattleScene.js';
-import { ProcResolver } from './ProcResolver.js';
+import { ProcResolver, isBcuHitProcDisabled } from './ProcResolver.js';
 import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
 import { flushBcuDelayProcQueues, queueBcuDelayProc } from './bcu-runtime/BcuDelayRuntime.js';
 import { applyBcuProcPercent, resolveBcuProcResistance } from './bcu-runtime/BcuResistRuntime.js';
@@ -160,6 +160,8 @@ export function installBcuDelayRuntimePatch() {
 
       if (targetType !== 'actor') {
         skipped.push({ key: 'delay', category: 'state', reason: 'delay-target-not-actor', payload });
+      } else if (isBcuHitProcDisabled(event)) {
+        skipped.push({ key: 'delay', category: 'state', reason: 'bcu-hit-abi-disabled', payload, bcuHitAbi: event?.bcuHitAbi ?? null, bcuReference: 'AtkModelUnit/AtkModelEnemy.getAttack: DELAY is in the setProc par list, gated by abis[ind] == 1' });
       } else {
         const suppressed = delaySuppressionReason(attacker);
         if (suppressed) {

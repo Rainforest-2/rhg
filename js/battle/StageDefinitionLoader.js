@@ -129,10 +129,25 @@ export class StageDefinitionLoader {
 
   parse(text, path = '') {
     const rawRows = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).map(parseCsvLine).filter((r) => r.some((c) => c !== ''));
-    const castleRow = rawRows[0] || [];
-    const metaRow = rawRows[1] || [];
     const warnings = [];
-    const enemyRowsRaw = rawRows.slice(2);
+    // BCU Stage.java: castle data only exists for type==0 (custom/event) stages. Main-story
+    // chapters (EoC/ItF/CotC, type 1/2 \u2014 the CH/* directories here) have NO castle row, so the
+    // len/health/bg header sits on line 0 instead of line 1. Detect this by shape: a header row
+    // begins with len (stage width, always >= ~1500) and health (>= ~100), while a castle row
+    // begins with a small castle id (<= ~999) followed by a 0/1 noContinue flag. Reading the
+    // header off the wrong line produced a tiny stageLen (extreme zoom) and a garbage bgId
+    // (missing background) for every main-story stage.
+    const looksLikeHeaderRow = (row) => {
+      const c0 = toNum(row?.[0], NaN);
+      const c1 = toNum(row?.[1], NaN);
+      return Number.isFinite(c0) && Number.isFinite(c1) && c0 >= 1000 && c1 >= 100;
+    };
+    const hasCastleRow = !looksLikeHeaderRow(rawRows[0]);
+    if (!hasCastleRow) warnings.push('no-castle-row-main-story-header-on-line-0');
+    const enemyRowStartIndex = hasCastleRow ? 2 : 1;
+    const castleRow = hasCastleRow ? (rawRows[0] || []) : [];
+    const metaRow = hasCastleRow ? (rawRows[1] || []) : (rawRows[0] || []);
+    const enemyRowsRaw = rawRows.slice(enemyRowStartIndex);
     const baseEnemyIdRaw = toNum(metaRow[6], null);
     const baseEnemyId = Number.isFinite(baseEnemyIdRaw) ? baseEnemyIdRaw - 2 : null;
 
@@ -230,7 +245,7 @@ export class StageDefinitionLoader {
         rowIndex: null,
         runtimeOrderIndex: null,
         sourceOrder,
-        csvRowIndex: sourceOrder + 2,
+        csvRowIndex: sourceOrder + enemyRowStartIndex,
         originalCsvOrderIndex: sourceOrder,
         raw,
         scdefRaw,

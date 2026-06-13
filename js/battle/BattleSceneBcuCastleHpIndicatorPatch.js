@@ -1,7 +1,27 @@
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
+import { BcuSpriteText } from '../ui/BcuSpriteText.js';
 
-const PATCH_FLAG = Symbol.for('wanko-battle.bcu-castle-hp-indicator.v2');
+const PATCH_FLAG = Symbol.for('wanko-battle.bcu-castle-hp-indicator.v3');
+// BCU PC/Android BattleBox.drawCastleHealthIndicator draws the castle health via
+// Res.getBase using the aux.num[5] gold digit sprites at setSym(siz * 0.8):
+//   <health digits> <slash> <maxHealth digits>
+// There is NO background box and NO border rectangle in BCU. This patch reproduces
+// that with the equivalent gold digit sprites already bundled in BcuSpriteText
+// (金額数字大 0-9 / 金額数字大/), falling back to outlined gold text only when the
+// sprite sheet has not finished loading.
 const BCU_HP_NUM_SCALE = 0.8;
+
+let sharedSpriteText = null;
+let spriteInitStarted = false;
+
+function getSpriteText() {
+  if (!sharedSpriteText) sharedSpriteText = new BcuSpriteText();
+  if (!spriteInitStarted) {
+    spriteInitStarted = true;
+    Promise.resolve(sharedSpriteText.init?.()).catch(() => {});
+  }
+  return sharedSpriteText;
+}
 
 function clampHp(value) {
   const n = Number(value);
@@ -52,62 +72,90 @@ function getBaseIndicatorPosition(renderer, base, indicatorHeight = 0) {
 
   if (base?.side === 'cat-enemy') {
     return {
-      // BCU PC BattleBox.drawCastleHealthIndicator:
-      // generic enemy castle: posx -= castw * siz * 1.15;
-      // posy -= casth * siz * 0.95 - digitHeight is compensated by Res.getBase top-left drawing.
+      // BCU BattleBox.drawCastleHealthIndicator (generic enemy castle):
+      //   posx -= castw * siz * 1.15
+      //   posy -= casth * siz * 0.95 + numHeight * siz
       x: screenX - width * 1.15,
-      y: renderY - height * 0.95 + indicatorHeight,
-      align: 'left',
-      source: 'BCU PC BattleBox.drawCastleHealthIndicator enemy castle anchor'
+      y: renderY - height * 0.95 - indicatorHeight,
+      source: 'BCU BattleBox.drawCastleHealthIndicator enemy castle anchor'
     };
   }
 
   return {
-    // BCU PC BattleBox.drawCastleHealthIndicator:
-    // player castle HP starts at the player castle left-bottom anchor x and sits one HP-number
-    // height above the castle top.
+    // BCU BattleBox.drawCastleHealthIndicator (player castle / ubase):
+    //   posy = midh - road_h*siz - casth*siz - numHeight*siz
+    // anchored at the player castle left edge.
     x: screenX,
     y: renderY - height - indicatorHeight,
-    align: 'left',
-    source: 'BCU PC BattleBox.drawCastleHealthIndicator player castle anchor'
+    source: 'BCU BattleBox.drawCastleHealthIndicator player castle anchor'
   };
+}
+
+// Build the BCU digit-sprite sequence: <health> <slash> <maxHealth>.
+function buildHpSpriteParts(sprite, hpText) {
+  const map = sprite?.map;
+  if (!sprite?.ready || !map?.bigDigits || !map.bigSlash) return null;
+  const parts = [];
+  for (const ch of hpText) {
+    if (ch === '/') { parts.push(map.bigSlash); continue; }
+    const digit = map.bigDigits[Number(ch)];
+    if (!digit) return null;
+    parts.push(digit);
+  }
+  return parts;
 }
 
 function drawBcuCastleHpIndicator(c, renderer, base) {
   const text = formatBcuBaseHp(base);
   const scale = renderer.getCameraScale?.(renderer._scene) || 1;
   const fontScale = Math.max(0.01, scale * BCU_HP_NUM_SCALE);
-  const paddingX = Math.max(3, 4 * fontScale);
-  const paddingY = Math.max(1, 2 * fontScale);
-  const fontPx = Math.max(10, Math.round(14 * fontScale));
-  const indicatorHeight = fontPx + paddingY * 2;
+  const sprite = getSpriteText();
+  const parts = buildHpSpriteParts(sprite, text);
+
+  let indicatorWidth = 0;
+  let indicatorHeight = 0;
+  let mode = 'sprite';
+
+  if (parts) {
+    const bounds = sprite.measurePartBounds(parts, fontScale);
+    indicatorWidth = bounds.width;
+    indicatorHeight = bounds.height;
+  } else {
+    mode = 'text-fallback';
+    indicatorHeight = Math.max(10, Math.round(14 * fontScale));
+  }
+
   const pos = getBaseIndicatorPosition(renderer, base, indicatorHeight);
 
   c.save();
-  c.font = `700 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-  c.textBaseline = 'top';
-  c.textAlign = pos.align;
-  const metrics = c.measureText(text);
-  const w = metrics.width + paddingX * 2;
-  const h = indicatorHeight;
-  const x = pos.align === 'right' ? pos.x - w : pos.x;
-  const y = pos.y;
-  c.fillStyle = '#000000cc';
-  c.fillRect(x, y, w, h);
-  c.strokeStyle = '#ffffffd9';
-  c.lineWidth = Math.max(1, fontScale);
-  c.strokeRect(x, y, w, h);
-  c.fillStyle = '#ffffff';
-  c.fillText(text, pos.align === 'right' ? x + w - paddingX : x + paddingX, y + paddingY);
+  if (parts) {
+    sprite.drawParts(c, sprite.img, parts, pos.x, pos.y, fontScale);
+  } else {
+    // BCU has no box behind the HP; emulate the gold digit look with an
+    // outlined fill until the sprite sheet finishes loading.
+    const fontPx = indicatorHeight;
+    c.font = `900 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+    c.textBaseline = 'top';
+    c.textAlign = 'left';
+    c.lineJoin = 'round';
+    c.lineWidth = Math.max(2, fontScale * 2.5);
+    c.strokeStyle = '#1a1207';
+    c.strokeText(text, pos.x, pos.y);
+    c.fillStyle = '#ffd400';
+    c.fillText(text, pos.x, pos.y);
+    indicatorWidth = c.measureText(text).width;
+  }
   c.restore();
 
   base.lastBcuCastleHpIndicator = {
     source: pos.source,
+    mode,
     hp: clampHp(base?.hp),
     maxHp: maxHp(base?.maxHp),
     text,
-    x,
-    y,
+    x: pos.x,
+    y: pos.y,
+    width: indicatorWidth,
     side: base?.side || null,
     fontScale,
     indicatorHeight

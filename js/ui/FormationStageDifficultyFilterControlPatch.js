@@ -1,5 +1,4 @@
 import { FormationEditor } from './FormationEditor.js';
-import { debounce, withFocusRestore } from './UiMotion.mjs';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty-filter-controls.v3');
 const DIFFICULTY_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
@@ -114,26 +113,27 @@ function updateFilterFromTarget(editor, target) {
   const max = target?.closest?.('[data-stage-difficulty-max]');
   if (!(q || min || max) || !editor.root?.contains(target)) return false;
 
-  const previous = editor.__bcuStageDifficultyFilter || {};
-  editor.__bcuStageDifficultyFilter = {
+  const previous = editor.__bcuStageDifficultyDraftFilter || editor.__bcuStageDifficultyFilter || {};
+  editor.__bcuStageDifficultyDraftFilter = {
     ...previous,
     ...(q ? { q: q.value } : {}),
     ...(min ? { min: min.value } : {}),
     ...(max ? { max: max.value } : {})
   };
-  scheduleDomDifficultyFilter(editor, target);
   return true;
 }
 
-function scheduleDomDifficultyFilter(editor, target, immediate = false) {
-  if (!editor.__bcuStageDifficultyDomFilterDebounced) {
-    editor.__bcuStageDifficultyDomFilterDebounced = debounce((input) => withFocusRestore(input, () => {
-      if (editor.stageSelectorVirtual?.active === true) editor.renderStageSelector?.();
-      else applyDomDifficultyFilter(editor);
-    }), 220);
-  }
-  if (immediate) return editor.__bcuStageDifficultyDomFilterDebounced.flush(target);
-  return editor.__bcuStageDifficultyDomFilterDebounced(target);
+function commitFilterFromControls(editor) {
+  const root = editor.root;
+  const draft = editor.__bcuStageDifficultyDraftFilter || editor.__bcuStageDifficultyFilter || {};
+  editor.__bcuStageDifficultyFilter = {
+    q: root?.querySelector?.('[data-stage-search-input]')?.value ?? draft.q ?? '',
+    min: root?.querySelector?.('[data-stage-difficulty-min]')?.value ?? draft.min ?? null,
+    max: root?.querySelector?.('[data-stage-difficulty-max]')?.value ?? draft.max ?? null
+  };
+  editor.__bcuStageDifficultyDraftFilter = { ...editor.__bcuStageDifficultyFilter };
+  if (editor.stageSelectorVirtual?.active === true) editor.renderStageSelector?.();
+  else applyDomDifficultyFilter(editor);
 }
 
 function wireFilterControls(editor) {
@@ -148,21 +148,8 @@ function wireFilterControls(editor) {
       event.stopPropagation();
       updateFilterFromTarget(editor, event.target);
     };
-    const immediate = (event) => {
-      event.stopPropagation();
-      const previous = editor.__bcuStageDifficultyFilter || {};
-      editor.__bcuStageDifficultyFilter = {
-        ...previous,
-        ...(input.matches('[data-stage-search-input]') ? { q: input.value } : {}),
-        ...(input.matches('[data-stage-difficulty-min]') ? { min: input.value } : {}),
-        ...(input.matches('[data-stage-difficulty-max]') ? { max: input.value } : {})
-      };
-      scheduleDomDifficultyFilter(editor, event.target, true);
-    };
     input.addEventListener('input', handler);
-    input.addEventListener('change', immediate);
-    input.addEventListener('blur', immediate);
-    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') immediate(event); });
+    input.addEventListener('change', handler);
   }
 }
 
@@ -185,6 +172,17 @@ export function installFormationStageDifficultyFilterControlPatch() {
   proto.onInput = function onInputWithDifficultyFilterControls(event) {
     if (updateFilterFromTarget(this, event.target)) return;
     return onInput.call(this, event);
+  };
+  const onClick = proto.onClick;
+  proto.onClick = function onClickWithDifficultyFilterControls(event) {
+    const apply = event.target.closest?.('[data-stage-filter-apply]');
+    if (apply && this.root?.contains(apply)) {
+      event.preventDefault();
+      event.stopPropagation();
+      commitFilterFromControls(this);
+      return;
+    }
+    return onClick.call(this, event);
   };
   return true;
 }

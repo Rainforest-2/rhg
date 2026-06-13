@@ -276,17 +276,17 @@ body{
 }
 
 @media (prefers-reduced-motion: no-preference){
-  .formation-panel,.formation-stage-dialog,.formation-tuning-panel{animation:gameUiEnter 220ms cubic-bezier(.16,1,.28,1) both}
+  .formation-panel,.formation-stage-dialog,.formation-tuning-panel{animation:gameUiEnter 140ms cubic-bezier(.16,1,.28,1) both}
   /* The battle card rail centers with left:50% + translateX(-50%) (style.css).
      gameUiEnter's fill-mode both would permanently replace that transform and
      shift the rail right by half its width, so it gets its own keyframes. */
-  .prod-ui .cards{animation:battleCardsEnter 220ms cubic-bezier(.16,1,.28,1) both}
-  .formation-character-card,.formation-page-tab,.formation-catalog-tabs button,.formation-stage-card,.secondary-action,.apply-battle-button,.stage-select-button,.prod-card.is-front{transition:transform 140ms cubic-bezier(.16,1,.28,1),filter 140ms ease,box-shadow 140ms ease,opacity 140ms ease}
+  .prod-ui .cards{animation:battleCardsEnter 140ms cubic-bezier(.16,1,.28,1) both}
+  .formation-character-card,.formation-page-tab,.formation-catalog-tabs button,.formation-stage-card,.secondary-action,.apply-battle-button,.stage-select-button,.prod-card.is-front{transition:transform 100ms cubic-bezier(.16,1,.28,1),filter 100ms ease,box-shadow 100ms ease,opacity 100ms ease}
   .formation-character-card:active,.formation-page-tab:active,.formation-catalog-tabs button:active,.formation-stage-card:active,.secondary-action:active,.apply-battle-button:active,.stage-select-button:active,.prod-card.is-front:active{transform:translateY(3px) scale(.965);filter:brightness(.9) saturate(1.12)}
-  .formation-stage-card.is-active,.formation-character-card.is-selected,.formation-slot.is-active{animation:gameUiPulse 260ms cubic-bezier(.16,1,.28,1) both}
+  .formation-stage-card.is-active,.formation-character-card.is-selected,.formation-slot.is-active{animation:gameUiPulse 160ms cubic-bezier(.16,1,.28,1) both}
 }
-@keyframes gameUiEnter{0%{opacity:0;transform:translateY(14px) scale(.985)}100%{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes battleCardsEnter{0%{opacity:0;transform:translateX(-50%) translateY(14px) scale(.985)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@keyframes gameUiEnter{0%{opacity:0;transform:translateY(8px) scale(.99)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes battleCardsEnter{0%{opacity:0;transform:translateX(-50%) translateY(8px) scale(.99)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @keyframes gameUiFade{0%{opacity:0}100%{opacity:1}}
 @keyframes gameUiPulse{0%{transform:scale(.97);filter:brightness(1.28)}55%{transform:scale(1.025);filter:brightness(1.12)}100%{transform:scale(1);filter:brightness(1)}}
 

@@ -10,7 +10,7 @@ import { FormationEditor } from './FormationEditor.js';
  */
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-premium-motion.v1');
-const STAGE_CLOSE_MS = 190;
+const STAGE_CLOSE_MS = 120;
 
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
 
@@ -65,7 +65,7 @@ export function installFormationPremiumMotionPatch() {
     // catalog first fills after the BCU database loads; never on scroll re-renders.
     if (this.__premiumCatalogEnter || (previousCount === 0 && count > 0)) {
       this.__premiumCatalogEnter = false;
-      transientClass(this.root?.querySelector?.('.formation-catalog-grid'), 'is-catalog-enter', 620);
+      transientClass(this.root?.querySelector?.('.formation-catalog-grid'), 'is-catalog-enter', 260);
     }
     return result;
   };
@@ -84,12 +84,12 @@ export function installFormationPremiumMotionPatch() {
       const signature = stageViewSignature(this);
       if (!wasOpen) {
         this.__premiumStageViewSignature = signature;
-        transientClass(overlay, 'is-opening', 460);
-        transientClass(overlay.querySelector('.formation-stage-list'), 'is-view-enter', 460);
+        transientClass(overlay, 'is-opening', 220);
+        transientClass(overlay.querySelector('.formation-stage-list'), 'is-view-enter', 220);
       } else if (signature !== this.__premiumStageViewSignature) {
         // Hierarchy changed (category -> map -> stage); scroll/filter re-renders keep the same signature.
         this.__premiumStageViewSignature = signature;
-        transientClass(overlay.querySelector('.formation-stage-list'), 'is-view-enter', 460);
+        transientClass(overlay.querySelector('.formation-stage-list'), 'is-view-enter', 220);
       }
     } else if (wasOpen && !reduceMotion()) {
       overlay.classList.add('is-open', 'is-closing');

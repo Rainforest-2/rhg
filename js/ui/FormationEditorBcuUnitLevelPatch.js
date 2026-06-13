@@ -119,24 +119,24 @@ html body.nyanko-ui-polish .formation-slot{position:relative!important;overflow:
 html body.nyanko-ui-polish .formation-tuning-badge{position:absolute;right:5px;bottom:5px;z-index:6;min-width:46px;height:22px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;border:3px solid #000;border-radius:999px;background:#f15212;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.72rem;font-weight:900;line-height:1;letter-spacing:.01em;box-shadow:0 2px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-tuning-overlay{position:fixed;inset:0;z-index:99980;display:none;place-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:rgba(0,0,0,.48);backdrop-filter:blur(2px);touch-action:none}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid;opacity:1!important;animation:none!important}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening{animation:formationTuningFade .2s ease-out both!important}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{animation:formationTuningFadeOut .18s ease-in both!important}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening{animation:formationTuningFade .14s ease-out both!important}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{animation:formationTuningFadeOut .11s ease-in both!important}
 @keyframes formationTuningFade{from{opacity:0}to{opacity:1}}
 @keyframes formationTuningFadeOut{from{opacity:1}to{opacity:0}}
 html body.nyanko-ui-polish .formation-tuning-panel{width:min(920px,calc(100vw - 28px));max-height:calc(100dvh - 20px);display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:6px solid #000;border-radius:22px;background:#fff4c2;box-shadow:0 10px 0 #160804,0 0 0 4px rgba(255,255,255,.12);transform-origin:center}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-open .formation-tuning-panel{animation:none}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-panel{animation:formationTuningSpring .38s cubic-bezier(.18,1.25,.32,1) both}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-closing .formation-tuning-panel{animation:formationTuningPopOut .18s cubic-bezier(.55,0,.85,.36) both}
-@keyframes formationTuningSpring{0%{opacity:0;transform:scale(.84) translateY(30px)}55%{opacity:1}100%{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes formationTuningPopOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.9) translateY(14px)}}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-header{animation:formationTuningRise .26s cubic-bezier(.16,1,.3,1) 50ms both}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-hero{animation:formationTuningRise .3s cubic-bezier(.16,1,.3,1) 90ms both}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*{animation:formationTuningRise .3s cubic-bezier(.16,1,.3,1) 220ms both}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(1){animation-delay:120ms}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(2){animation-delay:150ms}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(3){animation-delay:180ms}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-footer{animation:formationTuningRise .28s cubic-bezier(.16,1,.3,1) 210ms both}
-@keyframes formationTuningRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-panel{animation:formationTuningIn .18s cubic-bezier(.16,1,.3,1) both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-closing .formation-tuning-panel{animation:formationTuningPopOut .11s ease-in both}
+@keyframes formationTuningIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes formationTuningPopOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.98) translateY(5px)}}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-header{animation:formationTuningRise .16s cubic-bezier(.16,1,.3,1) 20ms both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-hero{animation:formationTuningRise .16s cubic-bezier(.16,1,.3,1) 35ms both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*{animation:formationTuningRise .16s cubic-bezier(.16,1,.3,1) 45ms both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(1){animation-delay:35ms}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(2){animation-delay:45ms}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(3){animation-delay:55ms}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-footer{animation:formationTuningRise .16s cubic-bezier(.16,1,.3,1) 60ms both}
+@keyframes formationTuningRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 html body.nyanko-ui-polish .formation-tuning-overlay[data-tuning-settled='1'] .formation-tuning-readout{animation:formationTuningTick .15s ease-out}
 @keyframes formationTuningTick{0%{transform:scale(1.06);filter:brightness(1.4)}100%{transform:scale(1);filter:brightness(1)}}
 @property --formation-slot-charge{syntax:'<percentage>';inherits:false;initial-value:0%}
@@ -486,16 +486,30 @@ function renderTuningOverlay(editor) {
   if (!draft?.characterId) {
     overlay.classList.remove('is-open', 'is-opening', 'is-closing');
     delete overlay.dataset.tuningSettled;
+    delete overlay.dataset.tuningCharacterId;
     overlay.innerHTML = '';
     return;
   }
   const wasOpen = overlay.classList.contains('is-open');
   const wasClosing = overlay.dataset.tuningClosing === '1';
+  const previousBody = overlay.querySelector('.formation-tuning-body');
+  const previousScrollTop = previousBody?.scrollTop || 0;
+  const preserveBodyScroll = wasOpen && !wasClosing && overlay.dataset.tuningCharacterId === String(draft.characterId);
   delete overlay.dataset.tuningClosing;
   clearTimeout(editor.__formationTuningCloseTimer);
   overlay.classList.remove('is-closing');
   overlay.classList.add('is-open');
   overlay.innerHTML = draft.faction === 'cat' ? renderCatPanel(editor, draft) : renderDogPanel(editor, draft);
+  overlay.dataset.tuningCharacterId = String(draft.characterId);
+  if (preserveBodyScroll) {
+    const body = overlay.querySelector('.formation-tuning-body');
+    if (body) {
+      body.scrollTop = previousScrollTop;
+      requestAnimationFrame(() => {
+        if (body.isConnected) body.scrollTop = previousScrollTop;
+      });
+    }
+  }
   // The regression-fix patch re-pops any panel it has not seen; renders here own their motion.
   const panel = overlay.querySelector('.formation-tuning-panel');
   if (panel) panel.dataset.motionFixSeen = '1';
@@ -505,7 +519,7 @@ function renderTuningOverlay(editor) {
     delete overlay.dataset.tuningSettled;
     overlay.classList.add('is-opening');
     clearTimeout(editor.__formationTuningOpenTimer);
-    editor.__formationTuningOpenTimer = setTimeout(() => overlay.classList.remove('is-opening'), 620);
+    editor.__formationTuningOpenTimer = setTimeout(() => overlay.classList.remove('is-opening'), 220);
   } else {
     overlay.classList.remove('is-opening');
     overlay.dataset.tuningSettled = '1';
@@ -542,9 +556,10 @@ function closeTuningOverlay(editor) {
     if (editor.characterTuningDraft) return;
     delete overlay.dataset.tuningClosing;
     delete overlay.dataset.tuningSettled;
+    delete overlay.dataset.tuningCharacterId;
     overlay.classList.remove('is-open', 'is-closing');
     overlay.innerHTML = '';
-  }, reduceMotion() ? 0 : 200);
+  }, reduceMotion() ? 0 : 130);
 }
 
 function stepDraft(editor, key, delta) {

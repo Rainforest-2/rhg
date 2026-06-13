@@ -7,7 +7,6 @@ Rows here are blockers for `fully-complete` or broader implementation claims. Th
 | Area | Current blocker | Required next step |
 |---|---|---|
 | BCU PC draw-side source | PC zip/source is not available in this checkout, so PC-only draw helpers cannot be cited. | Add PC zip to `references/bcu/` before any claim that depends on PC-only draw helpers. |
-| Enemy `IMUPOIATK` direct CSV holder | Direct `DataEnemy` raw index for toxic immunity/resistance is not proven. `DataUnit` index 90 maps `IMUPOIATK`; inspected `DataEnemy` fields only prove `P_POIATK`. | Inspect `CustomEntity` / proc serialization before adding an enemy CSV parser index. |
 | Normal CSV summon holder | Standard BC unit/enemy CSV constructor evidence does not prove a direct `Proc.SUMMON` holder. | Keep normal CSV parser unchanged; map BCU custom/proc-object data before any `code-complete` summon claim. |
 | BCU custom/proc-object summon loader | Explicit JS summon runtime exists, but automatic source loading for custom/proc-object attack data is not implemented. | Load custom/proc-object `SUMMON` data into per-hit attack events. |
 | Summon stage allow/group and entry visuals | Runtime has side limit/layer/delay/bond support, but source-backed stage `allow` group semantics and exact entry appearance are not fixture-backed. | Add stage fixture for summoned enemy allow/group rules; record human review before `fully-complete`. |

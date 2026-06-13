@@ -27,6 +27,7 @@ html body.nyanko-ui-polish .formation-stage-dialog::before{
 }
 
 html body.nyanko-ui-polish .formation-stage-dialog header button,
+html body.nyanko-ui-polish .formation-stage-filter-apply,
 html body.nyanko-ui-polish .formation-stage-filter-reset,
 html body.nyanko-ui-polish .formation-stage-backbar button{
   min-height:40px!important;
@@ -49,6 +50,7 @@ html body.nyanko-ui-polish .formation-stage-backbar button{
 }
 
 html body.nyanko-ui-polish .formation-stage-dialog header button:active,
+html body.nyanko-ui-polish .formation-stage-filter-apply:active,
 html body.nyanko-ui-polish .formation-stage-filter-reset:active,
 html body.nyanko-ui-polish .formation-stage-backbar button:active{
   transform:translateY(3px)!important;
@@ -321,10 +323,15 @@ html body.nyanko-ui-polish .formation-stage-range-sep{
   -webkit-text-fill-color:#2a1207!important;
 }
 
+html body.nyanko-ui-polish .formation-stage-filter-apply,
 html body.nyanko-ui-polish .formation-stage-filter-reset{
   min-width:112px!important;
   padding:6px 14px!important;
   font-size:.78rem!important;
+}
+
+html body.nyanko-ui-polish .formation-stage-filter-apply{
+  background:linear-gradient(180deg,#fffbd7 0%,#94ef62 45%,#42a830 100%)!important;
 }
 
 @media (max-width:760px){

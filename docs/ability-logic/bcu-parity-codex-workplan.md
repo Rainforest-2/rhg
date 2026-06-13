@@ -126,7 +126,7 @@ Required behavior:
 
 1. Use BCU source-backed holder paths.
 2. Do not invent CSV fields for missing holder sources.
-3. Keep `IMUPOIATK` unit direct holder separate from unproven enemy direct CSV holder.
+3. Treat enemy toxic immunity as nonexistent in supported enemy data; do not add an enemy `IMUPOIATK` CSV or loader holder.
 4. Add loader-backed fixtures before broad resolver changes.
 5. Verify with `node scripts/check-proc-immunity-resistance-parity.mjs` and `node scripts/check-ability-partial-blockers.mjs`.
 

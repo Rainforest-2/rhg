@@ -80,25 +80,25 @@ body.nyanko-ui-polish .apply-battle-button:disabled::after{
  * Slot row: direction-aware page-switch slide (staggered).
  * ---------------------------------------------------------------- */
 body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot{
-  animation:pmPageFwd .3s var(--pm-ease-out) both;
+  animation:pmPageFwd .18s var(--pm-ease-out) both;
 }
 
 body.nyanko-ui-polish .formation-slots.is-page-enter[data-page-dir='back'] .formation-slot{
   animation-name:pmPageBack;
 }
 
-body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(2){animation-delay:30ms}
-body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(3){animation-delay:60ms}
-body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(4){animation-delay:90ms}
-body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(5){animation-delay:120ms}
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(2){animation-delay:12ms}
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(3){animation-delay:24ms}
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(4){animation-delay:36ms}
+body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(5){animation-delay:48ms}
 
 @keyframes pmPageFwd{
-  from{opacity:0;transform:translateX(26px)}
+  from{opacity:0;transform:translateX(12px)}
   to{opacity:1;transform:translateX(0)}
 }
 
 @keyframes pmPageBack{
-  from{opacity:0;transform:translateX(-26px)}
+  from{opacity:0;transform:translateX(-12px)}
   to{opacity:1;transform:translateX(0)}
 }
 
@@ -107,25 +107,25 @@ body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot:nth-child(5
  * Scroll-driven virtual re-renders never receive .is-catalog-enter.
  * ---------------------------------------------------------------- */
 body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card{
-  animation:pmRiseIn .32s var(--pm-ease-out) 240ms both;
+  animation:pmRiseIn .18s var(--pm-ease-out) 40ms both;
 }
 
 /* nth-child(1) is the virtual top spacer; cards start at 2. */
 body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(2){animation-delay:0ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(3){animation-delay:22ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(4){animation-delay:44ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(5){animation-delay:66ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(6){animation-delay:88ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(7){animation-delay:110ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(8){animation-delay:132ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(9){animation-delay:154ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(10){animation-delay:176ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(11){animation-delay:198ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(12){animation-delay:220ms}
-body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(13){animation-delay:240ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(3){animation-delay:8ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(4){animation-delay:16ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(5){animation-delay:24ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(6){animation-delay:32ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(7){animation-delay:40ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(8){animation-delay:48ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(9){animation-delay:56ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(10){animation-delay:64ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(11){animation-delay:72ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(12){animation-delay:80ms}
+body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card:nth-child(13){animation-delay:88ms}
 
 @keyframes pmRiseIn{
-  from{opacity:0;transform:translateY(14px) scale(.97)}
+  from{opacity:0;transform:translateY(8px) scale(.99)}
   to{opacity:1;transform:translateY(0) scale(1)}
 }
 
@@ -133,50 +133,49 @@ body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-charac
  * Stage selector overlay: spring open, fade close, hierarchy stagger.
  * ---------------------------------------------------------------- */
 body.nyanko-ui-polish .formation-stage-overlay.is-opening{
-  animation:pmOverlayIn .22s ease-out both;
+  animation:pmOverlayIn .14s ease-out both;
 }
 
 body.nyanko-ui-polish .formation-stage-overlay.is-opening .formation-stage-dialog{
-  animation:pmDialogSpring .38s var(--pm-spring) both;
+  animation:pmDialogIn .18s var(--pm-ease-out) both;
 }
 
 body.nyanko-ui-polish .formation-stage-overlay.is-closing{
-  animation:pmOverlayOut .17s var(--pm-ease-in) both;
+  animation:pmOverlayOut .11s var(--pm-ease-in) both;
 }
 
 body.nyanko-ui-polish .formation-stage-overlay.is-closing .formation-stage-dialog{
-  animation:pmDialogOut .17s var(--pm-ease-in) both;
+  animation:pmDialogOut .11s var(--pm-ease-in) both;
 }
 
 @keyframes pmOverlayIn{from{opacity:0}to{opacity:1}}
 @keyframes pmOverlayOut{from{opacity:1}to{opacity:0}}
 
-@keyframes pmDialogSpring{
-  0%{opacity:0;transform:scale(.86) translateY(28px)}
-  55%{opacity:1}
-  100%{opacity:1;transform:scale(1) translateY(0)}
+@keyframes pmDialogIn{
+  from{opacity:0;transform:scale(.97) translateY(8px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
 }
 
 @keyframes pmDialogOut{
   from{opacity:1;transform:scale(1) translateY(0)}
-  to{opacity:0;transform:scale(.92) translateY(12px)}
+  to{opacity:0;transform:scale(.98) translateY(5px)}
 }
 
 /* Category -> map -> stage transitions (virtual spacers animate invisibly). */
 body.nyanko-ui-polish .formation-stage-list.is-view-enter > *{
-  animation:pmRiseIn .3s var(--pm-ease-out) 200ms both;
+  animation:pmRiseIn .16s var(--pm-ease-out) 35ms both;
 }
 
 body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(1){animation-delay:0ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(2){animation-delay:22ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(3){animation-delay:44ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(4){animation-delay:66ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(5){animation-delay:88ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(6){animation-delay:110ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(7){animation-delay:132ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(8){animation-delay:154ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(9){animation-delay:176ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(10){animation-delay:198ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(2){animation-delay:8ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(3){animation-delay:16ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(4){animation-delay:24ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(5){animation-delay:32ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(6){animation-delay:40ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(7){animation-delay:48ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(8){animation-delay:56ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(9){animation-delay:64ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(10){animation-delay:72ms}
 
 @media (hover:hover){
   body.nyanko-ui-polish .formation-stage-card:hover{

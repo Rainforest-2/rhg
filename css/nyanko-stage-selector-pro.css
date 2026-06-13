@@ -407,7 +407,7 @@ body.nyanko-ui-polish .formation-stage-card-category.tone-violet{
 body.nyanko-ui-polish .formation-stage-difficulty-tools{
   grid-column:1/-1!important;
   display:grid!important;
-  grid-template-columns:minmax(210px,1fr) auto auto minmax(112px,auto)!important;
+  grid-template-columns:minmax(210px,1fr) auto auto auto minmax(112px,auto)!important;
   align-items:center!important;
   gap:8px!important;
   margin:0 0 2px!important;
@@ -464,7 +464,9 @@ body.nyanko-ui-polish .formation-stage-search-field input{width:100%!important;}
 body.nyanko-ui-polish .formation-stage-difficulty-range label{display:flex!important;align-items:center!important;gap:4px!important;}
 body.nyanko-ui-polish .formation-stage-difficulty-range input{width:58px!important;text-align:center!important;}
 body.nyanko-ui-polish .formation-stage-range-sep{color:#050505!important;-webkit-text-fill-color:#050505!important;font-weight:1000!important;font-size:.72rem!important;}
-body.nyanko-ui-polish .formation-stage-filter-reset{min-width:106px!important;border-width:3px!important;font-size:.76rem!important;}
+body.nyanko-ui-polish .formation-stage-filter-apply,
+body.nyanko-ui-polish .formation-stage-filter-reset{min-width:86px!important;border-width:3px!important;font-size:.76rem!important;}
+body.nyanko-ui-polish .formation-stage-filter-apply{background:linear-gradient(180deg,#fffdf0 0%,#8ef05d 45%,#40a62f 100%)!important;}
 body.nyanko-ui-polish .formation-stage-difficulty-summary{
   min-width:0!important;
   color:#3c1908!important;

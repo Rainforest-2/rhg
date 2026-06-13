@@ -236,7 +236,7 @@ node scripts/check-ability-partial-blockers.mjs
 
 - Full unit IMU holders: wave 46, KB 48, stop 49, slow 50, weak 51, warp 75, curse 79, toxic 90, surge 91, blast 116.
 - Full enemy IMU holders: wave 37, KB 39, stop 40, slow 41, weak 42, warp 70, surge 85, curse 105, blast 109.
-- Negative evidence: `DataEnemy.fillData` has attack toxic `P_POIATK` 79/80 but no direct enemy `IMUPOIATK` CSV holder in inspected constructor; JS correctly records `IMUPOIATK` enemy holder as unconfirmed.
+- Negative evidence: `DataEnemy.fillData` has attack toxic `P_POIATK` 79/80 but no enemy toxic-immunity holder in inspected constructor; supported JS loaders should treat enemy `IMUPOIATK` as nonexistent.
 - Partial/custom holders use `Proc.IMU*` / `Proc.IMUAD` fields and may come from custom/proc-object/talent/orb sources.
 
 #### 2. BCU runtime owner
@@ -550,7 +550,7 @@ node scripts/check-ability-partial-blockers.mjs
   - reason: common source directly contains the battle owner methods needed for this pass.
   - what must be proven next: if exact draw-side pixel offsets beyond common `AnimManager` are needed, add PC zip to references or record that visual review must be human-only.
 
-### Enemy `IMUPOIATK` direct CSV holder
+### Enemy `IMUPOIATK` / toxic immunity absence
 
 - Searched BCU common:
   - command: `rg -n "IMUPOIATK|POIATK|IMUPOI" /tmp/bcu-ref/common/BCU_java_util_common-ef840238e4700eb4b8eb57b4446633e465f4edd5/battle /tmp/bcu-ref/common/BCU_java_util_common-ef840238e4700eb4b8eb57b4446633e465f4edd5/util`
@@ -567,10 +567,10 @@ node scripts/check-ability-partial-blockers.mjs
 - Negative evidence:
   - `DataUnit` maps unit index 90 to `proc.IMUPOIATK.mult = 100`.
   - `DataEnemy` maps enemy indexes 79/80 to `proc.POIATK`, but no inspected `DataEnemy.fillData` branch maps an enemy raw index to `IMUPOIATK`.
-- Most likely owner candidates:
-  - candidate: custom/proc-object `Proc.IMUPOIATK` or future enemy format not present in this common constructor.
-  - reason: `Entity.processProcs` supports target `getProc().IMUPOIATK`, so holder may exist outside standard enemy CSV.
-  - what must be proven next: inspect custom entity/proc-object import path before adding any enemy CSV parser index.
+- Conclusion:
+  - Treat enemy toxic immunity as nonexistent in supported enemy data.
+  - `Entity.processProcs` can still consume target `getProc().IMUPOIATK` when a proven non-enemy holder supplies it.
+  - Do not add any enemy CSV or enemy loader holder for `IMUPOIATK`.
 
 ### Normal CSV summon holder
 
@@ -608,7 +608,7 @@ node scripts/check-ability-partial-blockers.mjs
 | Item | Exact missing evidence | Searches performed | Next source to inspect |
 |---|---|---|---|
 | Summon | JS explicit proc-object runtime exists; automatic BCU custom/proc-object source loader and normal CSV holder are still missing | common/Android/JS summon searches listed above plus `scripts/check-bcu-summon-runtime-parity.mjs` | JS BCU custom entity/proc-object import path; BCU `CustomEntity` serialization |
-| Enemy `IMUPOIATK` direct CSV | standard `DataEnemy.fillData` does not expose a direct raw index | common/Android/JS toxic immunity searches listed above | custom/proc-object holder path |
+| Enemy `IMUPOIATK` / toxic immunity | supported enemy data has no toxic-immunity holder | common/Android/JS toxic immunity searches listed above | keep enemy loader unchanged |
 | Full targetForms compatibility | BCU `Trait.targetForms` branch is identified, but JS fixture coverage is missing | `EEnemy.getDamage`, `Entity.traitCompatible`, JS `BcuTraitCompatibility` | targetForms data source and minimal unit/enemy fixtures |
 | Bounty/money visual | BCU economy formula is known, but visual money effect owner is not proven in source pass | `EEnemy.kill`, JS bounty runtime, ZIP audits | BCU draw/economy visual owner, likely PC/draw-side source if available |
 | Zombie revive visual exactness | `ZombieEff` source owner is known, but JS stable loader/trace is not proven | `Entity.ZombX.updateRevive`, soul ZIP, wave/status/kbeff ZIP | bundle/build path for zombie effects or record human-visual-review-needed only after deterministic trace |

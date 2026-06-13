@@ -49,6 +49,7 @@ export class FormationEditor {
     this.stageOverlayOpen = false;
     this.filter = CHARACTER_FACTIONS.all;
     this.searchText = '';
+    this.searchDraft = '';
     this.formation = FormationStore.load();
     this.activePage = 0;
     this.activeSlot = 0;
@@ -112,8 +113,7 @@ export class FormationEditor {
   onInput(e) {
     const input = e.target.closest('[data-search-input]');
     if (!input) return;
-    this.searchText = String(input.value || '');
-    this.renderDynamic({ resetCatalogScroll: true });
+    this.searchDraft = String(input.value || '');
   }
 
   onScroll(e) {
@@ -158,6 +158,15 @@ export class FormationEditor {
         this.stageOverlayOpen = false;
         this.renderStageSelector();
         return;
+      }
+      if (type === 'catalog-search') {
+        e.preventDefault();
+        e.stopPropagation();
+        const input = this.root.querySelector('[data-search-input]');
+        this.searchDraft = String(input?.value ?? this.searchDraft ?? '');
+        this.searchText = this.searchDraft;
+        this.setHint(this.searchText ? `検索: ${this.searchText}` : '検索条件をクリア');
+        return this.renderDynamic({ resetCatalogScroll: true });
       }
       if (type === 'apply' && !this.applying) {
         e.preventDefault();
@@ -614,7 +623,7 @@ export class FormationEditor {
   }
 
   refresh() {
-    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchText}' /><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section></div>`;
+    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchDraft ?? this.searchText}' /><button type='button' class='formation-search-button' data-action='catalog-search'>検索</button><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section></div>`;
     this.renderDynamic({ resetCatalogScroll: true });
     this.renderStageSelector();
   }

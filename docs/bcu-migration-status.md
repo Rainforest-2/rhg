@@ -70,7 +70,7 @@ Do not mark these as fully complete without more evidence or loaders:
 - full `Trait.targetForms` fixture source.
 - combo / orb / treasure / talent / PCoin damage modifiers.
 - broader AB_SKILL status resistance holder sources.
-- enemy direct CSV `IMUPOIATK` holder: not proven; unit direct holder and proc/custom/PCoin-style holder paths are separate.
+- enemy toxic immunity: treated as nonexistent for supported enemy data; do not add an enemy `IMUPOIATK` CSV or loader holder.
 - bounty/money battle visual: no stable visual owner/effect alias proven; treat as logic/economy unless future evidence proves visuals.
 - mini-death-surge holder and extra/custom zombie revive interactions.
 - PC-only draw-side source evidence unless a PC source ZIP is added.

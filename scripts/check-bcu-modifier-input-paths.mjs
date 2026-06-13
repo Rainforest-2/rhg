@@ -42,7 +42,7 @@ const orbOpts = optionsFor({ bcuOrbEquipment: {
   'cat-unit-000-f': [[ORB_ID.ATK, 1 << 0, 4], [ORB_ID.MASSIVE, 1 << 3, 2], [99, 0, 0], [ORB_ID.ATK, 0, 9]]
 } }).bcuOrbEquipment;
 const equipped = orbOpts['cat-unit-000-f'];
-assert.equal(equipped.length, 2, 'invalid orb type (99) and bad grade (9) are dropped');
+assert.equal(equipped.length, 1, 'orb equipment keeps one valid slot and drops overflow/invalid entries');
 const parsed = equipped.map(parseOrb);
 assert.equal(parsed[0].type, ORB_ID.ATK, 'first equipped orb is an attack orb');
 assert.deepEqual(parsed[0].traits, ['red'], 'attack orb trait decodes to red');

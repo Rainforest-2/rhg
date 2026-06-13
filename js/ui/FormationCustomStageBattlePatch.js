@@ -28,6 +28,8 @@ html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added{position:
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added::after{content:'追加済み';position:absolute;right:8px;bottom:7px;z-index:4;padding:3px 8px;border:2px solid #000;border-radius:999px;background:#ffdf36;color:#120700;font-size:.72rem;font-weight:1000;box-shadow:0 2px 0 #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-just-added{filter:brightness(1.12) saturate(1.12)}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-duplicate{filter:brightness(1.08) saturate(.9)}
+html body.nyanko-ui-polish .formation-custom-stage-columns>section{min-height:0}
+html body.nyanko-ui-polish .formation-custom-stage-list{max-height:min(42dvh,360px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:3px!important}
 @media (max-width:680px){html body.nyanko-ui-polish .formation-custom-stage-pickbar{align-items:stretch;flex-direction:column}.formation-custom-stage-pickbar button{width:100%}}`;
   document.head.appendChild(style);
 }

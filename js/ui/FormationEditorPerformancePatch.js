@@ -246,6 +246,19 @@ function renderStageSelectorBody(editor) {
   return renderCategoryCards(catalog);
 }
 
+function stageSelectorBodyKey(editor) {
+  const state = ensureSelectorState(editor);
+  const filter = stageFilterState(editor);
+  return [
+    state.level || 'category',
+    state.categoryId || '',
+    state.mapKey || '',
+    stageFilterSignature(filter),
+    editor.selectedStageId || '',
+    (editor.stageOptions || []).length
+  ].join('|');
+}
+
 function updateStageHeader(editor) {
   const state = ensureSelectorState(editor);
   const title = editor.root.querySelector('.formation-stage-dialog header strong');
@@ -320,6 +333,7 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
   FormationEditor.prototype.onScroll = function patchedOnScroll(event) {
     const stageList = event?.target?.closest?.('.formation-stage-list');
     if (stageList && this.root?.contains(stageList)) {
+      if (this.stageSelectorState?.level === 'custom-stage-battle') return;
       if (this.__stageSelectorScrollFrame) return;
       this.__stageSelectorScrollFrame = requestAnimationFrame(() => {
         this.__stageSelectorScrollFrame = null;
@@ -354,8 +368,14 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
     const list = this.root.querySelector('.formation-stage-list');
     if (!list) return;
     updateStageHeader(this);
-    list.innerHTML = this.stageOptions?.length
+    const bodyKey = stageSelectorBodyKey(this);
+    const bodyHtml = this.stageOptions?.length
       ? renderStageSelectorBody(this)
       : `<p class='formation-stage-empty'>ステージデータを読み込み中...</p>`;
+    if (list.__stageSelectorBodyKey !== bodyKey || list.__stageSelectorBodyHtml !== bodyHtml) {
+      list.innerHTML = bodyHtml;
+      list.__stageSelectorBodyKey = bodyKey;
+      list.__stageSelectorBodyHtml = bodyHtml;
+    }
   };
 }

@@ -35,6 +35,7 @@ const TREASURE_POINT_MAX = 300;
 const FRUIT_TRAITS = Object.freeze(['red', 'floating', 'black', 'angel', 'metal', 'alien', 'zombie']);
 const ORB_TYPE_MAX = 25;
 const ORB_GRADE_MAX = 4;
+const ORB_EQUIPMENT_SLOT_MAX = 1;
 
 export const DEFAULT_FORMATION = Object.freeze({
   version: FORMATION_VERSION,
@@ -140,7 +141,7 @@ function normalizeOrbEquipmentMap(options = {}) {
   for (const [key, list] of Object.entries(raw || {})) {
     const cid = cleanCharacterKey(key);
     if (!cid || !Array.isArray(list)) continue;
-    const orbs = list.map(normalizeOrbTriple).filter(Boolean);
+    const orbs = list.map(normalizeOrbTriple).filter(Boolean).slice(0, ORB_EQUIPMENT_SLOT_MAX);
     if (orbs.length) out[cid] = orbs;
   }
   return out;

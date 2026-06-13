@@ -19,7 +19,7 @@ const LONG_PRESS_MS = 520;
 const LONG_PRESS_RING_DELAY_MS = 120;
 const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
 const DOG_MAGNIFICATION_MAX = 999900;
-const ORB_SLOT_COUNT = 3;
+const ORB_SLOT_COUNT = 1;
 const ORB_TYPE_OPTIONS = Object.freeze([
   { code: 0, type: null, label: 'なし' },
   { code: 1, type: ORB_ID.ATK, label: '攻撃' },
@@ -330,7 +330,7 @@ function renderOrbSection(draft) {
     </section>`;
   }).join('');
   const equipped = orbs.filter((orb) => orbTypeOption(orb.typeCode).type != null).length;
-  return `<section class='formation-tuning-orbs'><div class='formation-tuning-control-head'><strong>本能玉</strong><span>${equipped ? `${equipped}/${ORB_SLOT_COUNT}` : '未装備'}</span></div>${slots}</section>`;
+  return `<section class='formation-tuning-orbs'><div class='formation-tuning-control-head'><strong>本能玉</strong><span>${equipped ? '装備中' : '未装備'}</span></div>${slots}</section>`;
 }
 
 function catStatsId(characterId) {
@@ -449,7 +449,7 @@ function renderDogPanel(editor, draft) {
         <div class='formation-tuning-stat'><b>100%</b><small>初期値</small></div>
       </section>
     </main>
-    <footer class='formation-tuning-footer'><button type='button' class='formation-tuning-reset' data-tuning-reset='1'>100%に戻す</button><button type='button' class='formation-tuning-save' data-tuning-save='1'>決定</button></footer>
+    <footer class='formation-tuning-footer'><button type='button' class='formation-tuning-reset' data-tuning-reset='1' aria-label='100%に戻す'>リセット</button><button type='button' class='formation-tuning-save' data-tuning-save='1'>決定</button></footer>
   </div>`;
 }
 

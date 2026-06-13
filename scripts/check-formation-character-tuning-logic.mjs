@@ -28,4 +28,11 @@ assert.equal(formation.options.dogUnitMagnifications['dog-enemy-000'].percent, 2
 formation = FormationStore.setDogUnitMagnification('dog-enemy-000', DOG_DEFAULT_MAGNIFICATION_PERCENT);
 assert.equal(formation.options.dogUnitMagnifications['dog-enemy-000'], undefined, '100% dog magnification is stored as default/cleared');
 
+formation = FormationStore.setOrbEquipment('cat-unit-000-f', [
+  [1, 1, 4],
+  [2, 2, 3],
+  [3, 4, 2]
+]);
+assert.deepEqual(formation.options.bcuOrbEquipment['cat-unit-000-f'], [[1, 1, 4]], 'formation orb equipment stores one orb slot');
+
 console.log('check-formation-character-tuning-logic: OK');

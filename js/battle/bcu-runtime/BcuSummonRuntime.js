@@ -454,6 +454,57 @@ export function normalizeBcuSummonProc(input, { attacker = null } = {}) {
   return normalized;
 }
 
+function procObjectAtks(source) {
+  if (!source || typeof source !== 'object') return [];
+  if (Array.isArray(source.atks)) return source.atks;
+  if (Array.isArray(source.attackHits)) return source.attackHits;
+  if (Array.isArray(source.attacks)) return source.attacks;
+  return [];
+}
+
+/**
+ * Loader-normalizer for BCU custom/proc-object attack data. BCU custom entities
+ * store per-AtkDataModel proc objects, and AtkModelEntity#setProc copies
+ * SUMMON from that per-hit proc. This helper does not invent CSV columns; it
+ * only copies existing proc-object SUMMON holders into the JS attackHits shape
+ * already consumed by BattleAttackProfile.
+ */
+export function attachBcuProcObjectSummonsToAttackHits(stats, procObject, { attacker = null } = {}) {
+  if (!stats || typeof stats !== 'object') return stats;
+  const hits = Array.isArray(stats.attackHits) ? stats.attackHits : [];
+  if (!hits.length) return stats;
+  const atks = procObjectAtks(procObject || stats.bcuProcObject || stats.customEntity || stats);
+  if (!atks.length) return stats;
+  let changed = false;
+  const attackHits = hits.map((hit, index) => {
+    const atk = atks[index] || atks.find((a) => Number(a?.hitIndex) === Number(hit?.hitIndex));
+    const candidate = atk?.proc?.SUMMON || atk?.proc?.summon || atk?.bcuProc?.SUMMON || atk?.SUMMON || atk?.summon;
+    const summon = normalizeBcuSummonProc(candidate, { attacker });
+    if (!summon?.exists) return hit;
+    changed = true;
+    return {
+      ...hit,
+      bcuProc: { ...(hit?.bcuProc || hit?.proc || {}), SUMMON: summon.source },
+      summon: hit?.summon || summon.source,
+      bcuSummonLoader: {
+        source: 'BCU CustomEntity.atks[].proc.SUMMON',
+        bcuReference: BCU_SUMMON_REFERENCE,
+        hitIndex: hit?.hitIndex ?? index
+      }
+    };
+  });
+  if (!changed) return stats;
+  return {
+    ...stats,
+    attackHits,
+    bcuSummonProcObjectLoader: {
+      applied: true,
+      source: 'BCU CustomEntity.atks[].proc.SUMMON',
+      bcuReference: BCU_SUMMON_REFERENCE
+    }
+  };
+}
+
 export function getBcuSummonProcForEvent(attacker, event, meta = {}) {
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? 0;
   const candidates = [
@@ -468,6 +519,8 @@ export function getBcuSummonProcForEvent(attacker, event, meta = {}) {
     attacker?.bcuProc?.summon,
     attacker?.rawStats?.bcuProc?.SUMMON,
     attacker?.rawStats?.bcuProc?.summon,
+    attacker?.rawStats?.bcuProcObject?.atks?.[hitIndex]?.proc?.SUMMON,
+    attacker?.rawStats?.customEntity?.atks?.[hitIndex]?.proc?.SUMMON,
     attacker?.rawStats?.attackHits?.[hitIndex]?.bcuProc?.SUMMON,
     attacker?.rawStats?.attackHits?.[hitIndex]?.summon
   ];

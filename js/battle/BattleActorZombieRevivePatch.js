@@ -34,6 +34,55 @@ function reviveSpec(actor) {
   return { count: Math.trunc(count), timeFrames: Math.max(0, Math.trunc(time)), healthPercent: Math.max(0, health), source: 'BcuCombatModel.proc.revive' };
 }
 
+function reviveType(rev = {}) {
+  return rev?.type || {};
+}
+
+function explicitExtraReviveSources(actor) {
+  const scene = actor?.scene || globalThis.__APP__?.scene || null;
+  const direct = actor?.bcuZombieExtraReviveSources || actor?.rawStats?.bcuZombieExtraReviveSources || actor?.stats?.bcuZombieExtraReviveSources;
+  if (Array.isArray(direct)) return direct;
+  return (scene?.actors || []).filter((source) => source && source !== actor && reviveType(procModel(source)?.revive).reviveOthers === true);
+}
+
+function extraReviveSpecFromSource(source) {
+  const rev = source?.revive || procModel(source)?.revive || {};
+  const type = reviveType(rev);
+  if (type.reviveOthers !== true && source?.reviveOthers !== true) return null;
+  const count = Number(rev.count ?? source.count ?? 0);
+  const time = Number(rev.time ?? source.timeFrames ?? 0);
+  const health = Number(rev.health ?? source.healthPercent ?? 0);
+  if (!Number.isFinite(count) || count === 0 || !Number.isFinite(time) || !Number.isFinite(health) || health <= 0) return null;
+  return {
+    count: Math.trunc(count),
+    timeFrames: Math.max(0, Math.trunc(time)),
+    healthPercent: Math.max(0, health),
+    imuZkill: type.imuZkill === true || type.imu_zkill === true || source.imuZkill === true,
+    reviveNonZombie: type.reviveNonZombie === true || type.revive_non_zombie === true || source.reviveNonZombie === true,
+    source: source?.instanceId || source?.label || source?.source || 'explicit-extra-revive-source'
+  };
+}
+
+function resolveRevivePlan(actor) {
+  const own = reviveSpec(actor);
+  if (own) return { ...own, mode: 'own-revive', zombieKillerBlocked: false };
+  const extras = explicitExtraReviveSources(actor).map(extraReviveSpecFromSource).filter(Boolean);
+  if (!extras.length) return null;
+  if (isZombie(actor) && extras.every((spec) => spec.reviveNonZombie === true)) return null;
+  if (!actor.__bcuZombieExtraReviveUsed) actor.__bcuZombieExtraReviveUsed = 0;
+  const finiteTotal = extras.some((spec) => spec.count < 0) ? -1 : extras.reduce((sum, spec) => sum + Math.max(0, spec.count), 0);
+  if (finiteTotal !== -1 && finiteTotal <= actor.__bcuZombieExtraReviveUsed) return null;
+  return {
+    count: finiteTotal < 0 ? -1 : 1,
+    timeFrames: Math.min(...extras.map((spec) => spec.timeFrames)),
+    healthPercent: Math.max(...extras.map((spec) => spec.healthPercent)),
+    mode: 'extra-revive',
+    extraSources: extras,
+    zombieKillerBlocked: extras.some((spec) => spec.imuZkill),
+    source: 'BCU ZombX extra revive sources'
+  };
+}
+
 function hitHasZombieKiller(hit) {
   const calc = hit?.damageCalculation || null;
   const semantic = calc?.abilityDebug?.eventAbilitySemantic || hit?.event?.abilities || {};
@@ -67,6 +116,7 @@ function scheduleRevive(actor, spec, nowMs) {
   }
   if (actor.bcuZombieReviveRemaining === 0) return false;
   if (actor.bcuZombieReviveRemaining > 0) actor.bcuZombieReviveRemaining -= 1;
+  if (spec.mode === 'extra-revive') actor.__bcuZombieExtraReviveUsed = (actor.__bcuZombieExtraReviveUsed || 0) + 1;
   actor.bcuZombieRevivePending = true;
   // BCU ZombX.doRevive: status[P_REVIVE][1] = revive.time + A_ZOMBIE REVIVE anim length.
   const scene = actor.scene || globalThis.__APP__?.scene || null;
@@ -91,6 +141,8 @@ function scheduleRevive(actor, spec, nowMs) {
     reviveHp: actor.hp,
     healthPercent: spec.healthPercent,
     remaining: actor.bcuZombieReviveRemaining,
+    mode: spec.mode || 'own-revive',
+    extraSources: spec.extraSources || null,
     zombieKillerBlocked: false
   };
   return true;
@@ -162,10 +214,10 @@ export function installBattleActorZombieRevivePatch() {
     const pendingHitsBeforeResolve = Array.isArray(this.pendingHits) ? this.pendingHits.slice() : [];
     const result = originalResolvePostDamage.call(this, args);
     if (!result?.deathPending && !result?.dead) return result;
-    const spec = reviveSpec(this);
+    const spec = resolveRevivePlan(this);
     const nowMs = Number.isFinite(args?.nowMs) ? args.nowMs : 0;
     const zk = killedByZombieKillerHits(pendingHitsBeforeResolve);
-    if (isZombie(this) && spec && !zk) {
+    if ((isZombie(this) || spec?.mode === 'extra-revive') && spec && !(zk && spec.zombieKillerBlocked !== true)) {
       if (result.knockedBack === true && result.deathPending === true) {
         // BCU Entity.KBManager: the final KB plays fully; ZombX.preKill/doRevive only
         // runs at updateKB kbTime==0. Arm here and schedule at finishKnockback.
@@ -180,8 +232,8 @@ export function installBattleActorZombieRevivePatch() {
           result.knockedBack = false;
         }
       }
-    } else if (isZombie(this) && spec && zk) {
-      this.lastBcuZombieReviveDebug = { source: 'BCU ZombX.prekill tempZK blocks revive', scheduled: false, zombieKillerBlocked: true };
+    } else if ((isZombie(this) || spec?.mode === 'extra-revive') && spec && zk) {
+      this.lastBcuZombieReviveDebug = { source: 'BCU ZombX.prekill tempZK blocks revive', scheduled: false, zombieKillerBlocked: true, mode: spec.mode || 'own-revive' };
     }
     return result;
   };

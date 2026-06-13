@@ -10,6 +10,7 @@ import { applyBcuUnitLevelToStats } from './bcu-runtime/BcuUnitLevelRuntime.js';
 import { applyBcuComboModifiersToStats } from './bcu-runtime/BcuComboStatModifier.js';
 import { applyTreasureToStats } from './bcu-runtime/BcuTreasureModifier.js';
 import { applyTalentToStats } from './bcu-runtime/BcuTalentInfoData.js';
+import { attachBcuProcObjectSummonsToAttackHits } from './bcu-runtime/BcuSummonRuntime.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 export const TEMPLATE_LOAD_LEVEL = { STATS:'stats', RENDER_CORE:'render-core', SPAWN_READY:'spawn-ready', FULL_VISUAL:'full-visual' };
@@ -17,7 +18,11 @@ const LEVEL_RANK = { 'stats':1, 'render-core':2, 'spawn-ready':3, 'full-visual':
 const BCU_TIMER_FPS = 1000 / 33;
 
 function resolveTemplateStats(statsLoader, unitDef, baseStats) {
-  if (unitDef.statsType === 'enemy' && unitDef.stageStatModifiers) return statsLoader.applyStageEnemyMagnification(baseStats, unitDef.stageStatModifiers);
+  if (unitDef.statsType === 'enemy' && unitDef.stageStatModifiers) {
+    let s = statsLoader.applyStageEnemyMagnification(baseStats, unitDef.stageStatModifiers);
+    if (unitDef.bcuProcObject || s?.bcuProcObject || s?.customEntity) s = attachBcuProcObjectSummonsToAttackHits(s, unitDef.bcuProcObject || s?.bcuProcObject || s?.customEntity);
+    return s;
+  }
   if (unitDef.statsType === 'unit') {
     // BCU applies level magnification, then the construction-time multipliers
     // (combo C_ATK/C_DEF and treasure getAtkMulti/getDefMulti). Combo and
@@ -28,9 +33,13 @@ function resolveTemplateStats(statsLoader, unitDef, baseStats) {
     // Talent (PCoin) attack/HP multipliers are construction-time (commutative
     // with combo/treasure); applied when both definitions and selected levels exist.
     if (unitDef.bcuTalentInfo && unitDef.bcuTalentLevels) s = applyTalentToStats(s, unitDef.bcuTalentInfo, unitDef.bcuTalentLevels);
-    // Equipped orbs are surfaced for the resolver (orb damage is per-trait, per-hit).
+      if (unitDef.bcuProcObject || s.bcuProcObject || s.customEntity) s = attachBcuProcObjectSummonsToAttackHits(s, unitDef.bcuProcObject || s.bcuProcObject || s.customEntity);
+      // Equipped orbs are surfaced for the resolver (orb damage is per-trait, per-hit).
     if (unitDef.bcuEquippedOrbs) s = { ...s, bcuEquippedOrbs: unitDef.bcuEquippedOrbs };
     return s;
+  }
+  if (unitDef.bcuProcObject || baseStats?.bcuProcObject || baseStats?.customEntity) {
+    return attachBcuProcObjectSummonsToAttackHits(baseStats, unitDef.bcuProcObject || baseStats?.bcuProcObject || baseStats?.customEntity);
   }
   return baseStats;
 }

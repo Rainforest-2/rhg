@@ -1,8 +1,8 @@
 // Deterministic check for the BCU talent (PCoin) definition loader (Phase 4b).
 //
 // Loads the real SkillAcquisition.csv (150300) and verifies parsing, the
-// PC_CORRES attack/HP mapping, the registry, and construction-time stat
-// application against PCoin.getAtk/HPMultiplication.
+// PC_CORRES mapping, the registry, and construction-time stat / side-effect
+// application against PCoin.getAtk/HPMultiplication and PCoin.improve.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -21,10 +21,12 @@ import {
 } from '../js/battle/bcu-runtime/BcuTalentInfoData.js';
 
 // --- PC_CORRES attack/HP rows -----------------------------------------------
-assert.equal(PC_CORRES.length, 66, 'PC_CORRES has 66 rows');
-assert.deepEqual(PC_CORRES[31], [PC_CATEGORY.PC_BASE, PC_SUBTYPE.PC2_ATK], 'abilityID 31 -> base ATK');
-assert.deepEqual(PC_CORRES[32], [PC_CATEGORY.PC_BASE, PC_SUBTYPE.PC2_HP], 'abilityID 32 -> base HP');
+assert.equal(PC_CORRES.length, 68, 'PC_CORRES has 68 rows through BCU abilityID 67');
+assert.deepEqual(PC_CORRES[31].slice(0, 2), [PC_CATEGORY.PC_BASE, PC_SUBTYPE.PC2_ATK], 'abilityID 31 -> base ATK');
+assert.deepEqual(PC_CORRES[32].slice(0, 2), [PC_CATEGORY.PC_BASE, PC_SUBTYPE.PC2_HP], 'abilityID 32 -> base HP');
 assert.equal(PC_CORRES[10][0], 0, 'abilityID 10 (berserker) is category 0, not PC_BASE');
+assert.equal(PC_CORRES[66][0], PC_CATEGORY.PC_AB, 'abilityID 66 (sage slayer) is PC_AB');
+assert.equal(PC_CORRES[67][0], PC_CATEGORY.PC_P, 'abilityID 67 (blast proc) is PC_P');
 // Other PC_BASE rows must not collide with PC2_HP (0) / PC2_ATK (1).
 for (const i of [25, 26, 27, 28, 61]) {
   assert.equal(PC_CORRES[i][0], PC_CATEGORY.PC_BASE, `row ${i} is PC_BASE`);

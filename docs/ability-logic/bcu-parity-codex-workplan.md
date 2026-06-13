@@ -137,12 +137,12 @@ Summon runtime exists for explicitly supplied `Proc.SUMMON` objects. The remaini
 Remaining blockers:
 
 1. Normal unit/enemy CSV `SUMMON` holder is not proven.
-2. Automatic BCU custom/proc-object source loading is not implemented.
+2. BCU custom/proc-object `SUMMON` handoff is implemented for supplied proc objects, but broad automatic discovery/loading of real custom pack proc-object files is not implemented.
 3. Exact `Entity.setSummon(anim_type)` entry appearance has not been manually reviewed.
 
 Safe next steps:
 
-- Load BCU custom/proc-object `SUMMON` data into per-hit attack events.
+- Add real custom-pack loader fixtures beyond the supplied proc-object `SUMMON` handoff.
 - Keep normal CSV parser unchanged unless a source holder is proven.
 - Keep the row `partial` until those blockers are resolved.
 
@@ -153,13 +153,13 @@ Standard zombie corpse / soulstrike / revive visual trace is covered by determin
 Remaining blockers:
 
 1. Manual browser visual acceptance for DOWN/REVIVE appearance.
-2. Mini-death-surge holder proof.
-3. Extra/custom revive interactions and cleanup variants.
+2. Mini-death-surge browser visual acceptance.
+3. Broad extra/custom revive source/range interactions and cleanup variants.
 
 Safe next steps:
 
-- Add loader-backed/custom holder proof before mini-death-surge behavior edits.
-- Add end-to-end extra/custom revive lifecycle fixtures.
+- Add real source/range fixtures before broad extra-reviver behavior claims.
+- Add end-to-end extra/custom revive lifecycle variants beyond the explicit fixture handoff.
 - Keep broad visual claims at `human-visual-review-needed` until manual review is recorded.
 
 ### W5 — effect scale and coordinate model maintenance

@@ -77,7 +77,9 @@ const INCREMENT_TYPES = Object.freeze({
   good: COMBO_TYPE.C_GOOD,
   massive: COMBO_TYPE.C_MASSIVE,
   resist: COMBO_TYPE.C_RESIST,
-  crit: COMBO_TYPE.C_CRIT
+  crit: COMBO_TYPE.C_CRIT,
+  witchKiller: COMBO_TYPE.C_WKILL,
+  evaKiller: COMBO_TYPE.C_EKILL
 });
 
 /**

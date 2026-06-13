@@ -36,8 +36,8 @@ const probe = DamageAbilityResolver.resolve({
 
 const omitted = probe.implementationStatus?.omittedRuntimeState || [];
 assert.ok(!omitted.includes('orbs'), 'damage resolver now consumes equipped orbs (see check-bcu-orb-resolver-consumption)');
-assert.ok(omitted.includes('combos'), 'damage resolver still reports combos omitted (combos applied at construction, not in the resolver)');
-assert.ok(omitted.includes('full Trait targetForms special cases'), 'damage resolver still reports missing targetForms cases');
+assert.ok(omitted.includes('combo proc-duration/runtime sources'), 'damage resolver still reports remaining combo proc-duration/runtime sources');
+assert.ok(omitted.includes('remaining Trait targetForms capture edge cases'), 'damage resolver still reports remaining targetForms capture edges');
 assert.ok(omitted.includes('sage status resistance'), 'damage resolver still reports missing sage status-resistance scope');
 
 const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 'utf8');
@@ -50,7 +50,7 @@ for (const phrase of [
   'mini-death-surge | `code-complete-candidate`',
   'zombie extra-revive / custom revive edge cases | `partial`',
   'source-backed `smap`/`sdef`/`SCGroup` stage allow fixtures',
-  'Remaining blockers are automatic BCU custom/proc-object source loading'
+  'BCU custom/proc-object `SUMMON` holders now normalize into per-hit attack events'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
 }

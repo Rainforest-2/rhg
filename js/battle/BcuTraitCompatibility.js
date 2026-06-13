@@ -1,10 +1,20 @@
-import { BCU_ABI } from './BcuCombatModel.js';
+import { BCU_ABI, BCU_TRAITS } from './BcuCombatModel.js';
+
+const BCU_TARGET_TRAITED = Object.freeze([
+  BCU_TRAITS.red,
+  BCU_TRAITS.floating,
+  BCU_TRAITS.black,
+  BCU_TRAITS.angel,
+  BCU_TRAITS.alien,
+  BCU_TRAITS.zombie
+]);
 
 function flagsFromList(list = []) {
   const flags = {};
   for (const key of Array.isArray(list) ? list : []) {
-    if (key == null) flags.__all = true;
-    else flags[String(key)] = true;
+    const traitKey = traitId(key);
+    if (traitKey == null) flags.__all = true;
+    else flags[String(traitKey)] = true;
   }
   return flags;
 }
@@ -15,6 +25,45 @@ function lower(value) {
 
 export function getCombatModel(entity) {
   return entity?.bcuCombatModel || entity?.rawStats?.bcuCombatModel || entity?.stats?.bcuCombatModel || null;
+}
+
+export function traitId(value) {
+  if (value == null) return null;
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  return String(value.key ?? value.id ?? value.name ?? value.trait ?? value.type ?? '');
+}
+
+function formIds(entity) {
+  return [...new Set([
+    entity?.bcuFormId,
+    entity?.formId,
+    entity?.formRow,
+    entity?.unitDef?.formId,
+    entity?.unitDef?.formRow,
+    entity?.rawStats?.formId,
+    entity?.rawStats?.formRow,
+    entity?.stats?.formId,
+    entity?.stats?.formRow,
+    getCombatModel(entity)?.formId,
+    getCombatModel(entity)?.formRow,
+    entity?.unitDef?.slotId,
+    entity?.slotId,
+    entity?.sourceSlotId,
+    entity?.characterId
+  ].filter((value) => value !== undefined && value !== null).map(String))];
+}
+
+function targetFormMatches(trait, attacker) {
+  const forms = trait?.targetForms || trait?.forms || trait?.bcuTargetForms || [];
+  if (!Array.isArray(forms) || !forms.length) return false;
+  const ids = new Set(formIds(attacker));
+  return forms.some((form) => ids.has(String(form?.id ?? form?.slotId ?? form?.formId ?? form)));
+}
+
+export function isBcuTargetTraited(entityOrTraits) {
+  const traits = Array.isArray(entityOrTraits) ? entityOrTraits.map(traitId) : getTraitList(entityOrTraits);
+  const set = new Set(traits.map(String));
+  return BCU_TARGET_TRAITED.every((trait) => set.has(String(trait)));
 }
 
 function readFaction(entity) {
@@ -73,6 +122,25 @@ export function getTraitList(entity) {
   return Object.keys(flags).filter((key) => flags[key]);
 }
 
+export function getTraitEntries(entity) {
+  const cm = getCombatModel(entity);
+  const lists = [
+    cm?.traits?.entries,
+    cm?.traits?.list,
+    entity?.bcuTraits,
+    entity?.traits,
+    entity?.bcuSpecialTraits,
+    entity?.rawStats?.bcuSpecialTraits,
+    entity?.stats?.bcuSpecialTraits
+  ];
+  const out = [];
+  for (const list of lists) {
+    if (Array.isArray(list)) out.push(...list);
+  }
+  if (!out.length) return getTraitList(entity);
+  return out;
+}
+
 export function getTargetTraitList(entity) {
   const cm = getCombatModel(entity);
   const list = cm?.kind === 'unit' ? (cm?.targetTraits?.list || cm?.traits?.list) : cm?.traits?.list;
@@ -85,6 +153,13 @@ export function getAttackTraitList(attacker) {
   if (cm?.kind === 'unit') return (cm?.targetTraits?.list || cm?.traits?.list || []).slice();
   if (cm?.kind === 'enemy') return (cm?.traits?.list || []).slice();
   return Array.isArray(attacker?.traits) ? attacker.traits.slice() : getTraitList(attacker);
+}
+
+export function getAttackTraitEntries(attacker) {
+  const cm = getCombatModel(attacker);
+  if (cm?.kind === 'unit') return (cm?.targetTraits?.entries || cm?.targetTraits?.list || cm?.traits?.entries || cm?.traits?.list || []).slice();
+  if (cm?.kind === 'enemy') return (cm?.traits?.entries || cm?.traits?.list || []).slice();
+  return getTraitEntries(attacker);
 }
 
 export function getAbi(entity) {
@@ -105,12 +180,24 @@ export function bcuTraitCompatible({ attacker = null, target = null, targetType 
   if (targetType === 'base' || target?.isBase === true || target?.kind === 'base') return true;
   if (!target) return false;
   if (targetType === 'actor' && isDogMirrorCombat(attacker, target)) return true;
-  const attackTraits = getAttackTraitList(attacker);
+  const attackTraits = getAttackTraitEntries(attacker);
   if (!attackTraits.length || attackTraits.some((trait) => trait == null || trait === '__all' || trait === 'all')) return true;
   const targetTraits = getTargetTraitList(target);
   const targetFlags = flagsFromList(targetTraits);
   for (const trait of attackTraits) {
-    if (targetFlags[String(trait)] === true) return true;
+    if (targetFlags[String(traitId(trait))] === true) return true;
+  }
+  if (isBcuTargetTraited(targetTraits)) {
+    for (const trait of attackTraits) {
+      if (trait && typeof trait === 'object' && trait.targetType === true) return true;
+    }
+  }
+  const targetEntries = getTraitEntries(target);
+  const attackerTargetTraited = isBcuTargetTraited(getAttackTraitEntries(attacker));
+  for (const trait of targetEntries) {
+    if (!trait || typeof trait !== 'object') continue;
+    if (trait.targetType === true && attackerTargetTraited) return true;
+    if (targetFormMatches(trait, attacker)) return true;
   }
   return false;
 }

@@ -1,6 +1,7 @@
 import { BCU_ABI, BCU_TRAITS } from './BcuCombatModel.js';
 import { isBcuHitProcDisabled } from './ProcResolver.js';
 import { getOrbAttackBonus, getOrbResist, getOrbGoodFactor, getOrbMassiveFactor, getOrbGoodDefFactor, getOrbResistantDefFactor } from './bcu-runtime/BcuOrbModifier.js';
+import { getAttackTraitEntries, getTraitEntries, isBcuTargetTraited, traitId } from './BcuTraitCompatibility.js';
 
 const DEFAULT_MAX_FRUIT = 3;
 
@@ -23,7 +24,7 @@ function getStatsKind(entity) {
 }
 
 function getTraitFlags(entity) {
-  return entity?.traitFlags || entity?.abilityModel?.traits?.flags || entity?.rawStats?.traitFlags || entity?.rawStats?.abilityModel?.traits?.flags || getFlagsFromList(entity?.traits) || {};
+  return entity?.traitFlags || entity?.abilityModel?.traits?.flags || entity?.rawStats?.traitFlags || entity?.rawStats?.abilityModel?.traits?.flags || getCombatModel(entity)?.traits?.flags || getFlagsFromList(entity?.traits) || {};
 }
 
 function hasTrait(entity, trait) {
@@ -42,9 +43,51 @@ function getTargetTraitListFromStats(entity) {
   return Array.isArray(entity?.traits) ? entity.traits : [];
 }
 
+function formIds(entity) {
+  return [...new Set([
+    entity?.bcuFormId,
+    entity?.formId,
+    entity?.formRow,
+    entity?.unitDef?.formId,
+    entity?.unitDef?.formRow,
+    entity?.rawStats?.formId,
+    entity?.rawStats?.formRow,
+    entity?.stats?.formId,
+    entity?.stats?.formRow,
+    getCombatModel(entity)?.formId,
+    getCombatModel(entity)?.formRow,
+    entity?.unitDef?.slotId,
+    entity?.slotId,
+    entity?.sourceSlotId,
+    entity?.characterId
+  ].filter((value) => value !== undefined && value !== null).map(String))];
+}
+
+function targetFormMatches(trait, attacker) {
+  const forms = trait?.targetForms || trait?.forms || trait?.bcuTargetForms || [];
+  if (!Array.isArray(forms) || !forms.length) return false;
+  const ids = new Set(formIds(attacker));
+  return forms.some((form) => ids.has(String(form?.id ?? form?.slotId ?? form?.formId ?? form)));
+}
+
 function getSharedTraits(attackTraits = [], targetTraits = []) {
   const targetFlags = getFlagsFromList(targetTraits);
-  return [...new Set((attackTraits || []).filter((trait) => targetFlags[trait]))];
+  return [...new Set((attackTraits || []).map(traitId).filter((trait) => targetFlags[trait]))];
+}
+
+function getEffectiveSharedTraits(attacker, target, attackTraits = [], targetTraits = []) {
+  const shared = getSharedTraits(attackTraits, targetTraits);
+  const targetEntries = getTraitEntries(target);
+  if (!Array.isArray(targetEntries) || !targetEntries.length) return shared;
+  const attackTraited = isBcuTargetTraited(getAttackTraitEntries(attacker));
+  for (const trait of targetEntries) {
+    if (!trait || typeof trait !== 'object') continue;
+    const key = traitId(trait);
+    if (!key || shared.includes(key)) continue;
+    if (trait.targetType === true && attackTraited) shared.push(key);
+    else if (targetFormMatches(trait, attacker)) shared.push(key);
+  }
+  return shared;
 }
 
 function getAttackerAbi(attacker) {
@@ -68,6 +111,16 @@ function getEquippedOrbs(entity) {
 function getAttackerProc(attacker) {
   const cm = getCombatModel(attacker);
   return cm?.proc || attacker?.bcuProc || attacker?.rawStats?.bcuProc || attacker?.abilityModel?.bcuProc || {};
+}
+
+function comboIncrements(entity) {
+  const src = entity?.bcuComboModifiers || entity?.stats?.bcuComboModifiers || entity?.rawStats?.bcuComboModifiers || {};
+  return src?.increments || {};
+}
+
+function comboInc(entity, key) {
+  const n = Number(comboIncrements(entity)?.[key] || 0);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function getTargetProc(target) {
@@ -170,22 +223,44 @@ function makeSharedInfoForAttack(attacker, target) {
   if (isUnitAttackAgainstEnemy(attacker, target)) {
     const attackTraits = getTargetTraitListFromStats(attacker);
     const targetTraits = getTraitList(target);
-    const shared = getSharedTraits(attackTraits, targetTraits);
+    const shared = getEffectiveSharedTraits(attacker, target, attackTraits, targetTraits);
     return { mode: 'EEnemy.getDamage unit->enemy', attackTraits, targetTraits, shared, compatible: shared.length > 0 };
   }
   if (isEnemyAttackAgainstUnit(attacker, target)) {
     const attackTraits = getTraitList(attacker);
     const targetTraits = getTargetTraitListFromStats(target);
-    const shared = getSharedTraits(attackTraits, targetTraits);
+    const shared = getEffectiveSharedTraits(target, attacker, attackTraits, targetTraits);
     return { mode: 'EUnit.getDamage enemy->unit', attackTraits, targetTraits, shared, compatible: shared.length > 0 };
   }
   const attackTraits = getTargetTraitListFromStats(attacker);
   const targetTraits = getTraitList(target);
-  const shared = getSharedTraits(attackTraits, targetTraits);
+    const shared = getEffectiveSharedTraits(attacker, target, attackTraits, targetTraits);
   return { mode: 'generic-side-fallback', attackTraits, targetTraits, shared, compatible: shared.length > 0 };
 }
 
 function applyFixedKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference, allowAttack = true, allowDefense = true }) {
+  let ans = currentDamage;
+  if (allowAttack && hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {
+    const before = ans;
+    ans = bcuInt(ans * attackMult);
+    result.modifiers[key] *= before === 0 ? 1 : ans / before;
+    pushStep(result, key, before, ans, `${reference} attack`, { trait, abilityBit, multiplier: attackMult });
+  }
+  if (allowDefense && hasTargetAbi(result.__target, abilityBit) && hasTrait(result.__attacker, trait)) {
+    const before = ans;
+    ans = bcuInt(ans * defenseMult);
+    result.modifiers[key] *= before === 0 ? 1 : ans / before;
+    pushStep(result, key, before, ans, `${reference} defense`, { trait, abilityBit, multiplier: defenseMult });
+  }
+  return ans;
+}
+
+function getWitchKillerAtk(combo = 0) { return 5 * combo / 100; }
+function getWitchKillerDef(combo = 0) { return 0.1 / (100 + combo); }
+function getEvaKillerAtk(combo = 0) { return 5 * combo / 100; }
+function getEvaKillerDef(combo = 0) { return 0.2 / (100 + combo); }
+
+function applyComboScaledKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference, allowAttack = true, allowDefense = true }) {
   let ans = currentDamage;
   if (allowAttack && hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {
     const before = ans;
@@ -266,7 +341,7 @@ export class DamageAbilityResolver {
         resolver: 'DamageAbilityResolver',
         mode: 'bcu-getDamage-order-plus-fact-only-killers',
         exactScope: ['DataUnit/DataEnemy CSV flags', 'EEnemy.getDamage primary damage abilities', 'EUnit.getDamage primary defense abilities', 'Entity.critCalc metal/critical', 'Entity.damaged metal-killer add-damage', 'P_BSTHUNT beast hunter damage multipliers', 'documented fixed killer/special damage multipliers with existing ability bits/proc fields'],
-        omittedRuntimeState: ['combos', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'sage status resistance']
+        omittedRuntimeState: ['combo proc-duration/runtime sources', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'remaining Trait targetForms capture edge cases', 'sage status resistance']
       },
       debug: {
         rawAbi: event?.rawAbi ?? null,
@@ -319,14 +394,14 @@ export class DamageAbilityResolver {
     if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target) && sharedInfo.compatible && !attackerAbilitySuppressed) {
       if (hasAttackerAbi(attacker, BCU_ABI.AB_GOOD)) {
         // getOrbGoodFactor reduces to getGoodAtk when no ORB_STRONG orbs are equipped.
-        const factor = getOrbGoodFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboGoodInc: 0 });
+        const factor = getOrbGoodFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboGoodInc: comboInc(attacker, 'good') });
         const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.strong *= before === 0 ? 1 : ans / before;
         pushStep(result, 'strong', before, ans, 'BCU EEnemy.getDamage AB_GOOD getOrbGood (getGOODATK + ORB_STRONG)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
       if (hasAttackerAbi(attacker, BCU_ABI.AB_MASSIVE)) {
         // getOrbMassiveFactor reduces to getMassiveAtk when no ORB_MASSIVE orbs are equipped.
-        const factor = getOrbMassiveFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboMassiveInc: 0 });
+        const factor = getOrbMassiveFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboMassiveInc: comboInc(attacker, 'massive') });
         const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.massiveDamage *= before === 0 ? 1 : ans / before;
         pushStep(result, 'massiveDamage', before, ans, 'BCU EEnemy.getDamage AB_MASSIVE getOrbMassive (getMASSIVEATK + ORB_MASSIVE)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
@@ -343,14 +418,14 @@ export class DamageAbilityResolver {
     if (targetType === 'actor' && isEnemyAttackAgainstUnit(attacker, target) && !targetAbilitySuppressed) {
       if (hasTargetAbi(target, BCU_ABI.AB_GOOD)) {
         // getOrbGoodDefFactor reduces to getGoodDef when no ORB_STRONG orbs are equipped.
-        const factor = getOrbGoodDefFactor({ orbs: getEquippedOrbs(target), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboGoodInc: 0 });
+        const factor = getOrbGoodDefFactor({ orbs: getEquippedOrbs(target), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboGoodInc: comboInc(target, 'good') });
         const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.strong *= before === 0 ? 1 : ans / before;
         pushStep(result, 'strong', before, ans, 'BCU EUnit.getDamage target AB_GOOD getGOODDEF (+ ORB_STRONG def)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
       if (hasTargetAbi(target, BCU_ABI.AB_RESIST)) {
         // getOrbResistantDefFactor reduces to getResistDef when no ORB_RESISTANT orbs are equipped.
-        const factor = getOrbResistantDefFactor({ orbs: getEquippedOrbs(target), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboResistInc: 0 });
+        const factor = getOrbResistantDefFactor({ orbs: getEquippedOrbs(target), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboResistInc: comboInc(target, 'resist') });
         const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.resistant *= before === 0 ? 1 : ans / before;
         pushStep(result, 'resistant', before, ans, 'BCU EUnit.getDamage target AB_RESIST getRESISTDEF (+ ORB_RESISTANT def)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
@@ -377,8 +452,8 @@ export class DamageAbilityResolver {
       ans = applyFixedKillerMultiplier(result, ans, { key: 'baronKiller', abilityBit: BCU_ABI.AB_BAKILL, trait: BCU_TRAITS.baron, attackMult: 1.6, defenseMult: 0.7, reference: 'Reference 超生命体特効', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
       ans = applyFixedKillerMultiplier(result, ans, { key: 'sageSlayer', abilityBit: BCU_ABI.AB_SKILL, trait: BCU_TRAITS.sage, attackMult: 1.2, defenseMult: 0.5, reference: 'Reference 超賢者特効 damage-only', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
       ans = applyFixedKillerMultiplier(result, ans, { key: 'villainKiller', abilityBit: BCU_ABI.AB_VKILL, trait: BCU_TRAITS.villain, attackMult: 2.5, defenseMult: 0.4, reference: 'Reference 怪人特効', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
-      ans = applyFixedKillerMultiplier(result, ans, { key: 'witchKiller', abilityBit: BCU_ABI.AB_WKILL, trait: BCU_TRAITS.witch, attackMult: 5, defenseMult: 0.1, reference: 'Reference 魔女キラー', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
-      ans = applyFixedKillerMultiplier(result, ans, { key: 'evaKiller', abilityBit: BCU_ABI.AB_EKILL, trait: BCU_TRAITS.eva, attackMult: 5, defenseMult: 0.2, reference: 'Reference 使徒キラー', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
+      ans = applyComboScaledKillerMultiplier(result, ans, { key: 'witchKiller', abilityBit: BCU_ABI.AB_WKILL, trait: BCU_TRAITS.witch, attackMult: getWitchKillerAtk(comboInc(attacker, 'witchKiller')), defenseMult: getWitchKillerDef(comboInc(target, 'witchKiller')), reference: 'BCU Treasure.getWKAtk/getWKDef combo-scaled 魔女キラー', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
+      ans = applyComboScaledKillerMultiplier(result, ans, { key: 'evaKiller', abilityBit: BCU_ABI.AB_EKILL, trait: BCU_TRAITS.eva, attackMult: getEvaKillerAtk(comboInc(attacker, 'evaKiller')), defenseMult: getEvaKillerDef(comboInc(target, 'evaKiller')), reference: 'BCU Treasure.getEKAtk/getEKDef combo-scaled 使徒キラー', allowAttack: !attackerAbilitySuppressed, allowDefense: !targetAbilitySuppressed });
       ans = applyBeastHunterMultiplier(result, ans);
     }
 

@@ -65,14 +65,14 @@ Manual tracking lives in `docs/ability-logic/bcu-visual-review-checklist.md`.
 Do not mark these as fully complete without more evidence or loaders:
 
 - normal CSV summon holder: still not proven; current summon runtime consumes explicit proc-object data.
-- BCU custom/proc-object summon loader: still needed for automatic source loading.
+- BCU custom/proc-object summon loader: proc-object `SUMMON` handoff is fixture-backed, but broad automatic real custom-pack discovery is still needed.
 - summon `anim_type` entry visuals; stage `allow` / group semantics are fixture-backed for `SCDef.smap` / `sdef` / `SCGroup` limits.
-- full `Trait.targetForms` fixture source.
-- combo / orb / treasure / talent / PCoin damage modifiers.
+- full real-data `Trait.targetForms` loader fixtures; focused runtime fixtures now cover `targetType` / `targetForms` compatibility.
+- combo / orb / treasure / talent / PCoin damage modifiers: broader proc-duration/speed/crit hooks and real-data PCoin acceptance remain partial after focused damage-family/killer/PCoin side-effect wiring.
 - broader AB_SKILL status resistance holder sources.
 - enemy toxic immunity: treated as nonexistent for supported enemy data; do not add an enemy `IMUPOIATK` CSV or loader holder.
 - bounty/money battle visual: no stable visual owner/effect alias proven; treat as logic/economy unless future evidence proves visuals.
-- mini-death-surge holder and extra/custom zombie revive interactions.
+- mini-death-surge holder browser visual acceptance and broad extra/custom zombie revive source/range interactions.
 - PC-only draw-side source evidence unless a PC source ZIP is added.
 
 ## Important corrected stale claims

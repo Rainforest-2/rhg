@@ -50,6 +50,7 @@ const commands = [
   ['node', ['--check', 'scripts/check-debug-allocation-guards.mjs']],
   ['node', ['--check', 'scripts/check-bcu-death-animation-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-warp-lifecycle-parity.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-warp-interrupt-scene-parity.mjs']],
   ['node', ['--check', 'scripts/check-ability-partial-blockers.mjs']],
   ['node', ['scripts/check-bcu-stage-difficulty-parity.mjs']],
   ['node', ['scripts/check-production-card-icon-source-parity.mjs']],
@@ -74,6 +75,7 @@ const commands = [
   ['node', ['scripts/check-debug-allocation-guards.mjs']],
   ['node', ['scripts/check-bcu-death-animation-parity.mjs']],
   ['node', ['scripts/check-bcu-warp-lifecycle-parity.mjs']],
+  ['node', ['scripts/check-bcu-warp-interrupt-scene-parity.mjs']],
   ['node', ['scripts/check-ability-partial-blockers.mjs']]
 ];
 

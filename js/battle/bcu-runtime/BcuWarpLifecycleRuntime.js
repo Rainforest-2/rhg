@@ -153,6 +153,20 @@ export function buildBcuWarpLifecycle(actor, payload = {}, { scene = actor?.scen
   };
 }
 
+// BCU KBManager.doInterrupt: e.walking = false; e.atkm.stopAtk() cancels any in-progress
+// attack before kbAnim runs. While warped, updateKB keeps setAnim(UType.IDLE, false) and
+// updateAnimation skips anim.update for INT_WARP, so the entity holds a frozen IDLE pose.
+function interruptActorForWarp(actor) {
+  actor.attackTarget = null;
+  actor.attackTargetType = null;
+  if (actor.state === 'attack' || actor.state === 'attack-wait') actor.setState?.('move');
+  const idleAnimId = actor.idleAnimId || actor.currentAnimId || null;
+  if (idleAnimId && typeof actor.setAnimation === 'function') {
+    actor.setAnimation(idleAnimId, 'warp-idle', true);
+    actor.applyCurrentAnimationFrame?.();
+  }
+}
+
 export function startBcuWarpLifecycle(actor, payload = {}, meta = {}) {
   if (!actor) return { applied: false, reason: 'missing-actor' };
   const scene = meta.scene || actor.scene || globalThis.__APP__?.scene || null;
@@ -160,6 +174,7 @@ export function startBcuWarpLifecycle(actor, payload = {}, meta = {}) {
   actor.bcuWarpLifecycle = lifecycle;
   actor.bcuWarpHidden = true;
   actor.bcuWarpState = 'enter';
+  interruptActorForWarp(actor);
   const para = updateBcuWarpParaTransform(actor, lifecycle, scene);
   actor.bcuRenderOverride = {
     mode: 'warp-cont',
@@ -218,6 +233,14 @@ export function clearBcuWarpLifecycle(actor, reason = 'clear') {
   actor.bcuWarpLifecycle = null;
   actor.bcuWarpParaTransform = null;
   if (actor.bcuRenderOverride?.mode === 'warp-cont') actor.bcuRenderOverride = null;
+  if (reason === 'finished' && actor.isAlive?.()) {
+    // BCU KBManager.updateKB kbTime == 0: e.anim.back = null; e.anim.setAnim(UType.WALK, true)
+    actor.setState?.('move');
+    if (actor.moveAnimId && typeof actor.setAnimation === 'function') {
+      actor.setAnimation(actor.moveAnimId, 'move', true);
+      actor.applyCurrentAnimationFrame?.();
+    }
+  }
   actor.lastBcuWarpLifecycleClearDebug = { source: 'BcuWarpLifecycleRuntime.clear', reason };
 }
 

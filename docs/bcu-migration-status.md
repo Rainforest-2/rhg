@@ -95,6 +95,7 @@ node scripts/check-effect-coordinate-traces.mjs
 node scripts/check-debug-allocation-guards.mjs
 node scripts/check-bcu-death-animation-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
+node scripts/check-bcu-warp-interrupt-scene-parity.mjs
 node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node scripts/check-bcu-barrier-shield-effect-parity.mjs
 node scripts/check-bcu-demon-shield-regen-timing.mjs

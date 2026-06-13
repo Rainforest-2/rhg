@@ -42,7 +42,10 @@ Implemented evidence:
 - The base actor remains hidden through exit animation and becomes renderable/targetable/touchable only after lifecycle completion.
 - `IMUWARP` blocks warp lifecycle creation.
 - Stale warp state is cleared if the actor dies during warp.
+- A warped actor is fully interrupted like BCU `Entity.update` with `kbTime > 0`: the scene tick (`BattleSceneBcuStageBasisTickPatch` movement/target-search/attack-start/attack-timeline phases and the `BattleScene.tick` fallback) skips walking, retargeting, and attacking while the lifecycle is active, so the exit position is exactly `entry pos - min(distance, getLim()) * dire` with no forward walk drift.
+- Warp start mirrors `KBManager.doInterrupt` (`atkm.stopAtk()` cancels an in-progress attack) and `updateKB` (`setAnim(UType.IDLE, false)` holds a frozen idle pose during the warp); warp end mirrors `updateKB` `kbTime == 0` (`setAnim(UType.WALK, true)` resumes the walk animation).
 - `scripts/check-bcu-warp-lifecycle-parity.mjs` covers normal lifecycle, move timing, exit hidden behavior, IMUWARP, stale-dead cleanup, replacement warp lifecycle, and death during exit.
+- `scripts/check-bcu-warp-interrupt-scene-parity.mjs` covers scene-tick interruption (no walking/animation during warp), backward and forward (negative-distance) exit positions, attack cancellation at warp start, and walk resumption after the warp ends.
 
 Known remaining partials:
 
@@ -59,9 +62,11 @@ node --check js/battle/bcu-runtime/BcuWarpLifecycleRuntime.js
 node --check scripts/check-bcu-death-animation-parity.mjs
 node --check scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node --check scripts/check-bcu-warp-lifecycle-parity.mjs
+node --check scripts/check-bcu-warp-interrupt-scene-parity.mjs
 node scripts/check-bcu-death-animation-parity.mjs
 node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
+node scripts/check-bcu-warp-interrupt-scene-parity.mjs
 ```
 
 If bundle content changes, also run:

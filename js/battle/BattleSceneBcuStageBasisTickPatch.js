@@ -4,8 +4,16 @@ import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { KBRuntime } from './KBRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
+import { isBcuWarpLifecycleActive } from './bcu-runtime/BcuWarpLifecycleRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v5');
+
+// BCU Entity.update: kbTime > 0 runs only kb.updateKB(); Entity.update2: kbTime != 0
+// short-circuits before touch/walk/attack handling. INT_WARP keeps kbTime > 0 for the
+// whole warp, so a warped entity must not walk, retarget, or attack until the warp ends.
+function isBcuWarpInterrupted(actor) {
+  return isBcuWarpLifecycleActive(actor) || actor?.bcuWarpHidden === true || !!actor?.bcuProcStatuses?.warp;
+}
 
 function shouldTickActor(actor) {
   if (!actor) return false;
@@ -173,6 +181,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         // BCU Entity.update: kbTime < -1 (burrow) runs updateBurrow only —
         // no normal walk movement or animation while underground.
         if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
+        if (isBcuWarpInterrupted(actor)) continue;
         const selection = this.findTargetForActor(actor);
         this.__bcuTargetSelections.set(actor, selection);
         if (!selection) {
@@ -205,6 +214,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!isActorActive(actor)) continue;
         if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
+        if (isBcuWarpInterrupted(actor)) continue;
         if (this.__bcuTargetSelections.has(actor)) continue;
         const selection = this.findTargetForActor(actor);
         this.__bcuTargetSelections.set(actor, selection ? { ...selection, canAttack: this.canAttack(actor, selection.target) } : null);
@@ -216,6 +226,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!isActorActive(actor)) continue;
         if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
+        if (isBcuWarpInterrupted(actor)) continue;
         if (isBcuStopped(this, actor)) continue;
         const selection = getSelection(this, actor);
         if (!selection?.target) continue;
@@ -244,6 +255,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
       for (const actor of this.actors) {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!actor || actor.state !== 'attack') continue;
+        if (isBcuWarpInterrupted(actor)) continue;
         if (holdAttackForBcuStop(this, actor, scaledDt)) continue;
         actor.attackElapsedMs = BattleAttackTimeline.getElapsedMs(actor, this.timeMs);
         const dueHits = BattleAttackTimeline.getDueHitEvents(actor, this.timeMs) || [];

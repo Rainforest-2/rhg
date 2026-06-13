@@ -27,7 +27,7 @@ These areas have meaningful JS runtime wiring and focused regression tests:
 |---|---|---|
 | freeze / slow / weaken / knockback proc | `code-complete-candidate` | `ProcResolver.getProcCatalog()` marks these implemented and actor-targeted. Existing status runtime applies actor proc status. |
 | curse / seal / toxic | `code-complete-candidate` | Proc catalog and runtime status paths exist; immunity/resistance still needs continued coverage for edge sources. |
-| warp lifecycle | `code-complete-candidate` | `BcuWarpLifecycleRuntime` replaces simple countdown with entrance/exit lifecycle; `scripts/check-bcu-warp-lifecycle-parity.mjs` covers normal lifecycle, IMUWARP, replacement lifecycle, and death during exit. |
+| warp lifecycle | `code-complete-candidate` | `BcuWarpLifecycleRuntime` replaces simple countdown with entrance/exit lifecycle; warped actors are fully interrupted during the scene tick (no walking/retargeting/attacking, frozen idle pose, walk resumed at exit) like BCU `kbTime > 0`; `scripts/check-bcu-warp-lifecycle-parity.mjs` covers normal lifecycle, IMUWARP, replacement lifecycle, and death during exit; `scripts/check-bcu-warp-interrupt-scene-parity.mjs` covers scene-tick interruption, backward/forward exit positions, attack cancellation, and walk resumption. |
 | `P_DELAY` runtime/effect | `human-visual-review-needed` | BCU source shows `EUnit/EEnemy.processProcs -> status[P_DELAY]`, `EUnit.postUpdate -> basis.cdDelay -> ELineUp.delay`, and `EEnemy.postUpdate -> basis.lineDelay -> EStage.delay`; `BcuDelayRuntime` maps those owners to `BattleEconomy` cooldown frames and stage row `nextFrame`; `BcuDelayRuntimePatch` queues same-tick delay and flushes once in `proc-resolve`; `A_E_DELAY` is bundled as `effect:wave` `enemy-delay/*`; `scripts/check-bcu-delay-runtime.mjs`, `scripts/check-effect-bundle-aliases.mjs`, and `scripts/check-effect-coordinate-traces.mjs` cover runtime, ZIP alias, and coordinate trace. |
 | wave / mini-wave | `code-complete-candidate` | Projectile base damage model and runtime helper tests exist; effect coordinate traces use runtime helpers. |
 | surge / mini-surge | `code-complete-candidate` | Runtime container, raw projectile damage basis, and coordinate trace checks exist. |
@@ -94,6 +94,7 @@ node scripts/check-effect-coordinate-traces.mjs
 node scripts/check-debug-allocation-guards.mjs
 node scripts/check-bcu-death-animation-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
+node scripts/check-bcu-warp-interrupt-scene-parity.mjs
 node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node scripts/check-bcu-barrier-shield-effect-parity.mjs
 node scripts/check-bcu-demon-shield-regen-timing.mjs

@@ -161,7 +161,7 @@ export class BattleSceneRenderer {
     const actorsForRender = this.getAliveActorsForRender(scene);
     for (const actor of actorsForRender) this.drawActor(c, actor);
     if (Array.isArray(scene?.effects) && scene.effects.length) this.drawEffects(c, scene.effects);
-    for (const actor of actorsForRender) { if (actor.isAlive?.()) this.drawHpBar(c, actor); }
+    // Unit HP bars removed by request; base HP bars retained.
     for (const base of (scene?.bases || [])) this.drawBaseHpBar(c, base);
     if (debug.showBounds) { this.drawCombatDebug(c, scene, debug); for (const actor of actorsForRender) this.drawActorDebug(c, actor, scene?.battleState || 'running'); this.drawEventLog(c, scene?.debugEvents || []); this.drawStageSpawnPreview(c, scene); }
     this.drawHud(c, scene, debug);

@@ -7,6 +7,10 @@ import {
   BCU_DEFAULT_PREF_LEVEL,
   resolveBcuUnitLevelConfig
 } from '../battle/bcu-runtime/BcuUnitLevelRuntime.js';
+import { ORB_ID, ORB_TRAIT_NAMES } from '../battle/bcu-runtime/BcuOrbModifier.js';
+import { PC_CORRES, getTalentAbilityName, getTalentInfoForUnit, isTalentAbilityNameRegistryLoaded, isTalentRegistryLoaded } from '../battle/bcu-runtime/BcuTalentInfoData.js';
+import { PC_CATEGORY, PC_SUBTYPE } from '../battle/bcu-runtime/BcuTalentModifier.js';
+import { loadBcuTalentAbilityNames, loadBcuTalentRegistry } from '../battle/bcu-runtime/BcuTalentRegistryLoader.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-bcu-unit-level.v4-premium-motion');
 const STYLE_ID = 'formation-character-tuning-overlay-style';
@@ -15,6 +19,18 @@ const LONG_PRESS_MS = 520;
 const LONG_PRESS_RING_DELAY_MS = 120;
 const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
 const DOG_MAGNIFICATION_MAX = 999900;
+const ORB_SLOT_COUNT = 3;
+const ORB_TYPE_OPTIONS = Object.freeze([
+  { code: 0, type: null, label: 'なし' },
+  { code: 1, type: ORB_ID.ATK, label: '攻撃' },
+  { code: 2, type: ORB_ID.RES, label: '体力' },
+  { code: 3, type: ORB_ID.STRONG, label: 'めっぽう強い' },
+  { code: 4, type: ORB_ID.MASSIVE, label: '超ダメージ' },
+  { code: 5, type: ORB_ID.RESISTANT, label: '打たれ強い' }
+]);
+const ORB_TYPE_CODE_BY_ID = Object.freeze(Object.fromEntries(ORB_TYPE_OPTIONS.filter((o) => o.type != null).map((o) => [o.type, o.code])));
+const ORB_TRAIT_LABELS = Object.freeze(['赤', '浮', '黒', 'メタル', '天使', 'エイリアン', 'ゾンビ', '古代種', '白', 'エヴァ', '魔女', '悪魔']);
+const ORB_GRADE_LABELS = Object.freeze(['D', 'C', 'B', 'A', 'S']);
 
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
 
@@ -182,6 +198,15 @@ html body.nyanko-ui-polish .formation-tuning-presets{display:grid;grid-template-
 html body.nyanko-ui-polish .formation-tuning-presets .formation-tuning-btn{width:auto;min-width:0;font-size:.92rem;background:#fff2a6;color:#140700;-webkit-text-fill-color:#140700;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.formation-tuning-stat{min-width:0;padding:8px 9px;border:3px solid #000;border-radius:14px;background:#111;color:#fff8d8;-webkit-text-fill-color:#fff8d8;text-align:center;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:900;text-shadow:none}.formation-tuning-stat b{display:block;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:1.1rem;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}.formation-tuning-stat small{display:block;margin-top:2px;color:#ffe8a8;-webkit-text-fill-color:#ffe8a8;font-size:.66rem;text-shadow:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body.nyanko-ui-polish .formation-tuning-footer{grid-column:2;display:grid;grid-template-columns:minmax(120px,.55fr) minmax(150px,1fr);gap:10px;padding:11px 13px;border-top:5px solid #000;background:#f6c240}.formation-tuning-reset{background:#fff2a6;color:#160800;-webkit-text-fill-color:#160800;text-shadow:none}.formation-tuning-save{font-size:1.25rem}
+html body.nyanko-ui-polish .formation-tuning-body{overflow-y:auto}
+html body.nyanko-ui-polish .formation-tuning-talents{display:grid;gap:8px;padding-top:4px;border-top:3px dashed rgba(0,0,0,.35)}
+html body.nyanko-ui-polish .formation-tuning-orbs{display:grid;gap:8px;padding-top:4px;border-top:3px dashed rgba(0,0,0,.35)}
+html body.nyanko-ui-polish .formation-tuning-orb-slot{display:grid;gap:8px;padding:9px;border:3px solid #000;border-radius:14px;background:#fff1b8}
+html body.nyanko-ui-polish .formation-tuning-orb-slot-title{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#1b1005;-webkit-text-fill-color:#1b1005;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.78rem;font-weight:1000;text-shadow:none}
+html body.nyanko-ui-polish .formation-tuning-orb-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper{grid-template-columns:42px minmax(48px,1fr) 42px}
+html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper .formation-tuning-btn[data-delta='-5'],html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper .formation-tuning-btn[data-delta='5']{display:none}
+html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-readout{height:42px;font-size:1.16rem}
 @media (max-width:860px){html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) auto;width:min(560px,calc(100vw - 18px))}.formation-tuning-hero{grid-row:auto!important;border-right:0!important;border-bottom:5px solid #000!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-rows:auto!important;justify-items:start!important;padding:10px 12px!important}.formation-tuning-portrait{width:82px!important;border-radius:14px!important}.formation-tuning-hero-meta{text-align:left!important}.formation-tuning-footer{grid-column:1!important}.formation-tuning-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-height:520px) and (orientation:landscape){html body.nyanko-ui-polish .formation-tuning-overlay{padding:6px calc(8px + env(safe-area-inset-right,0px)) 6px calc(8px + env(safe-area-inset-left,0px))}.formation-tuning-panel{width:min(900px,calc(100vw - 16px))!important;max-height:calc(100dvh - 12px)!important;grid-template-columns:190px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;border-width:5px!important;border-radius:18px!important}.formation-tuning-header{padding:7px 10px 6px!important}.formation-tuning-title strong{font-size:1.28rem!important}.formation-tuning-hero{grid-row:2/4!important;border-right:5px solid #000!important;border-bottom:0!important;display:grid!important;grid-template-columns:1fr!important;padding:10px!important}.formation-tuning-portrait{width:112px!important}.formation-tuning-body{padding:9px!important;gap:8px!important}.formation-tuning-control{padding:8px!important;gap:6px!important}.formation-tuning-stepper{grid-template-columns:50px 46px minmax(76px,1fr) 46px 50px!important;gap:6px!important}.formation-tuning-btn,.formation-tuning-save,.formation-tuning-reset{min-height:38px!important;font-size:.9rem!important}.formation-tuning-readout{height:42px!important;font-size:1.28rem!important}.formation-tuning-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important}.formation-tuning-stat{padding:6px!important}.formation-tuning-footer{grid-column:2!important;padding:8px 10px!important}}
 @media (max-width:430px){html body.nyanko-ui-polish .formation-tuning-stepper{grid-template-columns:44px 42px minmax(70px,1fr) 42px 44px;gap:5px}.formation-tuning-summary{grid-template-columns:1fr}.formation-tuning-footer{grid-template-columns:1fr 1.2fr}.formation-tuning-title strong{font-size:1.18rem!important}}
@@ -247,6 +272,120 @@ function stepper({ key, value, min, max, label, maxLabel, deltas = [-10, -1, 1, 
   </section>`;
 }
 
+function orbTypeOption(code) {
+  return ORB_TYPE_OPTIONS.find((o) => o.code === Number(code)) || ORB_TYPE_OPTIONS[0];
+}
+
+function traitIndexFromMask(mask) {
+  const value = Math.trunc(Number(mask) || 0);
+  for (let i = 0; i < ORB_TRAIT_NAMES.length - 1; i++) {
+    if ((value & (1 << i)) !== 0) return i;
+  }
+  return 0;
+}
+
+function savedOrbToDraft(triple) {
+  if (!Array.isArray(triple) || triple.length < 3) return { typeCode: 0, traitIndex: 0, grade: 0 };
+  const typeCode = ORB_TYPE_CODE_BY_ID[Math.trunc(Number(triple[0]) || 0)] || 0;
+  return {
+    typeCode,
+    traitIndex: clampInt(traitIndexFromMask(triple[1]), 0, ORB_TRAIT_LABELS.length - 1),
+    grade: clampInt(triple[2], 0, ORB_GRADE_LABELS.length - 1)
+  };
+}
+
+function draftOrbToTriple(orb) {
+  const opt = orbTypeOption(orb?.typeCode);
+  if (opt.type == null) return null;
+  const traitIndex = clampInt(orb?.traitIndex, 0, ORB_TRAIT_LABELS.length - 1);
+  const grade = clampInt(orb?.grade, 0, ORB_GRADE_LABELS.length - 1);
+  return [opt.type, 1 << traitIndex, grade];
+}
+
+function ensureDraftOrbs(draft) {
+  if (Array.isArray(draft.orbs) && draft.orbs.length === ORB_SLOT_COUNT) return draft.orbs;
+  const saved = FormationStore.getOrbEquipment(draft.characterId) || [];
+  draft.orbs = Array.from({ length: ORB_SLOT_COUNT }, (_, i) => savedOrbToDraft(saved[i]));
+  return draft.orbs;
+}
+
+function orbValueLabel(kind, value) {
+  if (kind === 'type') return orbTypeOption(value).label;
+  if (kind === 'trait') return ORB_TRAIT_LABELS[clampInt(value, 0, ORB_TRAIT_LABELS.length - 1)] || ORB_TRAIT_LABELS[0];
+  if (kind === 'grade') return ORB_GRADE_LABELS[clampInt(value, 0, ORB_GRADE_LABELS.length - 1)] || ORB_GRADE_LABELS[0];
+  return String(value);
+}
+
+function renderOrbSection(draft) {
+  const orbs = ensureDraftOrbs(draft);
+  const slots = orbs.map((orb, i) => {
+    const typeLabel = orbValueLabel('type', orb.typeCode);
+    return `<section class='formation-tuning-orb-slot'>
+      <div class='formation-tuning-orb-slot-title'><strong>本能玉 ${i + 1}</strong><span>${esc(typeLabel)}</span></div>
+      <div class='formation-tuning-orb-grid'>
+        ${stepper({ key: `orb-${i}-type`, value: orb.typeCode, min: 0, max: ORB_TYPE_OPTIONS.length - 1, label: '種類', maxLabel: typeLabel, deltas: [-5, -1, 1, 5] })}
+        ${stepper({ key: `orb-${i}-trait`, value: orb.traitIndex, min: 0, max: ORB_TRAIT_LABELS.length - 1, label: '属性', maxLabel: orbValueLabel('trait', orb.traitIndex), deltas: [-5, -1, 1, 5] })}
+        ${stepper({ key: `orb-${i}-grade`, value: orb.grade, min: 0, max: ORB_GRADE_LABELS.length - 1, label: '等級', maxLabel: orbValueLabel('grade', orb.grade), deltas: [-5, -1, 1, 5] })}
+      </div>
+    </section>`;
+  }).join('');
+  const equipped = orbs.filter((orb) => orbTypeOption(orb.typeCode).type != null).length;
+  return `<section class='formation-tuning-orbs'><div class='formation-tuning-control-head'><strong>本能玉</strong><span>${equipped ? `${equipped}/${ORB_SLOT_COUNT}` : '未装備'}</span></div>${slots}</section>`;
+}
+
+function catStatsId(characterId) {
+  // Catalog characters carry no statsId; the BCU unit id is in the id (cat-unit-<id>-<form>).
+  const c = getCharacterById(characterId);
+  if (Number.isFinite(Number(c?.statsId))) return Number(c.statsId);
+  const m = /^cat-unit-(\d+)-[fcsu]$/.exec(String(characterId ?? ''));
+  return m ? Number.parseInt(m[1], 10) : null;
+}
+
+function talentInfoFor(characterId) {
+  const id = catStatsId(characterId);
+  return id == null ? [] : (getTalentInfoForUnit(id) || []);
+}
+
+function talentEffectLabel(abilityID) {
+  const localized = getTalentAbilityName(abilityID);
+  if (localized) return localized;
+  const row = PC_CORRES[abilityID];
+  if (row && row[0] === PC_CATEGORY.PC_BASE && row[1] === PC_SUBTYPE.PC2_ATK) return '攻撃力UP';
+  if (row && row[0] === PC_CATEGORY.PC_BASE && row[1] === PC_SUBTYPE.PC2_HP) return '体力UP';
+  return `本能 #${abilityID}`;
+}
+
+function talentAffectsStats(abilityID) {
+  const row = PC_CORRES[abilityID];
+  return !!row && row[0] === PC_CATEGORY.PC_BASE && (row[1] === PC_SUBTYPE.PC2_ATK || row[1] === PC_SUBTYPE.PC2_HP);
+}
+
+// Align draft.talents to the unit's talent slots, seeding from saved levels.
+function ensureDraftTalents(draft) {
+  const info = talentInfoFor(draft.characterId);
+  if (Array.isArray(draft.talents) && draft.talents.length === info.length) return info;
+  const saved = FormationStore.getTalentLevels(draft.characterId) || [];
+  const prev = Array.isArray(draft.talents) ? draft.talents : [];
+  draft.talents = info.map((slot, i) => clampInt(saved[i] ?? prev[i] ?? 0, 0, Math.max(0, toInt(slot[1], 0))));
+  return info;
+}
+
+function renderTalentSection(draft) {
+  const info = ensureDraftTalents(draft);
+  const loaded = isTalentRegistryLoaded();
+  const note = info.length ? (loaded ? '攻撃/体力のみ戦闘に反映' : '読込中…') : (loaded ? 'このキャラに本能なし' : '読込中…');
+  const controls = info.map((slot, i) => stepper({
+    key: `talent-${i}`,
+    value: draft.talents[i],
+    min: 0,
+    max: Math.max(0, toInt(slot[1], 0)),
+    label: talentEffectLabel(slot[0]) + (talentAffectsStats(slot[0]) ? '' : '（参考）'),
+    maxLabel: `MAX ${toInt(slot[1], 0)}`,
+    deltas: [-5, -1, 1, 5]
+  })).join('');
+  return `<section class='formation-tuning-talents'><div class='formation-tuning-control-head'><strong>本能</strong><span>${esc(note)}</span></div>${controls}</section>`;
+}
+
 function renderCatPanel(editor, draft) {
   const { character, metadata, resolved } = resolveCatState(draft.characterId, draft);
   if (!character) return '';
@@ -276,6 +415,8 @@ function renderCatPanel(editor, draft) {
         <button type='button' class='formation-tuning-btn' data-tuning-preset='cat-max'>MAX</button>
         <button type='button' class='formation-tuning-btn' data-tuning-preset='cat-default'>既定</button>
       </div>
+      ${renderTalentSection(draft)}
+      ${renderOrbSection(draft)}
     </main>
     <footer class='formation-tuning-footer'><button type='button' class='formation-tuning-reset' data-tuning-reset='1'>リセット</button><button type='button' class='formation-tuning-save' data-tuning-save='1'>決定</button></footer>
   </div>`;
@@ -377,6 +518,15 @@ function openTuningOverlay(editor, characterId, slotIndex = null) {
   editor.activeSlot = Number.isFinite(Number(slotIndex)) ? Number(slotIndex) : editor.activeSlot;
   editor.characterTuningDraft = createDraft(editor, characterId);
   renderTuningOverlay(editor);
+  // Talent definitions load at battle boot; in the editor, fetch them on demand
+  // so the 本能 section can populate, then re-render if still open for this unit.
+  if (character.faction === 'cat' && (!isTalentRegistryLoaded() || !isTalentAbilityNameRegistryLoaded())) {
+    const load = isTalentRegistryLoaded() ? loadBcuTalentAbilityNames() : loadBcuTalentRegistry();
+    load.then(() => {
+      const draft = editor.characterTuningDraft;
+      if (draft?.characterId === characterId) { draft.talents = null; renderTuningOverlay(editor); }
+    }).catch(() => {});
+  }
   return true;
 }
 
@@ -404,6 +554,22 @@ function stepDraft(editor, key, delta) {
     const state = resolveCatState(draft.characterId, draft);
     if (key === 'level') draft.level = clampInt((draft.level ?? state.resolved.level) + delta, 1, state.resolved.maxLevel);
     if (key === 'plusLevel') draft.plusLevel = clampInt((draft.plusLevel ?? state.resolved.plusLevel) + delta, 0, state.resolved.maxPlusLevel);
+    if (key.startsWith('talent-')) {
+      const info = ensureDraftTalents(draft);
+      const idx = toInt(key.slice(7), -1);
+      if (idx >= 0 && idx < info.length) draft.talents[idx] = clampInt((draft.talents[idx] ?? 0) + delta, 0, Math.max(0, toInt(info[idx][1], 0)));
+    }
+    if (key.startsWith('orb-')) {
+      const m = /^orb-(\d+)-(type|trait|grade)$/.exec(key);
+      if (!m) return;
+      const orbs = ensureDraftOrbs(draft);
+      const idx = toInt(m?.[1], -1);
+      if (idx >= 0 && idx < orbs.length) {
+        const field = m[2] === 'type' ? 'typeCode' : m[2] === 'trait' ? 'traitIndex' : 'grade';
+        const max = m[2] === 'type' ? ORB_TYPE_OPTIONS.length - 1 : m[2] === 'trait' ? ORB_TRAIT_LABELS.length - 1 : ORB_GRADE_LABELS.length - 1;
+        orbs[idx][field] = clampInt((orbs[idx][field] ?? 0) + delta, 0, max);
+      }
+    }
   } else if (key === 'percent') {
     draft.percent = clampInt((draft.percent ?? DOG_DEFAULT_MAGNIFICATION_PERCENT) + delta, 1, 999900);
   }
@@ -420,6 +586,22 @@ function setDraftInput(editor, key, value, { live = false } = {}) {
     const state = resolveCatState(draft.characterId, draft);
     if (key === 'level') draft.level = clampInt(value, 1, state.resolved.maxLevel);
     if (key === 'plusLevel') draft.plusLevel = clampInt(value, 0, state.resolved.maxPlusLevel);
+    if (key.startsWith('talent-')) {
+      const info = ensureDraftTalents(draft);
+      const idx = toInt(key.slice(7), -1);
+      if (idx >= 0 && idx < info.length) draft.talents[idx] = clampInt(value, 0, Math.max(0, toInt(info[idx][1], 0)));
+    }
+    if (key.startsWith('orb-')) {
+      const m = /^orb-(\d+)-(type|trait|grade)$/.exec(key);
+      if (!m) return;
+      const orbs = ensureDraftOrbs(draft);
+      const idx = toInt(m?.[1], -1);
+      if (idx >= 0 && idx < orbs.length) {
+        const field = m[2] === 'type' ? 'typeCode' : m[2] === 'trait' ? 'traitIndex' : 'grade';
+        const max = m[2] === 'type' ? ORB_TYPE_OPTIONS.length - 1 : m[2] === 'trait' ? ORB_TRAIT_LABELS.length - 1 : ORB_GRADE_LABELS.length - 1;
+        orbs[idx][field] = clampInt(value, 0, max);
+      }
+    }
   } else if (key === 'percent') {
     draft.percent = clampInt(value, 1, DOG_MAGNIFICATION_MAX);
   }
@@ -482,8 +664,15 @@ function saveDraft(editor) {
   let formation;
   if (draft.faction === 'cat') {
     const state = resolveCatState(draft.characterId, draft);
-    formation = FormationStore.setCatUnitLevel(draft.characterId, { level: state.resolved.level, plusLevel: state.resolved.plusLevel, source: 'formation-tuning-overlay-cat' });
-    syncFormation(editor, formation, `${character.label || draft.characterId}: Lv${state.resolved.level}+${state.resolved.plusLevel}`);
+    FormationStore.setCatUnitLevel(draft.characterId, { level: state.resolved.level, plusLevel: state.resolved.plusLevel, source: 'formation-tuning-overlay-cat' });
+    ensureDraftTalents(draft);
+    ensureDraftOrbs(draft);
+    // setTalentLevels drops all-zero arrays, so this also clears talents when reset.
+    FormationStore.setTalentLevels(draft.characterId, draft.talents || []);
+    formation = FormationStore.setOrbEquipment(draft.characterId, (draft.orbs || []).map(draftOrbToTriple).filter(Boolean));
+    const tCount = (draft.talents || []).filter((l) => l > 0).length;
+    const oCount = (draft.orbs || []).filter((orb) => orbTypeOption(orb.typeCode).type != null).length;
+    syncFormation(editor, formation, `${character.label || draft.characterId}: Lv${state.resolved.level}+${state.resolved.plusLevel}${tCount ? ` / 本能${tCount}` : ''}${oCount ? ` / 玉${oCount}` : ''}`);
   } else {
     const percent = clampInt(draft.percent, 1, 999900);
     formation = FormationStore.setDogUnitMagnification(draft.characterId, { percent, source: 'formation-tuning-overlay-dog' });
@@ -498,8 +687,10 @@ function resetDraft(editor) {
   const character = getCharacterById(draft.characterId);
   let formation;
   if (draft.faction === 'cat') {
-    formation = FormationStore.clearCatUnitLevel(draft.characterId);
-    syncFormation(editor, formation, `${character?.label || draft.characterId}: 個別Lv解除`);
+    FormationStore.clearCatUnitLevel(draft.characterId);
+    FormationStore.clearTalentLevels(draft.characterId);
+    formation = FormationStore.clearOrbEquipment(draft.characterId);
+    syncFormation(editor, formation, `${character?.label || draft.characterId}: 個別Lv/本能/本能玉解除`);
   } else {
     formation = FormationStore.clearDogUnitMagnification(draft.characterId);
     syncFormation(editor, formation, `${character?.label || draft.characterId}: 100%`);
@@ -519,10 +710,14 @@ function decorateSlotBadges(editor) {
     let label = '';
     if (character.faction === 'cat') {
       const saved = FormationStore.getCatUnitLevel(characterId);
+      const talents = FormationStore.getTalentLevels(characterId) || [];
+      const orbs = FormationStore.getOrbEquipment(characterId) || [];
       if (saved) {
         const state = resolveCatState(characterId);
         label = `Lv${state.resolved.level}${state.resolved.plusLevel ? `+${state.resolved.plusLevel}` : ''}`;
       }
+      if (talents.some((l) => l > 0)) label = label ? `${label}/本能` : '本能';
+      if (orbs.length) label = label ? `${label}/玉${orbs.length}` : `玉${orbs.length}`;
     } else if (character.faction === 'dog') {
       const saved = FormationStore.getDogUnitMagnification(characterId);
       const percent = saved?.percent ?? DOG_DEFAULT_MAGNIFICATION_PERCENT;
@@ -665,6 +860,8 @@ export function installFormationEditorBcuUnitLevelPatch() {
       faction: character?.faction || null,
       globalCatPrefLevel: FormationStore.load().options?.bcuCatUnitLevel || null,
       catUnitLevel: FormationStore.getCatUnitLevel(characterId),
+      catTalentLevels: character?.faction === 'cat' ? FormationStore.getTalentLevels(characterId) : null,
+      catOrbEquipment: character?.faction === 'cat' ? FormationStore.getOrbEquipment(characterId) : null,
       dogUnitMagnification: FormationStore.getDogUnitMagnification(characterId),
       catResolved: catState?.resolved || null,
       dogResolved: dogState ? { percent: dogState.percent } : null,

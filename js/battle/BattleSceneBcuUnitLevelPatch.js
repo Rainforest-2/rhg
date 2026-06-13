@@ -1,6 +1,9 @@
 import { BattleScene } from './BattleScene.js';
 import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT } from './FormationStore.js';
 import { BCU_DEFAULT_PREF_LEVEL, resolveBcuUnitLevelConfig } from './bcu-runtime/BcuUnitLevelRuntime.js';
+import { computeFrontRowForms, resolveComboModifiersForFrontRow } from './bcu-runtime/BcuComboStatModifier.js';
+import { parseOrb } from './bcu-runtime/BcuOrbModifier.js';
+import { getTalentInfoForUnit } from './bcu-runtime/BcuTalentInfoData.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.scene-bcu-unit-level-production.v2-per-character');
 
@@ -150,9 +153,56 @@ function withDogUnitMagnification(unitDef, opts = getFormationLevelOptions()) {
   };
 }
 
+function withBcuComboModifiers(unitDef, opts = getFormationLevelOptions()) {
+  if (!unitDef || unitDef.statsType !== 'unit') return unitDef;
+  // Combo activation reads the front row (page 0) of the formation. When no
+  // combo registry is loaded this resolves to null and stats are unchanged.
+  const modifiers = resolveComboModifiersForFrontRow(computeFrontRowForms(opts.formation));
+  if (!modifiers) return unitDef;
+  return { ...unitDef, bcuComboModifiers: modifiers };
+}
+
+// Treasure is always maxed by design (no per-game treasure configuration):
+// getAtkMulti/getDefMulti = 1 + 300*0.005 = 2.5x for every cat unit. An explicit
+// formation override (if ever set) still wins.
+const MAX_TREASURE_POINTS = 300;
+
+function withBcuTreasure(unitDef, opts = getFormationLevelOptions()) {
+  if (!unitDef || unitDef.statsType !== 'unit') return unitDef;
+  const tre = opts.formation?.options?.bcuTreasure;
+  const atk = Math.trunc(Number(tre?.trea?.atk) || 0) || MAX_TREASURE_POINTS;
+  const def = Math.trunc(Number(tre?.trea?.def) || 0) || MAX_TREASURE_POINTS;
+  return { ...unitDef, bcuTreasure: { trea: [atk, def] } }; // [T_ATK, T_DEF]
+}
+
+function withBcuOrbEquipment(unitDef, opts = getFormationLevelOptions()) {
+  if (!unitDef || unitDef.statsType !== 'unit') return unitDef;
+  const hit = firstOptionHit(opts.formation?.options?.bcuOrbEquipment || {}, unitDef);
+  if (!Array.isArray(hit.value) || !hit.value.length) return unitDef;
+  const orbs = hit.value.map(parseOrb).filter(Boolean);
+  if (!orbs.length) return unitDef;
+  return { ...unitDef, bcuEquippedOrbs: orbs };
+}
+
+function withBcuTalents(unitDef, opts = getFormationLevelOptions()) {
+  if (!unitDef || unitDef.statsType !== 'unit') return unitDef;
+  const hit = firstOptionHit(opts.formation?.options?.bcuTalentLevels || {}, unitDef);
+  if (!Array.isArray(hit.value) || !hit.value.some((l) => l > 0)) return unitDef;
+  // Pair the selected levels with the unit's PCoin definitions (registry, loaded
+  // at boot). Without definitions the levels are carried but produce no multiplier.
+  const info = getTalentInfoForUnit(unitDef.statsId);
+  return { ...unitDef, bcuTalentLevels: hit.value, ...(info ? { bcuTalentInfo: info } : {}) };
+}
+
 function withFormationCombatTuning(scene, unitDef) {
   const opts = getFormationLevelOptions();
-  return withDogUnitMagnification(withBcuCatUnitLevel(scene, unitDef, opts), opts);
+  let def = withBcuCatUnitLevel(scene, unitDef, opts);
+  def = withDogUnitMagnification(def, opts);
+  def = withBcuComboModifiers(def, opts);
+  def = withBcuTreasure(def, opts);
+  def = withBcuOrbEquipment(def, opts);
+  def = withBcuTalents(def, opts);
+  return def;
 }
 
 export function installBattleSceneBcuUnitLevelPatch() {

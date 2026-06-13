@@ -1,5 +1,6 @@
 import { BCU_ABI, BCU_TRAITS } from './BcuCombatModel.js';
 import { isBcuHitProcDisabled } from './ProcResolver.js';
+import { getOrbAttackBonus, getOrbResist, getOrbGoodFactor, getOrbMassiveFactor, getOrbGoodDefFactor, getOrbResistantDefFactor } from './bcu-runtime/BcuOrbModifier.js';
 
 const DEFAULT_MAX_FRUIT = 3;
 
@@ -54,6 +55,14 @@ function getAttackerAbi(attacker) {
 function getTargetAbi(target) {
   const cm = getCombatModel(target);
   return Number(cm?.ability?.abi ?? target?.bcuAbi ?? target?.rawStats?.bcuAbi ?? target?.abilityModel?.bcuAbi ?? 0) || 0;
+}
+
+function getEquippedOrbs(entity) {
+  const orbs = entity?.bcuEquippedOrbs
+    || entity?.stats?.bcuEquippedOrbs
+    || entity?.rawStats?.bcuEquippedOrbs
+    || getCombatModel(entity)?.bcuEquippedOrbs;
+  return Array.isArray(orbs) ? orbs : [];
 }
 
 function getAttackerProc(attacker) {
@@ -249,15 +258,15 @@ export class DamageAbilityResolver {
       baseDamage: ans,
       finalDamage: ans,
       multiplier: 1,
-      modifiers: { critical: 1, baseDestroyer: 1, metal: 1, strong: 1, resistant: 1, massiveDamage: 1, insaneDamage: 1, metalKiller: 1, strongAttack: 1, beastHunter: 1, baronKiller: 1, sageSlayer: 1, villainKiller: 1, witchKiller: 1, evaKiller: 1 },
-      applied: { critical: false, baseDestroyer: false, metal: false, strong: false, resistant: false, massiveDamage: false, insaneDamage: false, metalKiller: false, strongAttack: false, beastHunter: false, baronKiller: false, sageSlayer: false, villainKiller: false, witchKiller: false, evaKiller: false },
+      modifiers: { critical: 1, baseDestroyer: 1, metal: 1, strong: 1, resistant: 1, massiveDamage: 1, insaneDamage: 1, metalKiller: 1, strongAttack: 1, beastHunter: 1, baronKiller: 1, sageSlayer: 1, villainKiller: 1, witchKiller: 1, evaKiller: 1, orb: 1 },
+      applied: { critical: false, baseDestroyer: false, metal: false, strong: false, resistant: false, massiveDamage: false, insaneDamage: false, metalKiller: false, strongAttack: false, beastHunter: false, baronKiller: false, sageSlayer: false, villainKiller: false, witchKiller: false, evaKiller: false, orb: false },
       appliedDetails: [],
       notes: [],
       implementationStatus: {
         resolver: 'DamageAbilityResolver',
         mode: 'bcu-getDamage-order-plus-fact-only-killers',
         exactScope: ['DataUnit/DataEnemy CSV flags', 'EEnemy.getDamage primary damage abilities', 'EUnit.getDamage primary defense abilities', 'Entity.critCalc metal/critical', 'Entity.damaged metal-killer add-damage', 'P_BSTHUNT beast hunter damage multipliers', 'documented fixed killer/special damage multipliers with existing ability bits/proc fields'],
-        omittedRuntimeState: ['orbs', 'combos', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'sage status resistance']
+        omittedRuntimeState: ['combos', 'barrier/shield gating', 'wave/surge/volcano object damage class dispatch', 'full Trait targetForms special cases', 'sage status resistance']
       },
       debug: {
         rawAbi: event?.rawAbi ?? null,
@@ -291,16 +300,36 @@ export class DamageAbilityResolver {
       __target: { value: target, enumerable: false }
     });
 
+    // Attack-orb (ORB_ATK) additive bonus is part of the unit's attack value, so
+    // it folds into the base before trait/ability multipliers (BCU EUnit.getOrbAtk
+    // is added in AtkModelUnit before getDamage runs).
+    if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target)) {
+      const orbs = getEquippedOrbs(attacker);
+      if (orbs.length) {
+        const targetTraits = getTraitList(target);
+        const bonus = getOrbAttackBonus(orbs, targetTraits, ans);
+        if (bonus > 0) {
+          const before = ans; ans = ans + bonus;
+          result.modifiers.orb *= before === 0 ? 1 : ans / before;
+          pushStep(result, 'orb', before, ans, 'BCU EUnit.getOrbAtk attack-orb additive bonus', { bonus, targetTraits });
+        }
+      }
+    }
+
     if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target) && sharedInfo.compatible && !attackerAbilitySuppressed) {
       if (hasAttackerAbi(attacker, BCU_ABI.AB_GOOD)) {
-        const before = ans; ans = bcuInt(ans * getGoodAtk(sharedInfo.shared, 0));
+        // getOrbGoodFactor reduces to getGoodAtk when no ORB_STRONG orbs are equipped.
+        const factor = getOrbGoodFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboGoodInc: 0 });
+        const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.strong *= before === 0 ? 1 : ans / before;
-        pushStep(result, 'strong', before, ans, 'BCU EEnemy.getDamage AB_GOOD getGOODATK', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared) });
+        pushStep(result, 'strong', before, ans, 'BCU EEnemy.getDamage AB_GOOD getOrbGood (getGOODATK + ORB_STRONG)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
       if (hasAttackerAbi(attacker, BCU_ABI.AB_MASSIVE)) {
-        const before = ans; ans = bcuInt(ans * getMassiveAtk(sharedInfo.shared, 0));
+        // getOrbMassiveFactor reduces to getMassiveAtk when no ORB_MASSIVE orbs are equipped.
+        const factor = getOrbMassiveFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboMassiveInc: 0 });
+        const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.massiveDamage *= before === 0 ? 1 : ans / before;
-        pushStep(result, 'massiveDamage', before, ans, 'BCU EEnemy.getDamage AB_MASSIVE getMASSIVEATK', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared) });
+        pushStep(result, 'massiveDamage', before, ans, 'BCU EEnemy.getDamage AB_MASSIVE getOrbMassive (getMASSIVEATK + ORB_MASSIVE)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
       if (hasAttackerAbi(attacker, BCU_ABI.AB_MASSIVES)) {
         const before = ans; ans = bcuInt(ans * getMassivesAtk(sharedInfo.shared));
@@ -313,14 +342,18 @@ export class DamageAbilityResolver {
 
     if (targetType === 'actor' && isEnemyAttackAgainstUnit(attacker, target) && !targetAbilitySuppressed) {
       if (hasTargetAbi(target, BCU_ABI.AB_GOOD)) {
-        const before = ans; ans = bcuInt(ans * getGoodDef(sharedInfo.shared, 0));
+        // getOrbGoodDefFactor reduces to getGoodDef when no ORB_STRONG orbs are equipped.
+        const factor = getOrbGoodDefFactor({ orbs: getEquippedOrbs(target), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboGoodInc: 0 });
+        const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.strong *= before === 0 ? 1 : ans / before;
-        pushStep(result, 'strong', before, ans, 'BCU EUnit.getDamage target AB_GOOD getGOODDEF', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared) });
+        pushStep(result, 'strong', before, ans, 'BCU EUnit.getDamage target AB_GOOD getGOODDEF (+ ORB_STRONG def)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
       if (hasTargetAbi(target, BCU_ABI.AB_RESIST)) {
-        const before = ans; ans = bcuInt(ans * getResistDef(sharedInfo.shared, 0));
+        // getOrbResistantDefFactor reduces to getResistDef when no ORB_RESISTANT orbs are equipped.
+        const factor = getOrbResistantDefFactor({ orbs: getEquippedOrbs(target), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboResistInc: 0 });
+        const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.resistant *= before === 0 ? 1 : ans / before;
-        pushStep(result, 'resistant', before, ans, 'BCU EUnit.getDamage target AB_RESIST getRESISTDEF', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared) });
+        pushStep(result, 'resistant', before, ans, 'BCU EUnit.getDamage target AB_RESIST getRESISTDEF (+ ORB_RESISTANT def)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
       if (sharedInfo.compatible && hasTargetAbi(target, BCU_ABI.AB_RESISTS)) {
         const before = ans; ans = bcuInt(ans * getResistsDef(sharedInfo.shared));
@@ -359,6 +392,21 @@ export class DamageAbilityResolver {
       result.notes.push('attacker-seal-suppressed-strongAttack-proc');
     } else if (hitAbiProcDisabled && strongAttackProb > 0) {
       result.notes.push('bcu-hit-abi-disabled-strongAttack-proc');
+    }
+
+    // Resist-orb (ORB_RES) reduction on the defending unit, applied near the end
+    // before critical (BCU EUnit.getDamage: ans = getOrbRes(atk.trait, ans) then critCalc).
+    if (targetType === 'actor' && isEnemyAttackAgainstUnit(attacker, target)) {
+      const orbs = getEquippedOrbs(target);
+      if (orbs.length) {
+        const attackTraits = getTraitList(attacker);
+        const before = ans; const reduced = getOrbResist(orbs, attackTraits, ans);
+        if (reduced !== before) {
+          ans = reduced;
+          result.modifiers.orb *= before === 0 ? 1 : ans / before;
+          pushStep(result, 'orb', before, ans, 'BCU EUnit.getOrbRes resist-orb reduction', { attackTraits });
+        }
+      }
     }
 
     const targetIsMetal = isTargetMetalForDamage(attacker, target, targetType);

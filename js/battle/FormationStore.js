@@ -20,8 +20,21 @@ export const DEFAULT_FORMATION_OPTIONS = Object.freeze({
     source: 'BCU CommonStatic.Config.prefLevel default'
   }),
   bcuCatUnitLevels: Object.freeze({}),
-  dogUnitMagnifications: Object.freeze({})
+  dogUnitMagnifications: Object.freeze({}),
+  // Treasure (お宝) / orb-equipment / talent (本能) input state. Defaults are
+  // empty so all damage modifiers are no-ops until the player configures them.
+  bcuTreasure: Object.freeze({ trea: Object.freeze({ atk: 0, def: 0 }), fruit: Object.freeze({}) }),
+  bcuOrbEquipment: Object.freeze({}),
+  bcuTalentLevels: Object.freeze({})
 });
+
+// BCU caps: treasure points 0..300 (Treasure.java), fruit 0..300, orb grades 0..4,
+// orb type ids 0..ORB_TOT-1 (Data.ORB_TOT = 26). Kept inline to avoid coupling
+// this low-level store to the battle runtime modules.
+const TREASURE_POINT_MAX = 300;
+const FRUIT_TRAITS = Object.freeze(['red', 'floating', 'black', 'angel', 'metal', 'alien', 'zombie']);
+const ORB_TYPE_MAX = 25;
+const ORB_GRADE_MAX = 4;
 
 export const DEFAULT_FORMATION = Object.freeze({
   version: FORMATION_VERSION,
@@ -97,11 +110,62 @@ function normalizeDogMagnificationMap(options = {}) {
   return out;
 }
 
+function clampPoint(value, max) { return Math.max(0, Math.min(max, toInt(value, 0) ?? 0)); }
+
+function normalizeTreasureOptions(options = {}) {
+  const raw = options?.bcuTreasure || {};
+  const trea = raw.trea || {};
+  const fruitRaw = raw.fruit || {};
+  const fruit = {};
+  for (const name of FRUIT_TRAITS) {
+    const v = clampPoint(fruitRaw[name], TREASURE_POINT_MAX);
+    if (v) fruit[name] = v;
+  }
+  return { trea: { atk: clampPoint(trea.atk, TREASURE_POINT_MAX), def: clampPoint(trea.def, TREASURE_POINT_MAX) }, fruit };
+}
+
+function normalizeOrbTriple(triple) {
+  if (!Array.isArray(triple) || triple.length < 3) return null;
+  const type = toInt(triple[0]);
+  const trait = toInt(triple[1], 0) ?? 0;
+  const grade = toInt(triple[2]);
+  if (!Number.isInteger(type) || type < 0 || type > ORB_TYPE_MAX) return null;
+  if (!Number.isInteger(grade) || grade < 0 || grade > ORB_GRADE_MAX) return null;
+  return [type, trait, grade];
+}
+
+function normalizeOrbEquipmentMap(options = {}) {
+  const raw = options?.bcuOrbEquipment || {};
+  const out = {};
+  for (const [key, list] of Object.entries(raw || {})) {
+    const cid = cleanCharacterKey(key);
+    if (!cid || !Array.isArray(list)) continue;
+    const orbs = list.map(normalizeOrbTriple).filter(Boolean);
+    if (orbs.length) out[cid] = orbs;
+  }
+  return out;
+}
+
+function normalizeTalentLevelsMap(options = {}) {
+  const raw = options?.bcuTalentLevels || {};
+  const out = {};
+  for (const [key, levels] of Object.entries(raw || {})) {
+    const cid = cleanCharacterKey(key);
+    if (!cid || !Array.isArray(levels)) continue;
+    const norm = levels.map((l) => Math.max(0, toInt(l, 0) ?? 0));
+    if (norm.some((l) => l > 0)) out[cid] = norm;
+  }
+  return out;
+}
+
 function cloneOptions(options = {}) {
   return {
     bcuCatUnitLevel: normalizeCatUnitLevelOptions(options),
     bcuCatUnitLevels: normalizeCatUnitLevelMap(options),
-    dogUnitMagnifications: normalizeDogMagnificationMap(options)
+    dogUnitMagnifications: normalizeDogMagnificationMap(options),
+    bcuTreasure: normalizeTreasureOptions(options),
+    bcuOrbEquipment: normalizeOrbEquipmentMap(options),
+    bcuTalentLevels: normalizeTalentLevelsMap(options)
   };
 }
 
@@ -236,6 +300,46 @@ export const FormationStore = {
     const key = getCharacterOptionKey(characterId);
     if (!key) return this.load();
     return saveWithOptions((options) => { delete options.dogUnitMagnifications[key]; });
+  },
+  getTreasure() { return getFormationOptions(this.load()).bcuTreasure; },
+  setTreasure(treasureConfig = {}) {
+    return saveWithOptions((options) => { options.bcuTreasure = normalizeTreasureOptions({ bcuTreasure: treasureConfig }); });
+  },
+  getOrbEquipment(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    return key ? (getFormationOptions(this.load()).bcuOrbEquipment[key] || null) : null;
+  },
+  setOrbEquipment(characterId, orbTriples = []) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    const normalized = normalizeOrbEquipmentMap({ bcuOrbEquipment: { [key]: orbTriples } })[key] || null;
+    return saveWithOptions((options) => {
+      if (normalized) options.bcuOrbEquipment[key] = normalized;
+      else delete options.bcuOrbEquipment[key];
+    });
+  },
+  clearOrbEquipment(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    return saveWithOptions((options) => { delete options.bcuOrbEquipment[key]; });
+  },
+  getTalentLevels(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    return key ? (getFormationOptions(this.load()).bcuTalentLevels[key] || null) : null;
+  },
+  setTalentLevels(characterId, levels = []) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    const normalized = normalizeTalentLevelsMap({ bcuTalentLevels: { [key]: levels } })[key] || null;
+    return saveWithOptions((options) => {
+      if (normalized) options.bcuTalentLevels[key] = normalized;
+      else delete options.bcuTalentLevels[key];
+    });
+  },
+  clearTalentLevels(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    return saveWithOptions((options) => { delete options.bcuTalentLevels[key]; });
   },
   setSlot(index, characterId) {
     const i = Math.floor(index); if (i < 0 || i >= LINEUP_TOTAL) return this.load();

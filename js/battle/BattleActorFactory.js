@@ -7,6 +7,9 @@ import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.j
 import { bcuRangeToWorld, bcuSpeedToWorldPerSecond, bcuWidthToWorld } from './BattleWorldUnits.js';
 import { ActorStatsModel } from './ActorStatsModel.js';
 import { applyBcuUnitLevelToStats } from './bcu-runtime/BcuUnitLevelRuntime.js';
+import { applyBcuComboModifiersToStats } from './bcu-runtime/BcuComboStatModifier.js';
+import { applyTreasureToStats } from './bcu-runtime/BcuTreasureModifier.js';
+import { applyTalentToStats } from './bcu-runtime/BcuTalentInfoData.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 export const TEMPLATE_LOAD_LEVEL = { STATS:'stats', RENDER_CORE:'render-core', SPAWN_READY:'spawn-ready', FULL_VISUAL:'full-visual' };
@@ -15,7 +18,20 @@ const BCU_TIMER_FPS = 1000 / 33;
 
 function resolveTemplateStats(statsLoader, unitDef, baseStats) {
   if (unitDef.statsType === 'enemy' && unitDef.stageStatModifiers) return statsLoader.applyStageEnemyMagnification(baseStats, unitDef.stageStatModifiers);
-  if (unitDef.statsType === 'unit' && unitDef.bcuUnitLevel) return applyBcuUnitLevelToStats(baseStats, unitDef.bcuUnitLevel);
+  if (unitDef.statsType === 'unit') {
+    // BCU applies level magnification, then the construction-time multipliers
+    // (combo C_ATK/C_DEF and treasure getAtkMulti/getDefMulti). Combo and
+    // treasure are multiplicative on the leveled base, so order is commutative.
+    let s = unitDef.bcuUnitLevel ? applyBcuUnitLevelToStats(baseStats, unitDef.bcuUnitLevel) : baseStats;
+    if (unitDef.bcuComboModifiers) s = applyBcuComboModifiersToStats(s, unitDef.bcuComboModifiers);
+    if (unitDef.bcuTreasure?.trea) s = applyTreasureToStats(s, unitDef.bcuTreasure.trea);
+    // Talent (PCoin) attack/HP multipliers are construction-time (commutative
+    // with combo/treasure); applied when both definitions and selected levels exist.
+    if (unitDef.bcuTalentInfo && unitDef.bcuTalentLevels) s = applyTalentToStats(s, unitDef.bcuTalentInfo, unitDef.bcuTalentLevels);
+    // Equipped orbs are surfaced for the resolver (orb damage is per-trait, per-hit).
+    if (unitDef.bcuEquippedOrbs) s = { ...s, bcuEquippedOrbs: unitDef.bcuEquippedOrbs };
+    return s;
+  }
   return baseStats;
 }
 

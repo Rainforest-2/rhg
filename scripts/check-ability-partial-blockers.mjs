@@ -35,8 +35,8 @@ const probe = DamageAbilityResolver.resolve({
 });
 
 const omitted = probe.implementationStatus?.omittedRuntimeState || [];
-assert.ok(omitted.includes('orbs'), 'damage resolver still reports missing orb runtime state');
-assert.ok(omitted.includes('combos'), 'damage resolver still reports missing combo runtime state');
+assert.ok(!omitted.includes('orbs'), 'damage resolver now consumes equipped orbs (see check-bcu-orb-resolver-consumption)');
+assert.ok(omitted.includes('combos'), 'damage resolver still reports combos omitted (combos applied at construction, not in the resolver)');
 assert.ok(omitted.includes('full Trait targetForms special cases'), 'damage resolver still reports missing targetForms cases');
 assert.ok(omitted.includes('sage status resistance'), 'damage resolver still reports missing sage status-resistance scope');
 
@@ -45,9 +45,9 @@ for (const phrase of [
   '`P_DELAY`',
   'code-complete-candidate',
   'burrow | `code-complete-candidate`',
-  'combo / orb / treasure / talent / PCoin damage modifiers | `needs-loader-backed-fixtures`',
+  'combo / orb / treasure / talent / PCoin damage modifiers | `partial`',
   'AB_SKILL status resistance side | `partial`',
-  'death surge / zombie corpse interaction | `partial`'
+  'mini-death-surge / zombie extra-revive edge cases | `partial`'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
 }

@@ -17,4 +17,10 @@ export async function installBattleScenePatches() {
   await import('../../battle/BattleSceneBcuStatusEffectRenderPatch.js');
   await import('../../battle/BattleSceneBcuStageBasisTickPatch.js');
   await import('../../battle/BattleSceneCustomStageBaseHpPatch.js');
+  // Load combo (Nyanko combo) stat-modifier data; failure leaves combos disabled.
+  const { installBcuComboRegistry } = await import('../../battle/bcu-runtime/BcuComboRegistryLoader.js');
+  await installBcuComboRegistry();
+  // Load per-unit talent (PCoin) definitions; failure leaves talents disabled.
+  const { installBcuTalentRegistry } = await import('../../battle/bcu-runtime/BcuTalentRegistryLoader.js');
+  await installBcuTalentRegistry();
 }

@@ -46,8 +46,11 @@ for (const phrase of [
   'code-complete-candidate',
   'burrow | `code-complete-candidate`',
   'combo / orb / treasure / talent / PCoin damage modifiers | `partial`',
-  'AB_SKILL status resistance side | `partial`',
-  'mini-death-surge / zombie extra-revive edge cases | `partial`'
+  'AB_SKILL status resistance side | `code-complete-candidate`',
+  'mini-death-surge | `code-complete-candidate`',
+  'zombie extra-revive / custom revive edge cases | `partial`',
+  'source-backed `smap`/`sdef`/`SCGroup` stage allow fixtures',
+  'Remaining blockers are automatic BCU custom/proc-object source loading'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
 }

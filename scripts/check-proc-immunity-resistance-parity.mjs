@@ -57,4 +57,36 @@ assert.equal(unsupportedOrb.factor, 1, 'future talent/orb source is not silently
 assert.deepEqual(unsupportedOrb.unsupportedSources, ['talent-orb-resistance'], 'future talent/orb source is documented as unsupported');
 assert.equal(unsupportedOrb.breakdown.talentOrbResistance.implemented, false, 'future talent/orb branch remains explicitly unimplemented');
 
+// Equipped resist orbs (the proven source-backed path) fold into field immunity
+// additively, capped at 100 — mirrors EUnit.processAbilityOrbs ORB_*_RESIST.
+// ORB_STOP_RESIST grade 2 => ORB_RESIST_MULT[2] = 20.
+const orbStop = getBcuResistValue({
+  target: { side: 'dog-player', bcuEquippedOrbs: [{ type: 20, grade: 2 }] },
+  procName: 'IMUSTOP',
+  procResist: 0
+});
+assert.equal(orbStop.breakdown.orbEquipmentResistance.value, 20, 'ORB_STOP_RESIST grade 2 contributes ORB_RESIST_MULT[2]=20');
+assert.equal(orbStop.breakdown.orbEquipmentResistance.implemented, true, 'equipped-orb resistance is implemented');
+assert.equal(orbStop.resist, 20, 'orb resistance reduces incoming status by its mult (resist = 20)');
+assert.ok(Math.abs(orbStop.factor - 0.8) < 1e-9, 'orb resistance field factor is 1 - resist/100');
+assert.ok(orbStop.notes.includes('orb-equipment-status-resist-applied'), 'orb resistance application is noted');
+
+// CSV field immunity and orb resistance stack additively, capped at 100.
+const orbStacked = getBcuResistValue({
+  target: { side: 'dog-player', bcuEquippedOrbs: [{ type: 6, grade: 4 }] }, // ORB_WAVE_RESIST grade 4 => 50
+  procName: 'IMUWAVE',
+  procResist: 60
+});
+assert.equal(orbStacked.resist, 100, 'CSV 60 + orb 50 caps at 100 (min(100, ...))');
+assert.equal(orbStacked.factor, 0, 'capped resistance is full immunity (factor 0)');
+
+// A resist orb of a different family does not affect this proc.
+const orbMismatch = getBcuResistValue({
+  target: { side: 'dog-player', bcuEquippedOrbs: [{ type: 8, grade: 4 }] }, // ORB_KB_RESIST
+  procName: 'IMUSTOP',
+  procResist: 0
+});
+assert.equal(orbMismatch.breakdown.orbEquipmentResistance.value, 0, 'wrong-family resist orb contributes nothing');
+assert.equal(orbMismatch.factor, 1, 'wrong-family resist orb leaves resistance unchanged');
+
 console.log('check-proc-immunity-resistance-parity: OK');

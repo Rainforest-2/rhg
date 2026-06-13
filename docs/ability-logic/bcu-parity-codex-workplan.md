@@ -138,14 +138,12 @@ Remaining blockers:
 
 1. Normal unit/enemy CSV `SUMMON` holder is not proven.
 2. Automatic BCU custom/proc-object source loading is not implemented.
-3. Source-backed stage `allow` / group semantics for summoned enemies are missing.
-4. Exact `Entity.setSummon(anim_type)` entry appearance has not been manually reviewed.
+3. Exact `Entity.setSummon(anim_type)` entry appearance has not been manually reviewed.
 
 Safe next steps:
 
 - Load BCU custom/proc-object `SUMMON` data into per-hit attack events.
 - Keep normal CSV parser unchanged unless a source holder is proven.
-- Add source-backed stage allow/group fixtures.
 - Keep the row `partial` until those blockers are resolved.
 
 ### W4 — zombie revive and death-surge edge completion

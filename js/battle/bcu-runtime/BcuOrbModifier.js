@@ -62,6 +62,10 @@ export const ORB_STR_ATK_MULTI = Object.freeze([0.06, 0.12, 0.18, 0.24, 0.3]);
 export const ORB_MASSIVE_MULTI = Object.freeze([0.1, 0.2, 0.3, 0.4, 0.5]);
 export const ORB_RESISTANT_MULTI = Object.freeze([5, 10, 15, 20, 25]);
 export const ORB_RESIST_MULT = Object.freeze([5, 10, 20, 30, 50]);
+// ORB_DEATH_SURGE grade multipliers + fixed spawn band (Data.java).
+export const ORB_DEATH_SURGE_MULT = Object.freeze([3, 6, 10, 14, 20]);
+export const ORB_DEATH_SURGE_SPAWN_MIN = 200;
+export const ORB_DEATH_SURGE_SPAWN_MAX = 500;
 
 // battle/data/Orb.java orbTrait[]: orb trait bit index -> trait name. Index 12
 // ("ability orb") has no trait target.
@@ -205,4 +209,62 @@ export function getOrbResistantDefFactor({ orbs = [], orbMatchTraits = [], share
   }
   if (ini === 1) return 1;
   return ini * (1 - comboResistInc * 0.01);
+}
+
+// EUnit.processAbilityOrbs resist-orb branches: orb id -> IMU* proc field. Each
+// matching orb adds ORB_RESIST_MULT[grade], capped at 100. These resist orbs are
+// applied unconditionally (before the isOrbBoosted gate) and are NOT trait-matched.
+// Note: ORB_TOXIC_RESIST has no branch in processAbilityOrbs, so a toxic-resist
+// orb contributes nothing (matches the toxic-immunity negative-evidence row).
+export const ORB_RESIST_TO_IMU = Object.freeze({
+  [ORB_ID.WAVE_RESIST]: 'IMUWAVE',
+  [ORB_ID.KB_RESIST]: 'IMUKB',
+  [ORB_ID.CURSE_RESIST]: 'IMUCURSE',
+  [ORB_ID.SLOW_RESIST]: 'IMUSLOW',
+  [ORB_ID.STOP_RESIST]: 'IMUSTOP',
+  [ORB_ID.WEAK_RESIST]: 'IMUWEAK',
+  [ORB_ID.VOLC_RESIST]: 'IMUVOLC',
+  [ORB_ID.BLAST_RESIST]: 'IMUBLAST'
+});
+
+/**
+ * Sum the equipped resist-orb contribution to a single IMU* proc field, mirroring
+ * EUnit.processAbilityOrbs: proc.IMU*.mult = min(100, mult + ORB_RESIST_MULT[grade])
+ * per matching orb. Summing then capping at 100 is equivalent to BCU's per-orb cap
+ * because the contributions are additive and the ceiling is constant. Returns 0
+ * when no resist orb of the requested family is equipped.
+ */
+export function getOrbStatusResistance(orbs, procName) {
+  let mult = 0;
+  for (const orb of (Array.isArray(orbs) ? orbs : [])) {
+    if (!orb || !isGrade(orb.grade)) continue;
+    if (ORB_RESIST_TO_IMU[orb.type] !== procName) continue;
+    mult = Math.min(100, mult + ORB_RESIST_MULT[orb.grade]);
+  }
+  return mult;
+}
+
+/**
+ * Derive the MINIDEATHSURGE proc contributed by equipped ORB_DEATH_SURGE orbs.
+ * Mirrors EUnit.processAbilityOrbs ORB_DEATH_SURGE branch: when present, sets
+ * MINIDEATHSURGE prob=100, dis_0=200, dis_1=500, time=20, and
+ * mult = max(existing, ORB_DEATH_SURGE_MULT[grade]) across equipped death-surge
+ * orbs. Returns null if none is equipped.
+ *
+ * Note on the BCU isOrbBoosted gate: processAbilityOrbs only applies this orb
+ * when isOrbBoosted (== isEveryOther, ELineUp.hasEveryOther). Since
+ * ORB_DEATH_SURGE is itself a member of ORB_EVERY_OTHER, equipping it makes
+ * hasEveryOther true, so the gate is self-satisfied — equipping the orb always
+ * applies mini-death-surge.
+ */
+export function getOrbMiniDeathSurgeProc(orbs) {
+  let mult = 0;
+  let found = false;
+  for (const orb of (Array.isArray(orbs) ? orbs : [])) {
+    if (!orb || orb.type !== ORB_ID.DEATH_SURGE || !isGrade(orb.grade)) continue;
+    found = true;
+    mult = Math.max(mult, ORB_DEATH_SURGE_MULT[orb.grade]);
+  }
+  if (!found) return null;
+  return { prob: 100, dis0: ORB_DEATH_SURGE_SPAWN_MIN, dis1: ORB_DEATH_SURGE_SPAWN_MAX, time: 20, timeFrames: 20, aliveTimeFrames: 20, mult, source: 'EUnit.processAbilityOrbs ORB_DEATH_SURGE' };
 }

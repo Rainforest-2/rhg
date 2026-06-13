@@ -532,7 +532,12 @@ function stageAllow(scene, proc, unitDef, side) {
   if (typeof resolver === 'function') {
     const result = resolver.call(scene, { proc, unitDef, side, scene });
     if (typeof result === 'boolean') return { allowed: result, source: 'scene-getBcuSummonStageAllow' };
-    return { allowed: result?.allowed !== false && result?.allow !== false, group: result?.group ?? null, source: result?.source || 'scene-getBcuSummonStageAllow' };
+    return {
+      ...(result || {}),
+      allowed: result?.allowed !== false && result?.allow !== false,
+      group: result?.group ?? null,
+      source: result?.source || 'scene-getBcuSummonStageAllow'
+    };
   }
   return { allowed: true, group: null, source: 'stage-allow-not-modeled-assumed-allowed' };
 }
@@ -754,9 +759,16 @@ function requestBcuSummonTemplate(scene, unitDef, pending = null) {
 export function markBcuSummonedActor(actor, pending) {
   if (!actor) return actor;
   const proc = pending?.proc || {};
+  const allowGroup = firstNumber(pending?.allow?.group, pending?.allow?.allowGroup);
   actor.bcuIsSummoned = true;
   actor.bcuSummonProc = proc;
   actor.bcuSummonTrigger = pending?.trigger || null;
+  actor.bcuSummonStageAllow = pending?.allow || null;
+  if (Number.isFinite(allowGroup)) {
+    actor.bcuSummonGroup = Math.trunc(allowGroup);
+    actor.bcuStageGroup = Math.trunc(allowGroup);
+    actor.group = Math.trunc(allowGroup);
+  }
   actor.bcuSummonAnimationType = proc?.type?.animType ?? 0;
   actor.bcuSummonEntry = ['normal', 'warp-exit', 'burrow-move', 'burrow-up'][actor.bcuSummonAnimationType] || 'normal';
   actor.bcuSummonTba = Number.isFinite(proc?.tba) ? proc.tba : 0;
@@ -774,6 +786,8 @@ export function markBcuSummonedActor(actor, pending) {
     entry: actor.bcuSummonEntry,
     x: actor.x,
     layer: actor.currentLayer,
+    group: actor.bcuSummonGroup ?? null,
+    stageAllow: pending?.allow || null,
     sameHealth: pending?.sameHealth,
     tba: proc?.tba ?? null,
     visualReview: actor.bcuSummonAnimationType === 0 ? 'not-required' : 'human-visual-review-needed'

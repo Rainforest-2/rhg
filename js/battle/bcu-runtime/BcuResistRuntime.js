@@ -1,4 +1,5 @@
 import { BCU_ABI, BCU_TRAITS } from '../BcuCombatModel.js';
+import { getOrbStatusResistance } from './BcuOrbModifier.js';
 
 const SUPER_SAGE_RESIST = 70;
 const SUPER_SAGE_HUNTER_RESIST = 0.7;
@@ -48,6 +49,19 @@ function getTalentOrbResistance(entity, procName) {
   return null;
 }
 
+function getEquippedOrbs(entity) {
+  const orbs = entity?.bcuEquippedOrbs || entity?.stats?.bcuEquippedOrbs || entity?.rawStats?.bcuEquippedOrbs || getCombatModel(entity)?.bcuEquippedOrbs;
+  return Array.isArray(orbs) ? orbs : [];
+}
+
+// Combo-granted wave/surge full immunity (EUnit.processComboAbilities) attached to
+// stats by BcuComboStatModifier. Only IMUWAVE/IMUVOLC are combo-grantable.
+function getComboImmunity(entity, procName) {
+  const src = entity?.bcuComboImmunities || entity?.stats?.bcuComboImmunities || entity?.rawStats?.bcuComboImmunities || null;
+  if (!src || typeof src !== 'object') return 0;
+  return clampPercent(src[procName] ?? 0);
+}
+
 function hasTrait(entity, trait) {
   return getTraitFlags(entity)?.[trait] === true || (Array.isArray(entity?.traits) && entity.traits.includes(trait));
 }
@@ -64,24 +78,48 @@ function sideKind(entity) {
 export function getBcuResistValue({ target, attacker = null, attack = null, procName, procResist } = {}) {
   const side = target?.side || null;
   const kind = sideKind(target);
-  const resist = clampPercent(procResist ?? target?.bcuProcResist?.[procName] ?? 0);
+  const csvResist = clampPercent(procResist ?? target?.bcuProcResist?.[procName] ?? 0);
+  // Equipped resist orbs add to the same IMU*.mult field in BCU
+  // (EUnit.processAbilityOrbs), so fold them into the field immunity additively,
+  // capped at 100 — identical to min(100, proc.IMU.mult + ORB_RESIST_MULT[grade]).
+  const orbResist = getOrbStatusResistance(getEquippedOrbs(target), procName);
+  // Combo wave/surge immunity is a full (100) grant folded into the same field.
+  const comboImmunity = getComboImmunity(target, procName);
+  const resist = clampPercent(csvResist + orbResist + comboImmunity);
   const fieldFactor = Math.max(0, 1 - resist / 100);
   let factor = fieldFactor;
   const notes = [];
   const unsupportedSources = [];
+  // The pre-computed talent/PCoin resistance map (bcuTalentOrbResistance) has no
+  // proven loader yet, so it stays gated as unsupported. The equipped-orb path
+  // above is the proven, source-backed resistance contribution.
   const talentOrbValue = getTalentOrbResistance(target, procName);
   if (talentOrbValue !== null) unsupportedSources.push('talent-orb-resistance');
+  if (orbResist > 0) notes.push('orb-equipment-status-resist-applied');
+  if (comboImmunity > 0) notes.push('combo-wave-surge-immunity-applied');
 
   const breakdown = {
     fieldImmunity: {
       source: 'target getProc().IMU*.mult / combatModel.immunity proc field',
-      value: resist >= 100 ? resist : 0,
-      factor: resist >= 100 ? fieldFactor : 1
+      value: csvResist >= 100 ? csvResist : 0,
+      factor: csvResist >= 100 ? Math.max(0, 1 - csvResist / 100) : 1
     },
     partialResistance: {
       source: 'target getProc().IMU*.mult / combatModel.immunity proc field',
-      value: resist > 0 && resist < 100 ? resist : 0,
-      factor: resist > 0 && resist < 100 ? fieldFactor : 1
+      value: csvResist > 0 && csvResist < 100 ? csvResist : 0,
+      factor: csvResist > 0 && csvResist < 100 ? Math.max(0, 1 - csvResist / 100) : 1
+    },
+    orbEquipmentResistance: {
+      source: 'EUnit.processAbilityOrbs ORB_*_RESIST -> proc.IMU*.mult += ORB_RESIST_MULT[grade] (cap 100)',
+      value: orbResist,
+      factor: orbResist > 0 ? Math.max(0, 1 - resist / 100) : 1,
+      implemented: true
+    },
+    comboImmunity: {
+      source: 'EUnit.processComboAbilities C_IMUWAVE/C_IMUVOLC -> proc.IMU*.mult = 100',
+      value: comboImmunity,
+      factor: comboImmunity > 0 ? Math.max(0, 1 - resist / 100) : 1,
+      implemented: true
     },
     sageResistance: {
       source: 'Data.SUPER_SAGE_RESIST / Data.SUPER_SAGE_HUNTER_RESIST',

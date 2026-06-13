@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { BattleActor } from '../js/battle/BattleActor.js';
 import { BattleAttackProfile } from '../js/battle/BattleAttackProfile.js';
 import '../js/battle/BcuProcImmunityPatch.js';
+import { getBcuSummonStageAllowForScene } from '../js/battle/BattleSceneBcuStageSpawnPatch.js';
 import '../js/battle/BattleSceneBcuSummonPatch.js';
 import {
   linkBcuSummonBond,
@@ -102,7 +103,8 @@ function makeScene(seed = 0.5) {
       this.actors.push(actor);
       return actor;
     },
-    pushEvent(event) { this.debugEvents.push(event); }
+    pushEvent(event) { this.debugEvents.push(event); },
+    getBcuSummonStageAllow(args) { return getBcuSummonStageAllowForScene(this, args); }
   };
   return scene;
 }
@@ -277,6 +279,71 @@ assert.equal(defaultEnemyKind.kind, 'enemy', 'SUMMON with null id defaults to at
   });
   const profile = BattleAttackProfile.fromActor(actor);
   assert.equal(profile.events[0].summon.prob, 100, 'BattleAttackProfile carries per-hit SUMMON object into attack event');
+}
+
+{
+  const scene = makeScene(0);
+  scene.stage.runtime = {
+    stageLen: 4000,
+    summonGroupDefault: 1,
+    summonGroupMap: { 17: 2 },
+    groupLimits: { 2: 1 }
+  };
+  const attacker = makeActor('stage-allow-attacker');
+  const existing = makeActor('existing-group-2', { side: 'cat-enemy', direction: 1, x: 2000 });
+  existing.bcuStageGroup = 2;
+  existing.group = 2;
+  scene.actors.push(attacker, existing);
+  const def = summonUnitDef('summon-enemy-017', 'enemy', 17);
+  scene.actorFactory.templates.set(def.slotId, { unitDef: def, loadingLevel: 'spawn-ready' });
+  const event = { key: 'stage-allow-0', hitIndex: 0, summon: { prob: 100, unitDef: def, kind: 'enemy', statsId: 17, mult: 100, dis: 0, maxDis: 0, time: 1, type: { ignoreLimit: false } } };
+  const queued = queueBcuImmediateSummon(scene, attacker, event, { key: 'stage-allow-0' });
+  assert.equal(queued.queued, false, 'enemy SUMMON is rejected when SCDef.smap group is at its SCGroup limit');
+  assert.equal(queued.result.reason, 'summon-stage-allow-rejected', 'stage allow rejection has a stable reason');
+  assert.equal(queued.result.allow.requestedGroup, 2, 'summon stage allow resolves group from SCDef.smap by enemy id');
+  assert.equal(queued.result.allow.group, -1, 'BCU SCDef.allow returns -1 when the resolved group is blocked');
+  assert.equal(queued.result.allow.limit, 1, 'SCGroup max is carried into the deterministic trace');
+}
+
+{
+  const scene = makeScene(0);
+  scene.stage.runtime = {
+    stageLen: 4000,
+    summonGroupDefault: 1,
+    summonGroupMap: { 18: 2 },
+    groupLimits: { 2: 1 }
+  };
+  const attacker = makeActor('stage-allow-ignore-attacker');
+  const existing = makeActor('existing-ignore-group-2', { side: 'cat-enemy', direction: 1, x: 2000 });
+  existing.bcuStageGroup = 2;
+  existing.group = 2;
+  scene.actors.push(attacker, existing);
+  const def = summonUnitDef('summon-enemy-018', 'enemy', 18);
+  scene.actorFactory.templates.set(def.slotId, { unitDef: def, loadingLevel: 'spawn-ready' });
+  const event = { key: 'stage-allow-ignore-0', hitIndex: 0, summon: { prob: 100, unitDef: def, kind: 'enemy', statsId: 18, mult: 100, dis: 0, maxDis: 0, time: 1, type: { ignoreLimit: true } } };
+  const queued = queueBcuImmediateSummon(scene, attacker, event, { key: 'stage-allow-ignore-0' });
+  assert.equal(queued.queued, true, 'ignore_limit permits spawn even when SCDef.allow returns -1');
+  assert.equal(scene.bcuSummonSpawnQueue[0].allow.group, -1, 'ignore_limit keeps BCU blocked allow value on pending spawn');
+  tickBcuSummonSpawnQueue(scene);
+  const summoned = scene.actors.at(-1);
+  assert.equal(summoned.bcuSummonGroup, -1, 'spawned ignore_limit summon records the BCU allow=-1 group value');
+  assert.equal(summoned.group, -1, 'spawned ignore_limit summon shares the group field used by stage spawn actors');
+}
+
+{
+  const scene = makeScene(0);
+  scene.stage.runtime = {
+    stageLen: 4000,
+    summonGroupMap: { 19: 3 },
+    groupLimits: { 3: { max: [-1, 2, 2, 2] } }
+  };
+  const attacker = makeActor('stage-allow-negative-max-attacker');
+  scene.actors.push(attacker);
+  const def = summonUnitDef('summon-enemy-019', 'enemy', 19);
+  const event = { key: 'stage-allow-negative-max-0', hitIndex: 0, summon: { prob: 100, unitDef: def, kind: 'enemy', statsId: 19, mult: 100, dis: 0, maxDis: 0, time: 1, type: { ignoreLimit: false } } };
+  const queued = queueBcuImmediateSummon(scene, attacker, event, { key: 'stage-allow-negative-max-0' });
+  assert.equal(queued.queued, false, 'SCGroup max=-1 rejects the summon like BCU entityCount < getMax');
+  assert.equal(queued.result.allow.limit, -1, 'negative SCGroup max is preserved instead of treated as missing limit');
 }
 
 console.log('check-bcu-summon-runtime-parity: OK');

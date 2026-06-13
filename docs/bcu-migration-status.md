@@ -66,7 +66,7 @@ Do not mark these as fully complete without more evidence or loaders:
 
 - normal CSV summon holder: still not proven; current summon runtime consumes explicit proc-object data.
 - BCU custom/proc-object summon loader: still needed for automatic source loading.
-- summon stage `allow` / group semantics and `anim_type` entry visuals.
+- summon `anim_type` entry visuals; stage `allow` / group semantics are fixture-backed for `SCDef.smap` / `sdef` / `SCGroup` limits.
 - full `Trait.targetForms` fixture source.
 - combo / orb / treasure / talent / PCoin damage modifiers.
 - broader AB_SKILL status resistance holder sources.

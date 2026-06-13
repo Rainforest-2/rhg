@@ -96,6 +96,14 @@ export function computeUnitComboIncrements(activeCombos, values) {
   for (const [key, type] of Object.entries(INCREMENT_TYPES)) {
     out[key] = getInc(type, activeCombos, values, ungroupedOnly);
   }
+  // EUnit.processComboAbilities: a wave/surge-immunity combo with getInc > 0 sets
+  // proc.IMUWAVE/IMUVOLC.mult = 100 (full immunity). It is a boolean grant, not a
+  // scaled value. Stage combo-ban gating is not modelled here (combos auto-activate
+  // from the front row), matching the existing combo stat wiring.
+  out.immunities = {
+    IMUWAVE: getInc(COMBO_TYPE.C_IMUWAVE, activeCombos, values, ungroupedOnly) > 0 ? 100 : 0,
+    IMUVOLC: getInc(COMBO_TYPE.C_IMUVOLC, activeCombos, values, ungroupedOnly) > 0 ? 100 : 0
+  };
   return out;
 }
 
@@ -114,6 +122,7 @@ export function resolveComboModifiersForFrontRow(frontRowForms, registry = combo
   const increments = computeUnitComboIncrements(activeCombos, values);
   return {
     increments,
+    immunities: increments.immunities,
     attackFactor: 1 + increments.attack * 0.01,
     healthFactor: 1 + increments.health * 0.01,
     activeCombos,
@@ -139,8 +148,15 @@ function scaleHitDamage(attackHits, factor) {
 export function applyBcuComboModifiersToStats(stats, modifiers) {
   if (!stats || typeof stats !== 'object' || !modifiers) return stats;
   const { attackFactor, healthFactor, increments } = modifiers;
+  // Combo-granted wave/surge full immunity (EUnit.processComboAbilities). Attached
+  // regardless of attack/health combos so an immunity-only combo still applies; the
+  // resist runtime reads bcuComboImmunities and folds it into IMU*.mult.
+  const immunities = modifiers.immunities || increments?.immunities || null;
+  const immunityAttach = immunities && (immunities.IMUWAVE > 0 || immunities.IMUVOLC > 0)
+    ? { bcuComboImmunities: { ...immunities, source: 'EUnit.processComboAbilities C_IMUWAVE/C_IMUVOLC -> IMU*.mult=100' } }
+    : {};
   if (attackFactor === 1 && healthFactor === 1) {
-    return { ...stats, bcuComboModifiers: { applied: false, increments, reason: 'no-attack-or-health-combo' } };
+    return { ...stats, ...immunityAttach, bcuComboModifiers: { applied: false, increments, reason: 'no-attack-or-health-combo' } };
   }
   const baseHp = Number.isFinite(stats.hp) ? stats.hp : null;
   const baseDamage = Number.isFinite(stats.damage) ? stats.damage : null;
@@ -148,6 +164,7 @@ export function applyBcuComboModifiersToStats(stats, modifiers) {
   const scaledDamage = baseDamage != null ? Math.trunc(baseDamage * attackFactor) : stats.damage;
   return {
     ...stats,
+    ...immunityAttach,
     hp: scaledHp,
     maxHp: Number.isFinite(stats.maxHp) ? Math.trunc(stats.maxHp * healthFactor) : stats.maxHp,
     damage: scaledDamage,

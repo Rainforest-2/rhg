@@ -1,5 +1,6 @@
 import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
 import { BCU_PROC_KB_DEFAULT } from './BcuCombatModel.js';
+import { buffProcPayloadWithCombos } from './bcu-runtime/BcuComboStatModifier.js';
 
 const SEAL_SUPPRESSED_PROC_KEYS = new Set(['critical', 'barrierBreaker', 'shieldPierce', 'strongAttack', 'knockbackProc', 'freeze', 'slow', 'weaken', 'warp', 'curse', 'seal', 'toxic', 'wave', 'miniWave', 'surge', 'miniSurge', 'blast']);
 const CURSE_SUPPRESSED_PROC_KEYS = new Set(['knockbackProc', 'freeze', 'slow', 'weaken', 'warp', 'curse', 'seal', 'toxic']);
@@ -169,7 +170,11 @@ export class ProcResolver {
     if (hitAbiDisabled) notes.push('bcu-hit-abi-disabled-attack-procs');
 
     for (const candidate of candidates) {
-      const payload = payloadFor(candidate.key, proc);
+      // BCU AtkModelUnit buffs the attacker's cloned attack proc with the unit's
+      // active combos (STOP/SLOW/WEAK time, KB distance) before the proc reaches
+      // the target. Apply that buff to the rolled payload so disruption time and
+      // knockback distance are BCU-faithful; fruit/resist still apply downstream.
+      const payload = buffProcPayloadWithCombos(candidate.key, payloadFor(candidate.key, proc), attacker);
       const prob = Number(payload.prob || 0);
       if (hitAbiDisabled && !BCU_HIT_ABI_EXEMPT_PROC_KEYS.has(candidate.key)) {
         skipped.push({ key: candidate.key, category: candidate.category, reason: 'bcu-hit-abi-disabled', payload, bcuHitAbi: event?.bcuHitAbi ?? null, hitIndex, bcuReference: BCU_HIT_ABI_GATE_REFERENCE });

@@ -58,6 +58,6 @@ assert.equal(applyTreasureToStats(base, trea([])).bcuTreasureModifier.applied, f
 // --- gate guard -------------------------------------------------------------
 const probe = DamageAbilityResolver.resolve({ attacker: { side: 'dog-player' }, target: { side: 'cat-enemy' }, targetType: 'actor', baseDamage: 100, context: { random: () => 1 } });
 const omitted = probe.implementationStatus?.omittedRuntimeState || [];
-assert.ok(omitted.includes('combos'), 'this model is construction-time; resolver still reports combos omitted (combos handled at construction)');
+assert.ok(omitted.includes('combo proc-duration/runtime sources'), 'this model is construction-time; resolver still reports remaining combo runtime sources omitted');
 
 console.log('check-bcu-treasure-modifier: OK');

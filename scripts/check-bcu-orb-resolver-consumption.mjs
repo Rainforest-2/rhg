@@ -64,6 +64,6 @@ assert.equal(withOrb.finalDamage, Math.trunc(100 * (3 + 1 / 3 * 3 + ORB_MASSIVE_
 // --- gate promotion: resolver no longer reports orbs omitted ----------------
 const omitted = atkResult.implementationStatus?.omittedRuntimeState || [];
 assert.ok(!omitted.includes('orbs'), 'orbs are no longer in omittedRuntimeState (gate promoted)');
-assert.ok(omitted.includes('combos'), 'combos remain resolver-omitted (handled at construction)');
+assert.ok(omitted.includes('combo proc-duration/runtime sources'), 'resolver still reports remaining combo runtime sources omitted');
 
 console.log('check-bcu-orb-resolver-consumption: OK');

@@ -94,9 +94,15 @@ assert.equal(getInc(COMBO_TYPE.C_DEF, synthetic, values), 0, 'getInc is 0 for an
 assert.equal(getInc(COMBO_TYPE.C_STRONG, synthetic, values, () => false), 0, 'unitMatcher=false zeroes the increment');
 assert.equal(getInc(COMBO_TYPE.C_STRONG, synthetic, values, (c) => c.lv === 3), values[COMBO_TYPE.C_STRONG][3], 'unitMatcher filters per combo');
 
-// --- Gate guard: resolver wiring is still deferred --------------------------
+// --- Gate guard: combo runtime wiring is still partial ----------------------
+// The combo damage-family increments (C_GOOD/C_MASSIVE/C_RESIST + WK/EK killers)
+// are now consumed by DamageAbilityResolver and proc-duration (C_STOP/C_SLOW/
+// C_WEAK time + C_KB distance) by ProcResolver, so the loader is no longer
+// "foundation-only". The resolver still reports the remaining combo runtime
+// sources (speed/crit) as omitted, keeping the `partial` gate
+// (check-ability-partial-blockers) valid.
 const probe = DamageAbilityResolver.resolve({ attacker: { side: 'dog-player' }, target: { side: 'cat-enemy' }, targetType: 'actor', baseDamage: 100, context: { random: () => 1 } });
 const omitted = probe.implementationStatus?.omittedRuntimeState || [];
-assert.ok(omitted.includes('combos'), 'combo loader is foundation-only; resolver still reports combos omitted (gate intact)');
+assert.ok(omitted.includes('combo proc-duration/runtime sources'), 'resolver still reports remaining combo runtime sources omitted (partial gate intact)');
 
 console.log('check-bcu-combo-modifier-loader: OK');

@@ -79,8 +79,67 @@ const INCREMENT_TYPES = Object.freeze({
   resist: COMBO_TYPE.C_RESIST,
   crit: COMBO_TYPE.C_CRIT,
   witchKiller: COMBO_TYPE.C_WKILL,
-  evaKiller: COMBO_TYPE.C_EKILL
+  evaKiller: COMBO_TYPE.C_EKILL,
+  // Proc-buff increments applied to the attacker's cloned attack proc in the
+  // AtkModelUnit constructor / getAttack (not damage-family factors).
+  freezeTime: COMBO_TYPE.C_STOP,
+  slowTime: COMBO_TYPE.C_SLOW,
+  weakenTime: COMBO_TYPE.C_WEAK,
+  knockbackDist: COMBO_TYPE.C_KB
 });
+
+// ProcResolver proc key -> the combo increment that scales its disruption time.
+// Mirrors AtkModelUnit ctor: buffed[i].(STOP|SLOW|WEAK).time *= (100+getInc)/100.
+// Only STOP (freeze) / SLOW / WEAK have a combo type; curse/seal/warp/toxic/delay
+// have NO Nyanko combo and are intentionally absent.
+const COMBO_PROC_TIME_INCREMENT_KEY = Object.freeze({
+  freeze: 'freezeTime',
+  slow: 'slowTime',
+  weaken: 'weakenTime'
+});
+
+function comboIncrementsForEntity(entity) {
+  const src = entity?.bcuComboModifiers || entity?.stats?.bcuComboModifiers || entity?.rawStats?.bcuComboModifiers || {};
+  return src?.increments || {};
+}
+
+/**
+ * Apply the attacker's active front-row combos to a single proc payload, mirroring
+ * the BCU AtkModelUnit proc-buff path: STOP/SLOW/WEAK `.time` scales by
+ * (100 + getInc(C_STOP|C_SLOW|C_WEAK)) / 100 (integer truncation) and knockback
+ * `.dis` by (100 + getInc(C_KB)) / 100. Returns the payload unchanged when the
+ * proc has no combo type (curse/warp/seal/toxic/delay), when there is no active
+ * combo increment, or when the attacker carries no combo modifiers (e.g. enemies,
+ * which never get AtkModelUnit combo buffs).
+ *
+ * Stage combo-ban gating (StageLimit.isComboBanned) is not modelled here, matching
+ * the existing construction-time combo stat wiring which also auto-activates the
+ * front-row combos.
+ */
+export function buffProcPayloadWithCombos(key, payload, attacker) {
+  if (!payload || typeof payload !== 'object' || !attacker) return payload;
+  const inc = comboIncrementsForEntity(attacker);
+  const timeKey = COMBO_PROC_TIME_INCREMENT_KEY[key];
+  if (timeKey) {
+    const bonus = Math.trunc(Number(inc[timeKey]) || 0);
+    if (bonus === 0) return payload;
+    const out = { ...payload };
+    if (Number.isFinite(out.time)) out.time = Math.trunc(out.time * (100 + bonus) / 100);
+    if (Number.isFinite(out.timeFrames)) out.timeFrames = Math.trunc(out.timeFrames * (100 + bonus) / 100);
+    out.bcuComboProcBuff = { type: timeKey, increment: bonus, bcuReference: 'AtkModelUnit ctor: buffed[i].(STOP|SLOW|WEAK).time *= (100 + getInc) / 100' };
+    return out;
+  }
+  if (key === 'knockbackProc') {
+    const bonus = Math.trunc(Number(inc.knockbackDist) || 0);
+    if (bonus === 0 || !Number.isFinite(payload.dis)) return payload;
+    return {
+      ...payload,
+      dis: Math.trunc(payload.dis * (100 + bonus) / 100),
+      bcuComboProcBuff: { type: 'knockbackDist', increment: bonus, bcuReference: 'AtkModelUnit.getAttack: proc.KB.dis *= (100 + getInc(C_KB)) / 100' }
+    };
+  }
+  return payload;
+}
 
 /**
  * Compute per-unit combo increments (percentage points) for a unit given the

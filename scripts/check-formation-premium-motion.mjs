@@ -8,8 +8,11 @@ import { readFileSync } from 'node:fs';
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const premiumCss = read('css/nyanko-premium-polish.css');
+const uiPolishCss = read('css/ui-polish.css');
+const settingsCss = read('css/game-settings.css');
 const motionPatch = read('js/ui/FormationPremiumMotionPatch.js');
 const tuningPatch = read('js/ui/FormationEditorBcuUnitLevelPatch.js');
+const formationEditor = read('js/ui/FormationEditor.js');
 const indexHtml = read('index.html');
 const installUiPatches = read('js/boot/installUiPatches.js');
 
@@ -55,6 +58,10 @@ assert.ok(tuningPatch.includes('--formation-slot-charge-ms', tuningPatch.indexOf
 // 6. Settled re-renders must not re-pop the tuning panel (steppers update without entrance motion).
 assert.ok(tuningPatch.includes('.formation-tuning-overlay.is-open .formation-tuning-panel{animation:none}'), 'settled tuning panel suppresses entrance animation');
 assert.ok(tuningPatch.includes("panel.dataset.motionFixSeen = '1'"), 'tuning render marks panel as seen for the regression-fix patch');
+assert.ok(!uiPolishCss.includes('.formation-panel,.formation-stage-dialog'), 'formation containers must not receive generic gameUiEnter transforms');
+assert.ok(premiumCss.includes('@keyframes pmDialogStillIn{from{opacity:0}to{opacity:1}}'), 'stage dialog opens without translating the container');
+assert.ok(premiumCss.includes('@keyframes pmDialogStillOut{from{opacity:1}to{opacity:0}}'), 'stage dialog closes without translating the container');
+assert.ok(tuningPatch.includes('.formation-tuning-overlay.is-closing{background:rgba(0,0,0,0)!important'), 'tuning close must not flash a dark backdrop');
 
 // 7. Typing in tuning inputs stays live (no focus-stealing re-render) and commits on change.
 assert.ok(tuningPatch.includes('{ live: true }'), 'input events use the live path');
@@ -69,6 +76,10 @@ assert.ok(tuningPatch.includes('function updateTuningDynamic'), 'live path patch
 //    - brush fonts are preloaded so font-display:block never blanks the first open
 assert.ok(tuningPatch.includes('.formation-tuning-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr))'), 'preset chips use their own grid, not global full-width buttons');
 assert.ok(/formation-tuning-close\{[^}]*display:inline-flex;align-items:center;justify-content:center;padding:0 12px/.test(tuningPatch), 'close button overrides global button padding and centers its label');
+assert.ok(formationEditor.includes("formation-settings-group"), 'settings overlay renders grouped rows');
+assert.ok(formationEditor.includes("formation-setting-state"), 'settings overlay renders explicit switch state');
+assert.ok(settingsCss.includes('.formation-settings-group'), 'settings css styles grouped rows');
+assert.ok(settingsCss.includes('@media (max-width:520px)'), 'settings css has a compact mobile layout');
 const phonePatch = read('js/ui/FormationPhoneLandscapeLayoutPatch.js');
 assert.ok(/formation-action-rail\{[^}]*grid-template-columns:1fr!important;grid-template-rows:/.test(phonePatch), 'phone landscape rail pins a single column');
 assert.ok((indexHtml.match(/rel="preload" as="font"/g) || []).length >= 2, 'tuning brush fonts are preloaded');

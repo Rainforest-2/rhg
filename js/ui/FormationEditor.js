@@ -685,10 +685,16 @@ export class FormationEditor {
     const list = overlay.querySelector('.formation-settings-list');
     if (!list) return;
     const speedOn = BattleSpeedControl.isFeatureEnabled();
-    list.innerHTML = `<div class='formation-settings-row'>
-      <div class='label'><strong>スピードアップ機能</strong></div>
-      <button type='button' role='switch' class='formation-setting-toggle' data-setting='bcu-speed-control' aria-checked='${speedOn ? 'true' : 'false'}' aria-label='スピードアップ機能を切り替え'></button>
-    </div>`;
+    list.innerHTML = `<section class='formation-settings-group' aria-label='バトル設定'>
+      <div class='formation-settings-group-head'><span>バトル</span><strong>操作</strong></div>
+      <div class='formation-settings-row'>
+        <div class='label'><strong>スピードアップ</strong><span>戦闘中に倍速ボタンを表示します</span></div>
+        <div class='formation-setting-control'>
+          <span class='formation-setting-state'>${speedOn ? 'ON' : 'OFF'}</span>
+          <button type='button' role='switch' class='formation-setting-toggle' data-setting='bcu-speed-control' aria-checked='${speedOn ? 'true' : 'false'}' aria-label='スピードアップを切り替え'></button>
+        </div>
+      </div>
+    </section>`;
     const footer = overlay.querySelector('.formation-settings-footer');
     if (footer) {
       footer.innerHTML = `<span class='formation-settings-credit'>created by るる</span>

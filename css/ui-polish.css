@@ -276,7 +276,7 @@ body{
 }
 
 @media (prefers-reduced-motion: no-preference){
-  .formation-panel,.formation-stage-dialog,.formation-tuning-panel{animation:gameUiEnter 140ms cubic-bezier(.16,1,.28,1) both}
+  .formation-main,.formation-action-rail{animation:gameUiFade 140ms cubic-bezier(.16,1,.28,1) both}
   /* The battle card rail centers with left:50% + translateX(-50%) (style.css).
      gameUiEnter's fill-mode both would permanently replace that transform and
      shift the rail right by half its width, so it gets its own keyframes. */

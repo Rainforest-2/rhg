@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 const css = await fs.readFile('css/style.css', 'utf8');
 const js = await fs.readFile('js/ui/FormationEditor.js', 'utf8');
 const perfPatch = await fs.readFile('js/ui/FormationEditorPerformancePatch.js', 'utf8');
+const filterControlPatch = await fs.readFile('js/ui/FormationStageDifficultyFilterControlPatch.js', 'utf8');
 const failures = [];
 
 if (!/formation-catalog-scroll/.test(css) || !/overflow-y:\s*auto/.test(css)) failures.push('formation catalog scroll container must own vertical scrolling');
@@ -11,6 +12,8 @@ if (!/formation-catalog-spacer/.test(js)) failures.push('formation catalog must 
 if (!/estimateCatalogColumns/.test(js)) failures.push('FormationEditor must estimate catalog columns for virtualization');
 if (!/formation-stage-virtual-spacer/.test(perfPatch)) failures.push('stage selector must use spacer-based windowing for large map/stage lists');
 if (!/buildScopedDifficultyFilterCandidates/.test(perfPatch)) failures.push('stage selector virtualization must honor scoped difficulty/search filters');
+if (!/updateFilterFromTarget\(editor,\s*event\.target\);\s*commitFilterFromControls\(editor\);/.test(filterControlPatch)) failures.push('stage selector search input must live-apply the DOM filter');
+if (!/updateFilterFromTarget\(this,\s*event\.target\)[\s\S]*commitFilterFromControls\(this\);/.test(filterControlPatch)) failures.push('stage selector delegated input must live-apply the filter');
 if (!/__FORMATION_RENDER_DEBUG__/.test(js)) failures.push('formation render diagnostics must be gated behind __FORMATION_RENDER_DEBUG__');
 
 if (failures.length) {

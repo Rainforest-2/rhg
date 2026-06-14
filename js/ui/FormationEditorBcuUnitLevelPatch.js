@@ -120,7 +120,7 @@ html body.nyanko-ui-polish .formation-tuning-badge{position:absolute;right:5px;b
 html body.nyanko-ui-polish .formation-tuning-overlay{position:fixed;inset:0;z-index:99980;display:none;place-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:rgba(0,0,0,.48);backdrop-filter:blur(2px);touch-action:none}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid;opacity:1!important;animation:none!important}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-opening{animation:formationTuningFade .14s ease-out both!important}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{animation:formationTuningFadeOut .11s ease-in both!important}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{background:rgba(0,0,0,0)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation:none!important}
 @keyframes formationTuningFade{from{opacity:0}to{opacity:1}}
 @keyframes formationTuningFadeOut{from{opacity:1}to{opacity:0}}
 html body.nyanko-ui-polish .formation-tuning-panel{width:min(920px,calc(100vw - 28px));max-height:calc(100dvh - 20px);display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:6px solid #000;border-radius:22px;background:#fff4c2;box-shadow:0 10px 0 #160804,0 0 0 4px rgba(255,255,255,.12);transform-origin:center}

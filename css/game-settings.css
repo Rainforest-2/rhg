@@ -5,10 +5,10 @@
    stage-selector overlay. Nyanko CSS variables are reused with literal fallbacks
    so the panel still looks right if that stylesheet is unavailable. */
 
-.formation-settings-overlay{position:absolute;inset:0;z-index:46;display:none;place-items:center;padding:clamp(10px,2vw,24px);background:radial-gradient(120% 120% at 50% 0%,rgba(40,22,8,.6),rgba(2,6,23,.78));backdrop-filter:blur(4px);pointer-events:auto}
+.formation-settings-overlay{position:absolute;inset:0;z-index:46;display:none;place-items:center;padding:clamp(10px,2vw,24px);background:rgba(24,13,5,.66);backdrop-filter:blur(3px);pointer-events:auto}
 .formation-settings-overlay.is-open{display:grid}
 
-.formation-settings-dialog{width:min(520px,100%);max-height:min(640px,100%);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:14px;border:4px solid var(--nyanko-black,#050505);border-radius:22px;background:linear-gradient(180deg,var(--nyanko-paper,#fff7cf),var(--nyanko-paper-2,#ffe9a4));padding:18px;box-shadow:0 9px 0 rgba(43,22,8,.9),0 22px 48px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.7)}
+.formation-settings-dialog{width:min(560px,100%);max-height:min(640px,100%);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:14px;border:4px solid var(--nyanko-black,#050505);border-radius:18px;background:linear-gradient(180deg,var(--nyanko-paper,#fff7cf),var(--nyanko-paper-2,#ffe9a4));padding:16px;box-shadow:0 8px 0 rgba(43,22,8,.9),0 20px 42px rgba(0,0,0,.46),inset 0 2px 0 rgba(255,255,255,.7)}
 
 .formation-settings-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .formation-settings-dialog header div{display:grid;gap:2px}
@@ -18,10 +18,17 @@
 .formation-settings-dialog header button{min-width:96px;min-height:42px;border-radius:999px;border:4px solid var(--nyanko-black,#050505);background:linear-gradient(180deg,#fff3aa 0%,var(--nyanko-gold,#ffd531) 45%,var(--nyanko-gold-2,#f4a51f) 100%);color:#201006;font-weight:1000;letter-spacing:.04em;cursor:pointer;text-shadow:0 1px 0 rgba(255,255,255,.55);box-shadow:0 5px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.62)}
 .formation-settings-dialog header button:active{transform:translateY(4px);box-shadow:0 2px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.5)}
 
-.formation-settings-list{min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:10px;align-content:start;padding:2px}
-.formation-settings-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:14px 16px;border:3px solid var(--nyanko-black,#050505);border-radius:14px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 4px 0 rgba(74,33,13,.35)}
+.formation-settings-list{min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:12px;align-content:start;padding:2px}
+.formation-settings-group{display:grid;gap:8px}
+.formation-settings-group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px;color:#5f3716;font-weight:1000}
+.formation-settings-group-head span{font-size:.76rem;letter-spacing:.12em}
+.formation-settings-group-head strong{font-size:.86rem}
+.formation-settings-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:13px 14px;border:3px solid var(--nyanko-black,#050505);border-radius:12px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 4px 0 rgba(74,33,13,.35)}
 .formation-settings-row .label{display:grid;gap:3px;min-width:0}
 .formation-settings-row .label strong{font-size:1rem;color:#2a1606;font-weight:1000}
+.formation-settings-row .label span{font-size:.76rem;color:#7a5326;font-weight:800;line-height:1.25}
+.formation-setting-control{display:flex;align-items:center;gap:10px}
+.formation-setting-state{min-width:42px;text-align:center;padding:5px 8px;border:2px solid var(--nyanko-black,#050505);border-radius:999px;background:#111;color:#ffe27a;font-size:.74rem;font-weight:1000;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
 
 .formation-setting-toggle{position:relative;width:56px;height:31px;flex:none;padding:0;border:3px solid var(--nyanko-black,#050505);border-radius:999px;background:#caa86b;cursor:pointer;transition:background .15s ease}
 .formation-setting-toggle[aria-checked='true']{background:#2fb24a}
@@ -44,4 +51,10 @@
 @media (prefers-reduced-motion: reduce){
   .formation-setting-toggle,.formation-setting-toggle::after{transition:none}
   .formation-settings-overlay.is-opening,.formation-settings-overlay.is-closing,.formation-settings-overlay.is-opening .formation-settings-dialog,.formation-settings-overlay.is-closing .formation-settings-dialog{animation:none!important}
+}
+
+@media (max-width:520px){
+  .formation-settings-dialog{padding:13px;border-radius:16px}
+  .formation-settings-row{grid-template-columns:1fr;align-items:stretch}
+  .formation-setting-control{justify-content:space-between}
 }

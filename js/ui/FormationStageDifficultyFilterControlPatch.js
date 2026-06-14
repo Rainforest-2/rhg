@@ -147,6 +147,7 @@ function wireFilterControls(editor) {
     const handler = (event) => {
       event.stopPropagation();
       updateFilterFromTarget(editor, event.target);
+      commitFilterFromControls(editor);
     };
     input.addEventListener('input', handler);
     input.addEventListener('change', handler);
@@ -170,7 +171,10 @@ export function installFormationStageDifficultyFilterControlPatch() {
 
   const onInput = proto.onInput;
   proto.onInput = function onInputWithDifficultyFilterControls(event) {
-    if (updateFilterFromTarget(this, event.target)) return;
+    if (updateFilterFromTarget(this, event.target)) {
+      commitFilterFromControls(this);
+      return;
+    }
     return onInput.call(this, event);
   };
   const onClick = proto.onClick;

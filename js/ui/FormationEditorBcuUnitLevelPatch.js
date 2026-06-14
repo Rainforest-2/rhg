@@ -137,7 +137,7 @@ html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tunin
 html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-body>*:nth-child(3){animation-delay:55ms}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-footer{animation:formationTuningRise .16s cubic-bezier(.16,1,.3,1) 60ms both}
 @keyframes formationTuningRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-html body.nyanko-ui-polish .formation-tuning-overlay[data-tuning-settled='1'] .formation-tuning-readout{animation:formationTuningTick .15s ease-out}
+html body.nyanko-ui-polish .formation-tuning-overlay .formation-tuning-readout.is-ticking{animation:formationTuningTick .15s ease-out}
 @keyframes formationTuningTick{0%{transform:scale(1.06);filter:brightness(1.4)}100%{transform:scale(1);filter:brightness(1)}}
 @property --formation-slot-charge{syntax:'<percentage>';inherits:false;initial-value:0%}
 html body.nyanko-ui-polish .formation-slot-charge{position:absolute;inset:-8px;z-index:9;border-radius:17px;padding:6px;pointer-events:none;opacity:0;background:conic-gradient(from -90deg,#ffd531 0%,#ff7a12 calc(var(--formation-slot-charge,0%) - 1%),rgba(255,122,18,0) var(--formation-slot-charge,0%)),conic-gradient(rgba(21,8,2,.55) 0 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;filter:drop-shadow(0 1px 0 rgba(0,0,0,.65)) drop-shadow(0 0 7px rgba(255,150,40,.8))}
@@ -480,7 +480,24 @@ function resolveTuningOverlayIcons(editor, overlay) {
   if (provider && typeof editor.pumpIconQueue === 'function') editor.pumpIconQueue(provider);
 }
 
-function renderTuningOverlay(editor) {
+// Replay the BCU "tick" pop only on the readouts whose values actually changed.
+// A full panel re-render replaces every readout node, so the old approach of
+// flagging the whole overlay made level, +Lv, talent and orb readouts all pop at
+// once. We add the one-shot class to just the changed control's readout instead.
+function flashChangedReadouts(overlay, tickKeys) {
+  if (reduceMotion() || !overlay || !Array.isArray(tickKeys) || !tickKeys.length) return;
+  for (const key of tickKeys) {
+    if (!key) continue;
+    const readout = overlay.querySelector(`[data-tuning-control='${key}'] .formation-tuning-readout`);
+    if (!readout) continue;
+    readout.classList.remove('is-ticking');
+    void readout.offsetWidth; // restart the animation on the freshly rendered node
+    readout.classList.add('is-ticking');
+    setTimeout(() => readout.classList.remove('is-ticking'), 220);
+  }
+}
+
+function renderTuningOverlay(editor, { tickKeys = [] } = {}) {
   const overlay = tuningOverlay(editor);
   const draft = editor.characterTuningDraft;
   if (!draft?.characterId) {
@@ -523,6 +540,7 @@ function renderTuningOverlay(editor) {
   } else {
     overlay.classList.remove('is-opening');
     overlay.dataset.tuningSettled = '1';
+    flashChangedReadouts(overlay, tickKeys);
   }
 }
 
@@ -588,7 +606,7 @@ function stepDraft(editor, key, delta) {
   } else if (key === 'percent') {
     draft.percent = clampInt((draft.percent ?? DOG_DEFAULT_MAGNIFICATION_PERCENT) + delta, 1, 999900);
   }
-  renderTuningOverlay(editor);
+  renderTuningOverlay(editor, { tickKeys: [key] });
 }
 
 function setDraftInput(editor, key, value, { live = false } = {}) {
@@ -621,7 +639,7 @@ function setDraftInput(editor, key, value, { live = false } = {}) {
     draft.percent = clampInt(value, 1, DOG_MAGNIFICATION_MAX);
   }
   if (live) updateTuningDynamic(editor);
-  else renderTuningOverlay(editor);
+  else renderTuningOverlay(editor, { tickKeys: [key] });
 }
 
 function updateStepperDom(overlay, key, value, min, max, meterValue) {
@@ -658,17 +676,21 @@ function updateTuningDynamic(editor) {
 function applyPreset(editor, preset) {
   const draft = editor.characterTuningDraft;
   if (!draft) return;
+  let tickKeys = [];
   if (preset === 'cat-max' && draft.faction === 'cat') {
     const state = resolveCatState(draft.characterId, draft);
     draft.level = state.resolved.maxLevel;
     draft.plusLevel = state.resolved.maxPlusLevel;
+    tickKeys = ['level', 'plusLevel'];
   } else if (preset === 'cat-default' && draft.faction === 'cat') {
     const fresh = createDraft(editor, draft.characterId);
     editor.characterTuningDraft = fresh;
+    tickKeys = ['level', 'plusLevel'];
   } else if (preset?.startsWith?.('dog-') && draft.faction === 'dog') {
     draft.percent = clampInt(preset.slice(4), 1, 999900);
+    tickKeys = ['percent'];
   }
-  renderTuningOverlay(editor);
+  renderTuningOverlay(editor, { tickKeys });
 }
 
 function saveDraft(editor) {

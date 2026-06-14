@@ -129,9 +129,17 @@ export class BattleCamera {
   }
 
   clamp() {
+    // Clamp strictly to the BCU scrollable range, which spans the stage plus the
+    // off*2 side margins (getClampRange.maxPos). The previous early-return pinned
+    // pos to 0 whenever visibleWorldWidth >= stageLen, which is true at every
+    // partial zoom-out level between minSiz and siz~1; that killed horizontal
+    // scroll into the BCU margins even though there was still range to pan.
+    // getClampRange already returns maxPos===0 (visible covers the full
+    // stage+margins extent) at the most zoomed-out level, so the <=0 guard pins
+    // pos to 0 only when nothing can scroll and never blocks mid-zoom panning.
     const clampRange = this.getClampRange();
-    if (clampRange.visibleWorldWidth >= clampRange.stageLen) { this.pos = 0; return; }
     if (!Number.isFinite(this.pos)) this.pos = 0;
+    if (!(clampRange.maxPos > 1e-6)) { this.pos = 0; return; }
     this.pos = Math.max(clampRange.minPos, Math.min(clampRange.maxPos, this.pos));
   }
 

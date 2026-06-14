@@ -9,6 +9,7 @@ import { BattleScene } from '../battle/BattleScene.js';
 import { BattleSceneRenderer } from '../battle/BattleSceneRenderer.js';
 import { preloadBcuStatusEffectDefinitions } from '../battle/bcu-runtime/BcuStatusEffectManager.js';
 import { PlayerProductionBar } from '../ui/PlayerProductionBar.js';
+import { BattleSpeedControl } from '../ui/BattleSpeedControl.js';
 import { FormationEditor } from '../ui/FormationEditor.js';
 import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
 import { BattleSimulationClock } from './BattleSimulationClock.js';
@@ -63,7 +64,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.selectedStageId=options.selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; }
+  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.selectedStageId=options.selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.speedControl=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; }
 
   async start() {
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
@@ -81,8 +82,10 @@ export class PreviewApp {
       this.cameraInputController = new BattleCameraInputController(this.renderer.canvas, () => this.battleScene?.camera);
       this.cameraInputController.attach();
       const battleMount=document.querySelector('.canvas-panel')||document.body;
-      this.formationEditor = new FormationEditor({ mount:battleMount, selectedStageId:this.selectedStageId, onStageChanged:(stageId)=>{this.selectedStageId=stageId;this.ui?.log('info',`Stage selected: ${stageId}`);}, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${formatFormationForLog(f)}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); } });
+      this.formationEditor = new FormationEditor({ mount:battleMount, selectedStageId:this.selectedStageId, onStageChanged:(stageId)=>{this.selectedStageId=stageId;this.ui?.log('info',`Stage selected: ${stageId}`);}, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${formatFormationForLog(f)}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); }, onSettingChanged:(key)=>{ if(key==='bcu-speed-control') this.speedControl?.setVisible(this.speedControl?.visible); } });
       this.formationEditor.setVisible(true);
+      this.speedControl = new BattleSpeedControl({ mount: battleMount, onChange: (mult) => { this.battleSpeedMultiplier = mult; } });
+      this.speedControl.setVisible(false);
       this.productionBar?.setVisible(false);
       this.sceneReady = false;
       this.battleScene = null;
@@ -190,6 +193,7 @@ export class PreviewApp {
       console.info('applyFormationToBattle:after-resetBattle');
       this.formationEditor?.setVisible(false);
       this.productionBar?.setVisible(true);
+      this.speedControl?.setVisible(true);
       this.sceneReady = !!(this.battleScene && this.battleScene.camera);
       this.publishApplyBattleReport(this.buildApplyBattleReport({
         ok: this.sceneReady,
@@ -202,6 +206,7 @@ export class PreviewApp {
     } catch (e) {
       this.formationEditor?.setVisible(true);
       this.productionBar?.setVisible(false);
+      this.speedControl?.setVisible(false);
       this.sceneReady = false;
       this.publishApplyBattleReport(this.buildApplyBattleReport({
         ok: false,
@@ -265,8 +270,12 @@ export class PreviewApp {
       this.battleScene = nextScene;
       overlay?.setProgress({ phase: 'production', message: '出撃キャラを準備中…', value: 0.9, elapsedMs:elapsed });
       const battleMount=document.querySelector('.canvas-panel')||document.body;
-      if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}      
+      if(!this.productionBar){this.productionBar=new PlayerProductionBar({scene:nextScene,mount:battleMount});} else {this.productionBar.bindScene(nextScene);}
       this.productionBar?.setVisible(true);
+      // Each battle starts at the BCU default speed (1x, gray).
+      this.battleSpeedMultiplier = 1;
+      this.speedControl?.reset();
+      this.speedControl?.setVisible(true);
       this.sceneReady = true;
       this.formationEditor?.setVisible(keepFormationVisible);
       overlay?.setProgress({ phase: 'ready', message: '戦闘開始！', value: 1.0 });

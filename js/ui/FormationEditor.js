@@ -4,6 +4,7 @@ import { getAvailableStages, getDefaultStage } from '../battle/StageRegistry.js'
 import { StageDefinitionLoader } from '../battle/StageDefinitionLoader.js';
 import { stageKey as makeStageKey, stageMapKey } from '../bcu/BcuIdentifier.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+import { BattleSpeedControl } from './BattleSpeedControl.js';
 
 function clampPage(page) {
   const p = Math.floor(Number(page) || 0);
@@ -36,17 +37,19 @@ function pageLabel(page) {
 }
 
 export class FormationEditor {
-  constructor({ mount, onFormationChanged, onApplyBattle, onStageChanged, selectedStageId } = {}) {
+  constructor({ mount, onFormationChanged, onApplyBattle, onStageChanged, selectedStageId, onSettingChanged } = {}) {
     this.mount = mount || document.body;
     this.onFormationChanged = onFormationChanged || (() => {});
     this.onApplyBattle = onApplyBattle || (() => {});
     this.onStageChanged = onStageChanged || (() => {});
+    this.onSettingChanged = onSettingChanged || (() => {});
     this.selectedStageId = selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null;
     this.stageLoader = new StageDefinitionLoader((level, message) => console[level === 'error' ? 'error' : 'warn']?.(message));
     this.stageOptions = [];
     this.stageMeta = new Map();
     this.stageLoading = false;
     this.stageOverlayOpen = false;
+    this.settingsOverlayOpen = false;
     this.filter = CHARACTER_FACTIONS.all;
     this.searchText = '';
     this.searchDraft = '';
@@ -135,6 +138,29 @@ export class FormationEditor {
       return this.switchPage(page.dataset.page, 'click');
     }
 
+    const setting = e.target.closest('[data-setting]');
+    if (setting && this.root.contains(setting)) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (setting.dataset.setting === 'bcu-speed-control') {
+        const next = setting.getAttribute('aria-checked') !== 'true';
+        BattleSpeedControl.setFeatureEnabled(next);
+        this.onSettingChanged('bcu-speed-control', next);
+        this.setHint(next ? 'スピードアップ機能: ON' : 'スピードアップ機能: OFF');
+        this.renderSettingsOverlay();
+      }
+      return;
+    }
+
+    const settingsBackdrop = e.target.closest('.formation-settings-overlay');
+    if (settingsBackdrop && e.target === settingsBackdrop) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.settingsOverlayOpen = false;
+      this.renderSettingsOverlay();
+      return;
+    }
+
     const action = e.target.closest('[data-action]');
     const stage = e.target.closest('[data-stage-id]');
     if (stage) {
@@ -157,6 +183,20 @@ export class FormationEditor {
         e.stopPropagation();
         this.stageOverlayOpen = false;
         this.renderStageSelector();
+        return;
+      }
+      if (type === 'settings-open') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.settingsOverlayOpen = true;
+        this.renderSettingsOverlay();
+        return;
+      }
+      if (type === 'settings-close') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.settingsOverlayOpen = false;
+        this.renderSettingsOverlay();
         return;
       }
       if (type === 'catalog-search') {
@@ -623,8 +663,22 @@ export class FormationEditor {
   }
 
   refresh() {
-    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchDraft ?? this.searchText}' /><button type='button' class='formation-search-button' data-action='catalog-search'>検索</button><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section></div>`;
+    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchDraft ?? this.searchText}' /><button type='button' class='formation-search-button' data-action='catalog-search'>検索</button><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><button type='button' data-action='settings-open' class='secondary-action settings-open-button'>⚙ 設定</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section><section class='formation-settings-overlay' aria-label='Game settings'><div class='formation-settings-dialog' role='dialog' aria-modal='true'><header><div><strong>設定</strong><span>ゲーム設定</span></div><button type='button' data-action='settings-close'>閉じる</button></header><div class='formation-settings-list'></div></div></section></div>`;
     this.renderDynamic({ resetCatalogScroll: true });
     this.renderStageSelector();
+    this.renderSettingsOverlay();
+  }
+
+  renderSettingsOverlay() {
+    const overlay = this.root.querySelector('.formation-settings-overlay');
+    if (!overlay) return;
+    overlay.classList.toggle('is-open', !!this.settingsOverlayOpen);
+    const list = overlay.querySelector('.formation-settings-list');
+    if (!list) return;
+    const speedOn = BattleSpeedControl.isFeatureEnabled();
+    list.innerHTML = `<div class='formation-settings-row'>
+      <div class='label'><strong>スピードアップ機能</strong><span>戦闘中に倍速切替ボタン（1x→2x→3x→4x）を画面上部に表示します。BCU準拠。</span></div>
+      <button type='button' role='switch' class='formation-setting-toggle' data-setting='bcu-speed-control' aria-checked='${speedOn ? 'true' : 'false'}' aria-label='スピードアップ機能を切り替え'></button>
+    </div>`;
   }
 }

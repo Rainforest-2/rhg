@@ -1,0 +1,62 @@
+// Deterministic guard for the BCU speed-up battle control:
+//  - BattleSimulationClock honors the speed multiplier in bcu-no-catchup mode
+//    (1x stays single-step / no wall-clock catch-up; 2x/3x/4x advance faster).
+//  - BattleSpeedControl exposes the persisted feature flag and 1x->2x->3x->4x->1x
+//    cycle with the hand-tinted gray/green/pink/purple disc colors.
+import { BattleSimulationClock } from '../js/preview/BattleSimulationClock.js';
+
+const checks = [];
+const check = (name, cond, detail) => { checks.push({ name, ok: !!cond, detail }); };
+
+// ---- clock: multiplier=1 keeps BCU no-catchup (single step, drop remainder) ----
+{
+  const clock = new BattleSimulationClock();
+  const dts = [];
+  clock.resume(0);
+  const r = clock.step(5000, 1, (dt) => dts.push(dt));
+  check('1x: single 33ms step on huge dt', dts.length === 1 && dts[0] === 33, dts);
+  check('1x: drops remainder (no catch-up)', r.dropped === true && r.accumulatorMs === 0 && r.maxSteps === 1, r);
+}
+
+// ---- clock: higher multipliers advance the sim faster at a fixed display fps ----
+function simSteps(mult, frames = 60, fps = 60) {
+  const clock = new BattleSimulationClock();
+  clock.resume(0);
+  let t = 0; let steps = 0;
+  for (let i = 0; i < frames; i++) { t += 1000 / fps; clock.step(t, mult, () => { steps += 1; }); }
+  return steps;
+}
+const s1 = simSteps(1); const s2 = simSteps(2); const s3 = simSteps(3); const s4 = simSteps(4);
+check('1x ~= 30 steps/sec', Math.abs(s1 - 30) <= 2, s1);
+check('2x ~= 2x of 1x', s2 >= s1 * 1.8, { s1, s2 });
+check('3x > 2x', s3 > s2, { s2, s3 });
+check('4x ~= 4x of 1x', s4 >= s1 * 3.5, { s1, s4 });
+
+// ---- BattleSpeedControl feature flag + cycle/colors ----
+const store = new Map();
+globalThis.localStorage = {
+  getItem: (k) => (store.has(k) ? store.get(k) : null),
+  setItem: (k, v) => store.set(k, String(v)),
+  removeItem: (k) => store.delete(k)
+};
+const { BattleSpeedControl } = await import('../js/ui/BattleSpeedControl.js');
+check('feature enabled by default', BattleSpeedControl.isFeatureEnabled() === true);
+BattleSpeedControl.setFeatureEnabled(false);
+check('feature flag persists off', store.get(BattleSpeedControl.SETTING_KEY) === '0' && BattleSpeedControl.isFeatureEnabled() === false);
+BattleSpeedControl.setFeatureEnabled(true);
+check('feature flag persists on', BattleSpeedControl.isFeatureEnabled() === true);
+
+// headless cycle/colors (no document -> el is null, state logic still runs)
+const seen = [];
+const ctrl = new BattleSpeedControl({ onChange: (m) => seen.push(m) });
+check('control starts at 1x', ctrl.multiplier === 1);
+const cycle = [ctrl.multiplier];
+for (let i = 0; i < 4; i++) cycle.push(ctrl.cycle());
+check('cycle is 1->2->3->4->1', JSON.stringify(cycle) === JSON.stringify([1, 2, 3, 4, 1]), cycle);
+ctrl.cycle(); ctrl.reset();
+check('reset returns to 1x', ctrl.multiplier === 1);
+
+const failed = checks.filter((c) => !c.ok);
+for (const c of checks) console.log(`${c.ok ? 'PASS' : 'FAIL'} ${c.name}${c.ok ? '' : ' :: ' + JSON.stringify(c.detail)}`);
+if (failed.length) { console.error(`check-battle-speed-control: ${failed.length} failed`); process.exit(1); }
+console.log('check-battle-speed-control: OK');

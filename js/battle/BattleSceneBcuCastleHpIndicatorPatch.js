@@ -10,6 +10,13 @@ const PATCH_FLAG = Symbol.for('wanko-battle.bcu-castle-hp-indicator.v3');
 // (金額数字大 0-9 / 金額数字大/), falling back to outlined gold text only when the
 // sprite sheet has not finished loading.
 const BCU_HP_NUM_SCALE = 0.8;
+// BCU BattleBox layout constants, in BCU pre-siz pixels (BattleBox.java fields):
+//   road_h = 156, castw = 128, casth = 256.
+// drawCastleHealthIndicator anchors the gold digits to these fixed values and the
+// road baseline (midh - road_h*siz), NOT to each castle's actual sprite bounds.
+const BCU_ROAD_H = 156;
+const BCU_CASTW = 128;
+const BCU_CASTH = 256;
 
 let sharedSpriteText = null;
 let spriteInitStarted = false;
@@ -49,44 +56,43 @@ function finiteNumber(...values) {
   return 0;
 }
 
-function getVisualSize(base, scale) {
-  const baseScale = Number(base?.scale) || 1;
-  return {
-    width: finiteNumber(base?.visualBoundsPx?.width, base?.castleAsset?.visualBounds?.width, base?.castleAsset?.crop?.w, 160) * baseScale * scale,
-    height: finiteNumber(base?.visualBoundsPx?.height, base?.castleAsset?.visualBounds?.height, base?.castleAsset?.crop?.h, 220) * baseScale * scale
-  };
-}
-
 function getBaseScreenX(renderer, scene, base) {
   const x = finiteNumber(base?.x, base?.posBcu, 0);
   if (typeof renderer.projectBcuX === 'function') return renderer.projectBcuX(scene, x);
   return renderer.projectBattleX(scene, x);
 }
 
-function getBaseIndicatorPosition(renderer, base, indicatorHeight = 0) {
+function getRoadBaselineY(renderer, scene, siz) {
+  // BCU posy origin: midh - road_h*siz (the road line). getBcuStageGroundY returns
+  // the camera midh; matches BattleSceneRenderer.getBcuLayerScreenY(layer 0).
+  const midh = typeof renderer.getBcuStageGroundY === 'function'
+    ? renderer.getBcuStageGroundY(scene, 720)
+    : finiteNumber(scene?.camera?.midh, 720);
+  return midh - BCU_ROAD_H * siz;
+}
+
+function getBaseIndicatorPosition(renderer, base, siz, numHeightPx = 0) {
   const scene = renderer._scene;
-  const scale = renderer.getCameraScale?.(scene) || 1;
-  const renderY = renderer.getEntityRenderY(scene, base, base?.y || 0);
+  const roadBaseY = getRoadBaselineY(renderer, scene, siz);
   const screenX = getBaseScreenX(renderer, scene, base);
-  const { width, height } = getVisualSize(base, scale);
 
   if (base?.side === 'cat-enemy') {
     return {
-      // BCU BattleBox.drawCastleHealthIndicator (generic enemy castle):
-      //   posx -= castw * siz * 1.15
-      //   posy -= casth * siz * 0.95 + numHeight * siz
-      x: screenX - width * 1.15,
-      y: renderY - height * 0.95 - indicatorHeight,
+      // BCU BattleBox.drawCastleHealthIndicator (generic enemy castle, else-branch):
+      //   posx = getX(ebase.pos) - castw * siz * 1.15
+      //   posy = (midh - road_h*siz) - (casth * siz * 0.95 + numHeight * siz)
+      x: screenX - BCU_CASTW * siz * 1.15,
+      y: roadBaseY - (BCU_CASTH * siz * 0.95 + numHeightPx),
       source: 'BCU BattleBox.drawCastleHealthIndicator enemy castle anchor'
     };
   }
 
   return {
     // BCU BattleBox.drawCastleHealthIndicator (player castle / ubase):
+    //   posx = getX(len-800)  (player castle left edge)
     //   posy = midh - road_h*siz - casth*siz - numHeight*siz
-    // anchored at the player castle left edge.
     x: screenX,
-    y: renderY - height - indicatorHeight,
+    y: roadBaseY - BCU_CASTH * siz - numHeightPx,
     source: 'BCU BattleBox.drawCastleHealthIndicator player castle anchor'
   };
 }
@@ -107,25 +113,30 @@ function buildHpSpriteParts(sprite, hpText) {
 
 function drawBcuCastleHpIndicator(c, renderer, base) {
   const text = formatBcuBaseHp(base);
-  const scale = renderer.getCameraScale?.(renderer._scene) || 1;
-  const fontScale = Math.max(0.01, scale * BCU_HP_NUM_SCALE);
+  const siz = renderer.getCameraScale?.(renderer._scene) || 1;
+  // BCU draws the digits with setSym(siz * 0.8); the positioning offset uses the
+  // digit's natural height * siz (aux.num[5][0].getImg().getHeight() * siz).
+  const fontScale = Math.max(0.01, siz * BCU_HP_NUM_SCALE);
   const sprite = getSpriteText();
   const parts = buildHpSpriteParts(sprite, text);
 
   let indicatorWidth = 0;
-  let indicatorHeight = 0;
+  let glyphHeight = 0;
   let mode = 'sprite';
 
   if (parts) {
     const bounds = sprite.measurePartBounds(parts, fontScale);
     indicatorWidth = bounds.width;
-    indicatorHeight = bounds.height;
+    glyphHeight = bounds.height;
   } else {
     mode = 'text-fallback';
-    indicatorHeight = Math.max(10, Math.round(14 * fontScale));
+    glyphHeight = Math.max(10, Math.round(14 * fontScale));
   }
 
-  const pos = getBaseIndicatorPosition(renderer, base, indicatorHeight);
+  // glyphHeight is measured at fontScale (= siz*0.8); convert back to the BCU
+  // numHeight*siz offset by dividing out the 0.8 sprite scale.
+  const numHeightPx = glyphHeight / BCU_HP_NUM_SCALE;
+  const pos = getBaseIndicatorPosition(renderer, base, siz, numHeightPx);
 
   c.save();
   if (parts) {
@@ -133,7 +144,7 @@ function drawBcuCastleHpIndicator(c, renderer, base) {
   } else {
     // BCU has no box behind the HP; emulate the gold digit look with an
     // outlined fill until the sprite sheet finishes loading.
-    const fontPx = indicatorHeight;
+    const fontPx = glyphHeight;
     c.font = `900 ${fontPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
     c.textBaseline = 'top';
     c.textAlign = 'left';
@@ -158,7 +169,8 @@ function drawBcuCastleHpIndicator(c, renderer, base) {
     width: indicatorWidth,
     side: base?.side || null,
     fontScale,
-    indicatorHeight
+    glyphHeight,
+    numHeightPx
   };
 }
 

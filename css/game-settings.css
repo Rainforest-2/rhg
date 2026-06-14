@@ -1,0 +1,21 @@
+/* Game settings overlay (BCU speed-up toggle, future game settings). Mirrors the
+   stage-selector overlay visual language so it fits the existing battle UI. */
+.formation-settings-overlay{position:absolute;inset:0;z-index:46;display:none;place-items:center;padding:clamp(10px,2vw,24px);background:rgba(2,6,23,.72);backdrop-filter:blur(4px);pointer-events:auto}
+.formation-settings-overlay.is-open{display:grid}
+.formation-settings-dialog{width:min(560px,100%);max-height:min(640px,100%);display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;border:1px solid rgba(148,163,184,.32);border-radius:16px;background:#08111f;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.formation-settings-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.formation-settings-dialog header div{display:grid;gap:2px}
+.formation-settings-dialog header strong{font-size:1.05rem;color:#f1f5f9}
+.formation-settings-dialog header span{color:#a9b7ca;font-size:.74rem}
+.formation-settings-dialog header button{min-width:96px;min-height:40px;border-radius:10px;border:1px solid rgba(148,163,184,.3);background:#101827;color:#e5e7eb;font-weight:800;cursor:pointer}
+.formation-settings-dialog header button:active{transform:translateY(2px)}
+.formation-settings-list{min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:10px;align-content:start;padding:2px}
+.formation-settings-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:12px 14px;border:1px solid rgba(148,163,184,.22);border-radius:12px;background:#101827}
+.formation-settings-row .label{display:grid;gap:3px;min-width:0}
+.formation-settings-row .label strong{font-size:.94rem;color:#f1f5f9}
+.formation-settings-row .label span{font-size:.72rem;color:#9fb0c6;line-height:1.35}
+.formation-setting-toggle{position:relative;width:54px;height:30px;flex:none;padding:0;border:0;border-radius:999px;background:#33415599;cursor:pointer;transition:background .15s ease}
+.formation-setting-toggle[aria-checked='true']{background:#22c55e}
+.formation-setting-toggle::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#f8fafc;box-shadow:0 1px 3px rgba(0,0,0,.45);transition:transform .15s ease}
+.formation-setting-toggle[aria-checked='true']::after{transform:translateX(24px)}
+@media (prefers-reduced-motion: reduce){.formation-setting-toggle,.formation-setting-toggle::after{transition:none}}

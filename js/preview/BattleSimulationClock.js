@@ -33,10 +33,16 @@ export class BattleSimulationClock {
   }
 
   getEffectiveMaxSubSteps(speedMultiplier = 1) {
-    if (this.catchUpMode === 'bcu-no-catchup') return 1;
+    const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
+    if (this.catchUpMode === 'bcu-no-catchup') {
+      // BCU runs the battle update `spd` times per render frame to fast-forward.
+      // At 1x this stays at a single fixed step (no wall-clock catch-up); at
+      // 2x/3x/4x it allows that many fixed steps so higher speeds actually
+      // advance the simulation faster instead of dropping the extra time.
+      return Math.max(1, Math.ceil(speed));
+    }
     const configured = Number.isFinite(this.maxSubStepsPerFrame) ? Math.floor(this.maxSubStepsPerFrame) : 1;
     if (this.catchUpMode === 'speed-aware') {
-      const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
       return Math.max(1, Math.min(configured, Math.ceil(speed)));
     }
     return Math.max(1, configured);

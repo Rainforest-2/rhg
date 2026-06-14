@@ -98,13 +98,17 @@ function getBaseIndicatorPosition(renderer, base, siz, numHeightPx = 0) {
 }
 
 // Build the BCU digit-sprite sequence: <health> <slash> <maxHealth>.
+// BCU Res.getBase draws castle HP with aux.num[5] = the dedicated 「城ＨＰ数字」
+// sprites, which are distinct from the 「金額数字大」 money digits. Using the castle
+// digits is what makes the base HP read with BCU's own font/size instead of the
+// wallet font.
 function buildHpSpriteParts(sprite, hpText) {
   const map = sprite?.map;
-  if (!sprite?.ready || !map?.bigDigits || !map.bigSlash) return null;
+  if (!sprite?.ready || !map?.castleHpDigits || !map.castleHpSlash) return null;
   const parts = [];
   for (const ch of hpText) {
-    if (ch === '/') { parts.push(map.bigSlash); continue; }
-    const digit = map.bigDigits[Number(ch)];
+    if (ch === '/') { parts.push(map.castleHpSlash); continue; }
+    const digit = map.castleHpDigits[Number(ch)];
     if (!digit) return null;
     parts.push(digit);
   }

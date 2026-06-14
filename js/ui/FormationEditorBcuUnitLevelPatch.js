@@ -125,9 +125,9 @@ html body.nyanko-ui-polish .formation-tuning-overlay.is-closing{animation:format
 @keyframes formationTuningFadeOut{from{opacity:1}to{opacity:0}}
 html body.nyanko-ui-polish .formation-tuning-panel{width:min(920px,calc(100vw - 28px));max-height:calc(100dvh - 20px);display:grid;grid-template-columns:minmax(190px,245px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:6px solid #000;border-radius:22px;background:#fff4c2;box-shadow:0 10px 0 #160804,0 0 0 4px rgba(255,255,255,.12);transform-origin:center}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-open .formation-tuning-panel{animation:none}
-html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-panel{animation:formationTuningIn .18s cubic-bezier(.16,1,.3,1) both}
+html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-panel{animation:formationTuningSpring .18s cubic-bezier(.16,1,.3,1) both}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-closing .formation-tuning-panel{animation:formationTuningPopOut .11s ease-in both}
-@keyframes formationTuningIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes formationTuningSpring{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes formationTuningPopOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.98) translateY(5px)}}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-header{animation:formationTuningRise .16s cubic-bezier(.16,1,.3,1) 20ms both}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-opening .formation-tuning-hero{animation:formationTuningRise .16s cubic-bezier(.16,1,.3,1) 35ms both}

@@ -127,6 +127,9 @@ export function installPreviewAppBattleResultOverlayPatch() {
       this.battleScene.pushEvent?.({ type: 'battleResultOkReturnToFormation', source: 'PreviewAppBattleResultOverlayPatch' });
     }
     this.productionBar?.setVisible(false);
+    // The BCU speed-up control belongs to the battle scene only; hide it when we
+    // leave battle so it never lingers over the formation/non-battle screens.
+    this.speedControl?.setVisible(false);
     this.formationEditor?.setVisible(true);
   };
 }

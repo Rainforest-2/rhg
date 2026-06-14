@@ -74,9 +74,15 @@ export class BcuSpriteText {
     const bigDigits = Array.from({ length: 10 }, (_, d) => this.findByNormExact(this.imgcut, `金額数字大${d}`));
     const smallDigitsOn = Array.from({ length: 10 }, (_, d) => this.findByNormExact(this.imgcut, `金額数字小${d}`));
     const smallDigitsOff = Array.from({ length: 10 }, (_, d) => this.findByNormExact(this.imgcut, `金額数字小(暗転)${d}`));
+    // BCU castle-HP uses aux.num[5], the dedicated 「城ＨＰ数字」 (castle-HP digit)
+    // sprites (img001 parts 57-68), NOT the 「金額数字大」 money digits used by the
+    // wallet/cost displays. They are smaller (14x18) and read as the BCU base HP font.
+    const castleHpDigits = Array.from({ length: 10 }, (_, d) => this.findByNormExact(this.imgcut, `城HP数字${d}`));
     return {
       bigDigits,
       bigSlash: this.findByNormExact(this.imgcut, '金額数字大/'),
+      castleHpDigits,
+      castleHpSlash: this.findByNormExact(this.imgcut, '城HP数字/'),
       bigYen: this.findByNormIncludes(this.imgcut, ['金額数字大円'], ['光る', 'お金']),
       smallDigitsOn,
       smallDigitsOff,
@@ -88,8 +94,8 @@ export class BcuSpriteText {
   getMissingMapParts() {
     if (!this.map) return ['map'];
     const missing = [];
-    for (const key of ['bigSlash', 'bigYen', 'smallYenOn', 'smallYenOff', 'moneySignOnJp']) if (!this.map[key]) missing.push(key);
-    for (const key of ['bigDigits', 'smallDigitsOn', 'smallDigitsOff']) this.map[key].forEach((p, i) => { if (!p) missing.push(`${key}[${i}]`); });
+    for (const key of ['bigSlash', 'bigYen', 'castleHpSlash', 'smallYenOn', 'smallYenOff', 'moneySignOnJp']) if (!this.map[key]) missing.push(key);
+    for (const key of ['bigDigits', 'castleHpDigits', 'smallDigitsOn', 'smallDigitsOff']) this.map[key].forEach((p, i) => { if (!p) missing.push(`${key}[${i}]`); });
     return missing;
   }
   measureParts(parts, scale = 1) { return (parts || []).reduce((sum, p) => sum + ((p?.w || 0) * scale), 0); }

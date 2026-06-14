@@ -11,6 +11,7 @@ import { FormationEditor } from './FormationEditor.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-premium-motion.v1');
 const STAGE_CLOSE_MS = 120;
+const SETTINGS_CLOSE_MS = 140;
 
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
 
@@ -101,6 +102,34 @@ export function installFormationPremiumMotionPatch() {
     }
     return result;
   };
+
+  // Settings overlay: same spring-open / fade-close treatment as the stage
+  // selector so opening and closing the settings page reads as a smooth
+  // transition instead of an instant display:none flip.
+  const originalRenderSettingsOverlay = proto.renderSettingsOverlay;
+  if (typeof originalRenderSettingsOverlay === 'function') {
+    proto.renderSettingsOverlay = function renderSettingsOverlayWithPremiumMotion(...args) {
+      const wasOpen = this.__premiumSettingsOpen === true;
+      const result = originalRenderSettingsOverlay.apply(this, args);
+      const overlay = this.root?.querySelector?.('.formation-settings-overlay');
+      const isOpen = this.settingsOverlayOpen === true;
+      this.__premiumSettingsOpen = isOpen;
+      if (!overlay) return result;
+      if (isOpen) {
+        clearTimeout(this.__premiumSettingsCloseTimer);
+        overlay.classList.remove('is-closing');
+        if (!wasOpen) transientClass(overlay, 'is-opening', 240);
+      } else if (wasOpen && !reduceMotion()) {
+        overlay.classList.add('is-open', 'is-closing');
+        clearTimeout(this.__premiumSettingsCloseTimer);
+        this.__premiumSettingsCloseTimer = setTimeout(() => {
+          if (this.__premiumSettingsOpen) return;
+          overlay.classList.remove('is-open', 'is-closing');
+        }, SETTINGS_CLOSE_MS);
+      }
+      return result;
+    };
+  }
 }
 
 installFormationPremiumMotionPatch();

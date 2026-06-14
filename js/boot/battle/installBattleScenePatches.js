@@ -3,6 +3,7 @@ export async function installBattleScenePatches() {
   await import('../../battle/BattleSceneBcuLineupPatch.js');
   await import('../../battle/BattleSceneBcuStageSpawnPatch.js');
   await import('../../battle/BattleSceneBcuCastleGuardPatch.js');
+  await import('../../battle/BattleSceneBcuCatCannonPatch.js');
   await import('../../battle/BattleSceneBcuSpiritPatch.js');
   await import('../../battle/BattleSceneCustomStageBattlePatch.js');
   await import('../../battle/BattleSceneStageSpawnHeaderPatch.js');

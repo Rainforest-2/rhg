@@ -54,10 +54,138 @@
   overflow:visible!important;
 }
 
+.prod-ui .wallet-upgrade{
+  position:absolute;
+  left:calc(10px + env(safe-area-inset-left,0px));
+  bottom:calc(6px + env(safe-area-inset-bottom,0px));
+  width:clamp(86px,12vw,132px);
+  min-height:clamp(58px,8vw,84px);
+  display:grid;
+  place-content:center;
+  gap:2px;
+  pointer-events:auto;
+  touch-action:manipulation;
+  border:2px solid rgba(20,20,20,.9);
+  border-radius:6px;
+  padding:6px 8px;
+  background:linear-gradient(180deg,#f8fafc 0%,#cbd5e1 48%,#64748b 100%);
+  color:#111827;
+  box-shadow:0 4px 0 rgba(0,0,0,.75),inset 0 2px 0 rgba(255,255,255,.75);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-weight:1000;
+  line-height:1;
+  text-align:center;
+  z-index:2;
+}
+
+.prod-ui .wallet-upgrade.is-ready{
+  background:linear-gradient(180deg,#fde68a 0%,#facc15 48%,#b45309 100%);
+  color:#421b00;
+}
+
+.prod-ui .wallet-upgrade:disabled{
+  cursor:not-allowed;
+  filter:saturate(.7) brightness(.78);
+  opacity:.88;
+}
+
+.prod-ui .wallet-upgrade:active:not(:disabled){
+  transform:translateY(3px);
+  box-shadow:0 1px 0 rgba(0,0,0,.8),inset 0 2px 0 rgba(255,255,255,.55);
+}
+
+.prod-ui .wallet-upgrade .wallet-level{
+  font-size:clamp(13px,1.6vw,18px);
+}
+
+.prod-ui .wallet-upgrade .wallet-cost{
+  font-size:clamp(11px,1.35vw,15px);
+}
+
+.prod-ui .cat-cannon-fire{
+  position:absolute;
+  right:calc(10px + env(safe-area-inset-right,0px));
+  bottom:calc(6px + env(safe-area-inset-bottom,0px));
+  width:clamp(86px,12vw,132px);
+  min-height:clamp(58px,8vw,84px);
+  display:grid;
+  grid-template-rows:1fr auto;
+  place-items:center;
+  gap:4px;
+  pointer-events:auto;
+  touch-action:manipulation;
+  border:2px solid rgba(20,20,20,.9);
+  border-radius:6px;
+  padding:6px 8px;
+  background:linear-gradient(180deg,#e2e8f0 0%,#94a3b8 48%,#334155 100%);
+  color:#0f172a;
+  box-shadow:0 4px 0 rgba(0,0,0,.75),inset 0 2px 0 rgba(255,255,255,.7);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-weight:1000;
+  line-height:1;
+  text-align:center;
+  z-index:2;
+}
+
+.prod-ui .cat-cannon-fire.is-ready{
+  background:linear-gradient(180deg,#fee2e2 0%,#f87171 48%,#991b1b 100%);
+  color:#fff;
+  text-shadow:0 1px 0 #000;
+}
+
+.prod-ui .cat-cannon-fire:disabled{
+  cursor:not-allowed;
+  filter:saturate(.72) brightness(.78);
+  opacity:.9;
+}
+
+.prod-ui .cat-cannon-fire:active:not(:disabled){
+  transform:translateY(3px);
+  box-shadow:0 1px 0 rgba(0,0,0,.8),inset 0 2px 0 rgba(255,255,255,.55);
+}
+
+.prod-ui .cat-cannon-fire .cat-cannon-label{
+  font-size:clamp(13px,1.6vw,18px);
+}
+
+.prod-ui .cat-cannon-fire .cat-cannon-gauge{
+  width:100%;
+  height:16px;
+  display:grid;
+  grid-template-columns:repeat(10,1fr);
+  gap:2px;
+}
+
+.prod-ui .cat-cannon-fire .cat-cannon-gauge i{
+  display:block;
+  min-width:0;
+  border-radius:2px;
+  background:rgba(15,23,42,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+.prod-ui .cat-cannon-fire .cat-cannon-gauge i.is-filled{
+  background:#fef08a;
+}
+
 @media (max-width: 760px){
   .prod-ui .cards,
   .prod-ui:not(.is-hidden) .cards{
     bottom:calc(4px + env(safe-area-inset-bottom,0px))!important;
     padding:0!important;
+  }
+
+  .prod-ui .wallet-upgrade{
+    width:76px;
+    min-height:54px;
+    left:calc(6px + env(safe-area-inset-left,0px));
+    bottom:calc(4px + env(safe-area-inset-bottom,0px));
+  }
+
+  .prod-ui .cat-cannon-fire{
+    width:76px;
+    min-height:54px;
+    right:calc(6px + env(safe-area-inset-right,0px));
+    bottom:calc(4px + env(safe-area-inset-bottom,0px));
   }
 }

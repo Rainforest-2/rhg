@@ -11,7 +11,7 @@ export class ProductionRuntime {
     if (!economy) return { money: 0, maxMoney: 0, incomePerSecond: 0, cooldownCount: 0, cooldowns: [] };
     if (typeof economy.getState === 'function') {
       const s = economy.getState();
-      return { money: s.money ?? 0, maxMoney: s.maxMoney ?? 0, incomePerSecond: s.incomePerSecond ?? 0, cooldownCount: s.cooldownCount ?? 0, cooldowns: s.cooldowns ?? [] };
+      return { money: s.money ?? 0, maxMoney: s.maxMoney ?? 0, incomePerSecond: s.incomePerSecond ?? 0, wallet: s.wallet ?? null, walletLevel: s.walletLevel ?? null, upgradeCost: s.upgradeCost ?? null, cooldownCount: s.cooldownCount ?? 0, cooldowns: s.cooldowns ?? [] };
     }
     const cooldowns = economy.cooldowns instanceof Map ? [...economy.cooldowns.entries()].map(([slotId, remainingMs]) => ({ slotId, remainingMs })) : [];
     return { money: economy.money ?? 0, maxMoney: economy.maxMoney ?? 0, incomePerSecond: economy.incomePerSecond ?? 0, cooldownCount: cooldowns.length, cooldowns };

@@ -140,12 +140,56 @@ export class PlayerProductionBar {
   setup() {
     this.root = document.createElement('div');
     this.root.className = 'prod-ui is-hidden';
-    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><div class='cards lineup-cards'></div>";
+    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><button class='wallet-upgrade' type='button' aria-label='Worker cat wallet level up'><span class='wallet-level'>Lv 1</span><span class='wallet-cost'>---</span></button><button class='cat-cannon-fire' type='button' aria-label='Cat cannon fire'><span class='cat-cannon-label'>FIRE</span><span class='cat-cannon-gauge'></span></button><div class='cards lineup-cards'></div>";
     this.mount.appendChild(this.root);
     this.cardsWrap = this.root.querySelector('.cards');
     this.moneyCanvas = this.root.querySelector('.battle-money');
     this.moneyCtx = this.moneyCanvas.getContext('2d');
+    this.walletButton = this.root.querySelector('.wallet-upgrade');
+    this.walletLevelLabel = this.root.querySelector('.wallet-level');
+    this.walletCostLabel = this.root.querySelector('.wallet-cost');
+    this.cannonButton = this.root.querySelector('.cat-cannon-fire');
+    this.cannonGauge = this.root.querySelector('.cat-cannon-gauge');
     this.rebuildStacks();
+
+    this.walletButton?.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const before = this.scene?.economy?.getWalletStatus?.() || null;
+      const ok = this.scene?.economy?.upgradeWallet?.() === true;
+      const after = this.scene?.economy?.getWalletStatus?.() || null;
+      const detail = {
+        source: 'PlayerProductionBar.walletButton',
+        bcuAndroidReference: 'BBCtrl.click bottom-left aux.battle[0] -> SBCtrl.action -1',
+        bcuCommonReference: 'SBCtrl.actions action -1 -> StageBasis.act_mon',
+        ok,
+        before,
+        after
+      };
+      productionPageDebug().lastWalletAction = detail;
+      this.scene?.pushEvent?.({ type: ok ? 'bcuWalletUpgraded' : 'bcuWalletUpgradeRejected', ...detail });
+      this.drawWallet(this.scene);
+      this.drawMoney(this.scene);
+    }, true);
+
+    this.cannonButton?.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const before = this.scene?.getCatCannonStatus?.() || null;
+      const ok = this.scene?.requestCatCannonFire?.() === true;
+      const after = this.scene?.getCatCannonStatus?.() || null;
+      const detail = {
+        source: 'PlayerProductionBar.cannonButton',
+        bcuAndroidReference: 'BBCtrl.click bottom-right aux.battle[1] -> SBCtrl.action -2',
+        bcuCommonReference: 'SBCtrl.actions action -2 -> StageBasis.act_can',
+        ok,
+        before,
+        after
+      };
+      productionPageDebug().lastCannonAction = detail;
+      this.scene?.pushEvent?.({ type: ok ? 'bcuCatCannonRequested' : 'bcuCatCannonRequestRejected', ...detail });
+      this.drawCannon(this.scene);
+    }, true);
 
     this.cardsWrap.addEventListener('pointerdown', (e) => this.onPointerDown(e), true);
     this.cardsWrap.addEventListener('pointermove', (e) => this.onPointerMove(e), true);
@@ -426,6 +470,50 @@ export class PlayerProductionBar {
     }
     productionPageDebug().lastMoneyDraw = { money, maxMoney, ready: !!this.spriteText?.ready, timestamp: Date.now() };
   }
+  drawWallet(scene = this.scene) {
+    if (!this.walletButton) return;
+    const status = scene?.economy?.getWalletStatus?.() || null;
+    const enabled = status?.enabled === true;
+    this.walletButton.hidden = !enabled;
+    if (!enabled) return;
+    const level = Math.floor(Number(status.level || 1));
+    const isMax = status.isMax === true;
+    const cost = Math.floor(Number(status.upgradeCost || 0));
+    const canUpgrade = status.canUpgrade === true;
+    if (this.walletLevelLabel) this.walletLevelLabel.textContent = `Lv ${level}`;
+    if (this.walletCostLabel) this.walletCostLabel.textContent = isMax ? 'MAX' : `${cost}円`;
+    this.walletButton.disabled = !canUpgrade;
+    this.walletButton.classList.toggle('is-ready', canUpgrade);
+    this.walletButton.classList.toggle('is-max', isMax);
+    this.walletButton.dataset.level = String(level);
+    this.walletButton.dataset.cost = isMax ? '-1' : String(cost);
+    productionPageDebug().lastWalletDraw = {
+      source: 'PlayerProductionBar.drawWallet',
+      bcuAndroidReference: 'BattleBox.drawBtm: mtype from sb.money < sb.upgradeCost, work_lv >= 8 forces max state; Res.getWorkerLv and Res.getCost',
+      ...status
+    };
+  }
+  drawCannon(scene = this.scene) {
+    if (!this.cannonButton) return;
+    const status = scene?.getCatCannonStatus?.() || scene?.bcuCatCannon || null;
+    const enabled = status?.enabled !== false && !!status;
+    this.cannonButton.hidden = !enabled;
+    if (!enabled) return;
+    const ratio = Math.max(0, Math.min(1, Number(status.chargeRatio ?? (status.maxCannon > 0 ? status.cannon / status.maxCannon : 0)) || 0));
+    const ready = status.ready === true;
+    this.cannonButton.disabled = !ready;
+    this.cannonButton.classList.toggle('is-ready', ready);
+    this.cannonButton.classList.toggle('is-active', status.active === true);
+    this.cannonButton.dataset.charge = String(Math.floor(ratio * 10));
+    if (this.cannonGauge) {
+      this.cannonGauge.innerHTML = Array.from({ length: 10 }, (_, index) => `<i class='${index < Math.floor(ratio * 10) ? 'is-filled' : ''}'></i>`).join('');
+    }
+    productionPageDebug().lastCannonDraw = {
+      source: 'PlayerProductionBar.drawCannon',
+      bcuAndroidReference: 'BattleBox.drawBtm: ctype from sb.cannon == sb.maxCannon; 10 * sb.cannon / sb.maxCannon gauge slices; FIRE when full',
+      ...status
+    };
+  }
   updateLineupSwipeDebug(scene) {
     const hasBack = scene?.hasBackLineup?.() === true;
     const changing = !!scene?.lineupChanging;
@@ -447,6 +535,8 @@ export class PlayerProductionBar {
     this.scene = scene;
     if (!scene) return;
     this.updateLineupSwipeDebug(scene);
+    this.drawWallet(scene);
+    this.drawCannon(scene);
     this.drawMoney(scene);
     const iconDebug = productionIconDebug();
     const stats = { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 };

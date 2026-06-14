@@ -26,6 +26,11 @@ const commands = [
   ['node', ['--check', 'js/battle/BattleSceneBcuWaveOnBlockedHitPatch.js']],
   ['node', ['--check', 'js/battle/bcu-runtime/BcuSummonRuntime.js']],
   ['node', ['--check', 'js/battle/BattleSceneBcuSummonPatch.js']],
+  ['node', ['--check', 'js/battle/bcu-runtime/BcuCatCannonRuntime.js']],
+  ['node', ['--check', 'js/battle/bcu-runtime/BcuCannonLevelCurve.js']],
+  ['node', ['--check', 'js/battle/BattleSceneBcuCatCannonPatch.js']],
+  ['node', ['--check', 'js/battle/BattleSceneRendererEffectGlowPatch.js']],
+  ['node', ['--check', 'js/battle/BattleSceneAttackEffectPatch.js']],
   ['node', ['--check', 'js/preview/PreviewAppBattleResultOverlayPatch.js']],
   ['node', ['--check', 'scripts/check-bcu-stage-difficulty-parity.mjs']],
   ['node', ['--check', 'scripts/check-production-card-icon-source-parity.mjs']],
@@ -82,7 +87,12 @@ const commands = [
   ['node', ['scripts/check-bcu-combo-proc-duration-parity.mjs']],
   ['node', ['scripts/check-ability-partial-blockers.mjs']],
   ['node', ['scripts/check-bcu-wave-surge-point-capture-parity.mjs']],
-  ['node', ['scripts/check-bcu-metal-abi-double-apply.mjs']]
+  ['node', ['scripts/check-bcu-metal-abi-double-apply.mjs']],
+  ['node', ['scripts/check-bcu-cat-cannon-runtime-parity.mjs']],
+  ['node', ['scripts/check-bcu-cat-cannon-effect-position-parity.mjs']],
+  ['node', ['scripts/check-bcu-cannon-level-curve-parity.mjs']],
+  ['node', ['scripts/check-bcu-non-basic-cat-cannon-spec-parity.mjs']],
+  ['node', ['scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs']]
 ];
 
 const results = [];

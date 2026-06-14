@@ -6,6 +6,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { classifyBcuEffect, describeBcuEffectYFormula } from './bcu-runtime/BcuEffectTraceRuntime.js';
+import { computeBcuCannonBaseAnimDraw, computeBcuCannonWaveAnimDraw } from './bcu-runtime/BcuCatCannonRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v6-smoke-kind');
 const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v8-actor-priority-eanimcont');
@@ -267,6 +268,35 @@ function drawOneBcuEffect(renderer, ctx, effect) {
   const cameraScale = typeof renderer.getCameraScale === 'function' ? renderer.getCameraScale(scene) : 1;
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
+  // BCU BattleBox.drawBtm canon.drawBase: y = getBcuLayerScreenY(layer 0) + cany[id]*siz,
+  // x = projectBattleX(ubase.pos) + canx[id]*siz, scale = siz*sprite.
+  if (effect.bcuCannonBaseAnim === true && effect.model && effect.animator) {
+    const offsetX = finiteNumber(effect.bcuScreenOffsetX, 0) ?? 0;
+    const offsetY = finiteNumber(effect.bcuCannonOffsetY, 0) ?? 0;
+    const baseX = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
+    const baseY0 = typeof renderer.getBcuLayerScreenY === 'function'
+      ? renderer.getBcuLayerScreenY(scene, 0, ctx.canvas?.height || 720)
+      : (effect.worldY ?? effect.y ?? 0);
+    const draw = computeBcuCannonBaseAnimDraw({ baseX, baseY0, cameraScale, spriteScale, offsetX, offsetY });
+    const cdrawn = drawBcuModelEffect(renderer, ctx, effect, draw.x, draw.y, draw.scale);
+    effect.lastRenderDebug = { source: 'BattleSceneAttackEffectPatch.drawBcuCannonBaseAnim', x: draw.x, baseX, y: draw.y, baseY0, offsetX, offsetY, scale: draw.scale, yFormula: 'BCU canon.drawBase: getBcuLayerScreenY(0) + cany*siz' };
+    return cdrawn;
+  }
+  // BCU ContWaveCanon traveling wave (ATK eanim): x = getX(pos)-37*siz, y = getBcuLayerScreenY(9)-40*siz,
+  // scale = siz*sprite*2.5.
+  if (effect.bcuCannonWaveAnim === true && effect.model && effect.animator) {
+    const offsetX = finiteNumber(effect.bcuScreenOffsetX, 0) ?? 0;
+    const offsetY = finiteNumber(effect.bcuCannonWaveOffsetY, 0) ?? 0;
+    const layer = finiteNumber(effect.bcuCannonWaveLayer, 9) ?? 9;
+    const baseX = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
+    const baseY9 = typeof renderer.getBcuLayerScreenY === 'function'
+      ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
+      : (effect.worldY ?? effect.y ?? 0);
+    const draw = computeBcuCannonWaveAnimDraw({ baseX, baseY9, cameraScale, spriteScale, offsetX, offsetY, scaleMul: finiteNumber(effect.bcuCannonWaveScale, 2.5) ?? 2.5 });
+    const cdrawn = drawBcuModelEffect(renderer, ctx, effect, draw.x, draw.y, draw.scale);
+    effect.lastRenderDebug = { source: 'BattleSceneAttackEffectPatch.drawBcuCannonWaveAnim', x: draw.x, baseX, y: draw.y, baseY9, offsetX, offsetY, scale: draw.scale };
+    return cdrawn;
+  }
   const projectile = isProjectileContAbEffect(effect);
   const actorPriority = isActorPriorityEAnimCont(effect);
   // BCU BattleBox draws StageBasis.lea EAnimCont with psiz = siz * sprite.

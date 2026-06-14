@@ -1,6 +1,7 @@
 import { BattleScene } from './BattleScene.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import {
+  getBcuCatCannonDrawOffsets,
   getBcuCatCannonStatus,
   initializeBcuCatCannon,
   requestBcuCatCannonFire,
@@ -22,13 +23,18 @@ const PATCH_FLAG = Symbol.for('wanko-battle.bcu-cat-cannon-runtime.v1');
 // BCU NyCastle.read loads aux.atks[0] from org/castle/001/nyankoCastle_001_00_*; Cannon.activate
 // sets anim = atks[id].getEAnim(NyType.BASE), i.e. model/anim *_01 with sprite/imgcut *_00.
 const CAT_CANNON_ANIM_BUNDLE_REF = Object.freeze({ bundleKey: 'nyankoCastle:001', bundlePath: 'public/assets/bundles/castle/nyanko/001.zip' });
+// BCU util/pack/NyCastle.java: for cannon t, BASE = *_0<t>_01.mamodel/.maanim, ATK = *_0<t>_00.mamodel/.maanim,
+// both sharing sprite/imgcut *_0<t>_00.png/.imgcut. (basic cannon t=0)
 const CAT_CANNON_ANIM_FILES = Object.freeze({
   model: 'nyankoCastle_001_00_01.mamodel',
   anim: 'nyankoCastle_001_00_01.maanim',
+  atkModel: 'nyankoCastle_001_00_00.mamodel',
+  atkAnim: 'nyankoCastle_001_00_00.maanim',
   imgcut: 'nyankoCastle_001_00_00.imgcut',
   png: 'nyankoCastle_001_00_00.png'
 });
 const CAT_CANNON_ANIM_SOURCE = 'bcu-effanim-cat-cannon-base:nyankoCastle:001/nyankoCastle_001_00_01';
+const CAT_CANNON_WAVE_ANIM_SOURCE = 'bcu-effanim-cat-cannon-wave:nyankoCastle:001/nyankoCastle_001_00_00';
 
 const loadCannonImage = (src) => new Promise((res, rej) => {
   if (typeof Image === 'undefined') { rej(new Error('no Image')); return; }
@@ -42,9 +48,11 @@ async function loadBcuCatCannonBaseAnim() {
   const provider = getBcuAssetDatabase()?.semanticProvider || null;
   if (!provider) return { ok: false, reason: 'missing-semantic-provider' };
   const ref = CAT_CANNON_ANIM_BUNDLE_REF;
-  const [modelText, animText, imgcutText] = await Promise.all([
+  const [modelText, animText, atkModelText, atkAnimText, imgcutText] = await Promise.all([
     provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.model),
     provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.anim),
+    provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.atkModel),
+    provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.atkAnim),
     provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.imgcut)
   ]);
   const url = await provider.createObjectUrl(ref, CAT_CANNON_ANIM_FILES.png, 'image/png');
@@ -55,8 +63,12 @@ async function loadBcuCatCannonBaseAnim() {
     imgcut: parseImgcut(imgcutText),
     model: parseModel(modelText),
     anim: parseAnim(animText),
+    // ATK eanim = ContWaveCanon traveling wave (Cannon basic uses atks[0].getEAnim(ATK)).
+    atkModel: parseModel(atkModelText),
+    atkAnim: parseAnim(atkAnimText),
     source: CAT_CANNON_ANIM_SOURCE,
-    bcuReference: 'NyCastle.read aux.atks[0]; Cannon.activate anim = atks[0].getEAnim(BASE)'
+    waveSource: CAT_CANNON_WAVE_ANIM_SOURCE,
+    bcuReference: 'NyCastle.read aux.atks[0]; Cannon.activate anim = atks[0].getEAnim(BASE); ContWaveCanon anim = atks[0].getEAnim(ATK)'
   };
 }
 
@@ -113,6 +125,8 @@ export function installBattleSceneBcuCatCannonPatch() {
     animator.setLoop?.(false);
     animator.restart?.();
     const worldX = getCatCannonBasePosBcu(this);
+    const cannonId = Number.isInteger(this.bcuCatCannon?.id) ? this.bcuCatCannon.id : 0;
+    const { offsetX, offsetY } = getBcuCatCannonDrawOffsets(cannonId);
     const effect = EffectRuntime.createHitEffect({
       id: `bcu-cat-cannon-base-${this.logicFrame || 0}-${this.effects.length}`,
       x: worldX,
@@ -124,17 +138,80 @@ export function installBattleSceneBcuCatCannonPatch() {
       scale: 1,
       source: CAT_CANNON_ANIM_SOURCE,
       createdAtMs: this.timeMs,
+      // Draw-order only; the BCU draw Y uses the base ground line (layer 0) + cany offset explicitly.
       layer: 9,
+      // BCU canon.drawBase X offset: getX(ubase.pos) + canx[id]*siz. The renderer applies
+      // x = projectBattleX(worldX) + bcuScreenOffsetX * cameraScale, which matches canx*siz exactly.
+      bcuScreenOffsetX: offsetX,
       debug: {
         source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonFireEffect',
-        bcuReference: asset.bcuReference,
+        bcuReference: `${asset.bcuReference}; BattleBox.drawBtm canon.drawBase setP(getX(ubase.pos)+canx[${cannonId}]*siz, midh+(cany[${cannonId}]-road_h)*siz) psiz=siz*sprite`,
         effectKey: 'cat-cannon/base-anim',
         phase: 'activate',
-        worldX
+        worldX,
+        cannonId,
+        offsetX,
+        offsetY
       }
     });
+    // BCU canon.drawBase Y: midh + (cany[id] - road_h)*siz = getBcuLayerScreenY(layer 0) + cany[id]*siz,
+    // drawn at psiz = siz*sprite. The renderer honors bcuCannonBaseAnim to apply this exact formula
+    // instead of the generic layer/smoke-offset path (which sank the anim into the ground).
+    effect.bcuCannonBaseAnim = true;
+    effect.bcuCannonOffsetY = offsetY;
+    // Play the full BASE animation once (BCU Cannon.update keeps anim until anim.done()). The default
+    // BattleEffect lifetime (225ms ≈ 7 frames) cut the firing animation off after a few frames.
+    const stepMs = this.frameClock?.fixedStepMs || (1000 / 30);
+    effect.durationMs = animator.getFrameCount?.() ? animator.getFrameCount() * stepMs : effect.durationMs;
+    effect.frameDurationMs = stepMs;
     this.effects.push(effect);
-    this.lastCatCannonFireEffect = { source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonFireEffect', worldX, animSource: asset.source, effectId: effect.id };
+    this.lastCatCannonFireEffect = { source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonFireEffect', worldX, cannonId, offsetX, offsetY, durationMs: effect.durationMs, animSource: asset.source, effectId: effect.id };
+    return true;
+  };
+
+  // BCU ContWaveCanon traveling wave: draws atks[id].getEAnim(ATK) per band at the band center.
+  // Position/scale from BattleBox.drawEff + ContWaveCanon.draw (basic cannon canid=0):
+  //   x = getX(pos) - wave(28)*siz - 9*siz ; y = getBcuLayerScreenY(layer 9) - 40*siz ; scale = siz*sprite*2.5
+  // (pus*(-psiz) collapses to *siz because sprite*1.25 == 1.0). The renderer honors bcuCannonWaveAnim.
+  proto.spawnCatCannonWaveEffect = function spawnCatCannonWaveEffect(center, waveIndex = 0) {
+    const asset = this.bcuCatCannonAnim;
+    if (!asset?.ok || !asset.atkModel || !asset.atkAnim || !asset.image || !asset.imgcut?.parts?.length) {
+      if (!this._bcuCatCannonAnimPromise) this.ensureCatCannonAnimLoading?.();
+      return false;
+    }
+    if (!Array.isArray(this.effects)) return false;
+    if (this.effects.length >= (BATTLE_CONFIG.tuning?.maxEffects ?? 40)) return false;
+    const model = new BcuModelInstance(asset.atkModel);
+    const animator = new BcuAnimator(asset.atkAnim);
+    animator.setLoop?.(false);
+    animator.restart?.();
+    const worldX = Number.isFinite(center) ? center : getCatCannonBasePosBcu(this);
+    const stepMs = this.frameClock?.fixedStepMs || (1000 / 30);
+    const effect = EffectRuntime.createHitEffect({
+      id: `bcu-cat-cannon-wave-${this.logicFrame || 0}-w${waveIndex}-${this.effects.length}`,
+      type: 'cat-cannon-wave',
+      x: worldX,
+      y: 0,
+      image: asset.image,
+      imgcut: asset.imgcut,
+      model,
+      animator,
+      scale: 1,
+      source: CAT_CANNON_WAVE_ANIM_SOURCE,
+      createdAtMs: this.timeMs,
+      layer: 9,
+      // x = getX(pos) - 37*siz : -wave(28) - pus.x(9). Applied as bcuScreenOffsetX * cameraScale.
+      bcuScreenOffsetX: -37,
+      debug: { source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonWaveEffect', bcuReference: 'ContWaveCanon.draw atks[0].getEAnim(ATK)', effectKey: 'cat-cannon/wave', phase: 'attack', worldX, waveIndex }
+    });
+    effect.bcuCannonWaveAnim = true;
+    effect.bcuCannonWaveLayer = 9;
+    effect.bcuCannonWaveOffsetY = -40; // pus.y(40)*(-psiz) -> -40*siz
+    effect.bcuCannonWaveScale = 2.5;   // psiz*2 with psiz*=1.25 -> siz*sprite*2.5
+    effect.durationMs = animator.getFrameCount?.() ? animator.getFrameCount() * stepMs : effect.durationMs;
+    effect.frameDurationMs = stepMs;
+    this.effects.push(effect);
+    this.lastCatCannonWaveEffect = { source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonWaveEffect', worldX, waveIndex, durationMs: effect.durationMs, animSource: asset.waveSource, effectId: effect.id };
     return true;
   };
 
@@ -160,7 +237,7 @@ export function installBattleSceneBcuCatCannonPatch() {
     if (phase === 'proc-resolve') {
       return originalRunTickPhase.call(this, phase, () => {
         const result = fn();
-        tickBcuCatCannonAttack(this);
+        tickBcuCatCannonAttack(this, { tuning: BATTLE_CONFIG.tuning || {} });
         return result;
       });
     }

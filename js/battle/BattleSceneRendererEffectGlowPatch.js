@@ -3,6 +3,7 @@
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { drawBcuImagePart } from '../bcu/BcuCanvasComposite.js';
 import { BCU_SCALE_MODE, buildBcuEffectTrace, classifyBcuEffect, describeBcuEffectYFormula, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
+import { computeBcuCannonBaseAnimDraw, computeBcuCannonWaveAnimDraw } from './bcu-runtime/BcuCatCannonRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.renderer-effect-bcu-glow-patch.v3-entity-status-actor-pass');
 const ACTOR_SMOKE_Y_OFFSET = 75;
@@ -141,12 +142,53 @@ export function resolveBcuEffectScale({ effect, cameraScale = 1, spriteScale = 1
   };
 }
 
+// BCU androidutil/battle/BattleBox.java drawBtm: canon.drawBase(g, setP(getX(ubase.pos)+canx[id]*siz,
+// midh+(cany[id]-road_h)*siz), psiz) with psiz = siz*sprite. midh-road_h*siz == getBcuLayerScreenY(layer 0),
+// so y = baseY(layer 0) + cany[id]*siz and x = projectBattleX(ubase.pos) + canx[id]*siz.
+function drawBcuCannonBaseAnim(renderer, ctx, effect, scene, cameraScale, spriteScale) {
+  if (!effect?.model || !effect?.animator) return false;
+  const offsetX = finiteNumber(effect.bcuScreenOffsetX, 0) ?? 0;
+  const offsetY = finiteNumber(effect.bcuCannonOffsetY, 0) ?? 0;
+  const baseX = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
+  const baseY0 = typeof renderer.getBcuLayerScreenY === 'function'
+    ? renderer.getBcuLayerScreenY(scene, 0, ctx.canvas?.height || 720)
+    : (effect.worldY ?? effect.y ?? 0);
+  const draw = computeBcuCannonBaseAnimDraw({ baseX, baseY0, cameraScale, spriteScale, offsetX, offsetY });
+  const drawn = drawBcuModelEffectWithGlow(renderer, ctx, effect, draw.x, draw.y, draw.scale);
+  effect.lastRenderDebug = {
+    source: 'BattleSceneRendererEffectGlowPatch.drawBcuCannonBaseAnim',
+    bcuReference: draw.bcuReference,
+    x: draw.x, baseX, y: draw.y, baseY0, offsetX, offsetY, scale: draw.scale,
+    yFormula: 'BCU canon.drawBase: getBcuLayerScreenY(0) + cany*siz'
+  };
+  effect.effectRuntimeDebug = { ...(effect.effectRuntimeDebug || {}), rendererReached: true, rendererDrawn: drawn, rendererX: draw.x, rendererY: draw.y, rendererScale: draw.scale, bcuCannonBaseAnim: true };
+  return drawn;
+}
+
+function drawBcuCannonWaveAnim(renderer, ctx, effect, scene, cameraScale, spriteScale) {
+  if (!effect?.model || !effect?.animator) return false;
+  const offsetX = finiteNumber(effect.bcuScreenOffsetX, 0) ?? 0;
+  const offsetY = finiteNumber(effect.bcuCannonWaveOffsetY, 0) ?? 0;
+  const layer = finiteNumber(effect.bcuCannonWaveLayer, 9) ?? 9;
+  const baseX = renderer.projectBattleX(scene, effect.worldX ?? effect.x ?? 0);
+  const baseY9 = typeof renderer.getBcuLayerScreenY === 'function'
+    ? renderer.getBcuLayerScreenY(scene, layer, ctx.canvas?.height || 720)
+    : (effect.worldY ?? effect.y ?? 0);
+  const draw = computeBcuCannonWaveAnimDraw({ baseX, baseY9, cameraScale, spriteScale, offsetX, offsetY, scaleMul: finiteNumber(effect.bcuCannonWaveScale, 2.5) ?? 2.5 });
+  const drawn = drawBcuModelEffectWithGlow(renderer, ctx, effect, draw.x, draw.y, draw.scale);
+  effect.lastRenderDebug = { source: 'BattleSceneRendererEffectGlowPatch.drawBcuCannonWaveAnim', bcuReference: draw.bcuReference, x: draw.x, baseX, y: draw.y, baseY9, offsetX, offsetY, scale: draw.scale };
+  effect.effectRuntimeDebug = { ...(effect.effectRuntimeDebug || {}), rendererReached: true, rendererDrawn: drawn, rendererX: draw.x, rendererY: draw.y, rendererScale: draw.scale, bcuCannonWaveAnim: true };
+  return drawn;
+}
+
 function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
   if (!effect?.image) return false;
   const scene = renderer._scene;
   const cameraScale = typeof renderer.getCameraScale === 'function' ? renderer.getCameraScale(scene) : 1;
   const constants = typeof renderer.getBcuRenderConstants === 'function' ? renderer.getBcuRenderConstants() : { spriteScale: 0.8 };
   const spriteScale = Number.isFinite(constants?.spriteScale) ? constants.spriteScale : 0.8;
+  if (effect.bcuCannonBaseAnim === true) return drawBcuCannonBaseAnim(renderer, ctx, effect, scene, cameraScale, spriteScale);
+  if (effect.bcuCannonWaveAnim === true) return drawBcuCannonWaveAnim(renderer, ctx, effect, scene, cameraScale, spriteScale);
   const scaleTrace = resolveBcuEffectScale({ effect, cameraScale, spriteScale });
   const scale = scaleTrace.finalScale;
   const screenOffsetX = finiteNumber(effect.bcuScreenOffsetX, 0) ?? 0;

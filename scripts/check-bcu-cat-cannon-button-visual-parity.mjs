@@ -53,8 +53,15 @@ assert.match(spriteText, /drawCostOrMax/, 'BcuSpriteText must draw cost / MAX wi
 const prodUi = readFileSync('js/ui/PlayerProductionBar.js', 'utf8');
 assert.match(prodUi, /CANNON_BUTTON_PART\s*=\s*Object\.freeze\(\{\s*off:\s*8,\s*full:\s*7,\s*fire:\s*9/, 'cannon button frames map to BCU img002 parts 8/7/9');
 assert.match(prodUi, /drawCannonButtonIcon/, 'PlayerProductionBar must draw the BCU cannon button icon');
-assert.match(prodUi, /drawWorkerLvCentered/, 'wallet button must render the BCU worker-Lv font');
-assert.match(prodUi, /drawCostOrMaxCentered/, 'wallet button must render the BCU cost / MAX font');
+assert.match(prodUi, /drawWorkerLv\(/, 'wallet button must render the BCU worker-Lv font');
+assert.match(prodUi, /drawCostOrMax\(/, 'wallet button must render the BCU cost / MAX font');
+
+// 5b) BCU time = (sb.time / 5) % 2 flash for the worker button (mtype 1<->2) and the
+//     full cat-cannon button (ctype + flashing FIRE font).
+assert.match(prodUi, /\(Number\(scene\?\.logicFrame\)\s*\|\|\s*0\)\s*\/\s*5\)\s*%\s*2/, 'buttons must derive the BCU flash from (logicFrame / 5) % 2');
+assert.match(prodUi, /time === 0 \? 1 : 2/, 'affordable worker button must flash between glow (mtype 1) and on (mtype 2)');
+assert.match(prodUi, /full && time === 0 \? 1 : 0/, 'full cat-cannon button must flash ctype every 5 frames');
+assert.match(prodUi, /fireFlash/, 'full cat-cannon FIRE font must flash (aux.battle[1][13] / img002 parts[10])');
 // Runtime logic must remain untouched.
 assert.match(prodUi, /requestCatCannonFire\?\.\(\)/, 'cannon button must still call requestCatCannonFire (action -2)');
 assert.match(prodUi, /SBCtrl\.actions action -2 -> StageBasis\.act_can/, 'cannon button must keep BCU action -2 evidence');

@@ -203,6 +203,10 @@ export class BcuSpriteText {
     this.drawParts(ctx, this.img, parts, x, y, scale);
   }
   drawWorkerLvCentered(ctx, level, centerX, y, options = {}) { const w = this.measureWorkerLv(level, options); this.drawWorkerLv(ctx, level, centerX - w / 2, y, options); }
+  workerLvHeight({ disabled = false, scale = 1 } = {}) {
+    const digits = disabled ? this.map?.workerLvDigitsOff : this.map?.workerLvDigitsOn;
+    return ((digits?.[0]?.h) || 27) * scale;
+  }
 
   // BCU Res.getCost: cost == -1 renders the 「金額数字小 MAX」 sprite (aux.battle[0][3]).
   measureCostOrMax(cost, options = {}) {
@@ -217,6 +221,11 @@ export class BcuSpriteText {
     return this.drawCost(ctx, cost, x, y, { disabled, scale });
   }
   drawCostOrMaxCentered(ctx, cost, centerX, y, options = {}) { const w = this.measureCostOrMax(cost, options); this.drawCostOrMax(ctx, cost, centerX - w / 2, y, options); }
+  costOrMaxHeight(cost, { disabled = false, scale = 1 } = {}) {
+    if (cost === -1 || cost === '-1') return ((this.map?.smallMax?.h) || 26) * scale;
+    const digits = disabled ? this.map?.smallDigitsOff : this.map?.smallDigitsOn;
+    return ((digits?.[0]?.h) || 26) * scale;
+  }
 
   drawMoneyRight(ctx, money, maxMoney, rightX, y, options = {}) { const w = this.measureMoney(money, maxMoney, options); this.drawMoney(ctx, money, maxMoney, rightX - w, y, options); }
   drawCostRight(ctx, cost, rightX, y, options = {}) { const w = this.measureCost(cost, options); this.drawCost(ctx, cost, rightX - w, y, options); }

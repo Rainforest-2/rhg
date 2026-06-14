@@ -225,20 +225,30 @@ export class PlayerProductionBar {
     ctx.clearRect(0, 0, w, h);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(sprite.sheet, part.x, part.y, part.w, part.h, 0, 0, part.w, part.h);
-    // BCU Res.getWorkerLv / Res.getCost overlay the level and upgrade cost on the button.
+    // BCU BattleBox.drawBtm overlays Res.getWorkerLv at (hr*5, h-hr*130) top-left anchor and
+    // Res.getCost at (hr*5, h-hr*5) bottom-left anchor, both at the button scale (native here).
+    // Reproduce that: worker level along the top edge, upgrade cost along the bottom edge, left-aligned.
     const disabled = mtype === 0;
     if (this.spriteText?.ready) {
-      this.spriteText.drawWorkerLvCentered(ctx, level, w / 2, h * 0.50, { disabled, scale: 0.9 });
-      this.spriteText.drawCostOrMaxCentered(ctx, isMax ? -1 : cost, w / 2, h * 0.74, { disabled, scale: 0.9 });
+      const padX = Math.round(part.w * (5 / 146));
+      const padBottom = Math.round(part.h * (5 / 125));
+      const costH = this.spriteText.costOrMaxHeight(isMax ? -1 : cost, { disabled });
+      this.spriteText.drawWorkerLv(ctx, level, padX, Math.round(part.h * (1 / 125)), { disabled, scale: 1 });
+      this.spriteText.drawCostOrMax(ctx, isMax ? -1 : cost, padX, h - padBottom - costH, { disabled, scale: 1 });
     }
     this.walletIcon.classList.add('is-loaded');
     return true;
   }
-  drawCannonButtonIcon(ratio, { ready = false } = {}) {
+  drawCannonButtonIcon(ratio, { ready = false, time = 0 } = {}) {
     const ctx = this.cannonIconCtx;
     const sprite = this.cannonButtonSprite;
     if (!ctx || !this.cannonIcon) return false;
-    const part = sprite ? (ready ? (sprite.full || sprite.off) : sprite.off) : null;
+    // BCU BattleBox.drawBtm: ctype = (cannon == maxCannon && time == 0) ? 1 : 0. When full it
+    // toggles every 5 frames between the lit button (ctype 1) + flashing FIRE font and the OFF
+    // button (ctype 0) + full gauge + steady FIRE font — the 発射可能 チカチカ animation.
+    const full = ready === true;
+    const ctype = full && time === 0 ? 1 : 0;
+    const part = sprite ? (ctype === 1 ? (sprite.full || sprite.off) : sprite.off) : null;
     if (!sprite || !part) {
       this.cannonIcon.classList.remove('is-loaded');
       return false;
@@ -252,21 +262,23 @@ export class PlayerProductionBar {
     ctx.clearRect(0, 0, w, h);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(sprite.sheet, part.x, part.y, part.w, part.h, 0, 0, part.w, part.h);
-    // BCU BattleBox.drawBtm: while charging, stack aux.battle[1][2+i] (10%..100%) bars from the
-    // bottom, count = floor(10 * cannon / maxCannon); when full, draw the FIRE font instead.
-    const clamped = Math.max(0, Math.min(1, Number(ratio) || 0));
-    if (ready) {
-      const fire = sprite.fire;
-      if (fire) ctx.drawImage(sprite.sheet, fire.x, fire.y, fire.w, fire.h, (w - fire.w) / 2, h - fire.h - 4, fire.w, fire.h);
-    } else {
-      const bars = Math.floor(clamped * sprite.gauge.length);
+    const drawGaugeBars = (count) => {
       let baseY = h;
-      for (let i = 0; i < bars; i += 1) {
+      for (let i = 0; i < count; i += 1) {
         const bar = sprite.gauge[i];
         if (!bar) continue;
         baseY -= bar.h;
         ctx.drawImage(sprite.sheet, bar.x, bar.y, bar.w, bar.h, (w - bar.w) / 2, baseY, bar.w, bar.h);
       }
+    };
+    if (full) {
+      // gauge bars are drawn only on the ctype 0 frame (BCU: gauge loop runs when ctype == 0)
+      if (ctype === 0) drawGaugeBars(sprite.gauge.length);
+      const fire = ctype === 1 ? (sprite.fireFlash || sprite.fire) : sprite.fire;
+      if (fire) ctx.drawImage(sprite.sheet, fire.x, fire.y, fire.w, fire.h, (w - fire.w) / 2, h - fire.h - 4, fire.w, fire.h);
+    } else {
+      const clamped = Math.max(0, Math.min(1, Number(ratio) || 0));
+      drawGaugeBars(Math.floor(clamped * sprite.gauge.length));
     }
     this.cannonIcon.classList.add('is-loaded');
     return true;
@@ -630,9 +642,11 @@ export class PlayerProductionBar {
     this.walletButton.classList.toggle('is-max', isMax);
     this.walletButton.dataset.level = String(level);
     this.walletButton.dataset.cost = isMax ? '-1' : String(cost);
-    // BCU BattleBox.drawBtm mtype: 0 when sb.money < sb.upgradeCost; work_lv >= 8 forces 2.
-    // Affordable steady state and Lv8 max both render aux.battle[0][2] (the ON face).
-    const mtype = (isMax || canUpgrade) ? 2 : 0;
+    // BCU BattleBox.drawBtm: time = (sb.time / 5) % 2; mtype = money < upgradeCost ? 0 : (time == 0 ? 1 : 2);
+    // sb.work_lv >= 8 forces 2. While affordable the button flashes between the glow frame (1) and
+    // the ON frame (2) every 5 frames; Lv8/unaffordable do not flash.
+    const time = Math.floor((Number(scene?.logicFrame) || 0) / 5) % 2;
+    const mtype = isMax ? 2 : (canUpgrade ? (time === 0 ? 1 : 2) : 0);
     const iconDrawn = this.drawWorkerButtonIcon(mtype, { level, cost, isMax });
     this.walletButton.classList.toggle('has-bcu-icon', iconDrawn);
     this.walletButton.dataset.mtype = String(mtype);
@@ -656,7 +670,9 @@ export class PlayerProductionBar {
     this.cannonButton.classList.toggle('is-ready', ready);
     this.cannonButton.classList.toggle('is-active', status.active === true);
     this.cannonButton.dataset.charge = String(Math.floor(ratio * 10));
-    const iconDrawn = this.drawCannonButtonIcon(ratio, { ready });
+    // BCU BattleBox.drawBtm time = (sb.time / 5) % 2 drives the full/ready FIRE flash.
+    const time = Math.floor((Number(scene?.logicFrame) || 0) / 5) % 2;
+    const iconDrawn = this.drawCannonButtonIcon(ratio, { ready, time });
     this.cannonButton.classList.toggle('has-bcu-icon', iconDrawn);
     if (this.cannonGauge) {
       this.cannonGauge.innerHTML = Array.from({ length: 10 }, (_, index) => `<i class='${index < Math.floor(ratio * 10) ? 'is-filled' : ''}'></i>`).join('');

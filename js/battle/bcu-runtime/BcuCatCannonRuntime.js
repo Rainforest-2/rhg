@@ -5,6 +5,12 @@ export const BCU_CAT_CANNON_ID_BASIC = 0;
 export const BCU_CAT_CANNON_BASIC_RANGE = 400;
 export const BCU_CAT_CANNON_BASIC_PRE_FRAMES = 18;
 export const BCU_CAT_CANNON_ASSIST_DISTANCE = 55;
+// BCU util/Data.java W_TIME = 3: ContWaveCanon spawns the next wave band W_TIME frames later
+// (and NYRAN[0] = 400 further out) so the basic cannon wave visibly travels outward.
+export const BCU_CAT_CANNON_WAVE_TIME = 3;
+// BCU battle/attack/ContWaveCanon.java: band 0 is created at t = -3 and its AttackCanon lands
+// at t = 2 (guessed attack point), i.e. 5 frames after the wave is created (preTime reaches 0).
+export const BCU_CAT_CANNON_WAVE_FIRST_HIT_FRAMES = 5;
 
 export const BCU_DEFAULT_CAT_CANNON_TECH = Object.freeze({
   recharge: 30,
@@ -66,8 +72,10 @@ export function getBcuBasicCannonWaveCenters(playerBasePos, {
   chargeTech = BCU_DEFAULT_CAT_CANNON_TECH.charge,
   range = BCU_CAT_CANNON_BASIC_RANGE
 } = {}) {
-  const waveLevel = Math.floor(finite(chargeTech, 10)) + 2;
-  const count = waveLevel + 1;
+  // BCU Cannon basic: proc.WAVE.lv = tech[LV_CRG] + 2. Each AttackWave decrements WAVE.lv and the
+  // ContWaveCanon chain spawns a band while WAVE.lv > 0, so the chain yields exactly WAVE.lv bands.
+  const waveLv = Math.floor(finite(chargeTech, 10)) + 2;
+  const count = waveLv;
   const first = finite(playerBasePos, 4000) - 332.5 + range / 2;
   return Array.from({ length: count }, (_, index) => first - range * index);
 }
@@ -157,8 +165,9 @@ export function activateBcuCatCannon(scene) {
   }
   state.active = { preFrames: BCU_CAT_CANNON_BASIC_PRE_FRAMES, startedFrame: scene?.logicFrame ?? null };
   state.cannon = 0;
-  // BCU Cannon.activate() starts the cannon BASE animation at the player base on press;
-  // damage resolves preTime (NYPRE[BASE_H]=18) frames later. The scene owns the visual.
+  // BCU Cannon.activate() starts the cannon BASE animation at the player base on press; the basic
+  // wave (ContWaveCanon band 0) is created preTime (NYPRE[BASE_H]=18) frames later and its first
+  // damage lands at the wave's t=2 (a further BCU_CAT_CANNON_WAVE_FIRST_HIT_FRAMES). Scene owns visual.
   const animSpawned = scene?.spawnCatCannonFireEffect?.() === true;
   state.lastFireDebug = {
     ok: true,
@@ -173,41 +182,33 @@ export function activateBcuCatCannon(scene) {
   return true;
 }
 
-function captureBasicCannonTargets(scene, centers, range) {
+function captureBasicCannonBandTargets(scene, center, range, hitKeys) {
   const half = range / 2;
-  const seen = new Set();
   const hits = [];
   for (const actor of scene?.actors || []) {
     if (!isEnemyActor(actor)) continue;
     const pos = finite(actor.posBcu, finite(actor.x, NaN));
     if (!Number.isFinite(pos)) continue;
-    for (let waveIndex = 0; waveIndex < centers.length; waveIndex += 1) {
-      const center = centers[waveIndex];
-      if (pos < center - half || pos > center + half) continue;
-      const key = actor.instanceId || actor.label || String(hits.length);
-      if (seen.has(key)) break;
-      seen.add(key);
-      hits.push({ actor, waveIndex, center, pos });
-      break;
-    }
+    if (pos < center - half || pos > center + half) continue;
+    // BCU AttackWave shares an `incl` set across the whole wave, so a unit straddling two bands
+    // is only hit by the first band that reaches it.
+    const key = actor.instanceId || actor.label || `actor-${hitKeys.size}`;
+    if (hitKeys.has(key)) continue;
+    hitKeys.add(key);
+    hits.push({ actor, pos, key });
   }
   return hits;
 }
 
-export function tickBcuCatCannonAttack(scene) {
-  const state = scene?.bcuCatCannon || null;
-  if (!state?.enabled || !state.active) return null;
-  state.active.preFrames -= 1;
-  if (state.active.preFrames > 0) return { attacked: false, remainingPreFrames: state.active.preFrames };
-  const playerBasePos = getPlayerBasePos(scene);
-  const centers = getBcuBasicCannonWaveCenters(playerBasePos, { chargeTech: state.tech.charge });
-  const hits = captureBasicCannonTargets(scene, centers, BCU_CAT_CANNON_BASIC_RANGE);
+function fireBcuCannonBand(scene, state, wave, waveIndex) {
+  const center = wave.centers[waveIndex];
   const damage = state.attack;
+  const hits = captureBasicCannonBandTargets(scene, center, BCU_CAT_CANNON_BASIC_RANGE, wave.hitKeys);
   if (Array.isArray(scene?.effects)) {
     scene.effects.push(EffectRuntime.createEffect({
-      id: `bcu-cat-cannon-basic-${scene?.logicFrame ?? 0}`,
+      id: `bcu-cat-cannon-basic-${scene?.logicFrame ?? 0}-w${waveIndex}`,
       type: 'cat-cannon-basic',
-      x: centers[0],
+      x: center,
       y: scene?.actorGroundY ?? scene?.groundY ?? 560,
       source: 'bcu-effanim-cat-cannon-basic',
       createdAtMs: scene?.timeMs ?? 0,
@@ -215,9 +216,10 @@ export function tickBcuCatCannonAttack(scene) {
       layer: 9,
       debug: {
         effectKey: 'cat-cannon/basic',
-        source: 'BcuCatCannonRuntime.tickBcuCatCannonAttack',
-        bcuReference: 'Cannon.drawAtk / ContWaveCanon draw owns basic cannon attack visual; JS keeps source-separated trace until cannon attack bundle alias is proven',
-        phase: 'attack'
+        source: 'BcuCatCannonRuntime.fireBcuCannonBand',
+        bcuReference: 'ContWaveCanon: each band owns its own wave attack + ATK eanim, W_TIME=3 frames and NYRAN=400 apart (traveling wave)',
+        phase: 'attack',
+        waveIndex
       }
     }));
   }
@@ -225,7 +227,7 @@ export function tickBcuCatCannonAttack(scene) {
     const actor = hit.actor;
     const result = actor.takeDamage?.(damage, {
       attacker: 'bcu-cat-cannon',
-      hitIndex: hit.waveIndex,
+      hitIndex: waveIndex,
       attackEventKey: 'bcu-cat-cannon-basic',
       timeMs: scene?.timeMs ?? null,
       damageCalculation: {
@@ -243,26 +245,72 @@ export function tickBcuCatCannonAttack(scene) {
     if (result?.accepted) {
       actor.__bcuCatCannonAssistPending = {
         source: 'BCU Entity.damaged atkProc.SNIPER -> interrupt(INT_ASS, KB_DIS[INT_ASS])',
-        waveIndex: hit.waveIndex,
-        center: hit.center,
+        waveIndex,
+        center,
         damage,
         frame: scene?.logicFrame ?? null
       };
     }
   }
-  state.lastAttackDebug = {
-    source: 'BCU Cannon.update basic canon -> AttackCanon + ContWaveCanon',
-    bcuReference: 'BASE_H: WAVE.lv = tech[LV_CRG] + 2; SNIPER.prob = 1; NYRAN[0] = 400',
-    playerBasePos,
-    centers,
+  wave.totalHits += hits.length;
+  const debug = {
+    source: 'BCU Cannon.update basic canon -> AttackCanon + ContWaveCanon (per-band staggered)',
+    bcuReference: 'BASE_H: WAVE.lv = tech[LV_CRG] + 2; SNIPER.prob = 1; NYRAN[0] = 400; W_TIME = 3; band lands at wave t = 2',
+    attacked: hits.length > 0,
+    waveIndex,
+    waveAge: wave.age,
+    center,
     damage,
     effectSource: 'bcu-effanim-cat-cannon-basic',
     hitCount: hits.length,
-    hits: hits.map((hit) => ({ target: hit.actor.instanceId || hit.actor.label || null, waveIndex: hit.waveIndex, pos: hit.pos }))
+    totalHitCount: wave.totalHits,
+    bandCount: wave.centers.length,
+    hits: hits.map((h) => ({ target: h.key, waveIndex, pos: h.pos }))
   };
-  scene?.pushEvent?.({ type: 'bcuCatCannonBasicAttack', ...state.lastAttackDebug });
-  state.active = null;
-  return state.lastAttackDebug;
+  state.lastAttackDebug = debug;
+  scene?.pushEvent?.({ type: 'bcuCatCannonBasicAttack', ...debug });
+  return debug;
+}
+
+export function tickBcuCatCannonAttack(scene) {
+  const state = scene?.bcuCatCannon || null;
+  if (!state?.enabled || !state.active) return null;
+
+  // Pre phase: BCU Cannon.update counts preTime (NYPRE[BASE_H] = 18) down to 0; the basic
+  // ContWaveCanon (wave band 0) is created on the frame preTime reaches 0 (no damage yet).
+  if (!state.active.wave) {
+    state.active.preFrames -= 1;
+    if (state.active.preFrames > 0) {
+      return { attacked: false, remainingPreFrames: state.active.preFrames };
+    }
+    const playerBasePos = getPlayerBasePos(scene);
+    const centers = getBcuBasicCannonWaveCenters(playerBasePos, { chargeTech: state.tech.charge });
+    state.active.wave = { age: 0, centers, playerBasePos, bandsFired: 0, totalHits: 0, hitKeys: new Set() };
+    state.lastWaveDebug = {
+      source: 'BcuCatCannonRuntime.tickBcuCatCannonAttack wave creation',
+      bcuReference: 'BCU Cannon.update preTime==0 -> new ContWaveCanon(AttackWave ...) at ubase.pos',
+      playerBasePos,
+      bandCount: centers.length
+    };
+    return { attacked: false, waveStarted: true, waveAge: 0, bandCount: centers.length };
+  }
+
+  // Wave phase: BCU ContWaveCanon spawns the next band W_TIME = 3 frames later and NYRAN = 400
+  // further out (the wave travels outward). Band k's AttackCanon lands at the wave's t = 2, i.e.
+  // BCU_CAT_CANNON_WAVE_FIRST_HIT_FRAMES + k * W_TIME frames after the wave was created.
+  const wave = state.active.wave;
+  wave.age += 1;
+  const offset = wave.age - BCU_CAT_CANNON_WAVE_FIRST_HIT_FRAMES;
+  let result = { attacked: false, waveAge: wave.age };
+  if (offset >= 0 && offset % BCU_CAT_CANNON_WAVE_TIME === 0) {
+    const waveIndex = offset / BCU_CAT_CANNON_WAVE_TIME;
+    if (waveIndex < wave.centers.length) {
+      result = fireBcuCannonBand(scene, state, wave, waveIndex);
+      wave.bandsFired += 1;
+    }
+  }
+  if (wave.bandsFired >= wave.centers.length) state.active = null;
+  return result;
 }
 
 export function resolveBcuCatCannonAssistKnockback(scene, tuning = {}) {

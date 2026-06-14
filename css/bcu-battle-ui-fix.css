@@ -54,23 +54,28 @@
   overflow:visible!important;
 }
 
+/*
+ * Bottom-left worker-cat / wallet upgrade button.
+ * Renders the BCU button bitmap (img002 働きネコボタン, aux.battle[0][mtype]) drawn
+ * onto .wallet-icon by PlayerProductionBar.drawWorkerButtonIcon. The element stays a
+ * real <button> so the existing action -1 / upgradeWallet handler is untouched; this
+ * layer only swaps the visual from the previous gradient placeholder to the BCU icon.
+ */
 .prod-ui .wallet-upgrade{
   position:absolute;
-  left:calc(10px + env(safe-area-inset-left,0px));
+  left:env(safe-area-inset-left,0px);
   bottom:calc(6px + env(safe-area-inset-bottom,0px));
-  width:clamp(86px,12vw,132px);
-  min-height:clamp(58px,8vw,84px);
-  display:grid;
-  place-content:center;
-  gap:2px;
+  width:clamp(96px,13vw,150px);
+  aspect-ratio:146 / 125;
+  min-height:0;
+  padding:0;
   pointer-events:auto;
   touch-action:manipulation;
-  border:2px solid rgba(20,20,20,.9);
-  border-radius:6px;
-  padding:6px 8px;
-  background:linear-gradient(180deg,#f8fafc 0%,#cbd5e1 48%,#64748b 100%);
-  color:#111827;
-  box-shadow:0 4px 0 rgba(0,0,0,.75),inset 0 2px 0 rgba(255,255,255,.75);
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:#fff;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-weight:1000;
   line-height:1;
@@ -78,20 +83,68 @@
   z-index:2;
 }
 
-.prod-ui .wallet-upgrade.is-ready{
+/* Gradient placeholder fallback only while the BCU icon has not loaded yet. */
+.prod-ui .wallet-upgrade:not(.has-bcu-icon){
+  border:2px solid rgba(20,20,20,.9);
+  border-radius:6px;
+  background:linear-gradient(180deg,#f8fafc 0%,#cbd5e1 48%,#64748b 100%);
+  color:#111827;
+  box-shadow:0 4px 0 rgba(0,0,0,.75),inset 0 2px 0 rgba(255,255,255,.75);
+  display:grid;
+  place-content:center;
+  gap:2px;
+  aspect-ratio:auto;
+  min-height:clamp(58px,8vw,84px);
+}
+
+.prod-ui .wallet-upgrade.is-ready:not(.has-bcu-icon){
   background:linear-gradient(180deg,#fde68a 0%,#facc15 48%,#b45309 100%);
   color:#421b00;
 }
 
+.prod-ui .wallet-upgrade .wallet-icon{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:auto;
+  pointer-events:none;
+  display:none;
+}
+
+.prod-ui .wallet-upgrade.has-bcu-icon .wallet-icon{
+  display:block;
+}
+
 .prod-ui .wallet-upgrade:disabled{
   cursor:not-allowed;
-  filter:saturate(.7) brightness(.78);
-  opacity:.88;
+  filter:saturate(.85) brightness(.82);
+  opacity:.92;
 }
 
 .prod-ui .wallet-upgrade:active:not(:disabled){
-  transform:translateY(3px);
-  box-shadow:0 1px 0 rgba(0,0,0,.8),inset 0 2px 0 rgba(255,255,255,.55);
+  transform:translateY(2px);
+}
+
+.prod-ui .wallet-upgrade .wallet-level,
+.prod-ui .wallet-upgrade .wallet-cost{
+  position:relative;
+  z-index:1;
+  text-shadow:0 1px 0 #000,0 0 3px rgba(0,0,0,.85);
+}
+
+/* Level and cost are rendered with BCU sprite fonts onto .wallet-icon; keep the
+   text spans for the accessible name only when the BCU icon is active. */
+.prod-ui .wallet-upgrade.has-bcu-icon .wallet-level,
+.prod-ui .wallet-upgrade.has-bcu-icon .wallet-cost{
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  clip-path:inset(50%);
+  white-space:nowrap;
 }
 
 .prod-ui .wallet-upgrade .wallet-level{
@@ -102,24 +155,28 @@
   font-size:clamp(11px,1.35vw,15px);
 }
 
+/*
+ * Bottom-right cat-cannon (にゃんこ砲) button.
+ * Renders the BCU button bitmap (img002 にゃんこ砲ボタン, aux.battle[1][ctype]) plus the
+ * stacked charge gauge (aux.battle[1][2+i]) and FIRE font (aux.battle[1][12]) onto
+ * .cannon-icon via PlayerProductionBar.drawCannonButtonIcon. Stays a real <button> so the
+ * existing action -2 / requestCatCannonFire handler is untouched.
+ */
 .prod-ui .cat-cannon-fire{
   position:absolute;
-  right:calc(10px + env(safe-area-inset-right,0px));
+  right:env(safe-area-inset-right,0px);
   bottom:calc(6px + env(safe-area-inset-bottom,0px));
-  width:clamp(86px,12vw,132px);
-  min-height:clamp(58px,8vw,84px);
-  display:grid;
-  grid-template-rows:1fr auto;
-  place-items:center;
-  gap:4px;
+  width:clamp(96px,13vw,150px);
+  aspect-ratio:146 / 130;
+  min-height:0;
+  padding:0;
   pointer-events:auto;
   touch-action:manipulation;
-  border:2px solid rgba(20,20,20,.9);
-  border-radius:6px;
-  padding:6px 8px;
-  background:linear-gradient(180deg,#e2e8f0 0%,#94a3b8 48%,#334155 100%);
-  color:#0f172a;
-  box-shadow:0 4px 0 rgba(0,0,0,.75),inset 0 2px 0 rgba(255,255,255,.7);
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:#fff;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-weight:1000;
   line-height:1;
@@ -127,10 +184,41 @@
   z-index:2;
 }
 
-.prod-ui .cat-cannon-fire.is-ready{
+/* Gradient placeholder fallback only while the BCU icon has not loaded yet. */
+.prod-ui .cat-cannon-fire:not(.has-bcu-icon){
+  display:grid;
+  grid-template-rows:1fr auto;
+  place-items:center;
+  gap:4px;
+  border:2px solid rgba(20,20,20,.9);
+  border-radius:6px;
+  padding:6px 8px;
+  background:linear-gradient(180deg,#e2e8f0 0%,#94a3b8 48%,#334155 100%);
+  color:#0f172a;
+  box-shadow:0 4px 0 rgba(0,0,0,.75),inset 0 2px 0 rgba(255,255,255,.7);
+  aspect-ratio:auto;
+  min-height:clamp(58px,8vw,84px);
+}
+
+.prod-ui .cat-cannon-fire.is-ready:not(.has-bcu-icon){
   background:linear-gradient(180deg,#fee2e2 0%,#f87171 48%,#991b1b 100%);
   color:#fff;
   text-shadow:0 1px 0 #000;
+}
+
+.prod-ui .cat-cannon-fire .cannon-icon{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:auto;
+  pointer-events:none;
+  display:none;
+}
+
+.prod-ui .cat-cannon-fire.has-bcu-icon .cannon-icon{
+  display:block;
 }
 
 .prod-ui .cat-cannon-fire:disabled{
@@ -140,12 +228,18 @@
 }
 
 .prod-ui .cat-cannon-fire:active:not(:disabled){
-  transform:translateY(3px);
-  box-shadow:0 1px 0 rgba(0,0,0,.8),inset 0 2px 0 rgba(255,255,255,.55);
+  transform:translateY(2px);
 }
 
 .prod-ui .cat-cannon-fire .cat-cannon-label{
   font-size:clamp(13px,1.6vw,18px);
+}
+
+/* The charge gauge + FIRE text are drawn onto .cannon-icon with the BCU bitmap;
+   the DOM label/gauge remain only as the pre-load fallback. */
+.prod-ui .cat-cannon-fire.has-bcu-icon .cat-cannon-label,
+.prod-ui .cat-cannon-fire.has-bcu-icon .cat-cannon-gauge{
+  display:none;
 }
 
 .prod-ui .cat-cannon-fire .cat-cannon-gauge{
@@ -176,16 +270,22 @@
   }
 
   .prod-ui .wallet-upgrade{
-    width:76px;
-    min-height:54px;
-    left:calc(6px + env(safe-area-inset-left,0px));
+    width:84px;
+    left:env(safe-area-inset-left,0px);
     bottom:calc(4px + env(safe-area-inset-bottom,0px));
   }
 
-  .prod-ui .cat-cannon-fire{
-    width:76px;
+  .prod-ui .wallet-upgrade:not(.has-bcu-icon){
     min-height:54px;
-    right:calc(6px + env(safe-area-inset-right,0px));
+  }
+
+  .prod-ui .cat-cannon-fire{
+    width:84px;
+    right:env(safe-area-inset-right,0px);
     bottom:calc(4px + env(safe-area-inset-bottom,0px));
+  }
+
+  .prod-ui .cat-cannon-fire:not(.has-bcu-icon){
+    min-height:54px;
   }
 }

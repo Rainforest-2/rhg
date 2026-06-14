@@ -78,6 +78,10 @@ export class BcuSpriteText {
     // sprites (img001 parts 57-68), NOT the 「金額数字大」 money digits used by the
     // wallet/cost displays. They are smaller (14x18) and read as the BCU base HP font.
     const castleHpDigits = Array.from({ length: 10 }, (_, d) => this.findByNormExact(this.imgcut, `城HP数字${d}`));
+    // BCU worker-cat level uses the dedicated 「働きネコレベル数字」 sprites (img001 parts 13-34)
+    // via Res.getWorkerLv (aux.num[1] enable / aux.num[2] disable). Index [10] = the "Lv" label.
+    const workerLvDigitsOn = Array.from({ length: 10 }, (_, d) => this.findByNormExact(this.imgcut, `働きネコレベル数字${d}`));
+    const workerLvDigitsOff = Array.from({ length: 10 }, (_, d) => this.findByNormExact(this.imgcut, `働きネコレベル数字(暗転)${d}`));
     return {
       bigDigits,
       bigSlash: this.findByNormExact(this.imgcut, '金額数字大/'),
@@ -88,6 +92,11 @@ export class BcuSpriteText {
       smallDigitsOff,
       smallYenOn: this.findByNormIncludes(this.imgcut, ['金額数字小円'], ['暗転']),
       smallYenOff: this.findByNormIncludes(this.imgcut, ['金額数字小', '暗転', '円']),
+      smallMax: this.findByNormIncludes(this.imgcut, ['金額数字小', 'MAX'], ['暗転']),
+      workerLvDigitsOn,
+      workerLvDigitsOff,
+      workerLvLabelOn: this.findByNormIncludes(this.imgcut, ['働きネコレベル数字', 'LEVEL'], ['暗転']),
+      workerLvLabelOff: this.findByNormIncludes(this.imgcut, ['働きネコレベル数字', '暗転', 'LEVEL'], []),
       moneySignOnJp: this.signcut.getByLabel('money_jp_on')
     };
   }
@@ -176,6 +185,38 @@ export class BcuSpriteText {
     const endX = this.drawParts(ctx, this.img, parts, x, y, scale);
     this.drawParts(ctx, this.img, [yen], endX + scale, y, scale);
   }
+
+  // BCU Res.getWorkerLv: aux.num[enable?1:2][10] (the "Lv" label) followed by the level digits.
+  workerLvParts(level, { disabled = false } = {}) {
+    const digits = disabled ? this.map?.workerLvDigitsOff : this.map?.workerLvDigitsOn;
+    const label = disabled ? this.map?.workerLvLabelOff : this.map?.workerLvLabelOn;
+    const value = `${Math.max(1, Math.floor(Number(level) || 1))}`;
+    return [label, ...[...value].map((ch) => digits?.[Number(ch)])];
+  }
+  measureWorkerLv(level, options = {}) {
+    if (!this.ready || !this.map) return `Lv${Math.floor(level)}`.length * 12;
+    return this.measureParts(this.workerLvParts(level, options), options.scale ?? 1);
+  }
+  drawWorkerLv(ctx, level, x, y, { disabled = false, scale = 1 } = {}) {
+    const parts = this.workerLvParts(level, { disabled });
+    if (!this.ready || !this.map || parts.some((p) => !p)) return this.drawFallback(ctx, `Lv ${Math.floor(level)}`, x, y, { disabled, small: true });
+    this.drawParts(ctx, this.img, parts, x, y, scale);
+  }
+  drawWorkerLvCentered(ctx, level, centerX, y, options = {}) { const w = this.measureWorkerLv(level, options); this.drawWorkerLv(ctx, level, centerX - w / 2, y, options); }
+
+  // BCU Res.getCost: cost == -1 renders the 「金額数字小 MAX」 sprite (aux.battle[0][3]).
+  measureCostOrMax(cost, options = {}) {
+    if (cost === -1 || cost === '-1') return (this.ready && this.map?.smallMax) ? this.map.smallMax.w * (options.scale ?? 1) : 3 * 12;
+    return this.measureCost(cost, options);
+  }
+  drawCostOrMax(ctx, cost, x, y, { disabled = false, scale = 1 } = {}) {
+    if (cost === -1 || cost === '-1') {
+      if (this.ready && this.map?.smallMax) return this.drawParts(ctx, this.img, [this.map.smallMax], x, y, scale);
+      return this.drawFallback(ctx, 'MAX', x, y, { disabled, small: true });
+    }
+    return this.drawCost(ctx, cost, x, y, { disabled, scale });
+  }
+  drawCostOrMaxCentered(ctx, cost, centerX, y, options = {}) { const w = this.measureCostOrMax(cost, options); this.drawCostOrMax(ctx, cost, centerX - w / 2, y, options); }
 
   drawMoneyRight(ctx, money, maxMoney, rightX, y, options = {}) { const w = this.measureMoney(money, maxMoney, options); this.drawMoney(ctx, money, maxMoney, rightX - w, y, options); }
   drawCostRight(ctx, cost, rightX, y, options = {}) { const w = this.measureCost(cost, options); this.drawCost(ctx, cost, rightX - w, y, options); }

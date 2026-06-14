@@ -10,6 +10,8 @@ export const BCU_BATTLE_UI_SOURCES = Object.freeze([
   { name: 'uni.imgcut', source: 'public/assets/bcu/000001/org/data/uni.imgcut', required: true, role: 'battle-production-card-imgcut' },
   { name: 'img001.png', source: 'public/assets/bcu/000001/org/page/img001.png', required: true, role: 'battle-money-and-cost-digits-sheet' },
   { name: 'img001.imgcut', source: 'public/assets/bcu/000001/org/page/img001.imgcut', required: true, role: 'battle-money-and-cost-digits-imgcut' },
+  { name: 'img002.png', source: 'public/assets/bcu/000001/org/page/img002.png', required: true, role: 'battle-worker-cat-and-cannon-button-sheet' },
+  { name: 'img002.imgcut', source: 'public/assets/bcu/000001/org/page/img002.imgcut', required: true, role: 'battle-worker-cat-and-cannon-button-imgcut' },
   { name: 'moneySign.png', source: 'public/assets/bcu/110504/org/page/moneySign.png', required: true, role: 'battle-money-sign-sheet' },
   { name: 'moneySign.imgcut', source: 'public/assets/bcu/110504/org/page/moneySign.imgcut', required: true, role: 'battle-money-sign-imgcut' }
 ]);
@@ -24,6 +26,7 @@ function makeBundleJson(entries) {
     bcuReference: {
       productionCard: '000001/org/page/uni.png + 000001/org/data/uni.imgcut part[0]',
       moneyDigits: '000001/org/page/img001.png + 000001/org/page/img001.imgcut',
+      workerCatButton: '000001/org/page/img002.png + 000001/org/page/img002.imgcut parts[5]=働きネコボタンOFF, parts[24]=点滅アニメ用, parts[6]=働きネコボタンON (Res.readBattle aux.battle[0][0/1/2])',
       moneySign: '110504/org/page/moneySign.png + 110504/org/page/moneySign.imgcut'
     },
     entries: entries.map(({ name, source, required, role, present }) => ({ name, source, required, role, present })),

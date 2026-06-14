@@ -157,13 +157,17 @@ export function activateBcuCatCannon(scene) {
   }
   state.active = { preFrames: BCU_CAT_CANNON_BASIC_PRE_FRAMES, startedFrame: scene?.logicFrame ?? null };
   state.cannon = 0;
+  // BCU Cannon.activate() starts the cannon BASE animation at the player base on press;
+  // damage resolves preTime (NYPRE[BASE_H]=18) frames later. The scene owns the visual.
+  const animSpawned = scene?.spawnCatCannonFireEffect?.() === true;
   state.lastFireDebug = {
     ok: true,
     reason: 'ok',
     before,
     after: getBcuCatCannonStatus(scene),
+    animSpawned,
     source: 'BCU StageBasis.act_can -> canon.activate(); cannon = 0',
-    bcuReference: 'Cannon.activate: preTime = NYPRE[BASE_H] = 18'
+    bcuReference: 'Cannon.activate: anim = atks[BASE_H].getEAnim(BASE); preTime = NYPRE[BASE_H] = 18'
   };
   scene?.pushEvent?.({ type: 'bcuCatCannonActivated', ...state.lastFireDebug });
   return true;

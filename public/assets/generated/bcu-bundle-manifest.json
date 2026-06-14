@@ -33721,8 +33721,8 @@
       "key": "ui:battle",
       "bundlePath": "public/assets/bundles/ui/battle-ui.zip",
       "status": "full",
-      "sizeBytes": 95749,
-      "hash": "fb64c6d009010a153ea2d705c55ef5686aed0e9e68648fbfd0d7d3159b590ae1"
+      "sizeBytes": 608637,
+      "hash": "460ff3281074aa660dd436dd7e71bbfa8c1ffaab89c44932eaacee345d9e0d7d"
     },
     "core:db": {
       "kind": "core",

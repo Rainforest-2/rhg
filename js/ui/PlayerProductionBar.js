@@ -3,6 +3,7 @@ import { ProductionRuntime } from '../battle/ProductionRuntime.js';
 import { BcuSpriteText } from './BcuSpriteText.js';
 import { ProductionCardSkin, PRODUCTION_CARD_CANVAS } from './ProductionCardSkin.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+import { BcuImgCut } from './BcuImgCut.js';
 
 const loadImage = (src) => new Promise((res, rej) => {
   const i = new Image();
@@ -10,6 +11,34 @@ const loadImage = (src) => new Promise((res, rej) => {
   i.onerror = () => rej(new Error(`image load failed:${src}`));
   i.src = src;
 });
+
+// BCU battle bottom-left worker-cat / wallet upgrade button art.
+// Source-backed by Res.readBattle (BCU_java_util_common util/Res.java):
+//   aux.battle[0][0] = img002 parts[5]  = 働きネコボタン OFF (sb.money < sb.upgradeCost)
+//   aux.battle[0][1] = img002 parts[24] = 働きネコボタン 点滅アニメ用 (affordable flash)
+//   aux.battle[0][2] = img002 parts[6]  = 働きネコボタン ON (affordable steady / work_lv >= 8 max)
+// Drawn by BattleBox.drawBtm (BCU_Android BattleBox.java) as aux.battle[0][mtype].
+const BCU_BATTLE_UI_BUNDLE_REF = Object.freeze({ bundleKey: 'ui:battle', bundlePath: 'public/assets/bundles/ui/battle-ui.zip' });
+const WORKER_BUTTON_PART = Object.freeze({ off: 5, flash: 24, on: 6 });
+// BCU cat-cannon button art (Res.readBattle aux.battle[1], BattleBox.drawBtm):
+//   aux.battle[1][0] = img002 parts[8]  = にゃんこ砲ボタン OFF (ctype 0, charging)
+//   aux.battle[1][1] = img002 parts[7]  = にゃんこ砲ボタン 点滅アニメ用 (ctype 1, full)
+//   aux.battle[1][2+i] = img002 parts[11+i] = にゃんこ砲 10%..100% charge gauge bars
+//   aux.battle[1][12] = img002 parts[9]  = にゃんこ砲ボタン フォント (FIRE text, jp)
+//   aux.battle[1][13] = img002 parts[10] = フォント 点滅アニメ用 (FIRE flash)
+const CANNON_BUTTON_PART = Object.freeze({ off: 8, full: 7, fire: 9, fireFlash: 10, gaugeStart: 11, gaugeCount: 10 });
+
+async function loadBattleUiBundleImage(provider, internalPath) {
+  const url = await provider.createObjectUrl(BCU_BATTLE_UI_BUNDLE_REF, internalPath, 'image/png');
+  try {
+    const image = await loadImage(url);
+    image.bcuObjectUrl = url;
+    return image;
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
 
 const ANDROID_LINEUP_SLIDE_ANGLE_DEG = 50;
 const ANDROID_LINEUP_SLIDE_DISTANCE_RATIO = 0.15;
@@ -131,7 +160,117 @@ export class PlayerProductionBar {
     this.setup();
     this.initAssets();
   }
-  async initAssets() { await this.spriteText.init?.(); await this.cardSkin.preload(); if (this.scene) await this.update(this.scene); }
+  async initAssets() { await this.spriteText.init?.(); await this.cardSkin.preload(); await this.loadBattleButtonSprites(); if (this.scene) await this.update(this.scene); }
+  async loadBattleButtonSprites() {
+    if (this.battleButtonSheet) return this.battleButtonSheet;
+    try {
+      const provider = getBcuAssetDatabase()?.semanticProvider || null;
+      if (!provider) {
+        productionPageDebug().lastBattleButtonSprite = { source: 'PlayerProductionBar.loadBattleButtonSprites', ready: false, reason: 'missing-semantic-provider' };
+        return null;
+      }
+      const [sheet, imgcutText] = await Promise.all([
+        loadBattleUiBundleImage(provider, 'img002.png'),
+        provider.readTextByBundleRef(BCU_BATTLE_UI_BUNDLE_REF, 'img002.imgcut')
+      ]);
+      const imgcut = BcuImgCut.parse(imgcutText);
+      this.battleButtonSheet = sheet;
+      this.workerButtonSprite = {
+        sheet,
+        off: imgcut.getByIndex(WORKER_BUTTON_PART.off),
+        flash: imgcut.getByIndex(WORKER_BUTTON_PART.flash),
+        on: imgcut.getByIndex(WORKER_BUTTON_PART.on)
+      };
+      this.cannonButtonSprite = {
+        sheet,
+        off: imgcut.getByIndex(CANNON_BUTTON_PART.off),
+        full: imgcut.getByIndex(CANNON_BUTTON_PART.full),
+        fire: imgcut.getByIndex(CANNON_BUTTON_PART.fire),
+        fireFlash: imgcut.getByIndex(CANNON_BUTTON_PART.fireFlash),
+        gauge: Array.from({ length: CANNON_BUTTON_PART.gaugeCount }, (_, i) => imgcut.getByIndex(CANNON_BUTTON_PART.gaugeStart + i))
+      };
+      productionPageDebug().lastBattleButtonSprite = {
+        source: 'PlayerProductionBar.loadBattleButtonSprites',
+        bcuReference: 'Res.readBattle aux.battle[0]/[1] from img002; BattleBox.drawBtm aux.battle[0][mtype] / aux.battle[1][ctype] + gauge + fire',
+        workerReady: !!(this.workerButtonSprite.off && this.workerButtonSprite.on),
+        cannonReady: !!(this.cannonButtonSprite.off && this.cannonButtonSprite.full),
+        workerOffLabel: this.workerButtonSprite.off?.label || null,
+        workerOnLabel: this.workerButtonSprite.on?.label || null,
+        cannonOffLabel: this.cannonButtonSprite.off?.label || null,
+        cannonFullLabel: this.cannonButtonSprite.full?.label || null,
+        cannonFireLabel: this.cannonButtonSprite.fire?.label || null
+      };
+      return this.battleButtonSheet;
+    } catch (error) {
+      productionPageDebug().lastBattleButtonSprite = { source: 'PlayerProductionBar.loadBattleButtonSprites', ready: false, reason: error?.message || String(error) };
+      return null;
+    }
+  }
+  drawWorkerButtonIcon(mtype, { level = 1, cost = 0, isMax = false } = {}) {
+    const ctx = this.walletIconCtx;
+    const sprite = this.workerButtonSprite;
+    if (!ctx || !this.walletIcon) return false;
+    // BCU BattleBox.drawBtm chooses aux.battle[0][mtype]; mtype 0 = OFF, 1 = flash, 2 = ON/max.
+    const part = sprite ? (mtype === 0 ? sprite.off : mtype === 1 ? (sprite.flash || sprite.on) : sprite.on) : null;
+    if (!sprite || !part) {
+      this.walletIcon.classList.remove('is-loaded');
+      return false;
+    }
+    if (this.walletIcon.width !== part.w || this.walletIcon.height !== part.h) {
+      this.walletIcon.width = part.w;
+      this.walletIcon.height = part.h;
+    }
+    const w = this.walletIcon.width;
+    const h = this.walletIcon.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(sprite.sheet, part.x, part.y, part.w, part.h, 0, 0, part.w, part.h);
+    // BCU Res.getWorkerLv / Res.getCost overlay the level and upgrade cost on the button.
+    const disabled = mtype === 0;
+    if (this.spriteText?.ready) {
+      this.spriteText.drawWorkerLvCentered(ctx, level, w / 2, h * 0.50, { disabled, scale: 0.9 });
+      this.spriteText.drawCostOrMaxCentered(ctx, isMax ? -1 : cost, w / 2, h * 0.74, { disabled, scale: 0.9 });
+    }
+    this.walletIcon.classList.add('is-loaded');
+    return true;
+  }
+  drawCannonButtonIcon(ratio, { ready = false } = {}) {
+    const ctx = this.cannonIconCtx;
+    const sprite = this.cannonButtonSprite;
+    if (!ctx || !this.cannonIcon) return false;
+    const part = sprite ? (ready ? (sprite.full || sprite.off) : sprite.off) : null;
+    if (!sprite || !part) {
+      this.cannonIcon.classList.remove('is-loaded');
+      return false;
+    }
+    if (this.cannonIcon.width !== part.w || this.cannonIcon.height !== part.h) {
+      this.cannonIcon.width = part.w;
+      this.cannonIcon.height = part.h;
+    }
+    const w = this.cannonIcon.width;
+    const h = this.cannonIcon.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(sprite.sheet, part.x, part.y, part.w, part.h, 0, 0, part.w, part.h);
+    // BCU BattleBox.drawBtm: while charging, stack aux.battle[1][2+i] (10%..100%) bars from the
+    // bottom, count = floor(10 * cannon / maxCannon); when full, draw the FIRE font instead.
+    const clamped = Math.max(0, Math.min(1, Number(ratio) || 0));
+    if (ready) {
+      const fire = sprite.fire;
+      if (fire) ctx.drawImage(sprite.sheet, fire.x, fire.y, fire.w, fire.h, (w - fire.w) / 2, h - fire.h - 4, fire.w, fire.h);
+    } else {
+      const bars = Math.floor(clamped * sprite.gauge.length);
+      let baseY = h;
+      for (let i = 0; i < bars; i += 1) {
+        const bar = sprite.gauge[i];
+        if (!bar) continue;
+        baseY -= bar.h;
+        ctx.drawImage(sprite.sheet, bar.x, bar.y, bar.w, bar.h, (w - bar.w) / 2, baseY, bar.w, bar.h);
+      }
+    }
+    this.cannonIcon.classList.add('is-loaded');
+    return true;
+  }
   setVisible(v) { this.root?.classList.toggle('is-hidden', !v); }
   createSlideState() {
     return { pointerId: null, initX: 0, initY: 0, endX: 0, endY: 0, dragFrame: 0, isSliding: false, performed: false, horizontal: false, vertical: false };
@@ -140,15 +279,19 @@ export class PlayerProductionBar {
   setup() {
     this.root = document.createElement('div');
     this.root.className = 'prod-ui is-hidden';
-    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><button class='wallet-upgrade' type='button' aria-label='Worker cat wallet level up'><span class='wallet-level'>Lv 1</span><span class='wallet-cost'>---</span></button><button class='cat-cannon-fire' type='button' aria-label='Cat cannon fire'><span class='cat-cannon-label'>FIRE</span><span class='cat-cannon-gauge'></span></button><div class='cards lineup-cards'></div>";
+    this.root.innerHTML = "<canvas class='battle-money' width='360' height='48'></canvas><button class='wallet-upgrade' type='button' aria-label='Worker cat wallet level up'><canvas class='wallet-icon' width='1' height='1'></canvas><span class='wallet-level'>Lv 1</span><span class='wallet-cost'>---</span></button><button class='cat-cannon-fire' type='button' aria-label='Cat cannon fire'><canvas class='cannon-icon' width='1' height='1'></canvas><span class='cat-cannon-label'>FIRE</span><span class='cat-cannon-gauge'></span></button><div class='cards lineup-cards'></div>";
     this.mount.appendChild(this.root);
     this.cardsWrap = this.root.querySelector('.cards');
     this.moneyCanvas = this.root.querySelector('.battle-money');
     this.moneyCtx = this.moneyCanvas.getContext('2d');
     this.walletButton = this.root.querySelector('.wallet-upgrade');
+    this.walletIcon = this.root.querySelector('.wallet-icon');
+    this.walletIconCtx = this.walletIcon?.getContext('2d') || null;
     this.walletLevelLabel = this.root.querySelector('.wallet-level');
     this.walletCostLabel = this.root.querySelector('.wallet-cost');
     this.cannonButton = this.root.querySelector('.cat-cannon-fire');
+    this.cannonIcon = this.root.querySelector('.cannon-icon');
+    this.cannonIconCtx = this.cannonIcon?.getContext('2d') || null;
     this.cannonGauge = this.root.querySelector('.cat-cannon-gauge');
     this.rebuildStacks();
 
@@ -487,9 +630,17 @@ export class PlayerProductionBar {
     this.walletButton.classList.toggle('is-max', isMax);
     this.walletButton.dataset.level = String(level);
     this.walletButton.dataset.cost = isMax ? '-1' : String(cost);
+    // BCU BattleBox.drawBtm mtype: 0 when sb.money < sb.upgradeCost; work_lv >= 8 forces 2.
+    // Affordable steady state and Lv8 max both render aux.battle[0][2] (the ON face).
+    const mtype = (isMax || canUpgrade) ? 2 : 0;
+    const iconDrawn = this.drawWorkerButtonIcon(mtype, { level, cost, isMax });
+    this.walletButton.classList.toggle('has-bcu-icon', iconDrawn);
+    this.walletButton.dataset.mtype = String(mtype);
     productionPageDebug().lastWalletDraw = {
       source: 'PlayerProductionBar.drawWallet',
-      bcuAndroidReference: 'BattleBox.drawBtm: mtype from sb.money < sb.upgradeCost, work_lv >= 8 forces max state; Res.getWorkerLv and Res.getCost',
+      bcuAndroidReference: 'BattleBox.drawBtm: mtype from sb.money < sb.upgradeCost, work_lv >= 8 forces max state; aux.battle[0][mtype]; Res.getWorkerLv and Res.getCost',
+      mtype,
+      iconDrawn,
       ...status
     };
   }
@@ -505,12 +656,15 @@ export class PlayerProductionBar {
     this.cannonButton.classList.toggle('is-ready', ready);
     this.cannonButton.classList.toggle('is-active', status.active === true);
     this.cannonButton.dataset.charge = String(Math.floor(ratio * 10));
+    const iconDrawn = this.drawCannonButtonIcon(ratio, { ready });
+    this.cannonButton.classList.toggle('has-bcu-icon', iconDrawn);
     if (this.cannonGauge) {
       this.cannonGauge.innerHTML = Array.from({ length: 10 }, (_, index) => `<i class='${index < Math.floor(ratio * 10) ? 'is-filled' : ''}'></i>`).join('');
     }
     productionPageDebug().lastCannonDraw = {
       source: 'PlayerProductionBar.drawCannon',
-      bcuAndroidReference: 'BattleBox.drawBtm: ctype from sb.cannon == sb.maxCannon; 10 * sb.cannon / sb.maxCannon gauge slices; FIRE when full',
+      bcuAndroidReference: 'BattleBox.drawBtm: ctype from sb.cannon == sb.maxCannon; aux.battle[1][ctype] + stacked aux.battle[1][2+i] gauge bars; FIRE font when full',
+      iconDrawn,
       ...status
     };
   }

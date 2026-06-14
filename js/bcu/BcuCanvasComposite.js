@@ -1,3 +1,5 @@
+import { isBcuHeavyEffectDebugEnabled } from '../battle/bcu-runtime/BcuEffectTraceRuntime.js';
+
 const BCU_GLOW_MODES = new Set([1, 2, 3, -1]);
 const FAST_CANVAS_GLOW = new Map([
   [1, 'lighter'],
@@ -42,6 +44,11 @@ function transformPoint(m, x, y) {
 }
 
 function registerCompositeDebug(entry) {
+  // This runs on the hottest draw path (every actor part, every frame). The
+  // accumulated counters/examples are debug-only bookkeeping that no production
+  // code reads, so skip the global mutation + array churn unless the same debug
+  // flag that gates other BCU heavy-debug traces is enabled.
+  if (!isBcuHeavyEffectDebugEnabled()) return;
   const debug = globalThis.__BCU_CANVAS_COMPOSITE_DEBUG__ || {
     installed: true,
     drawCount: 0,

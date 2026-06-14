@@ -6,7 +6,9 @@ import { appendBoundedDebugTrace } from '../js/battle/bcu-runtime/BcuEffectTrace
 const staticChecks = [
   ['js/battle/EffectRuntime.js', /isBcuHeavyEffectDebugEnabled\(\)[\s\S]*debug\.examples\s*=\s*list\.slice\(0,\s*6\)/, 'EffectRuntime gates heavy cleanup examples behind debug flag'],
   ['js/battle/BattleWaveRuntimePatch.js', /appendBoundedDebugTrace\('__BCU_WAVE_TRACE__'/, 'wave runtime uses bounded debug trace helper'],
-  ['js/battle/BattleSurgeRuntimePatch.js', /appendBoundedDebugTrace\('__BCU_SURGE_TRACE__'/, 'surge runtime uses bounded debug trace helper']
+  ['js/battle/BattleSurgeRuntimePatch.js', /appendBoundedDebugTrace\('__BCU_SURGE_TRACE__'/, 'surge runtime uses bounded debug trace helper'],
+  ['js/bcu/BcuCanvasComposite.js', /function registerCompositeDebug\(entry\)\s*\{\s*(\/\/[^\n]*\n\s*)*if\s*\(!isBcuHeavyEffectDebugEnabled\(\)\)\s*return;/, 'BcuCanvasComposite gates per-draw composite debug bookkeeping behind the heavy-debug flag'],
+  ['js/input/BcuDomTouchPolicy.js', /if\s*\(BcuTraceRuntime\.enabled\)\s*\{\s*(\/\/[^\n]*\n\s*)*BcuTraceRuntime\.push\(/, 'BcuDomTouchPolicy only builds the touchmove trace object when tracing is enabled']
 ];
 
 for (const [file, pattern, message] of staticChecks) {

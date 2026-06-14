@@ -77,7 +77,17 @@ function configFromState(state) {
 function persistState(editor) {
   const state = editor?.customStageBattle;
   if (!state) return;
+  // The custom-stage HP options (城HP固定 / 毎FPS両城HP減少) are written by sibling
+  // patches under the SAME STORAGE_KEY. Preserve any previously stored fields so a
+  // stage pick/toggle here does not silently erase those HP options on reload.
+  let previous = {};
+  try {
+    const raw = globalThis.localStorage?.getItem?.(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && parsed.mode === 'stage-vs-stage-multi') previous = parsed;
+  } catch {}
   const payload = {
+    ...previous,
     mode: 'stage-vs-stage-multi',
     enabled: !!state.enabled,
     enemyStageIds: uniqueList(state.enemyStageIds),

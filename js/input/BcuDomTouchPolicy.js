@@ -17,12 +17,18 @@ export function installBcuDomTouchPolicy(root = document) {
   root.__bcuDomTouchPolicyInstalled = true;
   root.addEventListener('touchmove', (event) => {
     const prevent = shouldPreventBcuTouchDefault(event.target);
-    BcuTraceRuntime.push('input', {
-      source: 'BcuDomTouchPolicy',
-      bcuReference: 'BCU Android input separated from Web DOM touch policy',
-      type: 'touchmove-policy',
-      preventDefaultTarget: prevent ? event.target?.className || event.target?.id || event.target?.tagName || null : null
-    });
+    // Only build/push the trace object when tracing is actually enabled. The
+    // BcuTraceRuntime sink is a hard no-op by default, so unconditionally
+    // allocating this object (and reading event.target.className) on every
+    // touchmove was pure waste during battle drag/scroll on touch devices.
+    if (BcuTraceRuntime.enabled) {
+      BcuTraceRuntime.push('input', {
+        source: 'BcuDomTouchPolicy',
+        bcuReference: 'BCU Android input separated from Web DOM touch policy',
+        type: 'touchmove-policy',
+        preventDefaultTarget: prevent ? event.target?.className || event.target?.id || event.target?.tagName || null : null
+      });
+    }
     if (prevent) event.preventDefault();
   }, { passive: false });
 }

@@ -40,6 +40,13 @@ function patchMetalAbiResult(result, { attacker, target, targetType, context }) 
   const flags = traitFlags(target);
   if (flags?.metal === true) return result;
   if (!hasAbi(target, BCU_ABI.AB_METALIC)) return result;
+  // The base DamageAbilityResolver.isTargetMetalForDamage already treats an
+  // AB_METALIC-by-ability target as metal for every NON dog-player attacker, so the
+  // base resolve() has already applied the crit-cap / metal / metalKiller block.
+  // Re-applying it here would double the metalKiller health-percent burst and re-roll
+  // crit (desyncing the deterministic RNG stream). Only the dog-player attacker needs
+  // this patch, because there the base keys metal off the trait flag, not AB_METALIC.
+  if ((attacker?.side || null) !== 'dog-player') return result;
 
   const proc = attackerProc(attacker);
   const rng = typeof context?.random === 'function' ? context.random : Math.random;

@@ -54,14 +54,23 @@ function ensureOverlay(app) {
 
 function showOverlay(app, result) {
   const overlay = ensureOverlay(app);
+  const type = result?.type || 'victory';
+  // The result watcher re-runs every animation frame while a terminal result is
+  // still in memory. Once the overlay already shows this result there is nothing
+  // to change, so skip the per-frame DOM writes and visibility re-assertions.
+  if (overlay.classList.contains('is-visible') && overlay.dataset.result === type) return;
   const title = overlay.querySelector('.battle-result-title');
   if (title) {
     title.textContent = result?.title || '完全勝利!!';
-    title.classList.toggle('is-defeat', result?.type === 'defeat');
+    title.classList.toggle('is-defeat', type === 'defeat');
   }
-  overlay.dataset.result = result?.type || 'victory';
+  overlay.dataset.result = type;
   overlay.classList.add('is-visible');
   app.productionBar?.setVisible(false);
+  // The BCU speed-up control is battle-only; hide it on the result screen so the
+  // fixed FAB (z-index 99970) does not float over the victory/defeat card. The
+  // next battle's resetBattle re-shows it, so this never leaves it stuck off.
+  app.speedControl?.setVisible(false);
 }
 
 function hideOverlay(app) {

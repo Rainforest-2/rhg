@@ -199,8 +199,11 @@ function targetsInRange(scene, attacker, startX, endX, incl) {
     if (!target || target.side === attacker?.side || incl?.has(target)) return false;
     if (!(target.isTargetable?.() ?? target.isAlive?.())) return false;
     const p = pos(target);
-    const half = Number(target.width || target.rawStats?.width || 0) / 2;
-    return (p + half) >= lo && (p - half) <= hi;
+    // BCU StageBasis.inRange checks AbEntity.pos as a point: left <= pos <= right.
+    // It does NOT expand the range by target width. The sibling surge/blast runtimes
+    // were already corrected to point capture; wave must match so wide entities whose
+    // center sits outside the wave band are neither hit nor counted as wave-stoppers.
+    return p >= lo && p <= hi;
   });
 }
 

@@ -53,6 +53,8 @@ const commands = [
   ['node', ['--check', 'scripts/check-bcu-warp-interrupt-scene-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-combo-proc-duration-parity.mjs']],
   ['node', ['--check', 'scripts/check-ability-partial-blockers.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-wave-surge-point-capture-parity.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-metal-abi-double-apply.mjs']],
   ['node', ['scripts/check-bcu-stage-difficulty-parity.mjs']],
   ['node', ['scripts/check-production-card-icon-source-parity.mjs']],
   ['node', ['scripts/check-bcu-parser-indexes.mjs']],
@@ -78,7 +80,9 @@ const commands = [
   ['node', ['scripts/check-bcu-warp-lifecycle-parity.mjs']],
   ['node', ['scripts/check-bcu-warp-interrupt-scene-parity.mjs']],
   ['node', ['scripts/check-bcu-combo-proc-duration-parity.mjs']],
-  ['node', ['scripts/check-ability-partial-blockers.mjs']]
+  ['node', ['scripts/check-ability-partial-blockers.mjs']],
+  ['node', ['scripts/check-bcu-wave-surge-point-capture-parity.mjs']],
+  ['node', ['scripts/check-bcu-metal-abi-double-apply.mjs']]
 ];
 
 const results = [];

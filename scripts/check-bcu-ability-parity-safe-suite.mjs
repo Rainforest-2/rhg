@@ -31,6 +31,7 @@ const commands = [
   ['node', ['--check', 'js/battle/BattleSceneBcuCatCannonPatch.js']],
   ['node', ['--check', 'js/battle/BattleSceneRendererEffectGlowPatch.js']],
   ['node', ['--check', 'js/battle/BattleSceneAttackEffectPatch.js']],
+  ['node', ['--check', 'js/battle/bcu-runtime/BcuEnemyCastleBossSpawn.js']],
   ['node', ['--check', 'js/preview/PreviewAppBattleResultOverlayPatch.js']],
   ['node', ['--check', 'scripts/check-bcu-stage-difficulty-parity.mjs']],
   ['node', ['--check', 'scripts/check-production-card-icon-source-parity.mjs']],
@@ -90,9 +91,11 @@ const commands = [
   ['node', ['scripts/check-bcu-metal-abi-double-apply.mjs']],
   ['node', ['scripts/check-bcu-cat-cannon-runtime-parity.mjs']],
   ['node', ['scripts/check-bcu-cat-cannon-effect-position-parity.mjs']],
+  ['node', ['scripts/check-bcu-cat-cannon-wave-anim-parity.mjs']],
   ['node', ['scripts/check-bcu-cannon-level-curve-parity.mjs']],
   ['node', ['scripts/check-bcu-non-basic-cat-cannon-spec-parity.mjs']],
-  ['node', ['scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs']]
+  ['node', ['scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs']],
+  ['node', ['scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs']]
 ];
 
 const results = [];

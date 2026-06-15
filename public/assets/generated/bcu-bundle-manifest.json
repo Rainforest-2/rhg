@@ -33751,44 +33751,44 @@
       "key": "icon:unit:c",
       "bundlePath": "public/assets/bundles/icon/unit-c.zip",
       "status": "full",
-      "iconCount": 799,
+      "iconCount": 814,
       "unitOnlyRegenerated": true,
       "runtimeNormalize": false,
-      "sizeBytes": 4455271,
-      "hash": "ebe9f69543bf983b288c313d130501b0b3b45966f46decfe3f81d654cf5d2e0f"
+      "sizeBytes": 4514451,
+      "hash": "1dbd598cabddc4e528ee17faa41bbea9dc61ba54c54b45d4473e5300a624889b"
     },
     "icon:unit:f": {
       "kind": "icon",
       "key": "icon:unit:f",
       "bundlePath": "public/assets/bundles/icon/unit-f.zip",
       "status": "full",
-      "iconCount": 822,
+      "iconCount": 837,
       "unitOnlyRegenerated": true,
       "runtimeNormalize": false,
-      "sizeBytes": 4363413,
-      "hash": "561a70557fa2d52b60b870c65b484e48818e6758123aff5c1307e68f9ef2f541"
+      "sizeBytes": 4420676,
+      "hash": "319a383c06457bd37a067128d52719d22e4d3629a6a97711c492593343a0b987"
     },
     "icon:unit:s": {
       "kind": "icon",
       "key": "icon:unit:s",
       "bundlePath": "public/assets/bundles/icon/unit-s.zip",
       "status": "full",
-      "iconCount": 393,
+      "iconCount": 407,
       "unitOnlyRegenerated": true,
       "runtimeNormalize": false,
-      "sizeBytes": 2116372,
-      "hash": "9834242f2ebd124dff9b8cc53d3045216718144c2e90fc76a7cce583507b5ff0"
+      "sizeBytes": 2182938,
+      "hash": "5a436e83b92d157828c1fbe931f08958d012a12eb9951c250212077b763f68f5"
     },
     "icon:unit:u": {
       "kind": "icon",
       "key": "icon:unit:u",
       "bundlePath": "public/assets/bundles/icon/unit-u.zip",
       "status": "full",
-      "iconCount": 18,
+      "iconCount": 19,
       "unitOnlyRegenerated": true,
       "runtimeNormalize": false,
-      "sizeBytes": 103109,
-      "hash": "0ea1905cad2743f738114abbf8e206b606c7ee8cd3df03a0f3edbee4fdcedea6"
+      "sizeBytes": 109340,
+      "hash": "57022b7400c6a7759de0f9c7078afa3131684cbf919ac9ccdaa42e511ba5ba4a"
     },
     "effect:wave": {
       "kind": "effect",

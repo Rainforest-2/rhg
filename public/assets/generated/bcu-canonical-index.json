@@ -11,19 +11,19 @@
   "counts": {
     "actors": 2855,
     "stages": 8519,
-    "backgrounds": 361,
+    "backgrounds": 350,
     "enemyCastles": 330,
     "nyankoCastles": 4,
-    "bundles": 4253
+    "bundles": 4223
   },
   "diagnosticsSummary": {
-    "partialActors": 25,
+    "partialActors": 19,
     "iconOnlyActors": 0,
     "stageAliasConflicts": 1944,
-    "missingBackgrounds": 10,
+    "missingBackgrounds": 0,
     "bundleDiagnostics": {
-      "generated": 4247,
-      "skipped": 0,
+      "generated": 4215,
+      "skipped": 22,
       "sampleMode": false
     }
   }

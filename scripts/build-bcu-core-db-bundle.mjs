@@ -9,8 +9,13 @@ const BASE_T_UNIT_CSV = 'public/assets/bcu/000001/org/data/t_unit.csv';
 const BASE_UNITBUY_CSV = 'public/assets/bcu/000001/org/data/unitbuy.csv';
 const BASE_UNITLEVEL_CSV = 'public/assets/bcu/000001/org/data/unitlevel.csv';
 
+// Strip C0 control-character junk (e.g. stray \x01/\x05/\x10 trailing bytes found
+// in some BCU pack unit CSVs) so a corrupt line cannot survive `filter(Boolean)`
+// and fabricate a phantom form row. \t/\n/\r are intentionally not stripped here
+// (\n and \r are already consumed by the line split).
+const stripControlJunk = (line) => line.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]+/g, '');
 const parseCsvRows = (text) => String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)
-  .map((line) => line.replace(/\/\/.*$/, '').trim()).filter(Boolean)
+  .map((line) => stripControlJunk(line.replace(/\/\/.*$/, '')).trim()).filter(Boolean)
   .map((line) => line.split(',').map((x) => x.trim()));
 const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number(v) : 0));
 const pad3 = (id) => String(Math.max(0, Number(id) || 0)).padStart(3, '0');
@@ -201,8 +206,35 @@ for (const idRaw of manifest.indexes?.unitIds || []) {
   const unitId = Number(idRaw);
   if (!Number.isFinite(unitId)) continue;
   const id3 = pad3(unitId);
-  const statsPath = (manifest.files || []).find((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`));
-  const rows = statsPath ? parseCsvRows(await readText(statsPath)).map(toNumbers) : [];
+  const statsCandidates = (manifest.files || []).filter((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`));
+  const statsPath = statsCandidates[0] || null;
+  // A real BCU unit form row is a multi-column stat line whose first column
+  // (HP) is a number. Corrupt packs can leave a trailing junk line of mojibake
+  // high bytes (not C0 controls, so parseCsvRows keeps it) that collapses to a
+  // single non-numeric field; rejecting it here stops it fabricating a phantom
+  // form (e.g. unit 259's corrupted 100204 csv).
+  const readUnitFormRows = async (file) => parseCsvRows(await readText(file))
+    .filter((cols) => cols.length >= 2 && cols[0] !== '' && Number.isFinite(Number(cols[0])))
+    .map(toNumbers);
+  const baseRows = statsPath ? await readUnitFormRows(statsPath) : [];
+  // A later pack can add an evolution form (e.g. true/ultra 4th form) that the
+  // first-listed pack lacks. Find the pack that defines the most real forms
+  // (newest pack wins ties) and append only the extra forms it introduces, so
+  // genuine 4th forms are sourced with real stats while the base pack keeps
+  // ownership of the forms it already defines. Phantom rows can no longer appear
+  // here because junk lines are dropped before the forms are counted.
+  let richest = { rows: baseRows, pack: statsPath ? packIdFromBcuPath(statsPath) : null };
+  for (const candidate of statsCandidates) {
+    const candRows = await readUnitFormRows(candidate);
+    const candPack = packIdFromBcuPath(candidate);
+    if (candRows.length > richest.rows.length
+      || (candRows.length === richest.rows.length && comparePackId(candPack, richest.pack) > 0)) {
+      richest = { rows: candRows, pack: candPack };
+    }
+  }
+  const rows = richest.rows.length > baseRows.length
+    ? baseRows.concat(richest.rows.slice(baseRows.length))
+    : baseRows;
   const levelMeta = unitLevelMetadata.byUnitId[unitId] || null;
   for (let index = 0; index < Math.max(1, rows.length); index += 1) {
     const form = formCode(index);

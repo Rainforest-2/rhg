@@ -337,8 +337,34 @@ function crc32(buf) {
 function u16(v) { const b = Buffer.alloc(2); b.writeUInt16LE(v); return b; }
 function u32(v) { const b = Buffer.alloc(4); b.writeUInt32LE(v >>> 0); return b; }
 
+const STORE = 0;
+const DEFLATE = 8;
+
+// Aggregate runtime icon ZIPs are kept STORE-only because the browser runtime
+// parses bundle archives eagerly and DEFLATE on hundreds of icon entries causes
+// excessive Chromium inflate time during formation UI loading. This set must stay
+// in sync with STORE_ONLY_RUNTIME_ZIPS in scripts/check-bundle-zip-recompression.mjs.
+export const STORE_ONLY_RUNTIME_ZIPS = Object.freeze([
+  'public/assets/bundles/icon/enemy.zip',
+  'public/assets/bundles/icon/unit-c.zip',
+  'public/assets/bundles/icon/unit-f.zip',
+  'public/assets/bundles/icon/unit-s.zip',
+  'public/assets/bundles/icon/unit-u.zip'
+]);
+
+export function isStoreOnlyZipPath(zipPath) {
+  const norm = String(zipPath || '').replace(/\\/g, '/');
+  return STORE_ONLY_RUNTIME_ZIPS.some((p) => norm === p || norm.endsWith(`/${p}`) || norm.endsWith(p));
+}
+
+// Writes a bundle ZIP using the same candidate rule Codex adopted during the
+// 2026-06-14 recompression: per-entry DEFLATE level 9 when it is smaller than
+// STORE, otherwise STORE. Aggregate icon ZIPs are forced STORE. Regeneration
+// therefore preserves the recompressed footprint instead of re-bloating to STORE.
+// Name kept as writeStoreZip for backward compatibility with existing builders.
 export async function writeStoreZip(zipPath, entries) {
   await ensureDir(path.dirname(zipPath));
+  const forceStore = isStoreOnlyZipPath(zipPath);
   let offset = 0;
   const locals = [];
   const centrals = [];
@@ -346,9 +372,18 @@ export async function writeStoreZip(zipPath, entries) {
     const name = Buffer.from(entry.name.replace(/\\/g, '/'));
     const data = Buffer.isBuffer(entry.data) ? entry.data : Buffer.from(String(entry.data ?? ''), 'utf8');
     const crc = crc32(data);
-    const local = Buffer.concat([u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), name, data]);
+    let method = STORE;
+    let payload = data;
+    if (!forceStore && data.length > 0) {
+      const deflated = zlib.deflateRawSync(data, { level: 9 });
+      if (deflated.length < data.length) {
+        method = DEFLATE;
+        payload = deflated;
+      }
+    }
+    const local = Buffer.concat([u32(0x04034b50), u16(20), u16(0), u16(method), u16(0), u16(0), u32(crc), u32(payload.length), u32(data.length), u16(name.length), u16(0), name, payload]);
     locals.push(local);
-    centrals.push(Buffer.concat([u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset), name]));
+    centrals.push(Buffer.concat([u32(0x02014b50), u16(20), u16(20), u16(0), u16(method), u16(0), u16(0), u32(crc), u32(payload.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset), name]));
     offset += local.length;
   }
   const central = Buffer.concat(centrals);

@@ -242,7 +242,10 @@ function updateCustomUiAfterRender(editor) {
     popIn(editor.root?.querySelector?.('.formation-custom-stage-battle'), { duration: 135 });
     return;
   }
-  updateCurrentStageLabel(editor, currentBaseStageId(state) || editor.selectedStageId);
+  // Only override the rail's selected-stage label while custom stage battle is
+  // active. Otherwise the default-seeded custom base id (enemyStageIds[0]) would
+  // clobber the normally selected stage name on every renderStageSelector pass.
+  if (state.enabled) updateCurrentStageLabel(editor, currentBaseStageId(state) || editor.selectedStageId);
   addCustomCategoryCard(editor);
   decoratePickingMode(editor, state);
   const lead = editor.root?.querySelector?.('.formation-stage-dialog header span');

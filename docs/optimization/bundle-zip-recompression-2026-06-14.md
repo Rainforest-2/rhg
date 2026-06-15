@@ -22,6 +22,10 @@ Adopted candidate rule: use the smallest candidate whose manifest matched the or
 
 Runtime safety override: aggregate icon ZIPs were left STORE-only because the browser runtime currently parses bundle archives eagerly, and DEFLATE on hundreds of icon entries caused excessive Chromium inflate time during formation UI loading.
 
+## Bundle generator support (2026-06-15 follow-up)
+
+The shared ZIP writer `writeStoreZip()` in `scripts/bcu-semantic-utils.mjs` previously emitted STORE-only archives, so re-running any `build-bcu-*`/`repair-*` script would re-bloat bundles back to the pre-recompression size and discard this saving. The writer now applies the same adopted candidate rule used here: per-entry DEFLATE level 9 when it is smaller than STORE, otherwise STORE. The aggregate runtime icon ZIPs (`STORE_ONLY_RUNTIME_ZIPS`, kept in sync with `scripts/check-bundle-zip-recompression.mjs`) are still forced to STORE. Verified by regenerating `public/assets/bundles/effect/kbeff.zip`: the rebuilt archive matched the recompressed committed file byte-for-byte in size (50220 bytes, 24 DEFLATE entries) with identical decompressed contents, then was restored. No committed ZIPs were changed by this follow-up.
+
 ## Summary
 
 | ZIP count | Original bytes | New bytes | Saved bytes | Reduction |

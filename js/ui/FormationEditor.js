@@ -53,7 +53,8 @@ export class FormationEditor {
     this.stageLoading = false;
     this.stageOverlayOpen = false;
     this.settingsOverlayOpen = false;
-    this.filter = CHARACTER_FACTIONS.all;
+    this.filter = CHARACTER_FACTIONS.dog;
+    this.catFormFilter = 0;
     this.searchText = '';
     this.searchDraft = '';
     this.formation = FormationStore.load();
@@ -245,12 +246,14 @@ export class FormationEditor {
 
     const slot = e.target.closest('[data-slot]');
     const filter = e.target.closest('[data-filter]');
+    const catForm = e.target.closest('[data-cat-form]');
     const character = e.target.closest('[data-character]');
     if (slot) {
       this.activeSlot = Number(slot.dataset.slot);
       this.activePage = clampPage(Math.floor(this.activeSlot / LINEUP_COLS));
       return this.renderDynamic();
     }
+    if (catForm) { this.catFormFilter = Number(catForm.dataset.catForm) || 0; return this.renderDynamic({ resetCatalogScroll: true }); }
     if (filter) { this.filter = filter.dataset.filter; return this.renderDynamic({ resetCatalogScroll: true }); }
     if (character) {
       const characterId = character.dataset.character;
@@ -399,10 +402,37 @@ export class FormationEditor {
   }
 
   getFilteredCharacters() {
-    const baseChars = this.filter === CHARACTER_FACTIONS.all ? getAvailableCharacters() : getCharactersByFaction(this.filter);
+    let baseChars = this.filter === CHARACTER_FACTIONS.all ? getAvailableCharacters() : getCharactersByFaction(this.filter);
+    // にゃんこ軍は選択中の形態だけを表示（第1〜第4形態フィルタ）
+    if (this.filter === CHARACTER_FACTIONS.cat) {
+      baseChars = baseChars.filter((c) => (c.formIndex ?? 0) === this.catFormFilter);
+    }
     const q = this.searchText.trim().toLowerCase();
     if (!q) return baseChars;
     return baseChars.filter((c) => [c.characterId, c.baseCharacterId, c.label, c.sourceSlotId, c.statsSummary, c.defaultCost, c.defaultCooldownMs].some((v) => String(v || '').toLowerCase().includes(q)));
+  }
+
+  getAvailableCatFormIndexes() {
+    const set = new Set();
+    for (const c of getCharactersByFaction(CHARACTER_FACTIONS.cat)) set.add(c.formIndex ?? 0);
+    return [...set].sort((a, b) => a - b);
+  }
+
+  renderCatalogFormTabs() {
+    const host = this.root.querySelector('.formation-catalog-form-tabs');
+    if (!host) return;
+    if (this.filter !== CHARACTER_FACTIONS.cat) {
+      host.hidden = true;
+      host.innerHTML = '';
+      return;
+    }
+    const indexes = this.getAvailableCatFormIndexes();
+    if (!indexes.includes(this.catFormFilter)) this.catFormFilter = indexes[0] ?? 0;
+    host.hidden = false;
+    host.innerHTML = indexes.map((i) => {
+      const active = i === this.catFormFilter;
+      return `<button type='button' class='formation-cat-form-tab ${active ? 'is-active' : ''}' data-cat-form='${i}' aria-pressed='${active ? 'true' : 'false'}'>第${i + 1}形態</button>`;
+    }).join('');
   }
 
   renderIconMarkup(c, extraClass = '') {
@@ -652,6 +682,7 @@ export class FormationEditor {
       }).join('');
     }
 
+    this.renderCatalogFormTabs();
     const scroller = this.root.querySelector('.formation-catalog-scroll');
     if (scroller && resetCatalogScroll) scroller.scrollTop = 0;
     this.renderCatalogWindow();
@@ -672,7 +703,7 @@ export class FormationEditor {
   }
 
   refresh() {
-    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${Object.values(CHARACTER_FACTIONS).map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchDraft ?? this.searchText}' /><button type='button' class='formation-search-button' data-action='catalog-search'>検索</button><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><button type='button' data-action='settings-open' class='secondary-action settings-open-button'><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section><section class='formation-settings-overlay' aria-label='Game settings'><div class='formation-settings-dialog' role='dialog' aria-modal='true'><header><div><strong><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</strong><span>ゲーム設定</span></div><button type='button' data-action='settings-close'>閉じる</button></header><div class='formation-settings-list'></div><footer class='formation-settings-footer'></footer></div></section></div>`;
+    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${[CHARACTER_FACTIONS.dog, CHARACTER_FACTIONS.cat].map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${this.searchDraft ?? this.searchText}' /><button type='button' class='formation-search-button' data-action='catalog-search'>検索</button><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-form-tabs' hidden></div><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><button type='button' data-action='settings-open' class='secondary-action settings-open-button'><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section><section class='formation-settings-overlay' aria-label='Game settings'><div class='formation-settings-dialog' role='dialog' aria-modal='true'><header><div><strong><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</strong><span>ゲーム設定</span></div><button type='button' data-action='settings-close'>閉じる</button></header><div class='formation-settings-list'></div><footer class='formation-settings-footer'></footer></div></section></div>`;
     this.renderDynamic({ resetCatalogScroll: true });
     this.renderStageSelector();
     this.renderSettingsOverlay();

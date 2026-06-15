@@ -157,6 +157,45 @@ body.nyanko-ui-polish .formation-catalog-tabs button{
   padding:8px 12px;
 }
 
+/* にゃんこ軍タブ選択時に表示する形態フィルタ行（第1〜第4形態） */
+body.nyanko-ui-polish .formation-catalog-form-tabs{
+  position:sticky;
+  top:0;
+  z-index:3;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:clamp(6px,.7vw,10px);
+  margin:0 0 clamp(8px,.9vw,12px);
+  padding:clamp(5px,.5vw,8px) clamp(6px,.6vw,10px);
+  border:3px solid #050505;
+  border-radius:14px;
+  background:rgba(40,16,5,.94);
+  box-shadow:0 4px 0 rgba(0,0,0,.5);
+}
+body.nyanko-ui-polish .formation-catalog-form-tabs[hidden]{
+  display:none;
+}
+body.nyanko-ui-polish .formation-cat-form-tab{
+  width:auto;
+  flex:0 0 auto;
+  min-height:36px;
+  padding:6px clamp(12px,1.2vw,18px);
+  border:3px solid #050505;
+  border-radius:999px;
+  background:linear-gradient(180deg,#5a3a22,#3a2414);
+  color:#ffe9b8;
+  -webkit-text-fill-color:#ffe9b8;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 3px 0 #1a0d04,inset 0 1px 0 rgba(255,255,255,.25);
+}
+body.nyanko-ui-polish .formation-cat-form-tab.is-active{
+  background:linear-gradient(180deg,#fff3aa,#ffd531 45%,#f4a51f);
+  color:#201006;
+  -webkit-text-fill-color:#201006;
+}
+
 body.nyanko-ui-polish .formation-catalog-toolbar{
   grid-column:2;
   grid-row:1;

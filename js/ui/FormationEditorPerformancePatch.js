@@ -174,7 +174,17 @@ function selectedStageLabel(editor, catalog) {
   const selected = catalog.getStage(editor.selectedStageId);
   if (selected) return `${selected.mapLabel} - ${selected.label}`;
   const selectedStage = (editor.stageOptions || []).find((stage) => getStageId(stage) === editor.selectedStageId || stage.stageId === editor.selectedStageId);
-  return selectedStage?.label || selectedStage?.stageId || editor.selectedStageId || '未選択';
+  if (selectedStage) {
+    // The default/raw selectedStageId (e.g. "stageRNA001_00") is not a catalog key,
+    // so resolve it through the rich BCU name resolver before falling back to raw ids.
+    try {
+      const meta = editor.stageMeta?.get?.(selectedStage.stageKey || selectedStage.stageId) || {};
+      const display = editor.resolveStageDisplay?.(selectedStage, meta)?.displayName;
+      if (display) return display;
+    } catch {}
+    return selectedStage.label || selectedStage.stageId || editor.selectedStageId || '未選択';
+  }
+  return editor.selectedStageId || '未選択';
 }
 
 function renderBackControl(state, category, map) {

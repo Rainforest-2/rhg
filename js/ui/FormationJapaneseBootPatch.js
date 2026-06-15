@@ -44,7 +44,7 @@ function localizeFormationRoot(root) {
     for (const el of root.querySelectorAll(`[data-action='${action}']`)) setText(el, label);
   }
 
-  const filterLabels = { all: 'すべて', dog: 'わんこ軍', cat: 'にゃんこ軍' };
+  const filterLabels = { dog: 'わんこ軍', cat: 'にゃんこ軍' };
   for (const [filter, label] of Object.entries(filterLabels)) {
     for (const el of root.querySelectorAll(`[data-filter='${filter}']`)) setText(el, label);
   }

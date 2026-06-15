@@ -1,4 +1,5 @@
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+import { formCodeFromIndex } from '../bcu/BcuIdentifier.js';
 
 export const PLAYABLE_REGISTRY_VERSION = '0.15.0-bcu-unit-level';
 export const DOG_DEFAULT_COST = 100;
@@ -32,16 +33,16 @@ function excludedAllyAssetIds(db = null) {
   return new Set(Array.isArray(fromDb) ? fromDb : []);
 }
 
-function resolveName({ db, kind, id, locale = 'jp' }) {
+function resolveName({ db, kind, id, locale = 'jp', formIndex = 0 }) {
   if (kind === 'enemy' && db?.names) {
     const n = db.names.enemy(id, locale);
     return { label: n.value, labelSource: n.source, labelLocale: n.locale, labelKey: n.key, labelWarnings: n.warnings };
   }
   if (kind === 'unit' && db?.names) {
-    const n = db.names.unitForm(id, 0, locale);
+    const n = db.names.unitForm(id, formIndex, locale);
     return { label: n.value, labelSource: n.source, labelLocale: n.locale, labelKey: n.key, labelWarnings: n.warnings };
   }
-  const key = kind === 'enemy' ? `enemy:${id}` : `unit:${id}:form:0`;
+  const key = kind === 'enemy' ? `enemy:${id}` : `unit:${id}:form:${formIndex}`;
   return { label: key, labelSource: 'fallback-id', labelLocale: locale, labelKey: key, labelWarnings: ['bcu-db-not-loaded'] };
 }
 
@@ -111,25 +112,42 @@ export function buildDogSpecs(options = {}) {
     .map((id) => ({ id, characterId: `dog-enemy-${formatBcuId(id)}`, nameKey: `enemy:${id}`, cooldownMs: DOG_DEFAULT_COOLDOWN_MS }));
 }
 
+// Resolve which form indexes exist for a unit. BCU stores one form record per
+// CSV row in db.units.get(unitId).forms (index 0..3 -> f/c/s/u). Without a loaded
+// DB only the first form is known, preserving the module-load catalog behavior;
+// activeCatalog() rebuilds with every form once the DB is available.
+function availableFormIndexes(db, unitId) {
+  const forms = db?.units?.get?.(unitId)?.forms;
+  if (Array.isArray(forms) && forms.length) {
+    const indexes = forms.map((f) => (Number.isInteger(f?.index) ? f.index : null)).filter((i) => Number.isInteger(i));
+    if (indexes.length) return indexes;
+  }
+  return [0];
+}
+
 export function buildCatSpecs(options = {}) {
   const db = options.bcuDb || globalThis.__BCU_DB__ || null;
   const excluded = excludedAllyAssetIds(db);
-  return range(CAT_UNIT_ID_RANGE.start, CAT_UNIT_ID_RANGE.end)
-    .filter((unitId) => !excluded.has(unitId))
-    .map((unitId) => {
-      const form = 'f';
-      return {
+  const specs = [];
+  for (const unitId of range(CAT_UNIT_ID_RANGE.start, CAT_UNIT_ID_RANGE.end)) {
+    if (excluded.has(unitId)) continue;
+    for (const formIndex of availableFormIndexes(db, unitId)) {
+      const form = formCodeFromIndex(formIndex);
+      specs.push({
         unitId,
         characterId: `cat-unit-${formatBcuId(unitId)}-${form}`,
-        nameKey: `unit:${unitId}:form:0`,
+        nameKey: `unit:${unitId}:form:${formIndex}`,
         baseCharacterId: `cat-unit-${formatBcuId(unitId)}`,
         form,
+        formIndex,
         ...getCatEconomy({ db, unitId, form }),
         bcuUnitLevelMeta: getCatUnitLevelMeta(db, unitId, form),
         collisionRadius: 44,
         scale: 1.12
-      };
-    });
+      });
+    }
+  }
+  return specs;
 }
 
 export const DOG_PLAYABLE_SPECS = Object.freeze(buildDogSpecs());
@@ -221,7 +239,8 @@ export function buildCatRosterEntry(spec, options = {}) {
   const locale = options.locale || db?.locale || 'jp';
   const bcuId = formatBcuId(spec.unitId);
   const form = spec.form ?? 'f';
-  const name = resolveName({ db, kind: 'unit', id: spec.unitId, locale });
+  const formIndex = spec.formIndex ?? 0;
+  const name = resolveName({ db, kind: 'unit', id: spec.unitId, locale, formIndex });
   const economy = getCatEconomy({ db, unitId: spec.unitId, form });
   const bcuUnitLevelMeta = spec.bcuUnitLevelMeta || getCatUnitLevelMeta(db, spec.unitId, form);
   return {
@@ -232,7 +251,9 @@ export function buildCatRosterEntry(spec, options = {}) {
     assetDef: db?.assets?.resolveUnitAsset(spec.unitId, form) || unitAssetDef({ id: spec.unitId, bcuId, kind: 'unit', form }),
     statsType: 'unit',
     statsId: spec.unitId,
-    formRow: 0,
+    form,
+    formIndex,
+    formRow: formIndex,
     faction: 'cat',
     factionLabel: 'cat-unit',
     sourceKind: 'unit',
@@ -271,7 +292,7 @@ export const buildDogCatalogEntry = (spec, options = {}) => {
 
 export const buildCatCatalogEntry = (spec, options = {}) => {
   const e = buildCatRosterEntry(spec, options);
-  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, bcuPrice: e.bcuPrice, bcuRespawnFrames: e.bcuRespawnFrames, bcuRespawnMs: e.bcuRespawnMs, bcuUnitLevelMeta: e.bcuUnitLevelMeta, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
+  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, form: e.form, formIndex: e.formIndex, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, bcuPrice: e.bcuPrice, bcuRespawnFrames: e.bcuRespawnFrames, bcuRespawnMs: e.bcuRespawnMs, bcuUnitLevelMeta: e.bcuUnitLevelMeta, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
 };
 
 export const buildDogPreviewAsset = (spec, ANIM4_E, options = {}) => {

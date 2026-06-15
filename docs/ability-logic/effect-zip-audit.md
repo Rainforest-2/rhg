@@ -8,6 +8,8 @@ Latest docs-only verification: 2026-06-04. No bundle, builder, manifest, generat
 
 2026-06-12 summon runtime note: no bundle, builder, manifest, generated asset, or loose asset file was changed. `BcuSummonRuntime` uses normal actor ZIP bundles through the existing actor template loader and does not add or consume a stable summon-specific effect alias. Source-style summon-adjacent paths remain evidence only.
 
+2026-06-14 ZIP container recompression note: `effect/status-effects.zip`, `effect/wave.zip`, `effect/kbeff.zip`, and `effect/soul.zip` were recompressed from their existing ZIP entries only. No effect entry path or extracted file payload changed; SHA-256 manifest verification matched the original extracted entries. `unzip -l` completed after recompression with 64 files / 418239 uncompressed bytes for `status-effects.zip`, 286 files / 1754030 uncompressed bytes for `wave.zip`, 24 files / 60818 uncompressed bytes for `kbeff.zip`, and 66 files / 445192 uncompressed bytes for `soul.zip`.
+
 This file records only entries proven by `unzip -l` against the current checkout. Builder definitions, raw files under `public/assets/bcu`, and older docs are not treated as bundle evidence.
 
 ## Commands
@@ -19,7 +21,7 @@ unzip -l public/assets/bundles/effect/kbeff.zip
 unzip -l public/assets/bundles/effect/soul.zip
 ```
 
-2026-06-04 result: all four commands completed and the entries listed below were present in the current checkout. This audit still treats loose `public/assets/bcu/**` files as build-time inputs only, not production runtime evidence.
+2026-06-14 result: all four commands completed and the entries listed below were present in the current checkout after ZIP container recompression. This audit still treats loose `public/assets/bcu/**` files as build-time inputs only, not production runtime evidence.
 
 ## `effect/status-effects.zip`
 

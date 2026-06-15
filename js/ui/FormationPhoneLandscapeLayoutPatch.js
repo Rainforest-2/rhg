@@ -83,11 +83,11 @@ function injectStyle() {
   html body.nyanko-ui-polish .formation-character-card .character-id{display:none!important}
   html body.nyanko-ui-polish .formation-card-meta{width:100%!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:3px!important;margin-top:1px!important}
   html body.nyanko-ui-polish .formation-card-meta span{min-height:17px!important;padding:1px 3px!important;border-width:1px!important;border-radius:6px!important;font-size:.48rem!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  html body.nyanko-ui-polish .formation-action-rail{min-width:0!important;padding:6px!important;border-width:2px!important;border-radius:11px!important;gap:5px!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:40px 31px minmax(34px,auto) 29px 29px minmax(0,1fr)!important;align-content:start!important;overflow:hidden!important}
+  html body.nyanko-ui-polish .formation-action-rail{min-width:0!important;padding:6px!important;border-width:2px!important;border-radius:11px!important;gap:6px!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:minmax(52px,0.9fr) 32px minmax(44px,1fr) 30px 30px 32px!important;align-content:stretch!important;overflow:hidden!important}
   html body.nyanko-ui-polish .formation-action-rail button{min-height:0!important;width:100%!important;border-width:2px!important;border-radius:10px!important;padding:3px 6px!important;font-size:.62rem!important;line-height:1.05!important;box-shadow:0 2px 0 #3a1506,inset 0 1px 0 rgba(255,255,255,.55)!important}
-  html body.nyanko-ui-polish .apply-battle-button{min-height:40px!important;font-size:.82rem!important;letter-spacing:.02em!important}
-  html body.nyanko-ui-polish .stage-select-button{min-height:31px!important}
-  html body.nyanko-ui-polish .formation-current-stage{min-height:34px!important;max-height:48px!important;padding:4px 6px!important;border-width:2px!important;border-radius:9px!important;font-size:.52rem!important;line-height:1.12!important;overflow:hidden!important;display:block!important;color:#261005!important;-webkit-text-fill-color:#261005!important;background:rgba(255,250,218,.92)!important}
+  html body.nyanko-ui-polish .apply-battle-button{height:100%!important;min-height:0!important;font-size:.92rem!important;letter-spacing:.04em!important}
+  html body.nyanko-ui-polish .stage-select-button{min-height:0!important;height:100%!important}
+  html body.nyanko-ui-polish .formation-current-stage{height:100%!important;min-height:0!important;max-height:none!important;padding:5px 7px!important;border-width:2px!important;border-radius:9px!important;font-size:.55rem!important;line-height:1.18!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;white-space:normal!important;word-break:break-word!important;color:#261005!important;-webkit-text-fill-color:#261005!important;background:rgba(255,250,218,.92)!important}
   html body.nyanko-ui-polish .formation-action-hint{display:none!important}
 }
 @media ${TINY_PHONE_LANDSCAPE_QUERY}{
@@ -111,10 +111,10 @@ function injectStyle() {
   html body.nyanko-ui-polish .formation-character-card img{width:33px!important;height:33px!important}
   html body.nyanko-ui-polish .formation-character-card strong{font-size:.52rem!important;padding:1px 3px!important}
   html body.nyanko-ui-polish .formation-card-meta span{min-height:15px!important;font-size:.43rem!important}
-  html body.nyanko-ui-polish .formation-action-rail{grid-template-rows:34px 28px minmax(30px,auto) 26px 26px minmax(0,1fr)!important;padding:5px!important;gap:4px!important}
-  html body.nyanko-ui-polish .apply-battle-button{min-height:34px!important;font-size:.72rem!important}
+  html body.nyanko-ui-polish .formation-action-rail{grid-template-rows:minmax(44px,0.9fr) 27px minmax(36px,1fr) 26px 26px 28px!important;padding:5px!important;gap:5px!important}
+  html body.nyanko-ui-polish .apply-battle-button{min-height:0!important;height:100%!important;font-size:.8rem!important}
   html body.nyanko-ui-polish .formation-action-rail button{font-size:.56rem!important;border-radius:8px!important;padding:2px 4px!important}
-  html body.nyanko-ui-polish .formation-current-stage{min-height:30px!important;max-height:38px!important;font-size:.46rem!important;padding:3px 4px!important}
+  html body.nyanko-ui-polish .formation-current-stage{min-height:0!important;max-height:none!important;font-size:.5rem!important;padding:3px 5px!important}
 }
 `;
   document.head.appendChild(style);

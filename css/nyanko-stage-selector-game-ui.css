@@ -381,3 +381,45 @@ html body.nyanko-ui-polish .formation-stage-filter-apply{
     font-size:.78rem!important;
   }
 }
+
+/* Phone-landscape category picker: the 6 top-level categories were laid out in a
+   2-column grid that needed vertical scrolling on short, wide phone viewports
+   (the bottom 特殊/カスタム row was clipped). On phone landscape only, collapse to
+   a compact 3x2 grid centered in the available height so all six are visible at
+   once. iPad and portrait are unaffected (guarded by max-height/orientation). */
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 980px){
+  html body.nyanko-ui-polish .formation-stage-dialog{
+    padding:10px!important;
+    gap:8px!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-dialog header{
+    min-height:44px!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-category){
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    justify-content:stretch!important;
+    align-content:center!important;
+    gap:8px 10px!important;
+    padding:6px 8px!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card-category{
+    min-height:0!important;
+    grid-template-rows:minmax(0,1fr) 26px!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card-category strong,
+  html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-title{
+    padding:8px 12px 4px!important;
+    font-size:.84rem!important;
+    line-height:1.1!important;
+    -webkit-line-clamp:2!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta{
+    gap:10px!important;
+    padding:0 12px!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta b,
+  html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta i,
+  html body.nyanko-ui-polish .formation-stage-card-category small{
+    font-size:.68rem!important;
+  }
+}

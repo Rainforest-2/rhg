@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 
 function currentWarpState(target) {
   const st = target?.bcuProcStatuses?.warp || null;
@@ -47,6 +46,5 @@ export function resolveBcuWarp(ctx = {}) {
     application,
     bcuReference: 'Entity.processProcs WARP -> interrupt(INT_WARP); Entity.KBManager.updateKB handles status[P_WARP]/WaprCont'
   };
-  BcuTraceRuntime.push('warp', { source: 'BcuWarpRuntime.resolveBcuWarp', ...result });
   return result;
 }

@@ -1,14 +1,13 @@
 import { BattleScene } from './BattleScene.js';
 import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { hasBcuWaveStopper } from './bcu-runtime/BcuWaveStopperRuntime.js';
-import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BattleWaveEffectLoader } from './BattleWaveEffectLoader.js';
 import { directionForActor, spawnWaveBundleEffect } from './BcuWaveBundleEffectSpawner.js';
-import { BCU_SCALE_MODE, appendBoundedDebugTrace } from './bcu-runtime/BcuEffectTraceRuntime.js';
+import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.wave-runtime-patch.v5-explicit-proc-resolve');
 const W_PROG = 200;
@@ -102,8 +101,6 @@ function makeGroup() {
 
 function trace(scene, entry) {
   const payload = { sceneFrame: scene?.logicFrame ?? null, ...entry };
-  BcuTraceRuntime.push('wave', payload);
-  appendBoundedDebugTrace('__BCU_WAVE_TRACE__', payload, 200);
   scene?.pushEvent?.({ type: 'bcuWaveTrace', ...payload });
 }
 

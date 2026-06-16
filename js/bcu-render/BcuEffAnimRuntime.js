@@ -1,5 +1,4 @@
 import { computeBcuDrawList } from './BcuEPartTransformRuntime.js';
-import { traceBcuRender } from './BcuRenderTrace.js';
 
 export class BcuEffAnimRuntime {
   constructor({ model, anim, imgcut, image, type } = {}) {
@@ -21,7 +20,6 @@ export class BcuEffAnimRuntime {
 
   update() {
     this.frame += 1;
-    traceBcuRender({ effectType: this.type, frame: this.frame, bcuReference: 'EffAnim.update' });
   }
 
   done() {

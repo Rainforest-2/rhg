@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from '../battle/bcu-runtime/BcuTraceRuntime.js';
 
 const TAN_50 = Math.tan(50 * Math.PI / 180);
 
@@ -51,19 +50,6 @@ export class BcuMobileGestureRuntime {
       action = dy / this.dragFrame < 0 ? 'ACTION_LINEUP_CHANGE_UP' : 'ACTION_LINEUP_CHANGE_DOWN';
       this.performed = true;
     }
-    BcuTraceRuntime.push('input', {
-      source: 'BcuMobileGestureRuntime',
-      bcuReference: 'BattleView.checkSlideUpDown/isInSlideRange',
-      type: 'checkSlideUpDown',
-      initPoint: this.initPoint,
-      endPoint: this.endPoint,
-      dx,
-      dy,
-      dragFrame: this.dragFrame,
-      isInSlideRange: this.isInSlideRange(),
-      action,
-      reason
-    });
     return action;
   }
 }

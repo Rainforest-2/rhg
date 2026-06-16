@@ -1,10 +1,8 @@
 import { BattleScene } from './BattleScene.js';
 import { EffectRuntime } from './EffectRuntime.js';
-import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 
 const SCENE_FLAG = Symbol.for('wanko-battle.projectile-performance-position-scene.v3-bcu-smoke-kind');
 const EFFECT_FLAG = Symbol.for('wanko-battle.projectile-performance-position-effect.v1');
-const TRACE_FLAG = Symbol.for('wanko-battle.projectile-performance-position-trace.v1');
 
 const SOURCE_WAVE = 'bcu-effanim-wave-cont-wave-def';
 const SOURCE_SURGE = 'bcu-effanim-surge-cont-volcano';
@@ -129,24 +127,6 @@ export function installBattleProjectilePerformanceAndPositionPatch() {
         return originalPushEvent.call(this, event);
       };
     }
-  }
-
-  if (BcuTraceRuntime && !BcuTraceRuntime[TRACE_FLAG]) {
-    BcuTraceRuntime[TRACE_FLAG] = true;
-    const originalPush = BcuTraceRuntime.push;
-    BcuTraceRuntime.push = function pushSuppressProjectileVerbose(channel, entry = {}) {
-      if ((channel === 'wave' || channel === 'surge') && !IMPORTANT_TRACE_EVENTS.has(String(entry?.event || ''))) {
-        globalThis.__BCU_PROJECTILE_TRACE_SUPPRESS_DEBUG__ = {
-          source: 'BattleProjectilePerformanceAndPositionPatch.BcuTraceRuntime.push',
-          channel,
-          event: entry?.event || null,
-          reason: 'suppress verbose projectile trace',
-          frame: this.frame
-        };
-        return null;
-      }
-      return originalPush.call(this, channel, entry);
-    };
   }
 
   globalThis.__BCU_PROJECTILE_PERF_POSITION_PATCH__ = {

@@ -4,7 +4,6 @@ import { parseAnim } from '../../bcu/BcuAnimParser.js';
 import { BcuSpriteSheet } from '../../bcu/BcuSpriteSheet.js';
 import { BcuModelInstance } from '../../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../../bcu/BcuAnimator.js';
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 import { getBcuStatusSnapshot } from './BcuStatusSnapshot.js';
 import { loadBcuStatusEffectInventory, readStatusEffectImageBlob, readStatusEffectText } from './BcuStatusEffectAssetInventory.js';
 import { resolveStatusIcons } from './BcuStatusIconResolver.js';
@@ -104,7 +103,6 @@ export async function preloadBcuStatusEffectDefinitions(sceneOrProvider, options
     source: 'preloadBcuStatusEffectDefinitions'
   };
   globalThis.__BCU_STATUS_EFFECT_PRELOAD__ = summary;
-  BcuTraceRuntime.push('statusIconRender', { source: 'preloadBcuStatusEffectDefinitions', ...summary });
   return summary;
 }
 
@@ -220,7 +218,6 @@ export class BcuStatusEffectManager {
       .catch((error) => {
         this.loading.delete(key);
         this.actor.lastBcuStatusEffectError = { effectKey, variant, message: String(error?.message || error) };
-        BcuTraceRuntime.push('statusIconRender', { source: 'BcuStatusEffectManager.ensureEffect', effectKey, variant, rendered: false, error: String(error?.message || error) });
         return null;
       });
     this.loading.set(key, promise);

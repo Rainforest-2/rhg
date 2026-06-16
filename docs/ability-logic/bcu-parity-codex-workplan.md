@@ -66,7 +66,6 @@ node scripts/check-projectile-damage-parity.mjs
 node scripts/check-proc-immunity-resistance-parity.mjs
 node scripts/check-effect-bundle-aliases.mjs
 node scripts/check-effect-coordinate-traces.mjs
-node scripts/check-debug-allocation-guards.mjs
 node scripts/check-bcu-delay-runtime.mjs
 node scripts/check-bcu-burrow-lifecycle-parity.mjs
 node scripts/check-bcu-death-animation-parity.mjs
@@ -201,7 +200,7 @@ Rules:
 1. Gate heavy debug objects behind an explicit debug flag or reduce to concise counters.
 2. Do not remove behavior-bearing events, effect creation, wrapper calls, or renderer metadata.
 3. Do not change wave/surge smoke kind, offsets, layer, lifetime, or effect filtering.
-4. Verify with `node scripts/check-debug-allocation-guards.mjs` plus relevant battle checks.
+4. Verify with `node scripts/check-bcu-ability-parity-safe-suite.mjs` plus relevant battle checks. (The BCU trace-channel instrumentation and its `check-debug-allocation-guards.mjs` guard were removed; runtime no longer carries `BcuTraceRuntime`/`__BCU_*_TRACE__` allocation paths.)
 
 ## Required syntax checks
 

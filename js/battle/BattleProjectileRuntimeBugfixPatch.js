@@ -1,5 +1,4 @@
 import { BattleScene } from './BattleScene.js';
-import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.projectile-runtime-bugfix.v2-effect-lifetime');
 const MAX_SURGE_ALIVE_FRAMES = 300;
@@ -8,12 +7,6 @@ const PROJECTILE_EFFECT_SOURCES = new Set([
   'bcu-effanim-wave-cont-wave-def',
   'bcu-effanim-surge-cont-volcano'
 ]);
-
-function trace(kind, payload) {
-  BcuTraceRuntime.push(kind, payload);
-  const key = kind === 'surge' ? '__BCU_SURGE_TRACE__' : '__BCU_WAVE_TRACE__';
-  globalThis[key] = [...(globalThis[key] || []), payload].slice(-240);
-}
 
 function attackerKey(item) {
   return item?.attacker?.instanceId || item?.attacker?.label || item?.attacker?.id || 'unknown-attacker';
@@ -80,34 +73,12 @@ function dedupeContainers(scene, prop, kind) {
     if (seen.has(key)) {
       removed += 1;
       item.activate = false;
-      trace(kind, {
-        source: 'BattleProjectileRuntimeBugfixPatch.dedupeContainers',
-        event: 'deduped',
-        containerProp: prop,
-        id: item.id || null,
-        kind: item.kind || null,
-        attacker: attackerKey(item),
-        createdLogicFrame: item.createdLogicFrame,
-        bcuReference: 'Projectile/surge proc is generated once per direct attack event, not once per captured target'
-      });
       continue;
     }
     seen.add(key);
     out.push(item);
   }
   scene[prop] = out;
-  if (removed || normalized) {
-    trace(kind, {
-      source: 'BattleProjectileRuntimeBugfixPatch.dedupeContainers',
-      event: 'summary',
-      containerProp: prop,
-      input: list.length,
-      output: out.length,
-      removed,
-      normalized,
-      frame: scene.logicFrame || 0
-    });
-  }
   return { removed, normalized };
 }
 
@@ -151,15 +122,6 @@ function finishEffect(effect, reason, kind = 'wave') {
   if (!effect || effect.finished) return false;
   effect.finished = true;
   effect.bcuFinishedReason = reason;
-  trace(kind, {
-    source: 'BattleProjectileRuntimeBugfixPatch.finishEffect',
-    event: 'effect-finished',
-    effectId: effect.id || null,
-    itemId: effect.effectRuntimeDebug?.id || effect.debug?.id || null,
-    phase: effect.effectRuntimeDebug?.phase || effect.debug?.phase || null,
-    reason,
-    bcuReference: 'BCU ContAb/ContVolcano/ContWaveDef draw lifetime is tied to container.activate and current animation phase'
-  });
   return true;
 }
 

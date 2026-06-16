@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 import { getBcuStatusSnapshot } from './BcuStatusSnapshot.js';
 import { getStatusEffectKey } from './BcuStatusEffectSpec.js';
 
@@ -54,14 +53,5 @@ export function resolveStatusIcons(actor, scene) {
       scale: 0.75
     });
   }
-  BcuTraceRuntime.push('statusIcon', {
-    source: 'BcuStatusIconResolver',
-    bcuReference: 'Entity.AnimManager.getEff/drawEff/checkEff',
-    actorId: actor?.instanceId || actor?.label || null,
-    statusSnapshot: snapshot,
-    icons,
-    suppressed: icons.filter((x) => x.suppressed).map((x) => x.id),
-    sceneFrame: scene?.logicFrame ?? null
-  });
   return icons;
 }

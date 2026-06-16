@@ -2,14 +2,295 @@
   "schemaVersion": 1,
   "source": {
     "name": "reserved ally error list",
-    "definition": "Ally IDs in this file are display IDs. The BCU asset unit ID is display ID - 1."
+    "definition": "Ally IDs in this file are display IDs. The BCU asset unit ID is display ID - 1.",
+    "reason": "Cat units whose jp-UnitName.txt name column is empty render their semantic key (unit:<id>:form:N) as the card label in the formation catalog. They are hidden from the formation list per user request.",
+    "excludedAssetIds": [
+      155,
+      182,
+      285,
+      320,
+      339,
+      353,
+      432,
+      433,
+      465,
+      492,
+      497,
+      498,
+      499,
+      500,
+      673,
+      729,
+      732,
+      734,
+      739,
+      740,
+      741,
+      742,
+      743,
+      744,
+      745,
+      755,
+      761,
+      764,
+      770,
+      775,
+      782,
+      788,
+      800,
+      802,
+      812,
+      816,
+      818,
+      821,
+      825,
+      838,
+      839
+    ]
   },
-  "checkedMaxAllyId": 0,
-  "count": 0,
-  "missingAllyIds": [],
-  "missingAllyIdsPadded": [],
-  "missingRanges": [],
+  "checkedMaxAllyId": 840,
+  "count": 41,
+  "missingAllyIds": [
+    156,
+    183,
+    286,
+    321,
+    340,
+    354,
+    433,
+    434,
+    466,
+    493,
+    498,
+    499,
+    500,
+    501,
+    674,
+    730,
+    733,
+    735,
+    740,
+    741,
+    742,
+    743,
+    744,
+    745,
+    746,
+    756,
+    762,
+    765,
+    771,
+    776,
+    783,
+    789,
+    801,
+    803,
+    813,
+    817,
+    819,
+    822,
+    826,
+    839,
+    840
+  ],
+  "missingAllyIdsPadded": [
+    "156",
+    "183",
+    "286",
+    "321",
+    "340",
+    "354",
+    "433",
+    "434",
+    "466",
+    "493",
+    "498",
+    "499",
+    "500",
+    "501",
+    "674",
+    "730",
+    "733",
+    "735",
+    "740",
+    "741",
+    "742",
+    "743",
+    "744",
+    "745",
+    "746",
+    "756",
+    "762",
+    "765",
+    "771",
+    "776",
+    "783",
+    "789",
+    "801",
+    "803",
+    "813",
+    "817",
+    "819",
+    "822",
+    "826",
+    "839",
+    "840"
+  ],
+  "missingRanges": [
+    {
+      "start": 156,
+      "end": 156,
+      "count": 1
+    },
+    {
+      "start": 183,
+      "end": 183,
+      "count": 1
+    },
+    {
+      "start": 286,
+      "end": 286,
+      "count": 1
+    },
+    {
+      "start": 321,
+      "end": 321,
+      "count": 1
+    },
+    {
+      "start": 340,
+      "end": 340,
+      "count": 1
+    },
+    {
+      "start": 354,
+      "end": 354,
+      "count": 1
+    },
+    {
+      "start": 433,
+      "end": 434,
+      "count": 2
+    },
+    {
+      "start": 466,
+      "end": 466,
+      "count": 1
+    },
+    {
+      "start": 493,
+      "end": 493,
+      "count": 1
+    },
+    {
+      "start": 498,
+      "end": 501,
+      "count": 4
+    },
+    {
+      "start": 674,
+      "end": 674,
+      "count": 1
+    },
+    {
+      "start": 730,
+      "end": 730,
+      "count": 1
+    },
+    {
+      "start": 733,
+      "end": 733,
+      "count": 1
+    },
+    {
+      "start": 735,
+      "end": 735,
+      "count": 1
+    },
+    {
+      "start": 740,
+      "end": 746,
+      "count": 7
+    },
+    {
+      "start": 756,
+      "end": 756,
+      "count": 1
+    },
+    {
+      "start": 762,
+      "end": 762,
+      "count": 1
+    },
+    {
+      "start": 765,
+      "end": 765,
+      "count": 1
+    },
+    {
+      "start": 771,
+      "end": 771,
+      "count": 1
+    },
+    {
+      "start": 776,
+      "end": 776,
+      "count": 1
+    },
+    {
+      "start": 783,
+      "end": 783,
+      "count": 1
+    },
+    {
+      "start": 789,
+      "end": 789,
+      "count": 1
+    },
+    {
+      "start": 801,
+      "end": 801,
+      "count": 1
+    },
+    {
+      "start": 803,
+      "end": 803,
+      "count": 1
+    },
+    {
+      "start": 813,
+      "end": 813,
+      "count": 1
+    },
+    {
+      "start": 817,
+      "end": 817,
+      "count": 1
+    },
+    {
+      "start": 819,
+      "end": 819,
+      "count": 1
+    },
+    {
+      "start": 822,
+      "end": 822,
+      "count": 1
+    },
+    {
+      "start": 826,
+      "end": 826,
+      "count": 1
+    },
+    {
+      "start": 839,
+      "end": 840,
+      "count": 2
+    }
+  ],
   "notes": [
-    "When populated, use assetUnitId = missingAllyId - 1."
+    "When populated, use assetUnitId = missingAllyId - 1.",
+    "source.excludedAssetIds lists the resolved BCU asset unit IDs (already display-1) for cross-reference.",
+    "Exclusion is per whole unit: every form (f/c/s) of an excluded asset id is removed from the formation catalog."
   ]
 }

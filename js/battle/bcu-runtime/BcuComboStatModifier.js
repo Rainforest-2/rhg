@@ -186,6 +186,12 @@ export function resolveComboModifiersForFrontRow(frontRowForms, registry = combo
     immunities: increments.immunities,
     attackFactor: 1 + increments.attack * 0.01,
     healthFactor: 1 + increments.health * 0.01,
+    // C_SPE speed combo. BCU EUnit.updateMove adds `baseSpeed * getInc(C_SPE) / 50`
+    // to extmov, then super.updateMove(extmov / 4f) applies `pos += (speed*0.5 + extmov)`.
+    // Net per-frame movement = speed*0.5 * (1 + getInc(C_SPE)/100), so the combo is a
+    // clean `1 + getInc(C_SPE)*0.01` multiplier on the unit's base move speed (no
+    // truncation — the contribution is a fractional movement, not an integer stat).
+    speedFactor: 1 + increments.speed * 0.01,
     activeCombos,
     source: 'BcuComboStatModifier.resolveComboModifiersForFrontRow'
   };
@@ -209,6 +215,12 @@ function scaleHitDamage(attackHits, factor) {
 export function applyBcuComboModifiersToStats(stats, modifiers) {
   if (!stats || typeof stats !== 'object' || !modifiers) return stats;
   const { attackFactor, healthFactor, increments } = modifiers;
+  const speedFactor = Number.isFinite(modifiers.speedFactor) ? modifiers.speedFactor : 1;
+  // C_SPE applies to the unit's base move speed without integer truncation (BCU adds a
+  // fractional movement contribution, not an integer stat change). Applied here so a
+  // speed-only combo still takes effect even when there is no attack/health combo.
+  const scaledSpeed = (speedFactor !== 1 && Number.isFinite(stats.speed)) ? stats.speed * speedFactor : stats.speed;
+  const speedAttach = speedFactor !== 1 ? { speed: scaledSpeed } : {};
   // Combo-granted wave/surge full immunity (EUnit.processComboAbilities). Attached
   // regardless of attack/health combos so an immunity-only combo still applies; the
   // resist runtime reads bcuComboImmunities and folds it into IMU*.mult.
@@ -216,8 +228,8 @@ export function applyBcuComboModifiersToStats(stats, modifiers) {
   const immunityAttach = immunities && (immunities.IMUWAVE > 0 || immunities.IMUVOLC > 0)
     ? { bcuComboImmunities: { ...immunities, source: 'EUnit.processComboAbilities C_IMUWAVE/C_IMUVOLC -> IMU*.mult=100' } }
     : {};
-  if (attackFactor === 1 && healthFactor === 1) {
-    return { ...stats, ...immunityAttach, bcuComboModifiers: { applied: false, increments, reason: 'no-attack-or-health-combo' } };
+  if (attackFactor === 1 && healthFactor === 1 && speedFactor === 1) {
+    return { ...stats, ...immunityAttach, bcuComboModifiers: { applied: false, increments, reason: 'no-attack-health-or-speed-combo' } };
   }
   const baseHp = Number.isFinite(stats.hp) ? stats.hp : null;
   const baseDamage = Number.isFinite(stats.damage) ? stats.damage : null;
@@ -226,6 +238,7 @@ export function applyBcuComboModifiersToStats(stats, modifiers) {
   return {
     ...stats,
     ...immunityAttach,
+    ...speedAttach,
     hp: scaledHp,
     maxHp: Number.isFinite(stats.maxHp) ? Math.trunc(stats.maxHp * healthFactor) : stats.maxHp,
     damage: scaledDamage,
@@ -233,12 +246,14 @@ export function applyBcuComboModifiersToStats(stats, modifiers) {
     bcuComboModifiers: {
       applied: true,
       source: modifiers.source,
-      bcuReference: 'AtkModelEntity.java:76 (C_ATK) + Entity.java:1504 (C_DEF)',
+      bcuReference: 'AtkModelEntity.java:76 (C_ATK) + Entity.java:1504 (C_DEF) + EUnit.updateMove (C_SPE)',
       increments,
       attackFactor,
       healthFactor,
+      speedFactor,
       preComboHp: baseHp,
       preComboDamage: baseDamage,
+      preComboSpeed: Number.isFinite(stats.speed) ? stats.speed : null,
       activeComboCount: increments.activeCount
     }
   };

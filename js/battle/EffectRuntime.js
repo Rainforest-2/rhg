@@ -1,5 +1,5 @@
 import { BattleEffect } from './BattleEffect.js';
-import { BCU_SCALE_MODE, buildBcuEffectTrace, isBcuHeavyEffectDebugEnabled, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
+import { BCU_SCALE_MODE, buildBcuEffectTrace, normalizeBcuScaleMode } from './bcu-runtime/BcuEffectTraceRuntime.js';
 
 const SUPPRESS_NON_BCU_EFFECTS = true;
 
@@ -55,17 +55,6 @@ export class EffectRuntime {
     const list = Array.isArray(effects) ? effects : [];
     const active = list.filter((e) => !e?.finished && (!SUPPRESS_NON_BCU_EFFECTS || this.isBcuEffect(e)));
     const suppressed = SUPPRESS_NON_BCU_EFFECTS ? list.filter((e) => !this.isBcuEffect(e)).length : 0;
-    const debug = {
-      source: 'EffectRuntime.cleanupEffects',
-      policy: SUPPRESS_NON_BCU_EFFECTS ? 'suppress-non-bcu-placeholder-effects' : 'render-all-effects',
-      input: list.length,
-      active: active.length,
-      suppressed
-    };
-    if (isBcuHeavyEffectDebugEnabled()) {
-      debug.examples = list.slice(0, 6).map((e) => ({ id: e?.id || null, type: e?.type || null, source: e?.source || e?.effectRuntimeDebug?.source || null, hasImage: !!e?.image, frameCount: e?.frameParts?.length || 0, hasModel: !!e?.model, hasAnimator: !!e?.animator, renderFlipX: e?.renderFlipX === true, bcuScreenOffsetX: e?.bcuScreenOffsetX ?? 0, bcuScaleMode: e?.bcuScaleMode || e?.effectRuntimeDebug?.bcuScaleMode || null }));
-    }
-    globalThis.__BATTLE_EFFECT_DEBUG__ = debug;
     return { effects: active, removed: Math.max(0, list.length - active.length), active: active.length, suppressed };
   }
 

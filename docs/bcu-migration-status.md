@@ -68,7 +68,7 @@ Do not mark these as fully complete without more evidence or loaders:
 - BCU custom/proc-object summon loader: proc-object `SUMMON` handoff is fixture-backed, but broad automatic real custom-pack discovery is still needed.
 - summon `anim_type` entry visuals; stage `allow` / group semantics are fixture-backed for `SCDef.smap` / `sdef` / `SCGroup` limits.
 - full real-data `Trait.targetForms` loader fixtures; focused runtime fixtures now cover `targetType` / `targetForms` compatibility.
-- combo / orb / treasure / talent / PCoin damage modifiers: broader proc-duration/speed/crit hooks and real-data PCoin acceptance remain partial after focused damage-family/killer/PCoin side-effect wiring.
+- combo / orb / treasure / talent / PCoin damage modifiers: combo speed (C_SPE) and crit (C_CRIT) hooks are now wired (`check-bcu-combo-speed-crit-parity`); real-data PCoin acceptance remains partial after focused damage-family/killer/PCoin side-effect wiring.
 - broader AB_SKILL status resistance holder sources.
 - enemy toxic immunity: treated as nonexistent for supported enemy data; do not add an enemy `IMUPOIATK` CSV or loader holder.
 - bounty/money battle visual: no stable visual owner/effect alias proven; treat as logic/economy unless future evidence proves visuals.
@@ -92,7 +92,6 @@ node scripts/check-projectile-damage-parity.mjs
 node scripts/check-proc-immunity-resistance-parity.mjs
 node scripts/check-effect-bundle-aliases.mjs
 node scripts/check-effect-coordinate-traces.mjs
-node scripts/check-debug-allocation-guards.mjs
 node scripts/check-bcu-death-animation-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
 node scripts/check-bcu-warp-interrupt-scene-parity.mjs

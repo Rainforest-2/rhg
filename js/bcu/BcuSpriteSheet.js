@@ -1,5 +1,4 @@
 import { drawBcuImagePart, isBcuGlowSupported } from './BcuCanvasComposite.js';
-import { traceBcuBlendDraw } from '../bcu-render/BcuBlendRuntime.js';
 
 function consumeQueuedDrawPart(sprite, partIndex) {
   const q = sprite?.__bcuDrawQueue;
@@ -94,18 +93,6 @@ export class BcuSpriteSheet {
     // Previous code routed glow=0 through drawBcuImagePart(), which reset globalAlpha to 1
     // and changed non-glow actor rendering as a side effect.
     if (!isBcuGlowSupported(glow)) {
-      traceBcuBlendDraw({
-        source: 'BcuSpriteSheet.drawPart',
-        partIndex,
-        modelPartIndex: queued?.index ?? null,
-        glow,
-        opacity: ctx.globalAlpha,
-        callerAlpha: ctx.globalAlpha,
-        compositeBefore: ctx.globalCompositeOperation,
-        compositeAfter: ctx.globalCompositeOperation,
-        path: 'normal',
-        bcuReference: 'ImgCore.drawImg'
-      });
       ctx.drawImage(this.image, sx, sy, sw, sh, dx, dy, dw, dh);
       registerSpriteDrawDebug(this, { path: 'normal-canvas-draw', glow, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
       return true;
@@ -116,18 +103,6 @@ export class BcuSpriteSheet {
       opacity,
       glow,
       debug
-    });
-    traceBcuBlendDraw({
-      source: 'BcuSpriteSheet.drawPart',
-      partIndex,
-      modelPartIndex: queued?.index ?? null,
-      glow,
-      opacity,
-      callerAlpha: ctx.globalAlpha,
-      compositeBefore: ctx.globalCompositeOperation,
-      compositeAfter: ctx.globalCompositeOperation,
-      path: 'blend',
-      bcuReference: 'ImgCore.drawImg'
     });
     registerSpriteDrawDebug(this, { path: 'bcu-glow-composite', glow, opacity, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
     return result;

@@ -485,7 +485,12 @@ export class DamageAbilityResolver {
     }
 
     const targetIsMetal = isTargetMetalForDamage(attacker, target, targetType);
-    const criticalProb = (attackerSealProcSuppressed || hitAbiProcDisabled) ? 0 : Number(proc?.critical?.prob || 0);
+    // BCU AtkModelUnit ctor: `if (buffed[i].CRIT.prob > 0) buffed[i].CRIT.prob += getInc(C_CRIT, u)`.
+    // The C_CRIT combo only buffs attacks that already have a critical chance, and only for
+    // unit attackers (comboInc returns 0 for enemies / non-combo attackers).
+    const baseCriticalProb = Number(proc?.critical?.prob || 0);
+    const comboCriticalProb = baseCriticalProb > 0 ? comboInc(attacker, 'crit') : 0;
+    const criticalProb = (attackerSealProcSuppressed || hitAbiProcDisabled) ? 0 : (baseCriticalProb + comboCriticalProb);
     const criticalApplied = performProbability(criticalProb, rng);
     if (attackerSealProcSuppressed && Number(proc?.critical?.prob || 0) > 0) result.notes.push('attacker-seal-suppressed-critical-proc');
     if (hitAbiProcDisabled && !attackerSealProcSuppressed && Number(proc?.critical?.prob || 0) > 0) result.notes.push('bcu-hit-abi-disabled-critical-proc');

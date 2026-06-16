@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 
 export function resolveBcuBarrierHit(ctx = {}) {
   const result = {
@@ -8,7 +7,6 @@ export function resolveBcuBarrierHit(ctx = {}) {
     traceOnly: true,
     bcuReference: 'Entity.Barrier/damaged'
   };
-  BcuTraceRuntime.push('barrier', { source: 'BcuBarrierRuntime', ...result });
   return result;
 }
 

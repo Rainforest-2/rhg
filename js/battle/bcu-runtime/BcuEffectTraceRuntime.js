@@ -65,20 +65,6 @@ export function describeBcuEffectYFormula({ bcuScaleMode = BCU_SCALE_MODE.LEGACY
   }
 }
 
-export function isBcuHeavyEffectDebugEnabled() {
-  return globalThis.__BCU_DEBUG_EFFECT_EXAMPLES__ === true || globalThis.__BCU_DEBUG_ALLOCATIONS__ === true;
-}
-
-export function appendBoundedDebugTrace(globalName, payload, limit = 200) {
-  if (!isBcuHeavyEffectDebugEnabled() || !globalName) return false;
-  const existing = globalThis[globalName];
-  const current = Array.isArray(existing) && !Object.isFrozen(existing) ? existing : [];
-  current.push(payload);
-  if (current.length > limit) current.splice(0, current.length - limit);
-  globalThis[globalName] = current;
-  return true;
-}
-
 export function buildBcuEffectTrace({
   effectKey = null,
   phase = null,

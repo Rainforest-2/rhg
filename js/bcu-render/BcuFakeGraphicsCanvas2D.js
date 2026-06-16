@@ -1,5 +1,3 @@
-import { traceBcuRender } from './BcuRenderTrace.js';
-
 export class BcuFakeGraphicsCanvas2D {
   constructor(ctx) {
     if (!ctx) throw new Error('BcuFakeGraphicsCanvas2D requires a CanvasRenderingContext2D');
@@ -7,7 +5,6 @@ export class BcuFakeGraphicsCanvas2D {
   }
 
   drawImage(...args) {
-    traceBcuRender({ method: 'drawImage', argCount: args.length, bcuReference: 'FakeGraphics.drawImage/ImgCore.drawImg' });
     return this.ctx.drawImage(...args);
   }
 

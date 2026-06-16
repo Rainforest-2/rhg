@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 
 export const VOLC_ITV = 20;
 
@@ -28,13 +27,6 @@ export class BcuAttackVolcanoRuntime {
     }
     for (const target of targets) this.vcapt.add(target);
     this.attacked = targets.length > 0;
-    BcuTraceRuntime.push('surge', {
-      source: 'BcuAttackVolcanoRuntime',
-      bcuReference: 'AttackVolcano.vcapt/VOLC_ITV',
-      vcaptSize: this.vcapt.size,
-      attacked: this.attacked,
-      traceOnly: true
-    });
   }
 }
 

@@ -1,4 +1,3 @@
-import { traceBcuEPartMatrix } from './BcuRenderTrace.js';
 
 function identity() {
   return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
@@ -30,7 +29,6 @@ export function computeBcuPartDrawEntry({ model, anim, frame = 0, partIndex = 0,
     animKnown: !!anim,
     traceOnly: true
   };
-  traceBcuEPartMatrix(entry);
   return entry;
 }
 

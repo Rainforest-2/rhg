@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 
 export function resolveBcuDemonShieldHit(ctx = {}) {
   const currentShield = Number(ctx.target?.currentShield || ctx.target?.bcuShield || 0);
@@ -10,7 +9,6 @@ export function resolveBcuDemonShieldHit(ctx = {}) {
     traceOnly: true,
     bcuReference: 'Entity.damaged Demon Shield'
   };
-  BcuTraceRuntime.push('shield', { source: 'BcuDemonShieldRuntime', ...result });
   return result;
 }
 

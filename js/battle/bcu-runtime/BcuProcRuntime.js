@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 import { getBcuResistValue, applyBcuProcDuration, applyBcuProcDistance } from './BcuResistRuntime.js';
 
 export class BcuProcRuntime {
@@ -41,7 +40,6 @@ export class BcuProcRuntime {
       traceOnly: false,
       application
     };
-    BcuTraceRuntime.push('proc', { source: 'BcuProcRuntime', bcuReference: 'Entity.processProcs/getResistValue', ...result });
     return result;
   }
 

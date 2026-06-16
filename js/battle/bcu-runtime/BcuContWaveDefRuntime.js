@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 import { hasBcuWaveStopper } from './BcuWaveStopperRuntime.js';
 
 export const BCU_WAVE_CONSTANTS = { W_PROG: 200, W_TIME: 3, W_MINI_TIME: 1 };
@@ -26,21 +25,6 @@ export class BcuContWaveDefRuntime {
       blockerActor = stop.blockerActor;
       if (blocked) this.activate = false;
     }
-    BcuTraceRuntime.push('wave', {
-      source: 'BcuContWaveDefRuntime',
-      bcuReference: 'ContWaveDef.update',
-      t: this.t,
-      attackFrame,
-      pos: this.pos,
-      waveType: this.waveType,
-      levelRemaining: this.levelRemaining,
-      blocked,
-      blockerActor: blockerActor?.instanceId || blockerActor?.label || null,
-      hitTargets: hitTargets.map((a) => a?.instanceId || a?.label || null),
-      nextWaveCreated: false,
-      active: this.activate,
-      traceOnly: true
-    });
     this.t += 1;
     return this.activate;
   }

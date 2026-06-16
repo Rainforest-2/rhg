@@ -1,4 +1,3 @@
-import { BcuTraceRuntime } from './BcuTraceRuntime.js';
 import { resolveBcuImmunity } from './BcuImmunityRuntime.js';
 
 export function guardBcuDamage(ctx = {}) {
@@ -12,6 +11,5 @@ export function guardBcuDamage(ctx = {}) {
     invEffect: immunity.blocked ? 'INV' : null,
     bcuReference: 'Entity.damaged'
   };
-  BcuTraceRuntime.push('damageGuard', { source: 'BcuDamageGuardRuntime', ...result });
   return result;
 }

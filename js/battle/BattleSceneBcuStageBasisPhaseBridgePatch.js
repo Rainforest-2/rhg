@@ -1,11 +1,9 @@
 import { BattleScene } from './BattleScene.js';
-import { BcuTraceRuntime } from './bcu-runtime/BcuTraceRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-phase-bridge.v2-no-double-proc');
 
 function trace(scene, entry = {}) {
   const payload = { sceneFrame: scene?.logicFrame ?? null, ...entry };
-  BcuTraceRuntime.push('stagebasis', payload);
   scene?.pushEvent?.({ type: 'bcuStageBasisPhaseBridge', ...payload });
   return payload;
 }
@@ -116,11 +114,6 @@ export function installBattleSceneBcuStageBasisPhaseBridgePatch() {
     return originalRunTickPhase.call(this, phase, fn);
   };
 
-  BcuTraceRuntime.push('stagebasis', {
-    source: 'BattleSceneBcuStageBasisPhaseBridgePatch',
-    mode: 'explicit-stagebasis-phase-bridge-no-double-proc',
-    bcuReference: 'StageBasis.update/updateEntities phase boundaries'
-  });
 }
 
 installBattleSceneBcuStageBasisPhaseBridgePatch();

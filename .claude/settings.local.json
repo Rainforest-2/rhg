@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /workspaces/game log --oneline -30)",
+      "Bash(git -C /workspaces/game status)",
+      "Bash(node --test tests/)",
+      "Bash(node --test tests/bcu-combat-parity.test.mjs)",
+      "Bash(git -C /workspaces/game show --stat db92f07a6)",
+      "Bash(node scripts/check-battle-attack-wait-runtime.mjs)",
+      "Bash(node scripts/check-ability-model.mjs)",
+      "Bash(git worktree *)",
+      "Bash(node scripts/check-nonbattle-ui-polish.mjs)",
+      "Bash(git log *)",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(node scripts/check-battle-attack-timeline.mjs)",
+      "Bash(node scripts/check-bcu-attack-interval-timing.mjs)",
+      "Bash(mkdir -p /tmp/bcu-ref)",
+      "Bash(python3 -)",
+      "Bash(node scripts/check-battle-attack-interval-debug.mjs)",
+      "Bash(node scripts/check-bcu-timing-parity-mode.mjs)",
+      "Bash(node scripts/check-stage-runtime.mjs)",
+      "Bash(node scripts/check-bcu-stage-spawn-runtime.mjs)",
+      "Bash(sed -n 1,40p scripts/check-stage-runtime.mjs)",
+      "Bash(sed -n 1,45p scripts/check-bcu-stage-spawn-runtime.mjs)",
+      "Bash(node *)",
+      "Bash(sed -n 100,130p js/battle/BcuStageSpawnRuntime.js)",
+      "Bash(sed -n 230,280p js/battle/BcuStageSpawnRuntime.js)",
+      "Bash(grep -n -B10 -A5 'bg\\\\${pad2' js/battle/StageBackgroundLoader.js)",
+      "Bash(python3 -c ' *)",
+      "Bash(unzip -l public/assets/bundles/actor/enemy/415.zip)",
+      "Bash(sort -t: -k2 -n)",
+      "Bash(rm -rf tmp/b3)",
+      "Bash(perl -0pi -e \"s/orbMatchTraits: getTraitList\\\\\\(target\\\\\\)/orbMatchTraits: sharedInfo.attackTraits/g; s/orbMatchTraits: getTraitList\\\\\\(attacker\\\\\\)/orbMatchTraits: sharedInfo.attackTraits/g\" js/battle/DamageAbilityResolver.js)",
+      "Bash(echo \"EXIT=$?\")"
+    ]
+  }
+}

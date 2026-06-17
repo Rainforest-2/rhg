@@ -71,6 +71,7 @@ async function boot() {
     showBootStatus('出撃準備中…');
     await import('./preview/PreviewAppCustomStageBattleConfigPatch.js');
     await import('./preview/PreviewAppBattleResultOverlayPatch.js');
+    await import('./preview/PreviewAppBattlePauseOverlayPatch.js');
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     const app = new PreviewApp({ bcuDb: db });
     globalThis.__APP__ = app;

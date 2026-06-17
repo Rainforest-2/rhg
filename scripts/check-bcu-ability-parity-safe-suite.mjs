@@ -95,7 +95,9 @@ const commands = [
   ['node', ['scripts/check-bcu-cannon-level-curve-parity.mjs']],
   ['node', ['scripts/check-bcu-non-basic-cat-cannon-spec-parity.mjs']],
   ['node', ['scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs']],
-  ['node', ['scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs']]
+  ['node', ['scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-enemy-castle-resolution.mjs']],
+  ['node', ['scripts/check-bcu-enemy-castle-resolution.mjs']]
 ];
 
 const results = [];

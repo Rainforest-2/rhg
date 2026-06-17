@@ -15,7 +15,7 @@
 .formation-settings-dialog header strong{display:flex;align-items:center;gap:8px;font-size:1.18rem;color:#2a1606;font-weight:1000;letter-spacing:.02em;text-shadow:0 1px 0 rgba(255,255,255,.6)}
 .formation-settings-dialog header strong .bi{color:#b5610f}
 .formation-settings-dialog header span{color:#7a5326;font-size:.74rem;font-weight:800}
-.formation-settings-dialog header button{min-width:96px;min-height:42px;border-radius:999px;border:4px solid var(--nyanko-black,#050505);background:linear-gradient(180deg,#fff3aa 0%,var(--nyanko-gold,#ffd531) 45%,var(--nyanko-gold-2,#f4a51f) 100%);color:#201006;font-weight:1000;letter-spacing:.04em;cursor:pointer;text-shadow:0 1px 0 rgba(255,255,255,.55);box-shadow:0 5px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.62)}
+.formation-settings-dialog header button{width:auto;flex:0 0 auto;padding:0 22px;white-space:nowrap;min-width:96px;min-height:42px;border-radius:999px;border:4px solid var(--nyanko-black,#050505);background:linear-gradient(180deg,#fff3aa 0%,var(--nyanko-gold,#ffd531) 45%,var(--nyanko-gold-2,#f4a51f) 100%);color:#201006;font-weight:1000;letter-spacing:.04em;cursor:pointer;text-shadow:0 1px 0 rgba(255,255,255,.55);box-shadow:0 5px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.62)}
 .formation-settings-dialog header button:active{transform:translateY(4px);box-shadow:0 2px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.5)}
 
 .formation-settings-list{min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:12px;align-content:start;padding:2px}

@@ -1,4 +1,5 @@
 import { formatBcuId } from './BcuStageEnemyResolver.js';
+import { resolveBcuEnemyCastleId } from './BcuEnemyCastleResolver.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { assertRuntimeUrlAllowed } from '../bcu/RuntimeAssetGuard.js';
@@ -301,7 +302,12 @@ export class StageDefinitionLoader {
 
     const stageId = path.split('/').pop()?.replace('.csv', '') || null;
     const castle = parseCastleRow(castleRow);
-    const castleId = castle.castleId;
+    // BCU resolves a -1 castle field to the map's default castle (Stage.java
+    // CH_CASTLES + StageMap chapter cast). Without this the enemy base falls back
+    // to the dev "CAT BASE TEMP" placeholder. Explicit castle ids are untouched.
+    const castleResolution = resolveBcuEnemyCastleId(castle.castleId, { stageId });
+    const castleId = castleResolution.castleId;
+    const castleIdSource = castleResolution.source;
     const cannonId = castle.cannonId;
     const animBaseId = castleId;
     const noContinue = castle.noContinue;
@@ -355,6 +361,7 @@ export class StageDefinitionLoader {
       noContinue: out.noContinue,
       bossGuard: out.bossGuard,
       castleRowSource: castle.source,
+      castleIdSource,
       fps: FPS,
       timerPeriodMs: BCU_BATTLE_TIMER_PERIOD_MS,
       frameMultiplier: FRAME_MUL,
@@ -394,6 +401,7 @@ export class StageDefinitionLoader {
       castleRawRow: castleRow,
       headerRawRow: metaRow,
       castleRowSource: castle.source,
+      castleIdSource,
       maxEnemyCountRaw: out.maxEnemyCountRaw,
       maxEnemyCount: out.maxEnemyCount,
       noContinue: out.noContinue,

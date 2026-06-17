@@ -609,6 +609,15 @@
   font-size:clamp(1.65rem,3.2vw,3rem)!important;
 }
 
+/* Boot title sat at 5.4vw/3.6rem, large enough that "アセットを準備しています"
+   wrapped onto the icon. Match the calmer app-loading scale and let any wrap
+   break cleanly instead of overlapping the icon. */
+#boot-status-panel .boot-loading-title{
+  font-size:clamp(1.5rem,3.0vw,2.5rem)!important;
+  line-height:1.08!important;
+  text-wrap:balance;
+}
+
 .app-loading-version,
 .app-loading-phase-time{
   justify-self:end!important;

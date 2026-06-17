@@ -29,10 +29,10 @@ function injectStyle() {
   // Option button: region 445,1,58,58 shown at 52px -> scale 52/58 = 0.896552.
   // Abort label: region 185,317,254,55 shown at 220px -> scale 220/254 = 0.866142.
   style.textContent = `
-.bcu-pause-control{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));z-index:99972;width:52px;height:52px;padding:0;border:0;background:transparent;cursor:pointer;display:none;line-height:0;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));touch-action:manipulation}
+.bcu-pause-control{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));z-index:99972;width:52px;height:52px;padding:0;border:0;background:transparent;cursor:pointer;display:none;line-height:0;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));touch-action:manipulation}
 .bcu-pause-control.is-visible{display:block}
 .bcu-pause-control:active{transform:translateY(2px) scale(.94)}
-.bcu-pause-control .bcu-pause-icon{width:52px;height:52px;background-image:url('${ATLAS_URL}');background-repeat:no-repeat;background-size:459.034px 459.034px;background-position:-398.966px -0.897px}
+.bcu-pause-control .bcu-pause-icon{display:block;width:52px;height:52px;background-image:url('${ATLAS_URL}');background-repeat:no-repeat;background-size:459.034px 459.034px;background-position:-398.966px -0.897px}
 .bcu-pause-overlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;background:rgba(5,8,16,.62);font-family:system-ui,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
 .bcu-pause-overlay.is-open{display:flex}
 .bcu-pause-panel{width:min(420px,88vw);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#ffffff 0%,#eef2f7 100%);border:3px solid #0a0f1c;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.5);padding:clamp(16px,4vw,26px);display:grid;gap:clamp(14px,3vw,20px);color:#0a0f1c}

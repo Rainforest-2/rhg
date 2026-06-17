@@ -11,7 +11,7 @@ if (/BcuManifestLoader\.load\(\{ manifestPath \}\)/.test(bootSrc)) errors.push('
 
 const db = await BcuBootLoader.loadGame();
 const readPaths = db.semanticProvider.diagnostics.bundleReads.map((r) => `${r.bundlePath}:${r.internalPath}`);
-for (const entry of ['units.json', 'enemies.json', 'names-jp.json', 'backgrounds.json', 'castles.json', 'stages.json']) {
+for (const entry of ['units.json', 'enemies.json', 'names-jp.json', 'backgrounds.json', 'castles.json', 'boss-spawns.json', 'stages.json']) {
   if (!readPaths.some((p) => p.includes('core-db.zip') && p.endsWith(`:${entry}`))) errors.push(`core-db runtime did not read ${entry}`);
 }
 if (db.semanticMode !== 'semantic-strict') errors.push(`unexpected semantic mode ${db.semanticMode}`);

@@ -13,6 +13,7 @@
         "names-jp.json",
         "backgrounds.json",
         "castles.json",
+        "boss-spawns.json",
         "stages.json",
         "stage-aliases.json",
         "cannon-curve.json",
@@ -31,6 +32,7 @@
           "public/assets/bcu/**/org/data/unitbuy.csv",
           "public/assets/bcu/**/org/data/unitlevel.csv",
           "public/assets/bcu/**/org/data/CC_AllParts_growth.csv",
+          "public/assets/bcu/**/org/data/enemyCastleData*.csv",
           "public/assets/bcu/**/UnitName.txt",
           "public/assets/bcu/**/EnemyName.txt"
         ]
@@ -49,6 +51,7 @@
         "names-jp.json",
         "backgrounds.json",
         "castles.json",
+        "boss-spawns.json",
         "stages.json",
         "stage-aliases.json",
         "cannon-curve.json",
@@ -67,6 +70,7 @@
           "public/assets/bcu/**/org/data/unitbuy.csv",
           "public/assets/bcu/**/org/data/unitlevel.csv",
           "public/assets/bcu/**/org/data/CC_AllParts_growth.csv",
+          "public/assets/bcu/**/org/data/enemyCastleData*.csv",
           "public/assets/bcu/**/UnitName.txt",
           "public/assets/bcu/**/EnemyName.txt"
         ]

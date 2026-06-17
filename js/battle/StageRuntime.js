@@ -47,7 +47,10 @@ export class StageRuntime {
     const playerBaseWorldX = toFiniteNumber(options.playerBaseWorldX, resolvedStageLen - DEFAULT_PLAYER_BASE_OFFSET);
     const enemySpawnWorldX = toFiniteNumber(options.enemySpawnWorldX, DEFAULT_ENEMY_SPAWN_X);
     const playerSpawnWorldX = toFiniteNumber(options.playerSpawnWorldX, resolvedStageLen - DEFAULT_PLAYER_SPAWN_OFFSET);
-    const bossSpawnWorldX = toFiniteNumber(options.bossSpawnWorldX, null);
+    const bossSpawnWorldX = toFiniteNumber(
+      options.bossSpawnWorldX,
+      toFiniteNumber(stageDefinition?.runtime?.bossSpawnWorldX, toFiniteNumber(stageDefinition?.bossSpawnWorldX, null))
+    );
 
     this.source = 'StageRuntime';
     this.definition = stageDefinition;
@@ -113,6 +116,8 @@ export class StageRuntime {
     this.enemyBaseEnemySpawnWorldX = Number.isFinite(bossSpawnWorldX) ? bossSpawnWorldX : this.enemyNormalSpawnWorldX;
     this.enemyBaseMode = 'bcu-stagebasis-partial-parity';
     this.bossSpawnWorldX = bossSpawnWorldX;
+    this.bossSpawn = stageDefinition?.runtime?.bossSpawn || stageDefinition?.bossSpawn || null;
+    this.bossSpawnSource = stageDefinition?.runtime?.bossSpawnSource || (Number.isFinite(bossSpawnWorldX) ? 'stage-definition-boss-spawn' : null);
     const baseRowCandidate = this.enemyRows[this.enemyRows.length - 1] || null;
     const baseRowC0 = Number(baseRowCandidate?.baseHpTriggerLowerPercent ?? baseRowCandidate?.baseHpTriggerPercent ?? baseRowCandidate?.baseHpTrigger ?? baseRowCandidate?.scdef?.baseHpTriggerLowerPercent ?? NaN);
     this.enemyBaseRow = Number.isFinite(baseRowC0) && baseRowC0 === 0 ? baseRowCandidate : null;
@@ -142,7 +147,7 @@ export class StageRuntime {
 
     this.killCounterByRowIndex = Object.fromEntries(this.enemyRows.map((row, i) => [i, Number(row?.killCountTrigger) > 0 ? Number(row.killCountTrigger) : 0]));
     this.groupState = { source: 'StageRuntime.default-allow-partial', policy: 'default-allow-partial' };
-    this.debug = { source: 'StageRuntime', spawnCoordinateSource: 'stage-runtime-fields', maxEnemyCountRaw: this.maxEnemyCountRaw, maxEnemyCount: this.maxEnemyCount, noContinue: this.noContinue, castleRawRow: stageDefinition?.runtime?.castleRawRow || stageDefinition?.castle?.raw || [], headerRawRow: stageDefinition?.runtime?.headerRawRow || [], baseFrontSource: 'base-worldX-placeholder', killCounterRows: this.killCounterByRowIndex, groupPolicy: 'default-allow-partial', warnings };
+    this.debug = { source: 'StageRuntime', spawnCoordinateSource: 'stage-runtime-fields', maxEnemyCountRaw: this.maxEnemyCountRaw, maxEnemyCount: this.maxEnemyCount, noContinue: this.noContinue, castleRawRow: stageDefinition?.runtime?.castleRawRow || stageDefinition?.castle?.raw || [], headerRawRow: stageDefinition?.runtime?.headerRawRow || [], baseFrontSource: 'base-worldX-placeholder', bossSpawn: this.bossSpawn, bossSpawnSource: this.bossSpawnSource, killCounterRows: this.killCounterByRowIndex, groupPolicy: 'default-allow-partial', warnings };
 
   }
 
@@ -192,7 +197,8 @@ export class StageRuntime {
       enemyNormalSpawnWorldX: this.enemyNormalSpawnWorldX,
       enemyBaseEnemySpawnWorldX: this.enemyBaseEnemySpawnWorldX,
       playerSpawnWorldX: this.playerSpawnWorldX,
-      bossSpawnWorldX: this.bossSpawnWorldX
+      bossSpawnWorldX: this.bossSpawnWorldX,
+      bossSpawnSource: this.bossSpawnSource
     };
   }
 
@@ -237,6 +243,8 @@ export class StageRuntime {
       playerSpawnWorldX: this.playerSpawnWorldX,
       enemySpawnWorldX: this.enemySpawnWorldX,
       bossSpawnWorldX: this.bossSpawnWorldX,
+      bossSpawn: this.bossSpawn,
+      bossSpawnSource: this.bossSpawnSource,
       coordinateSource: this.coordinateSource,
       spawnCoordinateSource: this.spawnCoordinateSource,
       spawn: this.spawn,

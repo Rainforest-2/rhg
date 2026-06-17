@@ -1,6 +1,13 @@
 import fs from 'node:fs/promises';
 import zlib from 'node:zlib';
 import { BattleStatsLoader } from '../js/battle/BattleStatsLoader.js';
+import {
+  BCU_ENEMY_CASTLE_DATA_FILES,
+  bcuBossSpawnPoint,
+  getBcuBossSpawnAddressForCastle,
+  parseEnemyCastleDataCsv,
+  resolveBcuBossSpawnForCastle
+} from '../js/battle/bcu-runtime/BcuEnemyCastleBossSpawn.js';
 import { BcuLangStore } from '../js/bcu/BcuLangStore.js';
 import { createBcuDiagnostics } from '../js/bcu/BcuDiagnostics.js';
 import { comparePackId, FIXED_DATE, hashFile, loadManifest, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
@@ -151,6 +158,83 @@ async function loadCannonCurveCsv(manifest) {
   return { file: null, packId: null, text: '' };
 }
 
+async function loadEnemyCastleBossSpawnData(manifest, castleIndex) {
+  const files = manifest.files || [];
+  const latestByName = new Map();
+  for (const file of files) {
+    const match = String(file).match(/\/org\/data\/(enemyCastleData(?:Legend|0|1|2)\.csv)$/i);
+    if (!match) continue;
+    const name = match[1];
+    const prev = latestByName.get(name);
+    if (!prev || comparePackId(packIdFromBcuPath(file), packIdFromBcuPath(prev)) > 0 || (comparePackId(packIdFromBcuPath(file), packIdFromBcuPath(prev)) === 0 && file.localeCompare(prev) > 0)) {
+      latestByName.set(name, file);
+    }
+  }
+
+  const csvTextByFile = {};
+  const sources = {};
+  for (const [mapId, csvName] of Object.entries(BCU_ENEMY_CASTLE_DATA_FILES)) {
+    const file = latestByName.get(csvName);
+    if (!file) {
+      sources[mapId] = { mapId, csvName, file: null, packId: null, values: [], missing: true };
+      continue;
+    }
+    const text = await readText(file);
+    csvTextByFile[csvName] = text;
+    sources[mapId] = {
+      mapId,
+      csvName,
+      file,
+      packId: packIdFromBcuPath(file),
+      values: parseEnemyCastleDataCsv(text)
+    };
+  }
+
+  const byCastleId = {};
+  for (const entry of castleIndex.enemy || []) {
+    const castleId = Number(entry.numericId);
+    if (!Number.isFinite(castleId)) continue;
+    const resolved = resolveBcuBossSpawnForCastle(castleId, csvTextByFile, {
+      numericId: entry.numericId,
+      groupIndex: entry.groupIndex,
+      localCastleId: entry.localId
+    });
+    byCastleId[castleId] = {
+      castleId,
+      mapId: resolved.address?.mapId ?? null,
+      index: resolved.address?.index ?? null,
+      groupIndex: resolved.address?.groupIndex ?? null,
+      groupName: resolved.address?.groupName ?? entry.group ?? null,
+      bossSpawn: resolved.bossSpawn,
+      resolved: !!resolved.resolved,
+      reason: resolved.resolved ? null : resolved.reason,
+      file: resolved.file || null,
+      bcuReference: resolved.bcuReference || resolved.address?.bcuReference || null
+    };
+  }
+
+  return {
+    schemaVersion: 1,
+    key: 'core:enemy-castle-boss-spawns',
+    generatedAt: FIXED_DATE,
+    bcuReference: 'CastleImg.loadBossSpawns + CommonStatic.bossSpawnPoint + StageBasis.boss_spawn',
+    formula: 'floor(3200 + y*z/10 - z*1180/100 + z*127/10) / 4',
+    formulaCheck: {
+      legend0: bcuBossSpawnPoint(-2, 127),
+      z0: bcuBossSpawnPoint(0, 0)
+    },
+    sourceFileMap: BCU_ENEMY_CASTLE_DATA_FILES,
+    sources,
+    byCastleId,
+    addressExamples: {
+      '0': getBcuBossSpawnAddressForCastle(0),
+      '1000': getBcuBossSpawnAddressForCastle(1000),
+      '2000': getBcuBossSpawnAddressForCastle(2000),
+      '3000': getBcuBossSpawnAddressForCastle(3000)
+    }
+  };
+}
+
 const manifest = await loadManifest();
 const actorIndex = await readJson('public/assets/generated/bcu-actor-index.json', { byKey: {} });
 const stageIndex = await readJson('public/assets/generated/bcu-stage-index.json', { entries: [], byKey: {} });
@@ -165,6 +249,7 @@ const statsLoader = new BattleStatsLoader({ bcuDb: null });
 const enemyStatsSources = await loadEnemyStatSources(manifest);
 const unitLevelMetadata = await loadUnitLevelMetadata(manifest);
 const cannonCurve = await loadCannonCurveCsv(manifest);
+const enemyCastleBossSpawns = await loadEnemyCastleBossSpawnData(manifest, castleIndex);
 
 function serializeNames() {
   const tables = {};
@@ -362,6 +447,7 @@ const entries = [
   jsonEntry('names-jp.json', serializeNames()),
   jsonEntry('backgrounds.json', { schemaVersion: 1, backgrounds }),
   jsonEntry('castles.json', { schemaVersion: 1, enemy: enemyCastles, nyanko: {} }),
+  jsonEntry('boss-spawns.json', enemyCastleBossSpawns),
   jsonEntry('stages.json', { schemaVersion: 1, stages }),
   jsonEntry('stage-aliases.json', { schemaVersion: 1, aliases }),
   jsonEntry('cannon-curve.json', {
@@ -481,6 +567,8 @@ async function writeDeflateZip(zipPath, entries) {
 
 const bundlePath = 'public/assets/bundles/core/core-db.zip';
 await writeDeflateZip(bundlePath, entries);
+const bundleSizeBytes = (await fs.stat(bundlePath)).size;
+const bundleHash = await hashFile(bundlePath);
 const coreIndex = {
   schemaVersion: 1,
   generatedAt: FIXED_DATE,
@@ -490,10 +578,20 @@ const coreIndex = {
     files: entries.map((e) => e.name),
     status: 'full',
     bundleRef: { bundleKey: 'core:db', bundlePath, readMode: 'zip-json' },
-    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/org/data/unitbuy.csv', 'public/assets/bcu/**/org/data/unitlevel.csv', 'public/assets/bcu/**/org/data/CC_AllParts_growth.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
+    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/org/data/unitbuy.csv', 'public/assets/bcu/**/org/data/unitlevel.csv', 'public/assets/bcu/**/org/data/CC_AllParts_growth.csv', 'public/assets/bcu/**/org/data/enemyCastleData*.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
   }],
   byKey: {}
 };
 coreIndex.byKey['core:db'] = coreIndex.entries[0];
 await writeJson('public/assets/generated/bcu-core-index.json', coreIndex);
-console.log(`wrote ${bundlePath} entries=${entries.length} hash=${await hashFile(bundlePath)} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length} unitLevelRows=${Object.keys(unitLevelMetadata.byUnitId).length} cannonCurve=${cannonCurve.packId || 'none'}`);
+bundleManifest.bundles = bundleManifest.bundles || {};
+bundleManifest.bundles['core:db'] = {
+  kind: 'core',
+  key: 'core:db',
+  bundlePath,
+  status: 'full',
+  sizeBytes: bundleSizeBytes,
+  hash: bundleHash
+};
+await writeJson('public/assets/generated/bcu-bundle-manifest.json', bundleManifest);
+console.log(`wrote ${bundlePath} entries=${entries.length} hash=${bundleHash} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length} unitLevelRows=${Object.keys(unitLevelMetadata.byUnitId).length} cannonCurve=${cannonCurve.packId || 'none'}`);

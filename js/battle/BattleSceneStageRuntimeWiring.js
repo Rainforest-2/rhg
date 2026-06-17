@@ -75,7 +75,9 @@ function wireBattleSceneStageRuntime() {
       maxEnemyCount: mergedRuntime.maxEnemyCount,
       effectiveMaxEnemyCount: mergedRuntime.effectiveMaxEnemyCount,
       enemySpawnWorldX: mergedRuntime.enemySpawnWorldX,
-      playerSpawnWorldX: mergedRuntime.playerSpawnWorldX
+      playerSpawnWorldX: mergedRuntime.playerSpawnWorldX,
+      bossSpawnWorldX: mergedRuntime.bossSpawnWorldX,
+      bossSpawnSource: mergedRuntime.bossSpawnSource
     });
     return mergedRuntime;
   });

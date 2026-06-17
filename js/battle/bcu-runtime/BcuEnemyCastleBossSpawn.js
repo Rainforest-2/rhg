@@ -21,6 +21,47 @@ export const BCU_ENEMY_CASTLE_DATA_FILES = Object.freeze({
   '000003': 'enemyCastleData1.csv'
 });
 
+export const BCU_ENEMY_CASTLE_GROUPS = Object.freeze(['rc', 'ec', 'wc', 'sc']);
+
+function padMapId(groupIndex) {
+  const n = Number(groupIndex);
+  if (!Number.isInteger(n) || n < 0 || n >= BCU_ENEMY_CASTLE_GROUPS.length) return null;
+  return String(n).padStart(6, '0');
+}
+
+// BCU Stage.java stores CastleImg as Identifier.parseInt(cast * 1000 + localCastleId).
+// The generated castle index uses the same group order (rc/ec/wc/sc), so this is the
+// safe bridge from stage castleId to CastleImg.loadBossSpawns' CastleList id/index.
+export function getBcuBossSpawnAddressForCastle(castleId, castleEntry = null) {
+  const numericId = Number(castleEntry?.numericId ?? castleId);
+  const groupIndex = Number.isInteger(Number(castleEntry?.groupIndex))
+    ? Number(castleEntry.groupIndex)
+    : Math.floor(numericId / 1000);
+  const index = Number.isInteger(Number(castleEntry?.localCastleId))
+    ? Number(castleEntry.localCastleId)
+    : (Number.isInteger(Number(castleEntry?.localId)) ? Number(castleEntry.localId) : numericId % 1000);
+  const mapId = padMapId(groupIndex);
+  if (!Number.isInteger(numericId) || !mapId || !Number.isInteger(index) || index < 0) {
+    return {
+      ok: false,
+      mapId: null,
+      index: null,
+      groupIndex: Number.isFinite(groupIndex) ? groupIndex : null,
+      groupName: null,
+      reason: `invalid-castle-id-${castleId}`
+    };
+  }
+  return {
+    ok: true,
+    mapId,
+    index,
+    groupIndex,
+    groupName: BCU_ENEMY_CASTLE_GROUPS[groupIndex],
+    numericId,
+    bcuReference: 'Stage.java Identifier.parseInt(cast*1000+cas) + CastleImg.loadBossSpawns CastleList id/index'
+  };
+}
+
 // CommonStatic.bossSpawnPoint: floor(3200 + y*z/10 - z*1180/100 + z*127/10) / 4
 export function bcuBossSpawnPoint(y, z) {
   return Math.floor(3200 + (y * z) / 10 - (z * 1180) / 100 + (z * 127) / 10) / 4;
@@ -57,4 +98,21 @@ export function resolveBcuBossSpawn(mapId, index, csvTextByFile = {}) {
     return { bossSpawn: BCU_DEFAULT_BOSS_SPAWN, resolved: false, reason: `index-out-of-range-${index}`, count: list.length, file };
   }
   return { bossSpawn: list[i], resolved: true, file, index: i, count: list.length, bcuReference: 'CastleImg.loadBossSpawns + CommonStatic.bossSpawnPoint' };
+}
+
+export function resolveBcuBossSpawnForCastle(castleId, csvTextByFile = {}, castleEntry = null) {
+  const address = getBcuBossSpawnAddressForCastle(castleId, castleEntry);
+  if (!address.ok) {
+    return {
+      bossSpawn: BCU_DEFAULT_BOSS_SPAWN,
+      resolved: false,
+      reason: address.reason,
+      address
+    };
+  }
+  return {
+    ...resolveBcuBossSpawn(address.mapId, address.index, csvTextByFile),
+    address,
+    castleId: address.numericId
+  };
 }

@@ -266,13 +266,16 @@ export class SemanticAssetProvider {
       return null;
     }
   }
+  async readEnemyCastleBossSpawns() {
+    return await this.readCoreJson('boss-spawns.json');
+  }
   async readCoreDb() {
     if (!this.coreDbPromise) {
       this.coreDbPromise = (async () => {
-        const [manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary] = await Promise.all([
-          this.readCoreJson('manifest-lite.json'), this.readCoreJson('units.json'), this.readCoreJson('enemies.json'), this.readCoreJson('names-jp.json'), this.readCoreJson('backgrounds.json'), this.readCoreJson('castles.json'), this.readCoreJson('stages.json'), this.readCoreJson('stage-aliases.json'), this.readCoreJson('asset-keys.json'), this.readCoreJson('diagnostics-summary.json')
+        const [manifestLite, units, enemies, namesJp, backgrounds, castles, bossSpawns, stages, stageAliases, assetKeys, diagnosticsSummary] = await Promise.all([
+          this.readCoreJson('manifest-lite.json'), this.readCoreJson('units.json'), this.readCoreJson('enemies.json'), this.readCoreJson('names-jp.json'), this.readCoreJson('backgrounds.json'), this.readCoreJson('castles.json'), this.readCoreJson('boss-spawns.json'), this.readCoreJson('stages.json'), this.readCoreJson('stage-aliases.json'), this.readCoreJson('asset-keys.json'), this.readCoreJson('diagnostics-summary.json')
         ]);
-        return { manifestLite, units, enemies, namesJp, backgrounds, castles, stages, stageAliases, assetKeys, diagnosticsSummary };
+        return { manifestLite, units, enemies, namesJp, backgrounds, castles, bossSpawns, stages, stageAliases, assetKeys, diagnosticsSummary };
       })().catch((error) => { this.coreDbPromise = null; throw error; });
     }
     return await this.coreDbPromise;

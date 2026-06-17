@@ -88,6 +88,53 @@ function semanticStageError(stageKey, bundleRef, err) {
   return out;
 }
 
+function applyBossSpawnData(stageDefinition, bossSpawnData) {
+  if (!stageDefinition || !bossSpawnData?.byCastleId) return stageDefinition;
+  const castleId = toNum(stageDefinition.castleId, null);
+  if (!Number.isFinite(castleId)) return stageDefinition;
+  const record = bossSpawnData.byCastleId[String(castleId)] || bossSpawnData.byCastleId[castleId] || null;
+  if (!record || !Number.isFinite(Number(record.bossSpawn)) || record.resolved !== true) {
+    const warnings = stageDefinition.warnings || (stageDefinition.warnings = []);
+    const runtimeWarnings = stageDefinition.runtime?.warnings || [];
+    const warning = record ? `boss-spawn-unresolved-${record.reason || castleId}` : `boss-spawn-missing-castle-${castleId}`;
+    if (!warnings.includes(warning)) warnings.push(warning);
+    if (stageDefinition.runtime && !runtimeWarnings.includes(warning)) {
+      stageDefinition.runtime.warnings = [...runtimeWarnings, warning];
+    }
+    return stageDefinition;
+  }
+
+  const bossSpawnWorldX = Number(record.bossSpawn);
+  const bossSpawn = {
+    ...record,
+    bossSpawn: bossSpawnWorldX,
+    source: 'core-db.zip:boss-spawns.json',
+    bcuReference: record.bcuReference || bossSpawnData.bcuReference || 'CastleImg.loadBossSpawns + StageBasis.boss_spawn'
+  };
+  stageDefinition.bossSpawnWorldX = bossSpawnWorldX;
+  stageDefinition.bossSpawn = bossSpawn;
+  stageDefinition.runtime = {
+    ...(stageDefinition.runtime || {}),
+    bossSpawnWorldX,
+    bossSpawn,
+    bossSpawnSource: 'core-db.zip:boss-spawns.json'
+  };
+  stageDefinition.castle = {
+    ...(stageDefinition.castle || {}),
+    bossSpawnWorldX,
+    bossSpawn
+  };
+  stageDefinition.meta = {
+    ...(stageDefinition.meta || {}),
+    bossSpawnWorldX
+  };
+  stageDefinition.debug = {
+    ...(stageDefinition.debug || {}),
+    bossSpawn
+  };
+  return stageDefinition;
+}
+
 export class StageDefinitionLoader {
   constructor(log) { this.log = log || (() => {}); }
 
@@ -412,6 +459,25 @@ export class StageDefinitionLoader {
     return out;
   }
 
+  async enrichBossSpawn(stageDefinition, provider = null) {
+    if (!stageDefinition?.ok || !provider) return stageDefinition;
+    try {
+      const bossSpawnData = typeof provider.readEnemyCastleBossSpawns === 'function'
+        ? await provider.readEnemyCastleBossSpawns()
+        : await provider.readCoreJson?.('boss-spawns.json');
+      return applyBossSpawnData(stageDefinition, bossSpawnData);
+    } catch (err) {
+      const warning = `boss-spawn-core-data-unavailable:${err?.message || String(err)}`;
+      const warnings = stageDefinition.warnings || (stageDefinition.warnings = []);
+      if (!warnings.includes(warning)) warnings.push(warning);
+      if (stageDefinition.runtime) {
+        const runtimeWarnings = stageDefinition.runtime.warnings || [];
+        if (!runtimeWarnings.includes(warning)) stageDefinition.runtime.warnings = [...runtimeWarnings, warning];
+      }
+      return stageDefinition;
+    }
+  }
+
   async load(stageConfig = {}) {
     const stageKey = stageConfig.stageKey || stageConfig.semanticKey;
     if (stageKey || stageConfig.bundleRef) {
@@ -421,7 +487,7 @@ export class StageDefinitionLoader {
           const read = stageKey
             ? await provider.readStageCsv(stageKey)
             : { text: await provider.readTextByBundleRef(stageConfig.bundleRef), logicalPath: stageConfig.bundleRef.internalPath };
-          return this.parse(read.text, read.logicalPath);
+          return await this.enrichBossSpawn(this.parse(read.text, read.logicalPath), provider);
         }
       } catch (err) {
         let provider = null;

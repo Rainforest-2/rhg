@@ -2,9 +2,9 @@
 
 ## Last updated
 
-- date: 2026-06-12 (UTC+09)
-- commit: docs refresh on `main`
-- scope: current BCU ZIP/runtime/ability parity status, plus pointers to focused ability evidence docs.
+- date: 2026-06-17 (UTC)
+- commit: local Codex parity implementation batch
+- scope: current BCU ZIP/runtime/ability parity status, plus special-castle boss-spawn runtime wiring.
 
 This file is the current high-level status page. Older migration task logs were intentionally collapsed so this page reflects the current state instead of preserving stale intermediate claims.
 
@@ -46,6 +46,7 @@ These areas have meaningful JS runtime wiring and focused checks, but may still 
 - AB_GLASS skip-soul behavior
 - burrow lifecycle
 - standard zombie corpse / soulstrike / revive visual trace path
+- special castle boss-spawn coordinate via `core-db.zip:boss-spawns.json` and `StageRuntime.bossSpawnWorldX`
 
 ### Human visual review still needed
 

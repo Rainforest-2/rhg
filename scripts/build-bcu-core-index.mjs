@@ -11,8 +11,10 @@ const entry = {
     'names-jp.json',
     'backgrounds.json',
     'castles.json',
+    'boss-spawns.json',
     'stages.json',
     'stage-aliases.json',
+    'cannon-curve.json',
     'asset-keys.json',
     'diagnostics-summary.json'
   ],
@@ -26,6 +28,7 @@ const entry = {
     sourceRawPaths: [
       'public/assets/bcu/000001/org/data/t_unit.csv',
       'public/assets/bcu/**/org/unit/*/unit*.csv',
+      'public/assets/bcu/**/org/data/enemyCastleData*.csv',
       'public/assets/bcu/**/lang/jp/*.txt'
     ]
   }

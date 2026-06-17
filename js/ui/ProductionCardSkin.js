@@ -38,6 +38,9 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
   dogContentBackgroundRect: Object.freeze({ x: 4, y: 4, w: 102, h: 77 }),
   costRightX: 106,
   costY: 64,
+  // Target on-card height for the BCU 「金額数字小」 cost sprite; the sprite is
+  // downscaled to fit the card cost band (native small digits are ~26px tall).
+  costSpriteHeight: 16,
   cooldownTrackRect: Object.freeze({ x: 10, y: 61, w: 90, h: 12 }),
   cooldownFillRect: Object.freeze({ x: 12, y: 63, w: 86, h: 8 }),
   cooldownTrackColor: '#050505',
@@ -331,9 +334,22 @@ export class ProductionCardSkin {
   }
 
   drawCost(ctx, cost, state) {
+    // BCU Res.getCost(pri, enable, ...): the cost is the 「金額数字小」 sprite font
+    // (img001, pack 000001), and a disabled cost uses the gray 「金額数字小(暗転)」
+    // digit set (aux.num[4]). Render it from the real BCU sprites — like the worker
+    // button cost (Res.getCost) — instead of fabricating a sans-serif number. The
+    // sans-serif path below stays only as a pre-load fallback.
+    const disabled = state?.affordable === false;
+    if (this.spriteText?.ready) {
+      const box = this.spriteText.measureCostBox(cost, { disabled, scale: 1 });
+      const targetH = PRODUCTION_CARD_SKIN.costSpriteHeight;
+      const scale = box.height > 0 ? Math.min(1, targetH / box.height) : 1;
+      const y = Math.round(PRODUCTION_CARD_SKIN.costY - (box.height * scale) / 2);
+      this.spriteText.drawCostRight(ctx, cost, PRODUCTION_CARD_SKIN.costRightX, y, { disabled, scale });
+      return;
+    }
     ctx.save();
-    // BCU Res.getCost(pri, enable, ...): disabled cost uses the gray digit sprite set (aux.num[4]).
-    ctx.fillStyle = state?.affordable === false ? '#9b9b9b' : '#fff';
+    ctx.fillStyle = disabled ? '#9b9b9b' : '#fff';
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
     ctx.font = 'bold 13px sans-serif';

@@ -1,7 +1,26 @@
 import { BCU_BATTLE_TIMER_PERIOD_MS } from '../BattleFrameClock.js';
+import { TEMPLATE_LOAD_LEVEL } from '../BattleActorFactory.js';
 
 export const SPIRIT_SUMMON_DELAY = 15;
 export const SPIRIT_SUMMON_RANGE = 150;
+
+// BCU StageBasis spawns the conjured spirit through the same EUnit factory as any
+// lineup form, so its render template must be loaded before spawnActor can place
+// it. In live play nothing else preloads a conjurer's spirit form, which is why
+// scene.spawnActor returned null and the spirit never appeared. These helpers
+// resolve and warm the spirit template so the manual second-tap summon can fire.
+function spiritTemplateReady(scene, slotId) {
+  const tpl = scene?.actorFactory?.templates?.get?.(slotId);
+  return !!tpl && (tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.SPAWN_READY || tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.FULL_VISUAL);
+}
+
+function warmSpiritTemplate(scene, unitDef) {
+  const factory = scene?.actorFactory;
+  if (!factory || typeof factory.preloadTemplate !== 'function' || !unitDef?.slotId) return false;
+  if (spiritTemplateReady(scene, unitDef.slotId)) return true;
+  factory.preloadTemplate(unitDef, { level: TEMPLATE_LOAD_LEVEL.SPAWN_READY }).catch(() => {});
+  return false;
+}
 
 function combatModel(actorOrDef) {
   return actorOrDef?.bcuCombatModel || actorOrDef?.rawStats?.bcuCombatModel || actorOrDef?.stats?.bcuCombatModel || actorOrDef?.stats?.bcuCombatModel || null;
@@ -49,6 +68,13 @@ export function markBcuSummonerSpawned(scene, actor, { slotId = null } = {}) {
   st.cooldownFrames = SPIRIT_SUMMON_DELAY;
   st.spiritId = spec.id;
   st.lastSummoner = actor;
+  // Resolve and start loading the spirit form now, while the summon cooldown runs,
+  // so the spirit template is ready by the time the player taps to conjure it.
+  const spiritUnitDef = resolveBcuSpiritUnitDef(scene, key, actor);
+  if (spiritUnitDef) {
+    st.spiritUnitDef = spiritUnitDef;
+    warmSpiritTemplate(scene, spiritUnitDef);
+  }
   scene.pushEvent?.({ type: 'bcuSummonerSpawned', slotId: key, spiritId: spec.id, cooldownFrames: SPIRIT_SUMMON_DELAY });
   return { marked: true, state: st };
 }
@@ -122,24 +148,32 @@ export function resolveBcuSpiritUnitDef(scene, slotId, summoner = null) {
 export function requestBcuSpiritSpawn(scene, slotIdOrActor) {
   const slotId = slotKey(slotIdOrActor);
   const st = slotId ? stateFor(scene, slotId) : null;
-  if (!scene || !slotId || !st?.summonerSummoned) return { ok: false, reason: 'summoner-not-spawned' };
+  if (!scene || !slotId || !st?.summonerSummoned) return { ok: false, spiritAttempt: false, reason: 'summoner-not-spawned' };
   const summoners = livingSummoners(scene, slotId);
-  if (!summoners.length) return { ok: false, reason: 'no-living-summoner' };
-  if (st.spiritSummoned || livingSpirits(scene, slotId).length) return { ok: false, reason: 'spirit-already-summoned' };
-  if (st.cooldownFrames > 0) return { ok: false, reason: 'cooldown-active', cooldownFrames: st.cooldownFrames };
+  if (!summoners.length) return { ok: false, spiritAttempt: false, reason: 'no-living-summoner' };
+  // From here the tap is a spirit-conjure attempt (BCU StageBasis 527): it must not
+  // fall through to deploying a second summoner, even when it cannot spawn yet.
+  if (st.spiritSummoned || livingSpirits(scene, slotId).length) return { ok: false, spiritAttempt: true, reason: 'spirit-already-summoned' };
+  if (st.cooldownFrames > 0) return { ok: false, spiritAttempt: true, reason: 'cooldown-active', cooldownFrames: st.cooldownFrames };
   const spawned = [];
   for (const summoner of summoners) {
-    const unitDef = resolveBcuSpiritUnitDef(scene, slotId, summoner);
-    if (!unitDef) return { ok: false, reason: 'spirit-unit-def-missing' };
+    const unitDef = st.spiritUnitDef || resolveBcuSpiritUnitDef(scene, slotId, summoner);
+    if (!unitDef) return { ok: false, spiritAttempt: true, reason: 'spirit-unit-def-missing' };
+    // Only gate on the template when this scene actually has a loading factory
+    // (live battle). Spawn-time mocks without preloadTemplate spawn directly.
+    if (scene.actorFactory && typeof scene.actorFactory.preloadTemplate === 'function' && !spiritTemplateReady(scene, unitDef.slotId)) {
+      warmSpiritTemplate(scene, unitDef);
+      return { ok: false, spiritAttempt: true, reason: 'spirit-template-loading', slotId: unitDef.slotId };
+    }
     const x = resolveBcuSpiritSpawnX(scene, summoner, unitDef);
     const spirit = scene.spawnActor?.(unitDef, summoner.side || unitDef.side || 'dog-player', false, { x, bcuSpirit: true, summoner, slotId });
-    if (!spirit) return { ok: false, reason: 'spawnActor-returned-null' };
+    if (!spirit) return { ok: false, spiritAttempt: true, reason: 'spawnActor-returned-null' };
     markBcuSpiritActor(scene, spirit, summoner, slotId);
     spawned.push(spirit);
   }
   st.spiritSummoned = true;
   scene.pushEvent?.({ type: 'bcuSpiritSpawned', slotId, count: spawned.length });
-  return { ok: true, spawned, state: st };
+  return { ok: true, spiritAttempt: true, spawned, state: st };
 }
 
 export function markBcuSpiritActor(scene, spirit, summoner, slotId) {

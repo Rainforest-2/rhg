@@ -45,6 +45,14 @@ export function installBattleSceneBcuSpiritPatch() {
       const resolvedSlotId = (col === null ? slotId : this.getPlayerLineupRows?.()?.[row]?.[col]?.slotId) || slotId;
       const spirit = requestBcuSpiritSpawn(this, resolvedSlotId);
       if (spirit.ok) return true;
+      // BCU StageBasis 527: once a conjurer is on the field, tapping its card is a
+      // spirit-summon attempt. While the spirit is on cooldown / still loading / one
+      // is already out, the tap is consumed (SE_SPEND_FAIL) and must NOT deploy a
+      // second summoner. Only fall through for the initial summoner deployment.
+      if (spirit.spiritAttempt) {
+        this.pushEvent?.({ type: 'bcuSpiritSummonBlocked', slotId: resolvedSlotId, reason: spirit.reason });
+        return false;
+      }
       return originalRequestPlayerSpawn.call(this, slotId, row, col);
     };
 

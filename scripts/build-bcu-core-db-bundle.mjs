@@ -8,6 +8,10 @@ import { comparePackId, FIXED_DATE, hashFile, loadManifest, readJson, writeJson,
 const BASE_T_UNIT_CSV = 'public/assets/bcu/000001/org/data/t_unit.csv';
 const BASE_UNITBUY_CSV = 'public/assets/bcu/000001/org/data/unitbuy.csv';
 const BASE_UNITLEVEL_CSV = 'public/assets/bcu/000001/org/data/unitlevel.csv';
+// Cat-cannon level curve source (Treasure.readCannonCurveData -> CannonLevelCurve). This global
+// game-data file is identical in shape across packs; the newest pack carries the current max
+// foundation level, so it is the source of truth for non-basic cannon magnification.
+const BASE_CANNON_GROWTH_CSV = 'public/assets/bcu/000001/org/data/CC_AllParts_growth.csv';
 
 // Strip C0 control-character junk (e.g. stray \x01/\x05/\x10 trailing bytes found
 // in some BCU pack unit CSVs) so a corrupt line cannot survive `filter(Boolean)`
@@ -130,6 +134,23 @@ function findEnemyStats(enemyId, actorIndex, enemyStatsSources) {
   return { rawStats: [], rowIndex, sourceFile: null, sourcePack: null };
 }
 
+// Pick the newest pack's CC_AllParts_growth.csv (highest max foundation level) for the cannon curve.
+// Stored as raw CSV text so the runtime reuses the tested parseCannonCurveCsv loader unchanged.
+async function loadCannonCurveCsv(manifest) {
+  const files = (manifest.files || []).filter((file) => /\/org\/data\/CC_AllParts_growth\.csv$/i.test(file));
+  if (!files.includes(BASE_CANNON_GROWTH_CSV)) files.push(BASE_CANNON_GROWTH_CSV);
+  const sorted = [...new Set(files)].sort((a, b) => comparePackId(packIdFromBcuPath(b), packIdFromBcuPath(a)) || b.localeCompare(a));
+  for (const file of sorted) {
+    try {
+      const text = await readText(file);
+      if (text && text.trim()) return { file, packId: packIdFromBcuPath(file), text };
+    } catch {
+      // Optional packs can be absent in fixtures; fall through to the next candidate.
+    }
+  }
+  return { file: null, packId: null, text: '' };
+}
+
 const manifest = await loadManifest();
 const actorIndex = await readJson('public/assets/generated/bcu-actor-index.json', { byKey: {} });
 const stageIndex = await readJson('public/assets/generated/bcu-stage-index.json', { entries: [], byKey: {} });
@@ -143,6 +164,7 @@ await names.loadFromManifest(manifest, readText);
 const statsLoader = new BattleStatsLoader({ bcuDb: null });
 const enemyStatsSources = await loadEnemyStatSources(manifest);
 const unitLevelMetadata = await loadUnitLevelMetadata(manifest);
+const cannonCurve = await loadCannonCurveCsv(manifest);
 
 function serializeNames() {
   const tables = {};
@@ -342,6 +364,14 @@ const entries = [
   jsonEntry('castles.json', { schemaVersion: 1, enemy: enemyCastles, nyanko: {} }),
   jsonEntry('stages.json', { schemaVersion: 1, stages }),
   jsonEntry('stage-aliases.json', { schemaVersion: 1, aliases }),
+  jsonEntry('cannon-curve.json', {
+    schemaVersion: 1,
+    key: 'core:cannon-curve',
+    source: cannonCurve.file,
+    packId: cannonCurve.packId,
+    bcuReference: 'Treasure.readCannonCurveData (org/data/CC_AllParts_growth.csv) -> CannonLevelCurve.applyFormula',
+    csv: cannonCurve.text
+  }),
   jsonEntry('asset-keys.json', { schemaVersion: 1, actors: Object.keys(actorIndex.byKey || {}), stages: Object.keys(stages), backgrounds: Object.keys(backgrounds), castles: Object.keys(enemyCastles) }),
   jsonEntry('diagnostics-summary.json', {
     schemaVersion: 1,
@@ -460,10 +490,10 @@ const coreIndex = {
     files: entries.map((e) => e.name),
     status: 'full',
     bundleRef: { bundleKey: 'core:db', bundlePath, readMode: 'zip-json' },
-    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/org/data/unitbuy.csv', 'public/assets/bcu/**/org/data/unitlevel.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
+    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/org/data/unitbuy.csv', 'public/assets/bcu/**/org/data/unitlevel.csv', 'public/assets/bcu/**/org/data/CC_AllParts_growth.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
   }],
   byKey: {}
 };
 coreIndex.byKey['core:db'] = coreIndex.entries[0];
 await writeJson('public/assets/generated/bcu-core-index.json', coreIndex);
-console.log(`wrote ${bundlePath} entries=${entries.length} hash=${await hashFile(bundlePath)} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length} unitLevelRows=${Object.keys(unitLevelMetadata.byUnitId).length}`);
+console.log(`wrote ${bundlePath} entries=${entries.length} hash=${await hashFile(bundlePath)} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length} unitLevelRows=${Object.keys(unitLevelMetadata.byUnitId).length} cannonCurve=${cannonCurve.packId || 'none'}`);

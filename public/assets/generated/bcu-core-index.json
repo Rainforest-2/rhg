@@ -15,6 +15,7 @@
         "castles.json",
         "stages.json",
         "stage-aliases.json",
+        "cannon-curve.json",
         "asset-keys.json",
         "diagnostics-summary.json"
       ],
@@ -29,6 +30,7 @@
           "public/assets/bcu/**/org/data/t_unit.csv",
           "public/assets/bcu/**/org/data/unitbuy.csv",
           "public/assets/bcu/**/org/data/unitlevel.csv",
+          "public/assets/bcu/**/org/data/CC_AllParts_growth.csv",
           "public/assets/bcu/**/UnitName.txt",
           "public/assets/bcu/**/EnemyName.txt"
         ]
@@ -49,6 +51,7 @@
         "castles.json",
         "stages.json",
         "stage-aliases.json",
+        "cannon-curve.json",
         "asset-keys.json",
         "diagnostics-summary.json"
       ],
@@ -63,6 +66,7 @@
           "public/assets/bcu/**/org/data/t_unit.csv",
           "public/assets/bcu/**/org/data/unitbuy.csv",
           "public/assets/bcu/**/org/data/unitlevel.csv",
+          "public/assets/bcu/**/org/data/CC_AllParts_growth.csv",
           "public/assets/bcu/**/UnitName.txt",
           "public/assets/bcu/**/EnemyName.txt"
         ]

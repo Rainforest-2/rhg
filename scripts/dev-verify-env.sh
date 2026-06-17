@@ -145,6 +145,9 @@ for f in \
   scripts/check-effect-coordinate-traces.mjs \
   scripts/check-bcu-zombie-corpse-soul-strike-parity.mjs \
   scripts/check-bcu-stage-spawn-runtime.mjs \
+  scripts/check-bcu-cannon-level-curve-parity.mjs \
+  scripts/check-bcu-cannon-curve-semantic-wiring.mjs \
+  scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs \
   scripts/check-bcu-attack-interval-timing.mjs \
   scripts/check-battle-attack-wait-runtime.mjs \
   scripts/check-stage-runtime.mjs

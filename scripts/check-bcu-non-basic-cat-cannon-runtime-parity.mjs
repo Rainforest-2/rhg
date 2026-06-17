@@ -127,6 +127,25 @@ function fireAndResolve(scene) {
   assert.equal(scene.bcuCatCannon.lastFireDebug.reason, 'wall-cannon-entity-spawn-not-implemented');
 }
 
+// --- Unresolved magnification (id 3 with NO curve data): fail closed, never silent no-op. ---
+// CC_AllParts_growth.csv is not exposed through a semantic bundle, so the browser runtime gets no
+// cannonCurveData. A non-basic cannon must reject activation with the exact missing keys rather than
+// fire a magnification-less no-op (null atkMagnification -> 0 damage, null stopTime -> no proc).
+{
+  const enemy = makeActor({ id: 'unresolved-target', pos: 2750 });
+  const scene = makeScene([enemy]);
+  initializeBcuCatCannon(scene, { id: 3 }); // no cannonCurveData, no magnification override
+  assert.equal(scene.bcuCatCannon.spec.magnificationResolved, false, 'id3 without curve data is unresolved');
+  assert.equal(activateBcuCatCannon(scene), false, 'unresolved non-basic cannon fails closed at activation');
+  assert.equal(scene.bcuCatCannon.lastFireDebug.reason, 'cannon-magnification-unresolved');
+  assert.ok(
+    scene.bcuCatCannon.lastFireDebug.missingMagnification.includes('atkMagnification')
+      && scene.bcuCatCannon.lastFireDebug.missingMagnification.includes('stopTime'),
+    'fail-closed diagnostic names the exact missing magnification keys'
+  );
+  assert.equal(enemy.lastDamage, null, 'unresolved cannon never touches an enemy');
+}
+
 // Ownership separation: no cannon went through unit-proc queueAttackDamage.
 assert.equal(usedUnitProc, false, 'non-basic cannons must stay in the dedicated cannon source, not unit proc');
 

@@ -488,6 +488,22 @@ export function activateBcuCatCannon(scene) {
     scene?.pushEvent?.({ type: 'bcuCatCannonRejected', ...state.lastFireDebug });
     return false;
   }
+  // Non-basic cannons need level-curve magnification (Treasure.getCannonMagnification -> CannonLevelCurve).
+  // That data is CC_AllParts_growth.csv, which is NOT exposed through a semantic bundle in this checkout, so
+  // initializeBcuCatCannon receives no cannonCurveData unless a caller supplies it. Firing with unresolved
+  // magnification would silently produce a no-op (null atkMagnification -> 0 damage, null stopTime -> no proc).
+  // Fail closed with the exact missing keys instead of guessing or silently degrading (fact-first rule).
+  if (state.id !== BCU_CAT_CANNON_ID_BASIC && state.spec?.magnificationResolved === false) {
+    state.lastFireDebug = {
+      ok: false,
+      reason: 'cannon-magnification-unresolved',
+      before,
+      missingMagnification: [...(state.spec.missingMagnification || [])],
+      bcuReference: 'Treasure.getCannonMagnification -> CannonLevelCurve.applyFormula (CC_AllParts_growth.csv not in semantic bundle)'
+    };
+    scene?.pushEvent?.({ type: 'bcuCatCannonRejected', ...state.lastFireDebug });
+    return false;
+  }
   const preFrames = state.id === BCU_CAT_CANNON_ID_BASIC
     ? BCU_CAT_CANNON_BASIC_PRE_FRAMES
     : (Number.isFinite(state.spec?.preTime) && state.spec.preTime > 0 ? state.spec.preTime : BCU_CAT_CANNON_BASIC_PRE_FRAMES);

@@ -256,6 +256,16 @@ export class SemanticAssetProvider {
     if (!this.coreJsonCache.has(key)) this.coreJsonCache.set(key, JSON.parse(await this.readTextByBundleRef(entry.bundleRef, internalPath)));
     return this.coreJsonCache.get(key);
   }
+  // Cat-cannon level curve (CC_AllParts_growth.csv) shipped inside core-db.zip as cannon-curve.json.
+  // Returns the raw CSV text so callers parse it with the tested parseCannonCurveCsv loader.
+  async readCannonCurveCsv() {
+    try {
+      const entry = await this.readCoreJson('cannon-curve.json');
+      return typeof entry?.csv === 'string' && entry.csv.trim() ? entry.csv : null;
+    } catch {
+      return null;
+    }
+  }
   async readCoreDb() {
     if (!this.coreDbPromise) {
       this.coreDbPromise = (async () => {

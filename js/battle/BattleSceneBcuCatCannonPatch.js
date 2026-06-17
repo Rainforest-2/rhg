@@ -9,6 +9,7 @@ import {
   tickBcuCatCannonAttack,
   tickBcuCatCannonCharge
 } from './bcu-runtime/BcuCatCannonRuntime.js';
+import { parseCannonCurveCsv } from './bcu-runtime/BcuCannonLevelCurve.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { parseModel } from '../bcu/BcuModelParser.js';
@@ -33,6 +34,21 @@ const CAT_CANNON_ANIM_FILES = Object.freeze({
   imgcut: 'nyankoCastle_001_00_00.imgcut',
   png: 'nyankoCastle_001_00_00.png'
 });
+// Cat-cannon level curve (Treasure.getCannonMagnification -> CannonLevelCurve), shipped semantically
+// inside core-db.zip as cannon-curve.json. Parsed once and shared so non-basic cannons resolve their
+// magnification (slow/freeze/water/ground/blast/curse) instead of failing closed. Basic cannon (id 0)
+// needs no magnification, so a load failure never blocks the default battle.
+let cannonCurveDataPromise = null;
+async function loadBcuCannonCurveData() {
+  if (cannonCurveDataPromise) return cannonCurveDataPromise;
+  cannonCurveDataPromise = (async () => {
+    const provider = getBcuAssetDatabase()?.semanticProvider || null;
+    const csv = provider ? await provider.readCannonCurveCsv?.() : null;
+    return csv ? parseCannonCurveCsv(csv) : null;
+  })().catch(() => null);
+  return cannonCurveDataPromise;
+}
+
 const CAT_CANNON_ANIM_SOURCE = 'bcu-effanim-cat-cannon-base:nyankoCastle:001/nyankoCastle_001_00_01';
 const CAT_CANNON_WAVE_ANIM_SOURCE = 'bcu-effanim-cat-cannon-wave:nyankoCastle:001/nyankoCastle_001_00_00';
 
@@ -88,7 +104,11 @@ export function installBattleSceneBcuCatCannonPatch() {
   const originalInit = proto.init;
   proto.init = async function initWithBcuCatCannon(...args) {
     const result = await originalInit.apply(this, args);
-    initializeBcuCatCannon(this, BATTLE_CONFIG.cannon?.catCannon || {});
+    const cannonConfig = BATTLE_CONFIG.cannon?.catCannon || {};
+    // Provide the level curve so a configured non-basic cannon resolves its magnification semantically.
+    // Basic cannon (default) ignores it; a missing/failed curve simply leaves non-basic cannons gated.
+    const cannonCurveData = await loadBcuCannonCurveData();
+    initializeBcuCatCannon(this, cannonCurveData ? { ...cannonConfig, cannonCurveData } : cannonConfig);
     this.ensureCatCannonAnimLoading?.();
     return result;
   };

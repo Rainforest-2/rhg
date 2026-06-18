@@ -12,8 +12,15 @@ if (!/formation-catalog-spacer/.test(js)) failures.push('formation catalog must 
 if (!/estimateCatalogColumns/.test(js)) failures.push('FormationEditor must estimate catalog columns for virtualization');
 if (!/formation-stage-virtual-spacer/.test(perfPatch)) failures.push('stage selector must use spacer-based windowing for large map/stage lists');
 if (!/buildScopedDifficultyFilterCandidates/.test(perfPatch)) failures.push('stage selector virtualization must honor scoped difficulty/search filters');
-if (!/updateFilterFromTarget\(editor,\s*event\.target\);\s*commitFilterFromControls\(editor\);/.test(filterControlPatch)) failures.push('stage selector search input must live-apply the DOM filter');
-if (!/updateFilterFromTarget\(this,\s*event\.target\)[\s\S]*commitFilterFromControls\(this\);/.test(filterControlPatch)) failures.push('stage selector delegated input must live-apply the filter');
+// Stage selector search is commit-on-action (検索 button / Enter / blur), not per-keystroke,
+// so typing stays light. Verify the input listener is draft-only and commit is bound to change + Enter.
+const inputHandler = filterControlPatch.match(/addEventListener\('input',\s*\(event\)\s*=>\s*\{([\s\S]*?)\n\s*\}\);/);
+if (!inputHandler || /commitFilterFromControls/.test(inputHandler[1])) failures.push('stage selector typing must be draft-only (no commit/re-render per keystroke)');
+if (!/const commit = \(event\) =>[\s\S]*?commitFilterFromControls\(editor\)/.test(filterControlPatch)) failures.push('stage selector must define a commit handler that applies the filter');
+if (!/addEventListener\('change',\s*commit\)/.test(filterControlPatch)) failures.push('stage selector must commit the filter on change (blur)');
+if (!/addEventListener\('keydown',[\s\S]*?'Enter'[\s\S]*?commit\(event\)/.test(filterControlPatch)) failures.push('stage selector must commit the filter on Enter');
+const delegatedInput = filterControlPatch.match(/function onInputWithDifficultyFilterControls\(event\)\s*\{([\s\S]*?)\n\s*\};/);
+if (!delegatedInput || /commitFilterFromControls/.test(delegatedInput[1])) failures.push('stage selector delegated input must be draft-only (no commit per keystroke)');
 if (!/__FORMATION_RENDER_DEBUG__/.test(js)) failures.push('formation render diagnostics must be gated behind __FORMATION_RENDER_DEBUG__');
 
 if (failures.length) {

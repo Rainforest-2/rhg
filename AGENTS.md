@@ -55,7 +55,7 @@ Do not:
 - collapse unit/enemy side behavior unless BCU proves it identical.
 - conflate `strong`, `strongAttack`, and `strengthen`.
 - classify approximate visual placement as `fully-complete`.
-- delete older docs or promote historical analysis to current source of truth without confirmation from the current status docs.
+- promote historical or unverified analysis to current source of truth without a passing deterministic check.
 - change implementation code, public assets, ZIP bundles, or generated manifests during Markdown-only maintenance.
 
 ## Required checks
@@ -69,7 +69,6 @@ Use relevant checks from the current workplan and status docs. Common checks inc
 - `scripts/check-proc-immunity-resistance-parity.mjs`
 - `scripts/check-effect-bundle-aliases.mjs`
 - `scripts/check-effect-coordinate-traces.mjs`
-- `scripts/check-debug-allocation-guards.mjs`
 - `scripts/check-bcu-delay-runtime.mjs`
 - `scripts/check-bcu-burrow-lifecycle-parity.mjs`
 - `scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs`

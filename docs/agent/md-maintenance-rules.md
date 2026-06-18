@@ -11,9 +11,10 @@ Use these rules when organizing Markdown or agent instructions.
 
 ## Current And Historical Docs
 
-- Do not delete old docs during cleanup.
-- Do not promote older analysis to current source of truth unless the current status docs confirm the same claim.
-- Prefer adding index links that distinguish current source-of-truth docs from historical notes.
+- Keep `docs/` reflecting the current verified state. Dated progress/audit/handoff snapshots may be removed once their accurate claims live in a current source-of-truth doc; git history preserves them.
+- Keep durable BCU source-fact evidence docs (the ones that record immutable BCU source behavior, not progress) even when individual rows advance.
+- Do not promote older or unverified analysis to current source of truth without a passing deterministic check.
+- When you delete or rename a doc, fix every cross-reference to it (status docs, `AGENTS.md`, `docs/agent/README.md`) in the same pass so no dangling link remains.
 
 ## Claude Code Sync
 

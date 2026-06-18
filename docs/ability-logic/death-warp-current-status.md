@@ -4,7 +4,7 @@ This note records the current implementation state for the dedicated BCU death a
 
 ## Scope
 
-This file supersedes older wording in `docs/ability-logic/fact-only-ability-parity-matrix.md` that described an earlier analysis-only pass. The repository now contains runtime implementation and deterministic checks for the death-soul and warp-lifecycle work.
+This file is the current source of truth for death-soul and warp-lifecycle state. The repository contains runtime implementation and deterministic checks for both, so treat the status below as the live record.
 
 Browser/manual visual inspection remains outside Codex hard requirements. Status below is non-visual: source reading, JS runtime wiring, ZIP/loader evidence, and deterministic test coverage.
 

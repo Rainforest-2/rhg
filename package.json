@@ -15,5 +15,8 @@
     "verify": "npm run check && npm test",
     "verify:dev": "bash scripts/dev-verify-env.sh",
     "preview:stop": "bash scripts/stop-preview.sh"
+  },
+  "dependencies": {
+    "rg": "^0.0.2"
   }
 }

@@ -144,13 +144,23 @@ function wireFilterControls(editor) {
   for (const input of root.querySelectorAll(selector)) {
     if (input.dataset.bcuDifficultyFilterWired === '1') continue;
     input.dataset.bcuDifficultyFilterWired = '1';
-    const handler = (event) => {
+    // Typing only updates the draft — no filter pass / re-render per keystroke (kept light).
+    input.addEventListener('input', (event) => {
+      event.stopPropagation();
+      updateFilterFromTarget(editor, event.target);
+    });
+    // Commit (filter + render) only on value commit (blur) and Enter.
+    const commit = (event) => {
       event.stopPropagation();
       updateFilterFromTarget(editor, event.target);
       commitFilterFromControls(editor);
     };
-    input.addEventListener('input', handler);
-    input.addEventListener('change', handler);
+    input.addEventListener('change', commit);
+    input.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      commit(event);
+    });
   }
 }
 
@@ -172,7 +182,7 @@ export function installFormationStageDifficultyFilterControlPatch() {
   const onInput = proto.onInput;
   proto.onInput = function onInputWithDifficultyFilterControls(event) {
     if (updateFilterFromTarget(this, event.target)) {
-      commitFilterFromControls(this);
+      // Draft-only while typing; commit happens on Enter / blur / 検索 button.
       return;
     }
     return onInput.call(this, event);

@@ -24,6 +24,11 @@ Treat older docs as historical notes unless these current status files confirm t
 - `report-format.md`: required implementation-batch final report format.
 - `md-maintenance-rules.md`: Markdown and agent-instruction maintenance rules, including `CLAUDE.md` symlink handling.
 
-## Historical Docs
+## Reference vs progress docs
 
-Do not delete older analysis docs during cleanup. Link them as historical context only unless the current source-of-truth docs confirm their claims.
+`docs/` keeps two long-lived kinds of supporting docs:
+
+- **BCU source-fact evidence** (e.g. `../ability-logic/bcu-ability-source-evidence.md`, `../ability-logic/bcu-priority-hit-effect-evidence.md`, `../bcu-unit-stat-flow.md`): durable records of BCU source behavior. Keep these.
+- **Current status / structural docs** (the source-of-truth list above, plus the CSS-structure notes): keep current.
+
+Dated progress, audit, handoff, and extraction snapshots are not preserved as live docs once their accurate claims are folded into a current source-of-truth doc; git history holds the originals. Do not promote any historical note to source of truth without a passing deterministic check.

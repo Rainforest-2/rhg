@@ -26,7 +26,6 @@ This file is the current high-level status page. Older migration task logs were 
 | Evidence that still blocks broader claims | `docs/ability-logic/bcu-unresolved-evidence-blockers.md` |
 | Death / warp lifecycle notes | `docs/ability-logic/death-warp-current-status.md` |
 | Source evidence inventory | `docs/ability-logic/bcu-ability-source-evidence.md` |
-| Fact-only parity matrix | `docs/ability-logic/fact-only-ability-parity-matrix.md` |
 
 ## Current ability/proc/effect status summary
 

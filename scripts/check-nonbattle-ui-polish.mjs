@@ -142,6 +142,8 @@ async function checkViewport(browser, width, height) {
 
     const search = page.locator('[data-stage-search-input]').first();
     await search.fill('zzzzzz-no-match');
+    // Typing is draft-only (kept light); the filter commits on Enter / blur / 検索 button.
+    await search.press('Enter');
     await page.waitForTimeout(350);
     const mapCountAfter = await visibleCount(page, '.formation-stage-card-map');
     const hiddenDisplayCount = await page.locator('.formation-stage-card-map.is-difficulty-filtered').evaluateAll((nodes) => nodes.filter((node) => getComputedStyle(node).display === 'none').length);

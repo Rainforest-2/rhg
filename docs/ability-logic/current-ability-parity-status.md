@@ -89,7 +89,7 @@ These must not be marked code-complete until the listed blocker is resolved.
 
 ### Death / warp status
 
-The dedicated file `docs/ability-logic/death-warp-current-status.md` records the current death soul and warp lifecycle state. It supersedes older analysis-only wording in `fact-only-ability-parity-matrix.md` for those two areas.
+The dedicated file `docs/ability-logic/death-warp-current-status.md` records the current death soul and warp lifecycle state for those two areas.
 
 ## Required safe checks
 

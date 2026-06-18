@@ -324,12 +324,15 @@ for (const idRaw of manifest.indexes?.unitIds || []) {
     .filter((cols) => cols.length >= 2 && cols[0] !== '' && Number.isFinite(Number(cols[0])))
     .map(toNumbers);
   const baseRows = statsPath ? await readUnitFormRows(statsPath) : [];
-  // A later pack can add an evolution form (e.g. true/ultra 4th form) that the
-  // first-listed pack lacks. Find the pack that defines the most real forms
-  // (newest pack wins ties) and append only the extra forms it introduces, so
-  // genuine 4th forms are sourced with real stats while the base pack keeps
-  // ownership of the forms it already defines. Phantom rows can no longer appear
-  // here because junk lines are dropped before the forms are counted.
+  // BCU layers version packs newest-over-oldest. The same unit id can be a
+  // placeholder (hp 100 / speed 10) in an early pack and later be filled in or
+  // fully REUSED for a different unit (collab slots) in a newer pack. Pick the
+  // pack that defines the most real form rows, newest winning ties, and let it
+  // own ALL forms. Anchoring on the oldest pack and only appending "extra" forms
+  // left 28+ units (e.g. unit 581 = ごろにゃん: speed 10/hp 100 instead of
+  // speed 84/hp 20000) stuck on placeholder stats. Junk lines are already
+  // dropped by readUnitFormRows, so the row count reflects only real forms and
+  // genuine 4th/true forms in a newer pack still win on row count.
   let richest = { rows: baseRows, pack: statsPath ? packIdFromBcuPath(statsPath) : null };
   for (const candidate of statsCandidates) {
     const candRows = await readUnitFormRows(candidate);
@@ -339,9 +342,7 @@ for (const idRaw of manifest.indexes?.unitIds || []) {
       richest = { rows: candRows, pack: candPack };
     }
   }
-  const rows = richest.rows.length > baseRows.length
-    ? baseRows.concat(richest.rows.slice(baseRows.length))
-    : baseRows;
+  const rows = richest.rows;
   const levelMeta = unitLevelMetadata.byUnitId[unitId] || null;
   for (let index = 0; index < Math.max(1, rows.length); index += 1) {
     const form = formCode(index);

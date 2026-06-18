@@ -78,8 +78,14 @@ export class BcuUnitRepository {
     await Promise.all((this.manifest.indexes?.unitIds || []).map(async (id) => {
       const unitId = toInt(id, null); if (!Number.isFinite(unitId)) return;
       const id3 = pad3(unitId);
-      // Raw BCU fallback path (raw-only-diagnostics).
-      const statsPath = (this.manifest.files || []).find((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`)) || `public/assets/bcu/000004/org/unit/${id3}/unit${id3}.csv`;
+      // Raw BCU fallback path (raw-only-diagnostics). BCU layers packs
+      // newest-over-oldest, and a unit id can be a placeholder in an early pack
+      // then reused/filled in a newer one (e.g. unit 581 = ごろにゃん). Take the
+      // newest matching pack, not the first listed, to mirror the core-db builder.
+      const statsPath = (this.manifest.files || [])
+        .filter((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`))
+        .sort((a, b) => a.localeCompare(b))
+        .pop() || `public/assets/bcu/000004/org/unit/${id3}/unit${id3}.csv`;
       let rows = [];
       try { rows = parseCsvRows(await this.readText(statsPath)).map(toNumbers); } catch (error) { this.diagnostics.units.missingStats.push({ unitId, file: statsPath, reason: error?.message || String(error) }); }
       const forms = [];

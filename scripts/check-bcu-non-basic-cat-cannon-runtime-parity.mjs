@@ -3,9 +3,12 @@ import { readFileSync } from 'node:fs';
 import {
   activateBcuCatCannon,
   initializeBcuCatCannon,
-  tickBcuCatCannonAttack
+  tickBcuCatCannonAttack,
+  BCU_CAT_CANNON_WALL_ENTER_LEN,
+  BCU_CAT_CANNON_WALL_SPAWN_OFFSET,
+  BCU_CAT_CANNON_WALL_FORM_ID
 } from '../js/battle/bcu-runtime/BcuCatCannonRuntime.js';
-import { parseCannonCurveCsv } from '../js/battle/bcu-runtime/BcuCannonLevelCurve.js';
+import { parseCannonCurveCsv, resolveBcuCatCannonMagnification } from '../js/battle/bcu-runtime/BcuCannonLevelCurve.js';
 import '../js/battle/BattleActorProcStatusPatch.js';
 
 const text = readFileSync(new URL('../public/assets/bcu/110800/org/data/CC_AllParts_growth.csv', import.meta.url), 'utf8');
@@ -119,12 +122,94 @@ function fireAndResolve(scene) {
   assert.equal(enemy.lastKnockback.bcuTimeFrames, 11, 'INT_KB time = 11');
 }
 
-// --- Wall cannon (id 2): entity-spawn lifecycle not yet wired -> activate is rejected, not guessed. ---
+// --- Wall cannon (id 2): spawns Form 339 wall EUnit at pos+100, lives aliveTime+enter.len()-1
+//     frames, then SELF_DESTRUCTs; re-fire while the wall lives is rejected (replacement gating). ---
+function makeWallScene(actors) {
+  const scene = makeScene(actors);
+  scene.spawnedWalls = [];
+  scene.spawnBcuCannonWall = function spawnBcuCannonWall(worldX, opts) {
+    const wall = {
+      side: 'dog-player', bcuCatCannonWall: true, hp: 999999, worldX, opts,
+      _alive: true, deadAt: null,
+      isAlive() { return this._alive; },
+      enterDeadState(nowMs) { this._alive = false; this.state = 'dead'; this.deadAt = nowMs; }
+    };
+    this.spawnedWalls.push(wall);
+    return wall;
+  };
+  return scene;
+}
+
 {
-  const scene = makeScene([]);
+  // Anchor = max(800, enemyBasePos=0) extended to the rearmost enemy (pos 2750) -> wall at 2750+100.
+  const enemy = makeActor({ id: 'wall-anchor', pos: 2750 });
+  const scene = makeWallScene([enemy]);
   initializeBcuCatCannon(scene, { id: 2, cannonCurveData: curveData });
-  assert.equal(activateBcuCatCannon(scene), false, 'wall cannon activation is rejected (blocker)');
-  assert.equal(scene.bcuCatCannon.lastFireDebug.reason, 'wall-cannon-entity-spawn-not-implemented');
+  assert.equal(scene.bcuCatCannon.spec.preTime, -1, 'wall preTime = NYPRE[2] = -1');
+  assert.equal(scene.bcuCatCannon.spec.wallFormId, BCU_CAT_CANNON_WALL_FORM_ID, 'wall spawns Form 339');
+  const wallAliveTime = Math.floor(resolveBcuCatCannonMagnification(curveData, 2, null).magnification.wallAliveTime);
+  const expectedAlive = Math.max(1, wallAliveTime + BCU_CAT_CANNON_WALL_ENTER_LEN - 1);
+
+  assert.equal(activateBcuCatCannon(scene), true, 'wall cannon activates and spawns the wall');
+  assert.equal(scene.spawnedWalls.length, 1, 'one Form 339 wall is spawned');
+  assert.equal(scene.spawnedWalls[0].worldX, 2750 + BCU_CAT_CANNON_WALL_SPAWN_OFFSET, 'wall spawns at anchor + 100');
+  assert.equal(scene.bcuCatCannon.active.geometry, 'wall', 'wall cannon enters a wall lifecycle');
+  assert.equal(scene.bcuCatCannon.active.aliveFrames, expectedAlive, 'aliveFrames = wallAliveTime + enter.len() - 1');
+  assert.equal(scene.bcuCatCannon.cannon, 0, 'firing resets the cannon charge');
+
+  // Re-fire while the wall is alive is rejected (single wall / replacement gating).
+  scene.bcuCatCannon.cannon = scene.bcuCatCannon.maxCannon;
+  assert.equal(activateBcuCatCannon(scene), false, 'wall cannot be re-fired while one is active');
+  assert.equal(scene.bcuCatCannon.lastFireDebug.reason, 'active');
+  assert.equal(scene.spawnedWalls.length, 1, 'no second wall spawns while one is active');
+
+  // Count the lifetime down: the wall stays until the final frame, then SELF_DESTRUCTs.
+  for (let i = 0; i < expectedAlive - 1; i++) {
+    const r = tickBcuCatCannonAttack(scene, { tuning: {} });
+    assert.equal(r.geometry, 'wall', 'wall lifecycle still running');
+    assert.ok(scene.spawnedWalls[0].isAlive(), 'wall is alive until its lifetime elapses');
+  }
+  const final = tickBcuCatCannonAttack(scene, { tuning: {} });
+  assert.equal(final.wallExpired, true, 'wall self-destructs when its lifetime elapses');
+  assert.equal(scene.spawnedWalls[0].isAlive(), false, 'wall is dead after SELF_DESTRUCT');
+  assert.equal(scene.bcuCatCannon.active, null, 'cannon is released after the wall expires');
+}
+
+// --- Wall cannon with no enemies: anchor falls back to max(800, ebase.pos) -> wall at 900. ---
+{
+  const scene = makeWallScene([]);
+  initializeBcuCatCannon(scene, { id: 2, cannonCurveData: curveData });
+  assert.equal(activateBcuCatCannon(scene), true, 'wall cannon activates with no enemies present');
+  assert.equal(scene.spawnedWalls[0].worldX, 800 + BCU_CAT_CANNON_WALL_SPAWN_OFFSET, 'no-enemy wall spawns at 900');
+}
+
+// --- Wall cannon early death: enemies destroy the wall before its lifetime -> cannon is released. ---
+{
+  const scene = makeWallScene([]);
+  initializeBcuCatCannon(scene, { id: 2, cannonCurveData: curveData });
+  activateBcuCatCannon(scene);
+  scene.spawnedWalls[0]._alive = false; // simulate the wall being killed by enemies
+  const r = tickBcuCatCannonAttack(scene, { tuning: {} });
+  assert.equal(r.wallDiedEarly, true, 'wall death ends the lifecycle');
+  assert.equal(scene.bcuCatCannon.active, null, 'cannon is released when the wall dies early');
+}
+
+// --- Wall cannon with no scene factory hook: fail closed (never guess the spawn). ---
+{
+  const scene = makeScene([]); // no spawnBcuCannonWall
+  initializeBcuCatCannon(scene, { id: 2, cannonCurveData: curveData });
+  assert.equal(activateBcuCatCannon(scene), false, 'wall activation fails closed without a spawn hook');
+  assert.equal(scene.bcuCatCannon.lastFireDebug.reason, 'wall-spawn-unavailable');
+}
+
+// --- Wall cannon with unresolved magnification (no curve): fail closed, never a 0-frame wall. ---
+{
+  const scene = makeWallScene([]);
+  initializeBcuCatCannon(scene, { id: 2 }); // no cannonCurveData
+  assert.equal(scene.bcuCatCannon.spec.magnificationResolved, false, 'wall without curve data is unresolved');
+  assert.equal(activateBcuCatCannon(scene), false, 'unresolved wall fails closed at activation');
+  assert.equal(scene.bcuCatCannon.lastFireDebug.reason, 'cannon-magnification-unresolved');
+  assert.equal(scene.spawnedWalls.length, 0, 'no wall spawns when alive-time is unresolved');
 }
 
 // --- Unresolved magnification (id 3 with NO curve data): fail closed, never silent no-op. ---

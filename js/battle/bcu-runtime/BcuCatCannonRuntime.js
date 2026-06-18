@@ -39,6 +39,17 @@ export const BCU_CAT_CANNON_WAVE_TIME = 3;
 // at t = 2 (guessed attack point), i.e. 5 frames after the wave is created (preTime reaches 0).
 export const BCU_CAT_CANNON_WAVE_FIRST_HIT_FRAMES = 5;
 
+// BCU battle/entity/Cannon.java id==2 (BASE_WALL): wall.added(-1, (int)(pos + 100)) -- the wall is
+// placed 100 toward the player base from the id-2 anchor (max(800, ebase.pos) extended to the
+// rearmost touchable enemy). Its lifetime is preTime = getCannonMagnification(2, BASE_WALL_ALIVE_TIME)
+// + enter.len() - 1, after which Cannon.update kills it with KillMode.SELF_DESTRUCT.
+export const BCU_CAT_CANNON_WALL_SPAWN_OFFSET = 100;
+// Form 339 first-form ENTER eanim length (org/unit/339/f/339_f_entry.maanim max frame = 19). BCU
+// EAnimD.len() returns the max keyframe; the live scene may override this with the loaded anim length.
+export const BCU_CAT_CANNON_WALL_ENTER_LEN = 19;
+// Form 339 (the cat-cannon iron wall) spawned by Cannon.update id==2.
+export const BCU_CAT_CANNON_WALL_FORM_ID = 339;
+
 // BCU androidutil/battle/BattleBox.java drawBtm canon.drawBase positioning, indexed by NyType id:
 //   canx = { 0, 0, 0, 64, 64, 0, 0, 0 };  cany = { -134, -134, -134, -250, -250, -134, -134, -134 };
 //   canon.drawBase(g, setP(getX(ubase.pos) + canx[id]*siz, midh + (cany[id] - road_h)*siz), psiz)
@@ -116,7 +127,8 @@ export function getBcuCatCannonSpec(id, { magnification = {} } = {}) {
         magnificationResolved: missing.length === 0, missingMagnification: [...missing] };
     case BCU_CAT_CANNON_IDS.BASE_WALL: // 2
       return { ...base, geometry: 'wall', targetTrait: null, abilityBits: 0, damage: 0, procs: [],
-        wallFormId: 339, wallAliveTime: need('wallAliveTime'),
+        wallFormId: BCU_CAT_CANNON_WALL_FORM_ID, wallAliveTime: need('wallAliveTime'),
+        posAnchor: 'enemy-side-front', // Cannon.update id==2: pos = max(800, ebase.pos) extended to rearmost enemy
         magnificationResolved: missing.length === 0, missingMagnification: [...missing] };
     case BCU_CAT_CANNON_IDS.BASE_STOP: // 3 (freeze)
       return { ...base, geometry: 'localized', targetTrait: null, abilityBits: 0,
@@ -481,12 +493,10 @@ export function activateBcuCatCannon(scene) {
     scene?.pushEvent?.({ type: 'bcuCatCannonRejected', ...state.lastFireDebug });
     return false;
   }
-  // Wall cannon (id 2) has a distinct preTime=-1 entity-spawn lifecycle (Cannon.update spawns Unit 339).
-  // That entity-spawn path is not yet wired; reject rather than guess its timing/owner.
+  // Wall cannon (id 2) has a distinct preTime=-1 entity-spawn lifecycle: Cannon.update spawns the
+  // Form 339 wall EUnit at the player-front anchor and counts its alive-time down to SELF_DESTRUCT.
   if (state.spec?.geometry === 'wall') {
-    state.lastFireDebug = { ok: false, reason: 'wall-cannon-entity-spawn-not-implemented', before, bcuReference: 'Cannon.update id==2: spawns Unit 339 wall; preTime=-1 lifecycle' };
-    scene?.pushEvent?.({ type: 'bcuCatCannonRejected', ...state.lastFireDebug });
-    return false;
+    return activateBcuCatCannonWall(scene, state, before);
   }
   // Non-basic cannons need level-curve magnification (Treasure.getCannonMagnification -> CannonLevelCurve).
   // That data is CC_AllParts_growth.csv, which is NOT exposed through a semantic bundle in this checkout, so
@@ -523,6 +533,55 @@ export function activateBcuCatCannon(scene) {
     bcuReference: 'Cannon.activate: anim = atks[BASE_H].getEAnim(BASE); preTime = NYPRE[BASE_H] = 18'
   };
   scene?.pushEvent?.({ type: 'bcuCatCannonActivated', ...state.lastFireDebug });
+  return true;
+}
+
+// BCU Cannon.update id==2 (preTime==-1): spawn the Form 339 wall EUnit at (pos + 100) on the player
+// side, where pos is the id-2 anchor (max(800, ebase.pos) extended to the rearmost touchable enemy),
+// then set preTime = getCannonMagnification(2, BASE_WALL_ALIVE_TIME) + enter.len() - 1 and count it
+// down to SELF_DESTRUCT. The spawn itself goes through the scene factory hook (visual/template side);
+// the anchor math and lifetime stay here so they are deterministic and source-checkable.
+export function activateBcuCatCannonWall(scene, state, before = getBcuCatCannonStatus(scene)) {
+  const spec = state.spec;
+  // wallAliveTime comes from the level curve; fail closed (never spawn a 0-frame wall) if unresolved.
+  if (spec.magnificationResolved === false) {
+    state.lastFireDebug = {
+      ok: false, reason: 'cannon-magnification-unresolved', before,
+      missingMagnification: [...(spec.missingMagnification || [])],
+      bcuReference: 'Treasure.getCannonMagnification(2, BASE_WALL_ALIVE_TIME) (CC_AllParts_growth.csv not loaded)'
+    };
+    scene?.pushEvent?.({ type: 'bcuCatCannonRejected', ...state.lastFireDebug });
+    return false;
+  }
+  const anchor = resolveNonBasicCannonAnchor(scene, spec);
+  const wallX = anchor + BCU_CAT_CANNON_WALL_SPAWN_OFFSET;
+  const enterLen = Number.isFinite(scene?.getBcuCatCannonWallEnterLen?.())
+    ? scene.getBcuCatCannonWallEnterLen()
+    : BCU_CAT_CANNON_WALL_ENTER_LEN;
+  const aliveFrames = Math.max(1, Math.floor(finite(spec.wallAliveTime, 0)) + Math.floor(enterLen) - 1);
+  // Scene owns the Form 339 EUnit factory/template; returns the spawned actor or null when the
+  // wall template is not ready (mirrors the spirit lifecycle's loading gate).
+  const wall = scene?.spawnBcuCannonWall?.(wallX, { aliveFrames, spec, formId: spec.wallFormId });
+  if (!wall) {
+    state.lastFireDebug = {
+      ok: false, reason: 'wall-spawn-unavailable', before, wallX, aliveFrames,
+      bcuReference: 'Cannon.update id==2: new EUnit(Form 339 forms[0]); wall template not ready / no factory'
+    };
+    scene?.pushEvent?.({ type: 'bcuCatCannonRejected', ...state.lastFireDebug });
+    return false;
+  }
+  state.cannon = 0;
+  state.active = {
+    geometry: 'wall', wall, wallX, aliveFrames, remainingFrames: aliveFrames,
+    startedFrame: scene?.logicFrame ?? null
+  };
+  state.lastFireDebug = {
+    ok: true, reason: 'ok', before, after: getBcuCatCannonStatus(scene),
+    geometry: 'wall', wallFormId: spec.wallFormId, wallX, anchor, aliveFrames, enterLen,
+    source: 'BCU StageBasis.act_can -> Cannon.activate(); Cannon.update id==2 wall spawn',
+    bcuReference: 'Form 339 forms[0]; wall.added(-1, pos+100); preTime = getCannonMagnification(2, BASE_WALL_ALIVE_TIME) + enter.len() - 1'
+  };
+  scene?.pushEvent?.({ type: 'bcuCatCannonWallSpawned', ...state.lastFireDebug });
   return true;
 }
 
@@ -622,6 +681,36 @@ function fireBcuCannonBand(scene, state, wave, waveIndex) {
 export function tickBcuCatCannonAttack(scene, { tuning = {} } = {}) {
   const state = scene?.bcuCatCannon || null;
   if (!state?.enabled || !state.active) return null;
+
+  // Wall cannon (id 2): the Form 339 wall lives for `aliveFrames`, then SELF_DESTRUCTs. If enemies
+  // destroy the wall early, the lifecycle simply ends (BCU keeps the cannon busy until preTime hits 0,
+  // but a dead wall has nothing left to kill, so we release the cannon to recharge).
+  if (state.active.geometry === 'wall') {
+    const wall = state.active.wall;
+    const wallAlive = wall && (typeof wall.isAlive === 'function' ? wall.isAlive() : (wall.hp ?? 0) > 0);
+    if (!wallAlive) {
+      state.lastAttackDebug = { source: 'BcuCatCannonRuntime wall lifecycle', cannonId: 2, geometry: 'wall', wallDiedEarly: true, remainingFrames: state.active.remainingFrames };
+      scene?.pushEvent?.({ type: 'bcuCatCannonWallExpired', ...state.lastAttackDebug });
+      state.active = null;
+      return { attacked: false, wallExpired: true, wallDiedEarly: true };
+    }
+    state.active.remainingFrames -= 1;
+    if (state.active.remainingFrames > 0) {
+      return { attacked: false, geometry: 'wall', remainingFrames: state.active.remainingFrames };
+    }
+    // SELF_DESTRUCT: remove the wall immediately (no death soul / surge), like Entity.kill(SELF_DESTRUCT).
+    wall.bcuCatCannonWallSelfDestruct = true;
+    wall.removeAfterMs = 0;
+    if (typeof wall.enterDeadState === 'function') wall.enterDeadState(scene?.timeMs ?? 0);
+    else { wall.isAliveFlag = false; wall.state = 'dead'; }
+    state.lastAttackDebug = {
+      source: 'BcuCatCannonRuntime wall self-destruct', cannonId: 2, geometry: 'wall', wallExpired: true,
+      bcuReference: 'Cannon.update id==2: preTime hits 0 -> wall.kill(KillMode.SELF_DESTRUCT)'
+    };
+    scene?.pushEvent?.({ type: 'bcuCatCannonWallExpired', ...state.lastAttackDebug });
+    state.active = null;
+    return { attacked: false, wallExpired: true };
+  }
 
   // Non-basic cannons: count preTime (NYPRE[id]) down, then apply the dedicated cannon effect once.
   if (state.id !== BCU_CAT_CANNON_ID_BASIC) {

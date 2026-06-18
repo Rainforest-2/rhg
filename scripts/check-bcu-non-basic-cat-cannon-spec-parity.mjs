@@ -71,8 +71,10 @@ assert.equal(barrier.kbTime, BCU_CAT_CANNON_BARRIER_KB_TIME);
 assert.equal(barrier.kbTime, 11, 'KB_TIME[INT_KB]=11');
 assert.equal(barrier.excludeRightEdge, true, 'AttackCanon excludeRightEdge = (id==6)');
 
-// 6. wall cannon spawns Form 339 (Cannon.update id==2 -> Identifier.parseInt(339, Unit.class)).
+// 6. wall cannon spawns Form 339 (Cannon.update id==2 -> Identifier.parseInt(339, Unit.class)) at the
+//    enemy-side-front anchor (pos = max(800, ebase.pos) extended to the rearmost touchable enemy).
 assert.equal(getBcuCatCannonSpec(2).wallFormId, 339, 'wall cannon spawns Unit 339');
+assert.equal(getBcuCatCannonSpec(2).posAnchor, 'enemy-side-front', 'wall anchors on the player-front enemy line');
 
 // 7. extend cannons (slow/curse): ContExtend(eatk, p, wid, spe=150, itv=1, rem=32, rep=0, layer=9).
 for (const id of [1, 7]) {

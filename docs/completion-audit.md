@@ -55,7 +55,7 @@ Legend: ✅ implemented + deterministic check passing · 🟡 implemented, parti
 | formation / production UI | `PlayerProductionBar.js`, `ProductionRuntime.js`, `ProductionCardSkin`, `BcuSpriteText`/`BcuImgCut` | none found | `check-bcu-wallet-button-icon-parity`, production-card checks PASS | 90% |
 | wallet / worker-cat | `BattleEconomy.js` (upgrade cost, max money, internal money, income/frame, `money > upgradeCost`, max lv 8) | income combo multiplier `floor(pct/100)+1` is unusual (no-op at default pct=0); not BCU-verifiable from this checkout — left unchanged, low impact | `check-bcu-wallet-runtime-parity` PASS (exact BCU values) | 90% |
 | cat cannon (basic, id 0) | `BcuCatCannonRuntime.js` charge/maxCharge/ready/request/activate/preTime/wave-bands/anim/damage/assist-KB; `BattleSceneBcuCatCannonPatch.js` HUD+anim | none found | `check-bcu-cat-cannon-runtime-parity`, button/effect/wave-anim checks PASS | 92% |
-| cat cannon (non-basic) | `getBcuCatCannonSpec` ids 1/3/4/5/6/7 (slow/freeze/water/ground/blast/curse) + `BcuCannonLevelCurve` magnification, now **wired** via core-db.zip:cannon-curve.json → runtime resolves all magnification | Wall cannon (id 2, Unit 339 entity-spawn lifecycle) 🔒 still fail-closed (separate blocker, not guessed). Fail-closed safety net retained if curve load fails. | `check-bcu-non-basic-cat-cannon-runtime-parity` + new `check-bcu-cannon-curve-semantic-wiring` PASS | 92% |
+| cat cannon (non-basic) | `getBcuCatCannonSpec` ids 1/3/4/5/6/7 (slow/freeze/water/ground/blast/curse) + `BcuCannonLevelCurve` magnification, now **wired** via core-db.zip:cannon-curve.json → runtime resolves all magnification. Wall cannon (id 2, Form 339 entity-spawn lifecycle) is now **implemented** (`activateBcuCatCannonWall` + `BattleSceneBcuCatCannonPatch.spawnBcuCannonWall`: spawn at enemy-front anchor+100, alive-time SELF_DESTRUCT, early-death release, single-wall replacement; fail-closed while template loads / curve missing). | Wall cannon entry/idle appearance is browser-visual-review-only (no remaining runtime blocker). Fail-closed safety net retained if curve load fails. | `check-bcu-non-basic-cat-cannon-runtime-parity` + `-spec-parity` + `check-bcu-cannon-curve-semantic-wiring` PASS | 92% |
 | stage CSV parsing | `StageDefinitionLoader.js` parses score/specialSpawnControl/group/killCountTrigger/castle_0/castle_1/bossFlag/layerMin/layerMax | parse vs enforce split documented below (§3) | `check-bcu-stage-line-row-parity`, `check-stage-castle-row-detection` PASS | 85% |
 | enemy spawn runtime | `BcuStageSpawnRuntime.js` (base-HP window, kill-count, max-enemy slot, spawn-commit gating) | group gating **parsed but not enforced** — emits explicit `group-gating-not-enforced` warning (no silent ignore) | `check-bcu-stage-spawn-runtime` PASS | 85% |
 | battle tick order | `BattleScene.runTickPhase` economy → spawn → proc-resolve → knockback-death; cannon hooks wrap economy/proc/knockback | none found | `check-battle-tick-order` PASS | 90% |
@@ -93,10 +93,14 @@ Enumerated `BcuStageSpawnRuntime` blocked reasons (all explicit, none silent):
    into `initializeBcuCatCannon({ cannonCurveData })`. No raw `public/assets/bcu` fetch — semantic-strict
    is preserved (`blockedRawReads` stays 0). All non-basic cannon magnification now resolves. The
    activation fail-closed guard is retained as a safety net if the curve ever fails to load.
-2. **Wall cannon (id 2)** — spawns BCU Unit 339 wall entity with a `preTime = -1` lifecycle. The
-   entity-spawn owner/timing is not present in the available BCU source slice; activation rejects with
-   `wall-cannon-entity-spawn-not-implemented`. Left fail-closed rather than guessed (its `wallAliveTime`
-   magnification now resolves from the semantic curve; only the entity lifecycle remains).
+2. **Wall cannon (id 2)** — RESOLVED (2026-06-18). The BCU `Cannon.update` id==2 `preTime = -1`
+   entity-spawn lifecycle is now wired: `activateBcuCatCannonWall` resolves the enemy-front anchor + 100
+   spawn X and `aliveFrames = floor(wallAliveTime) + enter.len()(19) - 1`, `BattleSceneBcuCatCannonPatch.spawnBcuCannonWall`
+   builds the Form 339 form-0 player `EUnit` (template preloaded at init), and `tickBcuCatCannonAttack`
+   counts the wall down to `SELF_DESTRUCT`, releases the cannon on early death, and gates single-wall
+   replacement. Fails closed (`wall-spawn-unavailable` / `cannon-magnification-unresolved`) while the
+   template loads or curve data is missing. Covered by `check-bcu-non-basic-cat-cannon-runtime-parity`
+   and `-spec-parity`. Remaining: browser visual review of the wall entry/idle appearance only.
 3. **Stage special objects / enemy-castle special attack** — not present in the available BCU source
    slice; not implemented rather than guessed.
 
@@ -149,10 +153,15 @@ gaps confined to non-default cannons and unproven stage-special/castle-special f
 
 **Estimated completion after this pass: ~95%.**
 
-The non-basic cat-cannon curve blocker is now resolved (semantic bundle + runtime wiring), lifting the
-cannon category. Remaining ~5% is confined to: the wall cannon's Unit 339 entity-spawn lifecycle and
-stage special objects + enemy-castle special attacks (both held fail-closed for lack of BCU source
-proof — implementing them by guesswork would violate the fact-first rule), plus full end-to-end
-Playwright UI verification (the non-battle UI leg needs a non-crashing chromium in the verify
-environment). These are the only known gaps; everything else is implemented and deterministically
+The non-basic cat-cannon curve blocker is now resolved (semantic bundle + runtime wiring), and the wall
+cannon (id 2, Form 339) entity-spawn lifecycle is now implemented and deterministically checked
+(2026-06-18), lifting the cannon category further. Remaining gaps are confined to: stage special objects +
+enemy-castle special attacks (held fail-closed for lack of BCU source proof — implementing them by
+guesswork would violate the fact-first rule), browser visual review of the wall/guard/summon appearances,
+and full end-to-end Playwright UI verification (the non-battle UI leg needs a non-crashing chromium in the
+verify environment). These are the only known gaps; everything else is implemented and deterministically
 verified.
+
+> Update 2026-06-18 (commercial-grade hardening + UI/loading pass): see
+> [`commercial-grade-hardening-2026-06-18.md`](./commercial-grade-hardening-2026-06-18.md) for the
+> packaging/security/stage-selector/custom-stage-loading changes made on top of this audit.

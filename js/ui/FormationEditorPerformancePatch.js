@@ -119,9 +119,22 @@ function virtualSpacer(position, height) {
   return `<div class='formation-stage-virtual-spacer' data-stage-virtual-spacer='${position}' aria-hidden='true' style='grid-column:1/-1;height:${Math.max(0, Math.round(height))}px'></div>`;
 }
 
+function savedStageScroll(editor, viewKey) {
+  const value = editor.__stageSelectorScrollByKey?.[viewKey];
+  return Number.isFinite(value) ? value : 0;
+}
+
 function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
   const list = editor.root?.querySelector?.('.formation-stage-list');
   const all = items || [];
+  const previousKey = editor.__stageSelectorVirtualKey || '';
+  const keyChanged = previousKey !== viewKey;
+  if (keyChanged) editor.__stageSelectorVirtualKey = viewKey;
+  // On a view switch (category <-> map <-> stage) restore the scroll position this view
+  // was last left at instead of snapping to the top. Same-view re-renders (the virtual
+  // window sliding while the user scrolls) keep using the live scrollTop.
+  const baseScroll = keyChanged ? savedStageScroll(editor, viewKey) : (list?.scrollTop || 0);
+
   if (!list || all.length < STAGE_WINDOW_MIN_ITEMS) {
     editor.stageSelectorVirtual = {
       active: false,
@@ -130,22 +143,17 @@ function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
       total: all.length,
       rendered: all.length,
       start: 0,
-      end: all.length
+      end: all.length,
+      restoreScrollTop: keyChanged ? baseScroll : null
     };
     return all.map(renderItem).join('');
-  }
-
-  const previousKey = editor.__stageSelectorVirtualKey || '';
-  if (previousKey !== viewKey) {
-    editor.__stageSelectorVirtualKey = viewKey;
-    list.scrollTop = 0;
   }
 
   const columns = Math.max(1, countStageColumns(list));
   const rowHeight = (list.clientWidth || 0) <= 760 ? STAGE_WINDOW_MOBILE_ROW_HEIGHT : STAGE_WINDOW_ROW_HEIGHT;
   const totalRows = Math.ceil(all.length / columns);
   const visibleRows = Math.max(1, Math.ceil((list.clientHeight || 520) / rowHeight));
-  const firstVisibleRow = Math.max(0, Math.floor((list.scrollTop || 0) / rowHeight));
+  const firstVisibleRow = Math.max(0, Math.floor(baseScroll / rowHeight));
   const firstRow = Math.max(0, firstVisibleRow - STAGE_WINDOW_OVERSCAN_ROWS);
   const lastRow = Math.min(totalRows, firstVisibleRow + visibleRows + STAGE_WINDOW_OVERSCAN_ROWS);
   const start = firstRow * columns;
@@ -164,7 +172,8 @@ function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
     start,
     end,
     firstVisibleRow,
-    lastVisibleRow: Math.min(totalRows, firstVisibleRow + visibleRows)
+    lastVisibleRow: Math.min(totalRows, firstVisibleRow + visibleRows),
+    restoreScrollTop: keyChanged ? baseScroll : null
   };
 
   return `${virtualSpacer('top', top)}${all.slice(start, end).map(renderItem).join('')}${virtualSpacer('bottom', bottom)}`;
@@ -344,6 +353,13 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
     const stageList = event?.target?.closest?.('.formation-stage-list');
     if (stageList && this.root?.contains(stageList)) {
       if (this.stageSelectorState?.level === 'custom-stage-battle') return;
+      // Remember where the current map/stage view is scrolled so returning to it restores
+      // the position. Gate on level so scrolling the (stale-keyed) category list cannot
+      // overwrite a saved map/stage position.
+      const level = this.stageSelectorState?.level;
+      if ((level === 'map' || level === 'stage') && this.__stageSelectorVirtualKey) {
+        (this.__stageSelectorScrollByKey || (this.__stageSelectorScrollByKey = {}))[this.__stageSelectorVirtualKey] = stageList.scrollTop;
+      }
       if (this.__stageSelectorScrollFrame) return;
       this.__stageSelectorScrollFrame = requestAnimationFrame(() => {
         this.__stageSelectorScrollFrame = null;
@@ -386,6 +402,14 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
       list.innerHTML = bodyHtml;
       list.__stageSelectorBodyKey = bodyKey;
       list.__stageSelectorBodyHtml = bodyHtml;
+      // Replacing innerHTML drops scrollTop; when this render switched views, put the list
+      // back where that view was last scrolled (set by renderStageItemWindow). The rAF
+      // re-apply covers layout that settles after the new markup is attached.
+      const restore = this.stageSelectorVirtual?.restoreScrollTop;
+      if (Number.isFinite(restore)) {
+        list.scrollTop = restore;
+        requestAnimationFrame(() => { if (list.isConnected) list.scrollTop = restore; });
+      }
     }
   };
 }

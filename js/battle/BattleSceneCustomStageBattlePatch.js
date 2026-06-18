@@ -13,6 +13,11 @@ function uniqueList(values) {
   return [...new Set((values || []).filter(Boolean).map(String))];
 }
 
+function clamp01(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
+}
+
 function sceneRandom(scene) {
   return typeof scene?.getBcuRandom === 'function' ? scene.getBcuRandom() : Math.random;
 }
@@ -107,14 +112,20 @@ async function loadStageState(scene, loader, stageId, side, stageIndex) {
     stageKey: stageConfig.stageKey || stageConfig.stageId || stageId,
     stageIndex
   }));
-  for (const unitDef of unitDefs) {
-    if (unitDef.unavailable) continue;
+  // Preload this stage's enemy templates concurrently instead of one-by-one. Each unitDef
+  // has a unique slotId and BattleActorFactory.preloadTemplate de-dups in-flight loads by
+  // key, so distinct templates load independently while shared assets still share one
+  // request; preloading is I/O-bound and consumes no RNG, so this only shortens load time.
+  // Per-unit error handling is unchanged (each rejection is caught locally, so Promise.all
+  // never rejects and a bad unit is simply marked unavailable).
+  await Promise.all(unitDefs.map(async (unitDef) => {
+    if (unitDef.unavailable) return;
     try { await scene.actorFactory.preloadTemplate(unitDef, { level: TEMPLATE_LOAD_LEVEL.SPAWN_READY }); }
     catch (error) {
       unitDef.unavailable = true;
       unitDef.preloadError = { name: error?.name || 'Error', message: error?.message || String(error) };
     }
-  }
+  }));
   const spawnRuntime = new BcuStageSpawnRuntime(runtime, unitDefs, { random: sceneRandom(scene) });
   const killCounterByRowIndex = Object.fromEntries((runtime.enemyRows || []).map((row, i) => [
     Number.isFinite(row?.rowIndex) ? row.rowIndex : i,
@@ -282,10 +293,35 @@ async function initializeCustomStageBattle(scene) {
   if (!config.enabled) return;
   const loader = new StageDefinitionLoader(scene.log);
   const states = [];
+
+  // The base scene init only loads the single selectedStageId; every custom enemy/player
+  // stage is loaded here afterwards. Report per-stage progress into the band the patched
+  // init reserved (see installBattleSceneCustomStageBattlePatch) so the loading overlay
+  // reflects all stages instead of appearing finished after the first one.
+  const progress = scene.__customStageProgress || null;
+  const total = config.enemyStageIds.length + config.playerStageIds.length;
+  let loaded = 0;
+  const reportStageProgress = () => {
+    if (!progress?.report || total <= 0) return;
+    const value = progress.baseEnd + (loaded / total) * (1 - progress.baseEnd);
+    progress.report({ phase: 'battle-scene', message: `カスタムステージを準備中… (${Math.min(loaded + 1, total)}/${total})`, value });
+  };
+
   let index = 0;
-  for (const stageId of config.enemyStageIds) states.push(await loadStageState(scene, loader, stageId, 'cat-enemy', index++));
+  for (const stageId of config.enemyStageIds) {
+    reportStageProgress();
+    states.push(await loadStageState(scene, loader, stageId, 'cat-enemy', index++));
+    loaded++;
+  }
   index = 0;
-  for (const stageId of config.playerStageIds) states.push(await loadStageState(scene, loader, stageId, 'dog-player', index++));
+  for (const stageId of config.playerStageIds) {
+    reportStageProgress();
+    states.push(await loadStageState(scene, loader, stageId, 'dog-player', index++));
+    loaded++;
+  }
+  if (progress?.report && total > 0) {
+    progress.report({ phase: 'battle-scene', message: `カスタムステージ準備完了 (${total}/${total})`, value: 1 });
+  }
   const playerBaseHp = applyFirstPlayerStageBaseHp(scene, states);
   scene.customStageBattle = {
     enabled: true,
@@ -312,10 +348,28 @@ export function installBattleSceneCustomStageBattlePatch() {
 
   const originalInit = proto.init;
   if (typeof originalInit === 'function') {
-    proto.init = async function initWithCustomStageBattle(...args) {
-      const result = await originalInit.apply(this, args);
-      await initializeCustomStageBattle(this);
-      return result;
+    proto.init = async function initWithCustomStageBattle(options = {}, ...rest) {
+      const config = getCustomConfig(this);
+      const customStageCount = config.enabled ? (config.enemyStageIds.length + config.playerStageIds.length) : 0;
+      let initOptions = options;
+      // When custom stage battle will load extra stages after the base init, scale the base
+      // init's progress into [0, baseEnd] and reserve [baseEnd, 1] for the per-stage load so
+      // the overlay does not hit 100% and freeze while the remaining stages stream in.
+      if (customStageCount > 0 && typeof options?.onProgress === 'function') {
+        const baseProgress = options.onProgress;
+        const baseEnd = 0.6;
+        initOptions = { ...options, onProgress: (p) => baseProgress({ ...p, value: clamp01(p?.value) * baseEnd }) };
+        this.__customStageProgress = { report: baseProgress, baseEnd, total: customStageCount };
+      } else {
+        this.__customStageProgress = null;
+      }
+      try {
+        const result = await originalInit.call(this, initOptions, ...rest);
+        await initializeCustomStageBattle(this);
+        return result;
+      } finally {
+        this.__customStageProgress = null;
+      }
     };
   }
 

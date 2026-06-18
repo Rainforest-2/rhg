@@ -24,6 +24,8 @@ function loadImage(url) {
   if(imageCache.has(url)){ counters.imageCacheHit++; return imageCache.get(url); }
   const p=new Promise((res, rej) => {
     const img = new Image();
+    // decode() is best-effort pre-decoding; if it is unsupported or rejects we still
+    // resolve with the loaded image (onerror is the real load-failure path).
     img.onload = async () => { try { if (typeof img.decode === 'function') await img.decode(); } catch(_e) {} res(img); };
     img.onerror = () => rej(new Error(`Image load failed: ${url}`));
     img.src = url;
@@ -142,11 +144,15 @@ async function tryLoadText(baseDir, candidates, parser, field) {
 
 async function tryLoadImage(baseDir, candidates) {
   const tried = [];
+  let lastError = null;
   for (const file of asArray(candidates)) {
     tried.push(file);
-    try { return { ok: true, file, image: await loadImage(join(baseDir, file)), tried }; } catch (_e) {}
+    // A failed candidate falls through to the next one; keep the last error so the
+    // result is diagnosable instead of being silently swallowed.
+    try { return { ok: true, file, image: await loadImage(join(baseDir, file)), tried }; }
+    catch (e) { lastError = e; }
   }
-  return { ok: false, missing: true, tried };
+  return { ok: false, missing: true, tried, error: lastError ? String(lastError?.message || lastError) : null };
 }
 
 export class BcuAssetLoader {

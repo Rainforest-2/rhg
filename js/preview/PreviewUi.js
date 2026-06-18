@@ -1,5 +1,11 @@
 const ROLE_TAG = { dogs: 'DOG', cats: 'CAT', effects: 'FX', castles: 'CASTLE' };
 
+// Escape log text before it goes into innerHTML: the dev log panel renders arbitrary
+// runtime messages, so a message that happens to contain markup must not inject HTML.
+function esc(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+}
+
 export class PreviewUi {
   constructor(root, logEl) {
     this.root = root;
@@ -21,7 +27,7 @@ export class PreviewUi {
     this.logs.push({ level, msg, time: new Date().toISOString().slice(11, 19) });
     if (this.logs.length > 120) this.logs.shift();
     if (!this.logEl || this.logEl.hidden) { console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](`[PreviewUi] ${msg}`); return; }
-    this.logEl.innerHTML = this.logs.map((l) => `<div class='log-item log-${l.level}'>[${l.time}] ${l.level.toUpperCase()} ${l.msg}</div>`).join('');
+    this.logEl.innerHTML = this.logs.map((l) => `<div class='log-item log-${esc(l.level)}'>[${esc(l.time)}] ${esc(String(l.level).toUpperCase())} ${esc(l.msg)}</div>`).join('');
     this.logEl.scrollTop = this.logEl.scrollHeight;
   }
 }

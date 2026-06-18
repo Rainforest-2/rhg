@@ -10,6 +10,8 @@ import {
   tickBcuCatCannonCharge
 } from './bcu-runtime/BcuCatCannonRuntime.js';
 import { parseCannonCurveCsv } from './bcu-runtime/BcuCannonLevelCurve.js';
+import { BCU_CAT_CANNON_WALL_FORM_ID } from './bcu-runtime/BcuCatCannonRuntime.js';
+import { TEMPLATE_LOAD_LEVEL } from './BattleActorFactory.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { parseModel } from '../bcu/BcuModelParser.js';
@@ -96,6 +98,55 @@ function getCatCannonBasePosBcu(scene) {
   return Number.isFinite(fallback) ? fallback : 4000;
 }
 
+// BCU Cannon.update id==2 spawns `Identifier.parseInt(339, Unit.class).get().forms[0]` as a player
+// EUnit. Build a unit def for that fixed form (mirrors BcuSpiritLifecycleRuntime.resolveBcuSpiritUnitDef
+// but for the constant wall form 339) so the actor factory can resolve its bundled actor + combat model.
+const WALL_FORM_PAD = String(BCU_CAT_CANNON_WALL_FORM_ID).padStart(3, '0');
+function buildBcuCannonWallUnitDef(scene) {
+  const id = BCU_CAT_CANNON_WALL_FORM_ID;
+  const assetDef = scene?.bcuDb?.assets?.resolveUnitAsset?.(id, 'f') || {
+    id: `unit-${WALL_FORM_PAD}-f`,
+    kind: 'unit',
+    semanticKey: `unit:${id}:f`,
+    renderMode: 'animated-unit',
+    image: 'image.png',
+    imgcut: 'imgcut.imgcut',
+    model: 'model.mamodel',
+    animations: ['move', 'idle', 'attack', 'kb'].map((role, index) => ({ id: `anim0${index}`, file: `${role}.maanim` }))
+  };
+  return {
+    slotId: `bcu-cat-cannon-wall-${id}-f`,
+    assetId: `unit-${WALL_FORM_PAD}-f`,
+    label: `cat-cannon-wall:${id}`,
+    assetDef,
+    statsType: 'unit',
+    statsId: id,
+    formRow: 0,
+    side: 'dog-player',
+    direction: -1,
+    facing: -1,
+    renderFlipX: false,
+    moveAnimId: 'anim00',
+    idleAnimId: 'anim01',
+    attackAnimId: 'anim02',
+    knockbackAnimId: 'anim03',
+    scale: 1
+  };
+}
+
+function wallTemplateReady(scene, slotId) {
+  const tpl = scene?.actorFactory?.templates?.get?.(slotId);
+  return !!tpl && (tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.SPAWN_READY || tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.FULL_VISUAL);
+}
+
+function warmBcuCannonWallTemplate(scene, unitDef) {
+  const factory = scene?.actorFactory;
+  if (!factory || typeof factory.preloadTemplate !== 'function' || !unitDef?.slotId) return false;
+  if (wallTemplateReady(scene, unitDef.slotId)) return true;
+  factory.preloadTemplate(unitDef, { level: TEMPLATE_LOAD_LEVEL.SPAWN_READY }).catch(() => {});
+  return false;
+}
+
 export function installBattleSceneBcuCatCannonPatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
@@ -110,6 +161,11 @@ export function installBattleSceneBcuCatCannonPatch() {
     const cannonCurveData = await loadBcuCannonCurveData();
     initializeBcuCatCannon(this, cannonCurveData ? { ...cannonConfig, cannonCurveData } : cannonConfig);
     this.ensureCatCannonAnimLoading?.();
+    // The wall cannon (id 2) spawns Form 339 mid-battle; nothing else preloads it, so warm its
+    // template now (like the spirit lifecycle) so the first activation can place it.
+    if (this.bcuCatCannon?.spec?.geometry === 'wall') {
+      warmBcuCannonWallTemplate(this, buildBcuCannonWallUnitDef(this));
+    }
     return result;
   };
 
@@ -241,6 +297,35 @@ export function installBattleSceneBcuCatCannonPatch() {
 
   proto.getCatCannonStatus = function getCatCannonStatus() {
     return getBcuCatCannonStatus(this);
+  };
+
+  // BCU Cannon.update id==2: new EUnit(b, Form339.forms[0].du, enter, 1); b.le.add(wall);
+  // wall.added(-1, (int)(pos + 100)). The runtime owns the (pos + 100) X and alive-time; this hook
+  // builds + spawns the Form 339 player unit at that X, returning the actor (or null when the wall
+  // template is still loading, so the runtime fails the activation closed and the cannon stays charged).
+  proto.spawnBcuCannonWall = function spawnBcuCannonWall(worldX, opts = {}) {
+    if (typeof this.spawnActor !== 'function') return null;
+    const unitDef = buildBcuCannonWallUnitDef(this);
+    if (this.actorFactory && typeof this.actorFactory.preloadTemplate === 'function' && !wallTemplateReady(this, unitDef.slotId)) {
+      warmBcuCannonWallTemplate(this, unitDef);
+      this.lastCatCannonWallSpawn = { ok: false, reason: 'wall-template-loading', slotId: unitDef.slotId, worldX };
+      return null;
+    }
+    const wall = this.spawnActor(unitDef, 'dog-player', false, {
+      x: Number.isFinite(worldX) ? worldX : getCatCannonBasePosBcu(this),
+      bcuCatCannonWall: true,
+      aliveFrames: opts?.aliveFrames ?? null
+    });
+    if (wall) {
+      wall.bcuCatCannonWall = true;
+      // The wall is a fixed-duration defensive entity (no soul/surge); the cannon runtime owns its
+      // SELF_DESTRUCT, so do not let the generic dead-actor cleanup remove it before then.
+      wall.removeAfterMs = Number.MAX_SAFE_INTEGER;
+      this.lastCatCannonWallSpawn = { ok: true, slotId: unitDef.slotId, worldX, instanceId: wall.instanceId || wall.label || null, aliveFrames: opts?.aliveFrames ?? null };
+    } else {
+      this.lastCatCannonWallSpawn = { ok: false, reason: 'spawnActor-returned-null', slotId: unitDef.slotId, worldX };
+    }
+    return wall || null;
   };
 
   const originalRunTickPhase = proto.runTickPhase;

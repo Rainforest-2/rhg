@@ -274,7 +274,11 @@ for (const exportName of [
 const stageDefLoaderSrc = fs.readFileSync('js/battle/StageDefinitionLoader.js','utf8');
 assert.ok(stageDefLoaderSrc.includes('BCU_STAGE_ENEMY_COLUMNS'));
 assert.ok(stageDefLoaderSrc.includes('scdefRaw'));
-assert.ok(stageDefLoaderSrc.includes('specialSpawnControl'));
+// SC (raw CSV col 10 / SCDef internal index 15) is the kill Score used for
+// trail/dojo/timeLimit scoring — NOT a "special spawn control". The misleading
+// `specialSpawnControl` alias was removed; the parser must still expose `score`.
+assert.ok(stageDefLoaderSrc.includes('score'));
+assert.ok(!stageDefLoaderSrc.includes('specialSpawnControl'), 'specialSpawnControl misnomer must not reappear (SC = Score)');
 assert.ok(runtime.includes('killCounterByRowIndex'));
 assert.ok(runtime.includes('groupState'));
 assert.ok(runtime.includes('debug'));

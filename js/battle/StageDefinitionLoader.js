@@ -283,7 +283,6 @@ export class StageDefinitionLoader {
         killCountTrigger: killCount,
         kill_count: killCount,
         score,
-        specialSpawnControl: score,
         negativeSpawnFlag: negativeSpawnFlag ? 1 : 0
       };
 
@@ -332,7 +331,6 @@ export class StageDefinitionLoader {
         killCountTrigger: killCount,
         killCount,
         group,
-        specialSpawnControl: score,
         unsupportedSpawnControl: null,
         spawnWorldX: null,
         warnings: rowWarnings

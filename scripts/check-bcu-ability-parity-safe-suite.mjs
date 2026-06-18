@@ -61,6 +61,7 @@ const commands = [
   ['node', ['--check', 'scripts/check-ability-partial-blockers.mjs']],
   ['node', ['--check', 'scripts/check-bcu-wave-surge-point-capture-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-metal-abi-double-apply.mjs']],
+  ['node', ['--check', 'scripts/check-actor-render-bounds-guard.mjs']],
   ['node', ['scripts/check-bcu-stage-difficulty-parity.mjs']],
   ['node', ['scripts/check-production-card-icon-source-parity.mjs']],
   ['node', ['scripts/check-bcu-parser-indexes.mjs']],
@@ -97,7 +98,8 @@ const commands = [
   ['node', ['scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs']],
   ['node', ['scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-enemy-castle-resolution.mjs']],
-  ['node', ['scripts/check-bcu-enemy-castle-resolution.mjs']]
+  ['node', ['scripts/check-bcu-enemy-castle-resolution.mjs']],
+  ['node', ['scripts/check-actor-render-bounds-guard.mjs']]
 ];
 
 const results = [];

@@ -56,13 +56,13 @@ Legend: ✅ implemented + deterministic check passing · 🟡 implemented, parti
 | wallet / worker-cat | `BattleEconomy.js` (upgrade cost, max money, internal money, income/frame, `money > upgradeCost`, max lv 8) | income combo multiplier `floor(pct/100)+1` is unusual (no-op at default pct=0); not BCU-verifiable from this checkout — left unchanged, low impact | `check-bcu-wallet-runtime-parity` PASS (exact BCU values) | 90% |
 | cat cannon (basic, id 0) | `BcuCatCannonRuntime.js` charge/maxCharge/ready/request/activate/preTime/wave-bands/anim/damage/assist-KB; `BattleSceneBcuCatCannonPatch.js` HUD+anim | none found | `check-bcu-cat-cannon-runtime-parity`, button/effect/wave-anim checks PASS | 92% |
 | cat cannon (non-basic) | `getBcuCatCannonSpec` ids 1/3/4/5/6/7 (slow/freeze/water/ground/blast/curse) + `BcuCannonLevelCurve` magnification, now **wired** via core-db.zip:cannon-curve.json → runtime resolves all magnification. Wall cannon (id 2, Form 339 entity-spawn lifecycle) is now **implemented** (`activateBcuCatCannonWall` + `BattleSceneBcuCatCannonPatch.spawnBcuCannonWall`: spawn at enemy-front anchor+100, alive-time SELF_DESTRUCT, early-death release, single-wall replacement; fail-closed while template loads / curve missing). | Wall cannon entry/idle appearance is browser-visual-review-only (no remaining runtime blocker). Fail-closed safety net retained if curve load fails. | `check-bcu-non-basic-cat-cannon-runtime-parity` + `-spec-parity` + `check-bcu-cannon-curve-semantic-wiring` PASS | 92% |
-| stage CSV parsing | `StageDefinitionLoader.js` parses score/specialSpawnControl/group/killCountTrigger/castle_0/castle_1/bossFlag/layerMin/layerMax | parse vs enforce split documented below (§3) | `check-bcu-stage-line-row-parity`, `check-stage-castle-row-detection` PASS | 85% |
+| stage CSV parsing | `StageDefinitionLoader.js` parses score (SC)/group/killCountTrigger/castle_0/castle_1/bossFlag/layerMin/layerMax | parse vs enforce split documented below (§3). The misleading `specialSpawnControl` alias (a dead duplicate of `score`; SC = kill Score per `SCDef.SC`/raw CSV col 10) was removed 2026-06-18 | `check-bcu-stage-line-row-parity`, `check-stage-castle-row-detection`, `check-battle-scene-stage-runtime-wiring` PASS | 85% |
 | enemy spawn runtime | `BcuStageSpawnRuntime.js` (base-HP window, kill-count, max-enemy slot, spawn-commit gating) | group gating **parsed but not enforced** — emits explicit `group-gating-not-enforced` warning (no silent ignore) | `check-bcu-stage-spawn-runtime` PASS | 85% |
 | battle tick order | `BattleScene.runTickPhase` economy → spawn → proc-resolve → knockback-death; cannon hooks wrap economy/proc/knockback | none found | `check-battle-tick-order` PASS | 90% |
 | damage / proc | `DamageCalculator`, `DamageAbilityResolver`, `ProcResolver`, `BcuProcRuntime`, immunity/resist | none found | `bcu-combat-parity.test.mjs` (19 tests) PASS | 90% |
 | knockback / death | `KBRuntime`, `BcuKnockback*`, `BcuDeathAnimationRuntime`, zombie revive/corpse | none found | parity test + KB checks PASS | 88% |
-| enemy castle / boss guard | `BcuCastleGuardRuntime.js` (armed/active/break states, hold-without-HP-loss, breaker effect), `BcuEnemyCastleBossSpawn.js`, bossFlag from stage row | special enemy-castle "special attack" not present in BCU source slice — see §4 | `check-bcu-castle-guard-parity`, `check-bcu-enemy-castle-boss-spawn-parity`, `check-bcu-enemy-castle-resolution` PASS | 85% |
-| stage special objects / special attacks | `StageDefinitionLoader` score/specialSpawnControl parsed; `BcuStageSpawnRuntime` enforces base-HP/kill/slot controls | special-object spawning + castle special-attack runtime not proven by available BCU source → not implemented (documented, fail-closed) | partial | 65% |
+| enemy castle / boss guard | `BcuCastleGuardRuntime.js` (armed/active/break states, hold-without-HP-loss, breaker effect), `BcuEnemyCastleBossSpawn.js`, bossFlag from stage row | there is no "enemy-castle special attack" mechanism in BCU — see §4 (the real concept is the base-enemy / EEnemy base) | `check-bcu-castle-guard-parity`, `check-bcu-enemy-castle-boss-spawn-parity`, `check-bcu-enemy-castle-resolution` PASS | 85% |
+| base enemy / EEnemy base | last enemy row with `castle_0 == 0` makes the enemy base an `EEnemy` entity instead of an `ECastle` (`EStage.base()` + `StageBasis` ctor `ee != null ? ebase=ee : ebase=new ECastle`). rhg detects the row (`StageRuntime.enemyBaseRow`/`hasEnemyBaseEntity`) | **source-verified but NOT implemented** — detection is unwired (zero consumers) and fail-closed. Blockers in §4 | source proven (`EStage.java`/`StageBasis.java`); no runtime check yet | 25% |
 | tests / verification | 115 `scripts/check-*.mjs`, `tests/bcu-combat-parity.test.mjs`, `scripts/dev-verify-env.sh` (playwright preview) | dev-verify needs chromium installed for the UI leg | this audit ran the node-deterministic subset | 90% |
 
 ## 3. Stage row field: parsed vs enforced
@@ -71,8 +71,8 @@ Traced from `StageDefinitionLoader.js` + `BcuStageSpawnRuntime.js`:
 
 | Field | Parsed | Enforced at runtime | Notes |
 |---|---|---|---|
-| score | yes | n/a (display/difficulty) | |
-| specialSpawnControl | yes | partial | base-HP window + kill-count gating enforced |
+| score (SC) | yes | n/a (kill Score: trail/dojo/timeLimit display/difficulty) | raw CSV col 10 → `SCDef.SC` internal idx 15. The old `specialSpawnControl` alias was a dead duplicate of this and was removed |
+| castle_0 (base-HP trigger) | yes | yes | base-HP spawn window gate (this — not `score` — drives base-HP gating) |
 | group | yes | **no** | emits `group-gating-not-enforced` warning (explicit, not silent) |
 | killCountTrigger | yes | yes | `killCounterByRowIndex` drives the gate |
 | castle_0 / castle_1 | yes | yes | castle row detection check passes |
@@ -101,8 +101,26 @@ Enumerated `BcuStageSpawnRuntime` blocked reasons (all explicit, none silent):
    replacement. Fails closed (`wall-spawn-unavailable` / `cannon-magnification-unresolved`) while the
    template loads or curve data is missing. Covered by `check-bcu-non-basic-cat-cannon-runtime-parity`
    and `-spec-parity`. Remaining: browser visual review of the wall entry/idle appearance only.
-3. **Stage special objects / enemy-castle special attack** — not present in the available BCU source
-   slice; not implemented rather than guessed.
+3. **"Enemy-castle special attack"** — there is **no such mechanism** in BCU. The label was a
+   misnomer. The real concept (verified 2026-06-18 against `util/stage/EStage.java` `base()` and the
+   `battle/StageBasis.java` constructor) is the **base enemy / EEnemy base**: when the *last* enemy
+   line's `castle_0 == 0`, the enemy base becomes that enemy as an `EEnemy` entity
+   (`ebase = est.base(this)`, added at `shock ? boss_spawn : 700`) instead of the default
+   `new ECastle(this)` (added at 800); that line is consumed (`num[ind] = -1`) so it does not also
+   spawn as a normal enemy, and its HP/`getWill` become the base HP / win condition.
+4. **base enemy / EEnemy base spawn** — source-verified (blocker 3) but **NOT implemented**, held
+   fail-closed. `StageRuntime` detects the candidate row (`enemyBaseRow`/`hasEnemyBaseEntity`) but it is
+   unwired (zero consumers) and `row.baseEnemy` is never set. Implementing it is **all-or-nothing**
+   (the entity *replaces* the castle base — touches base-HP, win condition, targeting, render, smoke),
+   and is blocked on parity questions that must be resolved first, or it regresses most stages:
+   - **Trailing zero-row trimming.** BCU's `SCDef.datas`/`getSimple()` come from the binary stage
+     format where the row count `n = is.nextByte()` already excludes the CSV's zero-padding rows
+     (BCU CSVs pad to 10 enemy types with `0,0,0,0,0,0,…`). rhg parses the raw CSV directly and keeps
+     those rows, so a naive `castle_0 == 0` on the literal last CSV row fires on ~73% of stages
+     (verified by scanning all shipped stage CSVs) — almost all of them sentinel rows, not real bases.
+   - **Row order.** `EStage.base()` uses `num.length - 1` (last `datas` line); rhg reverses parsed rows
+     into `runtimeRows`, so the current `enemyBaseRow` index does not align with BCU's.
+   - **enemyId-0 / Aku-stage special** (`isAkuStage()` → enemy 575) handling is unresolved.
 
 ## 5. Changes made in this pass
 
@@ -156,8 +174,9 @@ gaps confined to non-default cannons and unproven stage-special/castle-special f
 The non-basic cat-cannon curve blocker is now resolved (semantic bundle + runtime wiring), and the wall
 cannon (id 2, Form 339) entity-spawn lifecycle is now implemented and deterministically checked
 (2026-06-18), lifting the cannon category further. Remaining gaps are confined to: stage special objects +
-enemy-castle special attacks (held fail-closed for lack of BCU source proof — implementing them by
-guesswork would violate the fact-first rule), browser visual review of the wall/guard/summon appearances,
+the **base enemy / EEnemy base** (source-verified 2026-06-18 but held fail-closed — implementation is
+all-or-nothing and blocked on CSV zero-row-trimming + row-order parity, see §4; the old "enemy-castle
+special attack" was a misnomer for this), browser visual review of the wall/guard/summon appearances,
 and full end-to-end Playwright UI verification (the non-battle UI leg needs a non-crashing chromium in the
 verify environment). These are the only known gaps; everything else is implemented and deterministically
 verified.

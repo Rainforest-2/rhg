@@ -338,11 +338,25 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
   }
   isAbsurdActorBounds(actor, bounds) {
     if (!bounds) return false;
-    const imageW = actor?.sprite?.image?.width || 0;
-    const imageH = actor?.sprite?.image?.height || 0;
-    const maxImageDim = Math.max(imageW, imageH, 1);
-    const maxAllowed = Math.max(maxImageDim * 4, 4096);
-    return !Number.isFinite(bounds.width) || !Number.isFinite(bounds.height) || bounds.width > maxAllowed || bounds.height > maxAllowed || Math.abs(bounds.left) > maxAllowed * 2 || Math.abs(bounds.right) > maxAllowed * 2 || Math.abs(bounds.top) > maxAllowed * 2 || Math.abs(bounds.bottom) > maxAllowed * 2;
+    // This per-frame runtime gate must reject ONLY genuinely broken transforms, not
+    // legitimate large-scale animation frames. A BCU attack/beam/explosion routinely
+    // scales parts to tens of thousands of model-local px while the resting sprite sheet
+    // is only a few hundred px wide. The previous `max(imageDim*4, 4096)` envelope assumed
+    // a rendered model never exceeds ~4x its sheet and dropped the WHOLE actor on every
+    // frame that exceeded it — e.g. enemy 393 (ラミエル) whose beam reaches ~15000px wide
+    // from frame 130 onward, making the body blink out then reappear mid-attack.
+    // That tight resting-frame envelope is correct only for the INITIAL/frame-0 draw and is
+    // still enforced there at build time by scripts/check-actor-bundle-compatibility.mjs.
+    // At runtime the only thing that genuinely cannot reach the canvas is a non-finite
+    // (NaN/Infinity) coordinate — it corrupts the 2D context state for every later draw —
+    // plus astronomically large extents that can only come from a matrix/parenting bug.
+    if (!Number.isFinite(bounds.width) || !Number.isFinite(bounds.height)
+      || !Number.isFinite(bounds.left) || !Number.isFinite(bounds.right)
+      || !Number.isFinite(bounds.top) || !Number.isFinite(bounds.bottom)) return true;
+    const SANITY_CAP_PX = 1_000_000;
+    return bounds.width > SANITY_CAP_PX || bounds.height > SANITY_CAP_PX
+      || Math.abs(bounds.left) > SANITY_CAP_PX || Math.abs(bounds.right) > SANITY_CAP_PX
+      || Math.abs(bounds.top) > SANITY_CAP_PX || Math.abs(bounds.bottom) > SANITY_CAP_PX;
   }
   initializeActorGroundContact(actor, drawList) {
     if (actor.visualGroundContactInitialized) return;
@@ -419,7 +433,7 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     const bounds = this.getBattleDrawListLocalBounds(actor, drawList);
     if (!actor.firstFrameBounds && bounds) actor.firstFrameBounds = bounds;
     if (this.isAbsurdActorBounds(actor, bounds)) {
-      const skippedReason = 'initial-draw-bounds-outlier';
+      const skippedReason = 'non-finite-or-absurd-bounds';
       globalThis.__LAST_ACTOR_RENDER_DEBUG__ = this.buildActorRenderDebug(actor, drawList, bounds, skippedReason);
       actor.lastRenderSkippedReason = skippedReason;
       this._scene?.pushEvent?.({ type: 'actorRenderSkipped', actor: actor.instanceId || actor.label, semanticKey: actor.semanticKey || actor.assetDef?.semanticKey || null, reason: skippedReason, bounds });

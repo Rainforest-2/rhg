@@ -2,9 +2,9 @@
 
 ## Last updated
 
-- date: 2026-06-17 (UTC)
+- date: 2026-06-19 (UTC)
 - commit: local Codex parity implementation batch
-- scope: current BCU ZIP/runtime/ability parity status, plus special-castle boss-spawn runtime wiring and the BASE_WALL (id 2) cat-cannon wall-entity spawn lifecycle.
+- scope: current BCU ZIP/runtime/ability parity status, plus attack-only spirit form actor bundle manifest registration and spawn-ready semantic ZIP loading.
 
 This file is the current high-level status page. Older migration task logs were intentionally collapsed so this page reflects the current state instead of preserving stale intermediate claims.
 
@@ -44,6 +44,7 @@ These areas have meaningful JS runtime wiring and focused checks, but may still 
 - death soul core
 - AB_GLASS skip-soul behavior
 - burrow lifecycle
+- spirit lifecycle and attack-only spirit form semantic ZIP loading
 - standard zombie corpse / soulstrike / revive visual trace path
 - special castle boss-spawn coordinate via `core-db.zip:boss-spawns.json` and `StageRuntime.bossSpawnWorldX`
 - BASE_WALL cat cannon (id 2) wall-entity spawn lifecycle (Form 339 spawn at anchor+100, alive-time SELF_DESTRUCT, single-wall replacement)
@@ -54,7 +55,7 @@ These have deterministic runtime/effect evidence, but exact browser appearance h
 
 - `P_DELAY` runtime/effect
 - barrier / demon shield / shield breaker
-- spirit lifecycle
+- spirit lifecycle exact actor / A_IMUATK appearance
 - castle/base guard hold/break appearance
 - standard zombie corpse DOWN/REVIVE appearance
 - summon entry appearance
@@ -83,6 +84,7 @@ The following older claims are no longer current:
 - Castle/base guard JS owner is **not** missing anymore. `BcuCastleGuardRuntime` / `BattleSceneBcuCastleGuardPatch` implement the `StageBasis.activeGuard`-equivalent state and `scripts/check-bcu-castle-guard-parity.mjs` covers active/hold/break behavior. Remaining blocker: manual browser appearance.
 - Zombie corpse / soulstrike is no longer just an unproven visual note. `scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs` covers revive indexes, corpse targetability, soulstrike cancellation, zombie-killer suppression, death-surge single spawn, DOWN/REVIVE phase timing, render override hide/show, cleanup, and HP restoration. Remaining blockers: manual browser acceptance, mini-death-surge holder proof, and extra/custom revive fixtures.
 - Summon runtime exists for explicit proc-object data, but normal unit/enemy CSV summon holder remains unproven. Keep those facts separate in future status updates.
+- Spirit lifecycle code is not runtime-missing: attack-only spirit forms referenced by `DataUnit.ints[110]` are manifest-backed partial actor bundles and `scripts/check-bcu-spirit-bundle-manifest-parity.mjs` covers ZIP entries, manifest registration, semantic provider lookup, and `BattleActorFactory` spawn-ready loading. Remaining blocker: manual browser appearance.
 
 ## Required safe checks before parity status upgrades
 
@@ -100,6 +102,7 @@ node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node scripts/check-bcu-barrier-shield-effect-parity.mjs
 node scripts/check-bcu-demon-shield-regen-timing.mjs
 node scripts/check-bcu-summon-runtime-parity.mjs
+node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
 node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```

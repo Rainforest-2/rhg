@@ -77,6 +77,8 @@ const spirit = spawned.spawned[0];
 assert.equal(spirit.bcuIsSpirit, true, 'spawned actor is marked as spirit role');
 assert.equal(spirit.x, Math.max(800 + spirit.detectionRangeBcu, Math.min(3000 + SPIRIT_SUMMON_RANGE, 3200)), 'spirit spawn position matches BCU clamp formula');
 assert.equal(spirit.state, 'attack', 'spirit starts attack on add');
+assert.equal(spirit.currentAnimId, 'anim02', 'spirit switches to attack animation on add');
+assert.equal(spirit.activeAnimRole, 'attack', 'spirit active animation role is attack on add');
 assert.equal(requestBcuSpiritSpawn(scene, 'summoner-slot').ok, false, 'second spirit is rejected while one is alive');
 
 const rejected = spirit.takeDamage(50, { timeMs: 1 });

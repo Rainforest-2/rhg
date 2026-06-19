@@ -1,0 +1,66 @@
+[ss] spirit 728 no-spirit
+[ss] spirit 731 no-spirit
+[ss] spirit 738 no-spirit
+[ss] spirit 754 no-spirit
+[ss] spirit 774 no-spirit
+[ss] mini-surge inject {"ok":true,"id":"dog-000-3","x":3858}
+[ss] mini-surge captured [{"type":"deathSoul"}] da [{"kind":"deathSurge","isMini":true,"triggered":false}]
+
+===== SS RESULTS =====
+{
+ "spirit-728": {
+  "setup": {
+   "ok": true,
+   "slotId": "spirit-conj-728",
+   "statsId": 728
+  },
+  "spiritSeen": null,
+  "errors": []
+ },
+ "spirit-731": {
+  "setup": {
+   "ok": true,
+   "slotId": "spirit-conj-731",
+   "statsId": 731
+  },
+  "spiritSeen": null,
+  "errors": []
+ },
+ "spirit-738": {
+  "setup": {
+   "ok": true,
+   "slotId": "spirit-conj-738",
+   "statsId": 738
+  },
+  "spiritSeen": null,
+  "errors": []
+ },
+ "spirit-754": {
+  "setup": {
+   "ok": true,
+   "slotId": "spirit-conj-754",
+   "statsId": 754
+  },
+  "spiritSeen": null,
+  "errors": []
+ },
+ "spirit-774": {
+  "setup": {
+   "ok": true,
+   "slotId": "spirit-conj-774",
+   "statsId": 774
+  },
+  "spiritSeen": null,
+  "errors": []
+ },
+ "miniDeathSurge": {
+  "inject": {
+   "ok": true,
+   "id": "dog-000-3",
+   "x": 3858
+  },
+  "captured": [
+   "surge"
+  ]
+ }
+}

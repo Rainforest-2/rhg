@@ -48,7 +48,7 @@ These rows are no longer "runtime missing" tasks. Do not reimplement them from s
 | Burrow lifecycle | `code-complete-candidate`; `BcuBurrowLifecycleRuntime` / `BattleActorBcuBurrowPatch` cover lifecycle, movement, targetability, collision, renderability, and cleanup. | Optional manual visual review for exact DOWN/MOVE/UP appearance. |
 | Barrier / demon shield / shield breaker | `human-visual-review-needed`; gate order, phases, y offset, scale, layer, and demon shield regen timing are covered. | Manual browser visual review. |
 | Castle/base guard | `human-visual-review-needed`; `BcuCastleGuardRuntime` / `BattleSceneBcuCastleGuardPatch` implement active/hold/break state and `check-bcu-castle-guard-parity.mjs` covers behavior. | Manual browser visual review for hold/break appearance. |
-| Spirit lifecycle | `human-visual-review-needed`; parser and lifecycle runtime checks exist. | Manual browser visual review for actor/IMUATK appearance. |
+| Spirit lifecycle | `human-visual-review-needed`; parser, lifecycle runtime, attack-only partial actor bundle registration, semantic ZIP loading, and spawn-ready factory checks exist. | Manual browser visual review for actor/IMUATK appearance. |
 | Standard zombie corpse / soulstrike / revive visual trace | `human-visual-review-needed`; `check-bcu-zombie-corpse-soulstrike-parity.mjs` covers standard revive, targetability, soulstrike cancellation, DOWN/REVIVE timing, render override, cleanup, and HP restoration. | Manual browser visual review plus extra/custom revive fixtures if broadening claims. |
 | Summon explicit proc-object runtime | `partial`; explicit proc-object runtime and deterministic checks exist, but normal CSV holder and automatic custom/proc-object loading remain unresolved. | Implement source-backed loader/fixtures before status upgrade. |
 
@@ -74,6 +74,7 @@ node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node scripts/check-bcu-barrier-shield-effect-parity.mjs
 node scripts/check-bcu-demon-shield-regen-timing.mjs
 node scripts/check-bcu-summon-runtime-parity.mjs
+node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
 node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```

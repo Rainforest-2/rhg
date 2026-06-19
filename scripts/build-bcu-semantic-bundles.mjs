@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileBufferOrNull, FIXED_DATE, hashFile, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
+import { comparePackId, fileBufferOrNull, FIXED_DATE, hashFile, loadManifest, readJson, writeJson, writeStoreZip } from './bcu-semantic-utils.mjs';
 import { EFFECT_KBEFF_BUNDLE_KEY, EFFECT_KBEFF_BUNDLE_PATH, rebuildKbeffEffectBundle } from './build-bcu-effect-bundle.mjs';
 import { BCU_BATTLE_UI_BUNDLE_KEY, BCU_BATTLE_UI_BUNDLE_PATH, rebuildBcuBattleUiBundle } from './build-bcu-ui-bundle.mjs';
 
@@ -15,6 +15,41 @@ const manifest = { schemaVersion: 1, generatedAt: FIXED_DATE, zipFormat: 'store-
 const diagnostics = { schemaVersion: 1, generatedAt: FIXED_DATE, summary: { generated: 0, skipped: 0, sampleMode: !all }, skipped: [], oversized: [] };
 const limit = 50 * 1024 * 1024;
 const ZOMBIE_BURROW_ANIM_ROLES = Object.freeze({ '00': 'anim04', '01': 'anim05', '02': 'anim06' });
+
+const stripControlJunk = (line) => line.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]+/g, '');
+const parseCsvRows = (text) => String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/)
+  .map((line) => stripControlJunk(line.replace(/\/\/.*$/, '')).trim()).filter(Boolean)
+  .map((line) => line.split(',').map((x) => x.trim()));
+const toNumbers = (cols) => cols.map((v) => (Number.isFinite(Number(v)) ? Number(v) : 0));
+const packIdFromBcuPath = (file) => String(file || '').match(/^public\/assets\/bcu\/([^/]+)\//)?.[1] || null;
+const isUnitFormRow = (cols) => cols.length >= 2 && cols[0] !== '' && Number.isFinite(Number(cols[0]));
+
+async function readUnitFormRows(file) {
+  try { return parseCsvRows(await fs.readFile(file, 'utf8')).filter(isUnitFormRow).map(toNumbers); }
+  catch { return []; }
+}
+
+async function deriveSpiritUnitIds() {
+  const manifest = await loadManifest();
+  const ids = new Set();
+  for (const idRaw of manifest.indexes?.unitIds || []) {
+    const unitId = Number(idRaw);
+    if (!Number.isFinite(unitId)) continue;
+    const id3 = String(unitId).padStart(3, '0');
+    const statsCandidates = (manifest.files || []).filter((p) => p.endsWith(`/org/unit/${id3}/unit${id3}.csv`));
+    let richest = { rows: [], pack: null };
+    for (const candidate of statsCandidates) {
+      const rows = await readUnitFormRows(candidate);
+      const pack = packIdFromBcuPath(candidate);
+      if (rows.length > richest.rows.length || (rows.length === richest.rows.length && comparePackId(pack, richest.pack) > 0)) richest = { rows, pack };
+    }
+    for (const row of richest.rows) {
+      const spiritId = Number(row?.[110]);
+      if (Number.isFinite(spiritId) && spiritId >= 0) ids.add(Math.trunc(spiritId));
+    }
+  }
+  return ids;
+}
 
 async function addBundle(bundleKey, kind, key, bundlePath, status, entries) {
   const requiredMissing = entries.filter((e) => e?.required && e.data == null).map((e) => e.name);
@@ -42,6 +77,25 @@ function sampleActors(entries) {
   return entries.filter((e) => wanted.includes(e.key)).slice(0, 8);
 }
 
+const spiritUnitIds = await deriveSpiritUnitIds();
+
+function isSpiritFormActor(entry) {
+  return entry?.kind === 'unit' && entry?.form === 'f' && spiritUnitIds.has(Number(entry.id));
+}
+
+function missingActorRuntimeEntries(entry) {
+  const files = entry?.selected?.files;
+  const missing = ['image','imgcut','model'].filter((name)=>!files?.[name]);
+  for (const role of ['move','idle','attack','kb']) if (!files?.animations?.[role]) missing.push(role);
+  return missing;
+}
+
+function isRuntimeUsableSpiritActor(entry) {
+  const files = entry?.selected?.files;
+  if (!isSpiritFormActor(entry) || entry?.status !== 'partial') return false;
+  return !!files?.image && !!files?.imgcut && !!files?.model && !!files?.animations?.attack;
+}
+
 function selectedSourcePrefix(entry) {
   const pack = entry?.selected?.sourcePack;
   if (!pack || entry?.kind !== 'enemy') return null;
@@ -67,9 +121,9 @@ function zombieBurrowAnimationEntries(entry) {
 for (const entry of sampleActors(actor.entries || [])) {
   if (!entry.selected) continue;
   const files = entry.selected.files;
-  const runtimeMissing = ['image','imgcut','model'].filter((name)=>!files?.[name]);
-  for (const role of ['move','idle','attack','kb']) if (!files?.animations?.[role]) runtimeMissing.push(role);
-  if (entry.status !== 'full' || runtimeMissing.length) {
+  const runtimeMissing = missingActorRuntimeEntries(entry);
+  const spiritActor = isRuntimeUsableSpiritActor(entry);
+  if (!spiritActor && (entry.status !== 'full' || runtimeMissing.length)) {
     diagnostics.skipped.push({ bundleKey: entry.bundleRef?.bundleKey, kind: 'actor', key: entry.key, bundlePath: entry.bundleRef?.bundlePath || null, reason: 'actor-runtime-incomplete', missingEntries: runtimeMissing, sourcePack: entry.selected?.sourcePack || null, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [] });
     diagnostics.summary.skipped += 1;
     continue;
@@ -77,11 +131,11 @@ for (const entry of sampleActors(actor.entries || [])) {
   const zombieBurrow = zombieBurrowAnimationEntries(entry);
   const extraActorAnimations = Object.fromEntries(zombieBurrow.map((e) => [e.animId, e.file]));
   const items = [
-    { name: 'bundle.json', required: true, data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, missing: entry.missing, fallbackPolicy: 'no-raw-runtime-fallback', sourcePack: entry.selected.sourcePack, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], entries: { image: files.image, imgcut: files.imgcut, model: files.model, animations: files.animations || {}, extraActorAnimations, icon: files.icon || null } }, null, 2)) },
+    { name: 'bundle.json', required: true, data: Buffer.from(JSON.stringify({ key: entry.key, status: entry.status, missing: entry.missing, fallbackPolicy: 'no-raw-runtime-fallback', sourcePack: entry.selected.sourcePack, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], spiritAttackOnly: spiritActor || undefined, entries: { image: files.image, imgcut: files.imgcut, model: files.model, animations: files.animations || {}, extraActorAnimations, icon: files.icon || null } }, null, 2)) },
     { name: 'image.png', required: true, data: await fileBufferOrNull(files.image) },
     { name: 'imgcut.imgcut', required: true, data: await fileBufferOrNull(files.imgcut) },
     { name: 'model.mamodel', required: true, data: await fileBufferOrNull(files.model) },
-    ...Object.entries(files.animations || {}).map(async ([role, file]) => ({ name: `${role}.maanim`, required: true, data: await fileBufferOrNull(file) })),
+    ...Object.entries(files.animations || {}).filter(([, file]) => !!file).map(async ([role, file]) => ({ name: `${role}.maanim`, required: true, data: await fileBufferOrNull(file) })),
     ...zombieBurrow.map(async (entry) => ({ name: entry.file, data: await fileBufferOrNull(entry.rawPath) })),
     { name: 'icon.png', data: await fileBufferOrNull(files.icon) }
   ];

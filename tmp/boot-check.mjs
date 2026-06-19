@@ -1,0 +1,11 @@
+import { launch, newApp, startBattle, sceneSummary } from './visual-harness.mjs';
+const browser = await launch();
+const { page, errors } = await newApp(browser, {});
+console.log('formation reached; apply button:', await page.evaluate(()=>!!document.querySelector('.apply-battle-button')));
+await page.screenshot({ path: 'tmp/visual-shots/00-formation.png' });
+await startBattle(page);
+console.log('battle scene ready');
+await page.screenshot({ path: 'tmp/visual-shots/01-battle-start.png' });
+console.log('scene summary:', JSON.stringify(await sceneSummary(page)));
+console.log('errors (first 8):', errors.slice(0,8));
+await browser.close();

@@ -1,0 +1,166 @@
+[fx] barrier-none effect true proof [{"type":"barrier","phase":null,"frameCount":null,"hasAnimator":true,"scale":0.75,"layer":6,"durationMs":858}]
+[fx] barrier-breaker effect true proof [{"type":"barrier","phase":null,"frameCount":null,"hasAnimator":true,"scale":0.75,"layer":9,"durationMs":1386}]
+[fx] shield-full effect true proof [{"type":"demonShield","phase":null,"frameCount":null,"hasAnimator":true,"scale":0.75,"layer":5,"durationMs":462}]
+[fx] shield-destruction effect true proof [{"type":"demonShield","phase":null,"frameCount":null,"hasAnimator":true,"scale":0.75,"layer":5,"durationMs":1320}]
+[fx] shield-regen effect true proof []
+[fx] delay effect true proof []
+[fx] guard-hold effect true proof [{"type":"waveGuard","phase":null,"frameCount":null,"hasAnimator":true,"scale":0.75,"layer":0,"durationMs":693}]
+[fx] guard-break effect true proof [{"type":"waveGuard","phase":null,"frameCount":null,"hasAnimator":true,"scale":0.75,"layer":0,"durationMs":1386}]
+[fx] corpse down @x3555
+[fx] revive pending
+[fx] corpse revive @x3555
+[fx] REVIVED @x3559
+[fx] zombie corpse/revive captures corpse-down,pending,corpse-revive,revived
+
+===== FX RESULTS =====
+{
+ "barrier-none": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": "bcu-enemyBarrier-none-31-k1cfjd7bdpi",
+   "type": "barrier",
+   "x": 2223
+  },
+  "proof": [
+   {
+    "type": "barrier",
+    "phase": null,
+    "frameCount": null,
+    "hasAnimator": true,
+    "scale": 0.75,
+    "layer": 6,
+    "durationMs": 858
+   }
+  ]
+ },
+ "barrier-breaker": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": "bcu-enemyBarrier-breaker-31-wqojcpkf3vp",
+   "type": "barrier",
+   "x": 2245
+  },
+  "proof": [
+   {
+    "type": "barrier",
+    "phase": null,
+    "frameCount": null,
+    "hasAnimator": true,
+    "scale": 0.75,
+    "layer": 9,
+    "durationMs": 1386
+   }
+  ]
+ },
+ "shield-full": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": "bcu-demonShield-full-34-da5dystbizl",
+   "type": "demonShield",
+   "x": 2288
+  },
+  "proof": [
+   {
+    "type": "demonShield",
+    "phase": null,
+    "frameCount": null,
+    "hasAnimator": true,
+    "scale": 0.75,
+    "layer": 5,
+    "durationMs": 462
+   }
+  ]
+ },
+ "shield-destruction": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": "bcu-demonShield-destruction-26-7r7ndgix1hu",
+   "type": "demonShield",
+   "x": 2275
+  },
+  "proof": [
+   {
+    "type": "demonShield",
+    "phase": null,
+    "frameCount": null,
+    "hasAnimator": true,
+    "scale": 0.75,
+    "layer": 5,
+    "durationMs": 1320
+   }
+  ]
+ },
+ "shield-regen": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": null,
+   "type": null,
+   "x": 2250
+  },
+  "proof": []
+ },
+ "delay": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": "bcu-enemyDelay-def-35-fa62lfycebt",
+   "type": "delay",
+   "x": 2206
+  },
+  "proof": []
+ },
+ "guard-hold": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": "bcu-enemyWaveGuard-none-33-ty7hk1eup2e",
+   "type": "waveGuard",
+   "x": 2238
+  },
+  "proof": [
+   {
+    "type": "waveGuard",
+    "phase": null,
+    "frameCount": null,
+    "hasAnimator": true,
+    "scale": 0.75,
+    "layer": 0,
+    "durationMs": 693
+   }
+  ]
+ },
+ "guard-break": {
+  "spawn": true,
+  "res": {
+   "ok": true,
+   "effectId": "bcu-enemyWaveGuard-breaker-42-xmwyimd0c2g",
+   "type": "waveGuard",
+   "x": 2253
+  },
+  "proof": [
+   {
+    "type": "waveGuard",
+    "phase": null,
+    "frameCount": null,
+    "hasAnimator": true,
+    "scale": 0.75,
+    "layer": 0,
+    "durationMs": 1386
+   }
+  ]
+ },
+ "zombie": {
+  "spawn": true,
+  "captures": [
+   "corpse-down",
+   "pending",
+   "corpse-revive",
+   "revived"
+  ]
+ }
+}

@@ -7,10 +7,10 @@
     "pngValidation": "signature, IHDR, dimensions, color type, chunk boundaries, CRC, IEND; trailing bytes after IEND are allowed for icon assets"
   },
   "summary": {
-    "needs-remap": 765,
+    "needs-remap": 764,
     "missing": 7,
     "invalid-png": 9,
-    "ok": 2074
+    "ok": 2075
   },
   "enemyCoverage": {
     "expectedMinEnemyId": 0,
@@ -89414,26 +89414,26 @@
     },
     {
       "semanticKey": "unit:734:f",
-      "currentSourcePath": "public/assets/bcu/130300/org/unit/734/f/uni734_f00.png",
-      "desiredSourcePath": "public/assets/bcu/130300/org/unit/734/f/uni734_f00.png",
+      "currentSourcePath": "public/assets/bcu/130200/org/unit/734/f/uni734_f00.png",
+      "desiredSourcePath": "public/assets/bcu/130200/org/unit/734/f/uni734_f00.png",
       "status": "ok",
       "pngValidation": {
         "valid": true,
         "reason": null,
         "width": 128,
         "height": 128,
-        "sizeBytes": 9570,
+        "sizeBytes": 10615,
         "signature": "89504e470d0a1a0a"
       },
       "candidates": [
         {
-          "sourcePath": "public/assets/bcu/130300/org/unit/734/f/uni734_f00.png",
+          "sourcePath": "public/assets/bcu/130200/org/unit/734/f/uni734_f00.png",
           "pngValidation": {
             "valid": true,
             "reason": null,
             "width": 128,
             "height": 128,
-            "sizeBytes": 9570,
+            "sizeBytes": 10615,
             "signature": "89504e470d0a1a0a"
           }
         }
@@ -91429,26 +91429,26 @@
     },
     {
       "semanticKey": "unit:770:f",
-      "currentSourcePath": null,
-      "desiredSourcePath": "public/assets/bcu/140400/org/unit/770/f/edi770_f.png",
-      "status": "needs-remap",
+      "currentSourcePath": "public/assets/bcu/130700/org/unit/770/f/uni770_c00.png",
+      "desiredSourcePath": "public/assets/bcu/130700/org/unit/770/f/uni770_c00.png",
+      "status": "ok",
       "pngValidation": {
         "valid": true,
         "reason": null,
-        "width": 85,
-        "height": 32,
-        "sizeBytes": 2112,
+        "width": 110,
+        "height": 85,
+        "sizeBytes": 10965,
         "signature": "89504e470d0a1a0a"
       },
       "candidates": [
         {
-          "sourcePath": "public/assets/bcu/140400/org/unit/770/f/edi770_f.png",
+          "sourcePath": "public/assets/bcu/130700/org/unit/770/f/uni770_c00.png",
           "pngValidation": {
             "valid": true,
             "reason": null,
-            "width": 85,
-            "height": 32,
-            "sizeBytes": 2112,
+            "width": 110,
+            "height": 85,
+            "sizeBytes": 10965,
             "signature": "89504e470d0a1a0a"
           }
         }

@@ -1,0 +1,7 @@
+[bz] zombie spawn {"ok":true,"slotId":"stage-enemy-284-row-99"}
+[bz] blocker drop {"ok":true,"zombieX":700,"blockerX":1060}
+[bz] BURROW down @x 960
+[bz] BURROW move @x 964
+[bz] BURROW up @x 1464
+[bz] zombie HP set to 1 to force death/revive
+[bz] captures: burrow-down,burrow-move,burrow-up

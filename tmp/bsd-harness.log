@@ -1,0 +1,53 @@
+[bsd] barrier spawn true
+[bsd] barrier no flash caught; effect types seen recently: ["hit"]
+[bsd] demon-shield spawn true
+[bsd] demon-shield FLASH caught [{"type":"demonShield","phase":null}] barrierHp 0 shieldHp 4492
+[bsd] delay enemy 772 runtime model: {"delay":{"prob":100,"strength":50},"slot":"stage-enemy-772-row-99","hp":200000}
+[bsd] delay no flash caught
+
+===== BSD RESULTS =====
+{
+ "barrier": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-362-row-99"
+  },
+  "caught": null
+ },
+ "demon-shield": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-552-row-99"
+  },
+  "caught": {
+   "present": [
+    {
+     "type": "demonShield",
+     "phase": null
+    }
+   ],
+   "allTypes": [
+    "demonShield",
+    "hit"
+   ],
+   "enemyBarrier": 0,
+   "enemyShield": 4492,
+   "state": "running"
+  }
+ },
+ "delay": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-772-row-99"
+  },
+  "model": {
+   "delay": {
+    "prob": 100,
+    "strength": 50
+   },
+   "slot": "stage-enemy-772-row-99",
+   "hp": 200000
+  },
+  "caught": null
+ }
+}

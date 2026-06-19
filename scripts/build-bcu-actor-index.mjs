@@ -32,6 +32,41 @@ function findCanonicalBodyImage(entry, candidate) {
   return pngs[0] || null;
 }
 
+function scoreActorCandidate(candidate) {
+  if (!candidate?.files) return -1;
+  let score = candidate.status === 'full' ? 100 : candidate.status === 'partial' ? 50 : 0;
+  if (candidate.files.image && !isUiIconLikePng(candidate.files.image)) score += 8;
+  if (candidate.files.imgcut) score += 4;
+  if (candidate.files.model) score += 4;
+  if (candidate.files.animations?.attack) score += 4;
+  if (candidate.files.animations?.move) score += 1;
+  if (candidate.files.animations?.idle) score += 1;
+  if (candidate.files.animations?.kb) score += 1;
+  return score;
+}
+
+function remapSelectedUiIconBody(index) {
+  for (const entry of index.entries || []) {
+    const selectedImage = entry.selected?.files?.image || null;
+    if (!selectedImage || !isUiIconLikePng(selectedImage)) continue;
+    const replacements = [];
+    for (const candidate of entry.sourceCandidates || []) {
+      const canonical = findCanonicalBodyImage(entry, candidate);
+      if (canonical && candidate.files) candidate.files.image = canonical;
+      if (!candidate?.files?.image || isUiIconLikePng(candidate.files.image)) continue;
+      if (!['full', 'partial'].includes(candidate.status)) continue;
+      replacements.push(candidate);
+    }
+    replacements.sort((a, b) => scoreActorCandidate(b) - scoreActorCandidate(a) || comparePackId(b.sourcePack, a.sourcePack));
+    const replacement = replacements[0] || null;
+    if (!replacement) continue;
+    entry.selected = { sourcePack: replacement.sourcePack, files: replacement.files };
+    entry.status = replacement.status;
+    entry.missing = replacement.missing || [];
+    entry.warnings = [...(entry.warnings || []), `remapped-ui-icon-selected-as-actor-image:${basename(selectedImage)}`];
+  }
+}
+
 function normalizeActorBodyImages(index) {
   for (const entry of index.entries || []) {
     for (const candidate of entry.sourceCandidates || []) {
@@ -50,6 +85,7 @@ function normalizeActorBodyImages(index) {
 const manifest = await loadManifest();
 const index = buildActorIndexFromFiles(manifest.files);
 normalizeActorBodyImages(index);
+remapSelectedUiIconBody(index);
 
 for (const entry of index.entries || []) {
   if (!entry.selected?.files?.image) continue;

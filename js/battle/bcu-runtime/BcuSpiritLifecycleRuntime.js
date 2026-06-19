@@ -125,11 +125,13 @@ export function resolveBcuSpiritUnitDef(scene, slotId, summoner = null) {
     model: 'model.mamodel',
     animations: ['move', 'idle', 'attack', 'kb'].map((role, index) => ({ id: `anim0${index}`, file: `${role}.maanim` }))
   };
+  const spiritAnimId = 'anim02';
   return {
     slotId: `bcu-spirit-unit-${id}-f`,
     assetId: `unit-${pad}-f`,
     label: `spirit:${id}`,
     assetDef,
+    bcuSpiritAttackOnly: true,
     statsType: 'unit',
     statsId: id,
     formRow: 0,
@@ -137,10 +139,11 @@ export function resolveBcuSpiritUnitDef(scene, slotId, summoner = null) {
     direction: summoner?.direction ?? -1,
     facing: summoner?.facing ?? -1,
     renderFlipX: summoner?.renderFlipX === true,
-    moveAnimId: 'anim00',
-    idleAnimId: 'anim01',
-    attackAnimId: 'anim02',
-    knockbackAnimId: 'anim03',
+    currentAnimId: spiritAnimId,
+    moveAnimId: spiritAnimId,
+    idleAnimId: spiritAnimId,
+    attackAnimId: spiritAnimId,
+    knockbackAnimId: spiritAnimId,
     scale: summoner?.scale || 1
   };
 }
@@ -183,6 +186,7 @@ export function markBcuSpiritActor(scene, spirit, summoner, slotId) {
   spirit.bcuSpiritAttackStartedOnAdd = true;
   spirit.scene = scene;
   spirit.setState?.('attack');
+  spirit.setAnimation?.(spirit.attackAnimId || 'anim02', 'attack', true);
   spirit.attackStartedAtMs = scene?.timeMs || 0;
   spirit.attackElapsedMs = 0;
   spirit.hasHitInCurrentAttack = false;

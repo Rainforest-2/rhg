@@ -1,0 +1,241 @@
+[enemy] delay spawn: {"ok":true,"slotId":"stage-enemy-774-row-99"}
+[enemy] delay DONE captures: (none) enemy: {"st":"attack-wait","hp":3000,"x":2600,"proc":{"barrier":0,"demonShield":0,"delay":0,"burrow":0,"revive":0},"barrierCur":null,"shieldCur":null,"burrowPhase":null,"corpse":null,"revivePending":false}
+[enemy] barrier spawn: {"ok":true,"slotId":"stage-enemy-364-row-99"}
+[enemy] barrier DONE captures: (none) enemy: {"st":"attack","hp":12800,"x":3550,"proc":{"barrier":0,"demonShield":0,"delay":0,"burrow":0,"revive":0},"barrierCur":null,"shieldCur":null,"burrowPhase":null,"corpse":null,"revivePending":false}
+[enemy] demon-shield spawn: {"ok":true,"slotId":"stage-enemy-554-row-99"}
+[enemy] demon-shield DONE captures: (none) enemy: {"st":"attack-wait","hp":2476,"x":3880,"proc":{"barrier":0,"demonShield":0,"delay":0,"burrow":0,"revive":0},"barrierCur":null,"shieldCur":0,"burrowPhase":null,"corpse":null,"revivePending":false}
+[enemy] burrow spawn: {"ok":true,"slotId":"stage-enemy-286-row-99"}
+[enemy] burrow DONE captures: (none) enemy: {"st":"attack","hp":40000,"x":3821,"proc":{"barrier":0,"demonShield":0,"delay":0,"burrow":1,"revive":1},"barrierCur":null,"shieldCur":null,"burrowPhase":null,"corpse":null,"revivePending":false}
+
+===== RESULTS =====
+{
+ "delay": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-774-row-99"
+  },
+  "firstProbe": {
+   "state": "running",
+   "effectTypes": [],
+   "enemy": {
+    "st": "attack",
+    "hp": 3000,
+    "x": 2600,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 0,
+     "revive": 0
+    },
+    "barrierCur": null,
+    "shieldCur": null,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 1
+  },
+  "finalProbe": {
+   "state": "running",
+   "effectTypes": [
+    "hit"
+   ],
+   "enemy": {
+    "st": "attack-wait",
+    "hp": 3000,
+    "x": 2600,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 0,
+     "revive": 0
+    },
+    "barrierCur": null,
+    "shieldCur": null,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 1
+  },
+  "captures": [],
+  "shots": [
+   "tmp/visual-shots/enemy-delay-steady.png"
+  ],
+  "errors": []
+ },
+ "barrier": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-364-row-99"
+  },
+  "firstProbe": {
+   "state": "running",
+   "effectTypes": [],
+   "enemy": {
+    "st": "move",
+    "hp": 12800,
+    "x": 2622,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 0,
+     "revive": 0
+    },
+    "barrierCur": null,
+    "shieldCur": null,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 1
+  },
+  "finalProbe": {
+   "state": "running",
+   "effectTypes": [
+    "hit"
+   ],
+   "enemy": {
+    "st": "attack",
+    "hp": 12800,
+    "x": 3550,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 0,
+     "revive": 0
+    },
+    "barrierCur": null,
+    "shieldCur": null,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 0
+  },
+  "captures": [],
+  "shots": [
+   "tmp/visual-shots/enemy-barrier-steady.png"
+  ],
+  "errors": []
+ },
+ "demon-shield": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-554-row-99"
+  },
+  "firstProbe": {
+   "state": "running",
+   "effectTypes": [],
+   "enemy": {
+    "st": "move",
+    "hp": 2500,
+    "x": 2700,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 0,
+     "revive": 0
+    },
+    "barrierCur": null,
+    "shieldCur": null,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 1
+  },
+  "finalProbe": {
+   "state": "running",
+   "effectTypes": [
+    "hit"
+   ],
+   "enemy": {
+    "st": "attack-wait",
+    "hp": 2476,
+    "x": 3880,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 0,
+     "revive": 0
+    },
+    "barrierCur": null,
+    "shieldCur": 0,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 1
+  },
+  "captures": [],
+  "shots": [
+   "tmp/visual-shots/enemy-demon-shield-steady.png"
+  ],
+  "errors": []
+ },
+ "burrow": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-286-row-99"
+  },
+  "firstProbe": {
+   "state": "running",
+   "effectTypes": [],
+   "enemy": {
+    "st": "move",
+    "hp": 40000,
+    "x": 2632,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 1,
+     "revive": 1
+    },
+    "barrierCur": null,
+    "shieldCur": null,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 2
+  },
+  "finalProbe": {
+   "state": "running",
+   "effectTypes": [
+    "deathSoul",
+    "hit"
+   ],
+   "enemy": {
+    "st": "attack",
+    "hp": 40000,
+    "x": 3821,
+    "proc": {
+     "barrier": 0,
+     "demonShield": 0,
+     "delay": 0,
+     "burrow": 1,
+     "revive": 1
+    },
+    "barrierCur": null,
+    "shieldCur": null,
+    "burrowPhase": null,
+    "corpse": null,
+    "revivePending": false
+   },
+   "playerUnits": 1
+  },
+  "captures": [],
+  "shots": [
+   "tmp/visual-shots/enemy-burrow-steady.png"
+  ],
+  "errors": []
+ }
+}

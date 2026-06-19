@@ -1,0 +1,14 @@
+[ui] wallet unaffordable {"state":"unaffordable","money":0,"walletLevel":1,"max":8,"upgradeCost":560}
+[ui] wallet affordable {"state":"affordable","money":2560,"walletLevel":1,"max":8,"upgradeCost":560}
+[ui] wallet lv8 {"state":"lv8","money":6000,"walletLevel":8,"max":8,"upgradeCost":560}
+[ui] cannon status (forced full): {"source":"BCU StageBasis.cannon/maxCannon + Cannon runtime (dedicated cannon source, not unit proc)","enabled":true,"id":0,"cannon":1500,"maxCannon":1500,"chargeRatio":1,"ready":true,"active":false,"attack":4550,"requestFire":false,"lastFireDebug":null,"lastAttackDebug":null}
+[ui] fire result: true
+[ui] fire frame 0 {"effects":["hit"],"cannonEffects":0,"baseAnim":true,"waveAnim":false}
+[ui] fire frame 2 {"effects":["cat-cannon-wave"],"cannonEffects":3,"baseAnim":true,"waveAnim":true}
+[ui] fire frame 3 {"effects":["cat-cannon-wave"],"cannonEffects":4,"baseAnim":true,"waveAnim":true}
+[ui] fire frame 4 {"effects":["cat-cannon-wave"],"cannonEffects":3,"baseAnim":true,"waveAnim":true}
+[ui] wall spawn attempt: {"spawned":false,"lastSpawn":{"ok":false,"reason":"wall-template-loading","slotId":"bcu-cat-cannon-wall-339-f","worldX":2400}}
+[ui] wall present: {"present":true,"x":2400,"hp":1,"state":"attack-wait"} -> tmp/visual-shots/ui-base-wall.png
+
+===== UI RESULTS =====
+errors: []

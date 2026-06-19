@@ -73,6 +73,7 @@ Use relevant checks from the current workplan and status docs. Common checks inc
 - `scripts/check-bcu-burrow-lifecycle-parity.mjs`
 - `scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs`
 - `scripts/check-bcu-summon-runtime-parity.mjs`
+- `scripts/check-bcu-spirit-bundle-manifest-parity.mjs`
 - `scripts/check-bcu-castle-guard-parity.mjs`
 - `scripts/check-ability-partial-blockers.mjs`
 

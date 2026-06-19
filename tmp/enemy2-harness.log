@@ -1,0 +1,59 @@
+[enemy2] barrier spawn true probe {"st":"move","hp":12800,"x":2408,"barrierHp":null,"barrierMax":null,"shieldHp":null,"shieldMax":null,"burrowPhase":null,"corpse":null,"revivePending":false}
+[enemy2] demon-shield spawn true probe {"st":"move","hp":2500,"x":2425,"barrierHp":null,"barrierMax":null,"shieldHp":null,"shieldMax":null,"burrowPhase":null,"corpse":null,"revivePending":false}
+[enemy2] delay DONE effects (none) proof null
+[enemy2] burrow/zombie DONE captures (none)
+
+===== RESULTS2 =====
+{
+ "barrier": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-364-row-99"
+  },
+  "probe": {
+   "st": "move",
+   "hp": 12800,
+   "x": 2408,
+   "barrierHp": null,
+   "barrierMax": null,
+   "shieldHp": null,
+   "shieldMax": null,
+   "burrowPhase": null,
+   "corpse": null,
+   "revivePending": false
+  }
+ },
+ "demon-shield": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-554-row-99"
+  },
+  "probe": {
+   "st": "move",
+   "hp": 2500,
+   "x": 2425,
+   "barrierHp": null,
+   "barrierMax": null,
+   "shieldHp": null,
+   "shieldMax": null,
+   "burrowPhase": null,
+   "corpse": null,
+   "revivePending": false
+  }
+ },
+ "delay": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-774-row-99"
+  },
+  "effectsSeen": [],
+  "proof": null
+ },
+ "burrow": {
+  "spawn": {
+   "ok": true,
+   "slotId": "stage-enemy-286-row-99"
+  },
+  "captures": []
+ }
+}

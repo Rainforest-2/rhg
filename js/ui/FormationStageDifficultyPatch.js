@@ -84,9 +84,10 @@ function mapMatches(ed, map, f = filterState(ed)) {
   if (!f.q) return true;
   return mapText(map, stats).includes(f.q) || (map?.stages || []).some((st) => stageText(st, diffOf(ed, st)).includes(f.q));
 }
+function semanticProvider() { try { return getBcuAssetDatabase()?.semanticProvider || null; } catch { return null; } }
 async function ensureDifficulty(ed) {
   if (ed.__bcuStageDifficultyPromise) return ed.__bcuStageDifficultyPromise;
-  ed.__bcuStageDifficultyPromise = loadBcuStageDifficultyTable().then((r) => { ed.__bcuStageDifficultyTable = r.table; ed.__bcuStageDifficultyDiagnostics = r.diagnostics; globalThis.__BCU_STAGE_DIFFICULTY_DEBUG__ = r.diagnostics; ed.renderStageSelector?.(); return r; });
+  ed.__bcuStageDifficultyPromise = loadBcuStageDifficultyTable({ provider: semanticProvider() }).then((r) => { ed.__bcuStageDifficultyTable = r.table; ed.__bcuStageDifficultyDiagnostics = r.diagnostics; globalThis.__BCU_STAGE_DIFFICULTY_DEBUG__ = r.diagnostics; ed.renderStageSelector?.(); return r; });
   return ed.__bcuStageDifficultyPromise;
 }
 function currentScope(ed) {
@@ -160,8 +161,8 @@ function decorateMapLevel(ed, scope) {
   setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown, unresolvedReason: unresolved[0] || null });
 }
 function decorateStageLevel(ed, scope) {
-  const f = filterState(ed);
-  const matched = new Set(scope.items.filter((s) => stageMatches(ed, s, f)).map((s) => s.key));
+  // Stage-level search/filter UI is removed (keep map search only). Decorate difficulty datasets for
+  // display but never hide a stage card and never insert the search/filter tools at this level.
   const unresolved = [];
   for (const card of ed.root.querySelectorAll('.formation-stage-card-stage[data-stage-id]')) {
     const st = scope.items.find((s) => s.key === card.dataset.stageId || s.id === card.dataset.stageId);
@@ -171,11 +172,9 @@ function decorateStageLevel(ed, scope) {
     card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
     card.dataset.stageDifficultyMin = d.diff >= 0 ? String(d.diff) : '';
     card.dataset.stageDifficultyMax = d.diff >= 0 ? String(d.diff) : '';
-    card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageId));
+    card.classList.remove('is-difficulty-filtered');
   }
-  const shown = scope.items.filter((s) => !isFiltering(f) || matched.has(s.key)).length;
-  insertControls(ed, scope, matched.size, shown);
-  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown, unresolvedReason: unresolved[0] || null });
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: scope.items.length, shownCount: scope.items.length, unresolvedReason: unresolved[0] || null });
 }
 function decorate(ed) {
   const scope = currentScope(ed);

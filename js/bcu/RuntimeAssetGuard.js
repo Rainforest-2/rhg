@@ -9,9 +9,12 @@ function normalizeGuardUrl(url) {
   return noHash.split('?')[0];
 }
 
+// No raw public/assets/bcu URL is whitelisted at runtime. Stage difficulty (the former sole
+// exception) is now bundled into lang:jp and read from the ZIP, so every raw BCU URL is blocked
+// in semantic-strict mode. Kept as an exported predicate so the guard's call sites are stable.
 export function isWhitelistedRawBcuUrl(url) {
-  const s = normalizeGuardUrl(url);
-  return /(^|\/|\.\/)public\/assets\/bcu\/lang\/Difficulty\.txt$/.test(s);
+  void normalizeGuardUrl(url);
+  return false;
 }
 
 function recordRawWhitelistRead(provider, context, url) {

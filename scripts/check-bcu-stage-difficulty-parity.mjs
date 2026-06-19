@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { buildBcuStageCatalog } from '../js/ui/BcuStageCatalogBuilder.js';
+import { readStoreZipEntries } from './bcu-semantic-utils.mjs';
 import { parseBcuStageDifficultyLang, formatBcuStageDifficulty, stageDifficultyKeyFromStageOption, resolveStageDifficulty, buildScopedDifficultyFilterCandidates } from '../js/bcu/BcuStageDifficultyRuntime.js';
 
 const parsed = parseBcuStageDifficultyLang('000-000-000\t1\n000-000-001\t2\n001-012-003\t7\n');
@@ -17,10 +18,15 @@ assert.equal(stageDifficultyKeyFromStageOption({ mapColcId: 1, mapNo: 12, stageN
 assert.equal(resolveStageDifficulty({ mapColcId: 1, mapNo: 12, stageNo: 3 }, { table: parsed.table }).diff, 7);
 assert.equal(resolveStageDifficulty({ stageId: 'unknown' }, { table: parsed.table }).diff, -1);
 
-const sourcePath = 'public/assets/bcu/lang/Difficulty.txt';
-assert.ok(fs.existsSync(sourcePath), 'repo contains actual BCU lang/Difficulty.txt source');
-const real = parseBcuStageDifficultyLang(fs.readFileSync(sourcePath, 'utf8'), { source: sourcePath });
-assert.ok(real.diagnostics.parsed > 1000, 'real Difficulty.txt parses many rows');
+// Difficulty data is consumed from the bundled lang:jp ZIP (entry `Difficulty.txt`), not the raw
+// public/assets/bcu source — runtime and checks must both be raw-asset-independent.
+const langBundlePath = 'public/assets/bundles/lang/jp.zip';
+assert.ok(fs.existsSync(langBundlePath), 'lang:jp bundle exists');
+const langEntries = await readStoreZipEntries(langBundlePath);
+assert.ok(langEntries.has('Difficulty.txt'), 'lang:jp bundle contains Difficulty.txt');
+const sourcePath = `${langBundlePath}:Difficulty.txt`;
+const real = parseBcuStageDifficultyLang(langEntries.get('Difficulty.txt').toString('utf8'), { source: sourcePath });
+assert.ok(real.diagnostics.parsed > 1000, 'bundled Difficulty.txt parses many rows');
 assert.equal(resolveStageDifficulty({ mapColcId: 0, mapNo: 0, stageNo: 0 }, { table: real.table }).diff, 1, 'representative legend stage resolves to real difficulty');
 assert.equal(resolveStageDifficulty({ mapColcId: 13, mapNo: 0, stageNo: 0 }, { table: real.table }).diff, 10, 'representative A/stageRNA stage resolves to real difficulty');
 assert.equal(resolveStageDifficulty({ mapColcId: 1, mapNo: 0, stageNo: 0 }, { table: real.table }).diff, 2, 'representative event stage resolves to real difficulty');

@@ -73,7 +73,8 @@ function applyDomDifficultyFilter(editor) {
   if (!root) return;
   const f = filterState(editor);
   if (editor.stageSelectorVirtual?.active === true) return;
-  const cards = [...root.querySelectorAll('.formation-stage-card-map[data-stage-map],.formation-stage-card-stage[data-stage-id]')];
+  // Stage search removed: only map cards are filtered. Stage cards are always shown in full.
+  const cards = [...root.querySelectorAll('.formation-stage-card-map[data-stage-map]')];
   let matched = 0;
   let hidden = 0;
   for (const card of cards) {

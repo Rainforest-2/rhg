@@ -1,6 +1,10 @@
 import { stageKey } from './BcuIdentifier.js';
 
-const DEFAULT_DIFFICULTY_LANG_PATH = 'public/assets/bcu/lang/Difficulty.txt';
+// Stage difficulty ships as a locale-agnostic lang file bundled into lang:jp (entry name
+// `Difficulty.txt`). The runtime resolves it from the semantic ZIP bundle, never from a raw
+// public/assets/bcu fetch.
+const DIFFICULTY_BUNDLE_LOCALE = 'jp';
+const DIFFICULTY_BUNDLE_ENTRY = 'Difficulty.txt';
 const NONE_LABEL = '---';
 
 function toInt(value, fallback = null) {
@@ -109,24 +113,26 @@ export function resolveStageDifficulty(stage, { table = null, db = null } = {}) 
 
 let cachedPromise = null;
 
-export async function loadBcuStageDifficultyTable({ path = DEFAULT_DIFFICULTY_LANG_PATH, fetchImpl = globalThis.fetch?.bind(globalThis) } = {}) {
+// Reads the bundled `Difficulty.txt` through the semantic asset provider's lang:jp ZIP. There
+// is no raw public/assets/bcu fallback by design; without a provider the table is empty and the
+// resolver falls back to core-db difficulty / `---`.
+export async function loadBcuStageDifficultyTable({
+  provider = null,
+  locale = DIFFICULTY_BUNDLE_LOCALE,
+  internalPath = DIFFICULTY_BUNDLE_ENTRY
+} = {}) {
+  const source = `lang:${locale}:${internalPath}`;
+  // Don't cache the provider-less empty result: a later call once the provider is ready must
+  // still be able to populate the table.
+  if (!provider || typeof provider.readLanguageFile !== 'function') {
+    return { table: new Map(), diagnostics: { source, parsed: 0, skipped: 0, loadMode: 'no-provider', errors: [{ reason: 'semantic-provider-unavailable' }] } };
+  }
   if (!cachedPromise) {
     cachedPromise = (async () => {
-      if (typeof fetchImpl === 'function') {
-        const response = await fetchImpl(path.startsWith('./') ? path : `./${path}`);
-        if (!response?.ok) throw new Error(`HTTP ${response?.status || 'unknown'}: ${path}`);
-        const parsed = parseBcuStageDifficultyLang(await response.text(), { source: path });
-        parsed.diagnostics.loadMode = 'fetch-raw-lang-file';
-        return parsed;
-      }
-      if (typeof window === 'undefined') {
-        const { readFile } = await import('node:fs/promises');
-        const parsed = parseBcuStageDifficultyLang(await readFile(path.replace(/^\.\//, ''), 'utf8'), { source: path });
-        parsed.diagnostics.loadMode = 'node-readfile-raw-lang-file';
-        return parsed;
-      }
-      return { table: new Map(), diagnostics: { source: path, parsed: 0, skipped: 0, errors: [{ reason: 'fetch-unavailable' }] } };
-    })().catch((error) => ({ table: new Map(), diagnostics: { source: path, parsed: 0, skipped: 0, errors: [{ reason: String(error?.message || error) }] } }));
+      const parsed = parseBcuStageDifficultyLang(await provider.readLanguageFile(locale, internalPath), { source });
+      parsed.diagnostics.loadMode = 'semantic-bundle-lang';
+      return parsed;
+    })().catch((error) => ({ table: new Map(), diagnostics: { source, parsed: 0, skipped: 0, loadMode: 'load-failed', errors: [{ reason: String(error?.message || error) }] } }));
   }
   return cachedPromise;
 }

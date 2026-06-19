@@ -56,6 +56,8 @@ function persistExtendedConfig(editor, config) {
     fixedBaseHpValue: Number(config.fixedBaseHpValue || FIXED_HP),
     baseHpDrainEnabled: !!config.baseHpDrainEnabled,
     baseHpDrainPerFrame: Number(config.baseHpDrainPerFrame || DRAIN_PER_FRAME),
+    autoBarrierBreakEnabled: !!config.autoBarrierBreakEnabled,
+    autoBarrierBreakMultiplier: Number(config.autoBarrierBreakMultiplier) || undefined,
     updatedAt: Date.now()
   };
   try { globalThis.localStorage?.setItem?.(STORAGE_KEY, JSON.stringify(payload)); } catch {}

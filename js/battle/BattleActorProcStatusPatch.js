@@ -6,6 +6,7 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { BCU_SCALE_MODE } from './bcu-runtime/BcuEffectTraceRuntime.js';
 import { clearBcuWarpLifecycle, isBcuWarpLifecycleActive, startBcuWarpLifecycle, tickBcuWarpLifecycle } from './bcu-runtime/BcuWarpLifecycleRuntime.js';
+import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.actor-proc-status-patch.v7-bcu-toxic-load-retry');
 const BCU_SLOW_MOVE_PER_FRAME = 0.25;
@@ -154,6 +155,10 @@ function createEffectRuntime(asset) {
 }
 
 function actorWorldX(actor) {
+  // Anchor the A_POISON (POIATK / 毒撃) burst to the actor's on-screen sprite position so it lands
+  // on the enemy. posBcu/x alone omits the model-alignment + crowd + knockback render offsets.
+  const visual = BattleCombatCoordinateRuntime.getEntityVisualWorldX(actor);
+  if (Number.isFinite(visual)) return visual;
   return Number.isFinite(actor?.posBcu) ? actor.posBcu : (Number.isFinite(actor?.x) ? actor.x : 0);
 }
 

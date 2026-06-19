@@ -86,6 +86,9 @@ function mapSearchText(map) {
 }
 
 function filteredStageItems(editor, kind, items) {
+  // Stage-level search/filter is intentionally removed: once a map is opened, show every stage it
+  // contains. Map-level search is preserved below. (User request: keep map search, drop stage search.)
+  if (kind === 'stage') return items || [];
   const filter = stageFilterState(editor);
   if (!isStageFiltering(filter)) return items || [];
   let bcuDb = null;

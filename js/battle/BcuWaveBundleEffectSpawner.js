@@ -12,7 +12,9 @@ const DRAWEFF_PRIORITY_STATUS_TYPES = new Set(['barrier', 'demonShield']);
 const DRAWEFF_BASELINE_STATUS_TYPES = new Set(['waveInvalid', 'waveStop', 'procInvalid', 'warpInvalid']);
 
 function actorPos(actor) {
-  const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
+  // Anchor proc/status burst effects (critical, savage, attack-nullify, warp, delay, ...) to the
+  // actor's on-screen sprite position, not the bare combat anchor, so they land on the enemy.
+  const n = BattleCombatCoordinateRuntime.getEntityVisualWorldX(actor);
   return Number.isFinite(n) ? n : (Number.isFinite(actor?.x) ? actor.x : 0);
 }
 

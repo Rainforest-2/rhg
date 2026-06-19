@@ -20,6 +20,17 @@ function procSucceeded(calc, key) {
   return list.some((p) => p?.key === key);
 }
 
+// Custom-stage "auto barrier break" option (toggled in the formation custom-stage controls). When
+// enabled, the damage a barrier absorbs is accumulated and the barrier breaks once the cumulative
+// total reaches `barrier durability (max HP) * multiplier`. Without it a barrier that never takes a
+// single hit >= its HP can block forever.
+function autoBarrierBreakConfig() {
+  const cfg = globalThis.__CUSTOM_STAGE_BATTLE_CONFIG__ || null;
+  if (!cfg || cfg.autoBarrierBreakEnabled !== true) return null;
+  const mult = Number(cfg.autoBarrierBreakMultiplier);
+  return { multiplier: Number.isFinite(mult) && mult > 0 ? mult : 5 };
+}
+
 function ensureBarrierShield(actor) {
   if (actor.__bcuBarrierShieldInitialized) return;
   actor.__bcuBarrierShieldInitialized = true;
@@ -28,6 +39,7 @@ function ensureBarrierShield(actor) {
   const shieldHpRaw = Math.max(0, Math.trunc(num(proc?.demonShield?.hp, 0)));
   actor.bcuBarrierHp = Number.isFinite(actor.bcuBarrierHp) ? actor.bcuBarrierHp : barrierHp;
   actor.bcuBarrierMaxHp = Number.isFinite(actor.bcuBarrierMaxHp) ? actor.bcuBarrierMaxHp : barrierHp;
+  actor.bcuBarrierAbsorbedDamage = Number.isFinite(actor.bcuBarrierAbsorbedDamage) ? actor.bcuBarrierAbsorbedDamage : 0;
   actor.bcuDemonShieldHp = Number.isFinite(actor.bcuDemonShieldHp) ? actor.bcuDemonShieldHp : shieldHpRaw;
   actor.bcuDemonShieldMaxHp = Number.isFinite(actor.bcuDemonShieldMaxHp) ? actor.bcuDemonShieldMaxHp : shieldHpRaw;
   actor.bcuDemonShieldRegenPercent = num(proc?.demonShield?.regen, 0);
@@ -53,6 +65,19 @@ function gateBarrier(actor, damage, meta = {}) {
     const before = actor.bcuBarrierHp;
     actor.bcuBarrierHp = 0;
     return { blocked: true, damage: 0, event: { type: 'barrier-broken-by-damage', before, after: 0, absorbedDamage: damage, source: 'BCU barrier breaks and cancels current damage/procs' } };
+  }
+  const auto = autoBarrierBreakConfig();
+  if (auto) {
+    const absorbed = (Number.isFinite(actor.bcuBarrierAbsorbedDamage) ? actor.bcuBarrierAbsorbedDamage : 0) + damage;
+    actor.bcuBarrierAbsorbedDamage = absorbed;
+    const durability = Number.isFinite(actor.bcuBarrierMaxHp) && actor.bcuBarrierMaxHp > 0 ? actor.bcuBarrierMaxHp : actor.bcuBarrierHp;
+    const threshold = durability * auto.multiplier;
+    if (absorbed >= threshold) {
+      const before = actor.bcuBarrierHp;
+      actor.bcuBarrierHp = 0;
+      return { blocked: true, damage: 0, event: { type: 'barrier-auto-broken-by-cumulative-damage', before, after: 0, absorbedDamage: damage, cumulativeAbsorbed: absorbed, threshold, multiplier: auto.multiplier, source: 'custom-stage auto barrier break: cumulative absorbed damage >= durability * multiplier' } };
+    }
+    return { blocked: true, damage: 0, event: { type: 'barrier-hit-blocked', before: actor.bcuBarrierHp, after: actor.bcuBarrierHp, absorbedDamage: damage, cumulativeAbsorbed: absorbed, threshold, source: 'BCU barrier blocks insufficient damage and cancels procs' } };
   }
   return { blocked: true, damage: 0, event: { type: 'barrier-hit-blocked', before: actor.bcuBarrierHp, after: actor.bcuBarrierHp, absorbedDamage: damage, source: 'BCU barrier blocks insufficient damage and cancels procs' } };
 }

@@ -5,6 +5,9 @@ const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
 const STORAGE_KEY = 'wanko.customStageBattle.v1';
 const FIXED_HP = 10000000;
 const DRAIN_PER_FRAME = 100;
+// Auto barrier break: when enabled, cumulative damage absorbed by a barrier breaks it once it reaches
+// this multiple of the barrier's durability (max HP). User spec: バリア耐久値の5倍。
+const AUTO_BARRIER_BREAK_MULTIPLIER = 5;
 
 function uniqueList(values) {
   return [...new Set((values || []).filter(Boolean).map(String))];
@@ -26,8 +29,10 @@ function ensureHpState(editor) {
   const stored = readStoredPayload() || {};
   if (editor.customStageBattle.fixedBaseHpEnabled === undefined) editor.customStageBattle.fixedBaseHpEnabled = !!stored.fixedBaseHpEnabled;
   if (editor.customStageBattle.baseHpDrainEnabled === undefined) editor.customStageBattle.baseHpDrainEnabled = !!stored.baseHpDrainEnabled;
+  if (editor.customStageBattle.autoBarrierBreakEnabled === undefined) editor.customStageBattle.autoBarrierBreakEnabled = !!stored.autoBarrierBreakEnabled;
   editor.customStageBattle.fixedBaseHpEnabled = !!editor.customStageBattle.fixedBaseHpEnabled;
   editor.customStageBattle.baseHpDrainEnabled = !!editor.customStageBattle.baseHpDrainEnabled && editor.customStageBattle.fixedBaseHpEnabled;
+  editor.customStageBattle.autoBarrierBreakEnabled = !!editor.customStageBattle.autoBarrierBreakEnabled;
   return editor.customStageBattle;
 }
 
@@ -39,6 +44,8 @@ function buildExtendedConfig(config, state) {
     fixedBaseHpValue: FIXED_HP,
     baseHpDrainEnabled: fixedBaseHpEnabled && !!state?.baseHpDrainEnabled,
     baseHpDrainPerFrame: DRAIN_PER_FRAME,
+    autoBarrierBreakEnabled: !!state?.autoBarrierBreakEnabled,
+    autoBarrierBreakMultiplier: AUTO_BARRIER_BREAK_MULTIPLIER,
     baseHpPolicySource: 'FormationCustomStageBattleHpPatch'
   };
 }
@@ -56,8 +63,10 @@ function persistExtendedState(editor) {
     baseSource: state.baseSource === 'player' ? 'player' : 'enemy',
     fixedBaseHpEnabled: !!state.fixedBaseHpEnabled,
     baseHpDrainEnabled: !!state.fixedBaseHpEnabled && !!state.baseHpDrainEnabled,
+    autoBarrierBreakEnabled: !!state.autoBarrierBreakEnabled,
     fixedBaseHpValue: FIXED_HP,
     baseHpDrainPerFrame: DRAIN_PER_FRAME,
+    autoBarrierBreakMultiplier: AUTO_BARRIER_BREAK_MULTIPLIER,
     updatedAt: Date.now()
   };
   try { globalThis.localStorage?.setItem?.(STORAGE_KEY, JSON.stringify(payload)); } catch {}
@@ -81,6 +90,7 @@ function injectHpControls(editor) {
     controls.insertAdjacentHTML('beforeend', `
       <button type="button" data-action="custom-stage-fixed-base-hp"></button>
       <button type="button" data-action="custom-stage-base-hp-drain"></button>
+      <button type="button" data-action="custom-stage-auto-barrier-break"></button>
     `);
   }
   updateButton(
@@ -92,6 +102,11 @@ function injectHpControls(editor) {
     controls.querySelector('[data-action="custom-stage-base-hp-drain"]'),
     state.baseHpDrainEnabled,
     state.baseHpDrainEnabled ? '毎FPS: 両城HP -100 ON' : '毎FPS: 両城HP -100 OFF'
+  );
+  updateButton(
+    controls.querySelector('[data-action="custom-stage-auto-barrier-break"]'),
+    state.autoBarrierBreakEnabled,
+    state.autoBarrierBreakEnabled ? `オートバリアブレイク: 耐久${AUTO_BARRIER_BREAK_MULTIPLIER}倍で破壊 ON` : 'オートバリアブレイク OFF'
   );
   const note = root.querySelector?.('.formation-custom-stage-note');
   if (note && state.fixedBaseHpEnabled) {
@@ -122,13 +137,15 @@ export function installFormationCustomStageBattleHpPatch() {
   proto.onClick = async function onClickWithCustomHpPolicy(e) {
     const action = e.target.closest?.('[data-action]');
     const type = action?.dataset?.action;
-    if ((type === 'custom-stage-fixed-base-hp' || type === 'custom-stage-base-hp-drain') && this.root?.contains(action)) {
+    if ((type === 'custom-stage-fixed-base-hp' || type === 'custom-stage-base-hp-drain' || type === 'custom-stage-auto-barrier-break') && this.root?.contains(action)) {
       e.preventDefault();
       e.stopPropagation();
       const state = ensureHpState(this);
       if (type === 'custom-stage-fixed-base-hp') {
         state.fixedBaseHpEnabled = !state.fixedBaseHpEnabled;
         if (!state.fixedBaseHpEnabled) state.baseHpDrainEnabled = false;
+      } else if (type === 'custom-stage-auto-barrier-break') {
+        state.autoBarrierBreakEnabled = !state.autoBarrierBreakEnabled;
       } else {
         if (!state.fixedBaseHpEnabled) state.fixedBaseHpEnabled = true;
         state.baseHpDrainEnabled = !state.baseHpDrainEnabled;

@@ -7,6 +7,7 @@ import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 import { classifyBcuEffect, describeBcuEffectYFormula } from './bcu-runtime/BcuEffectTraceRuntime.js';
 import { computeBcuCannonBaseAnimDraw, computeBcuCannonWaveAnimDraw } from './bcu-runtime/BcuCatCannonRuntime.js';
+import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-patch.v6-smoke-kind');
 const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.bcu-attack-effect-renderer-patch.v8-actor-priority-eanimcont');
@@ -76,11 +77,18 @@ function getBcuSmokeLayer(attacker, target, targetType) {
 }
 
 function getBcuSmokeWorldX(scene, attacker, target, targetType) {
-  const hit = typeof scene?.getHitEffectPosition === 'function' ? scene.getHitEffectPosition(attacker, target, targetType) : null;
-  const baseX = targetType === 'base'
-    ? finiteNumber(target?.frontX, target?.x, hit?.x, attacker?.x, 0)
-    : finiteNumber(target?.x, hit?.x, attacker?.x, 0);
-  return Math.floor((baseX ?? 0) + 25 + Math.random() * 50);
+  if (targetType === 'base') {
+    const hit = typeof scene?.getHitEffectPosition === 'function' ? scene.getHitEffectPosition(attacker, target, targetType) : null;
+    const baseX = finiteNumber(target?.frontX, target?.x, hit?.x, attacker?.x, 0) ?? 0;
+    return Math.floor(baseX + 25 + Math.random() * 50);
+  }
+  // Anchor the attack smoke to the enemy's on-screen sprite position (model alignment + crowd + KB
+  // included) instead of the bare combat anchor (target.x), then jitter symmetrically around it
+  // rather than always biasing ~50px to one side. Without the render offset the smoke drifts off the
+  // sprite — most visible on long-range attacks where attacker and target are far apart.
+  const visualX = BattleCombatCoordinateRuntime.getEntityVisualWorldX(target);
+  const baseX = finiteNumber(visualX, target?.x, attacker?.x, 0) ?? 0;
+  return Math.floor(baseX + (Math.random() * 50 - 25));
 }
 
 function getEffectYOffset(targetType) {

@@ -16,6 +16,7 @@ export function getBcuBarrierPhase(event = {}) {
   switch (event?.type) {
     case 'barrier-breaker': return 'breaker';
     case 'barrier-broken-by-damage': return 'destruction';
+    case 'barrier-auto-broken-by-cumulative-damage': return 'destruction';
     case 'barrier-hit-blocked': return 'none';
     case 'barrier-timeout': return 'destruction';
     case 'barrier-regenerated': return 'none';

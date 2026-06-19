@@ -23,6 +23,20 @@ export class BattleCombatCoordinateRuntime {
     return null;
   }
 
+  // The renderer draws an actor sprite at `actor.x + visualRenderOffsetWorldPx + visualCrowdFanoutPx
+  // + kbVisualOffsetX` (BattleSceneRenderer.drawActor / drawHpBar). Battle effects spawned onto a
+  // logical entity position (posBcu / x) therefore drift from the visible sprite by exactly the
+  // model-alignment + crowd + knockback offsets. Anchor hit/proc effects to this visual world X so
+  // they land on the enemy the player sees, not the bare combat anchor.
+  static getEntityVisualWorldX(entity) {
+    const base = this.getEntityPosBcu(entity);
+    const x = Number.isFinite(base) ? base : 0;
+    const align = Number.isFinite(entity?.visualRenderOffsetWorldPx) ? entity.visualRenderOffsetWorldPx : 0;
+    const crowd = Number.isFinite(entity?.visualCrowdFanoutPx) ? entity.visualCrowdFanoutPx : 0;
+    const kb = Number.isFinite(entity?.kbVisualOffsetX) ? entity.kbVisualOffsetX : 0;
+    return x + align + crowd + kb;
+  }
+
   static getEntityRangeBcu(entity) {
     const v = entity?.detectionRangeBcu ?? entity?.rawRangeBcu ?? entity?.rawStats?.range ?? entity?.rawStats?.detectionRange;
     return this.numberOrDefault(v, 0);

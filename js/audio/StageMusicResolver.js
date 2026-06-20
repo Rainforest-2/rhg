@@ -11,15 +11,72 @@
 //   [3]=boss-music castle-HP% threshold  [4]=boss music id  ...
 // (column meaning verified against the in-file Japanese comments).
 //
-// CH main-story stages are a second shape:
-//   stage/CH/stage/stage47.csv
-// uses the sibling
-//   stage/CH/stageNormal/stageNormal0.csv
-// row 47. This is what keeps EoC 西表島 on BCU music id 4 instead of the
-// catalog-default id 0.
+// CH main-story stages are a second shape: their music lives in a
+// stage/CH/stageNormal/stageNormal<saga>_<chapter>(_Z|_Invasion).csv sibling.
+// The whole main story (Empire of Cats / Into the Future / Cats of the Cosmos,
+// 3 chapters each, plus their zombie outbreaks) is split across these files, so
+// each chapter must map to its OWN MapStageData file or the BGM mixes between
+// chapters. The layout group dir encodes which saga/chapter:
+//
+//   EoC   CH/stage/stage{SS}             -> stageNormal0.csv            row SS
+//   ITF   CH/stageW/stageW{MM}_{SS}      -> stageNormal1_{MM-4}.csv     row SS  (MM 04..06)
+//   CotC  CH/stageSpace/stageSpace{MM}_{SS} -> stageNormal2_{MM-7}.csv  row SS  (MM 07..09)
+//   CotC invasion CH/stageSpace/stageSpace09_Invasion_{SS}
+//                                        -> stageNormal2_2_Invasion.csv row SS
+//   Outbreak (zombie) CH/stageZ/stageZ{MM}_{SS}
+//       MM 00..02 -> stageNormal0_{MM}_Z.csv     row SS  (EoC outbreaks)
+//       MM 04..06 -> stageNormal1_{MM-4}_Z.csv   row SS  (ITF outbreaks)
+//
+// MM is the global CH map number; (MM-4) folds ITF(4..6)->saga1 and CotC(7..9)
+// ->saga2. Verified by layout-count vs MapStageData-row-count parity (48 each)
+// and by the resulting per-chapter music ids. This keeps EoC 西表島 on id 4,
+// 未来編の月 on its ITF theme, フィリバスター on its CotC theme, etc., instead of
+// the catalog-default id 0.
 
 const LAYOUT_BASENAME_RE = /^stageR([A-Za-z]+)(\d+)_(\d+)$/;
-const CH_STAGE_BASENAME_RE = /^stage(\d+)$/;
+
+// Fold a global CH map number (MM) to its main-story saga + chapter (0-based).
+// The CH main story is EoC(saga0)/ITF(saga1)/CotC(saga2), 3 chapters each:
+//   regular   layouts use MM 04..06 (ITF) and 07..09 (CotC) -> (MM-4) folding;
+//   outbreaks (stageZ) reuse MM 00..02 (EoC), 04..06 (ITF), 07..09 (CotC).
+// Returns null outside the three known sagas/chapters.
+function chMainSagaChapter(mm) {
+  if (mm <= 2) return { saga: 0, chapter: mm };
+  const k = mm - 4;
+  if (k < 0) return null;
+  const saga = Math.floor(k / 3) + 1;
+  const chapter = k % 3;
+  return saga <= 2 ? { saga, chapter } : null;
+}
+
+// Resolve a CH main-story layout (group dir + basename) to its MapStageData
+// internal filename + stage row. Returns null for shapes with no music sibling.
+function chMainStageMsd(group, basename) {
+  if (group === 'stage') {
+    const m = /^stage(\d+)$/.exec(basename);
+    return m ? { internalPath: 'stageNormal0.csv', stageIndex: Number(m[1]) } : null;
+  }
+  // ITF (stageW) + CotC (stageSpace) regular + invasion (optionally zombie).
+  if (group === 'stageW' || group === 'stageSpace') {
+    const inv = /^stage(?:W|Space)(\d+)_Invasion(_Z)?_(\d+)$/.exec(basename);
+    if (inv) {
+      const sc = chMainSagaChapter(Number(inv[1]));
+      return sc ? { internalPath: `stageNormal${sc.saga}_${sc.chapter}_Invasion${inv[2] || ''}.csv`, stageIndex: Number(inv[3]) } : null;
+    }
+    const m = /^stage(?:W|Space)(\d+)_(\d+)$/.exec(basename);
+    if (!m) return null;
+    const sc = chMainSagaChapter(Number(m[1]));
+    return sc ? { internalPath: `stageNormal${sc.saga}_${sc.chapter}.csv`, stageIndex: Number(m[2]) } : null;
+  }
+  // Zombie outbreaks (stageZ) -> the _Z MapStageData of the same saga/chapter.
+  if (group === 'stageZ') {
+    const m = /^stageZ(\d+)_(\d+)$/.exec(basename);
+    if (!m) return null;
+    const sc = chMainSagaChapter(Number(m[1]));
+    return sc ? { internalPath: `stageNormal${sc.saga}_${sc.chapter}_Z.csv`, stageIndex: Number(m[2]) } : null;
+  }
+  return null;
+}
 
 function stripCsvComment(line) {
   const idx = line.indexOf('//');
@@ -65,30 +122,29 @@ export function deriveMsdRef(stageEntry) {
       debug: { suf, map, stageIndex }
     };
   }
-  const ch = CH_STAGE_BASENAME_RE.exec(stageEntry.basename || '');
-  const isChMainStage = ch
-    && typeof layoutRef.bundleKey === 'string'
-    && typeof layoutRef.bundlePath === 'string'
-    && /\/CH\/stage$/.test(layoutRef.bundleKey);
-  if (!isChMainStage) return null;
-  const stageIndex = Number.parseInt(ch[1], 10);
-  if (!Number.isFinite(stageIndex)) return null;
-  const bundleKey = typeof layoutRef.bundleKey === 'string'
-    ? layoutRef.bundleKey.replace('/CH/stage', '/CH/stageNormal')
-    : null;
-  const bundlePath = typeof layoutRef.bundlePath === 'string'
-    ? layoutRef.bundlePath.replace('__CH__stage.zip', '__CH__stageNormal.zip')
-    : null;
-  if (!bundleKey || !bundlePath) return null;
+  // CH main-story families (EoC stage / ITF stageW / CotC stageSpace / zombie
+  // stageZ). The MapStageData always lives in the CH/stageNormal bundle (which
+  // ships only in the base pack; the build's cross-pack bake resolves it).
+  if (typeof layoutRef.bundleKey !== 'string' || typeof layoutRef.bundlePath !== 'string') return null;
+  const chGroupMatch = /\/CH\/(stage|stageW|stageSpace|stageZ)$/.exec(layoutRef.bundleKey);
+  if (!chGroupMatch) return null;
+  const chGroup = chGroupMatch[1];
+  const msd = chMainStageMsd(chGroup, stageEntry.basename || '');
+  if (!msd || !Number.isFinite(msd.stageIndex)) return null;
+  const bundleKey = layoutRef.bundleKey.replace(`/CH/${chGroup}`, '/CH/stageNormal');
+  const bundlePath = layoutRef.bundlePath.replace(`__CH__${chGroup}.zip`, '__CH__stageNormal.zip');
+  // The replacement must actually apply, else the bundleRef would point at the
+  // layout (a wrong/nonexistent MSD) — bail rather than emit a bogus ref.
+  if (bundleKey === layoutRef.bundleKey || bundlePath === layoutRef.bundlePath) return null;
   return {
     bundleRef: {
       bundleKey,
       bundlePath,
-      internalPath: 'stageNormal0.csv',
+      internalPath: msd.internalPath,
       readMode: layoutRef.readMode || 'zip-text'
     },
-    stageIndex,
-    debug: { family: 'CH/stage', map: 'stageNormal0', stageIndex }
+    stageIndex: msd.stageIndex,
+    debug: { family: `CH/${chGroup}`, internalPath: msd.internalPath, stageIndex: msd.stageIndex }
   };
 }
 

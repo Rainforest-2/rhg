@@ -151,6 +151,42 @@ const chMainNoMusic = stageIndexBaked.entries.filter((e) => e.kind === 'stage-de
 check(chMainNoMusic.length === 0,
   `every CH main-story stage must bake music, missing: ${chMainNoMusic.slice(0, 8).map((e) => `${e.packId}/${e.basename}`).join(', ')}`);
 
+// 3d. The whole CH main story (EoC stage / ITF stageW / CotC stageSpace, incl.
+// invasion), split per saga+chapter so the BGM never mixes between chapters.
+// deriveMsdRef must map each layout group to its own stageNormal<saga>_<chapter>
+// MapStageData; bake + cross-pack make the runtime resolve them with no fetch.
+const chMsdCase = (group, basename, internalPath, stageIndex) => {
+  const ref = deriveMsdRef({ kind: 'stage-definition', basename, groupDir: group, category: 'CH',
+    bundleRef: { bundleKey: `stage-map:000001/CH/${group}`, bundlePath: `public/assets/bundles/stage/map/000001__CH__${group}.zip`, internalPath: `${basename}.csv`, readMode: 'zip-text' } });
+  check(ref?.bundleRef?.internalPath === internalPath && ref?.stageIndex === stageIndex,
+    `deriveMsdRef ${group}/${basename} must map to ${internalPath} row ${stageIndex}, got ${JSON.stringify(ref?.bundleRef?.internalPath)} row ${ref?.stageIndex}`);
+};
+chMsdCase('stage', 'stage47', 'stageNormal0.csv', 47);       // EoC 西表
+chMsdCase('stageW', 'stageW04_00', 'stageNormal1_0.csv', 0); // ITF ch1
+chMsdCase('stageW', 'stageW06_47', 'stageNormal1_2.csv', 47);// ITF ch3 月 (chapter must NOT collapse to ch1)
+chMsdCase('stageSpace', 'stageSpace07_00', 'stageNormal2_0.csv', 0);   // CotC ch1
+chMsdCase('stageSpace', 'stageSpace09_47', 'stageNormal2_2.csv', 47);  // CotC ch3
+chMsdCase('stageSpace', 'stageSpace09_Invasion_00', 'stageNormal2_2_Invasion.csv', 0); // CotC invasion
+chMsdCase('stageZ', 'stageZ00_00', 'stageNormal0_0_Z.csv', 0);  // EoC outbreak ch1
+chMsdCase('stageZ', 'stageZ07_00', 'stageNormal2_0_Z.csv', 0); // CotC outbreak ch1 (saga2)
+
+// ITF/CotC must be fully baked in the index (the user's "未来編の月 / フィリバスター
+// still fall back" report) and resolve fetch-free even from update packs.
+for (const group of ['stageW', 'stageSpace']) {
+  const grpEntries = stageIndexBaked.entries.filter((e) => e.category === 'CH' && e.groupDir === group);
+  const missing = grpEntries.filter((e) => !e.music);
+  check(missing.length === 0, `every CH ${group} stage must bake music, missing ${missing.length}: ${missing.slice(0, 6).map((e) => `${e.packId}/${e.basename}`).join(', ')}`);
+}
+const itfMoon = stageIndexBaked.byKey?.['stage:000001:CH/stageW/stageW06_47'];
+check(itfMoon?.music?.startMusicId === 48 && itfMoon?.music?.bossMusicId === 49,
+  `未来編の月 (stageW06_47) must bake its ITF ch3 music (start=48 boss=49), got ${JSON.stringify(itfMoon?.music)}`);
+const itf1 = stageIndexBaked.byKey?.['stage:000001:CH/stageW/stageW04_47'];
+check(itf1 && itf1.music?.startMusicId !== itfMoon?.music?.startMusicId || itf1?.music?.bossMusicId !== itfMoon?.music?.bossMusicId,
+  'ITF chapters must not share one MapStageData (ch1 vs ch3 must differ)');
+const cotcInvasion = stageIndexBaked.byKey?.['stage:000001:CH/stageSpace/stageSpace09_Invasion_00'];
+check(cotcInvasion?.music?.startMusicId === 87,
+  `CotC invasion (stageSpace09_Invasion_00) must bake start=87, got ${JSON.stringify(cotcInvasion?.music)}`);
+
 setBcuAssetDatabase({
   semanticMode: 'semantic-strict',
   semanticIndexes: {

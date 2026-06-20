@@ -276,7 +276,7 @@ async function bakeStageMusic(entries, files) {
     // pack's stageNormal0.csv — surface these in full so a missing/renamed source
     // is traceable. Other families (StageR variants with pre-existing deriveMsdRef
     // gaps) are intentionally not errors; report only their count to avoid noise.
-    const chMain = diagnostics.filter((d) => /\/CH\/stage\//.test(d.sourceRawPath || ''));
+    const chMain = diagnostics.filter((d) => /\/CH\/(stage|stageW|stageSpace|stageZ)\//.test(d.sourceRawPath || ''));
     const others = diagnostics.length - chMain.length;
     if (chMain.length) {
       console.warn(`[bakeStageMusic] ${chMain.length} CH main-story stage(s) resolved no music:`);

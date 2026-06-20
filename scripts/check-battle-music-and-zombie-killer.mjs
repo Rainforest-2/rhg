@@ -7,9 +7,11 @@
 //  3. StageMusicResolver: MSD bundle/stage-index derivation from a layout entry,
 //     and music-field parsing against a REAL MapStageData CSV from the bundle.
 //  4. Stage->runtime wiring carries musicId/bossMusicId/threshold end to end.
-//  5. AudioEngine + BattleSoundEffects expose the playback/SE API and the Zombie
-//     Killer sting is fired where zombie killer denies a revive.
-//  6. main.js installs the music patch; node --check on every touched module.
+//  5. AudioEngine persists battle audio through Cache API and preloads selected
+//     stage BGM + common BCU SE ids during the sortie loading path.
+//  6. AudioEngine + BattleSoundEffects expose real BCU SE ids and event playback,
+//     and the Zombie Killer SE is fired where zombie killer denies a revive.
+//  7. main.js installs the music patch; node --check on every touched module.
 //
 // Exits nonzero on the first failure.
 
@@ -18,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { MusicCatalog } from '../js/audio/MusicCatalog.js';
 import { deriveMsdRef, parseMsdRows, parseStageMusicFromRows, resolveStageMusic } from '../js/audio/StageMusicResolver.js';
+import { BATTLE_PRELOAD_SE_IDS, BCU_SE } from '../js/audio/BattleSoundEffects.js';
 
 const ROOT = new URL('../', import.meta.url);
 const failures = [];
@@ -77,18 +80,41 @@ check(/musicId:def\?\.musicId/.test(scene) && scene.includes('bossMusicHpThresho
 
 // 5. audio engine + SE
 const engine = await read('js/audio/AudioEngine.js');
-for (const api of ['playBgm', 'stopBgm', 'playSe', 'playSynthSe', 'setPaused', 'loadTrack', 'subscribe']) {
+for (const api of ['playBgm', 'stopBgm', 'playSe', 'playSynthSe', 'setPaused', 'loadTrack', 'prepareTracks', 'prepareBattleMusic', 'subscribe']) {
   check(engine.includes(api), `AudioEngine: missing ${api}`);
 }
+for (const piece of ['AUDIO_CACHE_NAME', 'caches.open', 'cache.match', 'await cache.put', 'persistent-cache']) {
+  check(engine.includes(piece), `AudioEngine: missing persistent-cache piece ${piece}`);
+}
 const se = await read('js/audio/BattleSoundEffects.js');
-check(se.includes('export function playZombieKillerSe'), 'BattleSoundEffects must export playZombieKillerSe');
+for (const piece of ['BCU_SE', 'BATTLE_PRELOAD_SE_IDS', 'playBcuSe', 'playZombieKillerSe', 'BCU_CANNON_SE']) {
+  check(se.includes(piece), `BattleSoundEffects must expose ${piece}`);
+}
+check(BCU_SE.ZOMBIE_KILLER === 59 && BCU_SE.SPEND_FAIL === 15 && BCU_SE.SPEND_SUCCESS === 19 && BCU_SE.HIT_BASE === 22,
+  'BattleSoundEffects: key BCU SE ids must match CommonStatic.java');
+for (const id of [BCU_SE.ZOMBIE_KILLER, BCU_SE.SPEND_FAIL, BCU_SE.SPEND_SUCCESS, BCU_SE.HIT_0, BCU_SE.HIT_BASE, BCU_SE.VICTORY, BCU_SE.DEFEAT, ...BATTLE_PRELOAD_SE_IDS]) {
+  const file = new URL(`public/assets/music/${String(id).padStart(3, '0')}.m4a`, ROOT);
+  try { await readFile(file); }
+  catch { check(false, `missing vendored SE/BGM file for id ${id}: ${file.pathname}`); }
+}
 const zombie = await read('js/battle/BattleActorZombieRevivePatch.js');
 check(zombie.includes("from '../audio/BattleSoundEffects.js'") && zombie.includes('playZombieKillerSe()'), 'Zombie revive patch must play the Zombie Killer SE');
 check(/zombieKillerBlocked: true[\s\S]{0,400}playZombieKillerSe\(\)/.test(zombie), 'Zombie Killer SE must fire in the revive-blocked branch');
 
+const previewApp = await read('js/preview/PreviewApp.js');
+check(previewApp.includes('BATTLE_PRELOAD_SE_IDS') && previewApp.includes('prepareTracks') && previewApp.includes('battleAudioPreloaded'),
+  'PreviewApp must preload/cache selected battle BGM and common SE during battle start');
+const eventPatch = await read('js/audio/BattleSoundEventPatch.js');
+for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRejected', 'damageQueued', 'baseDamageQueued', 'battleResult', 'bcuCatCannonActivated', 'cannonIdsForEvent']) {
+  check(eventPatch.includes(piece), `BattleSoundEventPatch: missing ${piece}`);
+}
+check(!/case 'stageEnemySpawned':[\s\S]{0,120}playDeploySe/.test(eventPatch), 'BattleSoundEventPatch must not play player deploy SE for enemy spawns');
+check(eventPatch.includes('BCU_CANNON_SE.WALL') && eventPatch.includes('BCU_CANNON_SE.BARRIER'), 'BattleSoundEventPatch must map cannon ids to BCU_CANNON_SE entries');
+
 // 6. patch wiring + node --check
 const main = await read('js/main.js');
 check(main.includes('PreviewAppBattleMusicPatch.js'), 'main.js must import the battle music patch');
+check(main.includes('BattleSoundEventPatch.js'), 'main.js must import the battle sound event patch');
 const musicPatch = await read('js/preview/PreviewAppBattleMusicPatch.js');
 for (const piece of ['playBgm', 'stopBgm', 'setPaused', 'bossMusicHpThresholdPercent', 'getEnemyBaseHpPercent']) {
   check(musicPatch.includes(piece), `BattleMusicPatch: missing "${piece}"`);
@@ -99,7 +125,9 @@ const touched = [
   'js/audio/StageMusicResolver.js',
   'js/audio/AudioEngine.js',
   'js/audio/BattleSoundEffects.js',
+  'js/audio/BattleSoundEventPatch.js',
   'js/preview/PreviewAppBattleMusicPatch.js',
+  'js/preview/PreviewApp.js',
   'js/battle/StageDefinitionLoader.js',
   'js/battle/StageRuntime.js',
   'js/battle/BattleScene.js',

@@ -1,57 +1,112 @@
-// Battle sound effects that have no downloadable BCU sample and so are
-// synthesized through the AudioEngine's SE bus (volume slider + mute apply).
+// BCU battle sound-effect ids.
 //
-// Zombie Killer: the BCU/Battle-Cats reference states the ability has no unique
-// sprite — "発動時は特有の効果音が鳴る" (a distinctive sound effect plays when it
-// triggers); the visual is just the zombie's normal death soul. So the missing
-// "Zombie Killer effect" is this sting, played the moment a zombie killer denies
-// a zombie's revive. The project blocks raw bcu assets at runtime and bcu-assets
-// ships no standalone SE file, so this is synthesized rather than fetched.
+// Source: BCU_java_util_common CommonStatic.java SE_* constants and
+// BCU_Android SoundHandler.kt. BCU stores both BGM and SE as Music records; in
+// this repo they are vendored together under public/assets/music/<id>.m4a.
+// Runtime playback goes through AudioEngine's SE bus so the SE toggle/mute apply.
 
 import { audioEngine } from './AudioEngine.js';
 
-// A short, distinctive "soul shatter" sting: a bright noise burst shaped by a
-// descending band-pass plus a falling tone, ~280ms, so it reads clearly over
-// combat without being harsh.
-function buildZombieKillerSe(ctx, destination, t0) {
-  const out = ctx.createGain();
-  out.gain.setValueAtTime(0.0001, t0);
-  out.gain.exponentialRampToValueAtTime(0.9, t0 + 0.012);
-  out.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
-  out.connect(destination);
+export const BCU_SE = Object.freeze({
+  VICTORY: 8,
+  DEFEAT: 9,
+  TOUCH: 10,
+  SPEND_FAIL: 15,
+  SPEND_SUCCESS: 19,
+  HIT_0: 20,
+  HIT_1: 21,
+  HIT_BASE: 22,
+  DEATH_0: 23,
+  DEATH_1: 24,
+  CANNON_BASIC_ATK: 25,
+  WAVE: 26,
+  SPEND_REFUND: 27,
+  CANNON_CHARGE: 28,
+  CRIT: 44,
+  BOSS: 45,
+  LETHAL: 50,
+  ZOMBIE_KILLER: 59,
+  BARRIER_ABI: 70,
+  BARRIER_NON: 71,
+  BARRIER_ATK: 72,
+  WARP_ENTER: 73,
+  WARP_EXIT: 74,
+  SATK: 90,
+  POISON: 110,
+  VOLC_START: 111,
+  VOLC_LOOP: 112,
+  SHIELD_HIT: 136,
+  SHIELD_BREAKER: 137,
+  SHIELD_REGEN: 138,
+  SHIELD_BROKEN: 139,
+  DEATH_SURGE: 143,
+  COUNTER_SURGE: 159,
+  SPIRIT_SUMMON: 162,
+  DELAY_COOLDOWN: 188
+});
 
-  // Noise burst through a sweeping band-pass = the "shatter".
-  const noiseLen = 0.3;
-  const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * noiseLen)), ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-  const band = ctx.createBiquadFilter();
-  band.type = 'bandpass';
-  band.Q.value = 6;
-  band.frequency.setValueAtTime(2600, t0);
-  band.frequency.exponentialRampToValueAtTime(420, t0 + 0.26);
-  noise.connect(band).connect(out);
-  noise.start(t0);
-  noise.stop(t0 + noiseLen + 0.02);
+export const BCU_CANNON_SE = Object.freeze({
+  BASIC: [25, 26],
+  SLOW: [60],
+  WALL: [61],
+  STOP: [36, 37],
+  WATER: [65, 83],
+  GROUND: [84, 85],
+  BARRIER: [86]
+});
 
-  // Falling tone = the "kill" punctuation.
-  const tone = ctx.createOscillator();
-  tone.type = 'triangle';
-  tone.frequency.setValueAtTime(880, t0);
-  tone.frequency.exponentialRampToValueAtTime(150, t0 + 0.22);
-  const toneGain = ctx.createGain();
-  toneGain.gain.setValueAtTime(0.0001, t0);
-  toneGain.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02);
-  toneGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.26);
-  tone.connect(toneGain).connect(out);
-  tone.start(t0);
-  tone.stop(t0 + 0.3);
+export const BATTLE_PRELOAD_SE_IDS = Object.freeze([
+  BCU_SE.TOUCH,
+  BCU_SE.SPEND_FAIL,
+  BCU_SE.SPEND_SUCCESS,
+  BCU_SE.HIT_0,
+  BCU_SE.HIT_1,
+  BCU_SE.HIT_BASE,
+  BCU_SE.DEATH_0,
+  BCU_SE.DEATH_1,
+  BCU_SE.CANNON_BASIC_ATK,
+  BCU_SE.WAVE,
+  BCU_SE.SPEND_REFUND,
+  BCU_SE.CANNON_CHARGE,
+  BCU_SE.CRIT,
+  BCU_SE.BOSS,
+  BCU_SE.LETHAL,
+  BCU_SE.ZOMBIE_KILLER,
+  BCU_SE.VICTORY,
+  BCU_SE.DEFEAT,
+  BCU_SE.BARRIER_ABI,
+  BCU_SE.BARRIER_NON,
+  BCU_SE.BARRIER_ATK,
+  BCU_SE.WARP_ENTER,
+  BCU_SE.WARP_EXIT,
+  BCU_SE.SATK,
+  BCU_SE.POISON,
+  BCU_SE.SHIELD_HIT,
+  BCU_SE.SHIELD_BREAKER,
+  BCU_SE.SHIELD_REGEN,
+  BCU_SE.SHIELD_BROKEN,
+  BCU_SE.DEATH_SURGE,
+  BCU_SE.COUNTER_SURGE,
+  BCU_SE.SPIRIT_SUMMON,
+  BCU_SE.DELAY_COOLDOWN,
+  ...BCU_CANNON_SE.BASIC,
+  ...BCU_CANNON_SE.SLOW,
+  ...BCU_CANNON_SE.WALL,
+  ...BCU_CANNON_SE.STOP,
+  ...BCU_CANNON_SE.WATER,
+  ...BCU_CANNON_SE.GROUND,
+  ...BCU_CANNON_SE.BARRIER
+]);
+
+export function playBcuSe(id, engine = audioEngine) {
+  return engine.playSe(id);
 }
 
-export function playZombieKillerSe(engine = audioEngine) {
-  return engine.playSynthSe(buildZombieKillerSe);
-}
-
-export { buildZombieKillerSe };
+export function playZombieKillerSe(engine = audioEngine) { return playBcuSe(BCU_SE.ZOMBIE_KILLER, engine); }
+export function playDeploySe(engine = audioEngine) { return playBcuSe(BCU_SE.SPEND_SUCCESS, engine); }
+export function playSpendFailSe(engine = audioEngine) { return playBcuSe(BCU_SE.SPEND_FAIL, engine); }
+export function playHitSe(engine = audioEngine, id = BCU_SE.HIT_0) { return playBcuSe(id, engine); }
+export function playBaseHitSe(engine = audioEngine) { return playBcuSe(BCU_SE.HIT_BASE, engine); }
+export function playCannonSe(engine = audioEngine, id = BCU_SE.CANNON_BASIC_ATK) { return playBcuSe(id, engine); }
+export function playDecisionSe(engine = audioEngine) { return playBcuSe(BCU_SE.TOUCH, engine); }
+export function playResultSe(engine = audioEngine, victory = true) { return playBcuSe(victory ? BCU_SE.VICTORY : BCU_SE.DEFEAT, engine); }

@@ -15,6 +15,8 @@ import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
 import { BattleSimulationClock } from './BattleSimulationClock.js';
 import { BattleCameraInputController } from './BattleCameraInputController.js';
 import { getDefaultStage } from '../battle/StageRegistry.js';
+import { audioEngine } from '../audio/AudioEngine.js';
+import { BATTLE_PRELOAD_SE_IDS } from '../audio/BattleSoundEffects.js';
 
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -241,6 +243,39 @@ export class PreviewApp {
       const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), { selectedStageId: this.selectedStageId || undefined, bcuDb: this.bcuDb });
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       console.info('battleScene:init:ok');
+
+      overlay?.setProgress({ phase: 'battle-audio', message: '戦闘音声を保存中…', value: 0.83 });
+      const audioPreloadStart = performance.now();
+      try {
+        const musicIds = audioEngine.getBattleTrackIds(nextScene.stage?.runtime);
+        const audioPreload = await audioEngine.prepareTracks([...musicIds, ...BATTLE_PRELOAD_SE_IDS], {
+          onProgress: (p) => overlay?.setProgress({
+            phase: 'battle-audio',
+            message: p.total > 1 ? `戦闘音声を保存中… ${p.index}/${p.total}` : '戦闘音声を保存中…',
+            value: 0.83 + (p.total ? Math.min(0.035, (p.index / p.total) * 0.035) : 0)
+          })
+        });
+        nextScene.loadTimings = nextScene.loadTimings || {};
+        nextScene.loadTimings.audioPreloadMs = performance.now() - audioPreloadStart;
+        nextScene.loadTimings.audioPreload = audioPreload;
+        nextScene.pushEvent?.({
+          type: 'battleAudioPreloaded',
+          loaded: audioPreload.loaded,
+          total: audioPreload.total,
+          ids: audioPreload.ids,
+          musicIds,
+          seIds: BATTLE_PRELOAD_SE_IDS,
+          cacheName: audioPreload.cacheName,
+          source: audioPreload.source
+        });
+        this.ui?.log('info', `Battle audio preloaded: ${audioPreload.loaded}/${audioPreload.total} (music ${musicIds.length}, se ${BATTLE_PRELOAD_SE_IDS.length})`);
+      } catch (error) {
+        nextScene.loadTimings = nextScene.loadTimings || {};
+        nextScene.loadTimings.audioPreloadMs = performance.now() - audioPreloadStart;
+        nextScene.loadTimings.audioPreloadError = errorReport(error);
+        console.warn('[PreviewApp] battle audio preload failed', error);
+        this.ui?.log('warn', `Battle audio preload failed: ${error?.message || String(error)}`);
+      }
 
       overlay?.setProgress({ phase: 'status-effects', message: '状態効果アイコンを準備中…', value: 0.84 });
       const statusPreloadStart = performance.now();

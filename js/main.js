@@ -77,6 +77,7 @@ async function boot() {
       console.warn('[main] combo/talent registry install failed; modifiers disabled', error);
     }
     showBootStatus('出撃準備中…');
+    await import('./audio/BattleSoundEventPatch.js');
     await import('./preview/PreviewAppCustomStageBattleConfigPatch.js');
     await import('./preview/PreviewAppBattleResultOverlayPatch.js');
     await import('./preview/PreviewAppBattlePauseOverlayPatch.js');

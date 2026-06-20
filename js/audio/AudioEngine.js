@@ -1,10 +1,11 @@
 // Web Audio playback engine for in-battle BGM (and a one-shot SE channel).
 //
 // Design contract:
-//  - Lazy: a track's .m4a is fetched + decoded only when first asked to play
-//    (resolved through MusicCatalog: local override, then BCU GitHub raw URL).
-//    Decoded buffers and in-flight fetches are cached, so re-entering a stage or
-//    swapping start<->boss music never re-downloads.
+//  - Battle-start preload: the selected stage's start/boss .m4a tracks are
+//    fetched + decoded during the sortie loading path, then persisted with Cache
+//    API so replaying the same stage does not download them again.
+//  - Runtime playback still lazy-loads as a fallback if a track was not prepared.
+//    Decoded buffers and in-flight fetches are cached in memory too.
 //  - Volume is driven live from AudioSettings: the BGM/SE gains track the
 //    effective (mute-aware) slider values without restarting playback.
 //  - playBgm() crossfades between tracks and is idempotent for the active id.
@@ -16,8 +17,11 @@ import { AudioSettings } from './AudioSettings.js';
 import { musicCatalog } from './MusicCatalog.js';
 
 const DEFAULT_CROSSFADE_MS = 900;
+const AUDIO_CACHE_NAME = 'wanko-battle-audio-v1';
+const AUDIO_CACHE_INDEX_KEY = 'wanko-battle.audio.cache-index.v1';
 
 function now(ctx) { return ctx.currentTime; }
+function unique(values) { return [...new Set(values.filter((v) => v != null))]; }
 
 export class AudioEngine {
   constructor({ audio = AudioSettings, catalog = musicCatalog } = {}) {
@@ -30,6 +34,7 @@ export class AudioEngine {
     this.current = null; // { id, source, gain }
     this._buffers = new Map();   // id -> AudioBuffer
     this._loading = new Map();   // id -> Promise<AudioBuffer|null>
+    this._lastLoadResults = new Map(); // id -> { id, ok, url, source }
     this._unsubscribe = null;
     this._gestureBound = null;
     this._supported = typeof window !== 'undefined'
@@ -103,26 +108,77 @@ export class AudioEngine {
     });
   }
 
+  getBattleTrackIds(stageRuntime = null) {
+    const ids = [];
+    const startId = this.catalog.normalizeId(stageRuntime?.musicId);
+    const bossId = this.catalog.normalizeId(stageRuntime?.bossMusicId);
+    if (startId != null) ids.push(startId);
+    if (bossId != null && bossId !== startId) ids.push(bossId);
+    return unique(ids);
+  }
+
+  async prepareBattleMusic(stageRuntime = null, { onProgress = null } = {}) {
+    try { await this.catalog.load?.(); } catch {}
+    const ids = this.getBattleTrackIds(stageRuntime);
+    const result = await this.prepareTracks(ids, { onProgress });
+    return {
+      ...result,
+      source: 'AudioEngine.prepareBattleMusic'
+    };
+  }
+
+  async prepareTracks(ids = [], { onProgress = null } = {}) {
+    try { await this.catalog.load?.(); } catch {}
+    const normalizedIds = unique(ids.map((id) => this.catalog.normalizeId(id)));
+    const results = [];
+    let index = 0;
+    for (const id of normalizedIds) {
+      index += 1;
+      onProgress?.({ id, index, total: normalizedIds.length, phase: 'start' });
+      const buffer = await this.loadTrack(id, { persist: true });
+      const detail = this._lastLoadResults.get(id) || { id, ok: !!buffer, source: buffer ? 'memory' : 'missing' };
+      results.push({ ...detail, ok: !!buffer });
+      onProgress?.({ id, index, total: normalizedIds.length, phase: 'done', ok: !!buffer, source: detail.source || null });
+    }
+    return {
+      ok: results.every((r) => r.ok),
+      total: normalizedIds.length,
+      loaded: results.filter((r) => r.ok).length,
+      ids: normalizedIds,
+      results,
+      cacheName: AUDIO_CACHE_NAME,
+      source: 'AudioEngine.prepareTracks'
+    };
+  }
+
   // Resolve + fetch + decode a track id, trying each candidate URL in order.
   // Returns the AudioBuffer or null (logged, never throws).
-  async loadTrack(id) {
+  async loadTrack(id, options = {}) {
     if (!this._ensureContext()) return null;
     const norm = this.catalog.normalizeId(id);
     if (norm == null) return null;
-    if (this._buffers.has(norm)) return this._buffers.get(norm);
+    if (this._buffers.has(norm)) {
+      this._lastLoadResults.set(norm, { id: norm, ok: true, source: 'memory' });
+      return this._buffers.get(norm);
+    }
     if (this._loading.has(norm)) return this._loading.get(norm);
 
     const promise = (async () => {
       const urls = this.catalog.resolveUrls(norm);
       for (const url of urls) {
-        const buf = await this._fetchAndDecode(url);
-        if (buf) { this._buffers.set(norm, buf); return buf; }
+        const loaded = await this._fetchAndDecode(url, { trackId: norm, persist: options.persist !== false });
+        if (loaded?.buffer) {
+          this._buffers.set(norm, loaded.buffer);
+          this._lastLoadResults.set(norm, { id: norm, ok: true, url, source: loaded.source, cacheName: loaded.cacheName || null });
+          return loaded.buffer;
+        }
       }
       // Non-fatal: in-battle BGM is optional. Reaching here almost always means
       // every download host was unreachable (offline or a network that blocks
       // the music CDNs); the battle just runs without music. Info, not warn, and
       // logged once per id (loadTrack caches the resolved promise).
       console.info(`[AudioEngine] music track ${norm} unavailable (offline or blocked host) — continuing without BGM`);
+      this._lastLoadResults.set(norm, { id: norm, ok: false, source: 'missing' });
       return null;
     })();
     this._loading.set(norm, promise);
@@ -130,17 +186,65 @@ export class AudioEngine {
     finally { this._loading.delete(norm); }
   }
 
-  // Fetch + decode one candidate URL. Returns the AudioBuffer or null. A missing
+  // Fetch + decode one candidate URL. Returns { buffer, source } or null. A missing
   // file (404 etc.) is a definitive miss for that host (no retry); a thrown
   // fetch/decode error is treated as transient and retried once before moving on,
   // so a single dropped request on a flaky connection doesn't silence the BGM.
-  async _fetchAndDecode(url, attempts = 2) {
+  async _fetchAndDecode(url, { attempts = 2, trackId = null, persist = true } = {}) {
+    const fetched = await this._fetchAudioArrayBuffer(url, { attempts, trackId, persist });
+    if (!fetched?.arrayBuffer) return null;
+    try {
+      const buffer = await this._decode(fetched.arrayBuffer);
+      return buffer ? { buffer, source: fetched.source, cacheName: fetched.cacheName || null } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async _openPersistentCache() {
+    if (typeof caches === 'undefined' || typeof caches.open !== 'function') return null;
+    try { return await caches.open(AUDIO_CACHE_NAME); }
+    catch { return null; }
+  }
+
+  _rememberPersistentCacheEntry(url, { trackId = null, source = null } = {}) {
+    try {
+      const raw = globalThis.localStorage?.getItem(AUDIO_CACHE_INDEX_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      parsed[url] = { trackId, source, cachedAt: Date.now(), cacheName: AUDIO_CACHE_NAME };
+      globalThis.localStorage?.setItem(AUDIO_CACHE_INDEX_KEY, JSON.stringify(parsed));
+    } catch {
+      // Cache index is diagnostic only. Cache API remains the source of truth.
+    }
+  }
+
+  async _fetchAudioArrayBuffer(url, { attempts = 2, trackId = null, persist = true } = {}) {
+    const cache = persist ? await this._openPersistentCache() : null;
+    if (cache) {
+      try {
+        const cached = await cache.match(url);
+        if (cached && cached.ok) {
+          return { arrayBuffer: await cached.arrayBuffer(), source: 'persistent-cache', cacheName: AUDIO_CACHE_NAME };
+        }
+      } catch {}
+    }
+
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
         const res = await fetch(url, { cache: 'force-cache', mode: 'cors' });
         if (!res || !res.ok) return null;
-        const buf = await this._decode(await res.arrayBuffer());
-        return buf || null;
+        const clone = cache ? res.clone() : null;
+        const arrayBuffer = await res.arrayBuffer();
+        if (cache && clone) {
+          try {
+            await cache.put(url, clone);
+            this._rememberPersistentCacheEntry(url, { trackId, source: 'network' });
+          } catch {
+            // Playback can continue from the decoded response even if persistent
+            // storage is unavailable or the browser evicts the entry immediately.
+          }
+        }
+        return { arrayBuffer, source: cache ? 'network-persistent-save' : 'network', cacheName: cache ? AUDIO_CACHE_NAME : null };
       } catch {
         if (attempt === attempts - 1) return null;
         await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
@@ -252,3 +356,4 @@ function clampGain(v) {
 }
 
 export const audioEngine = new AudioEngine();
+export { AUDIO_CACHE_NAME, AUDIO_CACHE_INDEX_KEY };

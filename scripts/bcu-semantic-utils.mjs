@@ -198,35 +198,95 @@ export function buildActorIndexFromFiles(files) {
 // Resolve and bake each stage entry's MapStageData music (start id, boss id,
 // boss-music HP% threshold) from the raw BCU CSVs so the runtime can read it
 // straight off the in-memory stage index — no second bundle fetch, no silent
-// fall-through to the catalog default (000.m4a) when that fetch fails. The raw
-// MSD CSV path is the sibling of the layout CSV: deriveMsdRef already maps the
-// layout bundle key to the MSD/stageNormal bundle key, whose last path segment
-// is the raw group dir (e.g. `MSDNA`, `stageNormal`).
-async function bakeStageMusic(entries) {
+// fall-through to the catalog default (000.m4a) when that fetch fails.
+//
+// MapStageData ownership is layered like the rest of BCU's asset packs:
+//  - StageR families (StageRNA/StageRN/StageRC/…) ship their MapStageData
+//    (MSD<suf>/MapStageData<suf>_<map>.csv) in the SAME pack as the layout.
+//  - CH main-story stages (CH/stage/stageNN.csv) read their music from
+//    CH/stageNormal/stageNormal0.csv, which lives ONLY in the base pack 000001.
+//    Update packs (110700/110800/111000/120100/…) override individual CH stage
+//    LAYOUTS but do NOT re-ship stageNormal0.csv. Mapping the MSD to the layout's
+//    own pack (e.g. 110800__CH__stageNormal.zip) is therefore a 404 at runtime,
+//    which is exactly what made stage:110800:CH/stage/stage50 fall back to
+//    catalog-default (id 0) instead of its real BGM id 4.
+//
+// So the MSD source pack is resolved from the actual raw files: prefer the
+// stage's own pack, else the newest pack that genuinely ships that MapStageData
+// CSV. Nothing is hardcoded or fabricated — the owner pack is discovered from
+// `files`. deriveMsdRef still supplies the MSD group dir, filename and row index.
+//
+// Returns the diagnostics for stages that have an MSD sibling but resolved no
+// music, so a missing/renamed source can be traced at build time. Intentional
+// no-music families (deriveMsdRef === null) are skipped, never diagnosed.
+async function bakeStageMusic(entries, files) {
   const catalog = new MusicCatalog();
-  const msdCache = new Map(); // rawMsdPath -> parsed rows | null
-  for (const entry of entries) {
-    const ref = deriveMsdRef(entry);
-    if (!ref) continue;
-    const rawGroupDir = String(ref.bundleRef.bundleKey).split('/').pop();
-    const rawMsdPath = `public/assets/bcu/${entry.packId}/org/stage/${entry.category}/${rawGroupDir}/${ref.bundleRef.internalPath}`;
-    let rows = msdCache.get(rawMsdPath);
-    if (rows === undefined) {
-      try { rows = parseMsdRows(await fs.readFile(rawMsdPath, 'utf8')); }
-      catch { rows = null; }
-      msdCache.set(rawMsdPath, rows);
-    }
-    if (!rows) continue;
-    const music = parseStageMusicFromRows(rows, ref.stageIndex, catalog);
-    if (!music) continue;
-    entry.music = {
-      startMusicId: music.startMusicId,
-      bossMusicId: music.bossMusicId,
-      bossHpThresholdPercent: music.bossHpThresholdPercent,
-      stageIndex: music.stageIndex,
-      source: 'MapStageData'
-    };
+  // relative raw stage path (e.g. "org/stage/CH/stageNormal/stageNormal0.csv")
+  //   -> sorted owner pack ids (ascending; newest = last).
+  const ownersByRel = new Map();
+  for (const f of files) {
+    const m = /^public\/assets\/bcu\/([^/]+)\/(org\/stage\/.+\.csv)$/i.exec(f);
+    if (!m) continue;
+    const list = ownersByRel.get(m[2]) || [];
+    list.push(m[1]);
+    ownersByRel.set(m[2], list);
   }
+  for (const list of ownersByRel.values()) list.sort(comparePackId);
+
+  const rowsCache = new Map(); // resolved raw MSD path -> parsed rows | null
+  const diagnostics = [];
+  for (const entry of entries) {
+    if (entry.kind !== 'stage-definition') continue;
+    const ref = deriveMsdRef(entry);
+    if (!ref) continue; // family with no MapStageData sibling: intentional no-music
+    const rawGroupDir = String(ref.bundleRef.bundleKey).split('/').pop();
+    const rel = `org/stage/${entry.category}/${rawGroupDir}/${ref.bundleRef.internalPath}`;
+    const owners = ownersByRel.get(rel) || [];
+    const msdPackId = owners.includes(entry.packId) ? entry.packId : owners[owners.length - 1];
+    const resolvedPath = msdPackId ? `public/assets/bcu/${msdPackId}/${rel}` : null;
+    let rows = resolvedPath ? rowsCache.get(resolvedPath) : null;
+    if (resolvedPath && rows === undefined) {
+      try { rows = parseMsdRows(await fs.readFile(resolvedPath, 'utf8')); }
+      catch { rows = null; }
+      rowsCache.set(resolvedPath, rows);
+    }
+    const music = rows ? parseStageMusicFromRows(rows, ref.stageIndex, catalog) : null;
+    if (music) {
+      entry.music = {
+        startMusicId: music.startMusicId,
+        bossMusicId: music.bossMusicId,
+        bossHpThresholdPercent: music.bossHpThresholdPercent,
+        stageIndex: music.stageIndex,
+        source: 'MapStageData'
+      };
+      continue;
+    }
+    diagnostics.push({
+      sourceRawPath: entry.diagnostics?.sourceRawPath || null,
+      packId: entry.packId,
+      basename: entry.basename,
+      deriveMsdRef: { internalPath: ref.bundleRef.internalPath, stageIndex: ref.stageIndex },
+      resolvedMsdPack: msdPackId || null,
+      resolvedMsdPath: resolvedPath,
+      reason: !resolvedPath ? 'no-owner-pack' : (rows ? 'row-missing-in-msd' : 'msd-file-unreadable')
+    });
+  }
+  if (diagnostics.length) {
+    // CH main-story (CH/stage/stageNN) music must always resolve from the base
+    // pack's stageNormal0.csv — surface these in full so a missing/renamed source
+    // is traceable. Other families (StageR variants with pre-existing deriveMsdRef
+    // gaps) are intentionally not errors; report only their count to avoid noise.
+    const chMain = diagnostics.filter((d) => /\/CH\/stage\//.test(d.sourceRawPath || ''));
+    const others = diagnostics.length - chMain.length;
+    if (chMain.length) {
+      console.warn(`[bakeStageMusic] ${chMain.length} CH main-story stage(s) resolved no music:`);
+      for (const d of chMain) {
+        console.warn(`  - ${d.packId}/${d.basename} reason=${d.reason} msd=${d.resolvedMsdPath} deriveMsdRef=${JSON.stringify(d.deriveMsdRef)} src=${d.sourceRawPath}`);
+      }
+    }
+    if (others) console.warn(`[bakeStageMusic] ${others} non-CH stage(s) with an MSD sibling resolved no music (pre-existing StageR-family gaps; not CH main-story).`);
+  }
+  return diagnostics;
 }
 
 export async function buildStageIndexFromFiles(files) {
@@ -266,7 +326,7 @@ export async function buildStageIndexFromFiles(files) {
       diagnostics: { sourceRawPath: f }
     });
   }
-  await bakeStageMusic(entries);
+  await bakeStageMusic(entries, files);
   return { schemaVersion: 1, generatedAt: FIXED_DATE, entries, byKey: Object.fromEntries(entries.map((e) => [e.key, e])) };
 }
 

@@ -129,6 +129,28 @@ const bakedResolvedNoFetch = await resolveStageMusic({ stageEntry: bakedIriomote
 check(bakedResolvedNoFetch.startMusicId === 4 && bakedResolvedNoFetch.source === 'stage-index-baked',
   `resolveStageMusic must resolve 西表島 from the baked entry with no MSD fetch, got ${JSON.stringify(bakedResolvedNoFetch)}`);
 
+// 3c. CH main-story music in UPDATE packs (e.g. 110800) lives only in the base
+// pack's CH/stageNormal/stageNormal0.csv — the update pack ships the stage layout
+// but no stageNormal sibling, so the runtime CH->stageNormal bundle derivation is a
+// 404 (110800__CH__stageNormal.zip). bakeStageMusic must resolve it cross-pack and
+// bake it, so the runtime resolves from the entry with no fetch (no 404).
+const bakedStage50 = stageIndexBaked.byKey?.['stage:110800:CH/stage/stage50'];
+check(bakedStage50?.music?.startMusicId === 4 && bakedStage50?.music?.bossMusicId === 33 && bakedStage50?.music?.bossHpThresholdPercent === 70,
+  `stage:110800:CH/stage/stage50 must bake start=4 boss=33 threshold=70 from base-pack stageNormal0, got ${JSON.stringify(bakedStage50?.music)}`);
+const stage50NoFetch = await resolveStageMusic({
+  stageEntry: bakedStage50,
+  // Any attempt to read the (nonexistent) 110800 stageNormal bundle is the 404 bug.
+  readMsdText: () => { throw new Error('stage50 must not fetch a stageNormal bundle (would 404)'); },
+  catalog
+});
+check(stage50NoFetch.startMusicId === 4 && stage50NoFetch.source === 'stage-index-baked',
+  `stage:110800:CH/stage/stage50 must resolve baked id 4 with no MSD fetch, got ${JSON.stringify(stage50NoFetch)}`);
+// Every selectable CH main-story stage layout must carry baked music regardless of
+// its pack, so none can fall through to the 404 -> catalog-default path at runtime.
+const chMainNoMusic = stageIndexBaked.entries.filter((e) => e.kind === 'stage-definition' && e.category === 'CH' && e.groupDir === 'stage' && /^stage\d+$/.test(e.basename || '') && !e.music);
+check(chMainNoMusic.length === 0,
+  `every CH main-story stage must bake music, missing: ${chMainNoMusic.slice(0, 8).map((e) => `${e.packId}/${e.basename}`).join(', ')}`);
+
 setBcuAssetDatabase({
   semanticMode: 'semantic-strict',
   semanticIndexes: {

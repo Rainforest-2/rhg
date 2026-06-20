@@ -100,6 +100,22 @@ export const BATTLE_PRELOAD_SE_IDS = Object.freeze([
   ...BCU_CANNON_SE.BARRIER
 ]);
 
+// The handful of SE that fire constantly and/or within the first moments of a battle
+// (deploy, every hit, every death, cannon, wave). Only THESE are fetched up front at
+// battle start; every other SE in BATTLE_PRELOAD_SE_IDS lazy-warms its blob on its
+// first actual play. Warming all ~48 at once was the heavy battle-start burst (~48
+// parallel fetches on mobile Safari) — this keeps the start cheap while the common
+// SE are still instant.
+export const BATTLE_HOT_SE_IDS = Object.freeze([
+  BCU_SE.SPEND_SUCCESS,
+  BCU_SE.SPEND_FAIL,
+  BCU_SE.HIT_0,
+  BCU_SE.HIT_BASE,
+  BCU_SE.DEATH_0,
+  BCU_SE.CANNON_BASIC_ATK,
+  BCU_SE.WAVE
+]);
+
 export function playBcuSe(id, engine = audioEngine) {
   return engine.playSe(id);
 }

@@ -16,7 +16,7 @@ import { BattleSimulationClock } from './BattleSimulationClock.js';
 import { BattleCameraInputController } from './BattleCameraInputController.js';
 import { getDefaultStage } from '../battle/StageRegistry.js';
 import { audioEngine } from '../audio/AudioEngine.js';
-import { BATTLE_PRELOAD_SE_IDS } from '../audio/BattleSoundEffects.js';
+import { BATTLE_PRELOAD_SE_IDS, BATTLE_HOT_SE_IDS } from '../audio/BattleSoundEffects.js';
 
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -248,12 +248,12 @@ export class PreviewApp {
       const audioPreloadStart = performance.now();
       try {
         // Light, idempotent warm only — HTMLAudio streams the local .m4a directly and
-        // the browser HTTP cache keeps them warm, so there is no per-battle decode or
-        // Cache-API "saving" step anymore (it used to download+decode ~50 tracks every
-        // battle start). This just ensures the SE pool exists and the BGM start track
-        // is buffering, then returns immediately.
+        // the in-memory blob cache keeps each file fetched at most once. We warm ONLY
+        // the small hot SE set (BATTLE_HOT_SE_IDS) up front; the rest of
+        // BATTLE_PRELOAD_SE_IDS lazy-warm on first play, so battle start no longer fires
+        // ~48 parallel fetches. No per-battle decode or Cache-API "saving".
         const musicIds = audioEngine.getBattleTrackIds(nextScene.stage?.runtime);
-        const audioPreload = await audioEngine.prepareTracks([...musicIds, ...BATTLE_PRELOAD_SE_IDS], { seIds: BATTLE_PRELOAD_SE_IDS });
+        const audioPreload = await audioEngine.prepareTracks(musicIds, { seIds: BATTLE_HOT_SE_IDS });
         nextScene.loadTimings = nextScene.loadTimings || {};
         nextScene.loadTimings.audioPreloadMs = performance.now() - audioPreloadStart;
         nextScene.loadTimings.audioPreload = audioPreload;
@@ -263,10 +263,11 @@ export class PreviewApp {
           total: audioPreload.total,
           ids: audioPreload.ids,
           musicIds,
-          seIds: BATTLE_PRELOAD_SE_IDS,
+          seIds: BATTLE_HOT_SE_IDS,
+          seLazyIds: BATTLE_PRELOAD_SE_IDS,
           source: audioPreload.source
         });
-        this.ui?.log('info', `Battle audio ready (html-audio): music ${musicIds.length}, se ${BATTLE_PRELOAD_SE_IDS.length}`);
+        this.ui?.log('info', `Battle audio ready (html-audio): music ${musicIds.length}, se hot ${BATTLE_HOT_SE_IDS.length}/${BATTLE_PRELOAD_SE_IDS.length} (rest lazy)`);
       } catch (error) {
         nextScene.loadTimings = nextScene.loadTimings || {};
         nextScene.loadTimings.audioPreloadMs = performance.now() - audioPreloadStart;

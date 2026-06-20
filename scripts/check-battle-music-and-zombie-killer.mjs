@@ -41,9 +41,11 @@ const catalog = new MusicCatalog(manifest);
 check(catalog.formatId(3) === '003', 'MusicCatalog.formatId(3) should be 003');
 check(catalog.normalizeId(999) === null && catalog.normalizeId(-1) === null, 'MusicCatalog must reject out-of-range ids');
 const urls = catalog.resolveUrls(3);
-check(urls.length === 1 && urls[0].includes('assets/music/003.m4a'),
-  `MusicCatalog.resolveUrls must be the single local 003.m4a (remote bases empty), got ${JSON.stringify(urls)}`);
+check(urls.length === 1 && urls[0].includes('public/assets/music/003.m4a'),
+  `MusicCatalog.resolveUrls must be the single public/assets 003.m4a candidate, got ${JSON.stringify(urls)}`);
 check(catalog.resolveUrls(99999).length === 0, 'MusicCatalog.resolveUrls must be empty for an invalid id');
+const catalogSource = await read('js/audio/MusicCatalog.js');
+check(catalogSource.includes("cache: 'no-cache'"), 'MusicCatalog must revalidate musicmap.json instead of force-caching stale manifests');
 
 // 3. resolver against a real MapStageData CSV from the bundle
 const layoutEntry = {
@@ -83,7 +85,7 @@ const engine = await read('js/audio/AudioEngine.js');
 for (const api of ['playBgm', 'stopBgm', 'playSe', 'playSynthSe', 'setPaused', 'loadTrack', 'prepareTracks', 'prepareBattleMusic', 'subscribe']) {
   check(engine.includes(api), `AudioEngine: missing ${api}`);
 }
-for (const piece of ['AUDIO_CACHE_NAME', 'caches.open', 'cache.match', 'await cache.put', 'persistent-cache']) {
+for (const piece of ['AUDIO_CACHE_NAME', 'caches.open', 'cache.match', 'await cache.put', 'persistent-cache', '_lastLoadFailures', '_deletePersistentCacheEntry', "cache: 'no-cache'"]) {
   check(engine.includes(piece), `AudioEngine: missing persistent-cache piece ${piece}`);
 }
 const se = await read('js/audio/BattleSoundEffects.js');
@@ -105,11 +107,14 @@ const previewApp = await read('js/preview/PreviewApp.js');
 check(previewApp.includes('BATTLE_PRELOAD_SE_IDS') && previewApp.includes('prepareTracks') && previewApp.includes('battleAudioPreloaded'),
   'PreviewApp must preload/cache selected battle BGM and common SE during battle start');
 const eventPatch = await read('js/audio/BattleSoundEventPatch.js');
-for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRejected', 'damageQueued', 'baseDamageQueued', 'battleResult', 'bcuCatCannonActivated', 'cannonIdsForEvent']) {
+for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRejected', 'damageQueued', 'procResolved', 'baseDamageQueued', 'battleResult', 'bcuCatCannonActivated', 'cannonIdsForEvent']) {
   check(eventPatch.includes(piece), `BattleSoundEventPatch: missing ${piece}`);
 }
 check(!/case 'stageEnemySpawned':[\s\S]{0,120}playDeploySe/.test(eventPatch), 'BattleSoundEventPatch must not play player deploy SE for enemy spawns');
 check(eventPatch.includes('BCU_CANNON_SE.WALL') && eventPatch.includes('BCU_CANNON_SE.BARRIER'), 'BattleSoundEventPatch must map cannon ids to BCU_CANNON_SE entries');
+for (const piece of ['BCU_SE.CRIT', 'BCU_SE.SATK', 'BCU_SE.WAVE', 'BCU_SE.POISON', 'BCU_SE.BARRIER_ATK', 'BCU_SE.SHIELD_BREAKER', 'BCU_SE.WARP_ENTER', 'BCU_SE.DEATH_SURGE']) {
+  check(eventPatch.includes(piece), `BattleSoundEventPatch must cover ${piece}`);
+}
 
 // 6. patch wiring + node --check
 const main = await read('js/main.js');

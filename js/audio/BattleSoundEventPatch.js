@@ -7,6 +7,7 @@ import {
   BCU_CANNON_SE,
   BCU_SE,
   playBaseHitSe,
+  playBcuSe,
   playCannonSe,
   playDecisionSe,
   playDeploySe,
@@ -48,6 +49,33 @@ function playCannonEventSe(scene, event = {}) {
   playCannonSe(undefined, first);
 }
 
+function hasAppliedDamageAbility(event = {}, key) {
+  return event?.abilityResolver?.applied?.[key] === true || event?.damageApplied?.[key] === true;
+}
+
+function procKeys(event = {}) {
+  const keys = new Set();
+  for (const bucket of [event.applied, event.pending]) {
+    if (!Array.isArray(bucket)) continue;
+    for (const item of bucket) {
+      const key = item?.key || item?.pendingType || item?.category;
+      if (key) keys.add(String(key));
+    }
+  }
+  return keys;
+}
+
+function playProcSe(scene, event = {}) {
+  const keys = procKeys(event);
+  if ((keys.has('wave') || keys.has('miniWave')) && throttle(scene, 'se-wave', 160)) playBcuSe(BCU_SE.WAVE);
+  if (keys.has('toxic') && throttle(scene, 'se-poison', 120)) playBcuSe(BCU_SE.POISON);
+  if (keys.has('barrierBreaker') && throttle(scene, 'se-barrier-breaker', 120)) playBcuSe(BCU_SE.BARRIER_ATK);
+  if ((keys.has('shieldPierce') || keys.has('shieldBreaker')) && throttle(scene, 'se-shield-breaker', 120)) playBcuSe(BCU_SE.SHIELD_BREAKER);
+  if (keys.has('warp') && throttle(scene, 'se-warp', 180)) playBcuSe(BCU_SE.WARP_ENTER);
+  if (keys.has('delay') && throttle(scene, 'se-delay', 160)) playBcuSe(BCU_SE.DELAY_COOLDOWN);
+  if (keys.has('spirit') && throttle(scene, 'se-spirit', 160)) playBcuSe(BCU_SE.SPIRIT_SUMMON);
+}
+
 function playForEvent(scene, event = {}) {
   switch (event.type) {
     case 'playerSpawned':
@@ -64,7 +92,12 @@ function playForEvent(scene, event = {}) {
       if (throttle(scene, 'cannon', 180)) playCannonEventSe(scene, event);
       break;
     case 'damageQueued':
-      if (Number(event.damage || 0) > 0 && throttle(scene, 'hit', 70)) playHitSe(undefined, BCU_SE.HIT_0);
+      if (hasAppliedDamageAbility(event, 'critical') && throttle(scene, 'critical', 120)) playBcuSe(BCU_SE.CRIT);
+      else if (hasAppliedDamageAbility(event, 'strongAttack') && throttle(scene, 'strong-attack', 120)) playBcuSe(BCU_SE.SATK);
+      else if (Number(event.damage || 0) > 0 && throttle(scene, 'hit', 70)) playHitSe(undefined, BCU_SE.HIT_0);
+      break;
+    case 'procResolved':
+      playProcSe(scene, event);
       break;
     case 'baseDamageQueued':
     case 'bcuCastleGuardBreak':
@@ -84,6 +117,12 @@ function playForEvent(scene, event = {}) {
       }
       break;
     }
+    case 'bcuDeathSurgeCreated':
+      if (throttle(scene, 'death-surge', 180)) playBcuSe(BCU_SE.DEATH_SURGE);
+      break;
+    case 'bcuBossShockwaveResolved':
+      if (throttle(scene, 'boss', 250)) playBcuSe(BCU_SE.BOSS);
+      break;
     default:
       break;
   }

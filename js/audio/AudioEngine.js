@@ -32,9 +32,11 @@ export class AudioEngine {
     this.bgmGain = null;
     this.seGain = null;
     this.current = null; // { id, source, gain }
+    this.currentElement = null; // HTMLAudioElement fallback when decodeAudioData is unavailable
     this._buffers = new Map();   // id -> AudioBuffer
     this._loading = new Map();   // id -> Promise<AudioBuffer|null>
     this._lastLoadResults = new Map(); // id -> { id, ok, url, source }
+    this._lastLoadFailures = new Map(); // id -> [{ url, reason, status }]
     this._unsubscribe = null;
     this._gestureBound = null;
     this._supported = typeof window !== 'undefined'
@@ -79,6 +81,7 @@ export class AudioEngine {
     // setTargetAtTime gives a short smooth ramp so slider drags don't click.
     this.bgmGain?.gain.setTargetAtTime(bgm, t, 0.05);
     this.seGain?.gain.setTargetAtTime(se, t, 0.05);
+    if (this.currentElement) this.currentElement.volume = bgm;
   }
 
   // Some browsers create the context in 'suspended' state until a gesture.
@@ -135,7 +138,7 @@ export class AudioEngine {
     for (const id of normalizedIds) {
       index += 1;
       onProgress?.({ id, index, total: normalizedIds.length, phase: 'start' });
-      const buffer = await this.loadTrack(id, { persist: true });
+      const buffer = await this.loadTrack(id, { persist: true, quiet: true });
       const detail = this._lastLoadResults.get(id) || { id, ok: !!buffer, source: buffer ? 'memory' : 'missing' };
       results.push({ ...detail, ok: !!buffer });
       onProgress?.({ id, index, total: normalizedIds.length, phase: 'done', ok: !!buffer, source: detail.source || null });
@@ -165,6 +168,7 @@ export class AudioEngine {
 
     const promise = (async () => {
       const urls = this.catalog.resolveUrls(norm);
+      this._lastLoadFailures.set(norm, []);
       for (const url of urls) {
         const loaded = await this._fetchAndDecode(url, { trackId: norm, persist: options.persist !== false });
         if (loaded?.buffer) {
@@ -177,8 +181,12 @@ export class AudioEngine {
       // every download host was unreachable (offline or a network that blocks
       // the music CDNs); the battle just runs without music. Info, not warn, and
       // logged once per id (loadTrack caches the resolved promise).
-      console.info(`[AudioEngine] music track ${norm} unavailable (offline or blocked host) — continuing without BGM`);
-      this._lastLoadResults.set(norm, { id: norm, ok: false, source: 'missing' });
+      const failures = this._lastLoadFailures.get(norm) || [];
+      const reason = failures.length
+        ? failures.map((f) => `${f.url}:${f.status ?? f.reason}`).join(', ')
+        : 'no-resolved-url';
+      if (!options.quiet) console.info(`[AudioEngine] music track ${norm} unavailable (${reason}) - continuing without BGM`);
+      this._lastLoadResults.set(norm, { id: norm, ok: false, source: 'missing', failures });
       return null;
     })();
     this._loading.set(norm, promise);
@@ -192,19 +200,52 @@ export class AudioEngine {
   // so a single dropped request on a flaky connection doesn't silence the BGM.
   async _fetchAndDecode(url, { attempts = 2, trackId = null, persist = true } = {}) {
     const fetched = await this._fetchAudioArrayBuffer(url, { attempts, trackId, persist });
-    if (!fetched?.arrayBuffer) return null;
+    if (!fetched?.arrayBuffer) {
+      this._recordLoadFailure(trackId, { url, reason: fetched?.reason || 'fetch-failed', status: fetched?.status ?? null });
+      return null;
+    }
     try {
       const buffer = await this._decode(fetched.arrayBuffer);
       return buffer ? { buffer, source: fetched.source, cacheName: fetched.cacheName || null } : null;
-    } catch {
+    } catch (error) {
+      if (fetched.source === 'persistent-cache') {
+        await this._deletePersistentCacheEntry(url);
+        const refetched = await this._fetchAudioArrayBuffer(url, { attempts, trackId, persist, bypassPersistentCache: true });
+        if (refetched?.arrayBuffer) {
+          try {
+            const buffer = await this._decode(refetched.arrayBuffer);
+            return buffer ? { buffer, source: refetched.source, cacheName: refetched.cacheName || null } : null;
+          } catch (refetchError) {
+            this._recordLoadFailure(trackId, { url, reason: 'decode-failed-after-cache-refresh', status: refetchError?.name || null });
+            return null;
+          }
+        }
+        this._recordLoadFailure(trackId, { url, reason: refetched?.reason || 'cache-refresh-fetch-failed', status: refetched?.status ?? null });
+        return null;
+      }
+      this._recordLoadFailure(trackId, { url, reason: 'decode-failed', status: error?.name || null });
       return null;
     }
+  }
+
+  _recordLoadFailure(trackId, detail = {}) {
+    if (trackId == null) return;
+    const failures = this._lastLoadFailures.get(trackId) || [];
+    failures.push(detail);
+    this._lastLoadFailures.set(trackId, failures);
   }
 
   async _openPersistentCache() {
     if (typeof caches === 'undefined' || typeof caches.open !== 'function') return null;
     try { return await caches.open(AUDIO_CACHE_NAME); }
     catch { return null; }
+  }
+
+  async _deletePersistentCacheEntry(url) {
+    const cache = await this._openPersistentCache();
+    if (!cache) return false;
+    try { return await cache.delete(url); }
+    catch { return false; }
   }
 
   _rememberPersistentCacheEntry(url, { trackId = null, source = null } = {}) {
@@ -218,9 +259,9 @@ export class AudioEngine {
     }
   }
 
-  async _fetchAudioArrayBuffer(url, { attempts = 2, trackId = null, persist = true } = {}) {
+  async _fetchAudioArrayBuffer(url, { attempts = 2, trackId = null, persist = true, bypassPersistentCache = false } = {}) {
     const cache = persist ? await this._openPersistentCache() : null;
-    if (cache) {
+    if (cache && !bypassPersistentCache) {
       try {
         const cached = await cache.match(url);
         if (cached && cached.ok) {
@@ -231,8 +272,8 @@ export class AudioEngine {
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
-        const res = await fetch(url, { cache: 'force-cache', mode: 'cors' });
-        if (!res || !res.ok) return null;
+        const res = await fetch(url, { cache: 'no-cache', mode: 'cors' });
+        if (!res || !res.ok) return { reason: 'http-status', status: res?.status ?? 0 };
         const clone = cache ? res.clone() : null;
         const arrayBuffer = await res.arrayBuffer();
         if (cache && clone) {
@@ -245,8 +286,8 @@ export class AudioEngine {
           }
         }
         return { arrayBuffer, source: cache ? 'network-persistent-save' : 'network', cacheName: cache ? AUDIO_CACHE_NAME : null };
-      } catch {
-        if (attempt === attempts - 1) return null;
+      } catch (error) {
+        if (attempt === attempts - 1) return { reason: error?.name || 'fetch-error', status: null };
         await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
       }
     }
@@ -255,14 +296,16 @@ export class AudioEngine {
 
   // Start (or crossfade to) a looping BGM track. Idempotent for the active id.
   async playBgm(id, { loop = true, fadeMs = DEFAULT_CROSSFADE_MS } = {}) {
-    if (!this._ensureContext()) return false;
+    const ctx = this._ensureContext();
     const norm = this.catalog.normalizeId(id);
     if (norm == null) return false;
+    if (!ctx) return this._playBgmElement(norm, { loop });
     if (this.current && this.current.id === norm && this.current.source) return true;
+    if (this.currentElement && this.currentElement.dataset?.trackId === String(norm) && !this.currentElement.paused) return true;
     this._wantedBgmId = norm;
 
-    const buffer = await this.loadTrack(norm);
-    if (!buffer) return false;
+    const buffer = await this.loadTrack(norm, { quiet: true });
+    if (!buffer) return this._playBgmElement(norm, { loop });
     // A newer playBgm() call superseded this one while we were downloading.
     if (this._wantedBgmId !== norm) return false;
     if (this._userPaused) { try { await this.ctx.resume(); } catch {} }
@@ -279,6 +322,7 @@ export class AudioEngine {
     source.connect(gain);
     source.start();
 
+    this._stopBgmElement();
     this._fadeOutAndStop(this.current, fadeMs);
     this.current = { id: norm, source, gain };
     if (this.ctx.state === 'suspended' && !this._userPaused) this.ctx.resume().catch(() => {});
@@ -300,6 +344,7 @@ export class AudioEngine {
 
   stopBgm({ fadeMs = 400 } = {}) {
     this._wantedBgmId = null;
+    this._stopBgmElement();
     if (!this.current) return;
     this._fadeOutAndStop(this.current, fadeMs);
     this.current = null;
@@ -308,14 +353,63 @@ export class AudioEngine {
   // One-shot SE playback. Infrastructure for sound effects; ids resolve through
   // the same catalog. Never throws.
   async playSe(id) {
-    if (!this._ensureContext()) return false;
-    const buffer = await this.loadTrack(id);
-    if (!buffer) return false;
+    const ctx = this._ensureContext();
+    const norm = this.catalog.normalizeId(id);
+    if (norm == null) return false;
+    if (!ctx) return this._playSeElement(norm);
+    const buffer = await this.loadTrack(norm, { quiet: true });
+    if (!buffer) return this._playSeElement(norm);
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(this.seGain);
     source.start();
     return true;
+  }
+
+  async _playBgmElement(id, { loop = true } = {}) {
+    const norm = this.catalog.normalizeId(id);
+    if (norm == null || typeof Audio !== 'function') return false;
+    const urls = this.catalog.resolveUrls(norm);
+    for (const url of urls) {
+      const audio = new Audio(url);
+      audio.dataset.trackId = String(norm);
+      audio.loop = loop;
+      audio.preload = 'auto';
+      audio.volume = clampGain(this.audio.getEffectiveBgmVolume?.() ?? 0.7);
+      try {
+        await audio.play();
+        this._fadeOutAndStop(this.current, 0);
+        this.current = null;
+        this._stopBgmElement();
+        this.currentElement = audio;
+        return true;
+      } catch {}
+    }
+    const failures = this._lastLoadFailures.get(norm) || [];
+    console.info(`[AudioEngine] music track ${norm} unavailable for WebAudio and HTMLAudio fallback (${failures.map((f) => `${f.url}:${f.status ?? f.reason}`).join(', ') || 'element-play-failed'}) - continuing without BGM`);
+    return false;
+  }
+
+  _stopBgmElement() {
+    if (!this.currentElement) return;
+    try {
+      this.currentElement.pause();
+      this.currentElement.removeAttribute('src');
+      this.currentElement.load?.();
+    } catch {}
+    this.currentElement = null;
+  }
+
+  async _playSeElement(id) {
+    const norm = this.catalog.normalizeId(id);
+    if (norm == null || typeof Audio !== 'function') return false;
+    const url = this.catalog.resolveUrls(norm)[0];
+    if (!url) return false;
+    const audio = new Audio(url);
+    audio.preload = 'auto';
+    audio.volume = clampGain(this.audio.getEffectiveSeVolume?.() ?? 0.8);
+    try { await audio.play(); return true; }
+    catch { return false; }
   }
 
   // Play a synthesized one-shot SE. `builder(ctx, destination, startTime)` wires
@@ -331,6 +425,10 @@ export class AudioEngine {
 
   setPaused(paused) {
     this._userPaused = !!paused;
+    if (this.currentElement) {
+      if (paused) this.currentElement.pause();
+      else this.currentElement.play?.().catch(() => {});
+    }
     if (!this.ctx) return;
     if (paused) this.ctx.suspend?.().catch(() => {});
     else this.ctx.resume?.().catch(() => {});
@@ -338,6 +436,7 @@ export class AudioEngine {
 
   dispose() {
     this.stopBgm({ fadeMs: 0 });
+    this._stopBgmElement();
     this._unsubscribe?.();
     this._unsubscribe = null;
     if (this._gestureBound && typeof window !== 'undefined') {

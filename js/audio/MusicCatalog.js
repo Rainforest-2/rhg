@@ -57,7 +57,7 @@ export class MusicCatalog {
     this._loadPromise = (async () => {
       if (typeof fetchImpl !== 'function') return this._manifest;
       try {
-        const res = await fetchImpl(MANIFEST_URL, { cache: 'force-cache' });
+        const res = await fetchImpl(MANIFEST_URL, { cache: 'no-cache' });
         if (res && res.ok) this._manifest = normalizeManifest(await res.json());
       } catch {
         // keep defaults

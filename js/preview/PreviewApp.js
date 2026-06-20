@@ -253,7 +253,7 @@ export class PreviewApp {
         // battle start). This just ensures the SE pool exists and the BGM start track
         // is buffering, then returns immediately.
         const musicIds = audioEngine.getBattleTrackIds(nextScene.stage?.runtime);
-        const audioPreload = await audioEngine.prepareTracks([...musicIds, ...BATTLE_PRELOAD_SE_IDS]);
+        const audioPreload = await audioEngine.prepareTracks([...musicIds, ...BATTLE_PRELOAD_SE_IDS], { seIds: BATTLE_PRELOAD_SE_IDS });
         nextScene.loadTimings = nextScene.loadTimings || {};
         nextScene.loadTimings.audioPreloadMs = performance.now() - audioPreloadStart;
         nextScene.loadTimings.audioPreload = audioPreload;

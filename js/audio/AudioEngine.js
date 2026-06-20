@@ -12,8 +12,14 @@
 //  - iOS autoplay policy: every element is "unlocked" once, inside the first user
 //    gesture, by playing a silent clip. Reusing the SAME unlocked elements is what
 //    lets BGM/SE start later from a non-gesture rAF tick (battle start).
-//  - No Cache API / no per-battle "saving": the browser HTTP cache already keeps the
-//    local .m4a files warm across battles.
+//  - Fetch each SE file from the server at most ONCE: the compressed .m4a is fetched
+//    a single time into an in-memory Blob object URL (`_blobUrls`) and every later
+//    play (and every later battle) reuses that blob: URL, which is served from memory
+//    and never hits the network. Without this, re-assigning a pool element's `src`
+//    re-requests the file on every SE — hammering the static server / risking rate
+//    limits, because the dev server sends no long-lived cache headers. This is an
+//    in-memory cache of the raw compressed file only — NOT the Cache API and NOT the
+//    decoded PCM the old Web Audio path persisted.
 //  - Volume tracks AudioSettings live; setPaused() pauses/resumes BGM.
 //  - Degrades to a no-op when HTMLAudioElement is unavailable (SSR / old runtime).
 
@@ -37,6 +43,10 @@ export class AudioEngine {
     this._wantedBgmId = null;
     this._sePool = [];
     this._sePoolIdx = 0;
+    // norm id -> in-memory Blob object URL (fetched once, reused forever). Keeps the
+    // static server from being re-hit on every SE play / every battle.
+    this._blobUrls = new Map();
+    this._blobPending = new Map();
     this._unlocked = false;
     this._userPaused = false;
     this._gestureBound = null;
@@ -76,6 +86,37 @@ export class AudioEngine {
       el.preload = 'auto';
       this._sePool.push(el);
     }
+  }
+
+  // ---- fetch-once blob cache (so the server is hit at most once per file) ----
+  _blobFor(norm) { return this._blobUrls.get(norm) || null; }
+
+  // Fetch the compressed file exactly once and hold it as an in-memory object URL.
+  // Idempotent and de-duped via _blobPending; safe to call fire-and-forget. Returns
+  // the object URL (or null if fetch/URL are unavailable, e.g. SSR).
+  async _ensureBlob(norm) {
+    if (norm == null) return null;
+    if (this._blobUrls.has(norm)) return this._blobUrls.get(norm);
+    if (this._blobPending.has(norm)) return this._blobPending.get(norm);
+    const url = this.catalog.resolveUrls(norm)[0];
+    const canFetch = typeof fetch === 'function' && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
+    if (!url || !canFetch) return null;
+    const pending = (async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        this._blobUrls.set(norm, objectUrl);
+        return objectUrl;
+      } catch {
+        return null;
+      } finally {
+        this._blobPending.delete(norm);
+      }
+    })();
+    this._blobPending.set(norm, pending);
+    return pending;
   }
 
   // ---- iOS gesture unlock ----
@@ -135,7 +176,7 @@ export class AudioEngine {
   // Lightweight, idempotent warm. No decode, no Cache API, no per-battle persistence
   // — just make sure the SE pool exists and the BGM start track is buffering. The
   // browser HTTP cache keeps the local files warm across battles.
-  async prepareTracks(ids = []) {
+  async prepareTracks(ids = [], { seIds = [] } = {}) {
     try { await this.catalog.load?.(); } catch {}
     if (!this._supported) return { ok: false, total: 0, loaded: 0, ids: [], results: [], source: 'AudioEngine.prepareTracks' };
     this._ensureSePool();
@@ -143,6 +184,10 @@ export class AudioEngine {
     // Warm the BGM start track (first id) so its first play streams without a stall.
     const startId = normalizedIds[0];
     if (startId != null) this.loadTrack(startId);
+    // Fetch each battle SE into its in-memory blob ONCE here (fire-and-forget, deduped
+    // by _ensureBlob across battles). After this first warm the blob Map is hit on
+    // every later play / battle, so the server is never re-fetched for these files.
+    for (const id of unique(seIds.map((s) => this.catalog.normalizeId(s)))) this._ensureBlob(id);
     return {
       ok: true,
       total: normalizedIds.length,
@@ -178,6 +223,10 @@ export class AudioEngine {
     const el = this._ensureBgmEl();
     if (!el) return false;
     if (this._bgmId === norm && !el.paused) return true; // already playing this track
+    // BGM is already fetched at most once: the reusable element keeps its `src`, so
+    // replaying / re-entering a battle with the same track never re-requests it, and a
+    // track change re-`src`s exactly once. (No blob cache — these long files don't need
+    // to be held fully in memory, and streaming starts faster.)
     const url = this.catalog.resolveUrls(norm)[0];
     if (!url) return false;
     try {
@@ -211,8 +260,13 @@ export class AudioEngine {
     if (norm == null || !this._supported || this._userPaused) return false;
     this._ensureSePool();
     if (!this._sePool.length) return false;
-    const url = this.catalog.resolveUrls(norm)[0];
+    // Reuse the in-memory blob if we have it (zero network); otherwise stream the
+    // server URL this once and warm the blob in the background so the NEXT play (and
+    // every future battle) is served from memory instead of re-fetching.
+    const cached = this._blobFor(norm);
+    const url = cached || this.catalog.resolveUrls(norm)[0];
     if (!url) return false;
+    if (!cached) this._ensureBlob(norm);
     const el = this._sePool[this._sePoolIdx];
     this._sePoolIdx = (this._sePoolIdx + 1) % this._sePool.length;
     try {
@@ -253,6 +307,11 @@ export class AudioEngine {
     try { this._bgmEl?.pause?.(); } catch {}
     for (const el of this._sePool) { try { el.pause?.(); } catch {} }
     this._sePool = [];
+    if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+      for (const objectUrl of this._blobUrls.values()) { try { URL.revokeObjectURL(objectUrl); } catch {} }
+    }
+    this._blobUrls.clear();
+    this._blobPending.clear();
   }
 }
 

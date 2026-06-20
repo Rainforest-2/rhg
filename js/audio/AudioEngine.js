@@ -58,6 +58,19 @@ export class AudioEngine {
     if (!this._supported || this.ctx) return this.ctx;
     const Ctor = window.AudioContext || window.webkitAudioContext;
     this.ctx = new Ctor();
+    // Keep the context alive across the battle. Browsers (iOS Safari especially,
+    // and Chrome under battery saver / focus loss / audio-focus interruptions)
+    // can drop a running context to 'suspended'/'interrupted' mid-battle, which
+    // silently kills all SE for a stretch until the next user gesture. Re-resume
+    // automatically whenever that happens outside of an intentional pause, so SE
+    // recover on their own instead of staying dead "for a while".
+    this.ctx.addEventListener?.('statechange', () => {
+      if (!this.ctx) return;
+      const state = this.ctx.state;
+      if ((state === 'suspended' || state === 'interrupted') && !this._userPaused) {
+        this.ctx.resume?.().catch(() => {});
+      }
+    });
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = 1;
     this.masterGain.connect(this.ctx.destination);
@@ -319,16 +332,33 @@ export class AudioEngine {
     if (this.current && this.current.id === norm && this.current.source) return true;
     if (this.currentElement && this.currentElement.dataset?.trackId === String(norm) && !this.currentElement.paused) return true;
 
-    const buffer = await this.loadTrack(norm, { quiet: true });
+    // Fast path: the stage BGM is decoded during the battle-start preload, so the
+    // common case is a cached buffer on a live context. Start it on this very tick
+    // instead of after an await, so the music is audible the moment the battle goes
+    // active rather than a frame or two later.
+    const cached = this._buffers.get(norm);
+    if (cached && !this._userPaused && this.ctx.state === 'running') {
+      return this._startBgmBuffer(cached, norm, { loop, fadeMs });
+    }
+
+    const buffer = cached || await this.loadTrack(norm, { quiet: true });
     if (!buffer) return this._playBgmElement(norm, { loop });
     // A newer playBgm() call superseded this one while we were downloading.
     if (this._wantedBgmId !== norm) return false;
     if (!await this._resumeContextForPlayback()) return this._playBgmElement(norm, { loop });
+    return this._startBgmBuffer(buffer, norm, { loop, fadeMs });
+  }
 
+  _startBgmBuffer(buffer, norm, { loop = true, fadeMs = DEFAULT_CROSSFADE_MS } = {}) {
     const t = now(this.ctx);
+    // Starting from silence (nothing to cross-fade out) ramps up fast so the track
+    // is heard right away. A long exponential in-fade keeps the gain near-zero for
+    // most of its duration, which reads as "the BGM started late"; only a real
+    // track->track crossfade (start->boss) uses the full fade.
+    const inFade = this.current?.source ? fadeMs : Math.min(fadeMs, 150);
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(1, t + Math.max(0.001, fadeMs / 1000));
+    gain.gain.exponentialRampToValueAtTime(1, t + Math.max(0.001, inFade / 1000));
     gain.connect(this.bgmGain);
 
     const source = this.ctx.createBufferSource();
@@ -371,9 +401,21 @@ export class AudioEngine {
     const norm = this.catalog.normalizeId(id);
     if (norm == null) return false;
     if (!ctx) return this._playSeElement(norm);
-    const buffer = await this.loadTrack(norm, { quiet: true });
+    // Fast path: SE samples are decoded during the battle-start preload, so the hot
+    // case is a cached buffer on a running context. Start it synchronously (no
+    // await) so the SE fires on the same tick as the gameplay event instead of a
+    // microtask later, which otherwise reads as the SE lagging the action.
+    const cached = this._buffers.get(norm);
+    if (cached && !this._userPaused && ctx.state === 'running') {
+      return this._startSeBuffer(cached);
+    }
+    const buffer = cached || await this.loadTrack(norm, { quiet: true });
     if (!buffer) return this._playSeElement(norm);
     if (!await this._resumeContextForPlayback()) return this._playSeElement(norm);
+    return this._startSeBuffer(buffer);
+  }
+
+  _startSeBuffer(buffer) {
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(this.seGain);

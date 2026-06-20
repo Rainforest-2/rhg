@@ -31,6 +31,9 @@ jobs:
           rm -rf public/assets/bcu 
           rm -rf tmp
           rm -rf scripts
+          rm -rf docs
+          rm -rf tool
+          rm -rf package.json
           rm -rf node_modules
           rm -rf references
 

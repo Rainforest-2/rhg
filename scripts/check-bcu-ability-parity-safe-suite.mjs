@@ -101,7 +101,9 @@ const commands = [
   ['node', ['scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-enemy-castle-resolution.mjs']],
   ['node', ['scripts/check-bcu-enemy-castle-resolution.mjs']],
-  ['node', ['scripts/check-actor-render-bounds-guard.mjs']]
+  ['node', ['scripts/check-actor-render-bounds-guard.mjs']],
+  ['node', ['scripts/check-battle-pause-control.mjs']],
+  ['node', ['scripts/check-battle-music-and-zombie-killer.mjs']]
 ];
 
 const results = [];

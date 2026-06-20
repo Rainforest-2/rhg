@@ -72,6 +72,7 @@ async function boot() {
     await import('./preview/PreviewAppCustomStageBattleConfigPatch.js');
     await import('./preview/PreviewAppBattleResultOverlayPatch.js');
     await import('./preview/PreviewAppBattlePauseOverlayPatch.js');
+    await import('./preview/PreviewAppBattleMusicPatch.js');
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     const app = new PreviewApp({ bcuDb: db });
     globalThis.__APP__ = app;

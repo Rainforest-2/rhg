@@ -1,0 +1,13 @@
+{
+  "_comment": "Music source map for in-battle BGM. Per the project decision, the .ogg tracks themselves are NOT vendored into this repo (193 files / ~147MB). At battle start the runtime downloads ONLY the track the stage needs from `remoteBaseUrl` (BCU's official bcu-assets repo, served with Access-Control-Allow-Origin:*), and the browser HTTP-caches it. A track id N resolves to the file `${id padded to `pad` digits}.ogg`. If a same-named file is dropped into public/assets/music/ it overrides the remote download (see localBaseUrl), which is why files live here unzipped rather than in a bundle.",
+  "schemaVersion": 1,
+  "remoteBaseUrl": "https://raw.githubusercontent.com/battlecatsultimate/bcu-assets/master/music/",
+  "localBaseUrl": "./public/assets/music/",
+  "extension": ".ogg",
+  "pad": 3,
+  "minId": 0,
+  "maxId": 190,
+  "defaultStartMusicId": 0,
+  "defaultBossMusicId": 1,
+  "defaultBossHpThresholdPercent": 100
+}

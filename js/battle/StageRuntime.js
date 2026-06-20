@@ -76,6 +76,8 @@ export class StageRuntime {
     this.noContinue = stageDefinition?.noContinue ?? null;
     this.bossGuard = toFiniteNumber(stageDefinition?.bossGuard, null);
     this.musicId = stageDefinition?.musicId ?? null;
+    this.bossMusicId = stageDefinition?.bossMusicId ?? null;
+    this.bossMusicHpThresholdPercent = toFiniteNumber(stageDefinition?.bossMusicHpThresholdPercent, null);
     this.mapId = stageDefinition?.mapId ?? null;
     this.stageId = stageDefinition?.stageId ?? null;
     this.enemyRows = Array.isArray(stageDefinition?.enemyRows) ? stageDefinition.enemyRows : [];
@@ -228,6 +230,8 @@ export class StageRuntime {
       noContinue: this.noContinue,
       bossGuard: this.bossGuard,
       musicId: this.musicId,
+      bossMusicId: this.bossMusicId,
+      bossMusicHpThresholdPercent: this.bossMusicHpThresholdPercent,
       mapId: this.mapId,
       stageId: this.stageId,
       enemyRows: this.enemyRows,

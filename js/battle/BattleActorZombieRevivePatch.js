@@ -4,6 +4,7 @@ import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { initializeBcuZombieCorpse, updateBcuZombieCorpseWindow } from './bcu-runtime/BcuZombieCorpseRuntime.js';
 import { clearBcuZombieCorpseVisual, getBcuZombieReviveAnimFrames, startBcuZombieCorpseVisual, tickBcuZombieCorpseVisual } from './bcu-runtime/BcuZombieReviveVisualRuntime.js';
+import { playZombieKillerSe } from '../audio/BattleSoundEffects.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.actor-zombie-revive-patch.v1');
 const RENDER_PATCH_FLAG = Symbol.for('wanko-battle.actor-zombie-revive-render-patch.v1');
@@ -234,6 +235,9 @@ export function installBattleActorZombieRevivePatch() {
       }
     } else if ((isZombie(this) || spec?.mode === 'extra-revive') && spec && zk) {
       this.lastBcuZombieReviveDebug = { source: 'BCU ZombX.prekill tempZK blocks revive', scheduled: false, zombieKillerBlocked: true, mode: spec.mode || 'own-revive' };
+      // BCU/Battle-Cats: Zombie Killer has no unique sprite — "発動時は特有の効果音が
+      // 鳴る". This is the moment it actually denies a revive, so play the sting.
+      try { playZombieKillerSe(); } catch {}
     }
     return result;
   };

@@ -3,6 +3,8 @@ import { resolveBcuEnemyCastleId } from './BcuEnemyCastleResolver.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { assertRuntimeUrlAllowed } from '../bcu/RuntimeAssetGuard.js';
+import { musicCatalog } from '../audio/MusicCatalog.js';
+import { resolveStageMusic } from '../audio/StageMusicResolver.js';
 
 const FRAME_MUL = 2;
 const FPS = 1000 / BCU_BATTLE_TIMER_PERIOD_MS;
@@ -457,6 +459,35 @@ export class StageDefinitionLoader {
     return out;
   }
 
+  // Attach BGM ids (start music, boss music + its castle-HP% trigger) from the
+  // stage's sibling MapStageData CSV. Always sets usable ids (catalog defaults on
+  // any miss) so the battle music layer never has a null id. See StageMusicResolver.
+  async enrichMusic(stageDefinition, stageEntry, provider = null) {
+    if (!stageDefinition?.ok) return stageDefinition;
+    try {
+      await musicCatalog.load().catch(() => {});
+      const readMsdText = provider && typeof provider.readTextByBundleRef === 'function'
+        ? (bundleRef) => provider.readTextByBundleRef(bundleRef, bundleRef.internalPath)
+        : null;
+      const music = await resolveStageMusic({ stageEntry, readMsdText, catalog: musicCatalog });
+      stageDefinition.musicId = music.startMusicId;
+      stageDefinition.bossMusicId = music.bossMusicId;
+      stageDefinition.bossMusicHpThresholdPercent = music.bossHpThresholdPercent;
+      stageDefinition.musicSource = music.source;
+      if (stageDefinition.runtime) {
+        stageDefinition.runtime.musicId = music.startMusicId;
+        stageDefinition.runtime.bossMusicId = music.bossMusicId;
+        stageDefinition.runtime.bossMusicHpThresholdPercent = music.bossHpThresholdPercent;
+        stageDefinition.runtime.musicSource = music.source;
+      }
+    } catch (err) {
+      const warning = `stage-music-resolve-failed:${err?.message || String(err)}`;
+      const warnings = stageDefinition.warnings || (stageDefinition.warnings = []);
+      if (!warnings.includes(warning)) warnings.push(warning);
+    }
+    return stageDefinition;
+  }
+
   async enrichBossSpawn(stageDefinition, provider = null) {
     if (!stageDefinition?.ok || !provider) return stageDefinition;
     try {
@@ -485,7 +516,8 @@ export class StageDefinitionLoader {
           const read = stageKey
             ? await provider.readStageCsv(stageKey)
             : { text: await provider.readTextByBundleRef(stageConfig.bundleRef), logicalPath: stageConfig.bundleRef.internalPath };
-          return await this.enrichBossSpawn(this.parse(read.text, read.logicalPath), provider);
+          const enriched = await this.enrichBossSpawn(this.parse(read.text, read.logicalPath), provider);
+          return await this.enrichMusic(enriched, read.entry || null, provider);
         }
       } catch (err) {
         let provider = null;

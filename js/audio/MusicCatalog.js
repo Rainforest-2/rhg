@@ -1,27 +1,21 @@
-// Resolves an in-battle music id to the URL(s) the AudioEngine should fetch.
+// Resolves an in-battle music id to the URL(s) the AudioEngine should load.
 //
-// Per the project decision (see public/assets/music/musicmap.json) the ~147MB of
-// BCU battle tracks are NOT vendored into the repo. Instead each track is
-// downloaded on demand at battle start and HTTP-cached by the browser. A track
-// dropped into public/assets/music/<id>.ogg overrides the download, so the music
-// folder stays the canonical place to add/replace tracks without rebuilding a bundle.
+// The BCU battle tracks are now vendored under public/assets/music/<id>.ogg
+// (000..190), so BGM loads entirely from local assets — no network fetch. The
+// remote hosts were unreachable on many networks, so the tracks were bundled
+// instead of downloaded on demand.
 //
-// Download order (first that succeeds wins):
-//   1. localBaseUrl  — a vendored override in this repo.
-//   2. cdnBaseUrl    — jsDelivr's CDN mirror of bcu-assets (Cloudflare-backed,
-//                      CORS:*, week-long edge cache). PRIMARY remote: it is far
-//                      more widely reachable/reliable than raw.githubusercontent,
-//                      which is throttled or outright blocked on many networks
-//                      (that is what surfaced "[AudioEngine] could not load music
-//                      track N" — the only host failed, so the BGM stayed silent).
-//   3. remoteBaseUrl — raw.githubusercontent.com fallback (same bytes).
+// Load order (first that succeeds wins), driven by musicmap.json:
+//   1. localBaseUrl  — the vendored tracks in this repo (the only source by default).
+//   2. cdnBaseUrl / remoteBaseUrl — optional remote fallbacks; empty by default,
+//      so resolveUrls skips them. Re-add a base URL to restore a remote fallback.
 
 const MANIFEST_URL = './public/assets/music/musicmap.json';
 
 const FALLBACK_MANIFEST = Object.freeze({
   schemaVersion: 1,
-  cdnBaseUrl: 'https://cdn.jsdelivr.net/gh/battlecatsultimate/bcu-assets@master/music/',
-  remoteBaseUrl: 'https://raw.githubusercontent.com/battlecatsultimate/bcu-assets/master/music/',
+  cdnBaseUrl: '',
+  remoteBaseUrl: '',
   localBaseUrl: './public/assets/music/',
   extension: '.ogg',
   pad: 3,

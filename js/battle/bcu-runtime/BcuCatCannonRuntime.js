@@ -471,7 +471,9 @@ export function tickBcuCatCannonCharge(scene, dt = BCU_BATTLE_TIMER_PERIOD_MS) {
   if (!state?.enabled) return state;
   const stepFrames = Math.max(1, Math.round(finite(dt, BCU_BATTLE_TIMER_PERIOD_MS) / BCU_BATTLE_TIMER_PERIOD_MS));
   const before = state.cannon;
-  if (!state.active) state.cannon = Math.min(state.maxCannon, state.cannon + stepFrames);
+  const wasActive = !!state.active;
+  if (!wasActive) state.cannon = Math.min(state.maxCannon, state.cannon + stepFrames);
+  const chargedThisTick = !wasActive && before < state.maxCannon && state.cannon >= state.maxCannon;
   state.lastChargeDebug = {
     source: 'BCU StageBasis.update active block: cannon++',
     before,
@@ -479,6 +481,17 @@ export function tickBcuCatCannonCharge(scene, dt = BCU_BATTLE_TIMER_PERIOD_MS) {
     stepFrames,
     ready: state.cannon >= state.maxCannon
   };
+  if (chargedThisTick) {
+    scene?.pushEvent?.({
+      type: 'bcuCatCannonCharged',
+      cannonId: state.id,
+      beforeCannon: before,
+      afterCannon: state.cannon,
+      maxCannon: state.maxCannon,
+      source: 'BCU StageBasis.update cannon == maxCannon - 1 -> CommonStatic.setSE(SE_CANNON_CHARGE)',
+      bcuReference: 'StageBasis.update CommonStatic.setSE(SE_CANNON_CHARGE)'
+    });
+  }
   if (state.requestFire) activateBcuCatCannon(scene);
   return state;
 }

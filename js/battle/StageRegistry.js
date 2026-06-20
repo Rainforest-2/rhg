@@ -3,10 +3,28 @@ import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 
 export const SELECTED_STAGE_STORAGE_KEY = 'bcu.selectedStageId';
 
+function isSelectableSemanticStage(entry = {}) {
+  // CH/stageNormal CSVs are MapStageData-style rows (BGM, boss threshold,
+  // reward/setup metadata), not battle layouts. They are valid resolver inputs
+  // for CH/stage layouts, but selecting them as stages makes battle parsing fall
+  // through to catalog default music such as 000.m4a.
+  if (entry.category === 'CH' && entry.groupDir === 'stageNormal') return false;
+  return true;
+}
+
+function isCanonicalChMainStage(stage = {}) {
+  const entry = stage.semanticEntry || {};
+  return entry.category === 'CH' && entry.groupDir === 'stage' && entry.packId === '000001';
+}
+
+function resolveAmbiguousStageMatch(matches = []) {
+  return matches.find(isCanonicalChMainStage) || null;
+}
+
 function semanticStages() {
   try {
     const entries = getBcuAssetDatabase()?.semanticIndexes?.stages?.entries || [];
-    return entries.map((e) => ({
+    return entries.filter(isSelectableSemanticStage).map((e) => ({
       stageKey: e.key,
       stageId: e.stageId,
       label: e.stageId,
@@ -27,7 +45,9 @@ function findStageInList(stages, stageId) {
   const exactKey = stages.find((s) => s.stageKey === stageId);
   if (exactKey) return exactKey;
   const matches = stages.filter((s) => s.stageId === stageId || s.semanticEntry?.aliases?.includes(stageId));
-  return matches.length === 1 ? matches[0] : null;
+  if (matches.length === 1) return matches[0];
+  if (matches.length > 1) return resolveAmbiguousStageMatch(matches);
+  return null;
 }
 
 export function readPersistedStageId() {

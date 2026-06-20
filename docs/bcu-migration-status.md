@@ -16,7 +16,7 @@ This file is the current high-level status page. Older migration task logs were 
 - Formation and production icons should resolve through `SemanticAssetProvider.getActorUiIconUrl()` and aggregate icon ZIPs, not actor bundle image fallbacks.
 - Core DB boot path remains `public/assets/bundles/core/core-db.zip` through `BcuBootLoader` / `SemanticAssetProvider`.
 - Stage, background, castle, actor, icon, core, language, and effect bundle families are treated as generated assets.
-- Battle BGM and all BCU sound ids `0..190` are resolved from the vendored `public/assets/music/<id>.m4a` files. Stage BGM comes from sibling map data, including CH main-story `stageNN -> stageNormal0.csv` rows (for example 日本編 西表島 `stage47` resolves music id `4`, not catalog default `0`). The sortie path warms only the selected stage BGM plus `BATTLE_HOT_SE_IDS`; every other sound id is accepted by the battle SE bridge and lazy-warms through the in-memory HTMLAudio blob cache on first play.
+- Battle BGM and all BCU sound ids `0..190` are resolved from the vendored `public/assets/music/<id>.m4a` files. Stage BGM comes from sibling map data, including CH main-story `stageNN -> stageNormal0.csv` rows (for example 日本編 西表島 `stage47` resolves music id `4`, not catalog default `0`). `CH/stageNormal` map-data rows are filtered out of selectable battle stages, and ambiguous short CH ids such as `stage47` resolve to the canonical `000001/CH/stage` layout. The sortie path warms only the selected stage BGM plus `BATTLE_HOT_SE_IDS`; every other sound id is accepted by the battle SE bridge and lazy-warms through the in-memory HTMLAudio blob cache on first play.
 
 ## Current focused docs
 
@@ -49,7 +49,7 @@ These areas have meaningful JS runtime wiring and focused checks, but may still 
 - standard zombie corpse / soulstrike / revive visual trace path
 - special castle boss-spawn coordinate via `core-db.zip:boss-spawns.json` and `StageRuntime.bossSpawnWorldX`
 - BASE_WALL cat cannon (id 2) wall-entity spawn lifecycle (Form 339 spawn at anchor+100, alive-time SELF_DESTRUCT, single-wall replacement)
-- battle BGM/full BCU sound id catalog `0..190` with CH stage music rows, hot SE preload, BCU `SE_CANNON`/wallet SE timing, and lazy raw-id playback from `public/assets/music` (`scripts/check-battle-music-and-zombie-killer.mjs`)
+- battle BGM/full BCU sound id catalog `0..190` with CH stage music rows, CH `stageNormal` map-data selection filtering, hot SE preload, BCU `SE_CANNON`/wallet/charge-ready SE timing, per-id `CommonStatic.setSE` frame dedupe, and lazy raw-id playback from `public/assets/music` (`scripts/check-battle-music-and-zombie-killer.mjs`)
 
 ### Human visual review still needed
 

@@ -86,10 +86,15 @@ export function playExplicitBcuSe(scene, event = {}, engine = undefined) {
   const includeGenericArrays = GENERIC_BCU_SOUND_EVENT_TYPES.has(type);
   const ids = collectBcuSoundIds(event, { includeGenericArrays });
   if (!ids.length) return false;
-  for (const id of ids) {
-    if (oncePerFrame(scene, `se-${id}`)) playBcuSe(id, engine);
-  }
+  for (const id of ids) playBcuSetSe(scene, id, engine);
   return true;
+}
+
+function playBcuSetSe(scene, id, engine = undefined) {
+  const normalized = normalizeBcuSoundId(id);
+  if (normalized == null) return false;
+  if (!oncePerFrame(scene, `se-${normalized}`)) return false;
+  return playBcuSe(normalized, engine);
 }
 
 function cannonIdsForEvent(scene, event = {}) {
@@ -104,10 +109,8 @@ function cannonIdsForEvent(scene, event = {}) {
   return BCU_CANNON_SE.BASIC;
 }
 
-function playIdsOncePerFrame(scene, ids, keyPrefix, engine = undefined) {
-  for (const id of ids) {
-    if (oncePerFrame(scene, `${keyPrefix}-${id}`)) playBcuSe(id, engine);
-  }
+function playIdsOncePerFrame(scene, ids, engine = undefined) {
+  for (const id of ids) playBcuSetSe(scene, id, engine);
 }
 
 function playCannonActivationSe(scene, event = {}, engine = undefined) {
@@ -115,14 +118,14 @@ function playCannonActivationSe(scene, event = {}, engine = undefined) {
   // BCU StageBasis.act_can first calls SE_SPEND_SUC, then Cannon.activate() calls
   // SE_CANNON[id][0]. Secondary cannon SE ids are emitted later by cannon update
   // containers, never together with the press.
-  playIdsOncePerFrame(scene, [BCU_SE.SPEND_SUCCESS, ids[0] ?? BCU_SE.CANNON_BASIC_ATK], 'se-cannon-activate', engine);
+  playIdsOncePerFrame(scene, [BCU_SE.SPEND_SUCCESS, ids[0] ?? BCU_SE.CANNON_BASIC_ATK], engine);
 }
 
 function playCannonSecondarySe(scene, event = {}, engine = undefined) {
   const ids = cannonIdsForEvent(scene, event);
   const secondary = ids[1];
   if (secondary == null) return;
-  playIdsOncePerFrame(scene, [secondary], 'se-cannon-secondary', engine);
+  playIdsOncePerFrame(scene, [secondary], engine);
 }
 
 function hasAppliedDamageAbility(event = {}, key) {
@@ -158,10 +161,12 @@ export function playForEvent(scene, event = {}, engine = undefined) {
       if (throttle(scene, 'deploy', 60)) playDeploySe(engine);
       break;
     case 'playerSpawnRejected':
+      if (throttle(scene, 'fail', 90)) playSpendFailSe(engine);
+      break;
     case 'bcuCatCannonRejected':
     case 'bcuWalletUpgradeRejected':
     case 'bcuSpiritSummonBlocked':
-      if (throttle(scene, 'fail', 90)) playSpendFailSe(engine);
+      playBcuSetSe(scene, BCU_SE.SPEND_FAIL, engine);
       break;
     case 'bcuCatCannonActivated':
     case 'bcuCatCannonWallSpawned':
@@ -171,8 +176,11 @@ export function playForEvent(scene, event = {}, engine = undefined) {
     case 'bcuCatCannonBasicAttack':
       playCannonSecondarySe(scene, event, engine);
       break;
+    case 'bcuCatCannonCharged':
+      playBcuSetSe(scene, BCU_SE.CANNON_CHARGE, engine);
+      break;
     case 'bcuWalletUpgraded':
-      if (throttle(scene, 'wallet-upgrade', 60)) playBcuSe(BCU_SE.SPEND_SUCCESS, engine);
+      playBcuSetSe(scene, BCU_SE.SPEND_SUCCESS, engine);
       break;
     case 'damageQueued':
       if (hasAppliedDamageAbility(event, 'critical') && throttle(scene, 'critical', 120)) playBcuSe(BCU_SE.CRIT, engine);
@@ -186,7 +194,7 @@ export function playForEvent(scene, event = {}, engine = undefined) {
       // BCU: ContWaveDef.update calls CommonStatic.setSE(SE_WAVE) at t==0; setSE is a
       // per-frame flag, so SE_WAVE sounds at most once per logic frame even when many
       // wave segments (multiple casters, or propagation levels) start the same frame.
-      if (oncePerFrame(scene, 'se-wave')) playBcuSe(BCU_SE.WAVE, engine);
+      playBcuSetSe(scene, BCU_SE.WAVE, engine);
       break;
     case 'bcuSurgeSe':
       if (event.soundEffect === 'SE_VOLC_LOOP') {

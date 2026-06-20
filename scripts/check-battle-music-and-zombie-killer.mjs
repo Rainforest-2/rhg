@@ -18,6 +18,8 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { setBcuAssetDatabase } from '../js/bcu/BcuAssetDatabase.js';
+import { getAvailableStages, getStageById } from '../js/battle/StageRegistry.js';
 import { MusicCatalog } from '../js/audio/MusicCatalog.js';
 import { deriveMsdRef, parseMsdRows, parseStageMusicFromRows, resolveStageMusic } from '../js/audio/StageMusicResolver.js';
 import {
@@ -107,6 +109,51 @@ const iriomoteResolved = await resolveStageMusic({ stageEntry: iriomoteEntry, re
 check(iriomoteResolved.startMusicId === 4 && iriomoteResolved.source === 'MapStageData',
   `resolveStageMusic must not fall back to 000.m4a for EoC 西表島, got ${JSON.stringify(iriomoteResolved)}`);
 
+setBcuAssetDatabase({
+  semanticMode: 'semantic-strict',
+  semanticIndexes: {
+    stages: {
+      entries: [
+        {
+          key: 'stage:000001:CH/stage/stage47',
+          stageId: 'stage47',
+          kind: 'stage-definition',
+          packId: '000001',
+          category: 'CH',
+          groupDir: 'stage',
+          basename: 'stage47',
+          aliases: ['stage47', 'stage47.csv', 'CH/stage/stage47.csv']
+        },
+        {
+          key: 'stage:110800:CH/stage/stage47',
+          stageId: 'stage47',
+          kind: 'stage-definition',
+          packId: '110800',
+          category: 'CH',
+          groupDir: 'stage',
+          basename: 'stage47',
+          aliases: ['stage47', 'stage47.csv', 'CH/stage/stage47.csv']
+        },
+        {
+          key: 'stage:000001:CH/stageNormal/stageNormal0',
+          stageId: 'stageNormal0',
+          kind: 'stage-definition',
+          packId: '000001',
+          category: 'CH',
+          groupDir: 'stageNormal',
+          basename: 'stageNormal0',
+          aliases: ['stageNormal0', 'stageNormal0.csv', 'CH/stageNormal/stageNormal0.csv']
+        }
+      ]
+    }
+  }
+});
+const selectableStages = getAvailableStages();
+check(!selectableStages.some((stage) => stage.stageKey === 'stage:000001:CH/stageNormal/stageNormal0'),
+  'StageRegistry must not expose CH/stageNormal map-data rows as selectable battle stages');
+check(getStageById('stage47')?.stageKey === 'stage:000001:CH/stage/stage47',
+  'StageRegistry must resolve ambiguous short CH stage ids to the canonical main-story layout');
+
 // 4. stage -> runtime wiring
 const loader = await read('js/battle/StageDefinitionLoader.js');
 check(loader.includes('enrichMusic') && loader.includes('resolveStageMusic') && loader.includes("from '../audio/MusicCatalog.js'"), 'StageDefinitionLoader must enrich music via the resolver/catalog');
@@ -164,10 +211,10 @@ for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRe
 }
 check(!/case 'stageEnemySpawned':[\s\S]{0,120}playDeploySe/.test(eventPatch), 'BattleSoundEventPatch must not play player deploy SE for enemy spawns');
 check(eventPatch.includes('BCU_CANNON_SE.WALL') && eventPatch.includes('BCU_CANNON_SE.BARRIER') && eventPatch.includes('BCU_CANNON_SE.CURSE'), 'BattleSoundEventPatch must map cannon ids to BCU_CANNON_SE entries');
-check(eventPatch.includes('includeGenericArrays') && eventPatch.includes('oncePerFrame(scene, `se-${id}`)'),
+check(eventPatch.includes('includeGenericArrays') && eventPatch.includes('oncePerFrame(scene, `se-${normalized}`)'),
   'BattleSoundEventPatch must support raw BCU setSE ids with per-frame dedupe');
-check(eventPatch.includes('playCannonActivationSe') && eventPatch.includes('playCannonSecondarySe') && eventPatch.includes('bcuWalletUpgraded'),
-  'BattleSoundEventPatch must split BCU cannon press/secondary SE and wallet upgrade SE');
+check(eventPatch.includes('playCannonActivationSe') && eventPatch.includes('playCannonSecondarySe') && eventPatch.includes('bcuWalletUpgraded') && eventPatch.includes('bcuCatCannonCharged'),
+  'BattleSoundEventPatch must split BCU cannon press/secondary SE, wallet upgrade SE, and cannon charge-ready SE');
 for (const piece of ['BCU_SE.CRIT', 'BCU_SE.SATK', 'BCU_SE.WAVE', 'BCU_SE.POISON', 'BCU_SE.VOLC_START', 'BCU_SE.VOLC_LOOP', 'BCU_SE.BARRIER_ATK', 'BCU_SE.SHIELD_BREAKER', 'BCU_SE.WARP_ENTER', 'BCU_SE.DEATH_SURGE']) {
   check(eventPatch.includes(piece), `BattleSoundEventPatch must cover ${piece}`);
 }
@@ -186,12 +233,27 @@ check(JSON.stringify(playedFor({ type: 'bcuCatCannonBasicAttack', cannonId: 0 })
   'BCU basic cannon wave container must play SE_CANNON[0][1]');
 check(JSON.stringify(playedFor({ type: 'bcuNonBasicCatCannonAttack', cannonId: 3 })) === JSON.stringify([37]),
   'BCU freeze cannon secondary attack must play SE_CANNON[3][1]');
+check(JSON.stringify(playedFor({ type: 'bcuCatCannonCharged', cannonId: 0 })) === JSON.stringify([28]),
+  'BCU cannon charge-ready event must play SE_CANNON_CHARGE');
 check(JSON.stringify(playedFor({ type: 'bcuWalletUpgraded' })) === JSON.stringify([19]),
   'BCU wallet upgrade success must play SE_SPEND_SUC');
 check(JSON.stringify(playedFor({ type: 'bcuWalletUpgradeRejected' })) === JSON.stringify([15]),
   'BCU wallet upgrade failure must play SE_SPEND_FAIL');
 check(JSON.stringify(playedFor({ type: 'bcuSetSe', bcuSeIds: [190, 190, 26] })) === JSON.stringify([190, 26]),
   'generic BCU setSE events must accept raw ids and dedupe duplicates in one event');
+{
+  const played = [];
+  const sharedFrameScene = { logicFrame: 2200, timeMs: 2200 * 33, bcuCatCannon: { id: 0 } };
+  const fakeEngine = { playSe(id) { played.push(id); return true; } };
+  playForEvent(sharedFrameScene, { type: 'bcuCatCannonBasicAttack', cannonId: 0 }, fakeEngine);
+  playForEvent(sharedFrameScene, { type: 'bcuWaveSe' }, fakeEngine);
+  check(JSON.stringify(played) === JSON.stringify([26]),
+    'BCU setSE dedupe must use the shared SE id key across cannon wave and normal wave events in one logic frame');
+  sharedFrameScene.logicFrame += 1;
+  playForEvent(sharedFrameScene, { type: 'bcuWaveSe' }, fakeEngine);
+  check(JSON.stringify(played) === JSON.stringify([26, 26]),
+    'BCU setSE dedupe must allow the same SE id again on the next logic frame');
+}
 const waveRuntime = await read('js/battle/BattleWaveRuntimePatch.js');
 check(waveRuntime.includes('bcuWaveSe') && waveRuntime.includes('SE_WAVE'), 'BattleWaveRuntimePatch must emit SE_WAVE at ContWaveDef t==0');
 const surgeRuntime = await read('js/battle/BattleSurgeRuntimePatch.js');
@@ -212,6 +274,8 @@ const touched = [
   'js/audio/AudioEngine.js',
   'js/audio/BattleSoundEffects.js',
   'js/audio/BattleSoundEventPatch.js',
+  'js/battle/StageRegistry.js',
+  'js/battle/bcu-runtime/BcuCatCannonRuntime.js',
   'js/preview/PreviewAppBattleMusicPatch.js',
   'js/preview/PreviewApp.js',
   'js/battle/StageDefinitionLoader.js',

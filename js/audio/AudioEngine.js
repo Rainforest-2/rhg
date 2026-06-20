@@ -19,6 +19,10 @@ import { musicCatalog } from './MusicCatalog.js';
 const DEFAULT_CROSSFADE_MS = 900;
 const AUDIO_CACHE_NAME = 'wanko-battle-audio-v1';
 const AUDIO_CACHE_INDEX_KEY = 'wanko-battle.audio.cache-index.v1';
+// ~0.01s of silence. Played once on the reusable BGM <audio> element inside a user
+// gesture to "unlock" it on iOS Safari, so the BGM can later start at battle start
+// (a non-gesture rAF tick) without being blocked by the autoplay policy.
+const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
 function now(ctx) { return ctx.currentTime; }
 function unique(values) { return [...new Set(values.filter((v) => v != null))]; }
@@ -81,9 +85,40 @@ export class AudioEngine {
     this.seGain.connect(this.masterGain);
 
     this._applyVolumes();
+    this._startKeepAlive();
     this._unsubscribe = this.audio.subscribe(() => this._applyVolumes());
     this._bindGestureUnlock();
     return this.ctx;
+  }
+
+  // A 1-frame silent looping buffer wired straight to the destination. iOS Safari
+  // (and some Android Chrome builds) idle the audio output unit when no buffer is
+  // actively rendering; once idled, the context still reports 'running' and BGM
+  // already in flight keeps playing, but newly started one-shot SE come out silent
+  // until a user gesture wakes the unit (hence "deploying a unit revives the SE").
+  // Keeping a perpetual silent source in the graph prevents the unit from idling.
+  _startKeepAlive() {
+    if (!this.ctx || this._keepAlive) return;
+    try {
+      const buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate || 44100);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      src.connect(this.masterGain || this.ctx.destination);
+      src.start();
+      this._keepAlive = src;
+    } catch {
+      // Non-fatal: without the keepalive the SE path still works on browsers that
+      // don't idle the output unit.
+    }
+  }
+
+  // Best-effort wake of the output unit before a sound. resume() on an already
+  // 'running' context is a cheap no-op on desktop but re-kicks the idled audio
+  // unit on iOS, so newly started SE are audible without needing a gesture first.
+  _wakeOutput() {
+    if (!this.ctx || this._userPaused) return;
+    if (this.ctx.state !== 'running') this.ctx.resume?.().catch(() => {});
   }
 
   _applyVolumes() {
@@ -105,9 +140,16 @@ export class AudioEngine {
       // a gesture-created context start 'running'); if a prior lazy creation from a
       // rAF tick already left one suspended, resume it here.
       const ctx = this._ensureContext();
-      if (ctx && ctx.state === 'suspended' && !this._userPaused) {
+      // Always resume from a gesture when not intentionally paused: covers both a
+      // 'suspended' context (autoplay policy) and an iOS context that is nominally
+      // 'running' but whose output unit idled and needs a re-kick.
+      if (ctx && ctx.state !== 'running' && !this._userPaused) {
         ctx.resume().catch(() => {});
       }
+      this._startKeepAlive();
+      // Unlock the streaming BGM element while we have a gesture, so BGM can start
+      // on its own at battle start on iOS instead of waiting for an in-battle tap.
+      this._unlockBgmElement();
       if (this._wantedBgmId != null && !this.current && !this.currentElement && !this._bgmRetryingFromGesture) {
         this._bgmRetryingFromGesture = true;
         this.playBgm(this._wantedBgmId).finally(() => { this._bgmRetryingFromGesture = false; });
@@ -199,6 +241,13 @@ export class AudioEngine {
       // the music CDNs); the battle just runs without music. Info, not warn, and
       // logged once per id (loadTrack caches the resolved promise).
       const failures = this._lastLoadFailures.get(norm) || [];
+      // A decode failure (vs a network miss) means this device's WebAudio can't
+      // decode the track — true for the long BGM AAC on iOS. Remember it so BGM
+      // routes straight to the streaming element from the first play (set here,
+      // during the battle-start preload, so even the first BGM start skips the
+      // doomed decode attempt). Local files don't fetch-fail, so on this build a
+      // null result is effectively always a decode failure.
+      if (failures.some((f) => String(f.reason || '').includes('decode'))) this._bgmPrefersElement = true;
       const reason = failures.length
         ? failures.map((f) => `${f.url}:${f.status ?? f.reason}`).join(', ')
         : 'no-resolved-url';
@@ -332,17 +381,23 @@ export class AudioEngine {
     if (this.current && this.current.id === norm && this.current.source) return true;
     if (this.currentElement && this.currentElement.dataset?.trackId === String(norm) && !this.currentElement.paused) return true;
 
+    const cached = this._buffers.get(norm);
+    // Once WebAudio decode has been shown to fail for BGM on this device (iOS can't
+    // decode the long AAC tracks), stream straight through the gesture-unlocked
+    // element and skip re-fetching + re-failing the decode of a ~1MB file on every
+    // track change.
+    if (this._bgmPrefersElement && !cached) return this._playBgmElement(norm, { loop });
+
     // Fast path: the stage BGM is decoded during the battle-start preload, so the
     // common case is a cached buffer on a live context. Start it on this very tick
     // instead of after an await, so the music is audible the moment the battle goes
     // active rather than a frame or two later.
-    const cached = this._buffers.get(norm);
     if (cached && !this._userPaused && this.ctx.state === 'running') {
       return this._startBgmBuffer(cached, norm, { loop, fadeMs });
     }
 
     const buffer = cached || await this.loadTrack(norm, { quiet: true });
-    if (!buffer) return this._playBgmElement(norm, { loop });
+    if (!buffer) { this._bgmPrefersElement = true; return this._playBgmElement(norm, { loop }); }
     // A newer playBgm() call superseded this one while we were downloading.
     if (this._wantedBgmId !== norm) return false;
     if (!await this._resumeContextForPlayback()) return this._playBgmElement(norm, { loop });
@@ -407,6 +462,7 @@ export class AudioEngine {
     // microtask later, which otherwise reads as the SE lagging the action.
     const cached = this._buffers.get(norm);
     if (cached && !this._userPaused && ctx.state === 'running') {
+      this._wakeOutput();
       return this._startSeBuffer(cached);
     }
     const buffer = cached || await this.loadTrack(norm, { quiet: true });
@@ -423,22 +479,55 @@ export class AudioEngine {
     return true;
   }
 
+  // Lazily create the ONE reusable BGM <audio> element. Long BGM tracks (~90-127s
+  // stereo AAC) routinely fail WebAudio decodeAudioData on iOS Safari (the decoded
+  // PCM is tens of MB and trips the platform's decode-memory ceiling), so BGM
+  // streams through this element instead. Reusing a single element is what makes
+  // the iOS unlock stick: an element first played inside a user gesture can be
+  // re-`src`'d and replayed from a non-gesture context later, whereas a freshly
+  // constructed `new Audio()` cannot (which is why BGM used to only start after the
+  // first in-battle tap).
+  _ensureBgmElement() {
+    if (this._bgmEl || typeof Audio !== 'function') return this._bgmEl || null;
+    const el = new Audio();
+    el.preload = 'auto';
+    this._bgmEl = el;
+    return el;
+  }
+
+  // Unlock the reusable BGM element from inside a user gesture (sortie tap, etc.).
+  _unlockBgmElement() {
+    const el = this._ensureBgmElement();
+    if (!el || this._bgmElUnlocked || this._bgmElUnlocking) return;
+    this._bgmElUnlocking = true;
+    try {
+      el.src = SILENT_WAV_DATA_URI;
+      el.loop = false;
+      el.volume = 0;
+      const p = el.play?.();
+      const done = () => { try { el.pause(); } catch {} this._bgmElUnlocked = true; this._bgmElUnlocking = false; };
+      if (p && typeof p.then === 'function') p.then(done, () => { this._bgmElUnlocking = false; });
+      else done();
+    } catch { this._bgmElUnlocking = false; }
+  }
+
   async _playBgmElement(id, { loop = true } = {}) {
     const norm = this.catalog.normalizeId(id);
     if (norm == null || typeof Audio !== 'function') return false;
+    const el = this._ensureBgmElement();
+    if (!el) return false;
     const urls = this.catalog.resolveUrls(norm);
     for (const url of urls) {
-      const audio = new Audio(url);
-      audio.dataset.trackId = String(norm);
-      audio.loop = loop;
-      audio.preload = 'auto';
-      audio.volume = clampGain(this.audio.getEffectiveBgmVolume?.() ?? 0.7);
       try {
-        await audio.play();
+        el.src = url;
+        el.dataset.trackId = String(norm);
+        el.loop = loop;
+        el.volume = clampGain(this.audio.getEffectiveBgmVolume?.() ?? 0.7);
+        el.load?.();
+        await el.play();
         this._fadeOutAndStop(this.current, 0);
         this.current = null;
-        this._stopBgmElement();
-        this.currentElement = audio;
+        this.currentElement = el;
         return true;
       } catch {}
     }
@@ -454,6 +543,8 @@ export class AudioEngine {
       this.currentElement.removeAttribute('src');
       this.currentElement.load?.();
     } catch {}
+    // Keep the reusable element instance (and its iOS unlock) around for the next
+    // track; only drop the "currently playing" reference.
     this.currentElement = null;
   }
 
@@ -494,6 +585,8 @@ export class AudioEngine {
   dispose() {
     this.stopBgm({ fadeMs: 0 });
     this._stopBgmElement();
+    try { this._keepAlive?.stop?.(); } catch {}
+    this._keepAlive = null;
     this._unsubscribe?.();
     this._unsubscribe = null;
     if (this._gestureBound && typeof window !== 'undefined') {

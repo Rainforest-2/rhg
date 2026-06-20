@@ -21,7 +21,7 @@ import { execFileSync } from 'node:child_process';
 import { setBcuAssetDatabase } from '../js/bcu/BcuAssetDatabase.js';
 import { getAvailableStages, getStageById } from '../js/battle/StageRegistry.js';
 import { MusicCatalog } from '../js/audio/MusicCatalog.js';
-import { deriveMsdRef, parseMsdRows, parseStageMusicFromRows, resolveStageMusic } from '../js/audio/StageMusicResolver.js';
+import { deriveMsdRef, musicFromBakedEntry, parseMsdRows, parseStageMusicFromRows, resolveStageMusic } from '../js/audio/StageMusicResolver.js';
 import {
   BATTLE_HOT_SE_IDS,
   BATTLE_PRELOAD_SE_IDS,
@@ -108,6 +108,26 @@ check(iriomoteMusic && iriomoteMusic.startMusicId === 4 && iriomoteMusic.bossMus
 const iriomoteResolved = await resolveStageMusic({ stageEntry: iriomoteEntry, readMsdText: async () => iriomoteText, catalog });
 check(iriomoteResolved.startMusicId === 4 && iriomoteResolved.source === 'MapStageData',
   `resolveStageMusic must not fall back to 000.m4a for EoC 西表島, got ${JSON.stringify(iriomoteResolved)}`);
+
+// 3b. baked stage-index music: the runtime must resolve from the in-memory stage
+// entry WITHOUT any MSD fetch, so a failed runtime MSD bundle read can never make
+// a normal stage fall through to the catalog default (000.m4a). The build
+// (build-bcu-stage-index.mjs -> bakeStageMusic) pre-resolves this from the raw CSVs.
+const stageIndexBaked = JSON.parse(await read('public/assets/generated/bcu-stage-index.json'));
+const bakedIriomote = stageIndexBaked.entries.find((e) => e.basename === 'stage47' && e.category === 'CH' && e.packId === '000001');
+check(bakedIriomote?.music?.startMusicId === 4 && bakedIriomote?.music?.bossMusicId === 4,
+  `stage index must bake EoC 西表島 (stage47) music id 4, got ${JSON.stringify(bakedIriomote?.music)}`);
+const bakedRna = stageIndexBaked.entries.find((e) => e.basename === 'stageRNA001_00');
+check(bakedRna?.music?.startMusicId === 3,
+  `stage index must bake stageRNA001_00 music id 3, got ${JSON.stringify(bakedRna?.music)}`);
+// musicFromBakedEntry must read the baked value, and resolveStageMusic must prefer
+// it even when no MSD reader is supplied (the browser second-fetch failure case).
+const bakedDescriptor = musicFromBakedEntry(bakedIriomote, catalog);
+check(bakedDescriptor?.startMusicId === 4 && bakedDescriptor?.source === 'stage-index-baked',
+  `musicFromBakedEntry must return baked id 4 for 西表島, got ${JSON.stringify(bakedDescriptor)}`);
+const bakedResolvedNoFetch = await resolveStageMusic({ stageEntry: bakedIriomote, readMsdText: undefined, catalog });
+check(bakedResolvedNoFetch.startMusicId === 4 && bakedResolvedNoFetch.source === 'stage-index-baked',
+  `resolveStageMusic must resolve 西表島 from the baked entry with no MSD fetch, got ${JSON.stringify(bakedResolvedNoFetch)}`);
 
 setBcuAssetDatabase({
   semanticMode: 'semantic-strict',

@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import zlib from 'node:zlib';
+import { deriveMsdRef, parseMsdRows, parseStageMusicFromRows } from '../js/audio/StageMusicResolver.js';
+import { MusicCatalog } from '../js/audio/MusicCatalog.js';
 
 export const GENERATED_DIR = 'public/assets/generated';
 export const BUNDLE_DIR = 'public/assets/bundles';
@@ -193,7 +195,41 @@ export function buildActorIndexFromFiles(files) {
   return { schemaVersion: 1, generatedAt: FIXED_DATE, entries, byKey: Object.fromEntries(entries.map((e) => [e.key, e])) };
 }
 
-export function buildStageIndexFromFiles(files) {
+// Resolve and bake each stage entry's MapStageData music (start id, boss id,
+// boss-music HP% threshold) from the raw BCU CSVs so the runtime can read it
+// straight off the in-memory stage index — no second bundle fetch, no silent
+// fall-through to the catalog default (000.m4a) when that fetch fails. The raw
+// MSD CSV path is the sibling of the layout CSV: deriveMsdRef already maps the
+// layout bundle key to the MSD/stageNormal bundle key, whose last path segment
+// is the raw group dir (e.g. `MSDNA`, `stageNormal`).
+async function bakeStageMusic(entries) {
+  const catalog = new MusicCatalog();
+  const msdCache = new Map(); // rawMsdPath -> parsed rows | null
+  for (const entry of entries) {
+    const ref = deriveMsdRef(entry);
+    if (!ref) continue;
+    const rawGroupDir = String(ref.bundleRef.bundleKey).split('/').pop();
+    const rawMsdPath = `public/assets/bcu/${entry.packId}/org/stage/${entry.category}/${rawGroupDir}/${ref.bundleRef.internalPath}`;
+    let rows = msdCache.get(rawMsdPath);
+    if (rows === undefined) {
+      try { rows = parseMsdRows(await fs.readFile(rawMsdPath, 'utf8')); }
+      catch { rows = null; }
+      msdCache.set(rawMsdPath, rows);
+    }
+    if (!rows) continue;
+    const music = parseStageMusicFromRows(rows, ref.stageIndex, catalog);
+    if (!music) continue;
+    entry.music = {
+      startMusicId: music.startMusicId,
+      bossMusicId: music.bossMusicId,
+      bossHpThresholdPercent: music.bossHpThresholdPercent,
+      stageIndex: music.stageIndex,
+      source: 'MapStageData'
+    };
+  }
+}
+
+export async function buildStageIndexFromFiles(files) {
   const entries = [];
   const basenameCounts = new Map();
   const csvs = files.filter((f) => /^public\/assets\/bcu\/[^/]+\/org\/stage\/.+\.csv$/i.test(f)).sort();
@@ -230,6 +266,7 @@ export function buildStageIndexFromFiles(files) {
       diagnostics: { sourceRawPath: f }
     });
   }
+  await bakeStageMusic(entries);
   return { schemaVersion: 1, generatedAt: FIXED_DATE, entries, byKey: Object.fromEntries(entries.map((e) => [e.key, e])) };
 }
 

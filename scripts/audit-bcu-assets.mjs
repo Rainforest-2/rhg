@@ -30,7 +30,7 @@ for (const file of files) {
 }
 
 const actors = buildActorIndexFromFiles(files);
-const stages = buildStageIndexFromFiles(files);
+const stages = await buildStageIndexFromFiles(files);
 const backgrounds = await buildBackgroundIndexFromFiles(files);
 const castles = buildCastleIndexFromFiles(files);
 

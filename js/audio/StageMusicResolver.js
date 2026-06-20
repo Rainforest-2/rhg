@@ -92,6 +92,32 @@ export function deriveMsdRef(stageEntry) {
   };
 }
 
+// Read music ids baked onto the stage-index entry at build time
+// (`scripts/build-bcu-stage-index.mjs`). Returns a usable descriptor or null.
+//
+// The build pre-resolves each stage's MapStageData music from the raw BCU CSVs
+// and stores it on the entry, so the runtime never has to fetch the sibling
+// MSD/stageNormal bundle a second time. That second fetch is the one fragile
+// link in the live path: when it fails in the browser, the bare catch in
+// resolveStageMusic falls back to the catalog default (id 0 = 000.m4a) even
+// though the correct id (e.g. 西表島 = 4) is well-defined. Preferring the baked
+// value removes that failure mode entirely.
+export function musicFromBakedEntry(stageEntry, catalog) {
+  const baked = stageEntry && typeof stageEntry === 'object' ? stageEntry.music : null;
+  if (!baked || typeof baked !== 'object') return null;
+  const startMusicId = catalog.normalizeId(baked.startMusicId);
+  if (startMusicId == null) return null;
+  const bossMusicId = catalog.normalizeId(baked.bossMusicId);
+  const thresholdRaw = Number(baked.bossHpThresholdPercent);
+  return {
+    startMusicId,
+    bossMusicId,
+    bossHpThresholdPercent: Number.isFinite(thresholdRaw) ? thresholdRaw : 100,
+    source: 'stage-index-baked',
+    stageIndex: Number.isFinite(Number(baked.stageIndex)) ? Number(baked.stageIndex) : null
+  };
+}
+
 // Extract music ids from already-parsed MSD rows for a given stage index.
 // Returns null when the row or its music cells are missing/invalid.
 export function parseStageMusicFromRows(rows, stageIndex, catalog) {
@@ -123,6 +149,11 @@ export async function resolveStageMusic({ stageEntry, readMsdText, catalog }) {
     bossHpThresholdPercent: defaults.bossHpThresholdPercent,
     source: 'catalog-default'
   };
+  // Prefer the music ids baked onto the stage-index entry at build time. This
+  // is the in-memory entry the runtime already holds, so it needs no fetch and
+  // cannot fall through to 000.m4a when a runtime MSD bundle read fails.
+  const baked = musicFromBakedEntry(stageEntry, catalog);
+  if (baked) return baked;
   try {
     const ref = deriveMsdRef(stageEntry);
     if (!ref || typeof readMsdText !== 'function') return fallback;

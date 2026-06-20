@@ -67,7 +67,6 @@ function procKeys(event = {}) {
 
 function playProcSe(scene, event = {}) {
   const keys = procKeys(event);
-  if ((keys.has('wave') || keys.has('miniWave')) && throttle(scene, 'se-wave', 160)) playBcuSe(BCU_SE.WAVE);
   if (keys.has('toxic') && throttle(scene, 'se-poison', 120)) playBcuSe(BCU_SE.POISON);
   if (keys.has('barrierBreaker') && throttle(scene, 'se-barrier-breaker', 120)) playBcuSe(BCU_SE.BARRIER_ATK);
   if ((keys.has('shieldPierce') || keys.has('shieldBreaker')) && throttle(scene, 'se-shield-breaker', 120)) playBcuSe(BCU_SE.SHIELD_BREAKER);
@@ -98,6 +97,16 @@ function playForEvent(scene, event = {}) {
       break;
     case 'procResolved':
       playProcSe(scene, event);
+      break;
+    case 'bcuWaveSe':
+      if (throttle(scene, 'se-wave', 60)) playBcuSe(BCU_SE.WAVE);
+      break;
+    case 'bcuSurgeSe':
+      if (event.soundEffect === 'SE_VOLC_LOOP') {
+        if (throttle(scene, 'se-volc-loop', 180)) playBcuSe(BCU_SE.VOLC_LOOP);
+      } else if (throttle(scene, 'se-volc-start', 120)) {
+        playBcuSe(BCU_SE.VOLC_START);
+      }
       break;
     case 'baseDamageQueued':
     case 'bcuCastleGuardBreak':

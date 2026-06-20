@@ -74,14 +74,14 @@ export class AudioEngine {
   }
 
   _applyVolumes() {
-    if (!this.ctx) return;
-    const t = now(this.ctx);
     const bgm = clampGain(this.audio.getEffectiveBgmVolume?.() ?? 0.7);
     const se = clampGain(this.audio.getEffectiveSeVolume?.() ?? 0.8);
+    if (this.currentElement) this.currentElement.volume = bgm;
+    if (!this.ctx) return;
+    const t = now(this.ctx);
     // setTargetAtTime gives a short smooth ramp so slider drags don't click.
     this.bgmGain?.gain.setTargetAtTime(bgm, t, 0.05);
     this.seGain?.gain.setTargetAtTime(se, t, 0.05);
-    if (this.currentElement) this.currentElement.volume = bgm;
   }
 
   // Some browsers create the context in 'suspended' state until a gesture.
@@ -94,6 +94,10 @@ export class AudioEngine {
       const ctx = this._ensureContext();
       if (ctx && ctx.state === 'suspended' && !this._userPaused) {
         ctx.resume().catch(() => {});
+      }
+      if (this._wantedBgmId != null && !this.current && !this.currentElement && !this._bgmRetryingFromGesture) {
+        this._bgmRetryingFromGesture = true;
+        this.playBgm(this._wantedBgmId).finally(() => { this._bgmRetryingFromGesture = false; });
       }
     };
     this._gestureBound = handler;
@@ -294,21 +298,32 @@ export class AudioEngine {
     return null;
   }
 
+  async _resumeContextForPlayback() {
+    if (!this.ctx || this._userPaused) return false;
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch {}
+    }
+    if (this.ctx.state === 'suspended') {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    return this.ctx.state !== 'suspended';
+  }
+
   // Start (or crossfade to) a looping BGM track. Idempotent for the active id.
   async playBgm(id, { loop = true, fadeMs = DEFAULT_CROSSFADE_MS } = {}) {
     const ctx = this._ensureContext();
     const norm = this.catalog.normalizeId(id);
     if (norm == null) return false;
+    this._wantedBgmId = norm;
     if (!ctx) return this._playBgmElement(norm, { loop });
     if (this.current && this.current.id === norm && this.current.source) return true;
     if (this.currentElement && this.currentElement.dataset?.trackId === String(norm) && !this.currentElement.paused) return true;
-    this._wantedBgmId = norm;
 
     const buffer = await this.loadTrack(norm, { quiet: true });
     if (!buffer) return this._playBgmElement(norm, { loop });
     // A newer playBgm() call superseded this one while we were downloading.
     if (this._wantedBgmId !== norm) return false;
-    if (this._userPaused) { try { await this.ctx.resume(); } catch {} }
+    if (!await this._resumeContextForPlayback()) return this._playBgmElement(norm, { loop });
 
     const t = now(this.ctx);
     const gain = this.ctx.createGain();
@@ -325,7 +340,6 @@ export class AudioEngine {
     this._stopBgmElement();
     this._fadeOutAndStop(this.current, fadeMs);
     this.current = { id: norm, source, gain };
-    if (this.ctx.state === 'suspended' && !this._userPaused) this.ctx.resume().catch(() => {});
     return true;
   }
 
@@ -359,6 +373,7 @@ export class AudioEngine {
     if (!ctx) return this._playSeElement(norm);
     const buffer = await this.loadTrack(norm, { quiet: true });
     if (!buffer) return this._playSeElement(norm);
+    if (!await this._resumeContextForPlayback()) return this._playSeElement(norm);
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(this.seGain);

@@ -336,6 +336,7 @@ function process(scene) {
     const rangeTargets = targetsInRange(scene, item.attacker, item.pos - item.width / 2, item.pos + item.width / 2, item.incl);
     if (item.t === 0) {
       trace(scene, { source: 'BattleWaveRuntimePatch.process', bcuReference: 'ContWaveDef.update t == 0 CommonStatic.setSE(SE_WAVE); draw begins because t >= 0', event: 'se-wave', id: item.id, t: item.t });
+      scene?.pushEvent?.({ type: 'bcuWaveSe', soundEffect: 'SE_WAVE', id: item.id, kind: item.kind, t: item.t, source: 'BattleWaveRuntimePatch.process' });
       spawnWaveEffect(scene, item);
     }
     if (item.t <= item.attackFrame) {

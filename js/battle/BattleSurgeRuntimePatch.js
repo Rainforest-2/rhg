@@ -400,7 +400,10 @@ function process(scene) {
   if (!q.length) return;
   const rest = [];
   for (const item of q) {
-    if (item.t === 0) spawnSurgeEffect(scene, item, 'start');
+    if (item.t === 0) {
+      scene?.pushEvent?.({ type: 'bcuSurgeSe', soundEffect: 'SE_VOLC_START', id: item.id, kind: item.kind, t: item.t, source: 'BattleSurgeRuntimePatch.process' });
+      spawnSurgeEffect(scene, item, 'start');
+    }
     updateProc(scene, item);
     if (item.t >= VOLC_PRE && item.t <= VOLC_PRE + item.aliveTime && item.animType !== 'DURING') {
       item.animType = 'DURING';
@@ -413,6 +416,7 @@ function process(scene) {
     }
     if (item.t >= VOLC_PRE && item.t < VOLC_PRE + item.aliveTime && (item.t - VOLC_PRE) % VOLC_SE === 0) {
       trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update SE_VOLC_LOOP cadence', event: 'se-loop', id: item.id, t: item.t, soundEffect: 'SE_VOLC_LOOP' });
+      scene?.pushEvent?.({ type: 'bcuSurgeSe', soundEffect: 'SE_VOLC_LOOP', id: item.id, kind: item.kind, t: item.t, source: 'BattleSurgeRuntimePatch.process' });
     }
     if (item.t >= item.aliveTime + VOLC_POST + VOLC_PRE) {
       trace(scene, { source: 'BattleSurgeRuntimePatch.process', bcuReference: 'ContVolcano.update t >= aliveTime + VOLC_POST + VOLC_PRE activate=false', event: 'deactivated', id: item.id, t: item.t });

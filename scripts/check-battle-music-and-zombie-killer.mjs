@@ -85,7 +85,7 @@ const engine = await read('js/audio/AudioEngine.js');
 for (const api of ['playBgm', 'stopBgm', 'playSe', 'playSynthSe', 'setPaused', 'loadTrack', 'prepareTracks', 'prepareBattleMusic', 'subscribe']) {
   check(engine.includes(api), `AudioEngine: missing ${api}`);
 }
-for (const piece of ['AUDIO_CACHE_NAME', 'caches.open', 'cache.match', 'await cache.put', 'persistent-cache', '_lastLoadFailures', '_deletePersistentCacheEntry', "cache: 'no-cache'"]) {
+for (const piece of ['AUDIO_CACHE_NAME', 'caches.open', 'cache.match', 'await cache.put', 'persistent-cache', '_lastLoadFailures', '_deletePersistentCacheEntry', '_resumeContextForPlayback', '_playBgmElement', '_bgmRetryingFromGesture', "cache: 'no-cache'"]) {
   check(engine.includes(piece), `AudioEngine: missing persistent-cache piece ${piece}`);
 }
 const se = await read('js/audio/BattleSoundEffects.js');
@@ -112,9 +112,13 @@ for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRe
 }
 check(!/case 'stageEnemySpawned':[\s\S]{0,120}playDeploySe/.test(eventPatch), 'BattleSoundEventPatch must not play player deploy SE for enemy spawns');
 check(eventPatch.includes('BCU_CANNON_SE.WALL') && eventPatch.includes('BCU_CANNON_SE.BARRIER'), 'BattleSoundEventPatch must map cannon ids to BCU_CANNON_SE entries');
-for (const piece of ['BCU_SE.CRIT', 'BCU_SE.SATK', 'BCU_SE.WAVE', 'BCU_SE.POISON', 'BCU_SE.BARRIER_ATK', 'BCU_SE.SHIELD_BREAKER', 'BCU_SE.WARP_ENTER', 'BCU_SE.DEATH_SURGE']) {
+for (const piece of ['BCU_SE.CRIT', 'BCU_SE.SATK', 'BCU_SE.WAVE', 'BCU_SE.POISON', 'BCU_SE.VOLC_START', 'BCU_SE.VOLC_LOOP', 'BCU_SE.BARRIER_ATK', 'BCU_SE.SHIELD_BREAKER', 'BCU_SE.WARP_ENTER', 'BCU_SE.DEATH_SURGE']) {
   check(eventPatch.includes(piece), `BattleSoundEventPatch must cover ${piece}`);
 }
+const waveRuntime = await read('js/battle/BattleWaveRuntimePatch.js');
+check(waveRuntime.includes('bcuWaveSe') && waveRuntime.includes('SE_WAVE'), 'BattleWaveRuntimePatch must emit SE_WAVE at ContWaveDef t==0');
+const surgeRuntime = await read('js/battle/BattleSurgeRuntimePatch.js');
+check(surgeRuntime.includes('bcuSurgeSe') && surgeRuntime.includes('SE_VOLC_START') && surgeRuntime.includes('SE_VOLC_LOOP'), 'BattleSurgeRuntimePatch must emit volcano SE at runtime phase changes');
 
 // 6. patch wiring + node --check
 const main = await read('js/main.js');
@@ -137,6 +141,8 @@ const touched = [
   'js/battle/StageRuntime.js',
   'js/battle/BattleScene.js',
   'js/battle/BattleActorZombieRevivePatch.js',
+  'js/battle/BattleWaveRuntimePatch.js',
+  'js/battle/BattleSurgeRuntimePatch.js',
   'js/main.js'
 ];
 for (const rel of touched) {

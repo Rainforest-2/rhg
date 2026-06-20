@@ -31,6 +31,21 @@ function stageViewSignature(editor) {
   return `${state.level || ''}:${state.categoryId || ''}:${state.mapKey || ''}`;
 }
 
+// Hierarchy depth of each selector view, so a drill can slide in the direction
+// of travel: deeper (category -> map -> stage) reads as forward, popping back
+// up a level reads as backward.
+const STAGE_LEVEL_DEPTH = { category: 0, map: 1, stage: 2, 'custom-stage-battle': 2 };
+
+function stageViewLevel(editor) {
+  return editor.stageSelectorState?.level || 'category';
+}
+
+function stageViewDir(prevLevel, nextLevel) {
+  const prev = STAGE_LEVEL_DEPTH[prevLevel] ?? 0;
+  const next = STAGE_LEVEL_DEPTH[nextLevel] ?? 0;
+  return next < prev ? 'back' : 'fwd';
+}
+
 export function installFormationPremiumMotionPatch() {
   const proto = FormationEditor?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
@@ -107,14 +122,22 @@ export function installFormationPremiumMotionPatch() {
       clearTimeout(this.__premiumStageCloseTimer);
       overlay.classList.remove('is-closing');
       const signature = stageViewSignature(this);
+      const level = stageViewLevel(this);
+      const list = overlay.querySelector('.formation-stage-list');
       if (!wasOpen) {
         this.__premiumStageViewSignature = signature;
-        transientClass(overlay, 'is-opening', 220);
-        transientClass(overlay.querySelector('.formation-stage-list'), 'is-view-enter', 220);
+        this.__premiumStageViewLevel = level;
+        if (list) list.dataset.viewDir = 'fwd';
+        // Timers outlast the longest child animation (header .34s, last staggered
+        // card ~.43s) so `both` never snaps mid-flight when the class is removed.
+        transientClass(overlay, 'is-opening', 380);
+        transientClass(list, 'is-view-enter', 480);
       } else if (signature !== this.__premiumStageViewSignature) {
         // Hierarchy changed (category -> map -> stage); scroll/filter re-renders keep the same signature.
+        if (list) list.dataset.viewDir = stageViewDir(this.__premiumStageViewLevel, level);
         this.__premiumStageViewSignature = signature;
-        transientClass(overlay.querySelector('.formation-stage-list'), 'is-view-enter', 220);
+        this.__premiumStageViewLevel = level;
+        transientClass(list, 'is-view-enter', 480);
       }
     } else if (wasOpen && !reduceMotion()) {
       overlay.classList.add('is-open', 'is-closing');

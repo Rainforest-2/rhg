@@ -26,6 +26,7 @@ async function read(rel) { return readFile(new URL(rel, ROOT), 'utf8'); }
 
 // 1. manifest
 const manifest = JSON.parse(await read('public/assets/music/musicmap.json'));
+check(/cdn\.jsdelivr\.net\/gh\/battlecatsultimate\/bcu-assets@.*\/music\//.test(manifest.cdnBaseUrl), 'musicmap.json: cdnBaseUrl must point at the jsDelivr bcu-assets music mirror');
 check(/raw\.githubusercontent\.com\/battlecatsultimate\/bcu-assets\/.*\/music\//.test(manifest.remoteBaseUrl), 'musicmap.json: remoteBaseUrl must point at the bcu-assets music dir');
 check(typeof manifest.localBaseUrl === 'string' && manifest.localBaseUrl.includes('assets/music'), 'musicmap.json: localBaseUrl must be the local assets/music override dir');
 check(manifest.extension === '.ogg' && manifest.pad === 3, 'musicmap.json: expected .ogg / pad=3');
@@ -35,7 +36,8 @@ const catalog = new MusicCatalog(manifest);
 check(catalog.formatId(3) === '003', 'MusicCatalog.formatId(3) should be 003');
 check(catalog.normalizeId(999) === null && catalog.normalizeId(-1) === null, 'MusicCatalog must reject out-of-range ids');
 const urls = catalog.resolveUrls(3);
-check(urls.length === 2 && urls[0].includes('assets/music/003.ogg') && urls[1].includes('raw.githubusercontent.com'), 'MusicCatalog.resolveUrls must be local-then-remote for 003.ogg');
+check(urls.length === 3 && urls[0].includes('assets/music/003.ogg') && urls[1].includes('cdn.jsdelivr.net') && urls[2].includes('raw.githubusercontent.com'),
+  `MusicCatalog.resolveUrls must be local-then-cdn-then-remote for 003.ogg, got ${JSON.stringify(urls)}`);
 check(catalog.resolveUrls(99999).length === 0, 'MusicCatalog.resolveUrls must be empty for an invalid id');
 
 // 3. resolver against a real MapStageData CSV from the bundle

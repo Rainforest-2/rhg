@@ -2,15 +2,25 @@
 //
 // Per the project decision (see public/assets/music/musicmap.json) the ~147MB of
 // BCU battle tracks are NOT vendored into the repo. Instead each track is
-// downloaded on demand at battle start from BCU's official bcu-assets repo and
-// HTTP-cached by the browser. A track dropped into public/assets/music/<id>.ogg
-// overrides the remote download, so the music folder stays the canonical place
-// to add/replace tracks without rebuilding any bundle.
+// downloaded on demand at battle start and HTTP-cached by the browser. A track
+// dropped into public/assets/music/<id>.ogg overrides the download, so the music
+// folder stays the canonical place to add/replace tracks without rebuilding a bundle.
+//
+// Download order (first that succeeds wins):
+//   1. localBaseUrl  — a vendored override in this repo.
+//   2. cdnBaseUrl    — jsDelivr's CDN mirror of bcu-assets (Cloudflare-backed,
+//                      CORS:*, week-long edge cache). PRIMARY remote: it is far
+//                      more widely reachable/reliable than raw.githubusercontent,
+//                      which is throttled or outright blocked on many networks
+//                      (that is what surfaced "[AudioEngine] could not load music
+//                      track N" — the only host failed, so the BGM stayed silent).
+//   3. remoteBaseUrl — raw.githubusercontent.com fallback (same bytes).
 
 const MANIFEST_URL = './public/assets/music/musicmap.json';
 
 const FALLBACK_MANIFEST = Object.freeze({
   schemaVersion: 1,
+  cdnBaseUrl: 'https://cdn.jsdelivr.net/gh/battlecatsultimate/bcu-assets@master/music/',
   remoteBaseUrl: 'https://raw.githubusercontent.com/battlecatsultimate/bcu-assets/master/music/',
   localBaseUrl: './public/assets/music/',
   extension: '.ogg',
@@ -30,6 +40,7 @@ function normalizeManifest(raw) {
   merged.minId = Number.isFinite(Number(merged.minId)) ? Math.trunc(Number(merged.minId)) : FALLBACK_MANIFEST.minId;
   merged.maxId = Number.isFinite(Number(merged.maxId)) ? Math.trunc(Number(merged.maxId)) : FALLBACK_MANIFEST.maxId;
   merged.extension = typeof merged.extension === 'string' && merged.extension ? merged.extension : FALLBACK_MANIFEST.extension;
+  merged.cdnBaseUrl = typeof merged.cdnBaseUrl === 'string' ? merged.cdnBaseUrl : FALLBACK_MANIFEST.cdnBaseUrl;
   merged.remoteBaseUrl = typeof merged.remoteBaseUrl === 'string' ? merged.remoteBaseUrl : FALLBACK_MANIFEST.remoteBaseUrl;
   merged.localBaseUrl = typeof merged.localBaseUrl === 'string' ? merged.localBaseUrl : FALLBACK_MANIFEST.localBaseUrl;
   return merged;
@@ -85,14 +96,18 @@ export class MusicCatalog {
   }
 
   // Ordered list of URLs to try for a track: local override first (so a vendored
-  // file wins), then the remote download. The engine fetches the first that
-  // succeeds.
+  // file wins), then the CDN mirror (reliable primary), then the raw.github
+  // fallback. The engine fetches the first that succeeds; duplicates/empties are
+  // dropped so a manifest that omits a base never yields a broken candidate.
   resolveUrls(id) {
     const file = this.fileName(id);
     if (file == null) return [];
     const urls = [];
-    if (this._manifest.localBaseUrl) urls.push(joinUrl(this._manifest.localBaseUrl, file));
-    if (this._manifest.remoteBaseUrl) urls.push(joinUrl(this._manifest.remoteBaseUrl, file));
+    for (const base of [this._manifest.localBaseUrl, this._manifest.cdnBaseUrl, this._manifest.remoteBaseUrl]) {
+      if (!base) continue;
+      const url = joinUrl(base, file);
+      if (!urls.includes(url)) urls.push(url);
+    }
     return urls;
   }
 

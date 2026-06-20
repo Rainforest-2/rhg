@@ -171,26 +171,38 @@ body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-charac
 /* ---------------------------------------------------------------- *
  * Stage selector overlay: spring open, fade close, hierarchy stagger.
  * ---------------------------------------------------------------- */
+/* Backdrop scrim eases in over a longer beat so the world behind reads as
+   softly receding rather than the whole modal flashing on in 140ms. */
 body.nyanko-ui-polish .formation-stage-overlay.is-opening{
-  animation:pmOverlayIn .14s ease-out both;
+  animation:pmOverlayIn .3s var(--pm-ease-out) both;
 }
 
+/* The dialog FRAME is pinned to opacity-only (stage-selector-fix.css hard-sets
+   transform:none / opacity:1 !important; guarded by check-formation-premium-motion).
+   The premium "settle into place" therefore lives on the dialog CONTENT — the
+   header drops in and the card grid cascades (.is-view-enter) — so the panel
+   feels like it lands instead of popping, without touching the locked frame. */
 body.nyanko-ui-polish .formation-stage-overlay.is-opening .formation-stage-dialog{
-  animation:pmDialogStillIn .14s ease-out both;
+  animation:pmDialogStillIn .3s var(--pm-ease-out) both;
+}
+
+body.nyanko-ui-polish .formation-stage-overlay.is-opening .formation-stage-dialog > header{
+  animation:pmDialogHeaderIn .34s var(--pm-spring) both;
 }
 
 body.nyanko-ui-polish .formation-stage-overlay.is-closing{
-  animation:pmOverlayOut .11s var(--pm-ease-in) both;
+  animation:pmOverlayOut .12s var(--pm-ease-in) both;
 }
 
 body.nyanko-ui-polish .formation-stage-overlay.is-closing .formation-stage-dialog{
-  animation:pmDialogStillOut .11s var(--pm-ease-in) both;
+  animation:pmDialogStillOut .12s var(--pm-ease-in) both;
 }
 
 @keyframes pmOverlayIn{from{opacity:0}to{opacity:1}}
 @keyframes pmOverlayOut{from{opacity:1}to{opacity:0}}
 @keyframes pmDialogStillIn{from{opacity:0}to{opacity:1}}
 @keyframes pmDialogStillOut{from{opacity:1}to{opacity:0}}
+@keyframes pmDialogHeaderIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
 @keyframes pmDialogIn{
   from{opacity:0;transform:scale(.97) translateY(8px)}
@@ -202,21 +214,42 @@ body.nyanko-ui-polish .formation-stage-overlay.is-closing .formation-stage-dialo
   to{opacity:0;transform:scale(.98) translateY(5px)}
 }
 
-/* Category -> map -> stage transitions (virtual spacers animate invisibly). */
+/* Category -> map -> stage drill: the card grid cascades in, sliding from the
+   direction of travel (deeper = in from the right, Back = in from the left) so
+   the hierarchy reads as navigation instead of an instant content swap. The
+   horizontal offset is clipped during the enter so a card sliding from the right
+   never flashes a scrollbar. data-view-dir is set by FormationPremiumMotionPatch;
+   virtual spacers animate invisibly. */
+body.nyanko-ui-polish .formation-stage-list.is-view-enter{
+  overflow-x:clip!important;
+}
+
 body.nyanko-ui-polish .formation-stage-list.is-view-enter > *{
-  animation:pmRiseIn .16s var(--pm-ease-out) 35ms both;
+  animation:pmViewEnter .3s var(--pm-spring) both;
+}
+
+body.nyanko-ui-polish .formation-stage-list.is-view-enter[data-view-dir='fwd'] > *{
+  animation-name:pmViewEnterFwd;
+}
+
+body.nyanko-ui-polish .formation-stage-list.is-view-enter[data-view-dir='back'] > *{
+  animation-name:pmViewEnterBack;
 }
 
 body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(1){animation-delay:0ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(2){animation-delay:8ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(3){animation-delay:16ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(4){animation-delay:24ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(5){animation-delay:32ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(6){animation-delay:40ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(7){animation-delay:48ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(8){animation-delay:56ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(9){animation-delay:64ms}
-body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(10){animation-delay:72ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(2){animation-delay:18ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(3){animation-delay:36ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(4){animation-delay:54ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(5){animation-delay:72ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(6){animation-delay:90ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(7){animation-delay:104ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(8){animation-delay:116ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(9){animation-delay:126ms}
+body.nyanko-ui-polish .formation-stage-list.is-view-enter > :nth-child(n+10){animation-delay:134ms}
+
+@keyframes pmViewEnter{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes pmViewEnterFwd{from{opacity:0;transform:translate(26px,10px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes pmViewEnterBack{from{opacity:0;transform:translate(-26px,10px) scale(.985)}to{opacity:1;transform:none}}
 
 @media (hover:hover){
   body.nyanko-ui-polish .formation-stage-card:hover{
@@ -267,6 +300,7 @@ body.nyanko-ui-polish .formation-stage-list::-webkit-scrollbar-thumb{
   body.nyanko-ui-polish .formation-stage-overlay.is-closing,
   body.nyanko-ui-polish .formation-stage-overlay.is-opening .formation-stage-dialog,
   body.nyanko-ui-polish .formation-stage-overlay.is-closing .formation-stage-dialog,
+  body.nyanko-ui-polish .formation-stage-overlay.is-opening .formation-stage-dialog > header,
   body.nyanko-ui-polish .formation-stage-list.is-view-enter > *{
     animation:none!important;
   }

@@ -115,21 +115,38 @@ export class AudioEngine {
     const promise = (async () => {
       const urls = this.catalog.resolveUrls(norm);
       for (const url of urls) {
-        try {
-          const res = await fetch(url, { cache: 'force-cache', mode: 'cors' });
-          if (!res || !res.ok) continue;
-          const buf = await this._decode(await res.arrayBuffer());
-          if (buf) { this._buffers.set(norm, buf); return buf; }
-        } catch {
-          // try next candidate URL
-        }
+        const buf = await this._fetchAndDecode(url);
+        if (buf) { this._buffers.set(norm, buf); return buf; }
       }
-      console.warn(`[AudioEngine] could not load music track ${norm}`);
+      // Non-fatal: in-battle BGM is optional. Reaching here almost always means
+      // every download host was unreachable (offline or a network that blocks
+      // the music CDNs); the battle just runs without music. Info, not warn, and
+      // logged once per id (loadTrack caches the resolved promise).
+      console.info(`[AudioEngine] music track ${norm} unavailable (offline or blocked host) — continuing without BGM`);
       return null;
     })();
     this._loading.set(norm, promise);
     try { return await promise; }
     finally { this._loading.delete(norm); }
+  }
+
+  // Fetch + decode one candidate URL. Returns the AudioBuffer or null. A missing
+  // file (404 etc.) is a definitive miss for that host (no retry); a thrown
+  // fetch/decode error is treated as transient and retried once before moving on,
+  // so a single dropped request on a flaky connection doesn't silence the BGM.
+  async _fetchAndDecode(url, attempts = 2) {
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        const res = await fetch(url, { cache: 'force-cache', mode: 'cors' });
+        if (!res || !res.ok) return null;
+        const buf = await this._decode(await res.arrayBuffer());
+        return buf || null;
+      } catch {
+        if (attempt === attempts - 1) return null;
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+      }
+    }
+    return null;
   }
 
   // Start (or crossfade to) a looping BGM track. Idempotent for the active id.

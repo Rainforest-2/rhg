@@ -28,7 +28,11 @@ jobs:
 
       - name: Remove raw BCU sources from deploy artifact
         run: |
-          rm -rf public/assets/bcu
+          rm -rf public/assets/bcu 
+          rm -rf tmp
+          rm -rf scripts
+          rm -rf node_modules
+          rm -rf references
 
       - uses: actions/upload-pages-artifact@v3
         with:

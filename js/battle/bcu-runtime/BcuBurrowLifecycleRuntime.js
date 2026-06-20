@@ -106,6 +106,11 @@ export function startBcuBurrow(actor, { scene = null } = {}) {
   actor.bcuBurrow = { active: true, phase: 'down', framesRemaining: phaseFrames(actor, 'down'), distanceRemaining: spec.dis, startedAtFrame: scene?.logicFrame ?? null, startedAtMs: scene?.timeMs ?? null, previousState: actor.state || 'move', source: 'BCU Entity.startBurrow', bcuReference: 'startBurrow: status[P_BURROW][0]--; status[P_BURROW][2]=BURROW_DOWN len; kbTime=-2' };
   actor.setState?.('burrow');
   setBurrowAnimation(actor, 'down', true);
+  // Render the BURROW_DOWN animation's first frame on the same tick the burrow starts. Without
+  // this the model keeps showing the previous pose (e.g. the just-emerged surface pose on an
+  // immediate re-dive) until the next tick advances the animator, so the body appears to skip the
+  // sink and only "logically" burrow. Mirrors finishKnockback's setAnimation+applyCurrentAnimationFrame.
+  actor.applyCurrentAnimationFrame?.();
   actor.lastBcuBurrowDebug = { source: 'BcuBurrowLifecycleRuntime.startBcuBurrow', phase: 'down', remaining: actor.bcuBurrowRemaining, distance: spec.dis };
   scene?.pushEvent?.({ type: 'bcuBurrowStarted', actor: actor.instanceId || actor.label || null, remaining: actor.bcuBurrowRemaining, distance: spec.dis });
   return { started: true, state: actor.bcuBurrow };

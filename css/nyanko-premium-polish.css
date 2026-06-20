@@ -42,6 +42,45 @@ body.nyanko-ui-polish .formation-search-input:focus{
 }
 
 /* ---------------------------------------------------------------- *
+ * Full screen formation <-> battle transition.
+ * ---------------------------------------------------------------- */
+body.nyanko-ui-polish .formation-ui.is-page-opening{
+  animation:pmFormationPageIn .2s var(--pm-ease-out) both;
+}
+
+body.nyanko-ui-polish .formation-ui.is-page-opening .formation-panel{
+  animation:pmFormationPanelIn .22s var(--pm-ease-out) both;
+}
+
+body.nyanko-ui-polish .formation-ui.is-page-leaving{
+  animation:pmFormationPageOut .17s var(--pm-ease-in) both;
+}
+
+body.nyanko-ui-polish .formation-ui.is-page-leaving .formation-panel{
+  animation:pmFormationPanelOut .17s var(--pm-ease-in) both;
+}
+
+@keyframes pmFormationPageIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+@keyframes pmFormationPageOut{
+  from{opacity:1}
+  to{opacity:0}
+}
+
+@keyframes pmFormationPanelIn{
+  from{opacity:0;transform:translateY(10px) scale(.99)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+@keyframes pmFormationPanelOut{
+  from{opacity:1;transform:translateY(0) scale(1)}
+  to{opacity:0;transform:translateY(8px) scale(.99)}
+}
+
+/* ---------------------------------------------------------------- *
  * Apply Battle button: idle sheen sweep + clear busy state.
  * ---------------------------------------------------------------- */
 body.nyanko-ui-polish .apply-battle-button{
@@ -219,6 +258,10 @@ body.nyanko-ui-polish .formation-stage-list::-webkit-scrollbar-thumb{
 @media (prefers-reduced-motion: reduce){
   body.nyanko-ui-polish .apply-battle-button::after,
   body.nyanko-ui-polish .formation-slots.is-page-enter .formation-slot,
+  body.nyanko-ui-polish .formation-ui.is-page-opening,
+  body.nyanko-ui-polish .formation-ui.is-page-leaving,
+  body.nyanko-ui-polish .formation-ui.is-page-opening .formation-panel,
+  body.nyanko-ui-polish .formation-ui.is-page-leaving .formation-panel,
   body.nyanko-ui-polish .formation-catalog-grid.is-catalog-enter .formation-character-card,
   body.nyanko-ui-polish .formation-stage-overlay.is-opening,
   body.nyanko-ui-polish .formation-stage-overlay.is-closing,

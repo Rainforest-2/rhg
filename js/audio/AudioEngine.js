@@ -34,6 +34,13 @@ export class AudioEngine {
     this._gestureBound = null;
     this._supported = typeof window !== 'undefined'
       && (typeof window.AudioContext === 'function' || typeof window.webkitAudioContext === 'function');
+    // Bind the gesture-unlock listeners now, before any context exists. Battle music
+    // is first requested from a requestAnimationFrame tick (not a user-gesture call
+    // stack), so a context created there would stay 'suspended' under the browser
+    // autoplay policy and never play. Binding eagerly means an earlier tap (menu,
+    // sortie button, etc.) creates+unlocks the context so the BGM is audible at
+    // battle start instead of only after the next tap.
+    this._bindGestureUnlock();
   }
 
   get supported() { return this._supported; }
@@ -71,10 +78,14 @@ export class AudioEngine {
 
   // Some browsers create the context in 'suspended' state until a gesture.
   _bindGestureUnlock() {
-    if (this._gestureBound || typeof window === 'undefined') return;
+    if (this._gestureBound || typeof window === 'undefined' || !this._supported) return;
     const handler = () => {
-      if (this.ctx && this.ctx.state === 'suspended' && !this._userPaused) {
-        this.ctx.resume().catch(() => {});
+      // Create the context inside the user-gesture call stack (autoplay policy lets
+      // a gesture-created context start 'running'); if a prior lazy creation from a
+      // rAF tick already left one suspended, resume it here.
+      const ctx = this._ensureContext();
+      if (ctx && ctx.state === 'suspended' && !this._userPaused) {
+        ctx.resume().catch(() => {});
       }
     };
     this._gestureBound = handler;

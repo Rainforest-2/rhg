@@ -33897,8 +33897,8 @@
       "key": "core:db",
       "bundlePath": "public/assets/bundles/core/core-db.zip",
       "status": "full",
-      "sizeBytes": 3192013,
-      "hash": "2977d52301d2c411dba6fd72cd4d4518356c03a1df087ca738661989d4f16728"
+      "sizeBytes": 3200535,
+      "hash": "3177d79817c7697a24f6e4aca14b3ffdf573ab51c1bc146684f311f4101012a0"
     },
     "icon:enemy": {
       "kind": "icon",

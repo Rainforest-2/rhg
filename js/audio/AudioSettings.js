@@ -26,6 +26,7 @@ function clamp01(value) {
 function readNumber(key, fallback) {
   try {
     const raw = globalThis.localStorage?.getItem(key);
+    if (raw == null) return fallback;
     const v = clamp01(raw);
     return v == null ? fallback : v;
   } catch {

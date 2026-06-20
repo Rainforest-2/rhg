@@ -68,10 +68,19 @@ async function boot() {
     const { BcuBootLoader, setBcuAssetDatabase } = await import('./bcu/BcuBootLoader.js');
     const db = await BcuBootLoader.loadGame({ assetRoot: './public/assets', bcuRoot: './public/assets/bcu', locale: 'jp', preloadMode: 'metadata-and-current-battle' });
     setBcuAssetDatabase(db);
+    // Combo/talent tables are read from the semantic provider's core-db bundle, so they install
+    // only after the provider exists. Failures here disable the modifiers but never abort boot.
+    try {
+      const { installBcuBattleDataRegistries } = await import('./boot/battle/installBattleScenePatches.js');
+      await installBcuBattleDataRegistries(db?.semanticProvider || null);
+    } catch (error) {
+      console.warn('[main] combo/talent registry install failed; modifiers disabled', error);
+    }
     showBootStatus('出撃準備中…');
     await import('./preview/PreviewAppCustomStageBattleConfigPatch.js');
     await import('./preview/PreviewAppBattleResultOverlayPatch.js');
     await import('./preview/PreviewAppBattlePauseOverlayPatch.js');
+    await import('./preview/PreviewAppPageTransitionPatch.js');
     await import('./preview/PreviewAppBattleMusicPatch.js');
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     const app = new PreviewApp({ bcuDb: db });

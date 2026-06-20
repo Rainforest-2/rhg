@@ -1,9 +1,12 @@
-// Boot-time loader for per-unit talent (PCoin) definitions from
-// ./org/data/SkillAcquisition.csv (canonical version 150300).
+// Boot-time loader for per-unit talent (PCoin) definitions from the canonical
+// 150300 pack's SkillAcquisition.csv.
 //
-// Until this runs the talent-info registry is empty and talent multipliers are
-// no-ops (they also require player-selected talent levels). A fetch/parse
-// failure leaves the registry empty, degrading gracefully like the combo loader.
+// The CSV ships inside core-db.zip as `skill-acquisition.json` ({ csv }), read
+// through the semantic asset provider — never from a raw public/assets/bcu fetch
+// (the runtime raw-asset guard blocks those). Until this runs the talent-info
+// registry is empty and talent multipliers are no-ops (they also require
+// player-selected talent levels). A read/parse failure leaves the registry
+// empty, degrading gracefully like the combo loader.
 
 import { getBcuAssetDatabase } from '../../bcu/BcuAssetDatabase.js';
 import {
@@ -14,14 +17,24 @@ import {
   getTalentInfoForUnit
 } from './BcuTalentInfoData.js';
 
-export const TALENT_DATA_PATH = './public/assets/bcu/150300/org/data/SkillAcquisition.csv';
+// core-db.zip internal entry produced by scripts/build-bcu-core-db-bundle.mjs.
+export const TALENT_BUNDLE_ENTRY = 'skill-acquisition.json';
 export const TALENT_LANG_INTERNAL_PATH = 'jp-util.properties';
+
+function resolveProvider(options = {}) {
+  if (options.semanticProvider) return options.semanticProvider;
+  try {
+    return getBcuAssetDatabase()?.semanticProvider
+      || globalThis.__BCU_DB__?.semanticProvider
+      || null;
+  } catch {
+    return null;
+  }
+}
 
 async function readTalentAbilityNameText(options = {}) {
   if (typeof options.readUtilText === 'function') return await options.readUtilText();
-  const provider = options.semanticProvider || (() => {
-    try { return getBcuAssetDatabase()?.semanticProvider || null; } catch { return null; }
-  })();
+  const provider = resolveProvider(options);
   if (provider?.readLanguageFile) return await provider.readLanguageFile('jp', TALENT_LANG_INTERNAL_PATH);
   return '';
 }
@@ -32,17 +45,19 @@ export async function loadBcuTalentAbilityNames(options = {}) {
 }
 
 export async function loadBcuTalentRegistry(options = {}) {
-  const fetchImpl = options.fetchImpl || (typeof fetch === 'function' ? fetch : null);
-  if (!fetchImpl) throw new Error('loadBcuTalentRegistry: no fetch implementation available');
-  const path = options.path || TALENT_DATA_PATH;
-  const response = await fetchImpl(path);
-  if (!response || response.ok === false) {
-    throw new Error(`talent asset fetch failed (${response?.status ?? 'no-response'}): ${path}`);
+  let csv = options.csv;
+  let provider = options.semanticProvider || null;
+  if (csv == null) {
+    provider = resolveProvider(options);
+    if (!provider || typeof provider.readCoreJson !== 'function') {
+      throw new Error('loadBcuTalentRegistry: semantic provider core-db unavailable');
+    }
+    const record = await provider.readCoreJson(options.entry || TALENT_BUNDLE_ENTRY);
+    csv = record?.csv ?? '';
   }
-  const csv = await response.text();
   const registry = setTalentInfoRegistry(parseSkillAcquisition(csv));
   try {
-    await loadBcuTalentAbilityNames(options);
+    await loadBcuTalentAbilityNames(provider ? { ...options, semanticProvider: provider } : options);
   } catch (error) {
     console.warn('[battle boot] talent ability-name load failed; using fallback labels', error);
   }

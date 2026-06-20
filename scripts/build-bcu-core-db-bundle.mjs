@@ -19,6 +19,11 @@ const BASE_UNITLEVEL_CSV = 'public/assets/bcu/000001/org/data/unitlevel.csv';
 // game-data file is identical in shape across packs; the newest pack carries the current max
 // foundation level, so it is the source of truth for non-basic cannon magnification.
 const BASE_CANNON_GROWTH_CSV = 'public/assets/bcu/000001/org/data/CC_AllParts_growth.csv';
+// Nyanko-combo (Combo.java) + talent/PCoin (SkillAcquisition) data live in the canonical 150300
+// pack. Bundling them lets the runtime read combo/talent tables from core-db.zip instead of
+// fetching public/assets/bcu raw files (which the runtime raw-asset guard blocks).
+const BASE_NYANCOMBO_DATA_CSV = 'public/assets/bcu/150300/org/data/NyancomboData.csv';
+const BASE_SKILL_ACQUISITION_CSV = 'public/assets/bcu/150300/org/data/SkillAcquisition.csv';
 
 // Strip C0 control-character junk (e.g. stray \x01/\x05/\x10 trailing bytes found
 // in some BCU pack unit CSVs) so a corrupt line cannot survive `filter(Boolean)`
@@ -158,6 +163,47 @@ async function loadCannonCurveCsv(manifest) {
   return { file: null, packId: null, text: '' };
 }
 
+// Pick the newest pack that ships the Nyanko-combo data + param pair (Combo.java reads both from
+// the same org/data dir). Stored as raw CSV/TSV text so the runtime reuses the tested
+// parseNyancomboData / parseNyancomboParam loaders unchanged — and so no public/assets/bcu raw
+// file is fetched at runtime (the combo registry now reads this bundle entry instead).
+async function loadNyancomboData(manifest) {
+  const dataFiles = (manifest.files || []).filter((file) => /\/org\/data\/NyancomboData\.csv$/i.test(file));
+  if (!dataFiles.includes(BASE_NYANCOMBO_DATA_CSV)) dataFiles.push(BASE_NYANCOMBO_DATA_CSV);
+  const sorted = [...new Set(dataFiles)].sort((a, b) => comparePackId(packIdFromBcuPath(b), packIdFromBcuPath(a)) || b.localeCompare(a));
+  for (const dataFile of sorted) {
+    const paramFile = dataFile.replace(/NyancomboData\.csv$/i, 'NyancomboParam.tsv');
+    try {
+      const csv = await readText(dataFile);
+      const param = await readText(paramFile);
+      if (csv && csv.trim() && param && param.trim()) {
+        return { dataFile, paramFile, packId: packIdFromBcuPath(dataFile), csv, param };
+      }
+    } catch {
+      // Optional packs can be absent in fixtures; fall through to the next candidate.
+    }
+  }
+  return { dataFile: null, paramFile: null, packId: null, csv: '', param: '' };
+}
+
+// Pick the newest pack's SkillAcquisition.csv (per-unit talent / PCoin definitions). Stored as raw
+// CSV text so the runtime reuses the tested parseSkillAcquisition loader and no raw bcu file is
+// fetched at runtime (the talent registry now reads this bundle entry instead).
+async function loadSkillAcquisitionCsv(manifest) {
+  const files = (manifest.files || []).filter((file) => /\/org\/data\/SkillAcquisition\.csv$/i.test(file));
+  if (!files.includes(BASE_SKILL_ACQUISITION_CSV)) files.push(BASE_SKILL_ACQUISITION_CSV);
+  const sorted = [...new Set(files)].sort((a, b) => comparePackId(packIdFromBcuPath(b), packIdFromBcuPath(a)) || b.localeCompare(a));
+  for (const file of sorted) {
+    try {
+      const text = await readText(file);
+      if (text && text.trim()) return { file, packId: packIdFromBcuPath(file), text };
+    } catch {
+      // Optional packs can be absent in fixtures; fall through to the next candidate.
+    }
+  }
+  return { file: null, packId: null, text: '' };
+}
+
 async function loadEnemyCastleBossSpawnData(manifest, castleIndex) {
   const files = manifest.files || [];
   const latestByName = new Map();
@@ -249,6 +295,8 @@ const statsLoader = new BattleStatsLoader({ bcuDb: null });
 const enemyStatsSources = await loadEnemyStatSources(manifest);
 const unitLevelMetadata = await loadUnitLevelMetadata(manifest);
 const cannonCurve = await loadCannonCurveCsv(manifest);
+const nyancombo = await loadNyancomboData(manifest);
+const skillAcquisition = await loadSkillAcquisitionCsv(manifest);
 const enemyCastleBossSpawns = await loadEnemyCastleBossSpawnData(manifest, castleIndex);
 
 function serializeNames() {
@@ -459,6 +507,24 @@ const entries = [
     bcuReference: 'Treasure.readCannonCurveData (org/data/CC_AllParts_growth.csv) -> CannonLevelCurve.applyFormula',
     csv: cannonCurve.text
   }),
+  jsonEntry('nyancombo.json', {
+    schemaVersion: 1,
+    key: 'core:nyancombo',
+    dataSource: nyancombo.dataFile,
+    paramSource: nyancombo.paramFile,
+    packId: nyancombo.packId,
+    bcuReference: 'Combo.readFile (org/data/NyancomboData.csv + NyancomboParam.tsv) -> BasisLU.getInc / LineUp.renewCombo',
+    csv: nyancombo.csv,
+    param: nyancombo.param
+  }),
+  jsonEntry('skill-acquisition.json', {
+    schemaVersion: 1,
+    key: 'core:skill-acquisition',
+    source: skillAcquisition.file,
+    packId: skillAcquisition.packId,
+    bcuReference: 'SkillAcquisition.csv -> per-unit talent (PCoin) definitions',
+    csv: skillAcquisition.text
+  }),
   jsonEntry('asset-keys.json', { schemaVersion: 1, actors: Object.keys(actorIndex.byKey || {}), stages: Object.keys(stages), backgrounds: Object.keys(backgrounds), castles: Object.keys(enemyCastles) }),
   jsonEntry('diagnostics-summary.json', {
     schemaVersion: 1,
@@ -579,7 +645,7 @@ const coreIndex = {
     files: entries.map((e) => e.name),
     status: 'full',
     bundleRef: { bundleKey: 'core:db', bundlePath, readMode: 'zip-json' },
-    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/org/data/unitbuy.csv', 'public/assets/bcu/**/org/data/unitlevel.csv', 'public/assets/bcu/**/org/data/CC_AllParts_growth.csv', 'public/assets/bcu/**/org/data/enemyCastleData*.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
+    diagnostics: { sourceRawPaths: ['public/assets/bcu/**/org/data/t_unit.csv', 'public/assets/bcu/**/org/data/unitbuy.csv', 'public/assets/bcu/**/org/data/unitlevel.csv', 'public/assets/bcu/**/org/data/CC_AllParts_growth.csv', 'public/assets/bcu/**/org/data/NyancomboData.csv', 'public/assets/bcu/**/org/data/NyancomboParam.tsv', 'public/assets/bcu/**/org/data/SkillAcquisition.csv', 'public/assets/bcu/**/org/data/enemyCastleData*.csv', 'public/assets/bcu/**/UnitName.txt', 'public/assets/bcu/**/EnemyName.txt'] }
   }],
   byKey: {}
 };
@@ -595,4 +661,4 @@ bundleManifest.bundles['core:db'] = {
   hash: bundleHash
 };
 await writeJson('public/assets/generated/bcu-bundle-manifest.json', bundleManifest);
-console.log(`wrote ${bundlePath} entries=${entries.length} hash=${bundleHash} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length} unitLevelRows=${Object.keys(unitLevelMetadata.byUnitId).length} cannonCurve=${cannonCurve.packId || 'none'}`);
+console.log(`wrote ${bundlePath} entries=${entries.length} hash=${bundleHash} enemyStats=${enemyStatsHitCount}/${enemyStatsHitCount + enemyStatsMissingCount} sources=${enemyStatsSources.sources.length} unitLevelRows=${Object.keys(unitLevelMetadata.byUnitId).length} cannonCurve=${cannonCurve.packId || 'none'} nyancombo=${nyancombo.packId || 'none'} skillAcq=${skillAcquisition.packId || 'none'}`);

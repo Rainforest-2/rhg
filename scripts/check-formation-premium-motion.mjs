@@ -26,12 +26,15 @@ const importOrder = [...installUiPatches.matchAll(/import\('\.\.\/ui\/([^']+)'\)
 assert.equal(importOrder.at(-1), 'FormationPremiumMotionPatch.js', 'premium motion patch must be the last ui patch import');
 
 // 3. Transient classes toggled by FormationPremiumMotionPatch exist in the premium sheet.
-for (const cls of ['is-page-enter', 'is-catalog-enter', 'is-view-enter', 'is-opening', 'is-closing']) {
+for (const cls of ['is-page-enter', 'is-page-opening', 'is-page-leaving', 'is-catalog-enter', 'is-view-enter', 'is-opening', 'is-closing']) {
   assert.ok(motionPatch.includes(`'${cls}'`), `motion patch toggles ${cls}`);
   assert.ok(premiumCss.includes(`.${cls}`), `premium css styles ${cls}`);
 }
 assert.ok(motionPatch.includes("dataset.pageDir"), 'page slide direction is recorded');
 assert.ok(premiumCss.includes("[data-page-dir='back']"), 'premium css styles the backward page slide');
+assert.ok(motionPatch.includes('setVisibleWithPremiumPageMotion'), 'formation page visibility is animated');
+assert.ok(premiumCss.includes('@keyframes pmFormationPageIn'), 'formation page open animation exists');
+assert.ok(premiumCss.includes('@keyframes pmFormationPageOut'), 'formation page close animation exists');
 
 // 4. Long-press charge + tuning overlay motion live in the tuning patch's injected style.
 for (const cls of ['is-charging', 'is-charge-fired', 'formation-slot-charge']) {

@@ -4,8 +4,8 @@
 // button) during battle; tapping it pauses the simulation and opens an option
 // dialog from which the player can change sound settings and return to the main
 // menu ("メインメニューに戻る"). This component reproduces that: a floating
-// option button plus a paused modal that exposes the 曲(BGM)/エフェクト音(SE)
-// volume controls and a "メインメニューに戻る" abort action.
+// option button plus a paused modal that exposes the 音符(BGM)/スピーカー(SE)
+// on/off buttons and a "メインメニューに戻る" abort action.
 //
 // The option-button and abort-label artwork are the real BCU sprites from
 // public/assets/bcu/000001/org/page/img002.png. To avoid raw-reading the bcu
@@ -21,6 +21,11 @@ import { AudioSettings } from '../audio/AudioSettings.js';
 
 const ATLAS_URL = './public/assets/ui/battle-option-atlas.png';
 const STYLE_ID = 'bcu-battle-pause-menu-style';
+const CLOSE_MS = 140;
+
+function reduceMotion() {
+  return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+}
 
 function injectStyle() {
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
@@ -35,45 +40,62 @@ function injectStyle() {
   // old cold white/slate card that clashed with everything around it. Nyanko CSS
   // vars are reused with literal fallbacks so it still looks right standalone.
   style.textContent = `
-.bcu-pause-control{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));z-index:99972;width:52px;height:52px;padding:0;border:0;background:transparent;cursor:pointer;display:none;line-height:0;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));touch-action:manipulation}
+@font-face{font-family:"BcuStageFont";src:url("./public/assets/bcu/fonts/stage_font.otf") format("opentype");font-display:block}
+.bcu-pause-control{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));z-index:99972;width:52px;height:52px;padding:0;border:0;background:transparent;cursor:pointer;display:none;line-height:0;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));touch-action:manipulation;transition:transform .1s ease-out,filter .1s ease-out}
 .bcu-pause-control.is-visible{display:block}
-.bcu-pause-control:active{transform:translateY(2px) scale(.94)}
+.bcu-pause-control:active{transform:translateY(2px) scale(.94);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)) brightness(.93)}
 .bcu-pause-control .bcu-pause-icon{display:block;width:52px;height:52px;background-image:url('${ATLAS_URL}');background-repeat:no-repeat;background-size:459.034px 459.034px;background-position:-398.966px -0.897px}
-.bcu-pause-overlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;background:rgba(24,13,5,.66);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);font-family:system-ui,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.bcu-pause-overlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;background:rgba(24,13,5,.66);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);font-family:"BcuStageFont","FOT-大江戸勘亭流 Std E","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));letter-spacing:0}
 .bcu-pause-overlay.is-open{display:flex}
-.bcu-pause-panel{width:min(420px,90vw);max-height:90vh;overflow:auto;background:linear-gradient(180deg,var(--nyanko-paper,#fff7cf),var(--nyanko-paper-2,#ffe9a4));border:4px solid var(--nyanko-black,#050505);border-radius:18px;box-shadow:0 8px 0 rgba(43,22,8,.9),0 20px 42px rgba(0,0,0,.46),inset 0 2px 0 rgba(255,255,255,.7);padding:clamp(16px,4vw,24px);display:grid;gap:clamp(14px,3vw,18px);color:#2a1606}
-.bcu-pause-title{margin:0;text-align:center;font-size:clamp(22px,5.4vw,30px);font-weight:1000;letter-spacing:.08em;color:#2a1606;text-shadow:0 2px 0 rgba(255,255,255,.6)}
-.bcu-pause-section{display:grid;gap:11px;padding:13px 13px 15px;border:3px solid var(--nyanko-black,#050505);border-radius:14px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 4px 0 rgba(74,33,13,.35)}
-.bcu-pause-section>h3{margin:0 0 1px;font-size:.78rem;font-weight:1000;letter-spacing:.12em;color:#5f3716}
-.bcu-pause-slider-row{display:grid;grid-template-columns:3.6em 1fr 3em;align-items:center;gap:10px}
-.bcu-pause-slider-row>label{font-weight:1000;font-size:15px;color:#2a1606}
-.bcu-pause-slider-row input[type=range]{width:100%;accent-color:var(--nyanko-gold-2,#f4a51f);touch-action:manipulation}
-.bcu-pause-slider-row .bcu-pause-val{font-variant-numeric:tabular-nums;text-align:right;font-weight:1000;color:#7a5326}
-.bcu-pause-slider-row input[type=range]:disabled{opacity:.45}
-.bcu-pause-mute{display:flex;align-items:center;gap:9px;font-weight:1000;font-size:15px;color:#2a1606;cursor:pointer;user-select:none;margin-top:2px}
-.bcu-pause-mute input{width:18px;height:18px;accent-color:var(--nyanko-gold-2,#f4a51f)}
+.bcu-pause-overlay.is-opening{animation:bcuPauseScrimIn .16s ease-out both}
+.bcu-pause-overlay.is-closing{animation:bcuPauseScrimOut .14s cubic-bezier(.55,0,.85,.36) both}
+.bcu-pause-panel{width:min(430px,90vw);max-height:90vh;overflow:auto;background:linear-gradient(180deg,var(--nyanko-paper,#fff7cf),var(--nyanko-paper-2,#ffe9a4));border:4px solid var(--nyanko-black,#050505);border-radius:16px;box-shadow:0 8px 0 rgba(43,22,8,.9),0 20px 42px rgba(0,0,0,.46),inset 0 2px 0 rgba(255,255,255,.7);padding:clamp(14px,4vw,22px);display:grid;gap:clamp(12px,3vw,16px);color:#2a1606}
+.bcu-pause-overlay.is-opening .bcu-pause-panel{animation:bcuPausePanelIn .18s cubic-bezier(.16,1,.3,1) both}
+.bcu-pause-overlay.is-closing .bcu-pause-panel{animation:bcuPausePanelOut .13s cubic-bezier(.55,0,.85,.36) both}
+.bcu-pause-title{margin:0;text-align:center;font-size:clamp(23px,5.5vw,33px);font-weight:900;letter-spacing:0;color:#2a1606;text-shadow:0 2px 0 rgba(255,255,255,.6)}
+.bcu-pause-section{display:grid;gap:12px;padding:13px;border:3px solid var(--nyanko-black,#050505);border-radius:12px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 4px 0 rgba(74,33,13,.35)}
+.bcu-pause-section>h3{margin:0 0 1px;font-size:clamp(16px,3.7vw,19px);font-weight:900;letter-spacing:0;color:#5f3716}
+.bcu-pause-sound-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bcu-pause-sound{appearance:none;width:auto;min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;padding:10px 11px;border:4px solid var(--nyanko-black,#050505);border-radius:14px;background:linear-gradient(180deg,#f1f1f1,#a8a8a8);box-shadow:0 4px 0 #4a4a4a,inset 0 2px 0 rgba(255,255,255,.65);color:#2a1606;font:inherit;font-weight:900;text-align:left;cursor:pointer;touch-action:manipulation;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.bcu-pause-sound.is-on{background:linear-gradient(180deg,#fff3aa 0%,var(--nyanko-gold,#ffd531) 48%,var(--nyanko-gold-2,#f4a51f) 100%);box-shadow:0 4px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.65)}
+.bcu-pause-sound:active{transform:translateY(3px);box-shadow:0 1px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.5)}
+.bcu-pause-sound-icon{width:42px;height:42px;border:3px solid #050505;border-radius:50%;display:grid;place-items:center;background:#fff;color:#111;font-family:system-ui,sans-serif;font-size:25px;font-weight:1000;line-height:1;filter:grayscale(1);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.bcu-pause-sound-icon .bi{font-size:26px;line-height:1}
+.bcu-pause-sound.is-on .bcu-pause-sound-icon{filter:none;background:#fff8c8;color:#111}
+.bcu-pause-sound-text{display:grid;gap:1px;min-width:0}
+.bcu-pause-sound-text strong{font-size:clamp(17px,4vw,21px);font-weight:900;line-height:1.05;white-space:nowrap}
+.bcu-pause-sound-text span{font-size:clamp(12px,3vw,14px);font-weight:900;color:#6d451f}
+.bcu-pause-sound:not(.is-on) .bcu-pause-sound-text span{color:#4f4f4f}
 .bcu-pause-actions{display:grid;gap:12px;margin-top:2px}
-.bcu-pause-btn{appearance:none;border:4px solid var(--nyanko-black,#050505);border-radius:999px;font-weight:1000;cursor:pointer;padding:12px 18px;font-size:clamp(17px,4vw,20px);letter-spacing:.04em;line-height:1.1;touch-action:manipulation;color:#201006;text-shadow:0 1px 0 rgba(255,255,255,.55)}
+.bcu-pause-btn{appearance:none;border:4px solid var(--nyanko-black,#050505);border-radius:999px;font-family:inherit;font-weight:900;cursor:pointer;padding:12px 18px;font-size:clamp(18px,4vw,22px);letter-spacing:0;line-height:1.1;touch-action:manipulation;color:#201006;text-shadow:0 1px 0 rgba(255,255,255,.55)}
 .bcu-pause-btn:active{transform:translateY(4px)}
 .bcu-pause-btn.resume{background:linear-gradient(180deg,#fff3aa 0%,var(--nyanko-gold,#ffd531) 45%,var(--nyanko-gold-2,#f4a51f) 100%);box-shadow:0 5px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.62)}
 .bcu-pause-btn.resume:active{box-shadow:0 2px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.5)}
 .bcu-pause-btn.abort{background:linear-gradient(180deg,#c9a978 0%,#9c6f3e 52%,#7a5326 100%);box-shadow:0 5px 0 #3c2710,inset 0 2px 0 rgba(255,255,255,.4);display:grid;place-items:center;padding:11px}
 .bcu-pause-btn.abort:active{box-shadow:0 2px 0 #3c2710,inset 0 2px 0 rgba(255,255,255,.35)}
 .bcu-pause-abort-label{width:220px;max-width:100%;height:47.638px;background-image:url('${ATLAS_URL}');background-repeat:no-repeat;background-size:443.465px 443.465px;background-position:-160.236px -274.567px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.4))}
-.bcu-pause-confirm{display:grid;gap:10px;padding:12px;border:3px dashed rgba(74,33,13,.55);border-radius:14px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.7)}
-.bcu-pause-confirm>p{margin:0;text-align:center;font-weight:1000;font-size:15px;color:#2a1606}
+.bcu-pause-confirm{display:grid;gap:10px;padding:12px;border:3px dashed rgba(74,33,13,.55);border-radius:12px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.7);animation:bcuPauseConfirmIn .12s ease-out both}
+.bcu-pause-confirm>p{margin:0;text-align:center;font-weight:900;font-size:clamp(15px,3.5vw,18px);color:#2a1606}
 .bcu-pause-confirm-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.bcu-pause-confirm-row button{appearance:none;border:3px solid var(--nyanko-black,#050505);border-radius:999px;font-weight:1000;font-size:15px;padding:10px;cursor:pointer;touch-action:manipulation;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.bcu-pause-confirm-row button{appearance:none;border:3px solid var(--nyanko-black,#050505);border-radius:999px;font-family:inherit;font-weight:900;font-size:clamp(15px,3.4vw,18px);padding:10px;cursor:pointer;touch-action:manipulation;text-shadow:0 1px 0 rgba(0,0,0,.25)}
 .bcu-pause-confirm-row button:active{transform:translateY(3px)}
 .bcu-pause-confirm-row .yes{background:linear-gradient(180deg,#ff8a7a,#ef4444 55%,#c42f2f);color:#fff;box-shadow:0 4px 0 #6f1414,inset 0 2px 0 rgba(255,255,255,.4)}
 .bcu-pause-confirm-row .no{background:linear-gradient(180deg,#fffdf3,#ecd9a6);color:#2a1606;box-shadow:0 4px 0 rgba(74,33,13,.45),inset 0 2px 0 rgba(255,255,255,.7);text-shadow:0 1px 0 rgba(255,255,255,.55)}
 .bcu-pause-hidden{display:none !important}
-@media (prefers-reduced-motion: reduce){.bcu-pause-control,.bcu-pause-btn{transition:none}}
+@keyframes bcuPauseScrimIn{from{opacity:0}to{opacity:1}}
+@keyframes bcuPauseScrimOut{from{opacity:1}to{opacity:0}}
+@keyframes bcuPausePanelIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes bcuPausePanelOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.985) translateY(5px)}}
+@keyframes bcuPauseConfirmIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width:420px){.bcu-pause-sound-grid{gap:8px}.bcu-pause-sound{padding:8px;gap:7px}.bcu-pause-sound-icon{width:36px;height:36px;font-size:22px}.bcu-pause-abort-label{width:205px;height:44.392px;background-size:413.224px 413.224px;background-position:-149.306px -255.831px}}
+@media (prefers-reduced-motion: reduce){.bcu-pause-control,.bcu-pause-btn{transition:none}.bcu-pause-overlay.is-opening,.bcu-pause-overlay.is-closing,.bcu-pause-overlay.is-opening .bcu-pause-panel,.bcu-pause-overlay.is-closing .bcu-pause-panel,.bcu-pause-confirm{animation:none!important}}
 `;
   document.head.appendChild(style);
 }
 
-function pct(volume) { return `${Math.round(volume * 100)}%`; }
+function soundOn(volume) {
+  return Number(volume) > 0.001;
+}
 
 export class BattlePauseMenu {
   constructor({ mount = null, onOpenRequest = null, onResume = null, onAbort = null, audio = AudioSettings } = {}) {
@@ -83,6 +105,7 @@ export class BattlePauseMenu {
     this.onAbort = typeof onAbort === 'function' ? onAbort : () => {};
     this.active = false;
     this.isOpen = false;
+    this.closeTimer = 0;
     this.button = null;
     this.overlay = null;
     if (typeof document !== 'undefined') this._build(mount || document.body);
@@ -112,20 +135,16 @@ export class BattlePauseMenu {
         <h2 class="bcu-pause-title">一時停止</h2>
         <div class="bcu-pause-section">
           <h3>サウンド設定</h3>
-          <div class="bcu-pause-slider-row">
-            <label for="bcu-pause-bgm">曲</label>
-            <input id="bcu-pause-bgm" class="bcu-pause-bgm" type="range" min="0" max="100" step="1" aria-label="曲(BGM)の音量">
-            <span class="bcu-pause-val bcu-pause-bgm-val">70%</span>
+          <div class="bcu-pause-sound-grid">
+            <button type="button" class="bcu-pause-sound bcu-pause-bgm" aria-label="曲(BGM)を切り替え">
+              <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-music-note-beamed"></i></span>
+              <span class="bcu-pause-sound-text"><strong>曲</strong><span class="bcu-pause-bgm-val">ON</span></span>
+            </button>
+            <button type="button" class="bcu-pause-sound bcu-pause-se" aria-label="効果音(SE)を切り替え">
+              <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-volume-up-fill"></i></span>
+              <span class="bcu-pause-sound-text"><strong>効果音</strong><span class="bcu-pause-se-val">ON</span></span>
+            </button>
           </div>
-          <div class="bcu-pause-slider-row">
-            <label for="bcu-pause-se">効果音</label>
-            <input id="bcu-pause-se" class="bcu-pause-se" type="range" min="0" max="100" step="1" aria-label="効果音(SE)の音量">
-            <span class="bcu-pause-val bcu-pause-se-val">80%</span>
-          </div>
-          <label class="bcu-pause-mute">
-            <input class="bcu-pause-mute-input" type="checkbox">
-            <span>すべての音を消す（ミュート）</span>
-          </label>
         </div>
         <div class="bcu-pause-actions">
           <button type="button" class="bcu-pause-btn resume">バトルにもどる</button>
@@ -144,26 +163,15 @@ export class BattlePauseMenu {
     host.appendChild(overlay);
     this.overlay = overlay;
 
-    this.bgmInput = overlay.querySelector('.bcu-pause-bgm');
-    this.seInput = overlay.querySelector('.bcu-pause-se');
+    this.bgmButton = overlay.querySelector('.bcu-pause-bgm');
+    this.seButton = overlay.querySelector('.bcu-pause-se');
     this.bgmVal = overlay.querySelector('.bcu-pause-bgm-val');
     this.seVal = overlay.querySelector('.bcu-pause-se-val');
-    this.muteInput = overlay.querySelector('.bcu-pause-mute-input');
     this.confirmEl = overlay.querySelector('.bcu-pause-confirm');
     this.abortBtn = overlay.querySelector('.bcu-pause-btn.abort');
 
-    this.bgmInput.addEventListener('input', () => {
-      const v = this.audio.setBgmVolume(Number(this.bgmInput.value) / 100);
-      if (this.bgmVal) this.bgmVal.textContent = pct(v);
-    });
-    this.seInput.addEventListener('input', () => {
-      const v = this.audio.setSeVolume(Number(this.seInput.value) / 100);
-      if (this.seVal) this.seVal.textContent = pct(v);
-    });
-    this.muteInput.addEventListener('change', () => {
-      this.audio.setMuted(this.muteInput.checked);
-      this._refreshDisabledState();
-    });
+    this.bgmButton?.addEventListener('click', (e) => { e.preventDefault(); this._toggleBgm(); });
+    this.seButton?.addEventListener('click', (e) => { e.preventDefault(); this._toggleSe(); });
 
     overlay.querySelector('.bcu-pause-btn.resume')?.addEventListener('click', (e) => { e.preventDefault(); this.onResume(); });
     this.abortBtn?.addEventListener('click', (e) => { e.preventDefault(); this._showConfirm(true); });
@@ -175,20 +183,32 @@ export class BattlePauseMenu {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) this.onResume(); });
   }
 
-  _refreshDisabledState() {
-    const muted = this.audio.isMuted();
-    if (this.bgmInput) this.bgmInput.disabled = muted;
-    if (this.seInput) this.seInput.disabled = muted;
+  _setSoundButton(button, value, muted) {
+    const on = !muted && soundOn(value);
+    button?.classList.toggle('is-on', on);
+    button?.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
 
   _syncFromSettings() {
     const snap = this.audio.snapshot();
-    if (this.bgmInput) this.bgmInput.value = String(Math.round(snap.bgm * 100));
-    if (this.seInput) this.seInput.value = String(Math.round(snap.se * 100));
-    if (this.bgmVal) this.bgmVal.textContent = pct(snap.bgm);
-    if (this.seVal) this.seVal.textContent = pct(snap.se);
-    if (this.muteInput) this.muteInput.checked = snap.muted;
-    this._refreshDisabledState();
+    this._setSoundButton(this.bgmButton, snap.bgm, snap.muted);
+    this._setSoundButton(this.seButton, snap.se, snap.muted);
+    if (this.bgmVal) this.bgmVal.textContent = !snap.muted && soundOn(snap.bgm) ? 'ON' : 'OFF';
+    if (this.seVal) this.seVal.textContent = !snap.muted && soundOn(snap.se) ? 'ON' : 'OFF';
+  }
+
+  _toggleBgm() {
+    const snap = this.audio.snapshot();
+    if (snap.muted) this.audio.setMuted(false);
+    this.audio.setBgmVolume(soundOn(snap.bgm) && !snap.muted ? 0 : (this.audio.defaults?.bgm ?? 0.7));
+    this._syncFromSettings();
+  }
+
+  _toggleSe() {
+    const snap = this.audio.snapshot();
+    if (snap.muted) this.audio.setMuted(false);
+    this.audio.setSeVolume(soundOn(snap.se) && !snap.muted ? 0 : (this.audio.defaults?.se ?? 0.8));
+    this._syncFromSettings();
   }
 
   _showConfirm(show) {
@@ -210,18 +230,31 @@ export class BattlePauseMenu {
 
   open() {
     if (!this.overlay || this.isOpen) return;
+    clearTimeout(this.closeTimer);
     this.isOpen = true;
     this._showConfirm(false);
     this._syncFromSettings();
-    this.overlay.classList.add('is-open');
+    this.overlay.classList.remove('is-closing');
+    this.overlay.classList.add('is-open', 'is-opening');
+    if (!reduceMotion()) setTimeout(() => this.overlay?.classList.remove('is-opening'), 180);
+    else this.overlay.classList.remove('is-opening');
     this._renderButton();
   }
 
   close() {
     if (!this.overlay) return;
     this.isOpen = false;
-    this.overlay.classList.remove('is-open');
     this._showConfirm(false);
+    clearTimeout(this.closeTimer);
+    this.overlay.classList.remove('is-opening');
+    if (reduceMotion()) {
+      this.overlay.classList.remove('is-open', 'is-closing');
+    } else {
+      this.overlay.classList.add('is-open', 'is-closing');
+      this.closeTimer = setTimeout(() => {
+        this.overlay?.classList.remove('is-open', 'is-closing');
+      }, CLOSE_MS);
+    }
     this._renderButton();
   }
 

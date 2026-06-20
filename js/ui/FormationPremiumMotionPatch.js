@@ -12,6 +12,7 @@ import { FormationEditor } from './FormationEditor.js';
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-premium-motion.v1');
 const STAGE_CLOSE_MS = 120;
 const SETTINGS_CLOSE_MS = 140;
+const PAGE_CLOSE_MS = 170;
 
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
 
@@ -34,6 +35,29 @@ export function installFormationPremiumMotionPatch() {
   const proto = FormationEditor?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
+
+  const originalSetVisible = proto.setVisible;
+  proto.setVisible = function setVisibleWithPremiumPageMotion(visible, ...args) {
+    if (!this.root) return originalSetVisible.call(this, visible, ...args);
+    clearTimeout(this.__premiumFormationCloseTimer);
+    if (visible) {
+      const result = originalSetVisible.call(this, true, ...args);
+      this.root.classList.remove('is-page-leaving');
+      transientClass(this.root, 'is-page-opening', 220);
+      return result;
+    }
+    if (reduceMotion() || !this.root.classList.contains('is-visible')) {
+      this.root.classList.remove('is-page-opening', 'is-page-leaving');
+      return originalSetVisible.call(this, false, ...args);
+    }
+    this.root.classList.remove('is-page-opening');
+    this.root.classList.add('is-visible', 'is-page-leaving');
+    this.__premiumFormationCloseTimer = setTimeout(() => {
+      this.root?.classList.remove('is-page-leaving');
+      originalSetVisible.call(this, false, ...args);
+    }, PAGE_CLOSE_MS);
+    return undefined;
+  };
 
   const originalSwitchPage = proto.switchPage;
   proto.switchPage = function switchPageWithPremiumMotion(page, reason) {

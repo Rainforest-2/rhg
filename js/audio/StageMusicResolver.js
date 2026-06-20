@@ -11,10 +11,15 @@
 //   [3]=boss-music castle-HP% threshold  [4]=boss music id  ...
 // (column meaning verified against the in-file Japanese comments).
 //
-// Families without a StageR<SUF>/MSD<SUF> pair (EoC `stage/CH/stage`, etc.)
-// return null so the caller can fall back to the catalog defaults.
+// CH main-story stages are a second shape:
+//   stage/CH/stage/stage47.csv
+// uses the sibling
+//   stage/CH/stageNormal/stageNormal0.csv
+// row 47. This is what keeps EoC 西表島 on BCU music id 4 instead of the
+// catalog-default id 0.
 
 const LAYOUT_BASENAME_RE = /^stageR([A-Za-z]+)(\d+)_(\d+)$/;
+const CH_STAGE_BASENAME_RE = /^stage(\d+)$/;
 
 function stripCsvComment(line) {
   const idx = line.indexOf('//');
@@ -35,29 +40,55 @@ export function parseMsdRows(text) {
 // Returns null for stage families that have no MapStageData sibling.
 export function deriveMsdRef(stageEntry) {
   if (!stageEntry || stageEntry.kind !== 'stage-definition') return null;
-  const m = LAYOUT_BASENAME_RE.exec(stageEntry.basename || '');
-  if (!m) return null;
-  const suf = m[1];
-  const map = m[2];
-  const stageIndex = Number.parseInt(m[3], 10);
-  if (!Number.isFinite(stageIndex)) return null;
   const layoutRef = stageEntry.bundleRef || {};
+  const m = LAYOUT_BASENAME_RE.exec(stageEntry.basename || '');
+  if (m) {
+    const suf = m[1];
+    const map = m[2];
+    const stageIndex = Number.parseInt(m[3], 10);
+    if (!Number.isFinite(stageIndex)) return null;
+    const bundleKey = typeof layoutRef.bundleKey === 'string'
+      ? layoutRef.bundleKey.replace(`/StageR${suf}`, `/MSD${suf}`)
+      : null;
+    const bundlePath = typeof layoutRef.bundlePath === 'string'
+      ? layoutRef.bundlePath.replace(`__StageR${suf}`, `__MSD${suf}`)
+      : null;
+    if (!bundleKey || !bundlePath) return null;
+    return {
+      bundleRef: {
+        bundleKey,
+        bundlePath,
+        internalPath: `MapStageData${suf}_${map}.csv`,
+        readMode: layoutRef.readMode || 'zip-text'
+      },
+      stageIndex,
+      debug: { suf, map, stageIndex }
+    };
+  }
+  const ch = CH_STAGE_BASENAME_RE.exec(stageEntry.basename || '');
+  const isChMainStage = ch
+    && typeof layoutRef.bundleKey === 'string'
+    && typeof layoutRef.bundlePath === 'string'
+    && /\/CH\/stage$/.test(layoutRef.bundleKey);
+  if (!isChMainStage) return null;
+  const stageIndex = Number.parseInt(ch[1], 10);
+  if (!Number.isFinite(stageIndex)) return null;
   const bundleKey = typeof layoutRef.bundleKey === 'string'
-    ? layoutRef.bundleKey.replace(`/StageR${suf}`, `/MSD${suf}`)
+    ? layoutRef.bundleKey.replace('/CH/stage', '/CH/stageNormal')
     : null;
   const bundlePath = typeof layoutRef.bundlePath === 'string'
-    ? layoutRef.bundlePath.replace(`__StageR${suf}`, `__MSD${suf}`)
+    ? layoutRef.bundlePath.replace('__CH__stage.zip', '__CH__stageNormal.zip')
     : null;
   if (!bundleKey || !bundlePath) return null;
   return {
     bundleRef: {
       bundleKey,
       bundlePath,
-      internalPath: `MapStageData${suf}_${map}.csv`,
+      internalPath: 'stageNormal0.csv',
       readMode: layoutRef.readMode || 'zip-text'
     },
     stageIndex,
-    debug: { suf, map, stageIndex }
+    debug: { family: 'CH/stage', map: 'stageNormal0', stageIndex }
   };
 }
 

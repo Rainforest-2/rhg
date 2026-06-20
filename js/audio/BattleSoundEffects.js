@@ -58,7 +58,8 @@ export const BCU_CANNON_SE = Object.freeze({
   STOP: [36, 37],
   WATER: [65, 83],
   GROUND: [84, 85],
-  BARRIER: [86]
+  BARRIER: [86],
+  CURSE: [124]
 });
 
 // BCU SoundHandler.setSE(int) accepts any Music index in the bundled music list.

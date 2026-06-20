@@ -53,6 +53,8 @@ assert.equal(legacy.money, Math.floor(Math.floor((60 * 100 * BCU_BATTLE_TIMER_PE
 const prodUi = readFileSync('js/ui/PlayerProductionBar.js', 'utf8');
 assert.match(prodUi, /wallet-upgrade/, 'production UI must render the wallet button');
 assert.match(prodUi, /upgradeWallet\?\.\(\)/, 'wallet button must call economy.upgradeWallet');
+assert.match(prodUi, /bcuWalletUpgraded/, 'wallet success event must be emitted for BCU SE_SPEND_SUC');
+assert.match(prodUi, /bcuWalletUpgradeRejected/, 'wallet failure event must be emitted for BCU SE_SPEND_FAIL');
 assert.match(prodUi, /SBCtrl\.actions action -1 -> StageBasis\.act_mon/, 'UI must record BCU action -1 evidence');
 
 const css = readFileSync('css/bcu-battle-ui-fix.css', 'utf8');

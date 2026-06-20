@@ -24,6 +24,7 @@ import {
   BATTLE_HOT_SE_IDS,
   BATTLE_PRELOAD_SE_IDS,
   BCU_ALL_SOUND_IDS,
+  BCU_CANNON_SE,
   BCU_SE,
   BCU_SOUND_ID_MAX,
   BCU_SOUND_ID_MIN,
@@ -86,6 +87,26 @@ check(resolved.startMusicId === 3 && resolved.bossMusicId === 33, 'resolveStageM
 const fallback = await resolveStageMusic({ stageEntry: { kind: 'stage-definition', basename: 'stage00', bundleRef: {} }, readMsdText: async () => msdText, catalog });
 check(fallback.source === 'catalog-default', 'resolveStageMusic must fall back to catalog defaults when no MSD');
 
+const iriomoteEntry = {
+  kind: 'stage-definition',
+  basename: 'stage47',
+  bundleRef: { bundleKey: 'stage-map:000001/CH/stage', bundlePath: 'public/assets/bundles/stage/map/000001__CH__stage.zip', internalPath: 'stage47.csv', readMode: 'zip-text' }
+};
+const iriomoteRef = deriveMsdRef(iriomoteEntry);
+check(iriomoteRef?.stageIndex === 47, 'deriveMsdRef must map CH/stage/stage47 to row 47');
+check(iriomoteRef?.bundleRef?.bundlePath === 'public/assets/bundles/stage/map/000001__CH__stageNormal.zip',
+  'deriveMsdRef must map CH/stage to sibling CH/stageNormal music data');
+check(iriomoteRef?.bundleRef?.internalPath === 'stageNormal0.csv',
+  'deriveMsdRef must use stageNormal0.csv for EoC chapter-1 stage music');
+const iriomoteZip = fileURLToPath(new URL(iriomoteRef.bundleRef.bundlePath, ROOT));
+const iriomoteText = execFileSync('unzip', ['-p', iriomoteZip, iriomoteRef.bundleRef.internalPath], { encoding: 'utf8' });
+const iriomoteMusic = parseStageMusicFromRows(parseMsdRows(iriomoteText), 47, catalog);
+check(iriomoteMusic && iriomoteMusic.startMusicId === 4 && iriomoteMusic.bossMusicId === 4 && iriomoteMusic.bossHpThresholdPercent === 0,
+  `EoC 西表島 stage47 should resolve BCU BGM id 4 from stageNormal0 row 47, got ${JSON.stringify(iriomoteMusic)}`);
+const iriomoteResolved = await resolveStageMusic({ stageEntry: iriomoteEntry, readMsdText: async () => iriomoteText, catalog });
+check(iriomoteResolved.startMusicId === 4 && iriomoteResolved.source === 'MapStageData',
+  `resolveStageMusic must not fall back to 000.m4a for EoC 西表島, got ${JSON.stringify(iriomoteResolved)}`);
+
 // 4. stage -> runtime wiring
 const loader = await read('js/battle/StageDefinitionLoader.js');
 check(loader.includes('enrichMusic') && loader.includes('resolveStageMusic') && loader.includes("from '../audio/MusicCatalog.js'"), 'StageDefinitionLoader must enrich music via the resolver/catalog');
@@ -115,6 +136,8 @@ for (const piece of ['BCU_SE', 'BCU_ALL_SOUND_IDS', 'BATTLE_PRELOAD_SE_IDS', 'BA
 }
 check(BCU_SE.ZOMBIE_KILLER === 59 && BCU_SE.SPEND_FAIL === 15 && BCU_SE.SPEND_SUCCESS === 19 && BCU_SE.HIT_BASE === 22,
   'BattleSoundEffects: key BCU SE ids must match CommonStatic.java');
+check(BCU_CANNON_SE.BASIC[0] === 25 && BCU_CANNON_SE.BASIC[1] === 26 && BCU_CANNON_SE.CURSE[0] === 124,
+  'BattleSoundEffects: BCU SE_CANNON ids must match util/Data.java');
 check(BCU_ALL_SOUND_IDS.length === 191 && BCU_ALL_SOUND_IDS[0] === 0 && BCU_ALL_SOUND_IDS.at(-1) === 190,
   'BattleSoundEffects: BCU_ALL_SOUND_IDS must cover every vendored BCU sound id 0..190');
 check(BATTLE_PRELOAD_SE_IDS.length === BCU_ALL_SOUND_IDS.length && BATTLE_PRELOAD_SE_IDS.every((id, i) => id === BCU_ALL_SOUND_IDS[i]),
@@ -140,14 +163,35 @@ for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRe
   check(eventPatch.includes(piece), `BattleSoundEventPatch: missing ${piece}`);
 }
 check(!/case 'stageEnemySpawned':[\s\S]{0,120}playDeploySe/.test(eventPatch), 'BattleSoundEventPatch must not play player deploy SE for enemy spawns');
-check(eventPatch.includes('BCU_CANNON_SE.WALL') && eventPatch.includes('BCU_CANNON_SE.BARRIER'), 'BattleSoundEventPatch must map cannon ids to BCU_CANNON_SE entries');
+check(eventPatch.includes('BCU_CANNON_SE.WALL') && eventPatch.includes('BCU_CANNON_SE.BARRIER') && eventPatch.includes('BCU_CANNON_SE.CURSE'), 'BattleSoundEventPatch must map cannon ids to BCU_CANNON_SE entries');
 check(eventPatch.includes('includeGenericArrays') && eventPatch.includes('oncePerFrame(scene, `se-${id}`)'),
   'BattleSoundEventPatch must support raw BCU setSE ids with per-frame dedupe');
-check(/for \(const id of ids\.length \? ids : \[BCU_SE\.CANNON_BASIC_ATK\]\)/.test(eventPatch),
-  'BattleSoundEventPatch must play all mapped cannon SE ids, not only the first one');
+check(eventPatch.includes('playCannonActivationSe') && eventPatch.includes('playCannonSecondarySe') && eventPatch.includes('bcuWalletUpgraded'),
+  'BattleSoundEventPatch must split BCU cannon press/secondary SE and wallet upgrade SE');
 for (const piece of ['BCU_SE.CRIT', 'BCU_SE.SATK', 'BCU_SE.WAVE', 'BCU_SE.POISON', 'BCU_SE.VOLC_START', 'BCU_SE.VOLC_LOOP', 'BCU_SE.BARRIER_ATK', 'BCU_SE.SHIELD_BREAKER', 'BCU_SE.WARP_ENTER', 'BCU_SE.DEATH_SURGE']) {
   check(eventPatch.includes(piece), `BattleSoundEventPatch must cover ${piece}`);
 }
+const { playForEvent } = await import('../js/audio/BattleSoundEventPatch.js');
+let soundTestFrame = 1000;
+function playedFor(event, sceneExtra = {}) {
+  const played = [];
+  const fakeEngine = { playSe(id) { played.push(id); return true; } };
+  soundTestFrame += 1;
+  playForEvent({ logicFrame: soundTestFrame, timeMs: soundTestFrame * 33, bcuCatCannon: { id: 0 }, ...sceneExtra }, event, fakeEngine);
+  return played;
+}
+check(JSON.stringify(playedFor({ type: 'bcuCatCannonActivated', cannonId: 0 })) === JSON.stringify([19, 25]),
+  'BCU basic cannon press must play SE_SPEND_SUC then SE_CANNON[0][0], not wave SE');
+check(JSON.stringify(playedFor({ type: 'bcuCatCannonBasicAttack', cannonId: 0 })) === JSON.stringify([26]),
+  'BCU basic cannon wave container must play SE_CANNON[0][1]');
+check(JSON.stringify(playedFor({ type: 'bcuNonBasicCatCannonAttack', cannonId: 3 })) === JSON.stringify([37]),
+  'BCU freeze cannon secondary attack must play SE_CANNON[3][1]');
+check(JSON.stringify(playedFor({ type: 'bcuWalletUpgraded' })) === JSON.stringify([19]),
+  'BCU wallet upgrade success must play SE_SPEND_SUC');
+check(JSON.stringify(playedFor({ type: 'bcuWalletUpgradeRejected' })) === JSON.stringify([15]),
+  'BCU wallet upgrade failure must play SE_SPEND_FAIL');
+check(JSON.stringify(playedFor({ type: 'bcuSetSe', bcuSeIds: [190, 190, 26] })) === JSON.stringify([190, 26]),
+  'generic BCU setSE events must accept raw ids and dedupe duplicates in one event');
 const waveRuntime = await read('js/battle/BattleWaveRuntimePatch.js');
 check(waveRuntime.includes('bcuWaveSe') && waveRuntime.includes('SE_WAVE'), 'BattleWaveRuntimePatch must emit SE_WAVE at ContWaveDef t==0');
 const surgeRuntime = await read('js/battle/BattleSurgeRuntimePatch.js');

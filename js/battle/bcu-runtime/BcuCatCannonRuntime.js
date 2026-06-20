@@ -526,6 +526,7 @@ export function activateBcuCatCannon(scene) {
   state.lastFireDebug = {
     ok: true,
     reason: 'ok',
+    cannonId: state.id,
     before,
     after: getBcuCatCannonStatus(scene),
     animSpawned,
@@ -576,7 +577,7 @@ export function activateBcuCatCannonWall(scene, state, before = getBcuCatCannonS
     startedFrame: scene?.logicFrame ?? null
   };
   state.lastFireDebug = {
-    ok: true, reason: 'ok', before, after: getBcuCatCannonStatus(scene),
+    ok: true, reason: 'ok', cannonId: spec.id, before, after: getBcuCatCannonStatus(scene),
     geometry: 'wall', wallFormId: spec.wallFormId, wallX, anchor, aliveFrames, enterLen,
     source: 'BCU StageBasis.act_can -> Cannon.activate(); Cannon.update id==2 wall spawn',
     bcuReference: 'Form 339 forms[0]; wall.added(-1, pos+100); preTime = getCannonMagnification(2, BASE_WALL_ALIVE_TIME) + enter.len() - 1'
@@ -662,6 +663,7 @@ function fireBcuCannonBand(scene, state, wave, waveIndex) {
   const debug = {
     source: 'BCU Cannon.update basic canon -> AttackCanon + ContWaveCanon (per-band staggered)',
     bcuReference: 'BASE_H: WAVE.lv = tech[LV_CRG] + 2; SNIPER.prob = 1; NYRAN[0] = 400; W_TIME = 3; band lands at wave t = 2',
+    cannonId: state.id,
     attacked: hits.length > 0,
     waveIndex,
     waveAge: wave.age,

@@ -9,7 +9,6 @@ import {
   normalizeBcuSoundId,
   playBaseHitSe,
   playBcuSe,
-  playCannonSe,
   playDecisionSe,
   playDeploySe,
   playHitSe,
@@ -101,14 +100,29 @@ function cannonIdsForEvent(scene, event = {}) {
   if (cannonId === 4) return BCU_CANNON_SE.WATER;
   if (cannonId === 5) return BCU_CANNON_SE.GROUND;
   if (cannonId === 6) return BCU_CANNON_SE.BARRIER;
+  if (cannonId === 7) return BCU_CANNON_SE.CURSE;
   return BCU_CANNON_SE.BASIC;
 }
 
-function playCannonEventSe(scene, event = {}, engine = undefined) {
-  const ids = cannonIdsForEvent(scene, event);
-  for (const id of ids.length ? ids : [BCU_SE.CANNON_BASIC_ATK]) {
-    if (oncePerFrame(scene, `se-cannon-${id}`)) playCannonSe(engine, id);
+function playIdsOncePerFrame(scene, ids, keyPrefix, engine = undefined) {
+  for (const id of ids) {
+    if (oncePerFrame(scene, `${keyPrefix}-${id}`)) playBcuSe(id, engine);
   }
+}
+
+function playCannonActivationSe(scene, event = {}, engine = undefined) {
+  const ids = cannonIdsForEvent(scene, event);
+  // BCU StageBasis.act_can first calls SE_SPEND_SUC, then Cannon.activate() calls
+  // SE_CANNON[id][0]. Secondary cannon SE ids are emitted later by cannon update
+  // containers, never together with the press.
+  playIdsOncePerFrame(scene, [BCU_SE.SPEND_SUCCESS, ids[0] ?? BCU_SE.CANNON_BASIC_ATK], 'se-cannon-activate', engine);
+}
+
+function playCannonSecondarySe(scene, event = {}, engine = undefined) {
+  const ids = cannonIdsForEvent(scene, event);
+  const secondary = ids[1];
+  if (secondary == null) return;
+  playIdsOncePerFrame(scene, [secondary], 'se-cannon-secondary', engine);
 }
 
 function hasAppliedDamageAbility(event = {}, key) {
@@ -145,13 +159,20 @@ export function playForEvent(scene, event = {}, engine = undefined) {
       break;
     case 'playerSpawnRejected':
     case 'bcuCatCannonRejected':
+    case 'bcuWalletUpgradeRejected':
     case 'bcuSpiritSummonBlocked':
       if (throttle(scene, 'fail', 90)) playSpendFailSe(engine);
       break;
     case 'bcuCatCannonActivated':
+    case 'bcuCatCannonWallSpawned':
+      playCannonActivationSe(scene, event, engine);
+      break;
     case 'bcuNonBasicCatCannonAttack':
     case 'bcuCatCannonBasicAttack':
-      if (throttle(scene, 'cannon', 180)) playCannonEventSe(scene, event, engine);
+      playCannonSecondarySe(scene, event, engine);
+      break;
+    case 'bcuWalletUpgraded':
+      if (throttle(scene, 'wallet-upgrade', 60)) playBcuSe(BCU_SE.SPEND_SUCCESS, engine);
       break;
     case 'damageQueued':
       if (hasAppliedDamageAbility(event, 'critical') && throttle(scene, 'critical', 120)) playBcuSe(BCU_SE.CRIT, engine);

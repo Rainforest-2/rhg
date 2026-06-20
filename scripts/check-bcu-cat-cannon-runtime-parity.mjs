@@ -79,6 +79,8 @@ assert.equal(requestBcuCatCannonFire(scene), true);
 tickBcuCatCannonCharge(scene);
 assert.equal(scene.bcuCatCannon.cannon, 0, 'BCU act_can resets cannon charge to 0');
 assert.equal(scene.bcuCatCannon.active.preFrames, 18, 'BCU NYPRE[BASE_H] is 18');
+const activationEvent = scene.debugEvents.find((event) => event.type === 'bcuCatCannonActivated');
+assert.equal(activationEvent?.cannonId, 0, 'cat cannon activation event must carry the BCU cannon id for SE_CANNON[id][0]');
 
 // BCU Cannon.update counts preTime (NYPRE[BASE_H] = 18) down to 0 before the wave is created.
 for (let i = 0; i < 17; i += 1) {
@@ -103,6 +105,8 @@ for (let i = 0; i < 30 && hitAge === null; i += 1) {
 assert.equal(band0Age, 5, 'basic cannon band 0 lands 5 frames after wave creation (wave t = 2)');
 // hitActor (posBcu 3468) sits in band 1 (center 3467.5); band 0 (center 3867.5) covers no actor.
 assert.equal(hitAge, 8, 'band 1 lands W_TIME = 3 frames after band 0 (staggered traveling wave)');
+const attackEvent = scene.debugEvents.find((event) => event.type === 'bcuCatCannonBasicAttack');
+assert.equal(attackEvent?.cannonId, 0, 'cat cannon attack event must carry the BCU cannon id for SE_CANNON[id][1]');
 assert.equal(hitActor.lastDamage.amount, 4550);
 assert.equal(hitActor.lastDamage.meta.attacker, 'bcu-cat-cannon');
 assert.equal(hitActor.lastDamage.meta.damageCalculation.modifiers.notes[0], 'stage/cannon-source-not-unit-proc');

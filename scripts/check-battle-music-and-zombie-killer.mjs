@@ -26,18 +26,20 @@ async function read(rel) { return readFile(new URL(rel, ROOT), 'utf8'); }
 
 // 1. manifest
 const manifest = JSON.parse(await read('public/assets/music/musicmap.json'));
-check(/cdn\.jsdelivr\.net\/gh\/battlecatsultimate\/bcu-assets@.*\/music\//.test(manifest.cdnBaseUrl), 'musicmap.json: cdnBaseUrl must point at the jsDelivr bcu-assets music mirror');
-check(/raw\.githubusercontent\.com\/battlecatsultimate\/bcu-assets\/.*\/music\//.test(manifest.remoteBaseUrl), 'musicmap.json: remoteBaseUrl must point at the bcu-assets music dir');
+// The tracks are vendored locally (no network fetch), so the remote bases are
+// intentionally empty; only the local override dir is required.
+check(manifest.cdnBaseUrl === '' && manifest.remoteBaseUrl === '', 'musicmap.json: cdn/remote bases must be empty (tracks are bundled locally)');
 check(typeof manifest.localBaseUrl === 'string' && manifest.localBaseUrl.includes('assets/music'), 'musicmap.json: localBaseUrl must be the local assets/music override dir');
-check(manifest.extension === '.ogg' && manifest.pad === 3, 'musicmap.json: expected .ogg / pad=3');
+// iOS/Safari can't decode Ogg Vorbis, so the BGM is bundled as .m4a (AAC).
+check(manifest.extension === '.m4a' && manifest.pad === 3, 'musicmap.json: expected .m4a / pad=3');
 
 // 2. catalog
 const catalog = new MusicCatalog(manifest);
 check(catalog.formatId(3) === '003', 'MusicCatalog.formatId(3) should be 003');
 check(catalog.normalizeId(999) === null && catalog.normalizeId(-1) === null, 'MusicCatalog must reject out-of-range ids');
 const urls = catalog.resolveUrls(3);
-check(urls.length === 3 && urls[0].includes('assets/music/003.ogg') && urls[1].includes('cdn.jsdelivr.net') && urls[2].includes('raw.githubusercontent.com'),
-  `MusicCatalog.resolveUrls must be local-then-cdn-then-remote for 003.ogg, got ${JSON.stringify(urls)}`);
+check(urls.length === 1 && urls[0].includes('assets/music/003.m4a'),
+  `MusicCatalog.resolveUrls must be the single local 003.m4a (remote bases empty), got ${JSON.stringify(urls)}`);
 check(catalog.resolveUrls(99999).length === 0, 'MusicCatalog.resolveUrls must be empty for an invalid id');
 
 // 3. resolver against a real MapStageData CSV from the bundle

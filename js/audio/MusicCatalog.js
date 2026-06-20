@@ -1,9 +1,10 @@
 // Resolves an in-battle music id to the URL(s) the AudioEngine should load.
 //
-// The BCU battle tracks are now vendored under public/assets/music/<id>.ogg
+// The BCU battle tracks are now vendored under public/assets/music/<id>.m4a
 // (000..190), so BGM loads entirely from local assets — no network fetch. The
 // remote hosts were unreachable on many networks, so the tracks were bundled
-// instead of downloaded on demand.
+// instead of downloaded on demand. The tracks are .m4a (AAC) so iOS/Safari can
+// decode them — Ogg Vorbis is not supported there.
 //
 // Load order (first that succeeds wins), driven by musicmap.json:
 //   1. localBaseUrl  — the vendored tracks in this repo (the only source by default).
@@ -17,7 +18,8 @@ const FALLBACK_MANIFEST = Object.freeze({
   cdnBaseUrl: '',
   remoteBaseUrl: '',
   localBaseUrl: './public/assets/music/',
-  extension: '.ogg',
+  // .m4a (AAC) so iOS/Safari can decode the BGM (Ogg Vorbis is unsupported there).
+  extension: '.m4a',
   pad: 3,
   minId: 0,
   maxId: 190,

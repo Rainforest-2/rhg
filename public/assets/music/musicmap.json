@@ -1,10 +1,10 @@
 {
-  "_comment": "Music source map for in-battle BGM. The .ogg tracks are now vendored under public/assets/music/<id>.ogg (000..190), so BGM loads entirely from local assets — no network fetch. A track id N resolves to `${id padded to `pad` digits}.ogg`. cdnBaseUrl/remoteBaseUrl are left empty: the remote hosts were unreachable on many networks, so the tracks were bundled instead. Re-add a base URL only if you want a remote fallback again.",
+  "_comment": "Music source map for in-battle BGM. The .m4a tracks are vendored under public/assets/music/<id>.m4a (000..190), so BGM loads entirely from local assets — no network fetch. A track id N resolves to `${id padded to `pad` digits}.m4a`. The format is .m4a (AAC) so iOS/Safari can decode it; Ogg Vorbis is not supported there. cdnBaseUrl/remoteBaseUrl are left empty: the remote hosts were unreachable on many networks, so the tracks were bundled instead. Re-add a base URL only if you want a remote fallback again.",
   "schemaVersion": 1,
   "cdnBaseUrl": "",
   "remoteBaseUrl": "",
   "localBaseUrl": "./public/assets/music/",
-  "extension": ".ogg",
+  "extension": ".m4a",
   "pad": 3,
   "minId": 0,
   "maxId": 190,

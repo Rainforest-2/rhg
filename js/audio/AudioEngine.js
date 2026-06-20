@@ -1,7 +1,7 @@
 // Web Audio playback engine for in-battle BGM (and a one-shot SE channel).
 //
 // Design contract:
-//  - Lazy: a track's .ogg is fetched + decoded only when first asked to play
+//  - Lazy: a track's .m4a is fetched + decoded only when first asked to play
 //    (resolved through MusicCatalog: local override, then BCU GitHub raw URL).
 //    Decoded buffers and in-flight fetches are cached, so re-entering a stage or
 //    swapping start<->boss music never re-downloads.

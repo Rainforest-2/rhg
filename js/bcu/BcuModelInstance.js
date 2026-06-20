@@ -43,7 +43,11 @@ export class BcuModelInstance {
   }
   applyTrack(partId, prop, v, modification = null) {
     const p = this.parts[partId];
-    if (!p) { this.lastAppliedTrackDebug = { partId, prop, modification, applied: false, value: v }; return { applied: false }; }
+    const debug = globalThis.__BCU_DEBUG_ALLOCATIONS__ === true;
+    if (!p) {
+      if (debug) this.lastAppliedTrackDebug = { partId, prop, modification, applied: false, value: v };
+      return { applied: false };
+    }
     const b = p.base, c = p.current;
     const bs = this.baseScale, bo = this.baseOpacity;
     switch (modification) {
@@ -70,10 +74,13 @@ export class BcuModelInstance {
         if (prop === 'posX') c.posX = b.posX + v;
         else if (prop === 'posY') c.posY = b.posY + v;
         else if (prop === 'partIndex') c.partIndex = Math.trunc(v);
-        else { this.lastAppliedTrackDebug = { partId, prop, modification, applied: false, value: v, reason: 'unsupported-modification' }; return { applied: false }; }
+        else {
+          if (debug) this.lastAppliedTrackDebug = { partId, prop, modification, applied: false, value: v, reason: 'unsupported-modification' };
+          return { applied: false };
+        }
     }
     const result = { applied: true, partId, modification };
-    this.lastAppliedTrackDebug = { partId, prop, modification, applied: true, value: v };
+    if (debug) this.lastAppliedTrackDebug = { partId, prop, modification, applied: true, value: v };
     return result;
   }
   getPartSize(part, cache = new Map()) {
@@ -141,21 +148,35 @@ export class BcuModelInstance {
         z: (c.zOrder ?? part.zOrder ?? 0) * Math.max(1, this.parts.length) + part.index
       };
     }).sort((a, b) => a.z - b.z);
-    const visibleCount = drawList.filter((d) => d.opacity > 0 && Number.isFinite(d.partIndex) && Number.isFinite(d.imgcutIndex)).length;
-    const zValues = drawList.map((d) => d.z).filter(Number.isFinite);
-    this.lastDrawListDebug = {
-      source: 'BcuModelInstance.getBattleDrawList',
-      count: drawList.length,
-      visibleCount,
-      opacityZeroCount: drawList.filter((d) => d.opacity <= 0).length,
-      glowCount: drawList.filter((d) => [1, 2, 3, -1].includes(Number(d.glow))).length,
-      glowModes: drawList.reduce((acc, d) => { const g = Number(d.glow); if ([1, 2, 3, -1].includes(g)) acc[String(g)] = (acc[String(g)] || 0) + 1; return acc; }, {}),
-      extendedCount: drawList.filter((d) => d.extendX || d.extendY).length,
-      minZ: zValues.length ? Math.min(...zValues) : null,
-      maxZ: zValues.length ? Math.max(...zValues) : null,
-      hasMatrix: drawList.some((d) => Array.isArray(d.matrix) && d.matrix.length === 6),
-      examples: drawList.slice(0, 3).map((d) => ({ index: d.index, partIndex: d.partIndex, imgcutIndex: d.imgcutIndex, z: d.z, opacity: d.opacity, glow: d.glow, extendX: d.extendX, extendY: d.extendY, extType: d.extType, matrix: Array.isArray(d.matrix) ? d.matrix.slice(0, 6) : null }))
-    };
+    let visibleCount = 0;
+    let opacityZeroCount = 0;
+    let glowCount = 0;
+    let extendedCount = 0;
+    let minZ = null;
+    let maxZ = null;
+    let hasMatrix = false;
+    const debug = globalThis.__BCU_DEBUG_ALLOCATIONS__ === true;
+    const glowModes = debug ? {} : null;
+    const examples = debug ? [] : null;
+    for (const d of drawList) {
+      if (d.opacity > 0 && Number.isFinite(d.partIndex) && Number.isFinite(d.imgcutIndex)) visibleCount += 1;
+      if (d.opacity <= 0) opacityZeroCount += 1;
+      const glow = Number(d.glow);
+      if ([1, 2, 3, -1].includes(glow)) {
+        glowCount += 1;
+        if (debug) glowModes[String(glow)] = (glowModes[String(glow)] || 0) + 1;
+      }
+      if (d.extendX || d.extendY) extendedCount += 1;
+      if (Number.isFinite(d.z)) {
+        minZ = minZ === null ? d.z : Math.min(minZ, d.z);
+        maxZ = maxZ === null ? d.z : Math.max(maxZ, d.z);
+      }
+      if (!hasMatrix && Array.isArray(d.matrix) && d.matrix.length === 6) hasMatrix = true;
+      if (debug && examples.length < 3) examples.push({ index: d.index, partIndex: d.partIndex, imgcutIndex: d.imgcutIndex, z: d.z, opacity: d.opacity, glow: d.glow, extendX: d.extendX, extendY: d.extendY, extType: d.extType, matrix: Array.isArray(d.matrix) ? d.matrix.slice(0, 6) : null });
+    }
+    this.lastDrawListDebug = debug
+      ? { source: 'BcuModelInstance.getBattleDrawList', count: drawList.length, visibleCount, opacityZeroCount, glowCount, glowModes, extendedCount, minZ, maxZ, hasMatrix, examples }
+      : { source: 'BcuModelInstance.getBattleDrawList', count: drawList.length, visibleCount, opacityZeroCount, glowCount, extendedCount, minZ, maxZ, hasMatrix };
     return drawList;
   }
   buildWorld() { return this.getBattleDrawList(); }

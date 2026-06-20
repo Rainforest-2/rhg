@@ -38,8 +38,9 @@ export function installBattleSceneBcuStatusEffectRenderPatch() {
   proto.render = function renderWithBcuStatusEffects(previewRenderer, scene, debugOptions = false) {
     const c = previewRenderer.ctx;
     const actorsForRender = this.getAliveActorsForRender(scene);
-    const actorSet = new Set(actorsForRender);
-    const statusDrawnActors = new Set();
+    this.__bcuStatusEffectRenderId = (this.__bcuStatusEffectRenderId || 0) + 1;
+    const renderId = this.__bcuStatusEffectRenderId;
+    let statusDrawnCount = 0;
 
     const originalGetAliveActorsForRender = this.getAliveActorsForRender;
     let suppliedOnce = false;
@@ -54,8 +55,9 @@ export function installBattleSceneBcuStatusEffectRenderPatch() {
     const originalDrawActor = this.drawActor;
     this.drawActor = function drawActorThenBcuStatusEffects(ctx, actor) {
       const result = originalDrawActor.call(this, ctx, actor);
-      if (actorSet.has(actor) && !statusDrawnActors.has(actor)) {
-        statusDrawnActors.add(actor);
+      if (actor?.__bcuStatusEffectRenderId !== renderId) {
+        actor.__bcuStatusEffectRenderId = renderId;
+        statusDrawnCount += 1;
         drawBcuStatusEffects(this, c || ctx, scene, [actor], BCU_STATUS_EFFECT_DT, { append: true });
       }
       return result;
@@ -63,7 +65,7 @@ export function installBattleSceneBcuStatusEffectRenderPatch() {
 
     try {
       const result = originalRender.call(this, previewRenderer, scene, debugOptions);
-      if (!statusDrawnActors.size && actorsForRender.length) {
+      if (!statusDrawnCount && actorsForRender.length) {
         drawBcuStatusEffects(this, c, scene, actorsForRender, BCU_STATUS_EFFECT_DT, { append: true });
       }
       return result;

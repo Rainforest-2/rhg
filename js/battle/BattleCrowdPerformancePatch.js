@@ -51,6 +51,12 @@ function getSceneFrame(scene) {
   return Math.trunc(Number(scene?.logicFrame) || 0);
 }
 
+function shouldCollectCrowdDebug(scene) {
+  return globalThis.__BCU_DEBUG_ALLOCATIONS__ === true
+    || globalThis.__BATTLE_CROWD_DEBUG__ === true
+    || scene?.debugBattleEnabled === true;
+}
+
 function validateCachedSelection(scene, actor, cached) {
   if (!cached || !cached.selection || !actor) return null;
   const frame = getSceneFrame(scene);
@@ -86,12 +92,14 @@ function installScenePatch() {
       const cached = this.__crowdPerfTargetCache.get(actor);
       const valid = validateCachedSelection(this, actor, cached);
       if (valid) {
-        this.__crowdPerfDebug = {
-          ...(this.__crowdPerfDebug || {}),
-          targetCacheHits: (this.__crowdPerfDebug?.targetCacheHits || 0) + 1,
-          lastCacheHitFrame: this.logicFrame,
-          cacheFrames: this.__crowdPerfTargetCacheFrames ?? DEFAULT_TARGET_CACHE_FRAMES
-        };
+        if (shouldCollectCrowdDebug(this)) {
+          this.__crowdPerfDebug = {
+            ...(this.__crowdPerfDebug || {}),
+            targetCacheHits: (this.__crowdPerfDebug?.targetCacheHits || 0) + 1,
+            lastCacheHitFrame: this.logicFrame,
+            cacheFrames: this.__crowdPerfTargetCacheFrames ?? DEFAULT_TARGET_CACHE_FRAMES
+          };
+        }
         return valid;
       }
       const selection = originalFindTargetForActor.call(this, actor, ...args);
@@ -104,12 +112,14 @@ function installScenePatch() {
           targetX: finiteNumber(selection.target?.x, selection.target?.posBcu, 0)
         });
       }
-      this.__crowdPerfDebug = {
-        ...(this.__crowdPerfDebug || {}),
-        targetCacheMisses: (this.__crowdPerfDebug?.targetCacheMisses || 0) + 1,
-        lastCacheMissFrame: this.logicFrame,
-        cacheFrames: this.__crowdPerfTargetCacheFrames ?? DEFAULT_TARGET_CACHE_FRAMES
-      };
+      if (shouldCollectCrowdDebug(this)) {
+        this.__crowdPerfDebug = {
+          ...(this.__crowdPerfDebug || {}),
+          targetCacheMisses: (this.__crowdPerfDebug?.targetCacheMisses || 0) + 1,
+          lastCacheMissFrame: this.logicFrame,
+          cacheFrames: this.__crowdPerfTargetCacheFrames ?? DEFAULT_TARGET_CACHE_FRAMES
+        };
+      }
       return selection;
     };
   }
@@ -122,12 +132,14 @@ function installScenePatch() {
       if (Array.isArray(this.debugEvents) && this.debugEvents.length > keep) {
         const overflow = this.debugEvents.length - keep;
         this.debugEvents.splice(0, overflow);
-        this.__crowdPerfDebug = {
-          ...(this.__crowdPerfDebug || {}),
-          debugEventsTrimmed: (this.__crowdPerfDebug?.debugEventsTrimmed || 0) + overflow,
-          debugEventsKept: keep,
-          lastTrimFrame: this.logicFrame
-        };
+        if (shouldCollectCrowdDebug(this)) {
+          this.__crowdPerfDebug = {
+            ...(this.__crowdPerfDebug || {}),
+            debugEventsTrimmed: (this.__crowdPerfDebug?.debugEventsTrimmed || 0) + overflow,
+            debugEventsKept: keep,
+            lastTrimFrame: this.logicFrame
+          };
+        }
       }
       if (event?.type && !IMPORTANT_EVENT_TYPES.has(event.type) && Array.isArray(this.debugEvents) && this.debugEvents.length > Math.floor(keep * 0.75)) {
         // Keep high-volume non-critical events from dominating the retained ring.
@@ -155,10 +167,14 @@ function installScenePatch() {
   }
 
   proto.getCrowdPerformanceDebug = function getCrowdPerformanceDebug() {
+    let alive = 0;
+    if (Array.isArray(this.actors)) {
+      for (const actor of this.actors) if (actor?.isAlive?.()) alive += 1;
+    }
     return {
       source: 'BattleCrowdPerformancePatch',
       actors: Array.isArray(this.actors) ? this.actors.length : 0,
-      alive: Array.isArray(this.actors) ? this.actors.filter((a) => a?.isAlive?.()).length : 0,
+      alive,
       effects: Array.isArray(this.effects) ? this.effects.length : 0,
       debugEvents: Array.isArray(this.debugEvents) ? this.debugEvents.length : 0,
       ...(this.__crowdPerfDebug || {})
@@ -202,15 +218,17 @@ function installRendererPatch() {
         }
         visible.push(actor);
       }
-      globalThis.__BATTLE_CROWD_RENDER_DEBUG__ = {
-        source: 'BattleCrowdPerformancePatch.getAliveActorsForRenderCulled',
-        input: list.length,
-        visible: visible.length,
-        culled,
-        margin,
-        canvasW,
-        frame: scene?.logicFrame ?? null
-      };
+      if (shouldCollectCrowdDebug(scene)) {
+        globalThis.__BATTLE_CROWD_RENDER_DEBUG__ = {
+          source: 'BattleCrowdPerformancePatch.getAliveActorsForRenderCulled',
+          input: list.length,
+          visible: visible.length,
+          culled,
+          margin,
+          canvasW,
+          frame: scene?.logicFrame ?? null
+        };
+      }
       return visible;
     };
   }
@@ -229,7 +247,8 @@ function installRendererPatch() {
     proto.drawHpBar = function drawHpBarCrowdThrottled(ctx, actor, ...args) {
       const scene = this._scene;
       const actors = Array.isArray(scene?.actors) ? scene.actors : [];
-      const aliveCount = actors.filter((a) => a?.isAlive?.()).length;
+      let aliveCount = 0;
+      for (const a of actors) if (a?.isAlive?.()) aliveCount += 1;
       const limit = Math.max(0, Math.trunc(Number(scene?.__crowdPerfHpBarActorLimit ?? DEFAULT_HP_BAR_ACTOR_LIMIT)));
       if (aliveCount > limit) {
         const sx = getActorApproxScreenX(this, scene, actor);

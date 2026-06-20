@@ -26,10 +26,11 @@
 import { AudioSettings } from './AudioSettings.js';
 import { musicCatalog } from './MusicCatalog.js';
 
-// Round-robin pool for overlapping one-shot SE. 8 is ample — more than ~8 SE never
-// truly overlap within their short tails, and each element is a live media object, so
-// keeping the count low matters on mobile.
-const SE_POOL_SIZE = 8;
+// Voice pool for one-shot SE. Each play grabs a FREE element (so the same SE can
+// layer over its own still-ringing tail = real overlap), preferring one that already
+// holds that SE's src so a repeat costs no reload. 12 voices is plenty of simultaneity
+// while staying light (idle media elements cost no CPU).
+const SE_POOL_SIZE = 12;
 // ~0.01s of silence, played once per element inside a user gesture to satisfy the
 // iOS autoplay policy so the element can be replayed programmatically afterwards.
 const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -45,11 +46,6 @@ export class AudioEngine {
     this._bgmId = null;
     this._wantedBgmId = null;
     this._sePool = [];
-    // norm id -> the pool element that currently holds that SE's src (loaded/decoded).
-    // Map insertion order doubles as LRU. Lets a repeated SE just `currentTime=0;play()`
-    // with NO src reassignment — re-`src`-ing a media element forces a reload/re-decode
-    // every shot, which was the battle-time jank during sustained combat.
-    this._seBound = new Map();
     // norm id -> in-memory Blob object URL (fetched once, reused forever). Keeps the
     // static server from being re-hit on every SE play / every battle.
     this._blobUrls = new Map();
@@ -94,6 +90,8 @@ export class AudioEngine {
       this._sePool.push(el);
     }
   }
+
+  _now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
 
   // ---- fetch-once blob cache (so the server is hit at most once per file) ----
   _blobFor(norm) { return this._blobUrls.get(norm) || null; }
@@ -260,30 +258,30 @@ export class AudioEngine {
   }
 
   // ---- SE ----
-  // Pick (and remember) the pool element to use for `norm`. Each SE id keeps a stable
-  // element so a repeat play is just `currentTime=0; play()` on already-loaded media.
-  // Only a brand-new id (or one evicted past the pool size) pays a single `src` reload.
-  _seElementFor(norm, url) {
-    const bound = this._seBound.get(norm);
-    if (bound) {
-      // Refresh LRU recency without re-`src`-ing (media stays loaded).
-      this._seBound.delete(norm);
-      this._seBound.set(norm, bound);
-      return bound;
+  // Pick a voice (pool element) for `norm`. Preference order:
+  //  1. a FREE element that already holds this src  -> replay, NO reload (hot path);
+  //  2. any FREE element                            -> claim it (one reload only if it
+  //     held a different src) — this is what lets the same SE LAYER over its own tail
+  //     and different SE overlap, because each gets its own free voice;
+  //  3. all voices busy -> steal the oldest-started one (cuts the longest-running tail).
+  // An element is "free" once its one-shot has ended/paused, so steady use converges to
+  // each SE id owning a voice and replaying with no reload.
+  _acquireSeElement(norm, url) {
+    const pool = this._sePool;
+    let freeSameId = null;
+    let freeAny = null;
+    let oldest = pool[0];
+    let oldestStart = Infinity;
+    for (const el of pool) {
+      const free = el.ended || el.paused;
+      if (free && Number(el.dataset.seId) === norm && el.getAttribute('src') === url) { freeSameId = el; break; }
+      if (free && !freeAny) freeAny = el;
+      const started = Number(el.dataset.seStart) || 0;
+      if (started < oldestStart) { oldestStart = started; oldest = el; }
     }
-    let el;
-    if (this._seBound.size < this._sePool.length) {
-      // Use a pool element not yet bound to any id.
-      const used = new Set(this._seBound.values());
-      el = this._sePool.find((e) => !used.has(e)) || this._sePool[0];
-    } else {
-      // Evict the least-recently-used binding (first Map entry) and reuse its element.
-      const lruNorm = this._seBound.keys().next().value;
-      el = this._seBound.get(lruNorm);
-      this._seBound.delete(lruNorm);
-    }
-    try { el.src = url; } catch {}
-    this._seBound.set(norm, el);
+    if (freeSameId) return freeSameId;
+    const el = freeAny || oldest;
+    if (el.getAttribute('src') !== url) { try { el.src = url; el.dataset.seId = String(norm); } catch {} }
     return el;
   }
 
@@ -301,12 +299,11 @@ export class AudioEngine {
     const url = cached || this.catalog.resolveUrls(norm)[0];
     if (!url) return false;
     if (!cached) this._ensureBlob(norm);
-    const el = this._seElementFor(norm, url);
+    const el = this._acquireSeElement(norm, url);
     try {
-      // If the blob arrived after this id was first bound to a streamed URL, upgrade
-      // the element's src once so future shots come from memory.
-      if (el.getAttribute('src') !== url) el.src = url;
-      else { try { el.currentTime = 0; } catch {} }
+      el.dataset.seId = String(norm);
+      el.dataset.seStart = String(this._now());
+      try { el.currentTime = 0; } catch {}
       el.volume = this._seVolume();
       const p = el.play?.();
       if (p && typeof p.catch === 'function') p.catch(() => {});
@@ -342,7 +339,6 @@ export class AudioEngine {
     try { this._bgmEl?.pause?.(); } catch {}
     for (const el of this._sePool) { try { el.pause?.(); } catch {} }
     this._sePool = [];
-    this._seBound.clear();
     if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
       for (const objectUrl of this._blobUrls.values()) { try { URL.revokeObjectURL(objectUrl); } catch {} }
     }

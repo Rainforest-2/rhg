@@ -21,8 +21,8 @@ function clearArray(value) {
 
 function noDebugEventStore(scene) {
   if (!scene) return;
-  // Keep these arrays mutable because existing runtime wrappers may still push into them.
-  // We strip storage by truncating before/after runtime phases instead of assigning a frozen array.
+  // Keep these arrays mutable because some verifier/runtime code expects normal arrays.
+  // Battle debug storage is disabled by pushEvent() and the phase helpers below.
   scene.debugEvents = clearArray(scene.debugEvents);
   scene.tickPhaseTrace = clearArray(scene.tickPhaseTrace);
   scene.debugBattleEnabled = false;
@@ -64,18 +64,32 @@ export function installBattleDebugStripPatch() {
     return null;
   };
 
+  proto.beginTickPhase = function beginTickPhaseWithoutTrace(phase) {
+    this.currentTickPhase = phase;
+    this.lastTickPhase = phase;
+  };
+
+  proto.endTickPhase = function endTickPhaseWithoutTrace(phase) {
+    if (this.currentTickPhase === phase) this.currentTickPhase = null;
+  };
+
+  proto.hasTickPhase = function hasTickPhaseDisabled() {
+    return false;
+  };
+
+  proto.getLastTickPhaseOrder = function getLastTickPhaseOrderDisabled() {
+    return [];
+  };
+
   const originalRunTickPhase = proto.runTickPhase;
   if (typeof originalRunTickPhase === 'function') {
     proto.runTickPhase = function runTickPhasePreserveRuntimeChain(phase, fn = () => {}) {
       noDebugEventStore(this);
-      const result = originalRunTickPhase.call(this, phase, (...args) => {
+      try {
+        return originalRunTickPhase.call(this, phase, fn);
+      } finally {
         noDebugEventStore(this);
-        const out = fn(...args);
-        noDebugEventStore(this);
-        return out;
-      });
-      noDebugEventStore(this);
-      return result;
+      }
     };
   }
 

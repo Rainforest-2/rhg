@@ -53,28 +53,36 @@ export class EffectRuntime {
 
   static cleanupEffects(effects = []) {
     const list = Array.isArray(effects) ? effects : [];
-    const active = list.filter((e) => !e?.finished && (!SUPPRESS_NON_BCU_EFFECTS || this.isBcuEffect(e)));
-    const suppressed = SUPPRESS_NON_BCU_EFFECTS ? list.filter((e) => !this.isBcuEffect(e)).length : 0;
+    const active = [];
+    let suppressed = 0;
+    for (const e of list) {
+      const isBcu = !SUPPRESS_NON_BCU_EFFECTS || this.isBcuEffect(e);
+      if (SUPPRESS_NON_BCU_EFFECTS && !isBcu) suppressed += 1;
+      if (!e?.finished && isBcu) active.push(e);
+    }
     return { effects: active, removed: Math.max(0, list.length - active.length), active: active.length, suppressed };
   }
 
   static tickAndCleanup(effects = [], dtMs = 0) {
     this.tickEffects(effects, dtMs);
     const cleaned = this.cleanupEffects(effects);
-    return { ...cleaned, summary: this.describeEffects(cleaned.effects) };
+    const summary = globalThis.__BCU_DEBUG_ALLOCATIONS__ === true ? this.describeEffects(cleaned.effects) : null;
+    return { ...cleaned, summary };
   }
 
   static describeEffects(effects = []) {
     const list = Array.isArray(effects) ? effects : [];
     const byType = {};
     let finishedCount = 0;
+    let activeCount = 0;
     for (const effect of list) {
       const type = effect?.type || 'unknown';
       byType[type] = (byType[type] || 0) + 1;
       if (effect?.finished) finishedCount += 1;
+      else activeCount += 1;
     }
     return {
-      activeCount: list.filter((e) => !e?.finished).length,
+      activeCount,
       finishedCount,
       byType,
       examples: list.slice(0, 5).map((e) => ({ id: e?.id || null, type: e?.type || null, worldX: e?.worldX ?? e?.x ?? null, worldY: e?.worldY ?? e?.y ?? null, layer: e?.currentLayer ?? e?.bcuRenderLayer ?? null, source: e?.source || null, hasModel: !!e?.model, animatorFrame: e?.animator?.frame ?? null, renderFlipX: e?.renderFlipX === true, bcuScreenOffsetX: e?.bcuScreenOffsetX ?? 0 })),

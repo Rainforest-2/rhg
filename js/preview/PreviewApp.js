@@ -249,9 +249,10 @@ export class PreviewApp {
       try {
         // Light, idempotent warm only — HTMLAudio streams the local .m4a directly and
         // the in-memory blob cache keeps each file fetched at most once. We warm ONLY
-        // the small hot SE set (BATTLE_HOT_SE_IDS) up front; the rest of
-        // BATTLE_PRELOAD_SE_IDS lazy-warm on first play, so battle start no longer fires
-        // ~48 parallel fetches. No per-battle decode or Cache-API "saving".
+        // the small hot SE set (BATTLE_HOT_SE_IDS) up front; the full BCU sound
+        // catalog in BATTLE_PRELOAD_SE_IDS lazy-warms on first play, so battle start
+        // never fires the whole 0..190 catalog at once. No per-battle decode or
+        // Cache-API "saving".
         const musicIds = audioEngine.getBattleTrackIds(nextScene.stage?.runtime);
         const audioPreload = await audioEngine.prepareTracks(musicIds, { seIds: BATTLE_HOT_SE_IDS });
         nextScene.loadTimings = nextScene.loadTimings || {};

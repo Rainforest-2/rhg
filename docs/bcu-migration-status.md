@@ -4,7 +4,7 @@
 
 - date: 2026-06-20 (UTC)
 - commit: local Codex parity implementation batch
-- scope: current BCU ZIP/runtime/ability parity status, battle audio/SE preload cache, plus attack-only spirit form actor bundle manifest registration and spawn-ready semantic ZIP loading.
+- scope: current BCU ZIP/runtime/ability parity status, battle audio/full sound-id catalog, plus attack-only spirit form actor bundle manifest registration and spawn-ready semantic ZIP loading.
 
 This file is the current high-level status page. Older migration task logs were intentionally collapsed so this page reflects the current state instead of preserving stale intermediate claims.
 
@@ -16,7 +16,7 @@ This file is the current high-level status page. Older migration task logs were 
 - Formation and production icons should resolve through `SemanticAssetProvider.getActorUiIconUrl()` and aggregate icon ZIPs, not actor bundle image fallbacks.
 - Core DB boot path remains `public/assets/bundles/core/core-db.zip` through `BcuBootLoader` / `SemanticAssetProvider`.
 - Stage, background, castle, actor, icon, core, language, and effect bundle families are treated as generated assets.
-- Battle BGM and SE are resolved from the vendored `public/assets/music/<id>.m4a` files. The sortie path preloads the selected stage BGM plus common BCU SE ids and persists them through Cache API under `wanko-battle-audio-v1`; repeated starts should read those tracks from `persistent-cache`.
+- Battle BGM and all BCU sound ids `0..190` are resolved from the vendored `public/assets/music/<id>.m4a` files. The sortie path warms only the selected stage BGM plus `BATTLE_HOT_SE_IDS`; every other sound id is accepted by the battle SE bridge and lazy-warms through the in-memory HTMLAudio blob cache on first play.
 
 ## Current focused docs
 
@@ -49,7 +49,7 @@ These areas have meaningful JS runtime wiring and focused checks, but may still 
 - standard zombie corpse / soulstrike / revive visual trace path
 - special castle boss-spawn coordinate via `core-db.zip:boss-spawns.json` and `StageRuntime.bossSpawnWorldX`
 - BASE_WALL cat cannon (id 2) wall-entity spawn lifecycle (Form 339 spawn at anchor+100, alive-time SELF_DESTRUCT, single-wall replacement)
-- battle BGM/common SE preload and real BCU SE id playback from `public/assets/music` (`scripts/check-battle-music-and-zombie-killer.mjs`)
+- battle BGM/full BCU sound id catalog `0..190` with hot SE preload and lazy raw-id playback from `public/assets/music` (`scripts/check-battle-music-and-zombie-killer.mjs`)
 
 ### Human visual review still needed
 

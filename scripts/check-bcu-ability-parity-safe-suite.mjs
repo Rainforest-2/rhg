@@ -63,6 +63,7 @@ const commands = [
   ['node', ['--check', 'scripts/check-bcu-wave-surge-point-capture-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-metal-abi-double-apply.mjs']],
   ['node', ['--check', 'scripts/check-actor-render-bounds-guard.mjs']],
+  ['node', ['--check', 'scripts/check-battle-runtime-lightweight-guards.mjs']],
   ['node', ['scripts/check-bcu-stage-difficulty-parity.mjs']],
   ['node', ['scripts/check-production-card-icon-source-parity.mjs']],
   ['node', ['scripts/check-bcu-parser-indexes.mjs']],
@@ -102,6 +103,7 @@ const commands = [
   ['node', ['--check', 'scripts/check-bcu-enemy-castle-resolution.mjs']],
   ['node', ['scripts/check-bcu-enemy-castle-resolution.mjs']],
   ['node', ['scripts/check-actor-render-bounds-guard.mjs']],
+  ['node', ['scripts/check-battle-runtime-lightweight-guards.mjs']],
   ['node', ['scripts/check-battle-pause-control.mjs']],
   ['node', ['scripts/check-battle-music-and-zombie-killer.mjs']]
 ];

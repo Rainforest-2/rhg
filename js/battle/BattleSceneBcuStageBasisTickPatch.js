@@ -105,8 +105,10 @@ function holdAttackForBcuStop(scene, actor, dt) {
 }
 
 function clearBcuTickScratch(scene) {
-  scene.__bcuTargetSelections = new Map();
-  scene.__bcuDueAttackHits = [];
+  if (scene.__bcuTargetSelections instanceof Map) scene.__bcuTargetSelections.clear();
+  else scene.__bcuTargetSelections = new Map();
+  if (Array.isArray(scene.__bcuDueAttackHits)) scene.__bcuDueAttackHits.length = 0;
+  else scene.__bcuDueAttackHits = [];
 }
 
 function getSelection(scene, actor) {
@@ -251,7 +253,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     });
 
     this.runTickPhase('attack-timeline', () => {
-      this.__bcuDueAttackHits = [];
+      this.__bcuDueAttackHits.length = 0;
       for (const actor of this.actors) {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!actor || actor.state !== 'attack') continue;

@@ -25,6 +25,9 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const i = (v) => Math.trunc(v);
 const isClose = (a, b) => Math.abs(a - b) <= EPSILON;
 const snapFrame = (v) => { const r = Math.round(v); return isClose(v, r) ? r : v; };
+function debugAllocationsEnabled() {
+  return globalThis.__BCU_DEBUG_ALLOCATIONS__ === true;
+}
 const positiveModulo = (v, m) => {
   if (!Number.isFinite(m) || m === 0) return 0;
   const r = v % m;
@@ -177,36 +180,43 @@ export class BcuAnimator {
   }
   getValuesAtFrame(frame = this.frame) {
     const values = [];
-    const skipped = [];
+    const debug = debugAllocationsEnabled();
+    const skippedExamples = debug ? [] : null;
+    let skippedCount = 0;
     const animMaxFrame = this.getMaxFrame();
     for (const t of this.anim?.tracks || []) {
       const prop = MOD_MAP[t.modification];
       if (!prop || !t.keyframes?.length) {
-        skipped.push({ partId: t.partId, modification: t.modification, reason: prop ? 'empty-keyframes' : 'unknown-modification' });
+        skippedCount += 1;
+        if (debug && skippedExamples.length < 5) skippedExamples.push({ partId: t.partId, modification: t.modification, reason: prop ? 'empty-keyframes' : 'unknown-modification' });
         continue;
       }
       const resolved = valueAtBcu(t, frame, animMaxFrame, this.rotate);
       if (!resolved.applied) {
-        skipped.push({ partId: t.partId, modification: t.modification, prop, reason: resolved.reason, localFrame: resolved.localFrame });
+        skippedCount += 1;
+        if (debug && skippedExamples.length < 5) skippedExamples.push({ partId: t.partId, modification: t.modification, prop, reason: resolved.reason, localFrame: resolved.localFrame });
         continue;
       }
-      values.push({
+      const entry = {
         partId: t.partId,
         modification: t.modification,
         prop,
         value: resolved.value,
-        track: t,
-        rawInterpolationDebug: { frame, localFrame: resolved.localFrame, reason: resolved.reason, loop: resolved.frameInfo?.loop, off: resolved.frameInfo?.off }
-      });
+        track: t
+      };
+      if (debug) entry.rawInterpolationDebug = { frame, localFrame: resolved.localFrame, reason: resolved.reason, loop: resolved.frameInfo?.loop, off: resolved.frameInfo?.off };
+      values.push(entry);
     }
-    this.lastValuesDebug = {
-      frame,
-      valueCount: values.length,
-      skippedCount: skipped.length,
-      trackCount: this.anim?.tracks?.length || 0,
-      skippedExamples: skipped.slice(0, 5),
-      examples: values.slice(0, 5).map((v) => ({ partId: v.partId, modification: v.modification, prop: v.prop, value: v.value, localFrame: v.rawInterpolationDebug?.localFrame ?? null, reason: v.rawInterpolationDebug?.reason ?? null }))
-    };
+    this.lastValuesDebug = debug
+      ? {
+          frame,
+          valueCount: values.length,
+          skippedCount,
+          trackCount: this.anim?.tracks?.length || 0,
+          skippedExamples,
+          examples: values.slice(0, 5).map((v) => ({ partId: v.partId, modification: v.modification, prop: v.prop, value: v.value, localFrame: v.rawInterpolationDebug?.localFrame ?? null, reason: v.rawInterpolationDebug?.reason ?? null }))
+        }
+      : { frame, valueCount: values.length, skippedCount, trackCount: this.anim?.tracks?.length || 0 };
     return values;
   }
   apply(model) {
@@ -215,9 +225,16 @@ export class BcuAnimator {
     if (resetApplied && typeof model.reset === 'function') model.reset();
     this.needsSetupReset = false;
     const values = this.getValuesAtFrame(this.frame);
-    const results = values.map((v) => model.applyTrack(v.partId, v.prop, v.value, v.modification));
-    const appliedCount = results.filter((r) => r?.applied !== false).length;
-    this.lastApplyDebug = { frame: this.frame, trackCount: values.length, appliedCount, failedCount: Math.max(0, values.length - appliedCount), resetApplied, examples: results.slice(0, 5) };
+    const results = [];
+    let appliedCount = 0;
+    for (const v of values) {
+      const result = model.applyTrack(v.partId, v.prop, v.value, v.modification);
+      results.push(result);
+      if (result?.applied !== false) appliedCount += 1;
+    }
+    this.lastApplyDebug = debugAllocationsEnabled()
+      ? { frame: this.frame, trackCount: values.length, appliedCount, failedCount: Math.max(0, values.length - appliedCount), resetApplied, examples: results.slice(0, 5) }
+      : { frame: this.frame, trackCount: values.length, appliedCount, failedCount: Math.max(0, values.length - appliedCount), resetApplied };
     return results;
   }
 }

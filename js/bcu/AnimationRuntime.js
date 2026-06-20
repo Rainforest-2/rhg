@@ -1,4 +1,8 @@
 export class AnimationRuntime {
+  static debugAllocationsEnabled() {
+    return globalThis.__BCU_DEBUG_ALLOCATIONS__ === true;
+  }
+
   static getAnimationContract() {
     return {
       source: 'AnimationRuntime.v1-facade',
@@ -71,14 +75,15 @@ export class AnimationRuntime {
   }
 
   static tickActor(actor, dtMs = 0) {
-    const before = this.getActorAnimationState(actor);
+    const debug = this.debugAllocationsEnabled();
+    const before = debug ? this.getActorAnimationState(actor) : null;
     const sync = this.syncActorAnimationForState(actor, { restart: false });
     let advanced = false;
     if (actor?.animator?.tick) {
       actor.animator.tick(dtMs);
       advanced = true;
     }
-    const after = this.getActorAnimationState(actor);
+    const after = debug ? this.getActorAnimationState(actor) : null;
     return { advanced, sync, before, after, dtMs, source: 'AnimationRuntime.tickActor' };
   }
 
@@ -89,21 +94,36 @@ export class AnimationRuntime {
     // erases step-held values such as walking part-image frames and makes units slide.
     const results = typeof actor.animator.apply === 'function' ? actor.animator.apply(actor.model) : [];
     const arr = Array.isArray(results) ? results : [];
-    const appliedTrackCount = arr.filter((r) => r?.applied !== false).length;
+    let appliedTrackCount = Number(actor.animator?.lastApplyDebug?.appliedCount);
+    if (!Number.isFinite(appliedTrackCount)) {
+      appliedTrackCount = 0;
+      for (const r of arr) if (r?.applied !== false) appliedTrackCount += 1;
+    }
     const failedTrackCount = Math.max(0, arr.length - appliedTrackCount);
-    actor.lastAnimationRuntimeApplyDebug = {
-      source: 'AnimationRuntime.applyActorModel',
-      trackCount: arr.length,
-      appliedTrackCount,
-      failedTrackCount,
-      animatorResetApplied: actor.animator?.lastApplyDebug?.resetApplied === true
-    };
+    if (this.debugAllocationsEnabled()) {
+      actor.lastAnimationRuntimeApplyDebug = {
+        source: 'AnimationRuntime.applyActorModel',
+        trackCount: arr.length,
+        appliedTrackCount,
+        failedTrackCount,
+        animatorResetApplied: actor.animator?.lastApplyDebug?.resetApplied === true
+      };
+    }
     return { appliedTrackCount, failedTrackCount, trackCount: arr.length, results: arr, source: 'AnimationRuntime.applyActorModel' };
   }
 
   static buildActorDrawList(actor, options = {}) {
     const drawList = actor?.model?.getBattleDrawList ? actor.model.getBattleDrawList({ parentMatrix: options.parentMatrix || null }) : [];
-    const summary = this.describeDrawList(drawList);
+    const summary = this.debugAllocationsEnabled()
+      ? this.describeDrawList(drawList)
+      : {
+          count: drawList.length,
+          visibleCount: actor?.model?.lastDrawListDebug?.visibleCount ?? 0,
+          opacityZeroCount: actor?.model?.lastDrawListDebug?.opacityZeroCount ?? 0,
+          minZ: actor?.model?.lastDrawListDebug?.minZ ?? null,
+          maxZ: actor?.model?.lastDrawListDebug?.maxZ ?? null,
+          hasMatrix: actor?.model?.lastDrawListDebug?.hasMatrix ?? false
+        };
     return { drawList, summary, source: 'AnimationRuntime.buildActorDrawList' };
   }
 

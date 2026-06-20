@@ -427,20 +427,22 @@ export class BattleActor {
   applyCurrentAnimationFrame() {
     const applied = AnimationRuntime.applyActorModel(this);
     const draw = AnimationRuntime.buildActorDrawList(this);
-    this.lastAnimationRuntimeDebug = {
-      currentAnimId: this.currentAnimId,
-      activeAnimId: this.activeAnimId,
-      activeAnimRole: this.activeAnimRole,
-      state: this.state,
-      frame: this.animator?.frame ?? null,
-      speed: this.animator?.speed ?? null,
-      loop: this.animator?.loop ?? null,
-      modelPartCount: this.model?.parts?.length ?? 0,
-      appliedTrackCount: applied.appliedTrackCount ?? 0,
-      failedTrackCount: applied.failedTrackCount ?? 0,
-      drawListCount: draw?.summary?.count ?? 0,
-      source: "BattleActor.applyCurrentAnimationFrame"
-    };
+    if (globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+      this.lastAnimationRuntimeDebug = {
+        currentAnimId: this.currentAnimId,
+        activeAnimId: this.activeAnimId,
+        activeAnimRole: this.activeAnimRole,
+        state: this.state,
+        frame: this.animator?.frame ?? null,
+        speed: this.animator?.speed ?? null,
+        loop: this.animator?.loop ?? null,
+        modelPartCount: this.model?.parts?.length ?? 0,
+        appliedTrackCount: applied.appliedTrackCount ?? 0,
+        failedTrackCount: applied.failedTrackCount ?? 0,
+        drawListCount: draw?.summary?.count ?? 0,
+        source: "BattleActor.applyCurrentAnimationFrame"
+      };
+    }
   }
 
   tick(dt) {

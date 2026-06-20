@@ -2,6 +2,10 @@ import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.stable-actor-render-order.v1');
 
+function debugAllocationsEnabled() {
+  return globalThis.__BCU_DEBUG_ALLOCATIONS__ === true || globalThis.__BATTLE_RENDER_ORDER_DEBUG__ === true;
+}
+
 function getLayer(renderer, actor) {
   const n = Number(renderer?.getBcuEntityLayer?.(actor));
   if (Number.isFinite(n)) return n;
@@ -44,29 +48,36 @@ export function installBattleSceneRendererOrderPatch() {
   };
 
   proto.getAliveActorsForRender = function getAliveActorsForRenderStable(scene) {
-    return (scene?.actors || [])
-      .map((actor, index) => ({ actor, index }))
-      .filter(({ actor }) => actor?.isRenderable ? actor.isRenderable() : actor?.isAlive?.())
-      .sort((a, b) => {
-        const ay = getLayer(this, a.actor);
-        const by = getLayer(this, b.actor);
+    const sourceActors = scene?.actors || [];
+    const actors = [];
+    for (const actor of sourceActors) {
+      if (actor?.isRenderable ? actor.isRenderable() : actor?.isAlive?.()) actors.push(actor);
+    }
+    actors.sort((a, b) => {
+        const ay = getLayer(this, a);
+        const by = getLayer(this, b);
         if (ay !== by) return ay - by;
-        const ao = getStableActorOrder(a.actor, a.index);
-        const bo = getStableActorOrder(b.actor, b.index);
+        const ai = sourceActors.indexOf(a);
+        const bi = sourceActors.indexOf(b);
+        const ao = getStableActorOrder(a, ai);
+        const bo = getStableActorOrder(b, bi);
         if (ao !== bo) return ao - bo;
-        return a.index - b.index;
-      })
-      .map(({ actor }, renderIndex) => {
+        return ai - bi;
+      });
+    if (debugAllocationsEnabled()) {
+      actors.forEach((actor, renderIndex) => {
+        const sourceIndex = sourceActors.indexOf(actor);
         actor.lastRenderOrderDebug = {
           source: 'BattleSceneRendererOrderPatch.getAliveActorsForRender',
           renderIndex,
           depthLayer: getLayer(this, actor),
-          stableOrder: getStableActorOrder(actor, renderIndex),
+          stableOrder: getStableActorOrder(actor, sourceIndex),
           ignoredXForDepth: Number.isFinite(actor?.x) ? actor.x : null,
           ignoredCrowdYOffsetForDepth: Number.isFinite(actor?.visualCrowdYOffsetPx) ? actor.visualCrowdYOffsetPx : null
         };
-        return actor;
       });
+    }
+    return actors;
   };
 }
 

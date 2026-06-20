@@ -319,9 +319,15 @@ if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
   const originalRender = BattleSceneRenderer.prototype.render;
   if (typeof originalRender === 'function') {
     BattleSceneRenderer.prototype.render = function renderWithBcuStageEffectLayering(previewRenderer, scene, debugOptions = false) {
-      const all = (scene?.effects || []).filter((effect) => effect && !effect.finished);
-      const effects = all.filter(isBcuStageLayeredEffect).sort(compareEffectLayer);
-      const entityEffects = all.filter(isBcuEntityStatusEffect).sort(compareEffectLayer);
+      const effects = [];
+      const entityEffects = [];
+      for (const effect of scene?.effects || []) {
+        if (!effect || effect.finished) continue;
+        if (isBcuStageLayeredEffect(effect)) effects.push(effect);
+        else if (isBcuEntityStatusEffect(effect)) entityEffects.push(effect);
+      }
+      effects.sort(compareEffectLayer);
+      entityEffects.sort(compareEffectLayer);
       this.__bcuStageEffectLayerState = { effects, entityEffects, index: 0, drawn: new Set() };
       try { return originalRender.call(this, previewRenderer, scene, debugOptions); }
       finally { delete this.__bcuStageEffectLayerState; }
@@ -341,11 +347,13 @@ if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
     drawRemainingStageEffects(this, ctx);
     const drawnStage = this.__bcuStageEffectLayerState?.drawn || null;
     const list = Array.isArray(effects) ? effects : [];
-    const active = list
-      .filter((effect) => effect && !effect.finished)
-      .filter((effect) => !(drawnStage?.has(effect)))
-      .filter((effect) => !isBcuStageLayeredEffect(effect) && !isBcuEntityStatusEffect(effect))
-      .sort(compareEffectLayer);
+    const active = [];
+    for (const effect of list) {
+      if (!effect || effect.finished || drawnStage?.has(effect)) continue;
+      if (isBcuStageLayeredEffect(effect) || isBcuEntityStatusEffect(effect)) continue;
+      active.push(effect);
+    }
+    active.sort(compareEffectLayer);
     for (const effect of active) {
       try { drawOneBcuEffectWithGlow(this, ctx, effect); } catch {}
     }

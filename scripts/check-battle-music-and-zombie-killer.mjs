@@ -20,7 +20,16 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { MusicCatalog } from '../js/audio/MusicCatalog.js';
 import { deriveMsdRef, parseMsdRows, parseStageMusicFromRows, resolveStageMusic } from '../js/audio/StageMusicResolver.js';
-import { BATTLE_PRELOAD_SE_IDS, BCU_SE } from '../js/audio/BattleSoundEffects.js';
+import {
+  BATTLE_HOT_SE_IDS,
+  BATTLE_PRELOAD_SE_IDS,
+  BCU_ALL_SOUND_IDS,
+  BCU_SE,
+  BCU_SOUND_ID_MAX,
+  BCU_SOUND_ID_MIN,
+  isBcuSoundId,
+  normalizeBcuSoundId
+} from '../js/audio/BattleSoundEffects.js';
 
 const ROOT = new URL('../', import.meta.url);
 const failures = [];
@@ -35,14 +44,20 @@ check(manifest.cdnBaseUrl === '' && manifest.remoteBaseUrl === '', 'musicmap.jso
 check(typeof manifest.localBaseUrl === 'string' && manifest.localBaseUrl.includes('assets/music'), 'musicmap.json: localBaseUrl must be the local assets/music override dir');
 // iOS/Safari can't decode Ogg Vorbis, so the BGM is bundled as .m4a (AAC).
 check(manifest.extension === '.m4a' && manifest.pad === 3, 'musicmap.json: expected .m4a / pad=3');
+check(manifest.minId === BCU_SOUND_ID_MIN && manifest.maxId === BCU_SOUND_ID_MAX,
+  `musicmap.json: expected full BCU sound id range ${BCU_SOUND_ID_MIN}..${BCU_SOUND_ID_MAX}`);
 
 // 2. catalog
 const catalog = new MusicCatalog(manifest);
 check(catalog.formatId(3) === '003', 'MusicCatalog.formatId(3) should be 003');
-check(catalog.normalizeId(999) === null && catalog.normalizeId(-1) === null, 'MusicCatalog must reject out-of-range ids');
+check(catalog.normalizeId(0) === 0 && catalog.normalizeId(190) === 190, 'MusicCatalog must accept the full vendored BCU sound range endpoints');
+check(catalog.normalizeId(999) === null && catalog.normalizeId(-1) === null && catalog.normalizeId(191) === null, 'MusicCatalog must reject out-of-range ids');
 const urls = catalog.resolveUrls(3);
 check(urls.length === 1 && urls[0].includes('public/assets/music/003.m4a'),
   `MusicCatalog.resolveUrls must be the single public/assets 003.m4a candidate, got ${JSON.stringify(urls)}`);
+const url190 = catalog.resolveUrls(190);
+check(url190.length === 1 && url190[0].includes('public/assets/music/190.m4a'),
+  `MusicCatalog.resolveUrls must include the final vendored BCU sound 190.m4a, got ${JSON.stringify(url190)}`);
 check(catalog.resolveUrls(99999).length === 0, 'MusicCatalog.resolveUrls must be empty for an invalid id');
 const catalogSource = await read('js/audio/MusicCatalog.js');
 check(catalogSource.includes("cache: 'no-cache'"), 'MusicCatalog must revalidate musicmap.json instead of force-caching stale manifests');
@@ -95,12 +110,20 @@ for (const banned of ['AudioContext', 'decodeAudioData', 'createBufferSource', '
   check(!engine.includes(banned), `AudioEngine must not reintroduce Web Audio / Cache-API persistence (${banned})`);
 }
 const se = await read('js/audio/BattleSoundEffects.js');
-for (const piece of ['BCU_SE', 'BATTLE_PRELOAD_SE_IDS', 'playBcuSe', 'playZombieKillerSe', 'BCU_CANNON_SE']) {
+for (const piece of ['BCU_SE', 'BCU_ALL_SOUND_IDS', 'BATTLE_PRELOAD_SE_IDS', 'BATTLE_HOT_SE_IDS', 'normalizeBcuSoundId', 'playBcuSe', 'playZombieKillerSe', 'BCU_CANNON_SE']) {
   check(se.includes(piece), `BattleSoundEffects must expose ${piece}`);
 }
 check(BCU_SE.ZOMBIE_KILLER === 59 && BCU_SE.SPEND_FAIL === 15 && BCU_SE.SPEND_SUCCESS === 19 && BCU_SE.HIT_BASE === 22,
   'BattleSoundEffects: key BCU SE ids must match CommonStatic.java');
-for (const id of [BCU_SE.ZOMBIE_KILLER, BCU_SE.SPEND_FAIL, BCU_SE.SPEND_SUCCESS, BCU_SE.HIT_0, BCU_SE.HIT_BASE, BCU_SE.VICTORY, BCU_SE.DEFEAT, ...BATTLE_PRELOAD_SE_IDS]) {
+check(BCU_ALL_SOUND_IDS.length === 191 && BCU_ALL_SOUND_IDS[0] === 0 && BCU_ALL_SOUND_IDS.at(-1) === 190,
+  'BattleSoundEffects: BCU_ALL_SOUND_IDS must cover every vendored BCU sound id 0..190');
+check(BATTLE_PRELOAD_SE_IDS.length === BCU_ALL_SOUND_IDS.length && BATTLE_PRELOAD_SE_IDS.every((id, i) => id === BCU_ALL_SOUND_IDS[i]),
+  'BattleSoundEffects: BATTLE_PRELOAD_SE_IDS must expose the full lazy BCU sound catalog');
+check(BATTLE_HOT_SE_IDS.length < BATTLE_PRELOAD_SE_IDS.length && BATTLE_HOT_SE_IDS.every((id) => BATTLE_PRELOAD_SE_IDS.includes(id)),
+  'BattleSoundEffects: BATTLE_HOT_SE_IDS must remain a small subset of the full catalog');
+check(normalizeBcuSoundId('190') === 190 && normalizeBcuSoundId('') === null && normalizeBcuSoundId(null) === null && normalizeBcuSoundId(false) === null && normalizeBcuSoundId(191) === null && isBcuSoundId(0) && !isBcuSoundId(191),
+  'BattleSoundEffects: raw BCU sound id normalization must match the vendored catalog range');
+for (const id of BATTLE_PRELOAD_SE_IDS) {
   const file = new URL(`public/assets/music/${String(id).padStart(3, '0')}.m4a`, ROOT);
   try { await readFile(file); }
   catch { check(false, `missing vendored SE/BGM file for id ${id}: ${file.pathname}`); }
@@ -113,11 +136,15 @@ const previewApp = await read('js/preview/PreviewApp.js');
 check(previewApp.includes('BATTLE_PRELOAD_SE_IDS') && previewApp.includes('prepareTracks') && previewApp.includes('battleAudioPreloaded'),
   'PreviewApp must preload/cache selected battle BGM and common SE during battle start');
 const eventPatch = await read('js/audio/BattleSoundEventPatch.js');
-for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRejected', 'damageQueued', 'procResolved', 'baseDamageQueued', 'battleResult', 'bcuCatCannonActivated', 'cannonIdsForEvent']) {
+for (const piece of ['pushEventWithBattleSound', 'playerSpawned', 'playerSpawnRejected', 'damageQueued', 'procResolved', 'baseDamageQueued', 'battleResult', 'bcuCatCannonActivated', 'cannonIdsForEvent', 'collectBcuSoundIds', 'playExplicitBcuSe', 'bcuSetSe', 'bcuSound', 'bcuSeIds']) {
   check(eventPatch.includes(piece), `BattleSoundEventPatch: missing ${piece}`);
 }
 check(!/case 'stageEnemySpawned':[\s\S]{0,120}playDeploySe/.test(eventPatch), 'BattleSoundEventPatch must not play player deploy SE for enemy spawns');
 check(eventPatch.includes('BCU_CANNON_SE.WALL') && eventPatch.includes('BCU_CANNON_SE.BARRIER'), 'BattleSoundEventPatch must map cannon ids to BCU_CANNON_SE entries');
+check(eventPatch.includes('includeGenericArrays') && eventPatch.includes('oncePerFrame(scene, `se-${id}`)'),
+  'BattleSoundEventPatch must support raw BCU setSE ids with per-frame dedupe');
+check(/for \(const id of ids\.length \? ids : \[BCU_SE\.CANNON_BASIC_ATK\]\)/.test(eventPatch),
+  'BattleSoundEventPatch must play all mapped cannon SE ids, not only the first one');
 for (const piece of ['BCU_SE.CRIT', 'BCU_SE.SATK', 'BCU_SE.WAVE', 'BCU_SE.POISON', 'BCU_SE.VOLC_START', 'BCU_SE.VOLC_LOOP', 'BCU_SE.BARRIER_ATK', 'BCU_SE.SHIELD_BREAKER', 'BCU_SE.WARP_ENTER', 'BCU_SE.DEATH_SURGE']) {
   check(eventPatch.includes(piece), `BattleSoundEventPatch must cover ${piece}`);
 }

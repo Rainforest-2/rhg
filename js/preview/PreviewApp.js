@@ -244,17 +244,16 @@ export class PreviewApp {
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       console.info('battleScene:init:ok');
 
-      overlay?.setProgress({ phase: 'battle-audio', message: '戦闘音声を保存中…', value: 0.83 });
+      overlay?.setProgress({ phase: 'battle-audio', message: '戦闘音声を準備中…', value: 0.83 });
       const audioPreloadStart = performance.now();
       try {
+        // Light, idempotent warm only — HTMLAudio streams the local .m4a directly and
+        // the browser HTTP cache keeps them warm, so there is no per-battle decode or
+        // Cache-API "saving" step anymore (it used to download+decode ~50 tracks every
+        // battle start). This just ensures the SE pool exists and the BGM start track
+        // is buffering, then returns immediately.
         const musicIds = audioEngine.getBattleTrackIds(nextScene.stage?.runtime);
-        const audioPreload = await audioEngine.prepareTracks([...musicIds, ...BATTLE_PRELOAD_SE_IDS], {
-          onProgress: (p) => overlay?.setProgress({
-            phase: 'battle-audio',
-            message: p.total > 1 ? `戦闘音声を保存中… ${p.index}/${p.total}` : '戦闘音声を保存中…',
-            value: 0.83 + (p.total ? Math.min(0.035, (p.index / p.total) * 0.035) : 0)
-          })
-        });
+        const audioPreload = await audioEngine.prepareTracks([...musicIds, ...BATTLE_PRELOAD_SE_IDS]);
         nextScene.loadTimings = nextScene.loadTimings || {};
         nextScene.loadTimings.audioPreloadMs = performance.now() - audioPreloadStart;
         nextScene.loadTimings.audioPreload = audioPreload;
@@ -265,16 +264,15 @@ export class PreviewApp {
           ids: audioPreload.ids,
           musicIds,
           seIds: BATTLE_PRELOAD_SE_IDS,
-          cacheName: audioPreload.cacheName,
           source: audioPreload.source
         });
-        this.ui?.log('info', `Battle audio preloaded: ${audioPreload.loaded}/${audioPreload.total} (music ${musicIds.length}, se ${BATTLE_PRELOAD_SE_IDS.length})`);
+        this.ui?.log('info', `Battle audio ready (html-audio): music ${musicIds.length}, se ${BATTLE_PRELOAD_SE_IDS.length}`);
       } catch (error) {
         nextScene.loadTimings = nextScene.loadTimings || {};
         nextScene.loadTimings.audioPreloadMs = performance.now() - audioPreloadStart;
         nextScene.loadTimings.audioPreloadError = errorReport(error);
-        console.warn('[PreviewApp] battle audio preload failed', error);
-        this.ui?.log('warn', `Battle audio preload failed: ${error?.message || String(error)}`);
+        console.warn('[PreviewApp] battle audio prepare failed', error);
+        this.ui?.log('warn', `Battle audio prepare failed: ${error?.message || String(error)}`);
       }
 
       overlay?.setProgress({ phase: 'status-effects', message: '状態効果アイコンを準備中…', value: 0.84 });

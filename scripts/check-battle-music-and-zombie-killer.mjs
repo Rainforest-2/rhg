@@ -85,8 +85,14 @@ const engine = await read('js/audio/AudioEngine.js');
 for (const api of ['playBgm', 'stopBgm', 'playSe', 'playSynthSe', 'setPaused', 'loadTrack', 'prepareTracks', 'prepareBattleMusic', 'subscribe']) {
   check(engine.includes(api), `AudioEngine: missing ${api}`);
 }
-for (const piece of ['AUDIO_CACHE_NAME', 'caches.open', 'cache.match', 'await cache.put', 'persistent-cache', '_lastLoadFailures', '_deletePersistentCacheEntry', '_resumeContextForPlayback', '_playBgmElement', '_bgmRetryingFromGesture', "cache: 'no-cache'"]) {
-  check(engine.includes(piece), `AudioEngine: missing persistent-cache piece ${piece}`);
+// AudioEngine is HTMLAudio-only (no Web Audio decode, no Cache-API persistence): BGM
+// streams one-way through a reusable looping element and SE play through a pooled set
+// of elements, all unlocked once inside a user gesture for the iOS autoplay policy.
+for (const piece of ['new Audio(', '_playBgmElement', '_sePool', '_unlock', 'SILENT_WAV_DATA_URI', 'loop', '.play(', '.pause(']) {
+  check(engine.includes(piece), `AudioEngine (html-audio): missing ${piece}`);
+}
+for (const banned of ['AudioContext', 'decodeAudioData', 'createBufferSource', 'caches.open', "cache: 'no-cache'"]) {
+  check(!engine.includes(banned), `AudioEngine must not reintroduce Web Audio / Cache-API persistence (${banned})`);
 }
 const se = await read('js/audio/BattleSoundEffects.js');
 for (const piece of ['BCU_SE', 'BATTLE_PRELOAD_SE_IDS', 'playBcuSe', 'playZombieKillerSe', 'BCU_CANNON_SE']) {

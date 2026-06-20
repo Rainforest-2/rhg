@@ -19,7 +19,7 @@ import {
 const PATCH_FLAG = Symbol.for('wanko-audio.battle-sound-events.v1');
 
 function soundState(scene) {
-  if (!scene.__battleSoundState) scene.__battleSoundState = { last: new Map(), firedResult: false };
+  if (!scene.__battleSoundState) scene.__battleSoundState = { last: new Map(), lastFrame: new Map(), firedResult: false };
   return scene.__battleSoundState;
 }
 
@@ -29,6 +29,18 @@ function throttle(scene, key, ms) {
   const last = state.last.get(key) ?? -Infinity;
   if (now - last < ms) return false;
   state.last.set(key, now);
+  return true;
+}
+
+// BCU `CommonStatic.setSE(id)` registers an SE as a per-frame flag, so the same SE
+// plays at most once per logic frame no matter how many callers set it that frame.
+// Mirror that for SE that BCU drives through setSE (e.g. SE_WAVE), instead of a
+// wall-clock throttle that would drop legitimate consecutive-frame plays.
+function oncePerFrame(scene, key) {
+  const state = soundState(scene);
+  const frame = Number(scene?.logicFrame ?? scene?.timeMs ?? 0);
+  if (state.lastFrame.get(key) === frame) return false;
+  state.lastFrame.set(key, frame);
   return true;
 }
 
@@ -99,7 +111,10 @@ function playForEvent(scene, event = {}) {
       playProcSe(scene, event);
       break;
     case 'bcuWaveSe':
-      if (throttle(scene, 'se-wave', 60)) playBcuSe(BCU_SE.WAVE);
+      // BCU: ContWaveDef.update calls CommonStatic.setSE(SE_WAVE) at t==0; setSE is a
+      // per-frame flag, so SE_WAVE sounds at most once per logic frame even when many
+      // wave segments (multiple casters, or propagation levels) start the same frame.
+      if (oncePerFrame(scene, 'se-wave')) playBcuSe(BCU_SE.WAVE);
       break;
     case 'bcuSurgeSe':
       if (event.soundEffect === 'SE_VOLC_LOOP') {

@@ -1,158 +1,91 @@
-// Web Audio playback engine for in-battle BGM (and a one-shot SE channel).
+// Lightweight HTML5 Audio playback engine for in-battle BGM + SE.
 //
-// Design contract:
-//  - Battle-start preload: the selected stage's start/boss .m4a tracks are
-//    fetched + decoded during the sortie loading path, then persisted with Cache
-//    API so replaying the same stage does not download them again.
-//  - Runtime playback still lazy-loads as a fallback if a track was not prepared.
-//    Decoded buffers and in-flight fetches are cached in memory too.
-//  - Volume is driven live from AudioSettings: the BGM/SE gains track the
-//    effective (mute-aware) slider values without restarting playback.
-//  - playBgm() crossfades between tracks and is idempotent for the active id.
-//  - setPaused() suspends/resumes the whole context so the pause menu freezes
-//    the music exactly where it was.
-//  - Fully degrades to a no-op when Web Audio is unavailable (SSR / old browser).
+// Design contract (intentionally simple — "just play the sound"):
+//  - NO Web Audio: long BGM AAC reliably fails iOS Safari the Web Audio decode path (the
+//    decoded PCM is tens of MB and trips the platform decode-memory ceiling), and a
+//    Web Audio context also goes silent for newly started one-shot SE when iOS idles
+//    the output unit (BGM kept playing, SE died until a tap). HTMLAudioElement uses
+//    the platform's native streaming decoder, survives idling, and is far lighter.
+//  - BGM: one reusable looping <audio> element, streamed one-way. Switching tracks
+//    just swaps `src` (no crossfade, no decode, no persistence).
+//  - SE: a small round-robin pool of <audio> elements for overlapping one-shots.
+//  - iOS autoplay policy: every element is "unlocked" once, inside the first user
+//    gesture, by playing a silent clip. Reusing the SAME unlocked elements is what
+//    lets BGM/SE start later from a non-gesture rAF tick (battle start).
+//  - No Cache API / no per-battle "saving": the browser HTTP cache already keeps the
+//    local .m4a files warm across battles.
+//  - Volume tracks AudioSettings live; setPaused() pauses/resumes BGM.
+//  - Degrades to a no-op when HTMLAudioElement is unavailable (SSR / old runtime).
 
 import { AudioSettings } from './AudioSettings.js';
 import { musicCatalog } from './MusicCatalog.js';
 
-const DEFAULT_CROSSFADE_MS = 900;
-const AUDIO_CACHE_NAME = 'wanko-battle-audio-v1';
-const AUDIO_CACHE_INDEX_KEY = 'wanko-battle.audio.cache-index.v1';
-// ~0.01s of silence. Played once on the reusable BGM <audio> element inside a user
-// gesture to "unlock" it on iOS Safari, so the BGM can later start at battle start
-// (a non-gesture rAF tick) without being blocked by the autoplay policy.
+const SE_POOL_SIZE = 16;
+// ~0.01s of silence, played once per element inside a user gesture to satisfy the
+// iOS autoplay policy so the element can be replayed programmatically afterwards.
 const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
-function now(ctx) { return ctx.currentTime; }
 function unique(values) { return [...new Set(values.filter((v) => v != null))]; }
 
 export class AudioEngine {
   constructor({ audio = AudioSettings, catalog = musicCatalog } = {}) {
     this.audio = audio;
     this.catalog = catalog;
-    this.ctx = null;
-    this.masterGain = null;
-    this.bgmGain = null;
-    this.seGain = null;
-    this.current = null; // { id, source, gain }
-    this.currentElement = null; // HTMLAudioElement fallback when decodeAudioData is unavailable
-    this._buffers = new Map();   // id -> AudioBuffer
-    this._loading = new Map();   // id -> Promise<AudioBuffer|null>
-    this._lastLoadResults = new Map(); // id -> { id, ok, url, source }
-    this._lastLoadFailures = new Map(); // id -> [{ url, reason, status }]
-    this._unsubscribe = null;
+    this._supported = typeof Audio === 'function';
+    this._bgmEl = null;
+    this._bgmId = null;
+    this._wantedBgmId = null;
+    this._sePool = [];
+    this._sePoolIdx = 0;
+    this._unlocked = false;
+    this._userPaused = false;
     this._gestureBound = null;
-    this._supported = typeof window !== 'undefined'
-      && (typeof window.AudioContext === 'function' || typeof window.webkitAudioContext === 'function');
-    // Bind the gesture-unlock listeners now, before any context exists. Battle music
-    // is first requested from a requestAnimationFrame tick (not a user-gesture call
-    // stack), so a context created there would stay 'suspended' under the browser
-    // autoplay policy and never play. Binding eagerly means an earlier tap (menu,
-    // sortie button, etc.) creates+unlocks the context so the BGM is audible at
-    // battle start instead of only after the next tap.
+    // Track volume changes live without restarting playback.
+    this._unsubscribe = this.audio?.subscribe?.(() => this._applyVolumes()) || null;
+    // Bind the gesture-unlock listeners eagerly, before any element exists, so an
+    // earlier tap (menu / sortie button) unlocks playback and the BGM is audible at
+    // battle start instead of only after the next in-battle tap.
     this._bindGestureUnlock();
   }
 
   get supported() { return this._supported; }
 
-  // Build the context + gain graph on first real use (must follow a user
-  // gesture for autoplay policy; battle start always does).
-  _ensureContext() {
-    if (!this._supported || this.ctx) return this.ctx;
-    const Ctor = window.AudioContext || window.webkitAudioContext;
-    this.ctx = new Ctor();
-    // Keep the context alive across the battle. Browsers (iOS Safari especially,
-    // and Chrome under battery saver / focus loss / audio-focus interruptions)
-    // can drop a running context to 'suspended'/'interrupted' mid-battle, which
-    // silently kills all SE for a stretch until the next user gesture. Re-resume
-    // automatically whenever that happens outside of an intentional pause, so SE
-    // recover on their own instead of staying dead "for a while".
-    this.ctx.addEventListener?.('statechange', () => {
-      if (!this.ctx) return;
-      const state = this.ctx.state;
-      if ((state === 'suspended' || state === 'interrupted') && !this._userPaused) {
-        this.ctx.resume?.().catch(() => {});
-      }
-    });
-    this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.value = 1;
-    this.masterGain.connect(this.ctx.destination);
-
-    this.bgmGain = this.ctx.createGain();
-    this.bgmGain.connect(this.masterGain);
-    this.seGain = this.ctx.createGain();
-    this.seGain.connect(this.masterGain);
-
-    this._applyVolumes();
-    this._startKeepAlive();
-    this._unsubscribe = this.audio.subscribe(() => this._applyVolumes());
-    this._bindGestureUnlock();
-    return this.ctx;
-  }
-
-  // A 1-frame silent looping buffer wired straight to the destination. iOS Safari
-  // (and some Android Chrome builds) idle the audio output unit when no buffer is
-  // actively rendering; once idled, the context still reports 'running' and BGM
-  // already in flight keeps playing, but newly started one-shot SE come out silent
-  // until a user gesture wakes the unit (hence "deploying a unit revives the SE").
-  // Keeping a perpetual silent source in the graph prevents the unit from idling.
-  _startKeepAlive() {
-    if (!this.ctx || this._keepAlive) return;
-    try {
-      const buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate || 44100);
-      const src = this.ctx.createBufferSource();
-      src.buffer = buffer;
-      src.loop = true;
-      src.connect(this.masterGain || this.ctx.destination);
-      src.start();
-      this._keepAlive = src;
-    } catch {
-      // Non-fatal: without the keepalive the SE path still works on browsers that
-      // don't idle the output unit.
+  // ---- volume ----
+  _bgmVolume() { return clampGain(this.audio?.getEffectiveBgmVolume?.() ?? 0.7); }
+  _seVolume() { return clampGain(this.audio?.getEffectiveSeVolume?.() ?? 0.8); }
+  _applyVolumes() {
+    if (this._bgmEl && !this._userPaused) {
+      try { this._bgmEl.volume = this._bgmVolume(); } catch {}
     }
   }
 
-  // Best-effort wake of the output unit before a sound. resume() on an already
-  // 'running' context is a cheap no-op on desktop but re-kicks the idled audio
-  // unit on iOS, so newly started SE are audible without needing a gesture first.
-  _wakeOutput() {
-    if (!this.ctx || this._userPaused) return;
-    if (this.ctx.state !== 'running') this.ctx.resume?.().catch(() => {});
+  // ---- elements ----
+  _ensureBgmEl() {
+    if (this._bgmEl || !this._supported) return this._bgmEl;
+    const el = new Audio();
+    el.preload = 'auto';
+    el.loop = true;
+    this._bgmEl = el;
+    return el;
   }
 
-  _applyVolumes() {
-    const bgm = clampGain(this.audio.getEffectiveBgmVolume?.() ?? 0.7);
-    const se = clampGain(this.audio.getEffectiveSeVolume?.() ?? 0.8);
-    if (this.currentElement) this.currentElement.volume = bgm;
-    if (!this.ctx) return;
-    const t = now(this.ctx);
-    // setTargetAtTime gives a short smooth ramp so slider drags don't click.
-    this.bgmGain?.gain.setTargetAtTime(bgm, t, 0.05);
-    this.seGain?.gain.setTargetAtTime(se, t, 0.05);
+  _ensureSePool() {
+    if (!this._supported) return;
+    while (this._sePool.length < SE_POOL_SIZE) {
+      const el = new Audio();
+      el.preload = 'auto';
+      this._sePool.push(el);
+    }
   }
 
-  // Some browsers create the context in 'suspended' state until a gesture.
+  // ---- iOS gesture unlock ----
   _bindGestureUnlock() {
     if (this._gestureBound || typeof window === 'undefined' || !this._supported) return;
     const handler = () => {
-      // Create the context inside the user-gesture call stack (autoplay policy lets
-      // a gesture-created context start 'running'); if a prior lazy creation from a
-      // rAF tick already left one suspended, resume it here.
-      const ctx = this._ensureContext();
-      // Always resume from a gesture when not intentionally paused: covers both a
-      // 'suspended' context (autoplay policy) and an iOS context that is nominally
-      // 'running' but whose output unit idled and needs a re-kick.
-      if (ctx && ctx.state !== 'running' && !this._userPaused) {
-        ctx.resume().catch(() => {});
-      }
-      this._startKeepAlive();
-      // Unlock the streaming BGM element while we have a gesture, so BGM can start
-      // on its own at battle start on iOS instead of waiting for an in-battle tap.
-      this._unlockBgmElement();
-      if (this._wantedBgmId != null && !this.current && !this.currentElement && !this._bgmRetryingFromGesture) {
-        this._bgmRetryingFromGesture = true;
-        this.playBgm(this._wantedBgmId).finally(() => { this._bgmRetryingFromGesture = false; });
+      this._unlock();
+      // If BGM was wanted but blocked before unlock, start it now from the gesture.
+      if (this._wantedBgmId != null && !this._userPaused && (!this._bgmEl || this._bgmEl.paused)) {
+        this.playBgm(this._wantedBgmId);
       }
     };
     this._gestureBound = handler;
@@ -161,15 +94,30 @@ export class AudioEngine {
     }
   }
 
-  async _decode(arrayBuffer) {
-    // Safari needs the callback form; modern browsers return a promise.
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const p = this.ctx.decodeAudioData(arrayBuffer, (buf) => { settled = true; resolve(buf); }, (err) => { settled = true; reject(err); });
-      if (p && typeof p.then === 'function') p.then((buf) => { if (!settled) resolve(buf); }, (err) => { if (!settled) reject(err); });
-    });
+  // Unlock every element once, inside a user gesture. Calling play() in the gesture
+  // marks the element user-activated even if its promise settles later, so the
+  // silent clip is enough. Runs exactly once, so it can never clobber BGM that is
+  // already streaming on the reused element.
+  _unlock() {
+    if (this._unlocked || !this._supported) return;
+    this._unlocked = true;
+    this._ensureSePool();
+    // Only pause if the element is still on the silent unlock clip — guards the
+    // (theoretical) race where real BGM started on the reused element before this
+    // silent play's promise resolved, so we never pause live music.
+    const finishPause = (el) => { try { if (el.getAttribute('src') === SILENT_WAV_DATA_URI) { el.pause(); el.currentTime = 0; } } catch {} };
+    const els = [this._ensureBgmEl(), ...this._sePool].filter(Boolean);
+    for (const el of els) {
+      try {
+        if (!el.getAttribute('src')) el.src = SILENT_WAV_DATA_URI;
+        const p = el.play?.();
+        if (p && typeof p.then === 'function') p.then(() => finishPause(el), () => {});
+        else finishPause(el);
+      } catch {}
+    }
   }
 
+  // ---- track-id helpers (used by the battle-start preload) ----
   getBattleTrackIds(stageRuntime = null) {
     const ids = [];
     const startId = this.catalog.normalizeId(stageRuntime?.musicId);
@@ -179,422 +127,132 @@ export class AudioEngine {
     return unique(ids);
   }
 
-  async prepareBattleMusic(stageRuntime = null, { onProgress = null } = {}) {
-    try { await this.catalog.load?.(); } catch {}
+  async prepareBattleMusic(stageRuntime = null, opts = {}) {
     const ids = this.getBattleTrackIds(stageRuntime);
-    const result = await this.prepareTracks(ids, { onProgress });
-    return {
-      ...result,
-      source: 'AudioEngine.prepareBattleMusic'
-    };
+    return { ...(await this.prepareTracks(ids, opts)), source: 'AudioEngine.prepareBattleMusic' };
   }
 
-  async prepareTracks(ids = [], { onProgress = null } = {}) {
+  // Lightweight, idempotent warm. No decode, no Cache API, no per-battle persistence
+  // — just make sure the SE pool exists and the BGM start track is buffering. The
+  // browser HTTP cache keeps the local files warm across battles.
+  async prepareTracks(ids = []) {
     try { await this.catalog.load?.(); } catch {}
+    if (!this._supported) return { ok: false, total: 0, loaded: 0, ids: [], results: [], source: 'AudioEngine.prepareTracks' };
+    this._ensureSePool();
     const normalizedIds = unique(ids.map((id) => this.catalog.normalizeId(id)));
-    const results = [];
-    let index = 0;
-    for (const id of normalizedIds) {
-      index += 1;
-      onProgress?.({ id, index, total: normalizedIds.length, phase: 'start' });
-      const buffer = await this.loadTrack(id, { persist: true, quiet: true });
-      const detail = this._lastLoadResults.get(id) || { id, ok: !!buffer, source: buffer ? 'memory' : 'missing' };
-      results.push({ ...detail, ok: !!buffer });
-      onProgress?.({ id, index, total: normalizedIds.length, phase: 'done', ok: !!buffer, source: detail.source || null });
-    }
+    // Warm the BGM start track (first id) so its first play streams without a stall.
+    const startId = normalizedIds[0];
+    if (startId != null) this.loadTrack(startId);
     return {
-      ok: results.every((r) => r.ok),
+      ok: true,
       total: normalizedIds.length,
-      loaded: results.filter((r) => r.ok).length,
+      loaded: normalizedIds.length,
       ids: normalizedIds,
-      results,
-      cacheName: AUDIO_CACHE_NAME,
+      results: normalizedIds.map((id) => ({ id, ok: true, source: 'html-audio' })),
       source: 'AudioEngine.prepareTracks'
     };
   }
 
-  // Resolve + fetch + decode a track id, trying each candidate URL in order.
-  // Returns the AudioBuffer or null (logged, never throws).
-  async loadTrack(id, options = {}) {
-    if (!this._ensureContext()) return null;
+  // Warm a single track into the reusable BGM element (does not start playback).
+  loadTrack(id) {
     const norm = this.catalog.normalizeId(id);
-    if (norm == null) return null;
-    if (this._buffers.has(norm)) {
-      this._lastLoadResults.set(norm, { id: norm, ok: true, source: 'memory' });
-      return this._buffers.get(norm);
-    }
-    if (this._loading.has(norm)) return this._loading.get(norm);
-
-    const promise = (async () => {
-      const urls = this.catalog.resolveUrls(norm);
-      this._lastLoadFailures.set(norm, []);
-      for (const url of urls) {
-        const loaded = await this._fetchAndDecode(url, { trackId: norm, persist: options.persist !== false });
-        if (loaded?.buffer) {
-          this._buffers.set(norm, loaded.buffer);
-          this._lastLoadResults.set(norm, { id: norm, ok: true, url, source: loaded.source, cacheName: loaded.cacheName || null });
-          return loaded.buffer;
-        }
-      }
-      // Non-fatal: in-battle BGM is optional. Reaching here almost always means
-      // every download host was unreachable (offline or a network that blocks
-      // the music CDNs); the battle just runs without music. Info, not warn, and
-      // logged once per id (loadTrack caches the resolved promise).
-      const failures = this._lastLoadFailures.get(norm) || [];
-      // A decode failure (vs a network miss) means this device's WebAudio can't
-      // decode the track — true for the long BGM AAC on iOS. Remember it so BGM
-      // routes straight to the streaming element from the first play (set here,
-      // during the battle-start preload, so even the first BGM start skips the
-      // doomed decode attempt). Local files don't fetch-fail, so on this build a
-      // null result is effectively always a decode failure.
-      if (failures.some((f) => String(f.reason || '').includes('decode'))) this._bgmPrefersElement = true;
-      const reason = failures.length
-        ? failures.map((f) => `${f.url}:${f.status ?? f.reason}`).join(', ')
-        : 'no-resolved-url';
-      if (!options.quiet) console.info(`[AudioEngine] music track ${norm} unavailable (${reason}) - continuing without BGM`);
-      this._lastLoadResults.set(norm, { id: norm, ok: false, source: 'missing', failures });
-      return null;
-    })();
-    this._loading.set(norm, promise);
-    try { return await promise; }
-    finally { this._loading.delete(norm); }
-  }
-
-  // Fetch + decode one candidate URL. Returns { buffer, source } or null. A missing
-  // file (404 etc.) is a definitive miss for that host (no retry); a thrown
-  // fetch/decode error is treated as transient and retried once before moving on,
-  // so a single dropped request on a flaky connection doesn't silence the BGM.
-  async _fetchAndDecode(url, { attempts = 2, trackId = null, persist = true } = {}) {
-    const fetched = await this._fetchAudioArrayBuffer(url, { attempts, trackId, persist });
-    if (!fetched?.arrayBuffer) {
-      this._recordLoadFailure(trackId, { url, reason: fetched?.reason || 'fetch-failed', status: fetched?.status ?? null });
-      return null;
-    }
-    try {
-      const buffer = await this._decode(fetched.arrayBuffer);
-      return buffer ? { buffer, source: fetched.source, cacheName: fetched.cacheName || null } : null;
-    } catch (error) {
-      if (fetched.source === 'persistent-cache') {
-        await this._deletePersistentCacheEntry(url);
-        const refetched = await this._fetchAudioArrayBuffer(url, { attempts, trackId, persist, bypassPersistentCache: true });
-        if (refetched?.arrayBuffer) {
-          try {
-            const buffer = await this._decode(refetched.arrayBuffer);
-            return buffer ? { buffer, source: refetched.source, cacheName: refetched.cacheName || null } : null;
-          } catch (refetchError) {
-            this._recordLoadFailure(trackId, { url, reason: 'decode-failed-after-cache-refresh', status: refetchError?.name || null });
-            return null;
-          }
-        }
-        this._recordLoadFailure(trackId, { url, reason: refetched?.reason || 'cache-refresh-fetch-failed', status: refetched?.status ?? null });
-        return null;
-      }
-      this._recordLoadFailure(trackId, { url, reason: 'decode-failed', status: error?.name || null });
-      return null;
-    }
-  }
-
-  _recordLoadFailure(trackId, detail = {}) {
-    if (trackId == null) return;
-    const failures = this._lastLoadFailures.get(trackId) || [];
-    failures.push(detail);
-    this._lastLoadFailures.set(trackId, failures);
-  }
-
-  async _openPersistentCache() {
-    if (typeof caches === 'undefined' || typeof caches.open !== 'function') return null;
-    try { return await caches.open(AUDIO_CACHE_NAME); }
-    catch { return null; }
-  }
-
-  async _deletePersistentCacheEntry(url) {
-    const cache = await this._openPersistentCache();
-    if (!cache) return false;
-    try { return await cache.delete(url); }
-    catch { return false; }
-  }
-
-  _rememberPersistentCacheEntry(url, { trackId = null, source = null } = {}) {
-    try {
-      const raw = globalThis.localStorage?.getItem(AUDIO_CACHE_INDEX_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      parsed[url] = { trackId, source, cachedAt: Date.now(), cacheName: AUDIO_CACHE_NAME };
-      globalThis.localStorage?.setItem(AUDIO_CACHE_INDEX_KEY, JSON.stringify(parsed));
-    } catch {
-      // Cache index is diagnostic only. Cache API remains the source of truth.
-    }
-  }
-
-  async _fetchAudioArrayBuffer(url, { attempts = 2, trackId = null, persist = true, bypassPersistentCache = false } = {}) {
-    const cache = persist ? await this._openPersistentCache() : null;
-    if (cache && !bypassPersistentCache) {
-      try {
-        const cached = await cache.match(url);
-        if (cached && cached.ok) {
-          return { arrayBuffer: await cached.arrayBuffer(), source: 'persistent-cache', cacheName: AUDIO_CACHE_NAME };
-        }
-      } catch {}
-    }
-
-    for (let attempt = 0; attempt < attempts; attempt++) {
-      try {
-        const res = await fetch(url, { cache: 'no-cache', mode: 'cors' });
-        if (!res || !res.ok) return { reason: 'http-status', status: res?.status ?? 0 };
-        const clone = cache ? res.clone() : null;
-        const arrayBuffer = await res.arrayBuffer();
-        if (cache && clone) {
-          try {
-            await cache.put(url, clone);
-            this._rememberPersistentCacheEntry(url, { trackId, source: 'network' });
-          } catch {
-            // Playback can continue from the decoded response even if persistent
-            // storage is unavailable or the browser evicts the entry immediately.
-          }
-        }
-        return { arrayBuffer, source: cache ? 'network-persistent-save' : 'network', cacheName: cache ? AUDIO_CACHE_NAME : null };
-      } catch (error) {
-        if (attempt === attempts - 1) return { reason: error?.name || 'fetch-error', status: null };
-        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
-      }
-    }
-    return null;
-  }
-
-  async _resumeContextForPlayback() {
-    if (!this.ctx || this._userPaused) return false;
-    if (this.ctx.state === 'suspended') {
-      try { await this.ctx.resume(); } catch {}
-    }
-    if (this.ctx.state === 'suspended') {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }
-    return this.ctx.state !== 'suspended';
-  }
-
-  // Start (or crossfade to) a looping BGM track. Idempotent for the active id.
-  async playBgm(id, { loop = true, fadeMs = DEFAULT_CROSSFADE_MS } = {}) {
-    const ctx = this._ensureContext();
-    const norm = this.catalog.normalizeId(id);
-    if (norm == null) return false;
-    this._wantedBgmId = norm;
-    if (!ctx) return this._playBgmElement(norm, { loop });
-    if (this.current && this.current.id === norm && this.current.source) return true;
-    if (this.currentElement && this.currentElement.dataset?.trackId === String(norm) && !this.currentElement.paused) return true;
-
-    const cached = this._buffers.get(norm);
-    // Once WebAudio decode has been shown to fail for BGM on this device (iOS can't
-    // decode the long AAC tracks), stream straight through the gesture-unlocked
-    // element and skip re-fetching + re-failing the decode of a ~1MB file on every
-    // track change.
-    if (this._bgmPrefersElement && !cached) return this._playBgmElement(norm, { loop });
-
-    // Fast path: the stage BGM is decoded during the battle-start preload, so the
-    // common case is a cached buffer on a live context. Start it on this very tick
-    // instead of after an await, so the music is audible the moment the battle goes
-    // active rather than a frame or two later.
-    if (cached && !this._userPaused && this.ctx.state === 'running') {
-      return this._startBgmBuffer(cached, norm, { loop, fadeMs });
-    }
-
-    const buffer = cached || await this.loadTrack(norm, { quiet: true });
-    if (!buffer) { this._bgmPrefersElement = true; return this._playBgmElement(norm, { loop }); }
-    // A newer playBgm() call superseded this one while we were downloading.
-    if (this._wantedBgmId !== norm) return false;
-    if (!await this._resumeContextForPlayback()) return this._playBgmElement(norm, { loop });
-    return this._startBgmBuffer(buffer, norm, { loop, fadeMs });
-  }
-
-  _startBgmBuffer(buffer, norm, { loop = true, fadeMs = DEFAULT_CROSSFADE_MS } = {}) {
-    const t = now(this.ctx);
-    // Starting from silence (nothing to cross-fade out) ramps up fast so the track
-    // is heard right away. A long exponential in-fade keeps the gain near-zero for
-    // most of its duration, which reads as "the BGM started late"; only a real
-    // track->track crossfade (start->boss) uses the full fade.
-    const inFade = this.current?.source ? fadeMs : Math.min(fadeMs, 150);
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(1, t + Math.max(0.001, inFade / 1000));
-    gain.connect(this.bgmGain);
-
-    const source = this.ctx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = loop;
-    source.connect(gain);
-    source.start();
-
-    this._stopBgmElement();
-    this._fadeOutAndStop(this.current, fadeMs);
-    this.current = { id: norm, source, gain };
-    return true;
-  }
-
-  _fadeOutAndStop(node, fadeMs) {
-    if (!node || !node.source) return;
-    try {
-      const t = now(this.ctx);
-      node.gain.gain.cancelScheduledValues(t);
-      node.gain.gain.setValueAtTime(Math.max(0.0001, node.gain.gain.value), t);
-      node.gain.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.001, fadeMs / 1000));
-      node.source.stop(t + Math.max(0.02, fadeMs / 1000) + 0.05);
-    } catch {
-      try { node.source.stop(); } catch {}
-    }
-  }
-
-  stopBgm({ fadeMs = 400 } = {}) {
-    this._wantedBgmId = null;
-    this._stopBgmElement();
-    if (!this.current) return;
-    this._fadeOutAndStop(this.current, fadeMs);
-    this.current = null;
-  }
-
-  // One-shot SE playback. Infrastructure for sound effects; ids resolve through
-  // the same catalog. Never throws.
-  async playSe(id) {
-    const ctx = this._ensureContext();
-    const norm = this.catalog.normalizeId(id);
-    if (norm == null) return false;
-    if (!ctx) return this._playSeElement(norm);
-    // Fast path: SE samples are decoded during the battle-start preload, so the hot
-    // case is a cached buffer on a running context. Start it synchronously (no
-    // await) so the SE fires on the same tick as the gameplay event instead of a
-    // microtask later, which otherwise reads as the SE lagging the action.
-    const cached = this._buffers.get(norm);
-    if (cached && !this._userPaused && ctx.state === 'running') {
-      this._wakeOutput();
-      return this._startSeBuffer(cached);
-    }
-    const buffer = cached || await this.loadTrack(norm, { quiet: true });
-    if (!buffer) return this._playSeElement(norm);
-    if (!await this._resumeContextForPlayback()) return this._playSeElement(norm);
-    return this._startSeBuffer(buffer);
-  }
-
-  _startSeBuffer(buffer) {
-    const source = this.ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(this.seGain);
-    source.start();
-    return true;
-  }
-
-  // Lazily create the ONE reusable BGM <audio> element. Long BGM tracks (~90-127s
-  // stereo AAC) routinely fail WebAudio decodeAudioData on iOS Safari (the decoded
-  // PCM is tens of MB and trips the platform's decode-memory ceiling), so BGM
-  // streams through this element instead. Reusing a single element is what makes
-  // the iOS unlock stick: an element first played inside a user gesture can be
-  // re-`src`'d and replayed from a non-gesture context later, whereas a freshly
-  // constructed `new Audio()` cannot (which is why BGM used to only start after the
-  // first in-battle tap).
-  _ensureBgmElement() {
-    if (this._bgmEl || typeof Audio !== 'function') return this._bgmEl || null;
-    const el = new Audio();
-    el.preload = 'auto';
-    this._bgmEl = el;
-    return el;
-  }
-
-  // Unlock the reusable BGM element from inside a user gesture (sortie tap, etc.).
-  _unlockBgmElement() {
-    const el = this._ensureBgmElement();
-    if (!el || this._bgmElUnlocked || this._bgmElUnlocking) return;
-    this._bgmElUnlocking = true;
-    try {
-      el.src = SILENT_WAV_DATA_URI;
-      el.loop = false;
-      el.volume = 0;
-      const p = el.play?.();
-      const done = () => { try { el.pause(); } catch {} this._bgmElUnlocked = true; this._bgmElUnlocking = false; };
-      if (p && typeof p.then === 'function') p.then(done, () => { this._bgmElUnlocking = false; });
-      else done();
-    } catch { this._bgmElUnlocking = false; }
-  }
-
-  async _playBgmElement(id, { loop = true } = {}) {
-    const norm = this.catalog.normalizeId(id);
-    if (norm == null || typeof Audio !== 'function') return false;
-    const el = this._ensureBgmElement();
-    if (!el) return false;
-    const urls = this.catalog.resolveUrls(norm);
-    for (const url of urls) {
-      try {
-        el.src = url;
-        el.dataset.trackId = String(norm);
-        el.loop = loop;
-        el.volume = clampGain(this.audio.getEffectiveBgmVolume?.() ?? 0.7);
-        el.load?.();
-        await el.play();
-        this._fadeOutAndStop(this.current, 0);
-        this.current = null;
-        this.currentElement = el;
-        return true;
-      } catch {}
-    }
-    const failures = this._lastLoadFailures.get(norm) || [];
-    console.info(`[AudioEngine] music track ${norm} unavailable for WebAudio and HTMLAudio fallback (${failures.map((f) => `${f.url}:${f.status ?? f.reason}`).join(', ') || 'element-play-failed'}) - continuing without BGM`);
-    return false;
-  }
-
-  _stopBgmElement() {
-    if (!this.currentElement) return;
-    try {
-      this.currentElement.pause();
-      this.currentElement.removeAttribute('src');
-      this.currentElement.load?.();
-    } catch {}
-    // Keep the reusable element instance (and its iOS unlock) around for the next
-    // track; only drop the "currently playing" reference.
-    this.currentElement = null;
-  }
-
-  async _playSeElement(id) {
-    const norm = this.catalog.normalizeId(id);
-    if (norm == null || typeof Audio !== 'function') return false;
+    if (norm == null || !this._supported) return false;
     const url = this.catalog.resolveUrls(norm)[0];
     if (!url) return false;
-    const audio = new Audio(url);
-    audio.preload = 'auto';
-    audio.volume = clampGain(this.audio.getEffectiveSeVolume?.() ?? 0.8);
-    try { await audio.play(); return true; }
-    catch { return false; }
+    const el = this._ensureBgmEl();
+    if (el && el.getAttribute('src') !== url && !this._bgmId) {
+      try { el.src = url; el.load?.(); el.dataset.trackId = String(norm); } catch {}
+    }
+    return true;
   }
 
-  // Play a synthesized one-shot SE. `builder(ctx, destination, startTime)` wires
-  // and schedules its own nodes into `destination` (the SE gain bus, so the SE
-  // volume slider + mute apply). Used for effects that have no downloadable
-  // sample (e.g. the Zombie Killer sting). Never throws; no-op while paused.
-  playSynthSe(builder) {
-    if (!this._ensureContext() || typeof builder !== 'function') return false;
-    if (this._userPaused || this.ctx.state === 'suspended') return false;
-    try { builder(this.ctx, this.seGain, this.ctx.currentTime); return true; }
-    catch { return false; }
+  // ---- BGM ----
+  async playBgm(id, { loop = true } = {}) {
+    const norm = this.catalog.normalizeId(id);
+    if (norm == null || !this._supported) return false;
+    this._wantedBgmId = norm;
+    return this._playBgmElement(norm, { loop });
   }
+
+  async _playBgmElement(norm, { loop = true } = {}) {
+    const el = this._ensureBgmEl();
+    if (!el) return false;
+    if (this._bgmId === norm && !el.paused) return true; // already playing this track
+    const url = this.catalog.resolveUrls(norm)[0];
+    if (!url) return false;
+    try {
+      if (el.getAttribute('src') !== url) { el.src = url; el.load?.(); }
+      el.loop = loop;
+      el.dataset.trackId = String(norm);
+      el.volume = this._userPaused ? 0 : this._bgmVolume();
+      this._bgmId = norm;
+      if (!this._userPaused) await el.play();
+      return true;
+    } catch {
+      // Most often the autoplay policy before the first gesture; the gesture handler
+      // retries. Logged once, quietly.
+      console.info(`[AudioEngine] BGM track ${norm} could not start yet (will retry on next interaction)`);
+      return false;
+    }
+  }
+
+  stopBgm() {
+    this._wantedBgmId = null;
+    this._bgmId = null;
+    if (!this._bgmEl) return;
+    try { this._bgmEl.pause(); } catch {}
+  }
+
+  // ---- SE ----
+  // One-shot SE via the round-robin element pool. Synchronous (no await) so the SE
+  // fires on the same tick as the gameplay event. Never throws.
+  playSe(id) {
+    const norm = this.catalog.normalizeId(id);
+    if (norm == null || !this._supported || this._userPaused) return false;
+    this._ensureSePool();
+    if (!this._sePool.length) return false;
+    const url = this.catalog.resolveUrls(norm)[0];
+    if (!url) return false;
+    const el = this._sePool[this._sePoolIdx];
+    this._sePoolIdx = (this._sePoolIdx + 1) % this._sePool.length;
+    try {
+      if (el.getAttribute('src') !== url) el.src = url;
+      else { try { el.currentTime = 0; } catch {} }
+      el.volume = this._seVolume();
+      const p = el.play?.();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Retained for API compatibility; the synth SE path required Web Audio, which this
+  // engine no longer uses. The one effect that used it (Zombie Killer) plays its
+  // vendored sample through playSe instead.
+  playSynthSe() { return false; }
 
   setPaused(paused) {
     this._userPaused = !!paused;
-    if (this.currentElement) {
-      if (paused) this.currentElement.pause();
-      else this.currentElement.play?.().catch(() => {});
+    if (!this._bgmEl) return;
+    if (paused) {
+      try { this._bgmEl.pause(); } catch {}
+    } else if (this._bgmId != null) {
+      try { this._bgmEl.volume = this._bgmVolume(); this._bgmEl.play?.().catch(() => {}); } catch {}
     }
-    if (!this.ctx) return;
-    if (paused) this.ctx.suspend?.().catch(() => {});
-    else this.ctx.resume?.().catch(() => {});
   }
 
   dispose() {
-    this.stopBgm({ fadeMs: 0 });
-    this._stopBgmElement();
-    try { this._keepAlive?.stop?.(); } catch {}
-    this._keepAlive = null;
+    this.stopBgm();
     this._unsubscribe?.();
     this._unsubscribe = null;
     if (this._gestureBound && typeof window !== 'undefined') {
       for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.removeEventListener(ev, this._gestureBound);
     }
     this._gestureBound = null;
-    try { this.ctx?.close?.(); } catch {}
-    this.ctx = null;
+    try { this._bgmEl?.pause?.(); } catch {}
+    for (const el of this._sePool) { try { el.pause?.(); } catch {} }
+    this._sePool = [];
   }
 }
 
@@ -605,4 +263,3 @@ function clampGain(v) {
 }
 
 export const audioEngine = new AudioEngine();
-export { AUDIO_CACHE_NAME, AUDIO_CACHE_INDEX_KEY };

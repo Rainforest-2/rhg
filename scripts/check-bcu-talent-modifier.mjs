@@ -13,6 +13,7 @@ import {
   getTalentAttackMultiplier,
   getTalentHpMultiplier
 } from '../js/battle/bcu-runtime/BcuTalentModifier.js';
+import { applyTalentToStats } from '../js/battle/bcu-runtime/BcuTalentInfoData.js';
 import { DamageAbilityResolver } from '../js/battle/DamageAbilityResolver.js';
 
 // A PCoin info entry: [typeCode, maxlv, v0, v1, ...] (padded to 14 in BCU).
@@ -47,6 +48,43 @@ assert.equal(getTalentHpMultiplier(info, [0, 5, 0], corres), 1 + 40 * 0.01, 'HP 
 assert.equal(getTalentHpMultiplier(info, [0, 0, 0], corres), 1.0, 'locked HP talent -> 1.0');
 // typeCode beyond corres length or type[0]==-1 is ignored.
 assert.equal(getTalentAttackMultiplier(info, [0, 0, 5], corres), 1.0, 'ignored talent type does not contribute');
+
+// --- PCoin.improve PC_P proc side effects -----------------------------------
+const procStats = {
+  hp: 100,
+  maxHp: 100,
+  damage: 10,
+  bcuCombatModel: {
+    kind: 'unit',
+    traits: { list: [], flags: {} },
+    targetTraits: { list: [], flags: {} },
+    ability: { abi: 0, flags: {} },
+    proc: {}
+  }
+};
+const procInfo = [
+  [13, 5, 10, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],     // critical prob
+  [56, 5, 10, 50, 1, 3, 40, 80, 20, 60, 0, 0, 0, 0], // surge prob/level/range
+  [64, 5, 10, 70, 30, 90, 0, 0, 0, 0, 0, 0, 0, 0],   // beast hunter
+  [67, 5, 10, 50, 40, 80, 20, 60, 0, 0, 0, 0, 0, 0], // blast prob/range
+  [51, 5, 10, 50, 20, 80, 0, 0, 0, 0, 0, 0, 0, 0]    // attack nullify
+];
+const procOut = applyTalentToStats(procStats, procInfo, [5, 5, 5, 5, 5]);
+assert.equal(procOut.bcuCombatModel.proc.critical.prob, 50, 'PC_P critical talent writes proc probability');
+assert.equal(procOut.bcuCombatModel.proc.critical.mult, 200, 'critical keeps BCU 200% multiplier');
+assert.equal(procOut.bcuCombatModel.proc.volcano.prob, 50, 'PC_P surge talent writes volcano probability');
+assert.equal(procOut.bcuCombatModel.proc.volcano.level, 3, 'PC_P surge talent writes BCU level');
+assert.equal(procOut.bcuCombatModel.proc.volcano.dis0, 20, 'PC_P surge range start is /4 for units');
+assert.equal(procOut.bcuCombatModel.proc.volcano.dis1, 35, 'PC_P surge range end is (start+width)/4 for units');
+assert.equal(procOut.bcuCombatModel.proc.beastHunter.active, 1, 'PC_P beast hunter activates P_BSTHUNT');
+assert.equal(procOut.bcuCombatModel.proc.beastHunter.prob, 70, 'PC_P beast hunter writes probability');
+assert.equal(procOut.bcuCombatModel.proc.bsthunt.time, 90, 'beast hunter aliases stay in sync');
+assert.equal(procOut.bcuCombatModel.proc.blast.prob, 50, 'PC_P blast writes probability');
+assert.equal(procOut.bcuCombatModel.proc.blast.dis0, 20, 'PC_P blast range start is /4 for units');
+assert.equal(procOut.bcuCombatModel.proc.blast.dis1, 35, 'PC_P blast range end is (start+width)/4 for units');
+assert.equal(procOut.bcuCombatModel.proc.attackNullify.prob, 50, 'PC_P attack nullify writes dodge probability');
+assert.equal(procOut.bcuCombatModel.proc.IMUATK.time, 80, 'attack nullify mirror proc stays in sync');
+assert.ok(procOut.bcuTalentModifier.effects.some((effect) => effect.category === 'PC_P' && effect.proc === 'volcano'), 'talent debug records PC_P proc effects');
 
 // --- gate guard -------------------------------------------------------------
 const probe = DamageAbilityResolver.resolve({ attacker: { side: 'dog-player' }, target: { side: 'cat-enemy' }, targetType: 'actor', baseDamage: 100, context: { random: () => 1 } });

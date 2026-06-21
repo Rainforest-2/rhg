@@ -46,5 +46,7 @@ assert.ok(tuningPatch.includes('1 << traitOption.traitIndex'), 'orb save path us
 assert.ok(tuningPatch.includes('function normalizeDraftOrb'), 'orb UI normalizes invalid type/trait combinations');
 assert.ok(tuningPatch.includes('selectedOrbTraitIndex(orb) === 3'), 'metal orb trait has a dedicated restriction');
 assert.ok(tuningPatch.includes('orbTypeOption(orb.typeCode).type !== ORB_ID.RES'), 'metal orbs must be damage-reduction only');
+assert.ok(!tuningPatch.includes('（参考）'), 'talents must no longer be labelled as reference-only');
+assert.ok(tuningPatch.includes("loaded ? '戦闘に反映'"), 'talent UI states that loaded talents affect combat');
 
 console.log('check-formation-character-tuning-logic: OK');

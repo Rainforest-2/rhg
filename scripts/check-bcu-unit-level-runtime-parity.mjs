@@ -4,7 +4,8 @@ import {
   applyBcuUnitLevelToStats,
   getBcuPreferredPlusLevel,
   getBcuUnitLevelMultiplier,
-  resolveBcuUnitLevelConfig
+  resolveBcuUnitLevelConfig,
+  selectBcuUnitLevelMetadata
 } from '../js/battle/bcu-runtime/BcuUnitLevelRuntime.js';
 
 const curve20 = Array(20).fill(20);
@@ -14,6 +15,14 @@ assert.equal(getBcuUnitLevelMultiplier(10, curve20), 2.8, 'level 10 uses initial
 assert.equal(getBcuUnitLevelMultiplier(11, curve20), 3, 'level 11 adds one remainder step from next curve slot');
 assert.equal(getBcuPreferredPlusLevel({ prefLevel: 50, rarity: 0, maxPlusLevel: 50 }), 50, 'rarity 0 preferred plus reaches max at prefLevel 50');
 assert.equal(getBcuPreferredPlusLevel({ prefLevel: 50, rarity: 2, maxPlusLevel: 50 }), 0, 'rarity >= 2 gets no preferred plus level in BCU getPrefLvs');
+assert.equal(
+  selectBcuUnitLevelMetadata(
+    { maxLevel: 50, maxPlusLevel: 0, rarity: 0, source: 'stale-catalog' },
+    { maxLevel: 60, maxPlusLevel: 90, rarity: 0, levelCurve: { lvs: curve20, source: 'unitbuy/unitlevel' } }
+  ).maxPlusLevel,
+  90,
+  'DB/form metadata with plus cap wins over stale catalog metadata'
+);
 
 const resolved = resolveBcuUnitLevelConfig({
   requested: { prefLevel: 99 },

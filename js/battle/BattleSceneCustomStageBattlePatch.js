@@ -147,8 +147,9 @@ async function loadStageState(scene, loader, stageId, side, stageIndex) {
   };
 }
 
-function customAliveCount(scene, side) {
-  return (scene.actors || []).filter((a) => a?.side === side && a?.isAlive?.()).length;
+function customAliveCount(scene, stageState) {
+  if (!stageState) return 0;
+  return (scene.actors || []).filter((a) => a?.side === stageState.side && a?.customStageBattle && a?.customStageBattleStageKey === stageState.stageKey && a?.isAlive?.()).length;
 }
 
 function isGroupAllowed(scene, stageState, { group } = {}) {
@@ -220,7 +221,7 @@ function tickCustomStageBattle(scene) {
     const side = stageState.side;
     const req = stageState.spawnRuntime.tick(scene.logicFrame, {
       logicFrame: scene.logicFrame,
-      aliveEnemyCount: customAliveCount(scene, side),
+      aliveEnemyCount: customAliveCount(scene, stageState),
       maxEnemyCount: stageState.runtime?.effectiveMaxEnemyCount || scene.getEffectiveEnemyMaxCount?.() || 20,
       enemyBaseHpPercent: baseHpPercent(scene, side),
       random,

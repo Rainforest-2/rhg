@@ -6,10 +6,9 @@
 //   - per-level value v interpolates: (v1-v0)*(lv-1)/(maxlv-1) + v0  (int math),
 //     or info[3] when maxlv == 0, or 0 when maxlv == 1.
 //
-// Scope: models the attack/HP talent multipliers from a unit's PCoin `info`
-// table, selected talent levels, and the PC_CORRES type map. There is no talent
-// data path in this game's runtime (forms carry no PCoin), so this is a fact-
-// grounded model with deterministic fixtures, not a wired runtime modifier.
+// Scope: models the attack/HP multiplier helpers from a unit's PCoin `info`
+// table, selected talent levels, and the PC_CORRES type map. The broader PCoin
+// improve() side effects are applied in BcuTalentInfoData.
 
 // util/Data.java PCoin category/subtype constants.
 export const PC_CATEGORY = Object.freeze({ PC_P: 0, PC_AB: 1, PC_BASE: 2, PC_IMU: 3, PC_TRAIT: 4 });

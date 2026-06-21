@@ -136,6 +136,7 @@ and stores per-unit metadata under `units.json`:
 
 - `getBcuUnitLevelMultiplier(level, lvs)` = BCU `UnitLevel.getMult`
 - `getBcuPreferredPlusLevel(...)` = BCU `Unit.getPrefLvs` plus-level formula
+- `selectBcuUnitLevelMetadata(...)`, which prefers form/DB metadata carrying a real `maxPlusLevel` over stale catalog metadata with `maxPlusLevel: 0`
 - `resolveBcuUnitLevelConfig(...)`
 - `applyBcuUnitLevelToStats(...)`
 
@@ -154,6 +155,7 @@ and stores per-unit metadata under `units.json`:
 - default preferred level = 50
 - `UnitLevel.getMult` curve behavior
 - `getPrefLvs` plus-level formula
+- metadata selection when stale catalog data reports `maxPlusLevel: 0`
 - clamping
 - HP scaling
 - attack hit scaling

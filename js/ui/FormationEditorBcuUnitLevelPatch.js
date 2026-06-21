@@ -5,7 +5,8 @@ import { getCharacterById } from '../battle/CharacterCatalog.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import {
   BCU_DEFAULT_PREF_LEVEL,
-  resolveBcuUnitLevelConfig
+  resolveBcuUnitLevelConfig,
+  selectBcuUnitLevelMetadata
 } from '../battle/bcu-runtime/BcuUnitLevelRuntime.js';
 import { ORB_ID, ORB_TRAIT_NAMES } from '../battle/bcu-runtime/BcuOrbModifier.js';
 import { PC_CORRES, getTalentAbilityName, getTalentInfoForUnit, isTalentAbilityNameRegistryLoaded, isTalentRegistryLoaded } from '../battle/bcu-runtime/BcuTalentInfoData.js';
@@ -71,14 +72,19 @@ function characterKind(characterId) {
 }
 
 function getCatLevelMetadata(character) {
-  if (character?.bcuUnitLevelMeta) return character.bcuUnitLevelMeta;
   const db = globalThis.__BCU_DB__ || null;
   try {
     const form = character?.form || (Number.isFinite(character?.formRow) ? character.formRow : 'f');
     const record = db?.units?.getForm?.(character?.statsId, form);
-    return record?.levelMeta || record?.stats?.bcuUnitLevelMeta || record?.stats?.source?.unitLevelMeta || db?.units?.get?.(character?.statsId)?.levelMeta || null;
+    return selectBcuUnitLevelMetadata(
+      record?.levelMeta,
+      record?.stats?.bcuUnitLevelMeta,
+      record?.stats?.source?.unitLevelMeta,
+      db?.units?.get?.(character?.statsId)?.levelMeta,
+      character?.bcuUnitLevelMeta
+    );
   } catch {
-    return null;
+    return character?.bcuUnitLevelMeta || null;
   }
 }
 
@@ -389,11 +395,6 @@ function talentEffectLabel(abilityID) {
   return `本能 #${abilityID}`;
 }
 
-function talentAffectsStats(abilityID) {
-  const row = PC_CORRES[abilityID];
-  return !!row && row[0] === PC_CATEGORY.PC_BASE && (row[1] === PC_SUBTYPE.PC2_ATK || row[1] === PC_SUBTYPE.PC2_HP);
-}
-
 // Align draft.talents to the unit's talent slots, seeding from saved levels.
 function ensureDraftTalents(draft) {
   const info = talentInfoFor(draft.characterId);
@@ -407,13 +408,13 @@ function ensureDraftTalents(draft) {
 function renderTalentSection(draft) {
   const info = ensureDraftTalents(draft);
   const loaded = isTalentRegistryLoaded();
-  const note = info.length ? (loaded ? '攻撃/体力のみ戦闘に反映' : '読込中…') : (loaded ? 'このキャラに本能なし' : '読込中…');
+  const note = info.length ? (loaded ? '戦闘に反映' : '読込中…') : (loaded ? 'このキャラに本能なし' : '読込中…');
   const controls = info.map((slot, i) => stepper({
     key: `talent-${i}`,
     value: draft.talents[i],
     min: 0,
     max: Math.max(0, toInt(slot[1], 0)),
-    label: talentEffectLabel(slot[0]) + (talentAffectsStats(slot[0]) ? '' : '（参考）'),
+    label: talentEffectLabel(slot[0]),
     maxLabel: `MAX ${toInt(slot[1], 0)}`,
     deltas: [-5, -1, 1, 5]
   })).join('');

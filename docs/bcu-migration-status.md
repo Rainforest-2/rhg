@@ -72,7 +72,7 @@ Do not mark these as fully complete without more evidence or loaders:
 - BCU custom/proc-object summon loader: proc-object `SUMMON` handoff is fixture-backed, but broad automatic real custom-pack discovery is still needed.
 - summon `anim_type` entry visuals; stage `allow` / group semantics are fixture-backed for `SCDef.smap` / `sdef` / `SCGroup` limits.
 - full real-data `Trait.targetForms` loader fixtures; focused runtime fixtures now cover `targetType` / `targetForms` compatibility.
-- combo / orb / treasure / talent / PCoin damage modifiers: combo speed (C_SPE) and crit (C_CRIT) hooks are now wired (`check-bcu-combo-speed-crit-parity`); real-data PCoin acceptance remains partial after focused damage-family/killer/PCoin side-effect wiring.
+- combo / orb / treasure / talent / PCoin damage modifiers: combo speed (C_SPE), crit (C_CRIT), combo proc-duration/knockback payload buffs, and PCoin direct PC_P proc payloads are now wired (`check-bcu-combo-speed-crit-parity`, `check-bcu-combo-proc-duration-parity`, `check-bcu-talent-modifier`); broad real-data PCoin acceptance remains partial until fixture sweeps and visual acceptance are recorded.
 - broader AB_SKILL status resistance holder sources.
 - enemy toxic immunity: treated as nonexistent for supported enemy data; do not add an enemy `IMUPOIATK` CSV or loader holder.
 - bounty/money battle visual: no stable visual owner/effect alias proven; treat as logic/economy unless future evidence proves visuals.

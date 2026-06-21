@@ -7,9 +7,9 @@
 //                  min4, max4, textID, lvID, nameID, limit].
 //   a slot is used iff abilityID != 0 (PCoin constructor's strs[2+i*14] != 0).
 //
-// abilityID indexes PC_CORRES; the attack/HP talent multipliers (PCoin.getAtk/
-// HPMultiplication, applied at construction) live in BcuTalentModifier. This
-// module loads the definitions and applies those multipliers to unit stats.
+// abilityID indexes PC_CORRES; PCoin.improve applies the selected levels to the
+// cloned DataUnit proc/ability/base stat model. This module loads definitions
+// and mirrors those construction-time updates into the JS combat model.
 
 import {
   PC_CATEGORY,
@@ -17,7 +17,7 @@ import {
   getTalentAttackMultiplier,
   getTalentHpMultiplier
 } from './BcuTalentModifier.js';
-import { BCU_ABI, BCU_TRAITS } from '../BcuCombatModel.js';
+import { BCU_ABI, BCU_TRAITS, BCU_PROC_IMMUNITY_FIELDS } from '../BcuCombatModel.js';
 
 const TALENT_SLOT_LEN = 14;
 const TALENT_SLOT_COUNT = 8;
@@ -250,6 +250,121 @@ function ensureProcField(proc, field) {
   return proc[field];
 }
 
+function addPositive(proc, field, values) {
+  const target = ensureProcField(proc, field);
+  if (!target) return null;
+  for (const [key, value] of Object.entries(values || {})) {
+    const v = Math.trunc(Number(value) || 0);
+    if (v > 0) target[key] = Math.trunc(Number(target[key]) || 0) + v;
+  }
+  return target;
+}
+
+function surgeFromTalent({ prob = 0, level = 0, start = 0, width = 0, mult = 0 } = {}) {
+  const lv = Math.max(0, Math.trunc(Number(level) || 0));
+  const dis0 = Math.trunc(Number(start) || 0) / 4;
+  const dis1 = Math.trunc((Number(start) || 0) + (Number(width) || 0)) / 4;
+  return { prob: Math.trunc(Number(prob) || 0), dis0, dis1, level: lv, time: lv, timeFrames: lv * 20, aliveTimeFrames: lv * 20, mult: Math.trunc(Number(mult) || 0) };
+}
+
+function rebuildTalentImmunity(proc = {}) {
+  const immunity = {};
+  for (const [key, field] of Object.entries(BCU_PROC_IMMUNITY_FIELDS)) {
+    const mult = Math.max(0, Math.min(100, Math.trunc(Number(proc?.[field]?.mult ?? proc?.[field]?.block ?? 0) || 0)));
+    immunity[key] = { field, mult, full: mult >= 100, partial: mult > 0 && mult < 100, damageMultiplier: Math.max(0, (100 - mult) / 100) };
+  }
+  return immunity;
+}
+
+function applyPcProcTalent(cm, target, modifs) {
+  const proc = cm.proc || (cm.proc = {});
+  switch (target) {
+    case 'weaken': {
+      const p = addPositive(proc, 'weaken', { prob: modifs[0], time: modifs[1], mult: modifs[2] });
+      if (p) p.mult = 100 - Math.trunc(Number(p.mult) || 0);
+      return { proc: 'weaken', payload: p };
+    }
+    case 'freeze':
+      return { proc: 'freeze', payload: addPositive(proc, 'freeze', { prob: modifs[0], time: modifs[1] }) };
+    case 'slow':
+      return { proc: 'slow', payload: addPositive(proc, 'slow', { prob: modifs[0], time: modifs[1] }) };
+    case 'knockbackProc': {
+      const p = addPositive(proc, 'knockback', { prob: modifs[0] });
+      if (p) {
+        p.dis = Math.trunc(Number(p.dis) || 0) || 165;
+        p.time = Math.trunc(Number(p.time) || 0) || 11;
+      }
+      return { proc: 'knockback', payload: p };
+    }
+    case 'warp':
+      return { proc: 'warp', payload: addPositive(proc, 'warp', { prob: modifs[0], time: modifs[1], dis0: modifs[2], dis1: modifs[3] }) };
+    case 'strengthen': {
+      const p = addPositive(proc, 'strengthen', { health: modifs[0], mult: modifs[1] });
+      if (p && modifs[0] !== 0) p.health = 100 - Math.trunc(Number(p.health) || 0);
+      return { proc: 'strengthen', payload: p };
+    }
+    case 'lethal':
+      return { proc: 'lethal', payload: addPositive(proc, 'lethal', { prob: modifs[0] }) };
+    case 'baseDestroyer': {
+      const p = ensureProcField(proc, 'baseDestroyer');
+      p.mult = 300;
+      return { proc: 'baseDestroyer', payload: p };
+    }
+    case 'critical': {
+      const p = addPositive(proc, 'critical', { prob: modifs[0] });
+      if (p) p.mult = Math.trunc(Number(p.mult) || 0) || 200;
+      return { proc: 'critical', payload: p };
+    }
+    case 'barrierBreaker':
+      return { proc: 'barrierBreaker', payload: addPositive(proc, 'barrierBreaker', { prob: modifs[0] }) };
+    case 'bounty': {
+      const p = ensureProcField(proc, 'bounty');
+      p.mult = 100;
+      return { proc: 'bounty', payload: p };
+    }
+    case 'wave':
+      return { proc: 'wave', payload: addPositive(proc, 'wave', { prob: modifs[0], level: modifs[1] }) };
+    case 'strongAttack':
+      return { proc: 'strongAttack', payload: addPositive(proc, 'strongAttack', { prob: modifs[0], mult: modifs[1] }) };
+    case 'attackNullify': {
+      const p = addPositive(proc, 'attackNullify', { prob: modifs[0], time: modifs[1] });
+      proc.IMUATK = { ...(proc.IMUATK || {}), prob: p?.prob || 0, time: p?.time || 0 };
+      return { proc: 'attackNullify', payload: p };
+    }
+    case 'volcano': {
+      proc.volcano = surgeFromTalent({ prob: modifs[0], level: modifs[1], start: modifs[2], width: modifs[3] });
+      return { proc: 'volcano', payload: proc.volcano };
+    }
+    case 'shieldBreaker':
+      return { proc: 'shieldBreaker', payload: addPositive(proc, 'shieldBreaker', { prob: modifs[0] }) };
+    case 'curse':
+      return { proc: 'curse', payload: addPositive(proc, 'curse', { prob: modifs[0], time: modifs[1] }) };
+    case 'miniWave':
+      return { proc: 'miniWave', payload: addPositive(proc, 'miniWave', { prob: modifs[0], level: modifs[1], mult: modifs[2] }) };
+    case 'beastHunter': {
+      const p = ensureProcField(proc, 'beastHunter');
+      p.active = 1;
+      p.prob = Math.trunc(Number(modifs[0]) || 0);
+      p.time = Math.trunc(Number(modifs[1]) || 0);
+      proc.bsthunt = { ...p };
+      proc.BSTHUNT = { ...p };
+      return { proc: 'beastHunter', payload: p };
+    }
+    case 'miniVolcano': {
+      proc.miniVolcano = surgeFromTalent({ prob: modifs[0], level: modifs[1], start: modifs[2], width: modifs[3], mult: 20 });
+      return { proc: 'miniVolcano', payload: proc.miniVolcano };
+    }
+    case 'blast': {
+      const start = Math.trunc(Number(modifs[1]) || 0);
+      const width = Math.trunc(Number(modifs[2]) || 0);
+      proc.blast = { ...(proc.blast || {}), prob: Math.trunc(Number(modifs[0]) || 0), dis0: start / 4, dis1: (start + width) / 4 };
+      return { proc: 'blast', payload: proc.blast };
+    }
+    default:
+      return null;
+  }
+}
+
 function applyTalentSideEffects(stats, info, talents) {
   const cm = cloneCombatModel(stats);
   const bcuTalentEffects = [];
@@ -266,6 +381,7 @@ function applyTalentSideEffects(stats, info, talents) {
     const target = row[1];
     if (level === 0) continue;
     const value = talentModValue(entry, level, 0);
+    const modifs = [0, 1, 2, 3, 4].map((j) => talentModValue(entry, level, j));
     if (category === PC_CATEGORY.PC_AB) {
       cm.ability = cm.ability || { abi: 0, flags: {}, sources: [] };
       cm.ability.abi = (Number(cm.ability.abi) || 0) | Number(target);
@@ -295,6 +411,9 @@ function applyTalentSideEffects(stats, info, talents) {
       proc.block = mult;
       proc.full = mult >= 100;
       bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_P_RESIST', field, mult });
+    } else if (category === PC_CATEGORY.PC_P) {
+      const applied = applyPcProcTalent(cm, String(target), modifs);
+      if (applied) bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_P', target: String(target), modifs, proc: applied.proc, payload: applied.payload });
     } else if (category === PC_CATEGORY.PC_TRAIT) {
       const trait = String(target);
       cm.traits = cm.traits || { list: [], flags: {} };
@@ -325,6 +444,8 @@ function applyTalentSideEffects(stats, info, talents) {
     traitFlags: cm.traits?.flags || out.traitFlags,
     bcuTalentEffects
   };
+  cm.immunity = rebuildTalentImmunity(cm.proc);
+  cm.resistance = Object.fromEntries(Object.entries(cm.immunity).filter(([, value]) => value.partial));
   return { stats: out, bcuTalentEffects };
 }
 

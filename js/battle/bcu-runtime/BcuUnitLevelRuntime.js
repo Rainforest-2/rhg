@@ -31,6 +31,31 @@ export function normalizeBcuUnitLevelCurve(lvs) {
   return Array.from({ length: 20 }, (_, i) => truncInt(src[i], DEFAULT_LEVEL_CURVE[i] || 0));
 }
 
+function metadataScore(metadata) {
+  if (!metadata || typeof metadata !== 'object') return -1;
+  let score = 0;
+  const maxLevel = truncInt(metadata.maxLevel ?? metadata.max, 0);
+  const maxPlusLevel = truncInt(metadata.maxPlusLevel ?? metadata.maxp, 0);
+  if (maxPlusLevel > 0) score += 100000 + maxPlusLevel;
+  if (maxLevel > 0) score += 1000 + maxLevel;
+  if (Array.isArray(metadata.levelCurve?.lvs) || Array.isArray(metadata.lvs)) score += 100;
+  if (Number.isFinite(Number(metadata.rarity))) score += 10;
+  return score;
+}
+
+export function selectBcuUnitLevelMetadata(...candidates) {
+  let best = null;
+  let bestScore = -1;
+  for (const candidate of candidates.flat()) {
+    const score = metadataScore(candidate);
+    if (score > bestScore) {
+      best = candidate || null;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
 export function getBcuUnitLevelMultiplier(level, lvs) {
   const curve = normalizeBcuUnitLevelCurve(lvs);
   let dec = Math.max(0, truncInt(level, 1));

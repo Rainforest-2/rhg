@@ -1,6 +1,6 @@
 import { BattleScene } from './BattleScene.js';
 import { FormationStore, DOG_DEFAULT_MAGNIFICATION_PERCENT } from './FormationStore.js';
-import { BCU_DEFAULT_PREF_LEVEL, resolveBcuUnitLevelConfig } from './bcu-runtime/BcuUnitLevelRuntime.js';
+import { BCU_DEFAULT_PREF_LEVEL, resolveBcuUnitLevelConfig, selectBcuUnitLevelMetadata } from './bcu-runtime/BcuUnitLevelRuntime.js';
 import { computeFrontRowForms, resolveComboModifiersForFrontRow } from './bcu-runtime/BcuComboStatModifier.js';
 import { parseOrb } from './bcu-runtime/BcuOrbModifier.js';
 import { getTalentInfoForUnit } from './bcu-runtime/BcuTalentInfoData.js';
@@ -39,14 +39,19 @@ function firstOptionHit(map = {}, unitDef = {}) {
 }
 
 function levelMetadataFor(scene, unitDef = {}) {
-  if (unitDef?.bcuUnitLevelMeta) return unitDef.bcuUnitLevelMeta;
   const db = scene?.bcuDb || globalThis.__BCU_DB__ || null;
   const form = unitDef.form || (Number.isFinite(unitDef.formRow) ? unitDef.formRow : 'f');
   try {
     const record = db?.units?.getForm?.(unitDef.statsId, form);
-    return record?.levelMeta || record?.stats?.bcuUnitLevelMeta || record?.stats?.source?.unitLevelMeta || db?.units?.get?.(unitDef.statsId)?.levelMeta || null;
+    return selectBcuUnitLevelMetadata(
+      record?.levelMeta,
+      record?.stats?.bcuUnitLevelMeta,
+      record?.stats?.source?.unitLevelMeta,
+      db?.units?.get?.(unitDef.statsId)?.levelMeta,
+      unitDef?.bcuUnitLevelMeta
+    );
   } catch {
-    return null;
+    return unitDef?.bcuUnitLevelMeta || null;
   }
 }
 

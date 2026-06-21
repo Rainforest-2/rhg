@@ -1,0 +1,145 @@
+/* mobile-landscape-fit.css
+   ------------------------------------------------------------------------
+   Short, wide phone-landscape (the real device the formation/map/overlay
+   screenshots came from: ~860x312 CSS px once Chrome's URL bar is shown).
+
+   Two concrete bugs this file fixes, both reproduced headless at 860x312:
+
+   1. Map picker: nyanko-stage-selector-pro.css `@media (max-width:900px)` turns
+      the difficulty toolbar (検索 / 難易度 / 検索 / 条件リセット / 表示中) into a
+      multi-row grid. It is NOT orientation-guarded, so it also fires on wide
+      landscape phones, stacking the toolbar tall enough to push the whole map
+      list below the fold. Here we re-flow the toolbar into one compact row and
+      shrink the dialog chrome + map cards so several maps stay visible.
+
+   2. The tuning / 本能 overlay is comfortable on tall screens but cramped at
+      ~300px tall. We trim its padding + portrait so the body keeps real estate.
+
+   Everything is guarded by (orientation:landscape) and (max-height:560px) so
+   iPad, desktop and portrait phones are untouched. Loaded after the stage
+   selector sheets (and before nyanko-premium-polish.css) so its equal-specificity
+   !important rules win the cascade. */
+
+@media (orientation: landscape) and (max-height: 560px) {
+  /* ---- shared stage dialog chrome (category + map + stage views) ---- */
+  html body.nyanko-ui-polish .formation-stage-dialog {
+    height: calc(100dvh - 10px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    min-height: 0 !important;
+    gap: 6px !important;
+    padding: 6px 9px 8px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-dialog::before {
+    inset: 48px 8px 8px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-dialog header {
+    min-height: 36px !important;
+    padding: 0 2px 5px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-dialog header strong {
+    font-size: 1.02rem !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-dialog header span {
+    display: none !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-dialog header button {
+    min-height: 32px !important;
+    min-width: 70px !important;
+    padding: 5px 10px !important;
+  }
+
+  /* ---- map view: compact back bar ---- */
+  html body.nyanko-ui-polish .formation-stage-backbar,
+  html body.nyanko-ui-polish .formation-stage-breadcrumb {
+    margin: 0 0 1px !important;
+    padding: 0 0 2px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-crumb,
+  html body.nyanko-ui-polish .formation-stage-backbar button {
+    min-height: 30px !important;
+    padding: 4px 11px !important;
+  }
+
+  /* ---- map view: one compact toolbar row (overrides the max-width:900 stack) ---- */
+  html body.nyanko-ui-polish .formation-stage-difficulty-tools {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    grid-template-columns: none !important;
+    gap: 6px !important;
+    margin: 0 0 1px !important;
+    padding: 5px 8px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-search-field {
+    flex: 1 1 130px !important;
+    min-width: 0 !important;
+    min-height: 32px !important;
+    padding: 3px 8px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-difficulty-range {
+    flex: 0 1 auto !important;
+    flex-wrap: nowrap !important;
+    min-height: 32px !important;
+    padding: 3px 8px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-search-field input,
+  html body.nyanko-ui-polish .formation-stage-difficulty-range input {
+    height: 24px !important;
+  }
+  /* Keep the apply/reset buttons sized to their label (the map-fix brush font
+     otherwise balloons them) and never let them stretch to a full row. */
+  html body.nyanko-ui-polish .formation-stage-filter-apply,
+  html body.nyanko-ui-polish .formation-stage-filter-reset {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 64px !important;
+    max-width: 132px !important;
+    min-height: 32px !important;
+    padding: 5px 12px !important;
+    font-size: .76rem !important;
+    grid-column: auto !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-difficulty-summary {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+    grid-column: auto !important;
+    text-align: right !important;
+  }
+
+  /* ---- map view: short cards so multiple stay on screen ---- */
+  html body.nyanko-ui-polish .formation-stage-list:has(.formation-stage-card-map),
+  html body.nyanko-ui-polish .formation-stage-list:has([data-stage-map]) {
+    grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)) !important;
+    align-content: start !important;
+    gap: 7px !important;
+    padding: 8px 6px 6px !important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card[data-stage-map],
+  html body.nyanko-ui-polish .formation-stage-card-map {
+    min-height: 54px !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+  }
+
+  /* ---- 本能 / tuning overlay: trim chrome so the scrollable body keeps room ---- */
+  html body.nyanko-ui-polish .formation-tuning-panel {
+    max-height: calc(100dvh - 10px) !important;
+    grid-template-columns: minmax(150px, 200px) minmax(0, 1fr) !important;
+  }
+  html body.nyanko-ui-polish .formation-tuning-header {
+    padding: 7px 11px 6px !important;
+  }
+  html body.nyanko-ui-polish .formation-tuning-hero {
+    padding: 9px !important;
+    gap: 7px !important;
+  }
+  html body.nyanko-ui-polish .formation-tuning-portrait {
+    width: min(116px, 20vw) !important;
+  }
+  html body.nyanko-ui-polish .formation-tuning-body {
+    padding: 9px !important;
+    gap: 8px !important;
+  }
+  html body.nyanko-ui-polish .formation-tuning-footer {
+    padding: 8px 11px !important;
+  }
+}

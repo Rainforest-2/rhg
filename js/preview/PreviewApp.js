@@ -96,6 +96,14 @@ export class PreviewApp {
         if (this.sceneTransitioning || !this.sceneReady || !this.battleScene) {
           this.renderPlaceholder();
         } else {
+          // Keep the battle camera's logical viewport matched to the renderer's
+          // aspect-derived logicalW so projection, scroll clamp and touch input all
+          // agree with the uniform fit-to-height transform (prevents stretch + keeps
+          // taps landing on the right world X across phone/tablet aspect ratios).
+          const cam = this.battleScene.camera;
+          if (cam && Math.abs((cam.logicalW || 0) - this.renderer.logicalW) > 0.5) {
+            cam.setViewport(this.renderer.logicalW, this.renderer.logicalH);
+          }
           const r=this.simulationClock.step(t,this.battleSpeedMultiplier,(stepDt)=>this.battleScene.tick(stepDt));
           if(r.dropped){this.battleScene?.pushEvent?.({type:'simulationDtDropped',rawDt:r.rawDt,clampedDt:r.clampedDt});}
           this.productionBar?.update(this.battleScene);

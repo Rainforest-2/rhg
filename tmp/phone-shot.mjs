@@ -1,0 +1,18 @@
+import { chromium } from 'playwright';
+const SHELL='/home/codespace/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell';
+const BASE='http://127.0.0.1:4173/';
+const vp = process.argv[2] || '760x340';
+const [w,h]=vp.split('x').map(Number);
+const dpr = Number(process.argv[3]||3);
+const tag = process.argv[4]||'formation';
+const browser = await chromium.launch({ executablePath: SHELL });
+const page = await browser.newPage({ viewport:{width:w,height:h}, deviceScaleFactor:dpr, isMobile:true, hasTouch:true });
+const errors=[];
+page.on('pageerror',e=>errors.push('PAGEERR '+e.message));
+page.on('console',m=>{if(m.type()==='error')errors.push('CONSOLE '+m.text());});
+await page.goto(BASE,{waitUntil:'domcontentloaded'});
+await page.waitForFunction(()=>!!globalThis.__APP__||!!document.querySelector('.apply-battle-button'),null,{timeout:120000});
+await page.waitForTimeout(2500);
+await page.screenshot({path:`tmp/ui-explore/${tag}-${vp}.png`});
+console.log('shot saved', `${tag}-${vp}.png`, 'errors:', errors.slice(0,5));
+await browser.close();

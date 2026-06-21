@@ -16,9 +16,18 @@
   --prod-card-back-offset-y:8px;
 }
 *{box-sizing:border-box}
+/* Kill Android Chrome "font boosting" / text inflation. Without an explicit
+   text-size-adjust the mobile browser enlarges font-size only (not boxes), which
+   overflowed cards, doubled the stroked labels, and wrapped the tab rows. Setting
+   it to 100% pins text to the author sizes so phones match the iPad layout. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{width:100%;height:100%;overflow:hidden}
-body{margin:0;background:#05070d;color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:manipulation}
-.app-shell,.app-shell.game-shell{width:100vw;height:100dvh;min-height:100vh;padding:0;display:block;overflow:hidden}.main-area,.game-stage{position:relative;width:100%;height:100%;display:block;min-height:0}.canvas-panel{position:relative;width:100%;height:100%;min-height:0;padding:0;border:0;border-radius:0;overflow:hidden;background:#000}#preview-canvas{width:100%;height:100%;min-height:0;display:block;background:#0b111a}
+body{margin:0;background:#05070d;color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* height:100dvh keeps the shell inside the visually-available area when the
+   mobile URL bar is shown; the 100vh line is only a fallback for engines without
+   dvh. The old min-height:100vh forced the shell taller than the visible area and
+   pushed the cannon/cards below the fold. */
+.app-shell,.app-shell.game-shell{width:100vw;height:100vh;height:100dvh;min-height:0;padding:0;display:block;overflow:hidden}.main-area,.game-stage{position:relative;width:100%;height:100%;display:block;min-height:0}.canvas-panel{position:relative;width:100%;height:100%;min-height:0;padding:0;border:0;border-radius:0;overflow:hidden;background:#000}#preview-canvas{width:100%;height:100%;min-height:0;display:block;background:#0b111a}
 .control-panel,.log-panel{display:none}body.debug-ui-enabled .control-panel,body.debug-ui-enabled .log-panel{display:block}.control-panel.is-hidden,.log-panel.is-hidden,.dev-panel[hidden],.dev-log[hidden]{display:none!important}
 button,input[type=range],select,input[type=text],input[type=search],.formation-search-input{width:100%;background:#0f1520;border:1px solid #38465c;color:var(--text);border-radius:10px;padding:9px 10px}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:hover{border-color:#60a5fa}button:disabled{opacity:.65;cursor:progress}
 

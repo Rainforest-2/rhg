@@ -359,7 +359,16 @@ export class PlayerProductionBar {
         e.stopPropagation();
         return;
       }
-      const t = e.target.closest('.prod-card.is-front[data-col]');
+      // onPointerDown takes pointer capture (so the lineup slide keeps receiving
+      // pointermove). A side effect is that pointerup is retargeted to the
+      // capturing .cards container, so e.target is no longer the tapped card and
+      // closest() returns null -> the unit never spawns (the "tapping cards does
+      // nothing" bug on touch). Fall back to hit-testing the pointer position.
+      let t = e.target.closest?.('.prod-card.is-front[data-col]');
+      if (!t) {
+        const hit = document.elementFromPoint(e.clientX, e.clientY);
+        t = hit?.closest?.('.prod-card.is-front[data-col]') || null;
+      }
       if (!t) return;
       const col = Number(t.dataset.col);
       const model = getCardStackRenderModel(this.scene, col);

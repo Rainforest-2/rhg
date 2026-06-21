@@ -4,6 +4,11 @@ export class PreviewRenderer {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    // logicalH is the fixed vertical design height (BCU fits the battlefield to the
+    // screen height). logicalW is recomputed every resize from the live canvas
+    // aspect so the world->pixel transform stays UNIFORM (no horizontal stretch on
+    // wide/short phones) and the canvas is always fully filled (no letterbox).
+    this.logicalBaseW = 1280;
     this.logicalW = 1280;
     this.logicalH = 720;
     this.lastCssW = 0;
@@ -69,7 +74,14 @@ export class PreviewRenderer {
       this.canvas.height = nextH;
     }
 
-    this.ctx.setTransform(this.canvas.width / this.logicalW, 0, 0, this.canvas.height / this.logicalH, 0, 0);
+    // Uniform fit-to-height: one scale for both axes so sprites/backgrounds keep
+    // their real proportions. logicalW expands with the canvas aspect so wide phones
+    // simply reveal more battlefield (BCU behaviour) instead of stretching, and the
+    // full canvas width is always covered. The battle camera viewport is synced to
+    // this logicalW each frame in PreviewApp so projection + input stay aligned.
+    const scale = this.canvas.height / this.logicalH;
+    this.logicalW = scale > 0 ? this.canvas.width / scale : this.logicalBaseW;
+    this.ctx.setTransform(scale, 0, 0, scale, 0, 0);
     this.lastCssW = Math.floor(rect.width);
     this.lastCssH = Math.floor(rect.height);
     this.lastDpr = dpr;

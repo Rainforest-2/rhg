@@ -30,6 +30,10 @@
        the existing game UI. -->
   <link rel="stylesheet" href="./public/assets/vendor/bootstrap-icons/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="./css/game-settings.css" />
+  <!-- Short, wide phone-landscape fixes (map toolbar reflow + overlay trims).
+       Loaded after the stage-selector sheets so its !important rules win, and
+       before premium-polish so premium stays the last stylesheet. -->
+  <link rel="stylesheet" href="./css/mobile-landscape-fit.css" />
   <!-- Premium polish stays the last local stylesheet so its equal-specificity
        motion rules win (see scripts/check-formation-premium-motion.mjs). -->
   <link rel="stylesheet" href="./css/nyanko-premium-polish.css" />

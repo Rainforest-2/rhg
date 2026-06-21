@@ -9,6 +9,12 @@ import { TEMPLATE_LOAD_LEVEL } from './BattleActorFactory.js';
 const PATCH_FLAG = Symbol.for('wanko-battle.custom-stage-battle-patch.v2-scene-rng');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
 
+// Global (cross-CSV) caps for multi-CSV custom stage battles. These bound the COMBINED
+// live battle across every custom stage CSV; they do NOT override any single CSV's own
+// effectiveMaxEnemyCount / castle-HP / kill-count / group / respawn logic, which each
+// BcuStageSpawnRuntime continues to enforce internally per tick.
+const CUSTOM_STAGE_GLOBAL_ACTOR_CAP = 75;
+
 function uniqueList(values) {
   return [...new Set((values || []).filter(Boolean).map(String))];
 }
@@ -213,26 +219,110 @@ function spawnCustomStageUnit(scene, stageState, event) {
   return true;
 }
 
+// Combined live custom-stage Actor count across EVERY CSV and BOTH sides
+// (cat-enemy + dog-player). Used only for the global cap; each CSV's own
+// effectiveMaxEnemyCount is still gauged by customAliveCount (per-stage).
+function customStageGlobalAliveCount(scene) {
+  return (scene.actors || []).filter((actor) =>
+    actor?.isAlive?.() && actor.customStageBattle === true
+  ).length;
+}
+
+// Two-phase per-logic-tick spawn driver for multi-CSV custom stage battles:
+//   1. tick every CSV runtime so each advances its own timers/state and (at most one
+//      per CSV) emits/holds a pendingSpawnEvent. This runs unconditionally every tick,
+//      even while the global cap blocks committing, so no CSV's internal clock stalls.
+//   2. gather all held pendingSpawnEvent candidates across CSVs.
+//   3. if combined live Actors >= global cap, commit nothing (candidates stay held).
+//   4. otherwise pick exactly ONE candidate: earliest spawnFrame first, ties broken by a
+//      round-robin cursor over the fixed stage order so the head CSV cannot starve others.
+//   5. spawn only that one; commit on success, reject only on a genuine spawn failure.
+// Candidates not chosen this tick are left untouched (pendingSpawnEvent preserved) so their
+// CSV-scheduled times, respawn timers, spawn counts and rows are never rewound.
 function tickCustomStageBattle(scene) {
   const states = scene.customStageBattle?.stageStates || [];
   if (!states.length) return;
   const random = sceneRandom(scene);
+
+  // Phase 1: advance every CSV runtime this logic tick (never gated by the global cap).
   for (const stageState of states) {
-    const side = stageState.side;
-    const req = stageState.spawnRuntime.tick(scene.logicFrame, {
+    stageState.spawnRuntime.tick(scene.logicFrame, {
       logicFrame: scene.logicFrame,
       aliveEnemyCount: customAliveCount(scene, stageState),
       maxEnemyCount: stageState.runtime?.effectiveMaxEnemyCount || scene.getEffectiveEnemyMaxCount?.() || 20,
-      enemyBaseHpPercent: baseHpPercent(scene, side),
+      enemyBaseHpPercent: baseHpPercent(scene, stageState.side),
       random,
       killCounterByRowIndex: stageState.killCounterByRowIndex,
       isGroupAllowed: (args) => isGroupAllowed(scene, stageState, args)
     });
-    for (const event of req) {
-      const ok = spawnCustomStageUnit(scene, stageState, event);
-      if (ok) stageState.spawnRuntime.commitSpawn(event, { random });
-      else stageState.spawnRuntime.rejectSpawn(event, 'custom-stage-spawn-failed', { retryDelayFrame: 1, currentFrame: scene.logicFrame });
+  }
+
+  // Phase 2: collect held candidates from each runtime's row states.
+  const candidates = [];
+  for (let stageIndex = 0; stageIndex < states.length; stageIndex++) {
+    const stageState = states[stageIndex];
+    for (const rowState of stageState.spawnRuntime.rows || []) {
+      const event = rowState?.pendingSpawnEvent;
+      if (!event) continue;
+      const spawnFrame = Number.isFinite(event.spawnFrame) ? event.spawnFrame : scene.logicFrame;
+      candidates.push({ stageState, stageIndex, event, spawnFrame });
     }
+  }
+
+  const n = states.length;
+  let roundRobinCursor = Number.isFinite(scene.customStageBattle.roundRobinCursor)
+    ? scene.customStageBattle.roundRobinCursor
+    : 0;
+  const globalAliveCount = customStageGlobalAliveCount(scene);
+  const blockedByGlobalCap = globalAliveCount >= CUSTOM_STAGE_GLOBAL_ACTOR_CAP;
+
+  let selected = null;
+  // Phase 3 + 4: only choose a candidate when below the global cap.
+  if (!blockedByGlobalCap && candidates.length) {
+    let minSpawnFrame = Infinity;
+    for (const c of candidates) if (c.spawnFrame < minSpawnFrame) minSpawnFrame = c.spawnFrame;
+    const tie = candidates.filter((c) => c.spawnFrame === minSpawnFrame);
+    // Round-robin: among the earliest-ready candidates, prefer the stage at or after the
+    // cursor (cyclically) so the same fixed-order head does not keep winning every tie.
+    tie.sort((a, b) =>
+      ((a.stageIndex - roundRobinCursor + n) % n) - ((b.stageIndex - roundRobinCursor + n) % n));
+    selected = tie[0];
+  }
+
+  // Phase 5: at most one spawn this tick; commit on success, reject only on real failure.
+  let selectedSpawned = false;
+  if (selected) {
+    selectedSpawned = spawnCustomStageUnit(scene, selected.stageState, selected.event);
+    if (selectedSpawned) {
+      selected.stageState.spawnRuntime.commitSpawn(selected.event, { random });
+      // Advance cursor so the next tie favors the following stage in fixed order.
+      roundRobinCursor = (selected.stageIndex + 1) % n;
+      scene.customStageBattle.roundRobinCursor = roundRobinCursor;
+    } else {
+      // Genuine spawn failure (e.g. template not yet loaded). This is the ONLY reject path;
+      // global-cap / not-selected / round-robin waiting candidates are never rejected.
+      selected.stageState.spawnRuntime.rejectSpawn(selected.event, 'custom-stage-spawn-failed', {
+        retryDelayFrame: 1,
+        currentFrame: scene.logicFrame
+      });
+    }
+  }
+
+  // Lightweight debug snapshot (no per-tick logging): inspect via
+  // scene.customStageBattle.spawnTickDebug or globalThis.__CUSTOM_STAGE_BATTLE_RUNTIME_DEBUG__.
+  const spawnTickDebug = {
+    globalActorCap: CUSTOM_STAGE_GLOBAL_ACTOR_CAP,
+    globalAliveCount,
+    pendingCandidateCount: candidates.length,
+    selectedStageKey: selected && selectedSpawned ? selected.stageState.stageKey : null,
+    selectedRowIndex: selected && selectedSpawned ? (selected.event.rowIndex ?? null) : null,
+    selectedSpawnFrame: selected && selectedSpawned ? selected.spawnFrame : null,
+    roundRobinCursor,
+    blockedByGlobalCap
+  };
+  scene.customStageBattle.spawnTickDebug = spawnTickDebug;
+  if (globalThis.__CUSTOM_STAGE_BATTLE_RUNTIME_DEBUG__) {
+    globalThis.__CUSTOM_STAGE_BATTLE_RUNTIME_DEBUG__.spawnTick = spawnTickDebug;
   }
 }
 
@@ -328,6 +418,8 @@ async function initializeCustomStageBattle(scene) {
     enabled: true,
     config,
     stageStates: states,
+    roundRobinCursor: 0,
+    spawnTickDebug: null,
     initDebug: {
       source: 'BattleSceneCustomStageBattlePatch.initializeCustomStageBattle',
       config,

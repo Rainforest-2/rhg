@@ -283,7 +283,7 @@ body{
   .prod-ui .cards{animation:battleCardsEnter 140ms cubic-bezier(.16,1,.28,1) both}
   .formation-character-card,.formation-page-tab,.formation-catalog-tabs button,.formation-stage-card,.secondary-action,.apply-battle-button,.stage-select-button,.prod-card.is-front{transition:transform 100ms cubic-bezier(.16,1,.28,1),filter 100ms ease,box-shadow 100ms ease,opacity 100ms ease}
   .formation-character-card:active,.formation-page-tab:active,.formation-catalog-tabs button:active,.formation-stage-card:active,.secondary-action:active,.apply-battle-button:active,.stage-select-button:active,.prod-card.is-front:active{transform:translateY(3px) scale(.965);filter:brightness(.9) saturate(1.12)}
-  .formation-stage-card.is-active,.formation-character-card.is-selected,.formation-slot.is-active{animation:gameUiPulse 160ms cubic-bezier(.16,1,.28,1) both}
+  .formation-stage-card.is-active,.formation-character-card.is-selected{animation:gameUiPulse 160ms cubic-bezier(.16,1,.28,1) both}
 }
 @keyframes gameUiEnter{0%{opacity:0;transform:translateY(8px) scale(.99)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes battleCardsEnter{0%{opacity:0;transform:translateX(-50%) translateY(8px) scale(.99)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}

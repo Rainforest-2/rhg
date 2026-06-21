@@ -239,6 +239,7 @@ export class AudioEngine {
       el.loop = loop;
       el.dataset.trackId = String(norm);
       el.volume = this._userPaused ? 0 : this._bgmVolume();
+      el.currentTime = 0;
       this._bgmId = norm;
       if (!this._userPaused) await el.play();
       return true;

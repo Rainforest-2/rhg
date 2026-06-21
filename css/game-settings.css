@@ -29,6 +29,9 @@
 .formation-settings-row .label span{font-size:.76rem;color:#7a5326;font-weight:800;line-height:1.25}
 .formation-setting-control{display:flex;align-items:center;gap:10px}
 .formation-setting-state{min-width:42px;text-align:center;padding:5px 8px;border:2px solid var(--nyanko-black,#050505);border-radius:999px;background:#111;color:#ffe27a;font-size:.74rem;font-weight:1000;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.formation-settings-row-slider{grid-template-columns:minmax(0,1fr) minmax(180px,240px)}
+.formation-volume-control{min-width:180px;display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:10px}
+.formation-volume-control input[type='range']{width:100%;accent-color:var(--nyanko-gold,#ffd531);cursor:pointer}
 
 .formation-setting-toggle{position:relative;width:56px;height:31px;flex:none;padding:0;border:3px solid var(--nyanko-black,#050505);border-radius:999px;background:#caa86b;cursor:pointer;transition:background .15s ease}
 .formation-setting-toggle[aria-checked='true']{background:#2fb24a}
@@ -55,6 +58,7 @@
 
 @media (max-width:520px){
   .formation-settings-dialog{padding:13px;border-radius:16px}
-  .formation-settings-row{grid-template-columns:1fr;align-items:stretch}
+  .formation-settings-row,.formation-settings-row-slider{grid-template-columns:1fr;align-items:stretch}
   .formation-setting-control{justify-content:space-between}
+  .formation-volume-control{min-width:0;grid-template-columns:minmax(0,1fr) 54px}
 }

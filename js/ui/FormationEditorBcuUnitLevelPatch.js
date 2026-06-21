@@ -29,7 +29,19 @@ const ORB_TYPE_OPTIONS = Object.freeze([
   { code: 5, type: ORB_ID.RESISTANT, label: '打たれ強い' }
 ]);
 const ORB_TYPE_CODE_BY_ID = Object.freeze(Object.fromEntries(ORB_TYPE_OPTIONS.filter((o) => o.type != null).map((o) => [o.type, o.code])));
-const ORB_TRAIT_LABELS = Object.freeze(['赤', '浮', '黒', 'メタル', '天使', 'エイリアン', 'ゾンビ', '古代種', '白', 'エヴァ', '魔女', '悪魔']);
+const ORB_TRAIT_OPTIONS = Object.freeze([
+  { traitIndex: 0, label: '赤' },
+  { traitIndex: 1, label: '浮' },
+  { traitIndex: 2, label: '黒' },
+  { traitIndex: 3, label: 'メタル' },
+  { traitIndex: 4, label: '天使' },
+  { traitIndex: 5, label: 'エイリアン' },
+  { traitIndex: 6, label: 'ゾンビ' },
+  { traitIndex: 7, label: '古代種' },
+  { traitIndex: 8, label: '白' },
+  { traitIndex: 11, label: '悪魔' }
+]);
+const ORB_TRAIT_LABELS = Object.freeze(ORB_TRAIT_OPTIONS.map((o) => o.label));
 const ORB_GRADE_LABELS = Object.freeze(['D', 'C', 'B', 'A', 'S']);
 
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
@@ -276,10 +288,12 @@ function orbTypeOption(code) {
   return ORB_TYPE_OPTIONS.find((o) => o.code === Number(code)) || ORB_TYPE_OPTIONS[0];
 }
 
-function traitIndexFromMask(mask) {
+function traitOptionIndexFromMask(mask) {
   const value = Math.trunc(Number(mask) || 0);
   for (let i = 0; i < ORB_TRAIT_NAMES.length - 1; i++) {
-    if ((value & (1 << i)) !== 0) return i;
+    if ((value & (1 << i)) === 0) continue;
+    const optionIndex = ORB_TRAIT_OPTIONS.findIndex((o) => o.traitIndex === i);
+    return optionIndex >= 0 ? optionIndex : 0;
   }
   return 0;
 }
@@ -289,7 +303,7 @@ function savedOrbToDraft(triple) {
   const typeCode = ORB_TYPE_CODE_BY_ID[Math.trunc(Number(triple[0]) || 0)] || 0;
   return {
     typeCode,
-    traitIndex: clampInt(traitIndexFromMask(triple[1]), 0, ORB_TRAIT_LABELS.length - 1),
+    traitIndex: clampInt(traitOptionIndexFromMask(triple[1]), 0, ORB_TRAIT_OPTIONS.length - 1),
     grade: clampInt(triple[2], 0, ORB_GRADE_LABELS.length - 1)
   };
 }
@@ -297,9 +311,9 @@ function savedOrbToDraft(triple) {
 function draftOrbToTriple(orb) {
   const opt = orbTypeOption(orb?.typeCode);
   if (opt.type == null) return null;
-  const traitIndex = clampInt(orb?.traitIndex, 0, ORB_TRAIT_LABELS.length - 1);
+  const traitOption = ORB_TRAIT_OPTIONS[clampInt(orb?.traitIndex, 0, ORB_TRAIT_OPTIONS.length - 1)] || ORB_TRAIT_OPTIONS[0];
   const grade = clampInt(orb?.grade, 0, ORB_GRADE_LABELS.length - 1);
-  return [opt.type, 1 << traitIndex, grade];
+  return [opt.type, 1 << traitOption.traitIndex, grade];
 }
 
 function ensureDraftOrbs(draft) {

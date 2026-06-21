@@ -2,6 +2,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from '../BattleFrameClock.js';
 import { EffectRuntime } from '../EffectRuntime.js';
 import { getTraitList } from '../BcuTraitCompatibility.js';
 import { resolveBcuCatCannonMagnification } from './BcuCannonLevelCurve.js';
+import { resolveBcuWaveInvalid, applyBcuWaveInvalidValue, spawnBcuWaveInvalidIcon } from './BcuWaveInvalidRuntime.js';
 
 export const BCU_CAT_CANNON_ID_BASIC = 0;
 export const BCU_CAT_CANNON_BASIC_RANGE = 400;
@@ -643,23 +644,47 @@ function fireBcuCannonBand(scene, state, wave, waveIndex) {
       }
     }));
   }
+  let waveInvalidFull = 0;
+  let waveInvalidPartial = 0;
   for (const hit of hits) {
     const actor = hit.actor;
-    const result = actor.takeDamage?.(damage, {
+    // BCU Entity.getDamage: a wave attack (waveType & WT_WAVE, canon != 16) is gated by the target's
+    // IMUWAVE. The basic cat cannon (id 0) wave carries canon bit 1<<0 = 1, so a wave-immune enemy
+    // nullifies (mult==100) or scales (0<mult<100) the band damage exactly like a unit wave proc.
+    // (The zombie wave cannon id 5 maps to canon bit 16 and is the only wave exempt; it never reaches
+    // this basic-only path.) See AttackCanon.java `canon = id>2 ? 1<<(id-1) : 1<<id`.
+    const invalid = resolveBcuWaveInvalid({ target: actor, targetType: 'actor', meta: { bcuWave: 'wave' } });
+    if (invalid.applies) {
+      spawnBcuWaveInvalidIcon(scene, actor, invalid, {
+        source: 'bcu-cat-cannon-basic',
+        phase: invalid.full ? 'full-invalid' : 'partial-invalid',
+        waveIndex
+      });
+    }
+    if (invalid.full) {
+      // BCU returns false from getDamage before adding the attack token, so no damage and no SNIPER
+      // assist knockback connect on a fully wave-immune target.
+      waveInvalidFull += 1;
+      continue;
+    }
+    const bandDamage = invalid.applies ? applyBcuWaveInvalidValue(damage, invalid).after : damage;
+    if (invalid.applies) waveInvalidPartial += 1;
+    const result = actor.takeDamage?.(bandDamage, {
       attacker: 'bcu-cat-cannon',
       hitIndex: waveIndex,
       attackEventKey: 'bcu-cat-cannon-basic',
       timeMs: scene?.timeMs ?? null,
+      ...(invalid.applies ? { bcuWaveInvalid: { before: damage, after: bandDamage, percent: invalid.percent, field: invalid.field } } : {}),
       damageCalculation: {
         source: 'BCU AttackCanon basic cannon direct damage',
         baseDamage: damage,
-        finalDamage: damage,
+        finalDamage: bandDamage,
         multiplier: 1,
         applied: true,
-        modifiers: { notes: ['stage/cannon-source-not-unit-proc'] }
+        modifiers: { notes: ['stage/cannon-source-not-unit-proc', ...(invalid.applies ? [`IMUWAVE-${invalid.percent}`] : [])] }
       },
       baseDamage: damage,
-      finalDamage: damage,
+      finalDamage: bandDamage,
       damageMultiplier: 1
     });
     if (result?.accepted) {
@@ -686,6 +711,8 @@ function fireBcuCannonBand(scene, state, wave, waveIndex) {
     hitCount: hits.length,
     totalHitCount: wave.totalHits,
     bandCount: wave.centers.length,
+    waveInvalidFull,
+    waveInvalidPartial,
     hits: hits.map((h) => ({ target: h.key, waveIndex, pos: h.pos }))
   };
   state.lastAttackDebug = debug;

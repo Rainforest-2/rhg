@@ -152,7 +152,8 @@ export function installFormationCustomStageBattleHpPatch() {
       }
       persistExtendedState(this);
       this.stageSelectorState = { level: 'custom-stage-battle', categoryId: null, mapKey: null };
-      this.renderStageSelector();
+      if (!this.refreshCustomStageBattleView?.({ sides: [] })) this.renderStageSelector();
+      injectHpControls(this);
       return;
     }
     const result = await originalOnClick.call(this, e);

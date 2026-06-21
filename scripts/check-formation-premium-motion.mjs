@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 // Deterministic, browser-free wiring check for the premium non-battle motion pass:
 // every transient class the JS applies must have a matching CSS rule, and the
 // CSS/patch must be registered in index.html / installUiPatches.js in the right order.
+// Slot page-switch animation intentionally stays disabled because the active
+// left slot visibly jumps when PAGE 1/2 tabs are tapped.
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -13,6 +15,8 @@ const settingsCss = read('css/game-settings.css');
 const motionPatch = read('js/ui/FormationPremiumMotionPatch.js');
 const tuningPatch = read('js/ui/FormationEditorBcuUnitLevelPatch.js');
 const formationEditor = read('js/ui/FormationEditor.js');
+const customStagePatch = read('js/ui/FormationCustomStageBattlePatch.js');
+const customStageHpPatch = read('js/ui/FormationCustomStageBattleHpPatch.js');
 const indexHtml = read('index.html');
 const installUiPatches = read('js/boot/installUiPatches.js');
 
@@ -26,12 +30,13 @@ const importOrder = [...installUiPatches.matchAll(/import\('\.\.\/ui\/([^']+)'\)
 assert.equal(importOrder.at(-1), 'FormationPremiumMotionPatch.js', 'premium motion patch must be the last ui patch import');
 
 // 3. Transient classes toggled by FormationPremiumMotionPatch exist in the premium sheet.
-for (const cls of ['is-page-enter', 'is-page-opening', 'is-page-leaving', 'is-catalog-enter', 'is-view-enter', 'is-opening', 'is-closing']) {
+for (const cls of ['is-page-opening', 'is-page-leaving', 'is-catalog-enter', 'is-view-enter', 'is-opening', 'is-closing']) {
   assert.ok(motionPatch.includes(`'${cls}'`), `motion patch toggles ${cls}`);
   assert.ok(premiumCss.includes(`.${cls}`), `premium css styles ${cls}`);
 }
-assert.ok(motionPatch.includes("dataset.pageDir"), 'page slide direction is recorded');
-assert.ok(premiumCss.includes("[data-page-dir='back']"), 'premium css styles the backward page slide');
+assert.ok(!motionPatch.includes("'is-page-enter'"), 'page tabs must not animate formation slots');
+assert.ok(!motionPatch.includes('dataset.pageDir'), 'page tabs must not record slot slide direction');
+assert.ok(!uiPolishCss.includes('.formation-slot.is-active{animation:gameUiPulse'), 'active formation slot must not pulse on re-render');
 assert.ok(motionPatch.includes('setVisibleWithPremiumPageMotion'), 'formation page visibility is animated');
 assert.ok(premiumCss.includes('@keyframes pmFormationPageIn'), 'formation page open animation exists');
 assert.ok(premiumCss.includes('@keyframes pmFormationPageOut'), 'formation page close animation exists');
@@ -81,8 +86,17 @@ assert.ok(tuningPatch.includes('.formation-tuning-presets{display:grid;grid-temp
 assert.ok(/formation-tuning-close\{[^}]*display:inline-flex;align-items:center;justify-content:center;padding:0 12px/.test(tuningPatch), 'close button overrides global button padding and centers its label');
 assert.ok(formationEditor.includes("formation-settings-group"), 'settings overlay renders grouped rows');
 assert.ok(formationEditor.includes("formation-setting-state"), 'settings overlay renders explicit switch state');
+assert.ok(formationEditor.includes("from '../audio/AudioSettings.js'"), 'formation settings imports shared audio settings');
+assert.ok(formationEditor.includes("data-audio-volume='bgm'"), 'formation settings exposes BGM volume');
+assert.ok(formationEditor.includes("data-audio-volume='se'"), 'formation settings exposes SE volume');
+assert.ok(formationEditor.includes("data-setting='audio-muted'"), 'formation settings exposes audio mute toggle');
 assert.ok(settingsCss.includes('.formation-settings-group'), 'settings css styles grouped rows');
+assert.ok(settingsCss.includes('.formation-volume-control'), 'settings css styles volume sliders');
 assert.ok(settingsCss.includes('@media (max-width:520px)'), 'settings css has a compact mobile layout');
+assert.ok(customStagePatch.includes('function refreshCustomStageBattleView'), 'custom-stage settings have a targeted refresh path');
+assert.ok(customStagePatch.includes("proto.refreshCustomStageBattleView"), 'custom-stage targeted refresh is exposed to sibling patches');
+assert.ok(customStagePatch.includes("if (!refreshCustomStageBattleView(this, { sides: [] })) this.renderStageSelector();"), 'custom-stage toggle/base buttons avoid full redraw when possible');
+assert.ok(customStageHpPatch.includes("if (!this.refreshCustomStageBattleView?.({ sides: [] })) this.renderStageSelector();"), 'custom-stage HP buttons avoid full redraw when possible');
 const phonePatch = read('js/ui/FormationPhoneLandscapeLayoutPatch.js');
 assert.ok(/formation-action-rail\{[^}]*grid-template-columns:1fr!important;grid-template-rows:/.test(phonePatch), 'phone landscape rail pins a single column');
 assert.ok((indexHtml.match(/rel="preload" as="font"/g) || []).length >= 2, 'tuning brush fonts are preloaded');

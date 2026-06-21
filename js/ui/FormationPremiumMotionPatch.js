@@ -2,8 +2,8 @@ import { FormationEditor } from './FormationEditor.js';
 
 /*
  * Premium motion pass for the non-battle shell.
- * Adds direction-aware page-switch slides, staggered catalog entrances, and
- * spring open/close + hierarchy transitions for the stage selector overlay.
+ * Adds staggered catalog entrances plus spring open/close + hierarchy
+ * transitions for the stage selector overlay.
  * All effects are transient CSS classes consumed by css/nyanko-premium-polish.css;
  * no DOM structure or data flow changes. Honors prefers-reduced-motion.
  * Must be installed after every other FormationEditor patch so its wrappers run outermost.
@@ -72,20 +72,6 @@ export function installFormationPremiumMotionPatch() {
       originalSetVisible.call(this, false, ...args);
     }, PAGE_CLOSE_MS);
     return undefined;
-  };
-
-  const originalSwitchPage = proto.switchPage;
-  proto.switchPage = function switchPageWithPremiumMotion(page, reason) {
-    const previousPage = this.activePage;
-    const result = originalSwitchPage.call(this, page, reason);
-    if (this.activePage !== previousPage) {
-      const slots = this.root?.querySelector?.('.formation-slots');
-      if (slots) {
-        slots.dataset.pageDir = this.activePage > previousPage ? 'fwd' : 'back';
-        transientClass(slots, 'is-page-enter', 460);
-      }
-    }
-    return result;
   };
 
   const originalOnClick = proto.onClick;

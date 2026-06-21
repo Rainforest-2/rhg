@@ -107,7 +107,16 @@ const commands = [
   ['node', ['scripts/check-actor-render-bounds-guard.mjs']],
   ['node', ['scripts/check-battle-runtime-lightweight-guards.mjs']],
   ['node', ['scripts/check-battle-pause-control.mjs']],
-  ['node', ['scripts/check-battle-music-and-zombie-killer.mjs']]
+  ['node', ['scripts/check-battle-music-and-zombie-killer.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs']],
+  ['node', ['scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-boss-knockback-castle-limit-parity.mjs']],
+  ['node', ['scripts/check-bcu-boss-knockback-castle-limit-parity.mjs']],
+  ['node', ['--check', 'scripts/build-bcu-stage-crown-index.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-stage-crown-parity.mjs']],
+  ['node', ['scripts/check-bcu-stage-crown-parity.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-special-castle-resolution-parity.mjs']],
+  ['node', ['scripts/check-bcu-special-castle-resolution-parity.mjs']]
 ];
 
 const results = [];

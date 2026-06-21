@@ -42,6 +42,12 @@ const MAIN_STORY_MAPS = {
 };
 
 const STAGE_NORMAL_RE = /^stageNormal(-?\d+)_(-?\d+)(_Z)?$/i;
+// BCU main-story EoC (日本編) per-stage files: org/stage/CH/stage/stageNN.csv. These are type != 0
+// (no castle row), so Stage.java resolves castle = sm.cast(1) * 1000 + CH_CASTLES[id.id], i.e. the
+// Empire (ec) castle that changes per stage index NN. Proven: base pack 000001 ships stage00..stage52,
+// MapColc.java EoC StageMap cast = 1, Stage.java type!=0 branch uses CH_CASTLES[id.id].
+const CH_EOC_STAGE_RE = /^stage(\d+)$/i;
+const EOC_CAST = 1;
 
 function chCastle(index) {
   if (!Number.isInteger(index) || index < 0 || index >= CH_CASTLES.length) return CH_CASTLES[0];
@@ -56,12 +62,26 @@ function applyCast(cas, cast) {
 // basename (e.g. "stageNormal0_0_Z"). When rawCastleId is a finite, non-negative
 // integer it is returned untouched.
 export function resolveBcuEnemyCastleId(rawCastleId, { stageId = null } = {}) {
-  const raw = Number(rawCastleId);
+  // Only a real, non-negative numeric castle field counts as explicit. null/undefined (no castle row,
+  // e.g. main-story CH stages) and -1 ("inherit map default") must fall through to CH resolution —
+  // note Number(null) === 0 would otherwise be mistaken for an explicit rc000 castle.
+  const raw = rawCastleId == null ? NaN : Number(rawCastleId);
   if (Number.isInteger(raw) && raw >= 0) {
     return { castleId: raw, source: 'explicit-stage-castle' };
   }
 
   const basename = String(stageId || '').split('/').pop() || '';
+
+  // EoC per-stage files (stageNN): castle = EOC_CAST*1000 + CH_CASTLES[NN] (Empire castle, per stage).
+  const eocMatch = basename.match(CH_EOC_STAGE_RE);
+  if (eocMatch) {
+    const stageIndex = Number(eocMatch[1]);
+    return {
+      castleId: applyCast(chCastle(stageIndex), EOC_CAST),
+      source: `bcu-main-story-castle:eoc:stage${stageIndex}`
+    };
+  }
+
   const match = basename.match(STAGE_NORMAL_RE);
   if (match) {
     const family = Number(match[1]);

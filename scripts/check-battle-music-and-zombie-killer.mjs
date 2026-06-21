@@ -342,7 +342,9 @@ const main = await read('js/main.js');
 check(main.includes('PreviewAppBattleMusicPatch.js'), 'main.js must import the battle music patch');
 check(main.includes('BattleSoundEventPatch.js'), 'main.js must import the battle sound event patch');
 const musicPatch = await read('js/preview/PreviewAppBattleMusicPatch.js');
-for (const piece of ['playBgm', 'stopBgm', 'setPaused', 'bossMusicHpThresholdPercent', 'getEnemyBaseHpPercent']) {
+// 'stopBgm' dropped: leaving battle now switches to the formation BGM (002.m4a)
+// instead of stopping playback.
+for (const piece of ['playBgm', 'setPaused', 'bossMusicHpThresholdPercent', 'getEnemyBaseHpPercent']) {
   check(musicPatch.includes(piece), `BattleMusicPatch: missing "${piece}"`);
 }
 

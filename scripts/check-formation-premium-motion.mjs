@@ -87,11 +87,14 @@ assert.ok(/formation-tuning-close\{[^}]*display:inline-flex;align-items:center;j
 assert.ok(formationEditor.includes("formation-settings-group"), 'settings overlay renders grouped rows');
 assert.ok(formationEditor.includes("formation-setting-state"), 'settings overlay renders explicit switch state');
 assert.ok(formationEditor.includes("from '../audio/AudioSettings.js'"), 'formation settings imports shared audio settings');
-assert.ok(formationEditor.includes("data-audio-volume='bgm'"), 'formation settings exposes BGM volume');
-assert.ok(formationEditor.includes("data-audio-volume='se'"), 'formation settings exposes SE volume');
-assert.ok(formationEditor.includes("data-setting='audio-muted'"), 'formation settings exposes audio mute toggle');
+// The formation volume control now reuses the in-battle 曲/効果音 icon toggles
+// (shared SoundToggleControls) so both surfaces use the same UI + logic and sync
+// through AudioSettings — no more bespoke sliders / mute switch here.
+assert.ok(formationEditor.includes("from './SoundToggleControls.js'"), 'formation settings imports the shared sound toggles');
+assert.ok(/soundTogglesMarkup\s*\(\s*\)/.test(formationEditor), 'formation settings renders the shared 曲/効果音 toggles');
+assert.ok(formationEditor.includes('bindSoundToggles'), 'formation settings binds the shared sound-toggle logic');
+assert.ok(!/data-audio-volume=|type=['"]range['"]/.test(formationEditor), 'formation settings must not use bespoke volume sliders');
 assert.ok(settingsCss.includes('.formation-settings-group'), 'settings css styles grouped rows');
-assert.ok(settingsCss.includes('.formation-volume-control'), 'settings css styles volume sliders');
 assert.ok(settingsCss.includes('@media (max-width:520px)'), 'settings css has a compact mobile layout');
 assert.ok(customStagePatch.includes('function refreshCustomStageBattleView'), 'custom-stage settings have a targeted refresh path');
 assert.ok(customStagePatch.includes("proto.refreshCustomStageBattleView"), 'custom-stage targeted refresh is exposed to sibling patches');

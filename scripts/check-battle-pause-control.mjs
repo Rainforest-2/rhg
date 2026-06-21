@@ -39,14 +39,30 @@ check(/export const AudioSettings/.test(audio), 'AudioSettings: missing singleto
 
 // 2. BattlePauseMenu UI
 const menu = await read('js/ui/BattlePauseMenu.js');
+// The 曲/効果音 icon toggles now live in the shared SoundToggleControls module so
+// the pause menu and the formation settings panel render the identical control and
+// stay in sync via AudioSettings. Assert the toggle UI/logic against the shared
+// module, and that the pause menu pulls it in.
+const soundToggles = await read('js/ui/SoundToggleControls.js');
 check(menu.includes("'./public/assets/ui/battle-option-atlas.png'") || menu.includes('battle-option-atlas.png'), 'BattlePauseMenu: must reference mirrored option atlas');
-for (const piece of ['OedoPauseFont', 'FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf', 'bcu-pause-sound-grid', 'bcu-pause-bgm', 'bcu-pause-se', 'bi-music-note-beamed', 'bi-volume-up-fill', 'bcu-pause-btn resume', 'bcu-pause-btn abort', 'bcu-pause-panel-main', 'is-confirming', 'setBgmVolume', 'setSeVolume', 'setMuted', 'is-opening', 'is-closing']) {
+for (const piece of ['OedoPauseFont', 'FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf', 'bcu-pause-btn resume', 'bcu-pause-btn abort', 'bcu-pause-panel-main', 'is-confirming', 'is-opening', 'is-closing']) {
   check(menu.includes(piece), `BattlePauseMenu: missing "${piece}"`);
 }
+for (const piece of ['bcu-pause-sound-grid', 'bcu-pause-bgm', 'bcu-pause-se', 'bi-music-note-beamed', 'bi-volume-up-fill', 'setBgmVolume', 'setSeVolume', 'setMuted']) {
+  check(soundToggles.includes(piece), `SoundToggleControls: missing "${piece}"`);
+}
+check(/soundTogglesMarkup\s*\(\s*\)/.test(menu) && /from '\.\/SoundToggleControls\.js'/.test(menu), 'BattlePauseMenu: must render the shared sound toggles');
 check(menu.includes('top:50%') && menu.includes('translateY(-50%) scale'), 'BattlePauseMenu: confirm prompt should be centered, not appended downward');
 check(menu.includes('メインメニューに戻る'), 'BattlePauseMenu: missing メインメニューに戻る abort affordance');
 check(/from '\.\.\/audio\/AudioSettings\.js'/.test(menu), 'BattlePauseMenu: must import AudioSettings');
-check(!menu.includes('type="range"'), 'BattlePauseMenu: BGM/SE controls should be Battle Cats-style icon toggles, not range sliders');
+check(!menu.includes('type="range"') && !soundToggles.includes('type="range"'), 'BattlePauseMenu: BGM/SE controls should be Battle Cats-style icon toggles, not range sliders');
+
+// 2b. Formation settings reuse the same shared sound toggles (same UI + logic),
+// so the formation-screen volume control matches the in-battle one and syncs.
+const formation = await read('js/ui/FormationEditor.js');
+check(/from '\.\/SoundToggleControls\.js'/.test(formation), 'FormationEditor: must import the shared sound toggles');
+check(/soundTogglesMarkup\s*\(\s*\)/.test(formation) && formation.includes('bindSoundToggles'), 'FormationEditor: settings panel must render+bind the shared sound toggles');
+check(!formation.includes('type="range"') && !formation.includes("type='range'"), 'FormationEditor: volume control should be the shared icon toggles, not range sliders');
 
 // 3. PreviewApp pause/page transition patch wiring
 const patch = await read('js/preview/PreviewAppBattlePauseOverlayPatch.js');
@@ -75,6 +91,8 @@ check(Buffer.compare(src, copy) === 0, 'battle-option-atlas.png: not byte-identi
 const touched = [
   'js/audio/AudioSettings.js',
   'js/ui/BattlePauseMenu.js',
+  'js/ui/SoundToggleControls.js',
+  'js/ui/FormationEditor.js',
   'js/preview/PreviewAppBattlePauseOverlayPatch.js',
   'js/preview/PreviewAppPageTransitionPatch.js',
   'js/main.js'

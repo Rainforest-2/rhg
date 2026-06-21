@@ -16,6 +16,10 @@ import { audioEngine } from '../audio/AudioEngine.js';
 
 const APP_PATCH_FLAG = Symbol.for('wanko-preview.battle-music.v1');
 
+// Music id for the formation / non-battle screen. 002.m4a ships in the initial
+// vendored music set (public/assets/music/002.m4a), so it needs no extra preload.
+const FORMATION_BGM_ID = 2;
+
 function battleIsActive(app) {
   if (!app || !app.sceneReady || app.sceneTransitioning || !app.battleScene) return false;
   const state = app.battleScene.battleState;
@@ -62,9 +66,15 @@ function updateBattleMusic(app) {
   }
 }
 
-function stopBattleMusic(app) {
+// On the formation / non-battle screen, play the formation BGM (002.m4a) instead
+// of stopping music entirely. Idempotent via __formationMusicActive so the rAF
+// watcher does not restart the track every frame. Clears any battle-music
+// tracking so the next battle is detected as a fresh instance.
+function startFormationMusic(app) {
+  if (app.__formationMusicActive) return;
+  app.__formationMusicActive = true;
   app.__battleMusic = null;
-  audioEngine.stopBgm({ fadeMs: 500 });
+  audioEngine.playBgm(FORMATION_BGM_ID).catch(() => {});
 }
 
 function installMusicWatcher(app) {
@@ -73,8 +83,8 @@ function installMusicWatcher(app) {
   const tick = () => {
     const active = battleIsActive(app);
     const sameInstance = app.__battleMusic && app.__battleMusic.instance === battleInstanceKey(app);
-    if (active && !sameInstance) startBattleMusic(app);
-    else if (!active && app.__battleMusic) stopBattleMusic(app);
+    if (active && !sameInstance) { app.__formationMusicActive = false; startBattleMusic(app); }
+    else if (!active) startFormationMusic(app);
     else if (active) updateBattleMusic(app);
 
     // Music follows the simulation pause gate (manual pause menu OR tab hidden).

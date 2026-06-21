@@ -18,6 +18,7 @@
 // exist so the hand-computed sprite math below cannot silently drift.
 
 import { AudioSettings } from '../audio/AudioSettings.js';
+import { ensureSoundToggleStyles, soundTogglesMarkup, bindSoundToggles, syncSoundToggles } from './SoundToggleControls.js';
 
 const ATLAS_URL = './public/assets/ui/battle-option-atlas.png';
 const STYLE_ID = 'bcu-battle-pause-menu-style';
@@ -28,6 +29,9 @@ function reduceMotion() {
 }
 
 function injectStyle() {
+  // The 曲/効果音 toggle look lives in the shared SoundToggleControls stylesheet so
+  // the pause menu and the formation settings panel render the identical control.
+  ensureSoundToggleStyles();
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
   style.id = STYLE_ID;
@@ -57,17 +61,6 @@ function injectStyle() {
 .bcu-pause-title{margin:0;text-align:center;font-size:clamp(23px,5.5vw,33px);font-weight:900;letter-spacing:0;color:#2a1606;text-shadow:0 2px 0 rgba(255,255,255,.6)}
 .bcu-pause-section{display:grid;gap:12px;padding:13px;border:3px solid var(--nyanko-black,#050505);border-radius:12px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 4px 0 rgba(74,33,13,.35)}
 .bcu-pause-section>h3{margin:0 0 1px;font-size:clamp(16px,3.7vw,19px);font-weight:900;letter-spacing:0;color:#5f3716}
-.bcu-pause-sound-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.bcu-pause-sound{appearance:none;width:auto;min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;padding:10px 11px;border:4px solid var(--nyanko-black,#050505);border-radius:14px;background:linear-gradient(180deg,#f1f1f1,#a8a8a8);box-shadow:0 4px 0 #4a4a4a,inset 0 2px 0 rgba(255,255,255,.65);color:#2a1606;font:inherit;font-weight:900;text-align:left;cursor:pointer;touch-action:manipulation;text-shadow:0 1px 0 rgba(255,255,255,.5)}
-.bcu-pause-sound.is-on{background:linear-gradient(180deg,#fff3aa 0%,var(--nyanko-gold,#ffd531) 48%,var(--nyanko-gold-2,#f4a51f) 100%);box-shadow:0 4px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.65)}
-.bcu-pause-sound:active{transform:translateY(3px);box-shadow:0 1px 0 #4a210d,inset 0 2px 0 rgba(255,255,255,.5)}
-.bcu-pause-sound-icon{width:42px;height:42px;border:3px solid #050505;border-radius:50%;display:grid;place-items:center;background:#fff;color:#111;font-family:system-ui,sans-serif;font-size:25px;font-weight:1000;line-height:1;filter:grayscale(1);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
-.bcu-pause-sound-icon .bi{font-size:26px;line-height:1}
-.bcu-pause-sound.is-on .bcu-pause-sound-icon{filter:none;background:#fff8c8;color:#111}
-.bcu-pause-sound-text{display:grid;gap:1px;min-width:0}
-.bcu-pause-sound-text strong{font-size:clamp(17px,4vw,21px);font-weight:900;line-height:1.05;white-space:nowrap}
-.bcu-pause-sound-text span{font-size:clamp(12px,3vw,14px);font-weight:900;color:#6d451f}
-.bcu-pause-sound:not(.is-on) .bcu-pause-sound-text span{color:#4f4f4f}
 .bcu-pause-actions{display:grid;gap:12px;margin-top:2px}
 .bcu-pause-btn{appearance:none;border:4px solid var(--nyanko-black,#050505);border-radius:999px;font-family:inherit;font-weight:900;cursor:pointer;padding:12px 18px;font-size:clamp(18px,4vw,22px);letter-spacing:0;line-height:1.1;touch-action:manipulation;color:#201006;text-shadow:0 1px 0 rgba(255,255,255,.55)}
 .bcu-pause-btn:active{transform:translateY(4px)}
@@ -90,14 +83,10 @@ function injectStyle() {
 @keyframes bcuPausePanelIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes bcuPausePanelOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.985) translateY(5px)}}
 @keyframes bcuPauseConfirmIn{from{opacity:0;transform:translateY(-50%) scale(.94)}to{opacity:1;transform:translateY(-50%) scale(1)}}
-@media (max-width:420px){.bcu-pause-sound-grid{gap:8px}.bcu-pause-sound{padding:8px;gap:7px}.bcu-pause-sound-icon{width:36px;height:36px;font-size:22px}.bcu-pause-abort-label{width:205px;height:44.392px;background-size:413.224px 413.224px;background-position:-149.306px -255.831px}}
+@media (max-width:420px){.bcu-pause-abort-label{width:205px;height:44.392px;background-size:413.224px 413.224px;background-position:-149.306px -255.831px}}
 @media (prefers-reduced-motion: reduce){.bcu-pause-control,.bcu-pause-btn{transition:none}.bcu-pause-overlay.is-opening,.bcu-pause-overlay.is-closing,.bcu-pause-overlay.is-opening .bcu-pause-panel,.bcu-pause-overlay.is-closing .bcu-pause-panel,.bcu-pause-confirm{animation:none!important}}
 `;
   document.head.appendChild(style);
-}
-
-function soundOn(volume) {
-  return Number(volume) > 0.001;
 }
 
 export class BattlePauseMenu {
@@ -139,16 +128,7 @@ export class BattlePauseMenu {
           <h2 class="bcu-pause-title">一時停止</h2>
           <div class="bcu-pause-section">
             <h3>サウンド設定</h3>
-            <div class="bcu-pause-sound-grid">
-              <button type="button" class="bcu-pause-sound bcu-pause-bgm" aria-label="曲(BGM)を切り替え">
-                <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-music-note-beamed"></i></span>
-                <span class="bcu-pause-sound-text"><strong>曲</strong><span class="bcu-pause-bgm-val">ON</span></span>
-              </button>
-              <button type="button" class="bcu-pause-sound bcu-pause-se" aria-label="効果音(SE)を切り替え">
-                <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-volume-up-fill"></i></span>
-                <span class="bcu-pause-sound-text"><strong>効果音</strong><span class="bcu-pause-se-val">ON</span></span>
-              </button>
-            </div>
+            ${soundTogglesMarkup()}
           </div>
           <div class="bcu-pause-actions">
             <button type="button" class="bcu-pause-btn resume">バトルにもどる</button>
@@ -168,15 +148,12 @@ export class BattlePauseMenu {
     host.appendChild(overlay);
     this.overlay = overlay;
 
-    this.bgmButton = overlay.querySelector('.bcu-pause-bgm');
-    this.seButton = overlay.querySelector('.bcu-pause-se');
-    this.bgmVal = overlay.querySelector('.bcu-pause-bgm-val');
-    this.seVal = overlay.querySelector('.bcu-pause-se-val');
     this.confirmEl = overlay.querySelector('.bcu-pause-confirm');
     this.abortBtn = overlay.querySelector('.bcu-pause-btn.abort');
 
-    this.bgmButton?.addEventListener('click', (e) => { e.preventDefault(); this._toggleBgm(); });
-    this.seButton?.addEventListener('click', (e) => { e.preventDefault(); this._toggleSe(); });
+    // Shared toggle logic so the pause menu and formation settings behave the same
+    // and stay in sync through AudioSettings.
+    this._unbindSoundToggles = bindSoundToggles(overlay, this.audio);
 
     overlay.querySelector('.bcu-pause-btn.resume')?.addEventListener('click', (e) => { e.preventDefault(); this.onResume(); });
     this.abortBtn?.addEventListener('click', (e) => { e.preventDefault(); this._showConfirm(true); });
@@ -188,32 +165,8 @@ export class BattlePauseMenu {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) this.onResume(); });
   }
 
-  _setSoundButton(button, value, muted) {
-    const on = !muted && soundOn(value);
-    button?.classList.toggle('is-on', on);
-    button?.setAttribute('aria-pressed', on ? 'true' : 'false');
-  }
-
   _syncFromSettings() {
-    const snap = this.audio.snapshot();
-    this._setSoundButton(this.bgmButton, snap.bgm, snap.muted);
-    this._setSoundButton(this.seButton, snap.se, snap.muted);
-    if (this.bgmVal) this.bgmVal.textContent = !snap.muted && soundOn(snap.bgm) ? 'ON' : 'OFF';
-    if (this.seVal) this.seVal.textContent = !snap.muted && soundOn(snap.se) ? 'ON' : 'OFF';
-  }
-
-  _toggleBgm() {
-    const snap = this.audio.snapshot();
-    if (snap.muted) this.audio.setMuted(false);
-    this.audio.setBgmVolume(soundOn(snap.bgm) && !snap.muted ? 0 : (this.audio.defaults?.bgm ?? 0.7));
-    this._syncFromSettings();
-  }
-
-  _toggleSe() {
-    const snap = this.audio.snapshot();
-    if (snap.muted) this.audio.setMuted(false);
-    this.audio.setSeVolume(soundOn(snap.se) && !snap.muted ? 0 : (this.audio.defaults?.se ?? 0.8));
-    this._syncFromSettings();
+    syncSoundToggles(this.overlay, this.audio);
   }
 
   _showConfirm(show) {
@@ -265,6 +218,8 @@ export class BattlePauseMenu {
   }
 
   destroy() {
+    this._unbindSoundToggles?.();
+    this._unbindSoundToggles = null;
     this.button?.remove();
     this.overlay?.remove();
     this.button = null;

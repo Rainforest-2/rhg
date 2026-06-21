@@ -6,6 +6,7 @@ import { stageKey as makeStageKey, stageMapKey } from '../bcu/BcuIdentifier.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { BattleSpeedControl } from './BattleSpeedControl.js';
 import { AudioSettings } from '../audio/AudioSettings.js';
+import { ensureSoundToggleStyles, soundTogglesMarkup, bindSoundToggles, syncSoundToggles } from './SoundToggleControls.js';
 
 // Community Discord invite shown in the settings UI.
 const SETTINGS_DISCORD_URL = 'https://discord.gg/6XJgaXEFQz';
@@ -89,6 +90,7 @@ export class FormationEditor {
     this.root.addEventListener('click', (e) => this.onClick(e));
     this.root.addEventListener('input', (e) => this.onInput(e));
     this.root.addEventListener('scroll', (e) => this.onScroll(e), true);
+    ensureSoundToggleStyles();
     this.audioSettingsUnsubscribe = AudioSettings.subscribe(() => this.updateAudioSettingControls?.());
     this.refresh();
     this.loadStageOptions();
@@ -128,15 +130,6 @@ export class FormationEditor {
   }
 
   onInput(e) {
-    const audio = e.target.closest?.('[data-audio-volume]');
-    if (audio && this.root.contains(audio)) {
-      const channel = audio.dataset.audioVolume;
-      const value = Number(audio.value) / 100;
-      if (channel === 'bgm') AudioSettings.setBgmVolume(value);
-      if (channel === 'se') AudioSettings.setSeVolume(value);
-      this.updateAudioSettingControls();
-      return;
-    }
     const input = e.target.closest('[data-search-input]');
     if (!input) return;
     this.searchDraft = String(input.value || '');
@@ -171,13 +164,6 @@ export class FormationEditor {
         this.onSettingChanged('bcu-speed-control', next);
         this.setHint(next ? 'バトルスピード8倍: ON' : 'バトルスピード8倍: OFF');
         this.renderSettingsOverlay();
-      }
-      if (setting.dataset.setting === 'audio-muted') {
-        const next = setting.getAttribute('aria-checked') !== 'true';
-        AudioSettings.setMuted(next);
-        this.onSettingChanged('audio-muted', next);
-        this.setHint(next ? '音量: ミュート' : '音量: ミュート解除');
-        this.updateAudioSettingControls();
       }
       return;
     }
@@ -427,11 +413,31 @@ export class FormationEditor {
     }).join('') || `<p class='formation-stage-empty'>No stage bundle entries available</p>`;
   }
 
+  // BCU's core-db derives a unit's form count from its unit CSV row count, but many
+  // unit CSVs carry a placeholder 3rd/4th row for a form the unit never actually
+  // received (no name in the lang file, no sprite/icon shipped). The authoritative
+  // signal for "this form really exists" is the icon index: a real form has an entry
+  // in bcu-icon-index.json's byKey (unit:<id>:<f|c|s|u>). Gating on it keeps phantom
+  // third forms (e.g. unit 27/28/29) out of the formation catalog. Fails open when
+  // the index is not loaded yet (in which case only first forms exist anyway).
+  getCatFormIconByKey() {
+    try { return getBcuAssetDatabase()?.semanticProvider?.indexes?.icons?.byKey || null; } catch { return null; }
+  }
+
+  catFormExists(c, byKey = this.getCatFormIconByKey()) {
+    if (!byKey) return true;
+    const key = c?.uiIcon?.semanticKey;
+    if (!key) return true;
+    return Object.prototype.hasOwnProperty.call(byKey, key);
+  }
+
   getFilteredCharacters() {
     let baseChars = this.filter === CHARACTER_FACTIONS.all ? getAvailableCharacters() : getCharactersByFaction(this.filter);
-    // にゃんこ軍は選択中の形態だけを表示（第1〜第4形態フィルタ）
+    // にゃんこ軍は選択中の形態だけを表示（第1〜第4形態フィルタ）。実在しない形態
+    // （アイコン/スプライト未収録のプレースホルダ形態）は除外する。
     if (this.filter === CHARACTER_FACTIONS.cat) {
-      baseChars = baseChars.filter((c) => (c.formIndex ?? 0) === this.catFormFilter);
+      const byKey = this.getCatFormIconByKey();
+      baseChars = baseChars.filter((c) => (c.formIndex ?? 0) === this.catFormFilter && this.catFormExists(c, byKey));
     }
     const q = this.searchText.trim().toLowerCase();
     if (!q) return baseChars;
@@ -439,8 +445,11 @@ export class FormationEditor {
   }
 
   getAvailableCatFormIndexes() {
+    const byKey = this.getCatFormIconByKey();
     const set = new Set();
-    for (const c of getCharactersByFaction(CHARACTER_FACTIONS.cat)) set.add(c.formIndex ?? 0);
+    for (const c of getCharactersByFaction(CHARACTER_FACTIONS.cat)) {
+      if (this.catFormExists(c, byKey)) set.add(c.formIndex ?? 0);
+    }
     return [...set].sort((a, b) => a - b);
   }
 
@@ -742,8 +751,6 @@ export class FormationEditor {
     const list = overlay.querySelector('.formation-settings-list');
     if (!list) return;
     const speedOn = BattleSpeedControl.isFeatureEnabled();
-    const audio = AudioSettings.snapshot();
-    const pct = (value) => Math.round(Number(value || 0) * 100);
     list.innerHTML = `<section class='formation-settings-group' aria-label='バトル設定'>
       <div class='formation-settings-group-head'><span>バトル</span><strong>操作</strong></div>
       <div class='formation-settings-row'>
@@ -756,28 +763,12 @@ export class FormationEditor {
     </section>
     <section class='formation-settings-group' aria-label='音量設定'>
       <div class='formation-settings-group-head'><span>サウンド</span><strong>音量</strong></div>
-      <div class='formation-settings-row'>
-        <div class='label'><strong>ミュート</strong><span>BGMと効果音をまとめて消音します</span></div>
-        <div class='formation-setting-control'>
-          <span class='formation-setting-state' data-audio-muted-state>${audio.muted ? 'ON' : 'OFF'}</span>
-          <button type='button' role='switch' class='formation-setting-toggle' data-setting='audio-muted' aria-checked='${audio.muted ? 'true' : 'false'}' aria-label='ミュートを切り替え'></button>
-        </div>
-      </div>
-      <div class='formation-settings-row formation-settings-row-slider'>
-        <div class='label'><strong>曲</strong><span>BGM音量</span></div>
-        <div class='formation-setting-control formation-volume-control'>
-          <input type='range' min='0' max='100' step='1' value='${pct(audio.bgm)}' data-audio-volume='bgm' aria-label='BGM音量'>
-          <span class='formation-setting-state' data-audio-volume-state='bgm'>${pct(audio.bgm)}%</span>
-        </div>
-      </div>
-      <div class='formation-settings-row formation-settings-row-slider'>
-        <div class='label'><strong>効果音</strong><span>SE音量</span></div>
-        <div class='formation-setting-control formation-volume-control'>
-          <input type='range' min='0' max='100' step='1' value='${pct(audio.se)}' data-audio-volume='se' aria-label='効果音音量'>
-          <span class='formation-setting-state' data-audio-volume-state='se'>${pct(audio.se)}%</span>
-        </div>
-      </div>
+      ${soundTogglesMarkup()}
     </section>`;
+    // Bind the shared 曲/効果音 toggles (same control + logic as the battle pause
+    // menu); both write to AudioSettings so the two surfaces stay in sync.
+    this._unbindSoundToggles?.();
+    this._unbindSoundToggles = bindSoundToggles(list, AudioSettings);
     const footer = overlay.querySelector('.formation-settings-footer');
     if (footer) {
       footer.innerHTML = `<span class='formation-settings-credit'>created by るる</span>
@@ -787,21 +778,8 @@ export class FormationEditor {
   }
 
   updateAudioSettingControls() {
-    const overlay = this.root?.querySelector?.('.formation-settings-overlay');
-    if (!overlay) return;
-    const audio = AudioSettings.snapshot();
-    const pct = (value) => `${Math.round(Number(value || 0) * 100)}%`;
-    const muted = overlay.querySelector('[data-setting="audio-muted"]');
-    if (muted) muted.setAttribute('aria-checked', audio.muted ? 'true' : 'false');
-    const muteState = overlay.querySelector('[data-audio-muted-state]');
-    if (muteState) muteState.textContent = audio.muted ? 'ON' : 'OFF';
-    const bgm = overlay.querySelector('[data-audio-volume="bgm"]');
-    const se = overlay.querySelector('[data-audio-volume="se"]');
-    if (bgm && bgm !== document.activeElement) bgm.value = String(Math.round(audio.bgm * 100));
-    if (se && se !== document.activeElement) se.value = String(Math.round(audio.se * 100));
-    const bgmState = overlay.querySelector('[data-audio-volume-state="bgm"]');
-    const seState = overlay.querySelector('[data-audio-volume-state="se"]');
-    if (bgmState) bgmState.textContent = pct(audio.bgm);
-    if (seState) seState.textContent = pct(audio.se);
+    const list = this.root?.querySelector?.('.formation-settings-overlay .formation-settings-list');
+    if (!list) return;
+    syncSoundToggles(list, AudioSettings);
   }
 }

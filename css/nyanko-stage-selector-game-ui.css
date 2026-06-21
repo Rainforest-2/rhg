@@ -404,22 +404,43 @@ html body.nyanko-ui-polish .formation-stage-filter-apply{
   }
   html body.nyanko-ui-polish .formation-stage-card-category{
     min-height:0!important;
-    grid-template-rows:minmax(0,1fr) 26px!important;
+    grid-template-rows:minmax(0,1fr) 18px!important;
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+      linear-gradient(180deg,#fffdf1 0%,#fff2bf calc(100% - 19px),#151515 calc(100% - 18px),#020202 100%)!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card-category.tone-red{
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+      linear-gradient(180deg,#fffdf1 0%,#ffd7c8 calc(100% - 19px),#151515 calc(100% - 18px),#020202 100%)!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card-category.tone-blue{
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+      linear-gradient(180deg,#fffdf1 0%,#d8f0ff calc(100% - 19px),#151515 calc(100% - 18px),#020202 100%)!important;
+  }
+  html body.nyanko-ui-polish .formation-stage-card-category.tone-violet{
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,transparent 42%),
+      linear-gradient(180deg,#fffdf1 0%,#eadcff calc(100% - 19px),#151515 calc(100% - 18px),#020202 100%)!important;
   }
   html body.nyanko-ui-polish .formation-stage-card-category strong,
   html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-title{
-    padding:8px 12px 4px!important;
+    padding:8px 12px 2px!important;
     font-size:.84rem!important;
     line-height:1.1!important;
     -webkit-line-clamp:2!important;
   }
   html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta{
-    gap:10px!important;
-    padding:0 12px!important;
+    min-height:18px!important;
+    height:18px!important;
+    gap:8px!important;
+    padding:0 10px!important;
   }
   html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta b,
   html body.nyanko-ui-polish .formation-stage-card-category .formation-stage-card-meta i,
   html body.nyanko-ui-polish .formation-stage-card-category small{
-    font-size:.68rem!important;
+    font-size:.58rem!important;
+    line-height:1!important;
   }
 }

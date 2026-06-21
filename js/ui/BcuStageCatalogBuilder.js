@@ -230,20 +230,36 @@ function mapLabelInfo(db, mapColcId, mapNo, fallback) {
   const resolved = Number.isFinite(mapColcId) && Number.isFinite(mapNo)
     ? resolveName(db, 'stageMap', stageMapKey(mapColcId, mapNo))
     : null;
-  if (resolved?.value) return { value: resolved.value, source: 'lang', file: resolved.file || null, key: resolved.key || null };
-  return { value: fallback || `マップ ${Number.isFinite(mapNo) ? mapNo : ''}`.trim(), source: 'fallback', file: null, key: null };
+  if (resolved?.value) return { value: normalizeStageDisplayLabel(resolved.value), source: 'lang', file: resolved.file || null, key: resolved.key || null };
+  return { value: normalizeStageDisplayLabel(fallback || `マップ ${Number.isFinite(mapNo) ? mapNo : ''}`.trim()), source: 'fallback', file: null, key: null };
 }
 
 function stageLabelInfo(db, mapColcId, mapNo, stageNo, fallback) {
   const resolved = Number.isFinite(mapColcId) && Number.isFinite(mapNo) && Number.isFinite(stageNo)
     ? resolveName(db, 'stage', stageKey(mapColcId, mapNo, stageNo))
     : null;
-  if (resolved?.value) return { value: resolved.value, source: 'lang', file: resolved.file || null, key: resolved.key || null };
-  return { value: fallback || `ステージ ${Number.isFinite(stageNo) ? stageNo : ''}`.trim(), source: 'fallback', file: null, key: null };
+  if (resolved?.value) return { value: normalizeStageDisplayLabel(resolved.value), source: 'lang', file: resolved.file || null, key: resolved.key || null };
+  return { value: normalizeStageDisplayLabel(fallback || `ステージ ${Number.isFinite(stageNo) ? stageNo : ''}`.trim()), source: 'fallback', file: null, key: null };
 }
 
 function normalizeNameKey(value) {
   return String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+}
+
+export function normalizeStageDisplayLabel(value) {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (!text) return text;
+  const spaced = text.match(/^(.{4,}?)(?:\s+\1)+$/u);
+  if (spaced?.[1]) return spaced[1].trim();
+  const delimited = text.match(/^(.{2,}?)(?:\s*(?:[-－ー/／|｜:：])\s*\1)+$/u);
+  if (delimited?.[1]) return delimited[1].trim();
+  const chars = Array.from(text);
+  for (let len = 4; len <= Math.floor(chars.length / 2); len += 1) {
+    if (chars.length % len !== 0) continue;
+    const unit = chars.slice(0, len).join('');
+    if (unit.repeat(chars.length / len) === text) return unit;
+  }
+  return text;
 }
 
 function sortByCollectionThenMap(a, b) {

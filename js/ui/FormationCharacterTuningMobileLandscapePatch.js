@@ -44,16 +44,45 @@ function injectMobileLandscapeStyle() {
   html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-save{font-size:.94rem!important;min-height:34px!important}
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-summary{grid-row:1!important}
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-presets{grid-row:2!important;align-self:start!important;align-content:start!important}
+  html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:82px minmax(0,1fr)!important;grid-template-rows:34px minmax(0,1fr) 38px!important}
+  html body.nyanko-ui-polish .formation-tuning-hero{grid-column:1!important;grid-row:2/4!important;padding:6px 5px!important;gap:4px!important}
+  html body.nyanko-ui-polish .formation-tuning-portrait{width:59px!important}
+  html body.nyanko-ui-polish .formation-tuning-body{grid-column:2!important;grid-row:2!important;grid-template-columns:1fr!important;grid-auto-rows:min-content!important;align-content:start!important;gap:5px!important;padding:6px!important;overflow:auto!important}
+  html body.nyanko-ui-polish .formation-tuning-body>.formation-tuning-control,
+  html body.nyanko-ui-polish .formation-tuning-summary,
+  html body.nyanko-ui-polish .formation-tuning-presets,
+  html body.nyanko-ui-polish .formation-tuning-talents,
+  html body.nyanko-ui-polish .formation-tuning-orbs{grid-column:1!important;grid-row:auto!important;align-self:stretch!important;min-width:0!important}
+  html body.nyanko-ui-polish .formation-tuning-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important}
+  html body.nyanko-ui-polish .formation-tuning-presets{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important}
+  html body.nyanko-ui-polish .formation-tuning-talents,
+  html body.nyanko-ui-polish .formation-tuning-orbs{display:grid!important;gap:5px!important;padding-top:5px!important;border-top-width:2px!important}
+  html body.nyanko-ui-polish .formation-tuning-talents .formation-tuning-control,
+  html body.nyanko-ui-polish .formation-tuning-orbs .formation-tuning-control{min-width:0!important;padding:5px!important;gap:3px!important;border-width:2px!important;border-radius:10px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-slot{gap:5px!important;padding:5px!important;border-width:2px!important;border-radius:10px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-slot-title{gap:6px!important;font-size:.62rem!important;line-height:1!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-slot-title span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper{grid-template-columns:24px minmax(36px,1fr) 24px!important;gap:3px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-btn[data-delta='-5'],
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-btn[data-delta='5']{display:none!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-btn{min-height:25px!important;min-width:0!important;border-width:2px!important;border-radius:8px!important;font-size:.58rem!important;padding:0!important;text-shadow:none!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-readout{height:27px!important;min-width:0!important;border-width:2px!important;border-radius:8px!important;font-size:.68rem!important;padding:0 2px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-meter{display:none!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-note{font-size:.56rem!important;line-height:1.12!important}
+  html body.nyanko-ui-polish .formation-tuning-footer{grid-column:2!important;grid-row:3!important;grid-template-columns:minmax(96px,.48fr) minmax(120px,1fr)!important;padding:4px 6px!important;gap:5px!important}
+  html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-reset,
+  html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-save{min-height:30px!important}
 }
 @media (orientation:landscape) and (max-height:390px) and (max-width:900px){
-  html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:78px minmax(0,1fr) 138px!important;grid-template-rows:32px minmax(0,1fr) 38px!important;border-width:3px!important;border-radius:13px!important}
+  html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:68px minmax(0,1fr)!important;grid-template-rows:30px minmax(0,1fr) 34px!important;border-width:3px!important;border-radius:13px!important}
   html body.nyanko-ui-polish .formation-tuning-header{padding:3px 6px!important;border-bottom-width:3px!important}
   html body.nyanko-ui-polish .formation-tuning-title strong{font-size:.94rem!important}
   html body.nyanko-ui-polish .formation-tuning-close{height:26px!important;min-height:26px!important;min-width:52px!important;font-size:.66rem!important}
   html body.nyanko-ui-polish .formation-tuning-hero{padding:5px!important;border-right-width:3px!important;gap:3px!important}
-  html body.nyanko-ui-polish .formation-tuning-portrait{width:55px!important;border-width:2px!important;border-radius:10px!important}
+  html body.nyanko-ui-polish .formation-tuning-portrait{width:49px!important;border-width:2px!important;border-radius:10px!important}
   html body.nyanko-ui-polish .formation-tuning-chip{min-height:18px!important;font-size:.48rem!important;border-width:2px!important;padding:0 5px!important}
-  html body.nyanko-ui-polish .formation-tuning-body{grid-template-columns:minmax(0,1fr) 138px!important;gap:4px!important;padding:5px!important}
+  html body.nyanko-ui-polish .formation-tuning-body{grid-template-columns:1fr!important;gap:4px!important;padding:5px!important;align-content:start!important}
   html body.nyanko-ui-polish .formation-tuning-body>.formation-tuning-control{padding:5px!important;gap:3px!important;border-width:2px!important;border-radius:10px!important}
   html body.nyanko-ui-polish .formation-tuning-stepper{grid-template-columns:38px 34px minmax(58px,1fr) 34px 38px!important;gap:3px!important}
   html body.nyanko-ui-polish .formation-tuning-btn,html body.nyanko-ui-polish .formation-tuning-save,html body.nyanko-ui-polish .formation-tuning-reset{min-height:29px!important;border-width:2px!important;font-size:.64rem!important}
@@ -64,6 +93,13 @@ function injectMobileLandscapeStyle() {
   html body.nyanko-ui-polish .formation-tuning-presets .formation-tuning-btn{min-height:25px!important;font-size:.56rem!important}
   html body.nyanko-ui-polish .formation-tuning-footer{padding:4px 6px!important;gap:5px!important;border-top-width:3px!important;grid-template-columns:minmax(96px,.5fr) minmax(118px,1fr)!important}
   html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-save{min-height:29px!important;font-size:.82rem!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid{gap:4px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper{grid-template-columns:22px minmax(32px,1fr) 22px!important;gap:2px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-btn{min-height:23px!important;font-size:.52rem!important;border-radius:7px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-readout{height:24px!important;font-size:.62rem!important;border-radius:7px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-slot{gap:4px!important;padding:4px!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-slot-title{font-size:.56rem!important}
+  html body.nyanko-ui-polish .formation-tuning-orb-note{font-size:.5rem!important}
 }
   `;
   document.head.appendChild(style);

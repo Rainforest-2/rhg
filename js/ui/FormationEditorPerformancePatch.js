@@ -2,7 +2,7 @@ import { getAvailableStages } from '../battle/StageRegistry.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { buildScopedDifficultyFilterCandidates } from '../bcu/BcuStageDifficultyRuntime.js';
 import { FormationEditor } from './FormationEditor.js';
-import { buildBcuStageCatalog } from './BcuStageCatalogBuilder.js';
+import { buildBcuStageCatalog, normalizeStageDisplayLabel } from './BcuStageCatalogBuilder.js';
 
 function safeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
@@ -184,7 +184,13 @@ function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
 
 function selectedStageLabel(editor, catalog) {
   const selected = catalog.getStage(editor.selectedStageId);
-  if (selected) return `${selected.mapLabel} - ${selected.label}`;
+  if (selected) {
+    const mapLabel = normalizeStageDisplayLabel(selected.mapLabel);
+    const stageLabel = normalizeStageDisplayLabel(selected.label);
+    if (!stageLabel) return mapLabel || '未選択';
+    if (!mapLabel || normalizeFilterValue(mapLabel) === normalizeFilterValue(stageLabel)) return stageLabel || mapLabel || '未選択';
+    return `${mapLabel} - ${stageLabel}`;
+  }
   const selectedStage = (editor.stageOptions || []).find((stage) => getStageId(stage) === editor.selectedStageId || stage.stageId === editor.selectedStageId);
   if (selectedStage) {
     // The default/raw selectedStageId (e.g. "stageRNA001_00") is not a catalog key,
@@ -192,11 +198,11 @@ function selectedStageLabel(editor, catalog) {
     try {
       const meta = editor.stageMeta?.get?.(selectedStage.stageKey || selectedStage.stageId) || {};
       const display = editor.resolveStageDisplay?.(selectedStage, meta)?.displayName;
-      if (display) return display;
+      if (display) return normalizeStageDisplayLabel(display);
     } catch {}
-    return selectedStage.label || selectedStage.stageId || editor.selectedStageId || '未選択';
+    return normalizeStageDisplayLabel(selectedStage.label || selectedStage.stageId || editor.selectedStageId || '未選択');
   }
-  return editor.selectedStageId || '未選択';
+  return normalizeStageDisplayLabel(editor.selectedStageId || '未選択');
 }
 
 function renderBackControl(state, category, map) {

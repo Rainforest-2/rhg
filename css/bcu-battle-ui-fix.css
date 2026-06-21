@@ -289,3 +289,73 @@
     min-height:54px;
   }
 }
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 980px){
+  :root{
+    --prod-card-w:clamp(52px,7.05vw,64px);
+    --prod-card-h:clamp(40px,5.45vw,49.5px);
+    --prod-card-gap:clamp(2px,.45vw,4px);
+    --prod-card-back-offset-x:2px;
+    --prod-card-back-offset-y:4px;
+  }
+
+  .prod-ui .cards,
+  .prod-ui:not(.is-hidden) .cards{
+    bottom:calc(3px + env(safe-area-inset-bottom,0px))!important;
+    gap:var(--prod-card-gap)!important;
+  }
+
+  .prod-ui .prod-card{
+    width:var(--prod-card-w)!important;
+    height:var(--prod-card-h)!important;
+  }
+
+  .prod-ui .battle-money{
+    top:calc(5px + env(safe-area-inset-top,0px))!important;
+    right:calc(7px + env(safe-area-inset-right,0px))!important;
+    width:min(250px,31vw)!important;
+  }
+
+  .prod-ui .wallet-upgrade{
+    width:clamp(52px,7vw,66px)!important;
+    bottom:calc(3px + env(safe-area-inset-bottom,0px))!important;
+  }
+
+  .prod-ui .wallet-upgrade:not(.has-bcu-icon){
+    min-height:40px!important;
+  }
+
+  .prod-ui .cat-cannon-fire{
+    width:clamp(52px,7vw,66px)!important;
+    bottom:calc(3px + env(safe-area-inset-bottom,0px))!important;
+  }
+
+  .prod-ui .cat-cannon-fire:not(.has-bcu-icon){
+    min-height:40px!important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 390px) and (max-width: 900px){
+  :root{
+    --prod-card-w:clamp(50px,6.85vw,58px);
+    --prod-card-h:clamp(38.6px,5.3vw,44.8px);
+    --prod-card-gap:2px;
+    --prod-card-back-offset-x:2px;
+    --prod-card-back-offset-y:3px;
+  }
+
+  .prod-ui .cards,
+  .prod-ui:not(.is-hidden) .cards{
+    bottom:calc(2px + env(safe-area-inset-bottom,0px))!important;
+  }
+
+  .prod-ui .wallet-upgrade,
+  .prod-ui .cat-cannon-fire{
+    width:clamp(50px,6.75vw,58px)!important;
+    bottom:calc(2px + env(safe-area-inset-bottom,0px))!important;
+  }
+
+  .prod-ui .battle-money{
+    width:min(220px,29vw)!important;
+  }
+}

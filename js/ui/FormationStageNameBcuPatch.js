@@ -1,6 +1,7 @@
 import { FormationEditor } from './FormationEditor.js';
 import { stageKey as makeStageKey, stageMapKey } from '../bcu/BcuIdentifier.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+import { normalizeStageDisplayLabel } from './BcuStageCatalogBuilder.js';
 
 /*
  * Compatibility-only name resolver patch.
@@ -80,7 +81,7 @@ if (!FormationEditor.prototype[FLAG]) {
     const db = getBcuAssetDatabase();
     const direct = db?.stages?.get?.(stage?.stageKey || stage?.key);
     if (direct?.name?.source === 'lang' && direct.name.value) {
-      return { displayName: direct.name.value, source: direct.name.file || 'BcuStageRepository.name', unresolvedNameReason: null };
+      return { displayName: normalizeStageDisplayLabel(direct.name.value), source: direct.name.file || 'BcuStageRepository.name', unresolvedNameReason: null };
     }
     const t = this.parseStageTripletFromEntry(stage);
     if (t && db?.names) {
@@ -90,11 +91,15 @@ if (!FormationEditor.prototype[FLAG]) {
       const st = db.names.resolve('stage', sk, db.locale);
       const mapOk = map?.source === 'lang' && map.value;
       const stOk = st?.source === 'lang' && st.value;
-      if (mapOk && stOk) return { displayName: `${map.value} - ${st.value}`, source: `${map.file}; ${st.file}`, unresolvedNameReason: null, nameTriplet: t };
-      if (stOk) return { displayName: st.value, source: st.file, unresolvedNameReason: mapOk ? null : `map name missing for ${mk}`, nameTriplet: t };
+      if (mapOk && stOk) {
+        const mapLabel = normalizeStageDisplayLabel(map.value);
+        const stageLabel = normalizeStageDisplayLabel(st.value);
+        return { displayName: mapLabel && mapLabel !== stageLabel ? `${mapLabel} - ${stageLabel}` : stageLabel, source: `${map.file}; ${st.file}`, unresolvedNameReason: null, nameTriplet: t };
+      }
+      if (stOk) return { displayName: normalizeStageDisplayLabel(st.value), source: st.file, unresolvedNameReason: mapOk ? null : `map name missing for ${mk}`, nameTriplet: t };
       return { displayName: null, source: t.source, unresolvedNameReason: `lang missing for ${sk}`, nameTriplet: t };
     }
-    const fallback = meta.displayName || stage?.name?.value || stage?.label || null;
+    const fallback = normalizeStageDisplayLabel(meta.displayName || stage?.name?.value || stage?.label || null);
     return { displayName: fallback, source: stage?.name?.source || 'stage-index', unresolvedNameReason: fallback ? null : 'not covered by confirmed BCU stage mapping' };
   };
 

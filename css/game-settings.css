@@ -62,3 +62,56 @@
   .formation-setting-control{justify-content:space-between}
   .formation-volume-control{min-width:0;grid-template-columns:minmax(0,1fr) 54px}
 }
+
+@media (orientation: landscape) and (max-height:520px) and (max-width:980px){
+  .formation-settings-overlay{padding:5px calc(7px + env(safe-area-inset-right,0px)) 5px calc(7px + env(safe-area-inset-left,0px))}
+  .formation-settings-dialog{box-sizing:border-box;width:min(560px,calc(100% - 14px));height:calc(100% - 10px);max-height:calc(100% - 10px);gap:7px;padding:8px;border-width:3px;border-radius:14px;box-shadow:0 4px 0 rgba(43,22,8,.9),0 12px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.7)}
+  .formation-settings-dialog header{gap:8px;min-height:0}
+  .formation-settings-dialog header div{gap:0}
+  .formation-settings-dialog header strong{font-size:.94rem;gap:6px;line-height:1}
+  .formation-settings-dialog header span{display:none}
+  .formation-settings-dialog header button{min-width:72px;min-height:30px;padding:0 14px;border-width:3px;font-size:.76rem;box-shadow:0 3px 0 #4a210d,inset 0 1px 0 rgba(255,255,255,.62)}
+  .formation-settings-list{gap:7px;padding:1px}
+  .formation-settings-group{gap:5px}
+  .formation-settings-group-head{padding:0 2px;gap:8px}
+  .formation-settings-group-head span{font-size:.62rem;letter-spacing:.08em}
+  .formation-settings-group-head strong{font-size:.72rem}
+  .formation-settings-row,.formation-settings-row-slider{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:7px 8px;border-width:2px;border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 2px 0 rgba(74,33,13,.35)}
+  .formation-settings-row .label{gap:1px}
+  .formation-settings-row .label strong{font-size:.82rem;line-height:1.05}
+  .formation-settings-row .label span{font-size:.62rem;line-height:1.15}
+  .formation-setting-control{gap:6px}
+  .formation-setting-state{min-width:34px;padding:3px 6px;font-size:.62rem;border-width:2px}
+  .formation-setting-toggle{width:46px;height:25px;border-width:2px}
+  .formation-setting-toggle::after{width:19px;height:19px}
+  .formation-setting-toggle[aria-checked='true']::after{transform:translateX(21px)}
+  .formation-settings-dialog .bcu-pause-sound-grid{gap:6px!important}
+  .formation-settings-dialog .bcu-pause-sound{grid-template-columns:auto minmax(0,1fr)!important;gap:6px!important;padding:6px!important;border-width:2px!important;border-radius:10px!important;box-shadow:0 2px 0 #4a210d,inset 0 1px 0 rgba(255,255,255,.65)!important}
+  .formation-settings-dialog .bcu-pause-sound-icon{width:30px!important;height:30px!important;border-width:2px!important;font-size:18px!important}
+  .formation-settings-dialog .bcu-pause-sound-icon .bi{font-size:18px!important}
+  .formation-settings-dialog .bcu-pause-sound-text strong{font-size:.82rem!important;line-height:1!important}
+  .formation-settings-dialog .bcu-pause-sound-text span{font-size:.64rem!important;line-height:1!important}
+  .formation-settings-footer{gap:8px;flex-wrap:nowrap;padding-top:7px;border-top-width:1px}
+  .formation-settings-credit{font-size:.68rem;white-space:nowrap}
+  .formation-settings-discord{min-height:30px;padding:0 12px;border-width:3px;font-size:.72rem;gap:6px;box-shadow:0 3px 0 #21275f,inset 0 1px 0 rgba(255,255,255,.35)}
+  .formation-settings-discord .bi{font-size:.98rem}
+}
+
+@media (orientation: landscape) and (max-height:390px) and (max-width:900px){
+  .formation-settings-dialog{width:min(520px,calc(100% - 12px));height:calc(100% - 8px);max-height:calc(100% - 8px);gap:5px;padding:6px;border-width:3px;border-radius:12px}
+  .formation-settings-dialog header strong{font-size:.86rem}
+  .formation-settings-dialog header button{min-height:26px;min-width:64px;padding:0 11px;border-width:2px;font-size:.68rem}
+  .formation-settings-list{gap:5px}
+  .formation-settings-row,.formation-settings-row-slider{padding:6px 7px;gap:6px;border-width:2px;border-radius:9px}
+  .formation-settings-row .label strong{font-size:.76rem}
+  .formation-settings-row .label span{font-size:.56rem}
+  .formation-settings-dialog .bcu-pause-sound-grid{gap:5px!important}
+  .formation-settings-dialog .bcu-pause-sound{padding:5px!important;gap:5px!important;border-radius:9px!important}
+  .formation-settings-dialog .bcu-pause-sound-icon{width:27px!important;height:27px!important;font-size:16px!important}
+  .formation-settings-dialog .bcu-pause-sound-icon .bi{font-size:16px!important}
+  .formation-settings-dialog .bcu-pause-sound-text strong{font-size:.74rem!important}
+  .formation-settings-dialog .bcu-pause-sound-text span{font-size:.58rem!important}
+  .formation-settings-footer{padding-top:5px}
+  .formation-settings-credit{font-size:.62rem}
+  .formation-settings-discord{min-height:26px;padding:0 10px;border-width:2px;font-size:.66rem}
+}

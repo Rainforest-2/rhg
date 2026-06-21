@@ -169,7 +169,7 @@ export class FormationEditor {
         const next = setting.getAttribute('aria-checked') !== 'true';
         BattleSpeedControl.setFeatureEnabled(next);
         this.onSettingChanged('bcu-speed-control', next);
-        this.setHint(next ? 'スピードアップ機能: ON' : 'スピードアップ機能: OFF');
+        this.setHint(next ? 'バトルスピード8倍: ON' : 'バトルスピード8倍: OFF');
         this.renderSettingsOverlay();
       }
       if (setting.dataset.setting === 'audio-muted') {
@@ -747,10 +747,10 @@ export class FormationEditor {
     list.innerHTML = `<section class='formation-settings-group' aria-label='バトル設定'>
       <div class='formation-settings-group-head'><span>バトル</span><strong>操作</strong></div>
       <div class='formation-settings-row'>
-        <div class='label'><strong>スピードアップ</strong><span>戦闘中に倍速ボタンを表示します</span></div>
+        <div class='label'><strong>バトルスピード8倍</strong><span>OFFでも1/2/3/4倍は常時切替できます</span></div>
         <div class='formation-setting-control'>
           <span class='formation-setting-state'>${speedOn ? 'ON' : 'OFF'}</span>
-          <button type='button' role='switch' class='formation-setting-toggle' data-setting='bcu-speed-control' aria-checked='${speedOn ? 'true' : 'false'}' aria-label='スピードアップを切り替え'></button>
+          <button type='button' role='switch' class='formation-setting-toggle' data-setting='bcu-speed-control' aria-checked='${speedOn ? 'true' : 'false'}' aria-label='バトルスピード8倍を切り替え'></button>
         </div>
       </div>
     </section>

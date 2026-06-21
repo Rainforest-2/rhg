@@ -4,7 +4,7 @@
 // Guards:
 //  1. AudioSettings exposes the persisted BGM/SE/mute keys, defaults and subscribe API.
 //  2. BattlePauseMenu renders the BGM/SE on/off buttons, resume and abort actions,
-//     uses the stage-map font, animates open/close, and references the mirrored
+//     uses the Oedo font, animates open/close, and references the mirrored
 //     option atlas.
 //  3. The PreviewApp pause/page-transition patches install the shared pause gate,
 //     abort routine and battle/formation transition classes, and are imported from main.js.
@@ -40,9 +40,10 @@ check(/export const AudioSettings/.test(audio), 'AudioSettings: missing singleto
 // 2. BattlePauseMenu UI
 const menu = await read('js/ui/BattlePauseMenu.js');
 check(menu.includes("'./public/assets/ui/battle-option-atlas.png'") || menu.includes('battle-option-atlas.png'), 'BattlePauseMenu: must reference mirrored option atlas');
-for (const piece of ['BcuStageFont', 'stage_font.otf', 'bcu-pause-sound-grid', 'bcu-pause-bgm', 'bcu-pause-se', 'bi-music-note-beamed', 'bi-volume-up-fill', 'bcu-pause-btn resume', 'bcu-pause-btn abort', 'setBgmVolume', 'setSeVolume', 'setMuted', 'is-opening', 'is-closing']) {
+for (const piece of ['OedoPauseFont', 'FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf', 'bcu-pause-sound-grid', 'bcu-pause-bgm', 'bcu-pause-se', 'bi-music-note-beamed', 'bi-volume-up-fill', 'bcu-pause-btn resume', 'bcu-pause-btn abort', 'bcu-pause-panel-main', 'is-confirming', 'setBgmVolume', 'setSeVolume', 'setMuted', 'is-opening', 'is-closing']) {
   check(menu.includes(piece), `BattlePauseMenu: missing "${piece}"`);
 }
+check(menu.includes('top:50%') && menu.includes('translateY(-50%) scale'), 'BattlePauseMenu: confirm prompt should be centered, not appended downward');
 check(menu.includes('メインメニューに戻る'), 'BattlePauseMenu: missing メインメニューに戻る abort affordance');
 check(/from '\.\.\/audio\/AudioSettings\.js'/.test(menu), 'BattlePauseMenu: must import AudioSettings');
 check(!menu.includes('type="range"'), 'BattlePauseMenu: BGM/SE controls should be Battle Cats-style icon toggles, not range sliders');

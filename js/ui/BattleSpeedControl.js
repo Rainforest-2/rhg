@@ -9,7 +9,8 @@
 // existing asset to match BCU's look).
 //
 // Cycle order: 1x (gray) -> 2x (green) -> 3x (pink) -> 4x (purple) -> 1x.
-// The feature is gated by a persisted setting so it can be enabled/disabled.
+// A persisted setting unlocks the optional 8x navy-blue step:
+// 1x -> 2x -> 3x -> 4x -> 8x -> 1x.
 
 const FEATURE_SETTING_KEY = 'wanko-battle.battle-speed-control.enabled';
 
@@ -18,17 +19,22 @@ const SPEED_STEPS = Object.freeze([
   { multiplier: 1, disc: '#9aa0a6', label: '1x' }, // gray (default / normal speed)
   { multiplier: 2, disc: '#4caf50', label: '2x' }, // green
   { multiplier: 3, disc: '#ff5fa2', label: '3x' }, // pink
-  { multiplier: 4, disc: '#9c27b0', label: '4x' }  // purple
+  { multiplier: 4, disc: '#9c27b0', label: '4x' }, // purple
+  { multiplier: 8, disc: '#123a75', label: '8x', requiresEightSpeed: true } // navy-blue
 ]);
 
 function readFeatureEnabled() {
   try {
     const raw = globalThis.localStorage?.getItem(FEATURE_SETTING_KEY);
-    if (raw == null) return true; // available by default, matching BCU where speed is always present
+    if (raw == null) return false;
     return raw === '1' || raw === 'true';
   } catch {
-    return true;
+    return false;
   }
+}
+
+function availableSteps() {
+  return readFeatureEnabled() ? SPEED_STEPS : SPEED_STEPS.filter((step) => !step.requiresEightSpeed);
 }
 
 // BCU drawable/speedup.xml, viewport 58x58: outer black ring, colored disc, then
@@ -56,6 +62,7 @@ function injectStyle() {
 .bcu-speed-control svg{width:36px;height:36px}
 .bcu-speed-control .bcu-speed-disc{transition:fill .12s ease-out}
 .bcu-speed-control .bcu-speed-badge{position:absolute;right:-2px;bottom:-2px;min-width:16px;height:16px;padding:0 3px;display:grid;place-items:center;border:2px solid #000;border-radius:999px;background:#fff;color:#000;font-family:system-ui,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-weight:900;font-size:10px;line-height:1;pointer-events:none}
+.bcu-speed-control[data-speed='8'] .bcu-speed-badge{background:#123a75;color:#fff}
 @media (prefers-reduced-motion: reduce){.bcu-speed-control,.bcu-speed-control .bcu-speed-disc{transition:none}}
 `;
   document.head.appendChild(style);
@@ -72,6 +79,7 @@ export class BattleSpeedControl {
   constructor({ mount = null, onChange = null } = {}) {
     this.onChange = typeof onChange === 'function' ? onChange : () => {};
     this.stepIndex = 0;
+    this.currentMultiplier = 1;
     this.visible = false;
     this.el = null;
     this.badgeEl = null;
@@ -79,7 +87,8 @@ export class BattleSpeedControl {
     if (typeof document !== 'undefined') this._build(mount || document.body);
   }
 
-  get multiplier() { return SPEED_STEPS[this.stepIndex].multiplier; }
+  get steps() { return availableSteps(); }
+  get multiplier() { return this.currentMultiplier; }
 
   _build(mount) {
     injectStyle();
@@ -98,14 +107,20 @@ export class BattleSpeedControl {
   }
 
   _render() {
+    const steps = this.steps;
+    if (this.stepIndex >= steps.length) this.stepIndex = steps.length - 1;
+    const step = steps[this.stepIndex] || SPEED_STEPS[0];
+    this.currentMultiplier = step.multiplier;
     if (!this.el) return;
-    const step = SPEED_STEPS[this.stepIndex];
     if (this.discEl) this.discEl.setAttribute('fill', step.disc);
     if (this.badgeEl) this.badgeEl.textContent = step.label;
+    this.el.dataset.speed = String(step.multiplier);
+    this.el.setAttribute('aria-label', `戦闘スピード切替 ${step.label}`);
   }
 
   cycle() {
-    this.stepIndex = (this.stepIndex + 1) % SPEED_STEPS.length;
+    const steps = this.steps;
+    this.stepIndex = (this.stepIndex + 1) % steps.length;
     this._render();
     this.onChange(this.multiplier);
     return this.multiplier;
@@ -122,8 +137,10 @@ export class BattleSpeedControl {
   setVisible(visible) {
     this.visible = !!visible;
     if (!this.el) return;
-    const show = this.visible && BattleSpeedControl.isFeatureEnabled();
-    this.el.classList.toggle('is-visible', show);
+    const before = this.currentMultiplier;
+    this._render();
+    if (this.currentMultiplier !== before) this.onChange(this.currentMultiplier);
+    this.el.classList.toggle('is-visible', this.visible);
   }
 
   destroy() {

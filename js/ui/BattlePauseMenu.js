@@ -40,18 +40,20 @@ function injectStyle() {
   // old cold white/slate card that clashed with everything around it. Nyanko CSS
   // vars are reused with literal fallbacks so it still looks right standalone.
   style.textContent = `
-@font-face{font-family:"BcuStageFont";src:url("./public/assets/bcu/fonts/stage_font.otf") format("opentype");font-display:block}
+@font-face{font-family:"OedoPauseFont";src:url("./public/assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf") format("opentype");font-weight:900;font-style:normal;font-display:block}
 .bcu-pause-control{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));z-index:99972;width:52px;height:52px;padding:0;border:0;background:transparent;cursor:pointer;display:none;line-height:0;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));touch-action:manipulation;transition:transform .1s ease-out,filter .1s ease-out}
 .bcu-pause-control.is-visible{display:block}
 .bcu-pause-control:active{transform:translateY(2px) scale(.94);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)) brightness(.93)}
 .bcu-pause-control .bcu-pause-icon{display:block;width:52px;height:52px;background-image:url('${ATLAS_URL}');background-repeat:no-repeat;background-size:459.034px 459.034px;background-position:-398.966px -0.897px}
-.bcu-pause-overlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;background:rgba(24,13,5,.66);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);font-family:"BcuStageFont","FOT-大江戸勘亭流 Std E","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));letter-spacing:0}
+.bcu-pause-overlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;background:rgba(24,13,5,.66);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);font-family:"OedoPauseFont","FOT-大江戸勘亭流 Std E","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));letter-spacing:0}
 .bcu-pause-overlay.is-open{display:flex}
 .bcu-pause-overlay.is-opening{animation:bcuPauseScrimIn .16s ease-out both}
 .bcu-pause-overlay.is-closing{animation:bcuPauseScrimOut .14s cubic-bezier(.55,0,.85,.36) both}
-.bcu-pause-panel{width:min(430px,90vw);max-height:90vh;overflow:auto;background:linear-gradient(180deg,var(--nyanko-paper,#fff7cf),var(--nyanko-paper-2,#ffe9a4));border:4px solid var(--nyanko-black,#050505);border-radius:16px;box-shadow:0 8px 0 rgba(43,22,8,.9),0 20px 42px rgba(0,0,0,.46),inset 0 2px 0 rgba(255,255,255,.7);padding:clamp(14px,4vw,22px);display:grid;gap:clamp(12px,3vw,16px);color:#2a1606}
+.bcu-pause-panel{position:relative;width:min(430px,90vw);max-height:90vh;overflow:hidden;background:linear-gradient(180deg,var(--nyanko-paper,#fff7cf),var(--nyanko-paper-2,#ffe9a4));border:4px solid var(--nyanko-black,#050505);border-radius:16px;box-shadow:0 8px 0 rgba(43,22,8,.9),0 20px 42px rgba(0,0,0,.46),inset 0 2px 0 rgba(255,255,255,.7);padding:clamp(14px,4vw,22px);display:grid;gap:clamp(12px,3vw,16px);color:#2a1606}
+.bcu-pause-panel-main{display:grid;gap:clamp(12px,3vw,16px);min-height:0;overflow:auto}
 .bcu-pause-overlay.is-opening .bcu-pause-panel{animation:bcuPausePanelIn .18s cubic-bezier(.16,1,.3,1) both}
 .bcu-pause-overlay.is-closing .bcu-pause-panel{animation:bcuPausePanelOut .13s cubic-bezier(.55,0,.85,.36) both}
+.bcu-pause-panel.is-confirming .bcu-pause-panel-main{filter:saturate(.75) brightness(.82);pointer-events:none}
 .bcu-pause-title{margin:0;text-align:center;font-size:clamp(23px,5.5vw,33px);font-weight:900;letter-spacing:0;color:#2a1606;text-shadow:0 2px 0 rgba(255,255,255,.6)}
 .bcu-pause-section{display:grid;gap:12px;padding:13px;border:3px solid var(--nyanko-black,#050505);border-radius:12px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 4px 0 rgba(74,33,13,.35)}
 .bcu-pause-section>h3{margin:0 0 1px;font-size:clamp(16px,3.7vw,19px);font-weight:900;letter-spacing:0;color:#5f3716}
@@ -74,8 +76,9 @@ function injectStyle() {
 .bcu-pause-btn.abort{background:linear-gradient(180deg,#c9a978 0%,#9c6f3e 52%,#7a5326 100%);box-shadow:0 5px 0 #3c2710,inset 0 2px 0 rgba(255,255,255,.4);display:grid;place-items:center;padding:11px}
 .bcu-pause-btn.abort:active{box-shadow:0 2px 0 #3c2710,inset 0 2px 0 rgba(255,255,255,.35)}
 .bcu-pause-abort-label{width:220px;max-width:100%;height:47.638px;background-image:url('${ATLAS_URL}');background-repeat:no-repeat;background-size:443.465px 443.465px;background-position:-160.236px -274.567px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.4))}
-.bcu-pause-confirm{display:grid;gap:10px;padding:12px;border:3px dashed rgba(74,33,13,.55);border-radius:12px;background:#fffdf3;box-shadow:inset 0 2px 0 rgba(255,255,255,.7);animation:bcuPauseConfirmIn .12s ease-out both}
-.bcu-pause-confirm>p{margin:0;text-align:center;font-weight:900;font-size:clamp(15px,3.5vw,18px);color:#2a1606}
+.bcu-pause-confirm{position:absolute;left:16px;right:16px;top:50%;z-index:2;display:grid;gap:12px;padding:15px;border:4px solid #050505;border-radius:15px;background:linear-gradient(180deg,#fffdf3,#f3d88f);box-shadow:0 6px 0 #4a210d,0 18px 30px rgba(0,0,0,.34),inset 0 2px 0 rgba(255,255,255,.78);transform:translateY(-50%) scale(.98);opacity:0;pointer-events:none}
+.bcu-pause-confirm:not(.bcu-pause-hidden){animation:bcuPauseConfirmIn .13s cubic-bezier(.16,1,.3,1) both;pointer-events:auto}
+.bcu-pause-confirm>p{margin:0;text-align:center;font-weight:900;font-size:clamp(16px,3.6vw,20px);line-height:1.25;color:#2a1606}
 .bcu-pause-confirm-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bcu-pause-confirm-row button{appearance:none;border:3px solid var(--nyanko-black,#050505);border-radius:999px;font-family:inherit;font-weight:900;font-size:clamp(15px,3.4vw,18px);padding:10px;cursor:pointer;touch-action:manipulation;text-shadow:0 1px 0 rgba(0,0,0,.25)}
 .bcu-pause-confirm-row button:active{transform:translateY(3px)}
@@ -86,7 +89,7 @@ function injectStyle() {
 @keyframes bcuPauseScrimOut{from{opacity:1}to{opacity:0}}
 @keyframes bcuPausePanelIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes bcuPausePanelOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.985) translateY(5px)}}
-@keyframes bcuPauseConfirmIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bcuPauseConfirmIn{from{opacity:0;transform:translateY(-50%) scale(.94)}to{opacity:1;transform:translateY(-50%) scale(1)}}
 @media (max-width:420px){.bcu-pause-sound-grid{gap:8px}.bcu-pause-sound{padding:8px;gap:7px}.bcu-pause-sound-icon{width:36px;height:36px;font-size:22px}.bcu-pause-abort-label{width:205px;height:44.392px;background-size:413.224px 413.224px;background-position:-149.306px -255.831px}}
 @media (prefers-reduced-motion: reduce){.bcu-pause-control,.bcu-pause-btn{transition:none}.bcu-pause-overlay.is-opening,.bcu-pause-overlay.is-closing,.bcu-pause-overlay.is-opening .bcu-pause-panel,.bcu-pause-overlay.is-closing .bcu-pause-panel,.bcu-pause-confirm{animation:none!important}}
 `;
@@ -132,25 +135,27 @@ export class BattlePauseMenu {
     overlay.setAttribute('aria-label', '一時停止メニュー');
     overlay.innerHTML = `
       <div class="bcu-pause-panel">
-        <h2 class="bcu-pause-title">一時停止</h2>
-        <div class="bcu-pause-section">
-          <h3>サウンド設定</h3>
-          <div class="bcu-pause-sound-grid">
-            <button type="button" class="bcu-pause-sound bcu-pause-bgm" aria-label="曲(BGM)を切り替え">
-              <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-music-note-beamed"></i></span>
-              <span class="bcu-pause-sound-text"><strong>曲</strong><span class="bcu-pause-bgm-val">ON</span></span>
-            </button>
-            <button type="button" class="bcu-pause-sound bcu-pause-se" aria-label="効果音(SE)を切り替え">
-              <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-volume-up-fill"></i></span>
-              <span class="bcu-pause-sound-text"><strong>効果音</strong><span class="bcu-pause-se-val">ON</span></span>
+        <div class="bcu-pause-panel-main">
+          <h2 class="bcu-pause-title">一時停止</h2>
+          <div class="bcu-pause-section">
+            <h3>サウンド設定</h3>
+            <div class="bcu-pause-sound-grid">
+              <button type="button" class="bcu-pause-sound bcu-pause-bgm" aria-label="曲(BGM)を切り替え">
+                <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-music-note-beamed"></i></span>
+                <span class="bcu-pause-sound-text"><strong>曲</strong><span class="bcu-pause-bgm-val">ON</span></span>
+              </button>
+              <button type="button" class="bcu-pause-sound bcu-pause-se" aria-label="効果音(SE)を切り替え">
+                <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-volume-up-fill"></i></span>
+                <span class="bcu-pause-sound-text"><strong>効果音</strong><span class="bcu-pause-se-val">ON</span></span>
+              </button>
+            </div>
+          </div>
+          <div class="bcu-pause-actions">
+            <button type="button" class="bcu-pause-btn resume">バトルにもどる</button>
+            <button type="button" class="bcu-pause-btn abort" aria-label="メインメニューに戻る（戦闘を中止）">
+              <span class="bcu-pause-abort-label" aria-hidden="true"></span>
             </button>
           </div>
-        </div>
-        <div class="bcu-pause-actions">
-          <button type="button" class="bcu-pause-btn resume">バトルにもどる</button>
-          <button type="button" class="bcu-pause-btn abort" aria-label="メインメニューに戻る（戦闘を中止）">
-            <span class="bcu-pause-abort-label" aria-hidden="true"></span>
-          </button>
         </div>
         <div class="bcu-pause-confirm bcu-pause-hidden">
           <p>戦闘を中止してメインメニューに戻りますか？</p>
@@ -213,6 +218,7 @@ export class BattlePauseMenu {
 
   _showConfirm(show) {
     this.confirmEl?.classList.toggle('bcu-pause-hidden', !show);
+    this.overlay?.querySelector('.bcu-pause-panel')?.classList.toggle('is-confirming', !!show);
   }
 
   // Whether a battle is currently running; gates the floating option button.

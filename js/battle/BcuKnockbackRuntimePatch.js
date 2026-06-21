@@ -19,7 +19,7 @@ function stageLenForActor(actor) {
   return finite(actor?.scene?.stage?.runtime?.stageLen, finite(actor?.scene?.stage?.definition?.stageLen, 0));
 }
 
-function getActorLimit(actor) {
+export function getActorLimit(actor) {
   const raw = actor?.rawStats || {};
   const side = actor?.side;
   const pos = finite(actor?.x, 0);
@@ -40,7 +40,7 @@ function easeOut(time, start, end, duration, dire) {
   return -end * t * (t - 2) * dire + start;
 }
 
-function kbMove(actor, mov) {
+export function kbMove(actor, mov) {
   const lim = getActorLimit(actor);
   const step = Math.min(Math.max(0, finite(mov, 0)), lim);
   actor.x -= step * finite(actor.direction, 1);

@@ -1,3 +1,5 @@
+import { applyCrownToEnemyRows } from './bcu-runtime/BcuStageCrownRuntime.js';
+
 const DEFAULT_STAGE_LEN = 4000;
 const DEFAULT_ENEMY_BASE_X = 800;
 const DEFAULT_ENEMY_SPAWN_X = 700;
@@ -80,8 +82,17 @@ export class StageRuntime {
     this.bossMusicHpThresholdPercent = toFiniteNumber(stageDefinition?.bossMusicHpThresholdPercent, null);
     this.mapId = stageDefinition?.mapId ?? null;
     this.stageId = stageDefinition?.stageId ?? null;
-    this.enemyRows = Array.isArray(stageDefinition?.enemyRows) ? stageDefinition.enemyRows : [];
-    this.sourceEnemyRows = Array.isArray(stageDefinition?.runtime?.sourceEnemyRows) ? stageDefinition.runtime.sourceEnemyRows : this.enemyRows;
+    // BCU EStage crown magnification: the selected crown (星/冠) scales every enemy row's HP & ATK
+    // magnification by stars[star]/100. ★1 (100%) leaves rows untouched. The UI resolves the map's
+    // stars[] + selected crown into a percentage and passes it as options.crownMagnificationPercent.
+    const rawEnemyRows = Array.isArray(stageDefinition?.enemyRows) ? stageDefinition.enemyRows : [];
+    this.crownMagnificationPercent = toFiniteNumber(
+      options.crownMagnificationPercent,
+      toFiniteNumber(stageDefinition?.crownMagnificationPercent, 100)
+    ) || 100;
+    this.crownStarIndex = toFiniteNumber(options.crownStarIndex, toFiniteNumber(stageDefinition?.crownStarIndex, 0)) || 0;
+    this.enemyRows = applyCrownToEnemyRows(rawEnemyRows, this.crownMagnificationPercent);
+    this.sourceEnemyRows = Array.isArray(stageDefinition?.runtime?.sourceEnemyRows) ? stageDefinition.runtime.sourceEnemyRows : rawEnemyRows;
 
     this.playerBase = makeBaseRuntime({
       side: 'dog-player',
@@ -234,6 +245,8 @@ export class StageRuntime {
       bossMusicHpThresholdPercent: this.bossMusicHpThresholdPercent,
       mapId: this.mapId,
       stageId: this.stageId,
+      crownMagnificationPercent: this.crownMagnificationPercent,
+      crownStarIndex: this.crownStarIndex,
       enemyRows: this.enemyRows,
       sourceEnemyRows: this.sourceEnemyRows,
       playerBase: this.playerBase,

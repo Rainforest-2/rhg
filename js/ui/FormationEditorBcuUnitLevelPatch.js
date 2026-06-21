@@ -23,7 +23,7 @@ const ORB_SLOT_COUNT = 1;
 const ORB_TYPE_OPTIONS = Object.freeze([
   { code: 0, type: null, label: 'なし' },
   { code: 1, type: ORB_ID.ATK, label: '攻撃' },
-  { code: 2, type: ORB_ID.RES, label: '体力' },
+  { code: 2, type: ORB_ID.RES, label: 'ダメ軽減' },
   { code: 3, type: ORB_ID.STRONG, label: 'めっぽう強い' },
   { code: 4, type: ORB_ID.MASSIVE, label: '超ダメージ' },
   { code: 5, type: ORB_ID.RESISTANT, label: '打たれ強い' }
@@ -38,7 +38,6 @@ const ORB_TRAIT_OPTIONS = Object.freeze([
   { traitIndex: 5, label: 'エイリアン' },
   { traitIndex: 6, label: 'ゾンビ' },
   { traitIndex: 7, label: '古代種' },
-  { traitIndex: 8, label: '白' },
   { traitIndex: 11, label: '悪魔' }
 ]);
 const ORB_TRAIT_LABELS = Object.freeze(ORB_TRAIT_OPTIONS.map((o) => o.label));
@@ -216,6 +215,7 @@ html body.nyanko-ui-polish .formation-tuning-orbs{display:grid;gap:8px;padding-t
 html body.nyanko-ui-polish .formation-tuning-orb-slot{display:grid;gap:8px;padding:9px;border:3px solid #000;border-radius:14px;background:#fff1b8}
 html body.nyanko-ui-polish .formation-tuning-orb-slot-title{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#1b1005;-webkit-text-fill-color:#1b1005;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.78rem;font-weight:1000;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-orb-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html body.nyanko-ui-polish .formation-tuning-orb-note{display:block;color:#6a3a12;-webkit-text-fill-color:#6a3a12;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.66rem;font-weight:900;line-height:1.3;text-shadow:none}
 html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper{grid-template-columns:42px minmax(48px,1fr) 42px}
 html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper .formation-tuning-btn[data-delta='-5'],html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-stepper .formation-tuning-btn[data-delta='5']{display:none}
 html body.nyanko-ui-polish .formation-tuning-orb-grid .formation-tuning-readout{height:42px;font-size:1.16rem}
@@ -288,6 +288,22 @@ function orbTypeOption(code) {
   return ORB_TYPE_OPTIONS.find((o) => o.code === Number(code)) || ORB_TYPE_OPTIONS[0];
 }
 
+function selectedOrbTraitIndex(orb) {
+  const option = ORB_TRAIT_OPTIONS[clampInt(orb?.traitIndex, 0, ORB_TRAIT_OPTIONS.length - 1)] || ORB_TRAIT_OPTIONS[0];
+  return option.traitIndex;
+}
+
+function normalizeDraftOrb(orb) {
+  if (!orb) return { typeCode: 0, traitIndex: 0, grade: 0 };
+  orb.traitIndex = clampInt(orb.traitIndex, 0, ORB_TRAIT_OPTIONS.length - 1);
+  orb.grade = clampInt(orb.grade, 0, ORB_GRADE_LABELS.length - 1);
+  orb.typeCode = clampInt(orb.typeCode, 0, ORB_TYPE_OPTIONS.length - 1);
+  if (selectedOrbTraitIndex(orb) === 3 && orb.typeCode !== 0 && orbTypeOption(orb.typeCode).type !== ORB_ID.RES) {
+    orb.typeCode = ORB_TYPE_OPTIONS.find((o) => o.type === ORB_ID.RES)?.code || 0;
+  }
+  return orb;
+}
+
 function traitOptionIndexFromMask(mask) {
   const value = Math.trunc(Number(mask) || 0);
   for (let i = 0; i < ORB_TRAIT_NAMES.length - 1; i++) {
@@ -309,6 +325,7 @@ function savedOrbToDraft(triple) {
 }
 
 function draftOrbToTriple(orb) {
+  normalizeDraftOrb(orb);
   const opt = orbTypeOption(orb?.typeCode);
   if (opt.type == null) return null;
   const traitOption = ORB_TRAIT_OPTIONS[clampInt(orb?.traitIndex, 0, ORB_TRAIT_OPTIONS.length - 1)] || ORB_TRAIT_OPTIONS[0];
@@ -333,7 +350,9 @@ function orbValueLabel(kind, value) {
 function renderOrbSection(draft) {
   const orbs = ensureDraftOrbs(draft);
   const slots = orbs.map((orb, i) => {
+    normalizeDraftOrb(orb);
     const typeLabel = orbValueLabel('type', orb.typeCode);
+    const metalOnly = selectedOrbTraitIndex(orb) === 3;
     return `<section class='formation-tuning-orb-slot'>
       <div class='formation-tuning-orb-slot-title'><strong>本能玉 ${i + 1}</strong><span>${esc(typeLabel)}</span></div>
       <div class='formation-tuning-orb-grid'>
@@ -341,6 +360,7 @@ function renderOrbSection(draft) {
         ${stepper({ key: `orb-${i}-trait`, value: orb.traitIndex, min: 0, max: ORB_TRAIT_LABELS.length - 1, label: '属性', maxLabel: orbValueLabel('trait', orb.traitIndex), deltas: [-5, -1, 1, 5] })}
         ${stepper({ key: `orb-${i}-grade`, value: orb.grade, min: 0, max: ORB_GRADE_LABELS.length - 1, label: '等級', maxLabel: orbValueLabel('grade', orb.grade), deltas: [-5, -1, 1, 5] })}
       </div>
+      <small class='formation-tuning-orb-note'>無属性の本能玉はありません。${metalOnly ? 'メタルはダメージ軽減のみです。' : ''}</small>
     </section>`;
   }).join('');
   const equipped = orbs.filter((orb) => orbTypeOption(orb.typeCode).type != null).length;
@@ -615,6 +635,7 @@ function stepDraft(editor, key, delta) {
         const field = m[2] === 'type' ? 'typeCode' : m[2] === 'trait' ? 'traitIndex' : 'grade';
         const max = m[2] === 'type' ? ORB_TYPE_OPTIONS.length - 1 : m[2] === 'trait' ? ORB_TRAIT_LABELS.length - 1 : ORB_GRADE_LABELS.length - 1;
         orbs[idx][field] = clampInt((orbs[idx][field] ?? 0) + delta, 0, max);
+        normalizeDraftOrb(orbs[idx]);
       }
     }
   } else if (key === 'percent') {
@@ -647,6 +668,7 @@ function setDraftInput(editor, key, value, { live = false } = {}) {
         const field = m[2] === 'type' ? 'typeCode' : m[2] === 'trait' ? 'traitIndex' : 'grade';
         const max = m[2] === 'type' ? ORB_TYPE_OPTIONS.length - 1 : m[2] === 'trait' ? ORB_TRAIT_LABELS.length - 1 : ORB_GRADE_LABELS.length - 1;
         orbs[idx][field] = clampInt(value, 0, max);
+        normalizeDraftOrb(orbs[idx]);
       }
     }
   } else if (key === 'percent') {

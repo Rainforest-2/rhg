@@ -1,8 +1,8 @@
 // Deterministic guard for the BCU speed-up battle control:
 //  - BattleSimulationClock honors the speed multiplier in bcu-no-catchup mode
-//    (1x stays single-step / no wall-clock catch-up; 2x/3x/4x advance faster).
-//  - BattleSpeedControl exposes the persisted feature flag and 1x->2x->3x->4x->1x
-//    cycle with the hand-tinted gray/green/pink/purple disc colors.
+//    (1x stays single-step / no wall-clock catch-up; 2x/3x/4x/8x advance faster).
+//  - BattleSpeedControl always exposes 1x->2x->3x->4x and uses the persisted flag
+//    only to unlock the navy-blue 8x step.
 import { BattleSimulationClock } from '../js/preview/BattleSimulationClock.js';
 
 const checks = [];
@@ -26,11 +26,12 @@ function simSteps(mult, frames = 60, fps = 60) {
   for (let i = 0; i < frames; i++) { t += 1000 / fps; clock.step(t, mult, () => { steps += 1; }); }
   return steps;
 }
-const s1 = simSteps(1); const s2 = simSteps(2); const s3 = simSteps(3); const s4 = simSteps(4);
+const s1 = simSteps(1); const s2 = simSteps(2); const s3 = simSteps(3); const s4 = simSteps(4); const s8 = simSteps(8);
 check('1x ~= 30 steps/sec', Math.abs(s1 - 30) <= 2, s1);
 check('2x ~= 2x of 1x', s2 >= s1 * 1.8, { s1, s2 });
 check('3x > 2x', s3 > s2, { s2, s3 });
 check('4x ~= 4x of 1x', s4 >= s1 * 3.5, { s1, s4 });
+check('8x > 4x', s8 > s4, { s4, s8 });
 
 // ---- BattleSpeedControl feature flag + cycle/colors ----
 const store = new Map();
@@ -40,11 +41,9 @@ globalThis.localStorage = {
   removeItem: (k) => store.delete(k)
 };
 const { BattleSpeedControl } = await import('../js/ui/BattleSpeedControl.js');
-check('feature enabled by default', BattleSpeedControl.isFeatureEnabled() === true);
+check('8x disabled by default', BattleSpeedControl.isFeatureEnabled() === false);
 BattleSpeedControl.setFeatureEnabled(false);
-check('feature flag persists off', store.get(BattleSpeedControl.SETTING_KEY) === '0' && BattleSpeedControl.isFeatureEnabled() === false);
-BattleSpeedControl.setFeatureEnabled(true);
-check('feature flag persists on', BattleSpeedControl.isFeatureEnabled() === true);
+check('8x flag persists off', store.get(BattleSpeedControl.SETTING_KEY) === '0' && BattleSpeedControl.isFeatureEnabled() === false);
 
 // headless cycle/colors (no document -> el is null, state logic still runs)
 const seen = [];
@@ -52,7 +51,19 @@ const ctrl = new BattleSpeedControl({ onChange: (m) => seen.push(m) });
 check('control starts at 1x', ctrl.multiplier === 1);
 const cycle = [ctrl.multiplier];
 for (let i = 0; i < 4; i++) cycle.push(ctrl.cycle());
-check('cycle is 1->2->3->4->1', JSON.stringify(cycle) === JSON.stringify([1, 2, 3, 4, 1]), cycle);
+check('default cycle is 1->2->3->4->1', JSON.stringify(cycle) === JSON.stringify([1, 2, 3, 4, 1]), cycle);
+BattleSpeedControl.setFeatureEnabled(true);
+check('8x flag persists on', BattleSpeedControl.isFeatureEnabled() === true);
+ctrl.reset();
+const cycle8 = [ctrl.multiplier];
+for (let i = 0; i < 5; i++) cycle8.push(ctrl.cycle());
+check('8x-enabled cycle is 1->2->3->4->8->1', JSON.stringify(cycle8) === JSON.stringify([1, 2, 3, 4, 8, 1]), cycle8);
+ctrl.stepIndex = 4;
+ctrl._render();
+check('manual 8x state is reachable when enabled', ctrl.multiplier === 8, ctrl.multiplier);
+BattleSpeedControl.setFeatureEnabled(false);
+ctrl._render();
+check('turning 8x off clamps current speed to 4x', ctrl.multiplier === 4, ctrl.multiplier);
 ctrl.cycle(); ctrl.reset();
 check('reset returns to 1x', ctrl.multiplier === 1);
 

@@ -39,6 +39,18 @@ function bcuStageRespawnTime(stageRuntime = {}, random = Math.random) {
   return bcuRandomRange(min, max, random);
 }
 
+// BCU EEnemy.java:36 / EUnit.java:69:
+//   currentLayer = spawnLayer = d0 == d1 ? d0 : d0 + (int)(b.r.nextFloat() * (d1 - d0 + 1));
+// The layer draw consumes the scene CopRand and, inside EStage.allow(), happens AFTER the row
+// respawn draw and BEFORE the StageBasis global respawn draw.
+function computeBcuSpawnLayer(row = {}, random = Math.random) {
+  const d0 = Math.floor(toFiniteNumber(row.layerMin ?? row.frontLayer ?? row.layer_0, 0));
+  const d1 = Math.floor(toFiniteNumber(row.layerMax ?? row.backLayer ?? row.layer_1, d0));
+  if (d0 === d1) return { currentLayer: d0, drewRandom: false };
+  const rv = Math.max(0, Math.min(0.999999999, Number(random?.()) || 0));
+  return { currentLayer: d0 + Math.floor(rv * (d1 - d0 + 1)), drewRandom: true };
+}
+
 function resolveKillCounter(rowState, context) {
   const rowIndex = rowState?.rowIndex;
   if (context?.killCounterByRowIndex && Number.isFinite(Number(context.killCounterByRowIndex[rowIndex]))) {
@@ -172,8 +184,9 @@ export class BcuStageSpawnRuntime {
     this.lastTickFrame = 0;
     this.spawnGateSource = 'BCU StageBasis.respawnTime / EStage.allow single-spawn gate';
     const rand = typeof this.options?.random === 'function' ? this.options.random : (typeof this.stageRuntime?.random === 'function' ? this.stageRuntime.random : Math.random);
-    this.globalRespawnTime = bcuStageRespawnTime(this.stageRuntime, rand) - 1;
-    this.lastGlobalRespawnDebug = { source: this.spawnGateSource, initialized: this.globalRespawnTime };
+    // BCU StageBasis constructor order: est.assign(this) draws each row's first-frame random
+    // (in row order) FIRST, then the global respawnTime (st.minSpawn..maxSpawn) is drawn. Keep
+    // that order so the scene CopRand consumption matches BCU exactly.
     const map = new Map(stageEnemyUnitDefs.map((u) => [u?.stageSpawn?.rowIndex, u]));
     this.rows = (this.stageRuntime.enemyRows || []).map((r) => {
       const firstFrameMin = Number.isFinite(r?.firstFrameMin) ? Math.floor(r.firstFrameMin) : (Number.isFinite(r?.firstFrame) ? Math.floor(r.firstFrame) : 0);
@@ -203,9 +216,13 @@ export class BcuStageSpawnRuntime {
         lastBlockedReason: null,
         lastSpawnResolveDebug: null,
         firstFrameResolvedDebug: { firstFrameMin, firstFrameMax, firstFrameResolved: firstResolved, negativeFirstDelayFrames },
+        lastSpawnLayer: null,
         warnings: []
       };
     });
+    // Global respawn time is drawn AFTER all row first-frames (BCU StageBasis constructor order).
+    this.globalRespawnTime = bcuStageRespawnTime(this.stageRuntime, rand) - 1;
+    this.lastGlobalRespawnDebug = { source: this.spawnGateSource, initialized: this.globalRespawnTime };
   }
 
   tick(frameOrMs, context = {}) {
@@ -364,28 +381,36 @@ export class BcuStageSpawnRuntime {
     rowState.waitingForMaxEnemySlot = false;
     rowState.lastBlockedReason = null;
 
+    // BCU EStage.allow() draws the row respawn (nextFloat) and then EEnemy.getEntity draws the
+    // spawn layer (nextFloat); StageBasis then draws the global respawn (nextFloat). Preserve
+    // this exact draw order: row respawn -> spawn layer -> global respawn.
+    const isInfinite = rowState.row?.isInfinite === true || toFiniteNumber(rowState.row?.count, 0) === 0;
+    const count = Math.max(0, toFiniteNumber(rowState.row?.count, 0));
+    const min = Math.max(0, toFiniteNumber(rowState.row?.respawnMinFrame, 0));
+    const max = Math.max(min, toFiniteNumber(rowState.row?.respawnMaxFrame, min));
+    // 1) row respawn draw (only when min < max, matching BCU `respawn_0 >= respawn_1 ? ... : draw`)
+    const interval = min >= max ? min : Math.floor(min + Math.max(0, Math.min(0.999999999, random())) * (max - min));
+    // 2) spawn layer draw (EEnemy/EUnit layer; consumes CopRand only when layerMin != layerMax)
+    const layer = computeBcuSpawnLayer(rowState.row || event?.row || event || {}, random);
+    rowState.lastSpawnLayer = layer.currentLayer;
+    // 3) global respawn draw (StageBasis respawnTime reset)
     const nextGlobal = bcuStageRespawnTime(this.stageRuntime, random);
     this.globalRespawnTime = nextGlobal - 1;
     this.lastGlobalRespawnDebug = { source: this.spawnGateSource, spawnFrame, nextGlobalRespawnTimeRaw: nextGlobal, nextGlobalRespawnTimeAfterCurrentTickDecrement: this.globalRespawnTime };
 
-    const isInfinite = rowState.row?.isInfinite === true || toFiniteNumber(rowState.row?.count, 0) === 0;
-    const count = Math.max(0, toFiniteNumber(rowState.row?.count, 0));
     if (!isInfinite && rowState.spawnedCount >= count) {
       rowState.exhausted = true;
       rowState.done = true;
       rowState.nextFrame = spawnFrame;
       rowState.nextAtFrame = rowState.nextFrame;
-      return true;
+      return { ok: true, currentLayer: layer.currentLayer, spawnLayerDrewRandom: layer.drewRandom };
     }
 
-    const min = Math.max(0, toFiniteNumber(rowState.row?.respawnMinFrame, 0));
-    const max = Math.max(min, toFiniteNumber(rowState.row?.respawnMaxFrame, min));
-    const interval = min >= max ? min : Math.floor(min + Math.max(0, Math.min(0.999999999, random())) * (max - min));
     rowState.nextFrame = spawnFrame + interval + 1;
     rowState.nextAtFrame = rowState.nextFrame;
     rowState.exhausted = false;
     rowState.done = false;
-    return true;
+    return { ok: true, currentLayer: layer.currentLayer, spawnLayerDrewRandom: layer.drewRandom };
   }
 
   rejectSpawn(eventOrRowIndex, reason = 'spawn-rejected', options = {}) {

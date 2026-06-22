@@ -1,9 +1,9 @@
 import { BattleScene } from './BattleScene.js';
+import './BattleSceneBcuTouchPatch.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { KBRuntime } from './KBRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
-import { BattleCombatCoordinateRuntime } from './BattleCombatCoordinateRuntime.js';
 import { isBcuWarpLifecycleActive } from './bcu-runtime/BcuWarpLifecycleRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.stagebasis-tick-patch.v5');
@@ -25,11 +25,6 @@ function isActorActive(actor) {
   return !!actor && actor.state !== 'dead' && !!actor.isAlive?.();
 }
 
-function getPos(actor) {
-  const n = BattleCombatCoordinateRuntime.getEntityPosBcu(actor);
-  return Number.isFinite(n) ? n : (Number.isFinite(actor?.x) ? actor.x : 0);
-}
-
 function getDire(actor) {
   if (Number.isFinite(actor?.direction)) return actor.direction;
   return actor?.side === 'dog-player' ? -1 : 1;
@@ -39,28 +34,19 @@ function getLayer(actor) {
   return Number.isFinite(actor?.currentLayer) ? actor.currentLayer : 0;
 }
 
+// BCU StageBasis.updateEntities: `le.sort(Comparator.comparingInt(e -> e.dire))`.
+// Java's List.sort is a STABLE sort, so entities with the same direction keep their relative
+// (insertion) order. Do NOT add pos/instanceId tiebreakers — that would reorder same-direction
+// entities differently from BCU. JS Array.prototype.sort is also stable, so returning 0 on a
+// direction tie preserves insertion order, matching BCU exactly.
 function sortForBcuUpdate(actors = []) {
-  actors.sort((a, b) => {
-    const ad = getDire(a);
-    const bd = getDire(b);
-    if (ad !== bd) return ad - bd;
-    const ap = getPos(a);
-    const bp = getPos(b);
-    if (ap !== bp) return ap - bp;
-    return String(a?.instanceId || '').localeCompare(String(b?.instanceId || ''));
-  });
+  actors.sort((a, b) => getDire(a) - getDire(b));
 }
 
+// BCU StageBasis.updateEntities: `le.sort(Comparator.comparingInt(e -> e.currentLayer))` — a
+// stable sort by currentLayer only. Same stability contract as above.
 function sortForBcuLayer(actors = []) {
-  actors.sort((a, b) => {
-    const al = getLayer(a);
-    const bl = getLayer(b);
-    if (al !== bl) return al - bl;
-    const ap = getPos(a);
-    const bp = getPos(b);
-    if (ap !== bp) return ap - bp;
-    return String(a?.instanceId || '').localeCompare(String(b?.instanceId || ''));
-  });
+  actors.sort((a, b) => getLayer(a) - getLayer(b));
 }
 
 function moveActor(scene, actor, dt) {
@@ -184,29 +170,30 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         // no normal walk movement or animation while underground.
         if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
         if (isBcuWarpInterrupted(actor)) continue;
+        // BCU Entity.checkTouch(): `touch` (anything in range) drives stop/idle vs walk;
+        // `touchEnemy` (Target Only trait gate) drives attack-start. Selection target is the
+        // nominal walk-direction target; the real attack target is re-captured at hit time.
+        const touchState = this.computeBcuTouchState(actor);
         const selection = this.findTargetForActor(actor);
-        this.__bcuTargetSelections.set(actor, selection);
-        if (!selection) {
+        const merged = selection
+          ? { ...selection, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch }
+          : { target: null, targetType: null, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch };
+        this.__bcuTargetSelections.set(actor, merged);
+        if (!touchState.touch) {
+          // BCU update2: !checkTouch() => walking = true, walk anim. update(): walking && !checkTouch() => move.
           if (actor.state === 'attack-wait') {
             actor.setState('move');
             actor.setAnimation(actor.moveAnimId, 'move', true);
-          }
-          if (actor.state === 'move') moveActor(this, actor, scaledDt);
-          continue;
-        }
-        const { target, targetType } = selection;
-        if (!this.canAttack(actor, target)) {
-          if (actor.state === 'attack-wait') {
-            actor.setState('move');
-            actor.setAnimation(actor.moveAnimId, 'move', false);
           } else if (actor.state !== 'move') {
             actor.setState('move');
             actor.setAnimation(actor.moveAnimId, 'move');
           }
           moveActor(this, actor, scaledDt);
-          this.__bcuTargetSelections.set(actor, { target, targetType, canAttack: false });
-        } else {
-          this.__bcuTargetSelections.set(actor, { target, targetType, canAttack: true });
+        } else if (actor.state === 'move') {
+          // BCU update2: checkTouch() => walking = false, idle anim. Do NOT move this frame,
+          // even if touchEnemy is false (Target Only stopped in front of an incompatible enemy).
+          actor.setState('attack-wait');
+          actor.setAnimation(actor.idleAnimId || actor.moveAnimId, 'attack-wait', true);
         }
       }
     });
@@ -218,8 +205,11 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         if (actor.state === 'knockback' || actor.state === 'attack' || actor.state === 'burrow' || actor.bcuBurrow?.active) continue;
         if (isBcuWarpInterrupted(actor)) continue;
         if (this.__bcuTargetSelections.has(actor)) continue;
+        const touchState = this.computeBcuTouchState(actor);
         const selection = this.findTargetForActor(actor);
-        this.__bcuTargetSelections.set(actor, selection ? { ...selection, canAttack: this.canAttack(actor, selection.target) } : null);
+        this.__bcuTargetSelections.set(actor, selection
+          ? { ...selection, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch }
+          : { target: null, targetType: null, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch });
       }
     });
 
@@ -231,22 +221,28 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         if (isBcuWarpInterrupted(actor)) continue;
         if (isBcuStopped(this, actor)) continue;
         const selection = getSelection(this, actor);
-        if (!selection?.target) continue;
-        const { target, targetType } = selection;
-        const canAttack = selection.canAttack !== false && this.canAttack(actor, target);
+        if (!selection) continue;
+        // BCU update2: attack-start gate is `waitTime == 0 && touchEnemy && atksLeft != 0`.
+        // touchEnemy already encodes the Target Only trait gate; do NOT use raw geometric
+        // canAttack here, or a Target Only unit would attack incompatible enemies.
+        const touchEnemy = selection.touchEnemy === true;
+        // Prefer a trait-compatible attack target for animation; the real damage target is
+        // re-captured at hit time, so this only affects which way the attack faces.
+        const chosen = selection.attackTarget || (selection.target ? { target: selection.target, targetType: selection.targetType } : null);
+        if (touchEnemy && !chosen) continue;
         if (actor.state === 'attack-wait') {
           const ready = attackWaitReady(actor, this.timeMs);
-          if (ready && canAttack) {
-            this.startActorAttack(actor, target, targetType);
+          if (ready && touchEnemy) {
+            this.startActorAttack(actor, chosen.target, chosen.targetType);
             continue;
           }
-          if (canAttack && !ready) {
+          if (touchEnemy && !ready) {
             this.enterAttackWait(actor, 'cooldown-target-in-range');
           }
           continue;
         }
-        if (actor.state === 'move' && canAttack) {
-          if (attackWaitReady(actor, this.timeMs)) this.startActorAttack(actor, target, targetType);
+        if (actor.state === 'move' && touchEnemy) {
+          if (attackWaitReady(actor, this.timeMs)) this.startActorAttack(actor, chosen.target, chosen.targetType);
           else this.enterAttackWait(actor, 'cooldown-target-in-range');
         }
       }
@@ -314,5 +310,8 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     });
   };
 }
+
+// Exported for parity tests: BCU stable direction-only / currentLayer-only entity sorts.
+export { sortForBcuUpdate, sortForBcuLayer };
 
 installBattleSceneBcuStageBasisTickPatch();

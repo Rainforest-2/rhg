@@ -5,7 +5,6 @@ const SCENE_FLAG = Symbol.for('wanko-battle.crowd-performance-scene.v1');
 const RENDERER_FLAG = Symbol.for('wanko-battle.crowd-performance-renderer.v1');
 
 const DEFAULT_EVENT_KEEP = 140;
-const DEFAULT_TARGET_CACHE_FRAMES = 2;
 const DEFAULT_CULL_MARGIN_PX = 360;
 const DEFAULT_HP_BAR_ACTOR_LIMIT = 34;
 const DEFAULT_HP_BAR_NEAR_SCREEN_MARGIN_PX = 80;
@@ -47,82 +46,21 @@ function isActorRenderable(actor) {
   return isActorAlive(actor);
 }
 
-function getSceneFrame(scene) {
-  return Math.trunc(Number(scene?.logicFrame) || 0);
-}
-
 function shouldCollectCrowdDebug(scene) {
   return globalThis.__BCU_DEBUG_ALLOCATIONS__ === true
     || globalThis.__BATTLE_CROWD_DEBUG__ === true
     || scene?.debugBattleEnabled === true;
 }
 
-function validateCachedSelection(scene, actor, cached) {
-  if (!cached || !cached.selection || !actor) return null;
-  const frame = getSceneFrame(scene);
-  const ttl = Math.max(0, Math.trunc(Number(scene.__crowdPerfTargetCacheFrames ?? DEFAULT_TARGET_CACHE_FRAMES)));
-  if (frame - cached.frame > ttl) return null;
-  const selection = cached.selection;
-  const target = selection.target;
-  if (!target || !isActorAlive(target) && selection.targetType !== 'base') return null;
-  if (target?.side && target.side === actor.side) return null;
-  // Revalidate the expensive result with the existing BCU/parity canAttack implementation.
-  if (typeof scene.canAttack === 'function' && target) {
-    try {
-      if (!scene.canAttack(actor, target)) return null;
-    } catch {
-      return null;
-    }
-  }
-  return selection;
-}
-
+// NOTE: This patch intentionally does NOT touch target selection. BCU
+// Entity.checkTouch() re-evaluates the in-range entities every logic frame, so any
+// cross-frame caching of the chosen target can desync attack target / stop / start
+// decisions from BCU. Combat-affecting selection must stay in the simulation path
+// (BattleScene.findTargetForActor / canAttack), never in a performance patch.
 function installScenePatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[SCENE_FLAG]) return;
   proto[SCENE_FLAG] = true;
-
-  const originalFindTargetForActor = proto.findTargetForActor;
-  if (typeof originalFindTargetForActor === 'function') {
-    proto.findTargetForActor = function findTargetForActorWithShortLivedCache(actor, ...args) {
-      if (!actor || actor.state === 'attack' || actor.state === 'knockback' || actor.state === 'dead') {
-        return originalFindTargetForActor.call(this, actor, ...args);
-      }
-      if (!this.__crowdPerfTargetCache) this.__crowdPerfTargetCache = new WeakMap();
-      const cached = this.__crowdPerfTargetCache.get(actor);
-      const valid = validateCachedSelection(this, actor, cached);
-      if (valid) {
-        if (shouldCollectCrowdDebug(this)) {
-          this.__crowdPerfDebug = {
-            ...(this.__crowdPerfDebug || {}),
-            targetCacheHits: (this.__crowdPerfDebug?.targetCacheHits || 0) + 1,
-            lastCacheHitFrame: this.logicFrame,
-            cacheFrames: this.__crowdPerfTargetCacheFrames ?? DEFAULT_TARGET_CACHE_FRAMES
-          };
-        }
-        return valid;
-      }
-      const selection = originalFindTargetForActor.call(this, actor, ...args);
-      if (selection?.target) {
-        this.__crowdPerfTargetCache.set(actor, {
-          frame: getSceneFrame(this),
-          selection,
-          target: selection.target,
-          actorX: finiteNumber(actor.x, actor.posBcu, 0),
-          targetX: finiteNumber(selection.target?.x, selection.target?.posBcu, 0)
-        });
-      }
-      if (shouldCollectCrowdDebug(this)) {
-        this.__crowdPerfDebug = {
-          ...(this.__crowdPerfDebug || {}),
-          targetCacheMisses: (this.__crowdPerfDebug?.targetCacheMisses || 0) + 1,
-          lastCacheMissFrame: this.logicFrame,
-          cacheFrames: this.__crowdPerfTargetCacheFrames ?? DEFAULT_TARGET_CACHE_FRAMES
-        };
-      }
-      return selection;
-    };
-  }
 
   const originalPushEvent = proto.pushEvent;
   if (typeof originalPushEvent === 'function') {
@@ -151,17 +89,6 @@ function installScenePatch() {
           }
         }
       }
-      return result;
-    };
-  }
-
-  const originalCleanupDead = proto.cleanupDead;
-  if (typeof originalCleanupDead === 'function') {
-    proto.cleanupDead = function cleanupDeadWithTargetCacheReset(...args) {
-      const before = Array.isArray(this.actors) ? this.actors.length : 0;
-      const result = originalCleanupDead.apply(this, args);
-      const after = Array.isArray(this.actors) ? this.actors.length : 0;
-      if (after !== before) this.__crowdPerfTargetCache = new WeakMap();
       return result;
     };
   }
@@ -267,12 +194,12 @@ export function installBattleCrowdPerformancePatch() {
   installRendererPatch();
   globalThis.__BATTLE_CROWD_PERFORMANCE_PATCH__ = {
     installed: true,
-    targetCacheFrames: DEFAULT_TARGET_CACHE_FRAMES,
     debugEventKeep: DEFAULT_EVENT_KEEP,
     cullMarginPx: DEFAULT_CULL_MARGIN_PX,
     hpBarActorLimit: DEFAULT_HP_BAR_ACTOR_LIMIT,
+    targetSelectionCached: false,
     notes: [
-      'short-lived target cache revalidates with canAttack before reuse',
+      'no cross-frame target cache: target selection is re-evaluated every frame in the simulation (BCU Entity.checkTouch parity)',
       'offscreen idle/move actors are culled from rendering only',
       'debugEvents are capped as a ring buffer under crowd load'
     ]

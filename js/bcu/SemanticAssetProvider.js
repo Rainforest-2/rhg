@@ -1,4 +1,21 @@
+import { createProgressReporter } from './ProgressReporter.js';
+
 const DEFAULT_INDEX_ROOT = './public/assets/generated';
+// Step shape: [key, fileName, fallbackValue, slimFileName?].
+// When a slimFileName is present the runtime fetches that build-stripped copy
+// first (build-bcu-slim-indexes.mjs); it falls back to the full file, then to
+// the empty fallback, so a missing slim file can never break boot.
+const SEMANTIC_INDEX_STEPS = Object.freeze([
+  ['bundleManifest', 'bcu-bundle-manifest.json', { bundles: {} }],
+  ['actors', 'bcu-actor-index.json', { entries: [], byKey: {} }, 'bcu-actor-index.slim.json'],
+  ['stages', 'bcu-stage-index.json', { entries: [], byKey: {} }, 'bcu-stage-index.slim.json'],
+  ['backgrounds', 'bcu-background-index.json', { entries: [], byKey: {} }, 'bcu-background-index.slim.json'],
+  ['castles', 'bcu-castle-index.json', { enemy: [], nyanko: [], byKey: {} }],
+  ['core', 'bcu-core-index.json', { entries: [], byKey: {} }],
+  ['icons', 'bcu-icon-index.json', { entries: [], byKey: {} }],
+  ['language', 'bcu-language-index.json', { entries: [], byKey: {} }],
+  ['canonical', 'bcu-canonical-index.json', {}]
+]);
 
 function normalizeFetchPath(path) {
   if (!path) return null;
@@ -147,18 +164,36 @@ export class SemanticAssetProvider {
     this.diagnostics = { mode: this.mode, bundleReads: [], rawOnlyReads: [], blockedRawReads: [], bundleErrors: [], missingBundles: [], rawFallbacks: [], failures: [], inferredIconEntries: [], backgroundLookups: [] };
   }
 
-  async load() {
+  async load({ onProgress = null } = {}) {
     const root = this.indexRoot.replace(/\/$/, '');
-    const readOptional = async (name, fallback) => { try { return await this.fetchJson(`${root}/${name}`); } catch { return fallback; } };
-    this.indexes.bundleManifest = await readOptional('bcu-bundle-manifest.json', { bundles: {} });
-    this.indexes.actors = await readOptional('bcu-actor-index.json', { entries: [], byKey: {} });
-    this.indexes.stages = await readOptional('bcu-stage-index.json', { entries: [], byKey: {} });
-    this.indexes.backgrounds = await readOptional('bcu-background-index.json', { entries: [], byKey: {} });
-    this.indexes.castles = await readOptional('bcu-castle-index.json', { enemy: [], nyanko: [], byKey: {} });
-    this.indexes.core = await readOptional('bcu-core-index.json', { entries: [], byKey: {} });
-    this.indexes.icons = await readOptional('bcu-icon-index.json', { entries: [], byKey: {} });
-    this.indexes.language = await readOptional('bcu-language-index.json', { entries: [], byKey: {} });
-    this.indexes.canonical = await readOptional('bcu-canonical-index.json', {});
+    const report = createProgressReporter(onProgress, 'SemanticAssetProvider');
+    // Each index file is fetched in turn; report a fraction after every one so the
+    // boot bar advances in small even steps instead of one big jump.
+    const fetchIndex = async (name) => this.fetchJson(`${root}/${name}`);
+    const readOptional = async (name, fallback, slimName = null) => {
+      // Prefer the slim runtime copy; a missing/broken slim falls back to the
+      // full file, and only a missing full file falls back to the empty default.
+      if (slimName) {
+        try {
+          return await fetchIndex(slimName);
+        } catch (error) {
+          this.diagnostics.failures.push({ type: 'semantic-slim-index-fallback', name: slimName, reason: error?.message || String(error) });
+          this.diagnostics.failures.splice(60);
+        }
+      }
+      try {
+        return await fetchIndex(name);
+      } catch (error) {
+        this.diagnostics.failures.push({ type: 'semantic-index-fallback', name, reason: error?.message || String(error) });
+        this.diagnostics.failures.splice(60);
+        return fallback;
+      }
+    };
+    for (let i = 0; i < SEMANTIC_INDEX_STEPS.length; i += 1) {
+      const [key, name, fallback, slimName] = SEMANTIC_INDEX_STEPS[i];
+      this.indexes[key] = await readOptional(name, fallback, slimName || null);
+      report((i + 1) / SEMANTIC_INDEX_STEPS.length);
+    }
     return this;
   }
 

@@ -36,4 +36,30 @@ const effects = read('js/battle/EffectRuntime.js');
 assert.match(effects, /globalThis\.__BCU_DEBUG_ALLOCATIONS__ === true \? this\.describeEffects/, 'EffectRuntime summaries must be debug-gated');
 assert.doesNotMatch(effects, /list\.filter\(\(e\) => !e\?\.finished/, 'EffectRuntime cleanup must not use repeated filter passes');
 
+const attackResolver = read('js/battle/BattleAttackResolver.js');
+assert.doesNotMatch(attackResolver, /\.slice\(\)\.sort/, 'single-target attack selection must scan instead of cloning and sorting candidates');
+assert.doesNotMatch(attackResolver, /\.filter\([^]*?\.filter\([^]*?\.map\(/, 'attack capture must not build candidates with chained filter/map passes');
+assert.match(attackResolver, /compareSingleTarget/, 'single-target attack selection must share one comparator for scan-based selection');
+
+const soulstrike = read('js/battle/BattleSoulstrikePatch.js');
+assert.doesNotMatch(soulstrike, /\.filter\([^]*?\.filter\([^]*?\.map\(/, 'soulstrike capture override must not rebuild candidates with chained filter/map passes');
+assert.match(soulstrike, /isSoulstrikeCaptureCandidate/, 'soulstrike capture override must use a single candidate predicate');
+
+const bossShockwave = read('js/battle/BattleBossShockwaveRuntimePatch.js');
+assert.doesNotMatch(bossShockwave, /queue\.filter\(/, 'boss shockwave queue must be compacted in place');
+assert.match(bossShockwave, /let writeIndex = 0/, 'boss shockwave queue must use in-place compaction');
+
+const economy = read('js/battle/BattleEconomy.js');
+assert.doesNotMatch(economy, /\[\.\.\.this\.cooldowns\.entries\(\)\]/, 'BattleEconomy tick must not clone cooldown Map entries');
+
+const productionBar = read('js/ui/PlayerProductionBar.js');
+assert.match(productionBar, /lastMoneyDrawKey/, 'production bar money canvas must skip unchanged redraws');
+assert.match(productionBar, /lastWalletDrawKey/, 'production bar wallet button must skip unchanged redraws');
+assert.match(productionBar, /lastCannonDrawKey/, 'production bar cannon button must skip unchanged redraws');
+assert.match(productionBar, /lastLineupSwipeDebugKey/, 'production bar lineup debug updates must be state-keyed');
+assert.match(productionBar, /function getLineupRenderContext/, 'production bar must reuse lineup render context per update');
+assert.match(productionBar, /const renderContext = getLineupRenderContext\(scene\)/, 'production bar update must avoid rebuilding lineup rows for every card');
+assert.match(productionBar, /drawCardIfNeeded/, 'production card canvases must use a render-key cache');
+assert.match(productionBar, /flashTime = ready \? time : 0/, 'cannon charging state must not redraw for full-ready flash timing');
+
 console.log('check-battle-runtime-lightweight-guards: OK');

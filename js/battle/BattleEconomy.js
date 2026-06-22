@@ -201,7 +201,7 @@ export class BattleEconomy {
     }
 
     // Legacy safety: convert any old ms-only cooldown entry to frame countdown rather than silently ticking ms forever.
-    for (const [slotId, remainingMs] of [...this.cooldowns.entries()]) {
+    for (const [slotId, remainingMs] of this.cooldowns.entries()) {
       if (this.cooldownFrames.has(slotId)) continue;
       const frames = Math.max(0, Math.ceil(toFinite(remainingMs, 0) / BCU_BATTLE_TIMER_PERIOD_MS) - stepFrames);
       if (frames <= 0) this.cooldowns.delete(slotId);

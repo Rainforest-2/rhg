@@ -143,18 +143,20 @@
 
 #boot-status-panel .boot-loading-rail span{
   display:block;
-  width:46%;
+  width:0;
   height:100%;
   border-radius:inherit;
   background:linear-gradient(90deg,#ff8f3d,#ffd166,#8bd3ff);
   box-shadow:0 0 22px rgba(255,209,102,.42);
-  animation:bootLoadingSlide 1.38s ease-in-out infinite;
+  /* Width is set from JS to the real boot progress; the transition makes each
+     step advance smoothly instead of jumping. */
+  transition:width .35s cubic-bezier(.16,1,.28,1);
 }
 
 #boot-status-panel .boot-loading-meta{
-  color:rgba(255,246,221,.38);
-  font:750 .68rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
-  letter-spacing:.18em;
+  color:rgba(255,246,221,.62);
+  font:850 .8rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.12em;
   text-align:right;
 }
 
@@ -368,12 +370,6 @@
   0%{ transform:translateX(-85%); opacity:0; }
   20%{ opacity:.92; }
   100%{ transform:translateX(115%); opacity:0; }
-}
-
-@keyframes bootLoadingSlide{
-  0%{ transform:translateX(-105%); }
-  50%{ transform:translateX(72%); }
-  100%{ transform:translateX(220%); }
 }
 
 @media (max-width:760px){

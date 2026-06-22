@@ -104,20 +104,31 @@ function scenePlayerBaseAlive(scene) {
   return base.health !== 0;
 }
 
-export function getCardStackRenderModel(scene, col) {
-  const rows = scene?.getPlayerLineupRows?.() || [[], []];
-  const front = scene?.frontLineup ?? 0;
+function getLineupRenderContext(scene) {
+  return {
+    rows: scene?.getPlayerLineupRows?.() || [[], []],
+    frontLineup: scene?.frontLineup ?? 0,
+    economy: scene?.economy || null,
+    lineupChanging: !!scene?.lineupChanging
+  };
+}
+
+export function getCardStackRenderModel(scene, col, context = null) {
+  const ctx = context || getLineupRenderContext(scene);
+  const rows = ctx.rows;
+  const front = ctx.frontLineup;
   const back = front === 0 ? 1 : 0;
   const frontUnit = rows[front]?.[col] || null;
   const backUnit = rows[back]?.[col] || null;
-  const econ = scene?.economy;
+  const econ = ctx.economy;
+  const lineupChanging = ctx.lineupChanging;
   const frontStatus = ProductionRuntime.getUnitStatus(frontUnit, econ);
   const backStatus = ProductionRuntime.getUnitStatus(backUnit, econ);
   return {
     col,
     frontLineup: front,
     backLineup: back,
-    lineupChanging: !!scene?.lineupChanging,
+    lineupChanging,
     back: {
       unitDef: backUnit,
       interactive: false,
@@ -133,7 +144,7 @@ export function getCardStackRenderModel(scene, col) {
     },
     front: {
       unitDef: frontUnit,
-      interactive: !!frontUnit && !scene?.lineupChanging,
+      interactive: !!frontUnit && !lineupChanging,
       row: front,
       affordable: frontStatus?.affordable ?? true,
       cooldownReady: frontStatus?.cooldownReady ?? true,
@@ -146,7 +157,10 @@ export function getCardStackRenderModel(scene, col) {
     }
   };
 }
-export function getLineupRenderModel(scene) { return Array.from({ length: LINEUP_COLS }, (_, col) => getCardStackRenderModel(scene, col)); }
+export function getLineupRenderModel(scene) {
+  const context = getLineupRenderContext(scene);
+  return Array.from({ length: LINEUP_COLS }, (_, col) => getCardStackRenderModel(scene, col, context));
+}
 
 export class PlayerProductionBar {
   constructor({ scene, mount = document.body }) {
@@ -156,6 +170,10 @@ export class PlayerProductionBar {
     this.iconCache = new Map();
     this.spriteText = new BcuSpriteText();
     this.cardSkin = new ProductionCardSkin({ spriteText: this.spriteText, log: console });
+    this.lastMoneyDrawKey = '';
+    this.lastWalletDrawKey = '';
+    this.lastCannonDrawKey = '';
+    this.lastLineupSwipeDebugKey = '';
     this.slide = this.createSlideState();
     this.setup();
     this.initAssets();
@@ -611,16 +629,74 @@ export class PlayerProductionBar {
       isEmpty: !entry.unitDef
     });
   }
+  getCardRenderKey(entry, asset, isBack = false) {
+    const unit = entry?.unitDef || null;
+    const icon = asset?.icon || entry?.icon || null;
+    const semanticKey = asset?.semanticKey || unit?.uiIcon?.semanticKey || unit?.assetDef?.semanticKey || icon?.bcuSemanticKey || '';
+    const cooldownReady = entry?.cooldownReady !== false;
+    const progress = cooldownReady ? 1 : Number(entry?.cooldownProgressRatio ?? 0);
+    const cooldownProgress = Number.isFinite(progress) ? progress : 0;
+    const iconKey = icon
+      ? [
+          icon.bcuIconSource || '',
+          icon.bcuSemanticKey || semanticKey,
+          icon.bcuBundlePath || '',
+          icon.bcuInternalPath || '',
+          icon.bcuRawSourcePath || '',
+          icon.naturalWidth || icon.width || 0,
+          icon.naturalHeight || icon.height || 0
+        ].join(':')
+      : (asset?.failed === true || entry?.iconLoadFailed === true ? 'failed' : 'none');
+    return [
+      isBack ? 'back' : 'front',
+      unit?.characterId || '',
+      unit?.slotId || '',
+      unit?.assetId || '',
+      unit?.faction || '',
+      semanticKey,
+      iconKey,
+      entry?.cost ?? unit?.cost ?? 0,
+      entry?.affordable !== false,
+      cooldownReady,
+      cooldownProgress,
+      entry?.interactive !== false,
+      !unit,
+      asset?.failed === true || entry?.iconLoadFailed === true,
+      this.spriteText?.ready === true,
+      this.cardSkin.source || '',
+      this.cardSkin.loadError?.message || ''
+    ].join('|');
+  }
+  drawCardIfNeeded(stack, slot, entry, asset, isBack = false) {
+    const key = this.getCardRenderKey(entry, asset, isBack);
+    const keyProp = slot === 'back' ? 'backRenderKey' : 'frontRenderKey';
+    const resultProp = slot === 'back' ? 'backRenderResult' : 'frontRenderResult';
+    if (stack[keyProp] === key && stack[resultProp]) return stack[resultProp];
+    const ctx = slot === 'back' ? stack.backCtx : stack.frontCtx;
+    const result = this.drawCard(ctx, entry, isBack);
+    stack[keyProp] = key;
+    stack[resultProp] = result;
+    return result;
+  }
   drawMoney(scene = this.scene) {
     if (!this.moneyCtx || !this.moneyCanvas) return;
-    const ctx = this.moneyCtx;
-    const w = this.moneyCanvas.width || 360;
-    const h = this.moneyCanvas.height || 48;
-    ctx.clearRect(0, 0, w, h);
     const economy = scene?.economy || null;
     const money = Math.floor(Number(economy?.money ?? 0));
     const maxMoney = Math.floor(Number(economy?.maxMoney ?? 0));
-    if (!Number.isFinite(money) || !Number.isFinite(maxMoney) || maxMoney <= 0) return;
+    const w = this.moneyCanvas.width || 360;
+    const h = this.moneyCanvas.height || 48;
+    if (!Number.isFinite(money) || !Number.isFinite(maxMoney) || maxMoney <= 0) {
+      if (this.lastMoneyDrawKey !== 'invalid') {
+        this.moneyCtx.clearRect(0, 0, w, h);
+        this.lastMoneyDrawKey = 'invalid';
+      }
+      return;
+    }
+    const drawKey = `${money}|${maxMoney}|${w}|${h}|${this.spriteText?.ready === true}`;
+    if (drawKey === this.lastMoneyDrawKey) return;
+    this.lastMoneyDrawKey = drawKey;
+    const ctx = this.moneyCtx;
+    ctx.clearRect(0, 0, w, h);
     if (this.spriteText?.drawMoneyRight) this.spriteText.drawMoneyRight(ctx, money, maxMoney, w - 2, 4);
     else {
       ctx.textAlign = 'right';
@@ -638,12 +714,27 @@ export class PlayerProductionBar {
     if (!this.walletButton) return;
     const status = scene?.economy?.getWalletStatus?.() || null;
     const enabled = status?.enabled === true;
+    if (!enabled) {
+      if (this.lastWalletDrawKey !== 'disabled') {
+        this.walletButton.hidden = true;
+        this.lastWalletDrawKey = 'disabled';
+      }
+      return;
+    }
     this.walletButton.hidden = !enabled;
-    if (!enabled) return;
     const level = Math.floor(Number(status.level || 1));
     const isMax = status.isMax === true;
     const cost = Math.floor(Number(status.upgradeCost || 0));
     const canUpgrade = status.canUpgrade === true;
+    // BCU BattleBox.drawBtm: time = (sb.time / 5) % 2; mtype = money < upgradeCost ? 0 : (time == 0 ? 1 : 2);
+    // sb.work_lv >= 8 forces 2. While affordable the button flashes between the glow frame (1) and
+    // the ON frame (2) every 5 frames; Lv8/unaffordable do not flash.
+    const time = Math.floor((Number(scene?.logicFrame) || 0) / 5) % 2;
+    const mtype = isMax ? 2 : (canUpgrade ? (time === 0 ? 1 : 2) : 0);
+    const spriteReady = !!(this.workerButtonSprite?.off && this.workerButtonSprite?.on);
+    const drawKey = [level, isMax, cost, canUpgrade, mtype, spriteReady, this.spriteText?.ready === true].join('|');
+    if (drawKey === this.lastWalletDrawKey) return;
+    this.lastWalletDrawKey = drawKey;
     if (this.walletLevelLabel) this.walletLevelLabel.textContent = `Lv ${level}`;
     if (this.walletCostLabel) this.walletCostLabel.textContent = isMax ? 'MAX' : `${cost}円`;
     this.walletButton.disabled = !canUpgrade;
@@ -651,11 +742,6 @@ export class PlayerProductionBar {
     this.walletButton.classList.toggle('is-max', isMax);
     this.walletButton.dataset.level = String(level);
     this.walletButton.dataset.cost = isMax ? '-1' : String(cost);
-    // BCU BattleBox.drawBtm: time = (sb.time / 5) % 2; mtype = money < upgradeCost ? 0 : (time == 0 ? 1 : 2);
-    // sb.work_lv >= 8 forces 2. While affordable the button flashes between the glow frame (1) and
-    // the ON frame (2) every 5 frames; Lv8/unaffordable do not flash.
-    const time = Math.floor((Number(scene?.logicFrame) || 0) / 5) % 2;
-    const mtype = isMax ? 2 : (canUpgrade ? (time === 0 ? 1 : 2) : 0);
     const iconDrawn = this.drawWorkerButtonIcon(mtype, { level, cost, isMax });
     this.walletButton.classList.toggle('has-bcu-icon', iconDrawn);
     this.walletButton.dataset.mtype = String(mtype);
@@ -671,20 +757,32 @@ export class PlayerProductionBar {
     if (!this.cannonButton) return;
     const status = scene?.getCatCannonStatus?.() || scene?.bcuCatCannon || null;
     const enabled = status?.enabled !== false && !!status;
+    if (!enabled) {
+      if (this.lastCannonDrawKey !== 'disabled') {
+        this.cannonButton.hidden = true;
+        this.lastCannonDrawKey = 'disabled';
+      }
+      return;
+    }
     this.cannonButton.hidden = !enabled;
-    if (!enabled) return;
     const ratio = Math.max(0, Math.min(1, Number(status.chargeRatio ?? (status.maxCannon > 0 ? status.cannon / status.maxCannon : 0)) || 0));
+    const gaugeCount = Math.floor(ratio * CANNON_BUTTON_PART.gaugeCount);
     const ready = status.ready === true;
+    // BCU BattleBox.drawBtm time = (sb.time / 5) % 2 drives the full/ready FIRE flash.
+    const time = Math.floor((Number(scene?.logicFrame) || 0) / 5) % 2;
+    const flashTime = ready ? time : 0;
+    const spriteReady = !!(this.cannonButtonSprite?.off && this.cannonButtonSprite?.full);
+    const drawKey = [ready, status.active === true, gaugeCount, flashTime, spriteReady].join('|');
+    if (drawKey === this.lastCannonDrawKey) return;
+    this.lastCannonDrawKey = drawKey;
     this.cannonButton.disabled = !ready;
     this.cannonButton.classList.toggle('is-ready', ready);
     this.cannonButton.classList.toggle('is-active', status.active === true);
-    this.cannonButton.dataset.charge = String(Math.floor(ratio * 10));
-    // BCU BattleBox.drawBtm time = (sb.time / 5) % 2 drives the full/ready FIRE flash.
-    const time = Math.floor((Number(scene?.logicFrame) || 0) / 5) % 2;
-    const iconDrawn = this.drawCannonButtonIcon(ratio, { ready, time });
+    this.cannonButton.dataset.charge = String(gaugeCount);
+    const iconDrawn = this.drawCannonButtonIcon(ratio, { ready, time: flashTime });
     this.cannonButton.classList.toggle('has-bcu-icon', iconDrawn);
     if (this.cannonGauge) {
-      this.cannonGauge.innerHTML = Array.from({ length: 10 }, (_, index) => `<i class='${index < Math.floor(ratio * 10) ? 'is-filled' : ''}'></i>`).join('');
+      this.cannonGauge.innerHTML = Array.from({ length: CANNON_BUTTON_PART.gaugeCount }, (_, index) => `<i class='${index < gaugeCount ? 'is-filled' : ''}'></i>`).join('');
     }
     productionPageDebug().lastCannonDraw = {
       source: 'PlayerProductionBar.drawCannon',
@@ -696,13 +794,24 @@ export class PlayerProductionBar {
   updateLineupSwipeDebug(scene) {
     const hasBack = scene?.hasBackLineup?.() === true;
     const changing = !!scene?.lineupChanging;
+    const frontLineup = scene?.frontLineup ?? null;
+    const key = [
+      frontLineup,
+      changing,
+      hasBack,
+      scene?.battleState || null,
+      scene?.lineupChangeDirection || null,
+      scene?.lineupChangeFrameRemaining ?? null
+    ].join('|');
+    if (key === this.lastLineupSwipeDebugKey) return;
+    this.lastLineupSwipeDebugKey = key;
     const debug = productionPageDebug();
     debug.lastRender = {
       source: 'PlayerProductionBar.updateLineupSwipeDebug',
       bcuAndroidReference: 'BattleSimulation touch listener + BattleView.checkSlideUpDown + BBCtrl.perform; no explicit battle lineup UI button is rendered on Android',
       bcuCommonReference: 'SBCtrl.actions non-twoRow: action -4/-5 calls StageBasis.act_change_up/down; manual production uses sb.frontLineup visible row',
-      frontLineup: scene?.frontLineup ?? null,
-      backLineup: (scene?.frontLineup ?? 0) === 0 ? 1 : 0,
+      frontLineup,
+      backLineup: (frontLineup ?? 0) === 0 ? 1 : 0,
       lineupChanging: changing,
       hasBackLineup: hasBack,
       disabled: !hasBack || changing || scene?.battleState !== 'running',
@@ -720,15 +829,15 @@ export class PlayerProductionBar {
     const iconDebug = productionIconDebug();
     const stats = { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 };
     const cardDebug = [];
-    const model = getLineupRenderModel(scene);
+    const renderContext = getLineupRenderContext(scene);
     for (const stack of this.cardStacks) {
-      const m = model[stack.col];
+      const m = getCardStackRenderModel(scene, stack.col, renderContext);
       const backAsset = await this.ensureCardAssets(m.back.unitDef, stats);
       const frontAsset = await this.ensureCardAssets(m.front.unitDef, stats);
       const backEntry = { ...m.back, icon: backAsset?.icon || null, iconLoadFailed: backAsset?.failed === true, interactive: false, affordable: m.back?.affordable !== false, cooldownReady: m.back?.cooldownReady !== false, cooldownProgressRatio: m.back?.cooldownProgressRatio ?? 1 };
       const frontEntry = { ...m.front, icon: frontAsset?.icon || null, iconLoadFailed: frontAsset?.failed === true, affordable: m.front?.affordable !== false, cooldownReady: m.front?.cooldownReady !== false, cooldownProgressRatio: m.front?.cooldownProgressRatio ?? 1 };
-      const backRender = this.drawCard(stack.backCtx, backEntry, true);
-      const frontRender = this.drawCard(stack.frontCtx, frontEntry, false);
+      const backRender = this.drawCardIfNeeded(stack, 'back', backEntry, backAsset, true);
+      const frontRender = this.drawCardIfNeeded(stack, 'front', frontEntry, frontAsset, false);
       for (const [slot, modelEntry, asset] of [['back', m.back, backAsset], ['front', m.front, frontAsset]]) {
         if (!modelEntry?.unitDef) continue;
         const render = slot === 'back' ? backRender : frontRender;

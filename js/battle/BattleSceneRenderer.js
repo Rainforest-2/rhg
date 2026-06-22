@@ -170,7 +170,7 @@ export class BattleSceneRenderer {
   getActorLocalRenderBounds(actor){if(!actor?.sprite||!actor?.model)return null;const baseAngle=actor.model.baseAngle||3600;let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const p of actor.model.getDrawList()){const w=p.world;const partIndex=p.current?.partIndex??p.partIndex;const imgcutIndex=p.current?.imgcutIndex??p.imgcutIndex;if(!Number.isInteger(partIndex)||partIndex<0)continue;if((imgcutIndex??0)<0)continue;if(!w||(w.o??1)<=0)continue;const part=actor.sprite?.imgcut?.parts?.[partIndex];if(!part||part.w<=0||part.h<=0)continue;const cx=w.x*actor.scale,cy=w.y*actor.scale,sx=w.sx*actor.scale,sy=w.sy*actor.scale;const halfW=Math.abs(part.w*sx)*0.5,halfH=Math.abs(part.h*sy)*0.5;const angle=(w.a/baseAngle)*Math.PI*2,cos=Math.cos(angle),sin=Math.sin(angle);for(const [px,py] of [[-halfW,-halfH],[halfW,-halfH],[-halfW,halfH],[halfW,halfH]]){const rx=cx+px*cos-py*sin;const ry=cy+px*sin+py*cos;minX=Math.min(minX,rx);minY=Math.min(minY,ry);maxX=Math.max(maxX,rx);maxY=Math.max(maxY,ry);}}if(!Number.isFinite(minX)||!Number.isFinite(minY)||!Number.isFinite(maxX)||!Number.isFinite(maxY))return null;return{left:minX,top:minY,right:maxX,bottom:maxY,width:maxX-minX,height:maxY-minY};}
   getActorBottomAnchorOffset(actor){const bounds=this.getActorLocalRenderBounds(actor);if(!bounds)return 0;return -bounds.bottom;}
   getActorRenderDepthY(actor){const y=Number.isFinite(actor.y)?actor.y:0;const crowdY=Number.isFinite(actor.visualCrowdYOffsetPx)?actor.visualCrowdYOffsetPx:0;return y+crowdY;}
-  getAliveActorsForRender(scene){return (scene?.actors||[]).filter((actor)=>actor?.isRenderable?actor.isRenderable():actor?.isAlive?.()).slice().sort((a,b)=>{const ay=this.getActorRenderDepthY(a);const by=this.getActorRenderDepthY(b);if(ay!==by)return ay-by;const ax=Number.isFinite(a.x)?a.x:0;const bx=Number.isFinite(b.x)?b.x:0;if(ax!==bx)return ax-bx;const at=Number.isFinite(a.spawnedAtMs)?a.spawnedAtMs:0;const bt=Number.isFinite(b.spawnedAtMs)?b.spawnedAtMs:0;return at-bt;});}
+  getAliveActorsForRender(scene){return (scene?.actors||[]).filter((actor)=>actor?.isRenderable?actor.isRenderable():actor?.isAlive?.()).sort((a,b)=>{const ay=this.getActorRenderDepthY(a);const by=this.getActorRenderDepthY(b);if(ay!==by)return ay-by;const ax=Number.isFinite(a.x)?a.x:0;const bx=Number.isFinite(b.x)?b.x:0;if(ax!==bx)return ax-bx;const at=Number.isFinite(a.spawnedAtMs)?a.spawnedAtMs:0;const bt=Number.isFinite(b.spawnedAtMs)?b.spawnedAtMs:0;return at-bt;});}
 
   rgb(color){return `rgb(${color.r},${color.g},${color.b})`;}
   drawVerticalGradient(c,x,y,w,h,top,bottom){const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,this.rgb(top));g.addColorStop(1,this.rgb(bottom));c.fillStyle=g;c.fillRect(x,y,w,h);}
@@ -439,7 +439,13 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
       this._scene?.pushEvent?.({ type: 'actorRenderSkipped', actor: actor.instanceId || actor.label, semanticKey: actor.semanticKey || actor.assetDef?.semanticKey || null, reason: skippedReason, bounds });
       return;
     }
-    globalThis.__LAST_ACTOR_RENDER_DEBUG__ = this.buildActorRenderDebug(actor, drawList, bounds, null);
+    // buildActorRenderDebug walks imgcut/model/anim arrays per actor and only ever
+    // feeds the inspect-only __LAST_ACTOR_RENDER_DEBUG__ global (read by hand in
+    // devtools, never by runtime/tests). Skip that per-frame allocation during
+    // normal play; populate it only when battle debug or the opt-in flag is on.
+    if (this._scene?.debugBattleEnabled || globalThis.__BCU_RENDER_DEBUG__ === true) {
+      globalThis.__LAST_ACTOR_RENDER_DEBUG__ = this.buildActorRenderDebug(actor, drawList, bounds, null);
+    }
     const anchorY = this.getActorGroundAnchorLocalY(actor, drawList);
     c.save();
     const alignCfg = BATTLE_CONFIG.tuning?.visualOriginAlignment || {};

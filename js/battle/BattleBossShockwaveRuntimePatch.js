@@ -182,37 +182,46 @@ function applyBossShockwaveKnockback(scene, shock) {
 function processPendingBossShockwaves(scene) {
   const queue = ensureBossShockwaveQueue(scene);
   if (!queue.length) return [];
-  const ready = queue.filter((shock) => !shock.processed && Number(shock.executeFrame) <= Number(scene.logicFrame));
-  if (!ready.length) return [];
   const processed = [];
-  for (const shock of ready) {
-    shock.processed = true;
-    shock.processedAtFrame = scene.logicFrame;
-    shock.processedAtMs = scene.timeMs;
-    const affected = applyBossShockwaveKnockback(scene, shock);
-    const effect = createBossShockwaveEffect(scene, shock);
-    const shake = applyBossShake(scene, shock);
-    const event = {
-      type: 'bcuBossShockwaveResolved',
-      source: 'BCU StageBasis shock flag flushed after entity update; preserves boss-spawn 1F interaction window',
-      bossFlag: shock.bossFlag,
-      side: shock.side,
-      targetSide: shock.targetSide,
-      queuedAtFrame: shock.queuedAtFrame,
-      processedAtFrame: scene.logicFrame,
-      worldX: shock.worldX,
-      layer: BCU_BOSS_SHOCKWAVE_LAYER,
-      affectedCount: affected.length,
-      affected,
-      effectId: effect?.id || null,
-      effectLoaded: !!effect,
-      shake: shake ? { duration: shake.duration, initial: shake.initial, end: shake.end, stabilizer: shake.stabilizer } : null,
-      se: { id: 45, key: 'SE_BOSS' }
-    };
-    scene.pushEvent?.(event);
-    processed.push(event);
+  let writeIndex = 0;
+  for (let i = 0; i < queue.length; i += 1) {
+    const shock = queue[i];
+    const ready = !shock.processed && Number(shock.executeFrame) <= Number(scene.logicFrame);
+    if (ready) {
+      shock.processed = true;
+      shock.processedAtFrame = scene.logicFrame;
+      shock.processedAtMs = scene.timeMs;
+      const affected = applyBossShockwaveKnockback(scene, shock);
+      const effect = createBossShockwaveEffect(scene, shock);
+      const shake = applyBossShake(scene, shock);
+      const event = {
+        type: 'bcuBossShockwaveResolved',
+        source: 'BCU StageBasis shock flag flushed after entity update; preserves boss-spawn 1F interaction window',
+        bossFlag: shock.bossFlag,
+        side: shock.side,
+        targetSide: shock.targetSide,
+        queuedAtFrame: shock.queuedAtFrame,
+        processedAtFrame: scene.logicFrame,
+        worldX: shock.worldX,
+        layer: BCU_BOSS_SHOCKWAVE_LAYER,
+        affectedCount: affected.length,
+        affected,
+        effectId: effect?.id || null,
+        effectLoaded: !!effect,
+        shake: shake ? { duration: shake.duration, initial: shake.initial, end: shake.end, stabilizer: shake.stabilizer } : null,
+        se: { id: 45, key: 'SE_BOSS' }
+      };
+      scene.pushEvent?.(event);
+      processed.push(event);
+      continue;
+    }
+    if (!shock.processed) {
+      queue[writeIndex] = shock;
+      writeIndex += 1;
+    }
   }
-  scene.__bcuBossShockwaveQueue = queue.filter((shock) => !shock.processed);
+  queue.length = writeIndex;
+  if (!processed.length) return [];
   scene.lastBossShockwaveDebug = { source: 'BattleBossShockwaveRuntimePatch.processPendingBossShockwaves', processed };
   globalThis.__BCU_BOSS_SHOCKWAVE_DEBUG__ = scene.lastBossShockwaveDebug;
   return processed;

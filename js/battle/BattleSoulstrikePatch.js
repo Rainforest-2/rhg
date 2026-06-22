@@ -28,9 +28,15 @@ function isActorTargetableForEvent(target, event, attacker) {
   return false;
 }
 
-function isBcuTraitAllowed(target, event, attacker) {
-  if (!hasTargetOnly(attacker, event)) return true;
+function isBcuTraitAllowed(target, event, attacker, targetOnly = hasTargetOnly(attacker, event)) {
+  if (!targetOnly) return true;
   return bcuTraitCompatible({ attacker, target, targetType: 'actor', targetOnly: true });
+}
+
+function isSoulstrikeCaptureCandidate(resolver, target, event, attacker, targetOnly) {
+  return isActorTargetableForEvent(target, event, attacker)
+    && resolver.isTargetInEventRange(attacker, target, event)
+    && isBcuTraitAllowed(target, event, attacker, targetOnly);
 }
 
 export function installBattleSoulstrikePatch() {
@@ -47,22 +53,39 @@ export function installBattleSoulstrikePatch() {
     BattleAttackResolver[RESOLVER_PATCH_FLAG] = true;
     BattleAttackResolver.captureTargets = function captureTargetsSoulstrikeAware({ attacker, enemyActors, enemyBase, event }) {
       const mode = event?.targetMode || 'single';
-      const actorCandidates = (enemyActors || [])
-        .filter((t) => isActorTargetableForEvent(t, event, attacker))
-        .filter((t) => this.isTargetInEventRange(attacker, t, event))
-        .filter((t) => isBcuTraitAllowed(t, event, attacker))
-        .map((target) => ({ target, targetType: 'actor', event, soulstrikeCorpse: isZombieCorpse(target) }));
-      const baseCandidate = enemyBase?.isAlive?.() && event?.allowBaseHit !== false && this.isTargetInEventRange(attacker, enemyBase, event)
-        ? { target: enemyBase, targetType: 'base', event }
-        : null;
+      const actors = enemyActors || [];
+      const targetOnly = hasTargetOnly(attacker, event);
       if (mode === 'range') {
-        const r = [...actorCandidates];
-        if (baseCandidate) r.push(baseCandidate);
-        return r;
+        const results = [];
+        for (const target of actors) {
+          if (isSoulstrikeCaptureCandidate(this, target, event, attacker, targetOnly)) {
+            results.push({ target, targetType: 'actor', event, soulstrikeCorpse: isZombieCorpse(target) });
+          }
+        }
+        if (enemyBase?.isAlive?.() && event?.allowBaseHit !== false && this.isTargetInEventRange(attacker, enemyBase, event)) {
+          results.push({ target: enemyBase, targetType: 'base', event });
+        }
+        return results;
       }
-      const c = actorCandidates.length ? actorCandidates : (baseCandidate ? [baseCandidate] : []);
-      const one = this.chooseSingleTarget(attacker, c);
-      if (one?.targetType === 'actor' && hasTargetOnly(attacker, event)) {
+      let actorCount = 0;
+      let allHaveBcu = Number.isFinite(this.getEntityPosBcu(attacker));
+      let bestBcu = null;
+      let bestPx = null;
+      for (const target of actors) {
+        if (!isSoulstrikeCaptureCandidate(this, target, event, attacker, targetOnly)) continue;
+        const candidate = { target, targetType: 'actor', event, soulstrikeCorpse: isZombieCorpse(target) };
+        actorCount += 1;
+        if (!Number.isFinite(this.getEntityPosBcu(target))) allHaveBcu = false;
+        else if (!bestBcu || this.compareSingleTarget(attacker, candidate, bestBcu, true) < 0) bestBcu = candidate;
+        if (!bestPx || this.compareSingleTarget(attacker, candidate, bestPx, false) < 0) bestPx = candidate;
+      }
+      let one = null;
+      if (actorCount > 0) {
+        one = allHaveBcu ? bestBcu : bestPx;
+      } else if (enemyBase?.isAlive?.() && event?.allowBaseHit !== false && this.isTargetInEventRange(attacker, enemyBase, event)) {
+        one = { target: enemyBase, targetType: 'base', event };
+      }
+      if (one?.targetType === 'actor' && targetOnly) {
         one.traitCompatibility = describeBcuTraitCompatibility({ attacker, target: one.target, targetType: 'actor', targetOnly: true });
       }
       return one ? [one] : [];

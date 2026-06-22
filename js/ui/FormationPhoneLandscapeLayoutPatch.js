@@ -62,7 +62,7 @@ function injectStyle() {
   html body.nyanko-ui-polish .formation-slots{grid-column:1!important;grid-row:1!important;height:100%!important;gap:5px!important;align-items:stretch!important;overflow:visible!important}
   html body.nyanko-ui-polish .formation-slot{position:relative!important;min-height:0!important;height:100%!important;border-width:2px!important;border-radius:10px!important;padding:5px 4px 4px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 3px 7px rgba(0,0,0,.32)!important;overflow:visible!important}
   html body.nyanko-ui-polish .formation-slot::after{left:5px!important;top:4px!important;font-size:8px!important}
-  html body.nyanko-ui-polish .formation-slot img{width:34px!important;height:34px!important;margin:0 0 3px!important;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))!important}
+  html body.nyanko-ui-polish .formation-slot img{width:46px!important;height:46px!important;margin:0 0 3px!important;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))!important}
   html body.nyanko-ui-polish .formation-slot span{display:-webkit-box!important;max-width:100%!important;min-height:1.95em!important;font-size:.5rem!important;line-height:1.02!important;white-space:normal!important;overflow:hidden!important;text-overflow:ellipsis!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;color:#fff8df!important;-webkit-text-fill-color:#fff8df!important;text-shadow:0 1px 0 #000,0 0 3px #000!important}
   html body.nyanko-ui-polish .formation-slot small{display:none!important}
   html body.nyanko-ui-polish .formation-slot-charge{inset:-5px!important;padding:4px!important;border-radius:14px!important;z-index:20!important;pointer-events:none!important}
@@ -104,7 +104,7 @@ function injectStyle() {
   html body.nyanko-ui-polish .formation-page-tab strong{font-size:.48rem!important}
   html body.nyanko-ui-polish .formation-page-tab span{font-size:.45rem!important;padding:1px 2px!important}
   html body.nyanko-ui-polish .formation-slot{padding:4px 3px 3px!important}
-  html body.nyanko-ui-polish .formation-slot img{width:28px!important;height:28px!important;margin-bottom:2px!important}
+  html body.nyanko-ui-polish .formation-slot img{width:38px!important;height:38px!important;margin-bottom:2px!important}
   html body.nyanko-ui-polish .formation-slot span{font-size:.45rem!important;min-height:1.85em!important}
   html body.nyanko-ui-polish .formation-slot-charge{inset:-4px!important;padding:3px!important;border-radius:12px!important}
   html body.nyanko-ui-polish .formation-catalog-section{grid-template-columns:104px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;padding:4px!important;gap:4px!important}

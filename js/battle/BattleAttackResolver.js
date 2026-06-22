@@ -21,10 +21,91 @@ export class BattleAttackResolver {
   static isTargetTouchable(attacker,target){ if(this.shouldUseBcu(attacker,target)) return this.isTargetPosInIntervalBcu(target,this.getTouchIntervalBcu(attacker)); const interval=this.getAttackIntervalPx(attacker,{attackKind:'normal',rangeEndPxDebug:attacker?.detectionRangePx??0,attackBackPxDebug:Number.isFinite(attacker?.attackWidthPx)?attacker.attackWidthPx:((attacker?.rawStats?.width??0)*(BATTLE_CONFIG.tuning?.rangeToPx??1))}); return this.isTargetPosInIntervalPx(target,interval); }
   static isTargetInEventRange(attacker,target,event){ if(this.shouldUseBcu(attacker,target)) return this.isTargetPosInIntervalBcu(target,this.getAttackIntervalBcu(attacker,event)); return this.isTargetPosInIntervalPx(target,this.getAttackIntervalPx(attacker,event)); }
 
-  static chooseSingleTarget(attacker,candidates){ const dir=Number.isFinite(attacker?.direction)?attacker.direction:1; const allHaveBcu=(candidates||[]).every(c=>Number.isFinite(this.getEntityPosBcu(c.target)))&&Number.isFinite(this.getEntityPosBcu(attacker)); if(allHaveBcu){ const ap=this.getEntityPosBcu(attacker)??0; return (candidates||[]).slice().sort((a,b)=>{ const ax=this.getEntityPosBcu(a.target)??0; const bx=this.getEntityPosBcu(b.target)??0; const f=dir>0?(ax-bx):(bx-ax); if(f!==0)return f; return Math.abs(ax-ap)-Math.abs(bx-ap); })[0]||null; }
-    const ax=this.getEntityCombatX(attacker)??0; return (candidates||[]).slice().sort((a,b)=>{ const txA=this.getEntityCombatX(a.target)??0; const txB=this.getEntityCombatX(b.target)??0; const front=dir>0?(txA-txB):(txB-txA); if(front!==0)return front; return Math.abs(txA-ax)-Math.abs(txB-ax); })[0]||null; }
+  static compareSingleTarget(attacker, a, b, allHaveBcu) {
+    if (!b) return -1;
+    const dir = Number.isFinite(attacker?.direction) ? attacker.direction : 1;
+    if (allHaveBcu) {
+      const attackerPos = this.getEntityPosBcu(attacker) ?? 0;
+      const aPos = this.getEntityPosBcu(a.target) ?? 0;
+      const bPos = this.getEntityPosBcu(b.target) ?? 0;
+      const front = dir > 0 ? aPos - bPos : bPos - aPos;
+      if (front !== 0) return front;
+      return Math.abs(aPos - attackerPos) - Math.abs(bPos - attackerPos);
+    }
+    const attackerX = this.getEntityCombatX(attacker) ?? 0;
+    const aX = this.getEntityCombatX(a.target) ?? 0;
+    const bX = this.getEntityCombatX(b.target) ?? 0;
+    const front = dir > 0 ? aX - bX : bX - aX;
+    if (front !== 0) return front;
+    return Math.abs(aX - attackerX) - Math.abs(bX - attackerX);
+  }
 
-  static captureTargets({attacker,enemyActors,enemyBase,event}){ const mode=event?.targetMode||'single'; const targetOnly=hasTargetOnly(attacker,event); const actorCandidates=(enemyActors||[]).filter((t)=>{ if (typeof t?.isBcuTargetableForEvent === 'function') return t.isBcuTargetableForEvent(event,attacker); if (typeof t?.isTargetable === 'function') return t.isTargetable(); return !!t?.isAlive?.(); }).filter(t=>this.isTargetInEventRange(attacker,t,event)).filter(t=>!targetOnly||bcuTraitCompatible({attacker,target:t,targetType:'actor',targetOnly:true})).map(target=>({target,targetType:'actor',event})); const baseCandidate=enemyBase?.isAlive?.()&&event?.allowBaseHit!==false&&this.isTargetInEventRange(attacker,enemyBase,event)?{target:enemyBase,targetType:'base',event}:null; if(mode==='range'){ const r=[...actorCandidates]; if(baseCandidate)r.push(baseCandidate); return r; } const c=actorCandidates.length?actorCandidates:(baseCandidate?[baseCandidate]:[]); const one=this.chooseSingleTarget(attacker,c); return one?[one]:[]; }
+  static chooseSingleTarget(attacker, candidates) {
+    const list = candidates || [];
+    if (!list.length) return null;
+    let allHaveBcu = Number.isFinite(this.getEntityPosBcu(attacker));
+    for (const c of list) {
+      if (!Number.isFinite(this.getEntityPosBcu(c.target))) {
+        allHaveBcu = false;
+        break;
+      }
+    }
+    let best = null;
+    for (const candidate of list) {
+      if (!best || this.compareSingleTarget(attacker, candidate, best, allHaveBcu) < 0) best = candidate;
+    }
+    return best;
+  }
+
+  static isCaptureTargetable(target, event, attacker) {
+    if (typeof target?.isBcuTargetableForEvent === 'function') return target.isBcuTargetableForEvent(event, attacker);
+    if (typeof target?.isTargetable === 'function') return target.isTargetable();
+    return !!target?.isAlive?.();
+  }
+
+  static isCaptureCandidate(target, event, attacker, targetOnly) {
+    return this.isCaptureTargetable(target, event, attacker)
+      && this.isTargetInEventRange(attacker, target, event)
+      && (!targetOnly || bcuTraitCompatible({ attacker, target, targetType: 'actor', targetOnly: true }));
+  }
+
+  static captureTargets({ attacker, enemyActors, enemyBase, event }) {
+    const mode = event?.targetMode || 'single';
+    const targetOnly = hasTargetOnly(attacker, event);
+    const actors = enemyActors || [];
+    if (mode === 'range') {
+      const results = [];
+      for (const target of actors) {
+        if (this.isCaptureCandidate(target, event, attacker, targetOnly)) {
+          results.push({ target, targetType: 'actor', event });
+        }
+      }
+      if (enemyBase?.isAlive?.() && event?.allowBaseHit !== false && this.isTargetInEventRange(attacker, enemyBase, event)) {
+        results.push({ target: enemyBase, targetType: 'base', event });
+      }
+      return results;
+    }
+
+    let actorCount = 0;
+    let allHaveBcu = Number.isFinite(this.getEntityPosBcu(attacker));
+    let bestBcu = null;
+    let bestPx = null;
+    for (const target of actors) {
+      if (!this.isCaptureCandidate(target, event, attacker, targetOnly)) continue;
+      const candidate = { target, targetType: 'actor', event };
+      actorCount += 1;
+      if (!Number.isFinite(this.getEntityPosBcu(target))) allHaveBcu = false;
+      else if (!bestBcu || this.compareSingleTarget(attacker, candidate, bestBcu, true) < 0) bestBcu = candidate;
+      if (!bestPx || this.compareSingleTarget(attacker, candidate, bestPx, false) < 0) bestPx = candidate;
+    }
+    if (actorCount > 0) {
+      const actorBest = allHaveBcu ? bestBcu : bestPx;
+      return actorBest ? [actorBest] : [];
+    }
+    return enemyBase?.isAlive?.() && event?.allowBaseHit !== false && this.isTargetInEventRange(attacker, enemyBase, event)
+      ? [{ target: enemyBase, targetType: 'base', event }]
+      : [];
+  }
 
   static getAttackInterval(actor,event){ const firstEvent=event||BattleAttackProfile.ensure(actor)?.events?.[0]; const mode=BATTLE_CONFIG.tuning?.combatPositionMode; const bcu=(mode==='bcu-pos'&&actor?.battleCoordinate)?this.getAttackIntervalBcu(actor,firstEvent):null; if(bcu&&actor?.battleCoordinate){ const left=actor.battleCoordinate.toScreenX(bcu.leftBcu); const right=actor.battleCoordinate.toScreenX(bcu.rightBcu); const box=BattleBodyResolver.getCombatBodyBox(actor); return {...bcu,left,right,startX:left,endX:right,centerY:Number.isFinite(box?.centerY)?box.centerY:(actor?.y??0),top:Number.isFinite(box?.top)?box.top:((actor?.y??0)-80),bottom:Number.isFinite(box?.bottom)?box.bottom:(actor?.y??0),mode:'bcu-projected'}; }
     return this.getAttackIntervalPx(actor,firstEvent); }

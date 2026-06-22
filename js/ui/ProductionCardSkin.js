@@ -13,7 +13,9 @@ const loadImage = (src) => new Promise((res, rej) => {
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const imageWidth = (img) => img?.naturalWidth || img?.width || 0;
 const imageHeight = (img) => img?.naturalHeight || img?.height || 0;
-const DOG_CARD_ICON_SCALE = 1.1;
+// Draw the dog-card icon at its natural cover-fit size (no extra zoom). The old
+// 1.1x scale cropped the icon edges; 1 keeps the whole icon visible on the card.
+const DOG_CARD_ICON_SCALE = 1;
 const CARD_IMAGE_ASPECT_EPSILON = 0.02;
 const UNIT_KEY_RE = /^unit:\d+:(f|c|s|u)$/;
 
@@ -50,7 +52,15 @@ export const PRODUCTION_CARD_SKIN = Object.freeze({
 const samePart = (a, b) => a && b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 
 function getSemanticProvider() {
-  try { return getBcuAssetDatabase()?.semanticProvider || null; } catch { return null; }
+  try {
+    return getBcuAssetDatabase()?.semanticProvider || null;
+  } catch (error) {
+    globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+      ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
+      semanticProviderError: error?.message || String(error)
+    };
+    return null;
+  }
 }
 
 function getCanvasPixelRatio(ctx) {

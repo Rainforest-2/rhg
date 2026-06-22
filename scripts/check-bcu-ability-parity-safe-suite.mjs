@@ -116,7 +116,10 @@ const commands = [
   ['node', ['--check', 'scripts/check-bcu-stage-crown-parity.mjs']],
   ['node', ['scripts/check-bcu-stage-crown-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-special-castle-resolution-parity.mjs']],
-  ['node', ['scripts/check-bcu-special-castle-resolution-parity.mjs']]
+  ['node', ['scripts/check-bcu-special-castle-resolution-parity.mjs']],
+  ['node', ['--check', 'scripts/build-bcu-slim-indexes.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-slim-indexes-sync.mjs']],
+  ['node', ['scripts/check-bcu-slim-indexes-sync.mjs']]
 ];
 
 const results = [];

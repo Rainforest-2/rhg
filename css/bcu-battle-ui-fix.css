@@ -316,22 +316,18 @@
     width:min(250px,31vw)!important;
   }
 
-  .prod-ui .wallet-upgrade{
-    width:clamp(52px,7vw,66px)!important;
-    bottom:calc(3px + env(safe-area-inset-bottom,0px))!important;
-  }
-
-  .prod-ui .wallet-upgrade:not(.has-bcu-icon){
-    min-height:40px!important;
-  }
-
+  /* BCU img002 worker / cannon buttons are 146px wide while uni.imgcut card part[0]
+     is 110px wide (146 / 110 ~= 1.33). Keep the compressed phone layout near that
+     sprite ratio instead of sizing the buttons to a unit card. */
+  .prod-ui .wallet-upgrade,
   .prod-ui .cat-cannon-fire{
-    width:clamp(52px,7vw,66px)!important;
+    width:clamp(69px,9.1vw,85px)!important;
     bottom:calc(3px + env(safe-area-inset-bottom,0px))!important;
   }
 
+  .prod-ui .wallet-upgrade:not(.has-bcu-icon),
   .prod-ui .cat-cannon-fire:not(.has-bcu-icon){
-    min-height:40px!important;
+    min-height:59px!important;
   }
 }
 
@@ -351,7 +347,7 @@
 
   .prod-ui .wallet-upgrade,
   .prod-ui .cat-cannon-fire{
-    width:clamp(50px,6.75vw,58px)!important;
+    width:clamp(66px,9.1vw,77px)!important;
     bottom:calc(2px + env(safe-area-inset-bottom,0px))!important;
   }
 

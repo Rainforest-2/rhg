@@ -27,21 +27,18 @@ export function installBattleSceneStageSpawnHeaderPatch() {
   if (typeof originalInit === 'function') {
     proto.init = async function initWithSpawnHeader(...args) {
       const result = await originalInit.apply(this, args);
+      // Do NOT force globalRespawnTime = 0 here. BCU StageBasis derives the initial respawnTime
+      // from the stage header min/max spawn (respawnTime = min + (int)((max-min)*r.nextDouble()),
+      // then respawnTime--). The header is already copied onto stage.runtime by the
+      // buildStageRuntime wrapper before BcuStageSpawnRuntime is constructed, so the runtime's
+      // constructor-computed globalRespawnTime is the correct BCU initial gate.
       copyHeader(this);
-      if (this.stageSpawnRuntime) {
-        this.stageSpawnRuntime.globalRespawnTime = 0;
-        this.stageSpawnRuntime.lastGlobalRespawnDebug = {
-          source: 'BCU StageBasis initial respawnTime = 0',
-          initialized: 0,
-          minSpawnFrame: this.stage?.runtime?.minSpawnFrame ?? null,
-          maxSpawnFrame: this.stage?.runtime?.maxSpawnFrame ?? null
-        };
-      }
       this.pushEvent?.({
         type: 'bcuStageSpawnHeaderApplied',
         minSpawnFrame: this.stage?.runtime?.minSpawnFrame ?? null,
         maxSpawnFrame: this.stage?.runtime?.maxSpawnFrame ?? null,
-        globalRespawnTime: this.stageSpawnRuntime?.globalRespawnTime ?? null
+        globalRespawnTime: this.stageSpawnRuntime?.globalRespawnTime ?? null,
+        globalRespawnSource: 'BCU StageBasis respawnTime from header min/max (constructor-derived)'
       });
       return result;
     };

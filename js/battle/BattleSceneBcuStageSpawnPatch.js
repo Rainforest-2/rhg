@@ -272,14 +272,26 @@ export function installBattleSceneBcuStageSpawnPatch() {
         aliveEnemyCount: this.actors.filter((a) => a.isAlive() && a.side === 'cat-enemy').length,
         maxEnemyCount: this.getEffectiveEnemyMaxCount(),
         enemyBaseHpPercent: this.getEnemyBaseHpPercent(),
-        random: Math.random,
+        // tick() itself draws no RNG (it only gates/emits); the scene CopRand is consumed in
+        // commitSpawn (row respawn -> spawn layer -> global respawn), matching BCU EStage.allow.
+        random: typeof this.getBcuCopRand === 'function' ? () => this.getBcuCopRand().nextFloat() : Math.random,
         killCounterByRowIndex: counters,
         isGroupAllowed: (args) => this.isBcuStageGroupAllowed(args)
       });
+      const commitRandom = typeof this.getBcuRandom === 'function' ? this.getBcuRandom() : Math.random;
       for (const r of req) {
         const ok = this.spawnStageEnemy(r.unitDef, r);
         if (ok) {
-          this.stageSpawnRuntime.commitSpawn(r, { random: Math.random });
+          const spawned = this.actors[this.actors.length - 1] || null;
+          const commit = this.stageSpawnRuntime.commitSpawn(r, { random: commitRandom });
+          // BCU EEnemy assigns currentLayer from the spawn-layer draw; apply it to the actor.
+          // The actor was just created (no battle RNG drawn during creation), so the
+          // row-respawn -> spawn-layer -> global-respawn draw order in commitSpawn is preserved.
+          if (spawned && commit && Number.isFinite(commit.currentLayer)) {
+            spawned.currentLayer = commit.currentLayer;
+            spawned.bcuRenderLayerSource = 'bcu-stage-spawn-layer';
+            r.currentLayer = commit.currentLayer;
+          }
         } else {
           this.stageSpawnRuntime.rejectSpawn(r, 'spawnStageEnemy-returned-false', {
             retryDelayFrame: 1,

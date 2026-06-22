@@ -1,33 +1,52 @@
 import './BattleMiniProcParityPatch.js';
 import { BattleScene } from './BattleScene.js';
 import { DamageCalculator } from './DamageCalculator.js';
+import { BcuCopRand, normalizeBattleSeed, randomBattleSeed } from './bcu-runtime/BcuCopRand.js';
 
-const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.deterministic-random-scene-patch.v2');
+const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.deterministic-random-scene-patch.v3');
 const CALC_PATCH_FLAG = Symbol.for('wanko-battle.deterministic-random-calculator-patch.v1');
 const RANDOM_STACK = [];
 
-function createBcuRng(seed = 0x2bc0ffee) {
-  let state = (Number(seed) >>> 0) || 1;
-  return function bcuRuntimeRandom() {
-    state = (Math.imul(1664525, state) + 1013904223) >>> 0;
-    return state / 0x100000000;
+// Resolve the scene's battle seed. BCU StageBasis uses a single CopRand (basis.r) seeded
+// at battle start. We accept an explicit 64-bit `battleSeed` from scene options, fall back
+// to a generated seed, and persist it as a string so replay/debug can reuse the exact run.
+// NOTE: stage ID is deliberately NOT treated as the seed.
+function resolveBattleSeed(scene) {
+  const fromOptions = normalizeBattleSeed(
+    scene?.options?.battleSeed ?? scene?.options?.seed ?? scene?.battleSeed
+  );
+  if (fromOptions !== null) return fromOptions;
+  return randomBattleSeed();
+}
+
+function ensureCopRand(scene) {
+  if (scene.__bcuCopRand instanceof BcuCopRand) return scene.__bcuCopRand;
+  const seed = resolveBattleSeed(scene);
+  scene.__bcuCopRand = new BcuCopRand(seed);
+  scene.__bcuRandomSeed = seed;
+  // Persisted as a string so the full 64-bit signed seed survives JSON (replay/debug).
+  scene.battleSeed = seed.toString();
+  scene.battleSeedSource = (normalizeBattleSeed(scene?.options?.battleSeed ?? scene?.options?.seed) !== null)
+    ? 'scene-options-battleSeed'
+    : 'generated';
+  scene.lastBcuRandomDebug = {
+    source: 'scene CopRand (BCU basis.r); single seeded battle RNG',
+    seed: scene.battleSeed,
+    seedSource: scene.battleSeedSource,
+    drawCount: 0
   };
+  return scene.__bcuCopRand;
 }
 
 function ensureRng(scene) {
-  if (typeof scene.__bcuRandom !== 'function') {
-    const seed = scene?.stageDefinition?.id ?? scene?.stageId ?? scene?.config?.stage?.id ?? scene?.stage?.selectedStageId ?? 0x2bc0ffee;
-    scene.__bcuRandomSeed = Number(seed) >>> 0;
-    scene.__bcuRandom = createBcuRng(scene.__bcuRandomSeed);
-    scene.__bcuRandomCount = 0;
-  }
+  ensureCopRand(scene);
   return () => {
-    scene.__bcuRandomCount = (scene.__bcuRandomCount || 0) + 1;
-    const value = scene.__bcuRandom();
+    const value = scene.__bcuCopRand.nextFloat();
     scene.lastBcuRandomDebug = {
-      source: 'scene-scoped deterministic battle RNG passed to DamageCalculator context; BCU basis.r analogue',
-      seed: scene.__bcuRandomSeed,
-      count: scene.__bcuRandomCount,
+      source: 'scene CopRand (BCU basis.r) nextFloat passed to DamageCalculator/spawn context',
+      seed: scene.battleSeed,
+      seedSource: scene.battleSeedSource,
+      drawCount: scene.__bcuCopRand.drawCount,
       value
     };
     return value;
@@ -56,6 +75,14 @@ export function installBattleDeterministicRandomPatch() {
   if (!proto || proto[SCENE_PATCH_FLAG]) return;
   proto[SCENE_PATCH_FLAG] = true;
 
+  // Returns the scene's single CopRand instance (BCU basis.r). All deterministic battle
+  // draws (proc, spawn, respawn, layer, hit smoke, wave) must consume from this instance
+  // so consumption order matches BCU.
+  proto.getBcuCopRand = function getBcuCopRand() {
+    return ensureCopRand(this);
+  };
+
+  // float draw consumer used as DamageCalculator context.random and spawn/layer RNG.
   proto.getBcuRandom = function getBcuRandom() {
     return ensureRng(this);
   };

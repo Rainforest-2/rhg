@@ -28,6 +28,33 @@ function getKillCount(row = {}) {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
+// BCU StageBasis.entityCount(1): each counted entity contributes data.getWill() + 1.
+// `will` is 0 for vanilla data but must be preserved for custom entities.
+function getEntityWill(entity) {
+  const w = Number(
+    entity?.will
+    ?? entity?.bcuWill
+    ?? entity?.stageSpawn?.will
+    ?? entity?.rawStats?.will
+    ?? entity?.bcuCombatModel?.will
+  );
+  return Number.isFinite(w) && w > 0 ? Math.floor(w) : 0;
+}
+
+// BCU entityCount(1) counts entities with `!dead`. `e.dead` only becomes true when the death
+// (soul) animation finishes — so an entity in its final knockback, deathPending, or playing its
+// death animation is still `!dead` and keeps its slot. In the JS lifecycle that maps to "not
+// yet removed": a 'dead'-state actor still counts until it is removable (death animation done).
+function isBcuDeadEnemy(entity, nowMs) {
+  if (!entity) return true;
+  if (entity.state === 'removed') return true;
+  if (entity.state === 'dead') {
+    if (typeof entity.isRemovable === 'function') return entity.isRemovable(nowMs);
+    return true;
+  }
+  return false;
+}
+
 function shouldDecrementKillCounter(row = {}, enemyBaseHpPercent = 100) {
   const c0 = getCastle0(row);
   const c1 = getCastle1(row);
@@ -256,6 +283,22 @@ export function installBattleSceneBcuStageSpawnPatch() {
     return ok;
   };
 
+  // BCU StageBasis.entityCount(1): sum of (getWill()+1) over dire==1 && !dead entities, plus the
+  // enemy base's (getWill()+1) when ebase is an EEnemy (boss-as-base). NOT an isAlive() count.
+  proto.getBcuEnemyCapacityUsed = function getBcuEnemyCapacityUsed(nowMs = this.timeMs) {
+    let used = 0;
+    for (const a of (this.actors || [])) {
+      if (!a || a.side !== 'cat-enemy') continue;
+      if (isBcuDeadEnemy(a, nowMs)) continue;
+      used += getEntityWill(a) + 1;
+    }
+    for (const b of (this.bases || [])) {
+      // Only boss-as-base (EEnemy) bases occupy a slot; the normal ECastle base does not.
+      if (b?.side === 'cat-enemy' && b?.isBcuEnemyEntityBase === true) used += getEntityWill(b) + 1;
+    }
+    return used;
+  };
+
   proto.isBcuStageGroupAllowed = function isBcuStageGroupAllowed({ group } = {}) {
     return resolveBcuStageGroupAllowed(this, { group, side: 'cat-enemy' }).allowed;
   };
@@ -269,7 +312,9 @@ export function installBattleSceneBcuStageSpawnPatch() {
       const counters = ensureKillCounter(this);
       const req = this.stageSpawnRuntime.tick(this.logicFrame, {
         logicFrame: this.logicFrame,
-        aliveEnemyCount: this.actors.filter((a) => a.isAlive() && a.side === 'cat-enemy').length,
+        // BCU StageBasis uses entityCount(1) (will+1 per !dead entity), not an isAlive() count,
+        // so final-knockback / dying enemies still occupy capacity (st.max - entityCount(1)).
+        aliveEnemyCount: this.getBcuEnemyCapacityUsed(),
         maxEnemyCount: this.getEffectiveEnemyMaxCount(),
         enemyBaseHpPercent: this.getEnemyBaseHpPercent(),
         // tick() itself draws no RNG (it only gates/emits); the scene CopRand is consumed in

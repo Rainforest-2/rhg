@@ -1,22 +1,59 @@
-# BCU unresolved evidence blockers
+# BCU unresolved evidence and compatibility blockers
 
-This file lists evidence that could not be fully resolved after the 2026-06-12 docs refresh.
+Updated: 2026-06-23.
 
-Rows here are blockers for `fully-complete` or broader implementation claims. They are not necessarily blockers for deterministic runtime checks. If a runtime is implemented but still lacks browser/manual visual acceptance, the row must say that explicitly instead of marking the JS owner as missing.
+This file lists blockers for broad parity claims in `Rainforest-2/rhg`. A row here can coexist with an implemented runtime: the blocker may be its real data source, a browser acceptance gap, or a compatibility boundary.
 
-| Area | Current blocker | Required next step |
-|---|---|---|
-| BCU PC draw-side source | PC zip/source is not available in this checkout, so PC-only draw helpers cannot be cited. | Add PC zip to `references/bcu/` before any claim that depends on PC-only draw helpers. |
-| Normal CSV summon holder | Standard BC unit/enemy CSV constructor evidence does not prove a direct `Proc.SUMMON` holder. | Keep normal CSV parser unchanged; map BCU custom/proc-object data before any `code-complete` summon claim. |
-| BCU custom/proc-object summon loader | BCU custom/proc-object `SUMMON` holders now normalize into per-hit attack events when a proc-object is present, and the handoff is covered by `scripts/check-bcu-nine-item-runtime-parity.mjs`. Broad automatic discovery/loading of real custom pack proc-object files is still not implemented. | Add real custom pack loader fixtures before any broad source-loading claim. |
-| Summon entry visuals | Runtime has side limit/layer/delay/bond support, and summoned-enemy stage `SCDef.allow` group semantics are fixture-backed for `smap`/`sdef`/`SCGroup` limits in `scripts/check-bcu-summon-runtime-parity.mjs`. Exact entry appearance is not manually reviewed. | Record human review of `Entity.setSummon(anim_type)` behavior before `fully-complete`. |
-| Full `Trait.targetForms` fixture source | Focused JS fixtures now cover `targetType` and `targetForms` compatibility in `BcuTraitCompatibility` / `DamageAbilityResolver`, but real custom trait/form loader fixtures are not proven. | Add real custom trait/form data fixtures and capture/proc edge checks before broad completion claims. |
-| Bounty/money visual | Economy math is source-backed, but battle visual owner/effect alias is not proven. | Keep visual row partial; add PC source or exhaustive negative visual search. |
-| Non-basic cat cannon runtime | RESOLVED for 6/7 cannons (SLOW/STOP/WATER/GROUND/BARRIER/CURSE). Magnification is no longer a blocker: the level curves ship as `org/data/CC_AllParts_growth.csv` and are parsed faithfully by `BcuCannonLevelCurve` (`CannonLevelCurve.applyFormula`, max foundation level 30). `getBcuCatCannonSpec` + `fireBcuNonBasicCannon` own proc/range/target/timing/geometry/damage/KB in a dedicated cannon source (asserted no unit-proc `queueAttackDamage`). Remaining: (a) RESOLVED — BASE_WALL (id 2, Form 339, `preTime=-1`) entity-spawn lifecycle is wired: `activateBcuCatCannonWall` + `BattleSceneBcuCatCannonPatch.spawnBcuCannonWall` spawn the Form 339 player `EUnit` at `enemy-side-front anchor + 100`, count `aliveFrames = floor(wallAliveTime) + enter.len()(19) - 1` down, SELF_DESTRUCT, release-on-early-death, and single-wall replacement gating, all fail-closed and covered by `check-bcu-non-basic-cat-cannon-runtime-parity`/`-spec-parity`; (b) per-cannon ATK/EXT bitmap-animation bundle aliases; (c) exact per-frame traveling/sweep coordinate timing for extend/waved cannons (human-visual review). | Add ATK/EXT bundle aliases; visual-review extend/waved sweep timing and the wall entry/idle appearance. |
-| Cat cannon firing-effect position | RESOLVED. The firing animation drew too low / sank into the ground because the effect used a generic layer-9 + 75px smoke offset instead of BCU `BattleBox.drawBtm` `canon.drawBase` (`midh+(cany[id]-road_h)*siz`, `psiz=siz*sprite`). `computeBcuCannonBaseAnimDraw` + the `bcuCannonBaseAnim` render branches now reproduce the closed form exactly (`check-bcu-cat-cannon-effect-position-parity`). Remaining: browser human-visual confirmation only. | Record browser visual review of the firing animation placement. |
-| Enemy castle / stage "special attack" ownership | NEGATIVE EVIDENCE. BCU `ECastle.getAbi()=0` and has no attack method — plain castles do not attack. Boss bases that attack are `EEnemy` (`ebase instanceof EEnemy`, `mark=-2`) using the existing enemy/unit proc owner. `wave`/`surge`/`curse` are unit/enemy attack procs (`AttackWave`/`AttackVolcano`), never stage/castle-owned. "Dojo one-shot castle" is not a castle attack: dojo/`trail` bases have `Integer.MAX_VALUE` HP and the battle ends via `isDojoOvertime()` overtime. Castle-HP-threshold and `kill_count` counterattack spawns are owned by `EStage`/`StageBasis` (existing stage spawn runtime). | Do not build a castle-owned attack runtime; keep these on the existing enemy-proc and stage-spawn owners. |
-| Special castle boss-spawn coordinate | RESOLVED for runtime wiring. `BcuEnemyCastleBossSpawn` ports `CastleImg.loadBossSpawns` + `CommonStatic.bossSpawnPoint(y,z)=floor(3200+y*z/10-z*1180/100+z*127/10)/4`, confirms the `castleId -> CastleList map/index` bridge (`rc/ec/wc/sc` == `000000/000001/000002/000003`), and `core-db.zip:boss-spawns.json` now carries the derived values. `StageDefinitionLoader.enrichBossSpawn()` feeds `StageRuntime.bossSpawnWorldX`, and `StageRuntime.getEnemySpawnWorldX({ bossFlag/baseEnemy })` consumes it. `scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs` covers formula/source rows, ZIP read, stage enrichment, and runtime boss-spawn output. Collision = `ECastle.touchable()=TCH_N`; attack owner = none (plain castle) / `EEnemy` (boss base, existing enemy-proc owner). | No remaining coordinate-runtime blocker. Keep castle-owned attack negative evidence separate. |
-| Zombie revive browser visual acceptance and extra/custom revive interactions | Standard deterministic zombie revive/soulstrike visual trace exists; explicit extra/custom revive fixture handoff is now covered. Human browser acceptance and broad source/range filtering for real extra-reviver actors are not recorded. | Record browser review for DOWN/REVIVE phases; add real extra-reviver source/range fixtures before broader `fully-complete` claims. |
-| Mini-death-surge holder and edge cleanup | RESOLVED for holder/runtime: `MINIDEATHSURGE` has no CSV column; the only proven holder is the `ORB_DEATH_SURGE` talent orb (`EUnit.processAbilityOrbs`). `getOrbMiniDeathSurgeProc` + the `BcuDeathAnimationRuntime` mutually-exclusive full/mini roll + `miniSurge` routing are implemented and covered by `scripts/check-bcu-mini-death-surge-parity.mjs`. Remaining: human browser visual acceptance only. | Record browser review of mini demon-soul + WT_MIVC appearance before `fully-complete`. |
-| External combo/orb/treasure/talent/PCoin modifiers | Loader-backed fixtures and the primary construction/resolver hooks exist for combo, treasure, ORB_* damage families, ATK/HP talents, PCoin side effects including direct PC_P proc payloads, damage-family combos, combo-scaled WK/EK killers, combo speed (`C_SPE`), combo crit (`C_CRIT`), and combo proc-duration/knockback payload buffs. Broader claims are still blocked by real custom targetForms loader fixtures, broad real-data PCoin acceptance, and in-battle visual acceptance. | Keep the row `partial`; add real-data fixture sweeps and visual acceptance before broadening the claim. |
-| Castle/base guard browser visual acceptance | JS owner is no longer missing: `BcuCastleGuardRuntime` / `BattleSceneBcuCastleGuardPatch` implement active/hold/break behavior and `scripts/check-bcu-castle-guard-parity.mjs` covers it. Remaining evidence gap is manual browser appearance only. | Record browser review for guard hold/break appearance before any `fully-complete` visual claim. |
+## Active blockers
+
+| Severity | Area | Current blocker | Required next step |
+|---|---|---|---|
+| High | Real custom-pack SUMMON loading | Explicit proc-object `SUMMON` data reaches `BcuSummonRuntime`, but automatic discovery/loading of real custom pack proc-object files is not demonstrated. | Add loader-backed real custom-pack fixtures, then validate attack-hit handoff and stage allow/group behavior end to end. |
+| High | Normal CSV SUMMON holder | Inspected BCU evidence does not prove a direct normal unit/enemy CSV `SUMMON` holder. | Keep normal CSV parsing unchanged unless source evidence identifies one. |
+| High | BCU save / lineup compatibility | rhg persistence is browser-local `localStorage` JSON. The BCU serialization owner, schema, import/export rules, and round-trip compatibility are unconfirmed. | Find the BCU save/lineup owner, document the format and versions, then add import/export fixtures before making any compatibility claim. |
+| High | Storage failure visibility | `FormationStore` / `StageRegistry` persistence failures can fall back silently. | Surface read/write failure through UI or structured log; test blocked/quota-full storage. |
+| Medium | `Trait.targetForms` real-data coverage | Focused compatibility fixtures pass, but broad real custom trait/form loading plus capture/proc/targetOnly edge coverage is absent. | Add real loader-backed fixtures and a cross-path regression matrix. |
+| Medium | Combo / orb / treasure / talent / PCoin acceptance | Main modifier hooks are implemented, but broad real-data sweep coverage and in-battle visual acceptance are incomplete. | Keep `partial`; add real-data fixtures and record browser acceptance. |
+| Medium | Non-basic cannon visual assets | Dedicated cannon runtime is present—including BASE_WALL—but per-cannon ATK/EXT bitmap-animation aliases remain incomplete. | Add aliases from BCU assets; do not replace them with a generic effect approximation. |
+| Medium | Extend/waved cannon timing | Exact per-frame sweep/travel coordinates are not manually accepted. | Capture a fixed BCU reference and compare frames in browser. |
+| Medium | Summon entry visual | `Entity.setSummon(anim_type)` start appearance, placement, layer, and cleanup are not manually accepted. | Review only after a loader-backed summon fixture is available. |
+| Medium | Zombie extra/custom revive | Standard zombie lifecycle is deterministic-test covered, but broad real source/range filtering for extra/custom revivers is not. | Add real source/range fixtures before broad completion claims. |
+| Medium | BCU PC draw-side source | No PC draw-side source ZIP is available in this checkout for claims that depend on PC-only rendering helpers. | Add the relevant PC source before making PC-only visual assertions. |
+| Low | Bounty/money battle visual | Economy logic is source-backed, but no dedicated battle effect owner or stable visual alias is proven. | Keep it logic-only unless new BCU source proves a visual owner. |
+
+## Manual-only acceptance blockers
+
+These have runtime and deterministic evidence but remain visually unaccepted:
+
+- P_DELAY;
+- barrier / demon shield / shield breaker;
+- burrow DOWN / underground / UP appearance;
+- spirit actor and A_IMUATK appearance;
+- castle/base guard hold/break;
+- zombie corpse DOWN/REVIVE and mini-death-surge visuals;
+- basic cannon firing/wave effect, non-basic cannon sweep, and BASE_WALL entry/idle.
+
+Track outcomes only in `bcu-visual-review-checklist.md`. A passing headless test is not a manual browser acceptance.
+
+## Resolved or negative-evidence items
+
+Do not re-list these as current implementation blockers without a current code regression:
+
+| Area | Current conclusion |
+|---|---|
+| Historical StageDefinitionLoader gaps | Current code already handles the historical `rowIndex`, castle `noContinue`, `-1` enemy-castle fallback, and `bossGuard` source-row issues. Treat old README claims as historical only. |
+| Castle/base guard owner | Implemented as scene/base state; only browser appearance remains. |
+| Standard zombie corpse/soulstrike | Deterministic runtime coverage exists; remaining scope is visual acceptance and extra/custom sources. |
+| Basic/non-basic cannon runtime | Dedicated owners and deterministic checks exist. Visual asset/timing acceptance is separate. |
+| Plain castle-owned attack | Negative evidence: plain `ECastle` has no attack owner. Boss-base attacks are ordinary `EEnemy`; stage threshold/kill spawns are stage-owned. |
+| Special castle boss-spawn coordinate | Runtime wiring and formula coverage are implemented. |
+
+## Documentation rule
+
+Do not call a runtime missing merely because its loader or visual acceptance is incomplete. State the actual boundary:
+
+1. runtime missing;
+2. runtime exists but source loading is incomplete;
+3. runtime exists but browser appearance is unaccepted;
+4. source owner is unconfirmed or disproven;
+5. persistence schema compatibility is unconfirmed.

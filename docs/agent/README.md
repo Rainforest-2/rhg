@@ -1,34 +1,46 @@
 # Agent Documentation
 
-This directory holds the longer agent rules that used to live in `AGENTS.md`.
-`AGENTS.md` stays as the short entrypoint so Codex and Claude Code can read the same rule set.
+This directory holds the longer agent rules referenced by the repository-root `AGENTS.md`.
 
-## Current Source Of Truth
+## Current source of truth
 
-Use these files before relying on older notes:
+Read these in order before using older notes:
 
-- `../ability-logic/current-ability-parity-status.md`
-- `../ability-logic/bcu-unresolved-evidence-blockers.md`
-- `../ability-logic/bcu-visual-review-checklist.md`
-- `../ability-logic/bcu-parity-codex-workplan.md`
-- `../ability-logic/bcu-fact-first-update-procedure.md`
-- `../bcu-migration-status.md`
+1. `../../README.md`
+2. `../bcu-migration-status.md`
+3. `../ability-logic/current-ability-parity-status.md`
+4. `../ability-logic/bcu-unresolved-evidence-blockers.md`
+5. `../ability-logic/bcu-visual-review-checklist.md`
+6. `../ability-logic/bcu-ability-source-evidence.md`
+7. `../ability-logic/bcu-parity-codex-workplan.md`
+8. `../ability-logic/bcu-fact-first-update-procedure.md`
 
-Treat older docs as historical notes unless these current status files confirm the same claim.
+The 2026-06-23 audit established an important documentation rule: historical analysis can preserve source facts, but historical claims about the current rhg implementation are not current until code and deterministic checks confirm them.
 
-## Agent Rule Files
+## Agent rule files
 
-- `bcu-parity-rules.md`: status vocabulary, evidence rule, source priority, runtime asset rule, current gaps, and naming discipline.
+- `bcu-parity-rules.md`: evidence hierarchy, status vocabulary, asset/runtime rules, and known constraints.
 - `fact-first-update-procedure.md`: agent-facing link to the canonical fact-first workflow.
-- `checks-and-verification.md`: required checks and effect-bundle verification.
-- `report-format.md`: required implementation-batch final report format.
-- `md-maintenance-rules.md`: Markdown and agent-instruction maintenance rules, including `CLAUDE.md` symlink handling.
+- `checks-and-verification.md`: deterministic checks, ZIP inspection, and verification requirements.
+- `report-format.md`: final implementation-batch report format.
+- `md-maintenance-rules.md`: Markdown and agent-instruction maintenance rules.
 
-## Reference vs progress docs
+## Documentation classes
 
-`docs/` keeps two long-lived kinds of supporting docs:
+`docs/` contains three distinct kinds of information:
 
-- **BCU source-fact evidence** (e.g. `../ability-logic/bcu-ability-source-evidence.md`, `../ability-logic/bcu-priority-hit-effect-evidence.md`, `../bcu-unit-stat-flow.md`): durable records of BCU source behavior. Keep these.
-- **Current status / structural docs** (the source-of-truth list above, plus the CSS-structure notes): keep current.
+1. **Current status and workplan** — must remain synchronized with current code and checks.
+2. **BCU source evidence** — durable facts about BCU ownership, fields, timing, and negative evidence.
+3. **Historical reports** — useful context only; never a live defect list by themselves.
 
-Dated progress, audit, handoff, and extraction snapshots are not preserved as live docs once their accurate claims are folded into a current source-of-truth doc; git history holds the originals. Do not promote any historical note to source of truth without a passing deterministic check.
+Do not create parallel status documents when an existing source-of-truth file can be updated. For a parity change, update the current status, blocker, visual-review ledger, migration summary, and root README/AGENTS summary when their scope changes.
+
+## Current audit focus
+
+- real custom-pack SUMMON source loading;
+- persistence scope and failure visibility;
+- real-data targetForms/modifier fixture coverage;
+- browser visual acceptance;
+- non-basic cannon visual asset aliases and sweep timing.
+
+Do not treat repository-local `localStorage` persistence as BCU save compatibility, and do not create a generic castle-owned attack owner: BCU evidence rejects both claims.

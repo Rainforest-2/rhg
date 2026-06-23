@@ -140,8 +140,28 @@ function spawnWarpVisuals(scene, target, result) {
   }
 }
 
+// BCU Entity.damaged counter-surge gate (Entity.java:1746-1755):
+//   (getAbi() & AB_CSUR) && atk instanceof AttackVolcano
+//   && volc.handler != null && !volc.handler.reflected
+//   && !volc.handler.surgeSummoned.contains(this)
+// i.e. the entity has counter surge, the incoming hit is a volcano/surge, that
+// surge is NOT itself a counter surge (reflected), and this entity has not already
+// countered that same volcano handler. Records the claim so a handler counters an
+// entity at most once across its multi-tick lifetime.
+export function counterSurgeAllowed(target, incomingEvent, meta = {}) {
+  if (!hasCounterSurge(target) || !meta?.bcuSurge) return false;
+  if (meta?.bcuCounterSurge === true || incomingEvent?.bcuCounterSurge === true) return false;
+  const containerId = meta?.bcuSurgeContainerId;
+  if (containerId != null) {
+    if (!target.__bcuCounterSurgedContainers) target.__bcuCounterSurgedContainers = new Set();
+    if (target.__bcuCounterSurgedContainers.has(containerId)) return false;
+    target.__bcuCounterSurgedContainers.add(containerId);
+  }
+  return true;
+}
+
 function queueCounterSurge(scene, target, incomingEvent, meta = {}) {
-  if (!hasCounterSurge(target) || !meta?.bcuSurge || meta?.bcuCounterSurge) return;
+  if (!counterSurgeAllowed(target, incomingEvent, meta)) return;
   const incomingKind = meta.bcuSurge === 'miniSurge' ? 'miniSurge' : 'surge';
   const payload = incomingEvent?.bcuCounterSurgePayload || {
     dis0: Number(meta.bcuRangeStart ?? 0) || 0,
@@ -160,6 +180,8 @@ function queueCounterSurge(scene, target, incomingEvent, meta = {}) {
     source: 'BCU SurgeSummoner COUNTER_SURGE_FORESWING'
   };
   scene.__bcuCounterSurgeQueue.push(item);
+  // BCU SurgeSummoner adds the counter surge with CommonStatic.setSE(SE_COUNTER_SURGE).
+  scene.pushEvent?.({ type: 'bcuCounterSurgeStarted', actor: target?.instanceId || target?.label || null, incomingKind, source: 'BCU SurgeSummoner SE_COUNTER_SURGE' });
   spawnWaveBundleEffect(scene, {
     key: counterKey(target),
     actor: target,

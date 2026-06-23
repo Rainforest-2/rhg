@@ -147,11 +147,39 @@ function procKeys(event = {}) {
 function playProcSe(scene, event = {}, engine = undefined) {
   const keys = procKeys(event);
   if (keys.has('toxic') && throttle(scene, 'se-poison', 120)) playBcuSe(BCU_SE.POISON, engine);
-  if (keys.has('barrierBreaker') && throttle(scene, 'se-barrier-breaker', 120)) playBcuSe(BCU_SE.BARRIER_ATK, engine);
-  if ((keys.has('shieldPierce') || keys.has('shieldBreaker')) && throttle(scene, 'se-shield-breaker', 120)) playBcuSe(BCU_SE.SHIELD_BREAKER, engine);
+  // Barrier/shield SE are driven by the actual barrier/shield STATE change
+  // (bcuBarrierShieldStateChange), not the attacker proc, so the exact BCU
+  // getEff(BREAK_*/SHIELD_*) sound plays even when no breaker proc is present.
   if (keys.has('warp') && throttle(scene, 'se-warp', 180)) playBcuSe(BCU_SE.WARP_ENTER, engine);
   if (keys.has('delay') && throttle(scene, 'se-delay', 160)) playBcuSe(BCU_SE.DELAY_COOLDOWN, engine);
   if (keys.has('spirit') && throttle(scene, 'se-spirit', 160)) playBcuSe(BCU_SE.SPIRIT_SUMMON, engine);
+}
+
+// BCU Entity.AnimManager.getEff barrier/shield SE sites (Entity.java):
+//   BREAK_ABI -> SE_BARRIER_ABI, BREAK_ATK -> SE_BARRIER_ATK, BREAK_NON -> SE_BARRIER_NON,
+//   SHIELD_HIT -> SE_SHIELD_HIT, SHIELD_BROKEN -> SE_SHIELD_BROKEN,
+//   SHIELD_REGEN -> SE_SHIELD_REGEN, SHIELD_BREAKER -> SE_SHIELD_BREAKER.
+// Keyed by the rhg barrier/shield state-change event types.
+const BARRIER_SHIELD_STATE_SE = Object.freeze({
+  'barrier-breaker': BCU_SE.BARRIER_ABI,
+  'barrier-broken-by-damage': BCU_SE.BARRIER_ATK,
+  'barrier-auto-broken-by-cumulative-damage': BCU_SE.BARRIER_ATK,
+  'barrier-hit-blocked': BCU_SE.BARRIER_NON,
+  'shield-pierced': BCU_SE.SHIELD_BREAKER,
+  'shield-broken-by-damage': BCU_SE.SHIELD_BROKEN,
+  'shield-hit-absorbed': BCU_SE.SHIELD_HIT,
+  'shield-regen': BCU_SE.SHIELD_REGEN
+});
+
+export function barrierShieldStateSeId(stateType) {
+  return BARRIER_SHIELD_STATE_SE[String(stateType || '')] ?? null;
+}
+
+// BCU Entity.java:2618 plays SE_DEATH_0 or SE_DEATH_1 on entity death via a 50/50
+// roll. The pick is cosmetic, so it uses Math.random rather than the seeded combat
+// RNG stream (consuming that would shift deterministic gameplay draws).
+function deathSoundId() {
+  return Math.random() < 0.5 ? BCU_SE.DEATH_0 : BCU_SE.DEATH_1;
 }
 
 export function playForEvent(scene, event = {}, engine = undefined) {
@@ -190,6 +218,29 @@ export function playForEvent(scene, event = {}, engine = undefined) {
     case 'procResolved':
       playProcSe(scene, event, engine);
       break;
+    case 'bcuBarrierShieldStateChange': {
+      // BCU getEff(BREAK_*/SHIELD_*) -> setSE; per-frame de-dup via playBcuSetSe.
+      const id = barrierShieldStateSeId(event.barrierShieldType);
+      if (id != null) playBcuSetSe(scene, id, engine);
+      break;
+    }
+    case 'bcuEntityDied':
+      // BCU Entity.java death: setSE(SE_DEATH_0/1). oncePerFrame keeps a mass
+      // same-frame wipe to at most one death sound per id, like BCU's setSE flag.
+      playBcuSetSe(scene, deathSoundId(), engine);
+      break;
+    case 'bcuCastleGuardHold':
+      // BCU ECastle GUARD_HOLD -> SE_BARRIER_NON.
+      playBcuSetSe(scene, BCU_SE.BARRIER_NON, engine);
+      break;
+    case 'bcuCounterSurgeStarted':
+      // BCU SurgeSummoner counter surge -> SE_COUNTER_SURGE.
+      if (throttle(scene, 'counter-surge', 120)) playBcuSe(BCU_SE.COUNTER_SURGE, engine);
+      break;
+    case 'bcuLethalSurvived':
+      // BCU Entity P_LETHAL survive effect -> SE_LETHAL.
+      if (throttle(scene, 'lethal', 200)) playBcuSe(BCU_SE.LETHAL, engine);
+      break;
     case 'bcuWaveSe':
       // BCU: ContWaveDef.update calls CommonStatic.setSE(SE_WAVE) at t==0; setSE is a
       // per-frame flag, so SE_WAVE sounds at most once per logic frame even when many
@@ -203,8 +254,12 @@ export function playForEvent(scene, event = {}, engine = undefined) {
         playBcuSe(BCU_SE.VOLC_START, engine);
       }
       break;
-    case 'baseDamageQueued':
     case 'bcuCastleGuardBreak':
+      // BCU ECastle GUARD_BREAK -> SE_BARRIER_ABI, in addition to the base taking the hit.
+      playBcuSetSe(scene, BCU_SE.BARRIER_ABI, engine);
+      if (throttle(scene, 'base-hit', 140)) playBaseHitSe(engine);
+      break;
+    case 'baseDamageQueued':
       if (throttle(scene, 'base-hit', 140)) playBaseHitSe(engine);
       break;
     case 'battlePauseOpened':

@@ -73,6 +73,7 @@ node scripts/check-bcu-trait-targetforms-loader-parity.mjs
 node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
 node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
 node scripts/check-formation-storage-failure-visibility.mjs
+node scripts/check-bcu-battle-sound-effects-parity.mjs
 node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
 node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-bcu-wallet-runtime-parity.mjs

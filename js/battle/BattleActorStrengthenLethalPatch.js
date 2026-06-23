@@ -102,6 +102,9 @@ function applyLethalSurvive(actor, result, meta = {}) {
     activatedAtMs: meta.nowMs ?? null,
     source: 'BCU Entity.AnimManager.getEff(P_LETHAL)'
   };
+  // BCU Entity.AnimManager.getEff(P_LETHAL) calls CommonStatic.setSE(SE_LETHAL).
+  const scene = meta?.scene || actor?.scene || globalThis.__APP__?.battleScene || globalThis.__APP__?.scene || null;
+  scene?.pushEvent?.({ type: 'bcuLethalSurvived', actor: actor.instanceId || actor.label || null, source: 'BCU Entity P_LETHAL survive SE_LETHAL' });
   return { applied: true, status: statuses.lethal };
 }
 

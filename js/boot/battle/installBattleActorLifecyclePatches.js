@@ -4,6 +4,7 @@ export async function installBattleActorLifecyclePatches() {
   await import('../../battle/BattleActorStrengthenLethalPatch.js');
   await import('../../battle/BattleActorZombieRevivePatch.js');
   await import('../../battle/BattleActorGlassPatch.js');
+  await import('../../battle/BattleActorDeathSoundPatch.js');
   await import('../../battle/BattleBcuDeathAnimationRuntimePatch.js');
   await import('../../battle/BcuKnockbackEffectLayerPatch.js');
   await import('../../battle/BcuKnockbackAnimationPatch.js');

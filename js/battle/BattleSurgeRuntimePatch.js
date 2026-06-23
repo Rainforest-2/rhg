@@ -376,6 +376,12 @@ export function attackTick(scene, item) {
       key: `${item.id}:${item.t}:${target.instanceId || target.label || 'target'}`,
       hitIndex: item.hitIndex,
       bcuSurge: item.kind,
+      // BCU ContVolcano.reflected: a counter surge's volcano carries reflected=true so a
+      // downstream AB_CSUR entity does NOT counter it (counter surges never chain). The
+      // flag lives on the container's event; surface it on the damage meta the counter
+      // gate actually reads. item.id mirrors the per-handler surgeSummoned identity.
+      bcuCounterSurge: item.event?.bcuCounterSurge === true,
+      bcuSurgeContainerId: item.id,
       bcuProjectileNoHitSmoke: true,
       bcuRangeStart: item.startX,
       bcuRangeEnd: item.endX,

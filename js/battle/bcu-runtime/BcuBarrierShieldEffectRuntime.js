@@ -92,6 +92,18 @@ export function spawnBcuBarrierShieldVisual(scene, actor, event = {}, options = 
   if (!scene || !actor || !event?.type) return null;
   const spec = describeBcuBarrierShieldVisual(actor, event);
   if (!spec) return null;
+  // BCU plays the barrier/shield SE at the getEff(BREAK_*/SHIELD_*) site, i.e. when
+  // the state change happens — emit it once per event (independent of whether the
+  // visual asset is ready or the spawn is later retried).
+  if (event.__bcuBarrierShieldSePlayed !== true) {
+    event.__bcuBarrierShieldSePlayed = true;
+    scene.pushEvent?.({
+      type: 'bcuBarrierShieldStateChange',
+      barrierShieldType: event.type,
+      actor: actorLabel(actor),
+      phase: spec.phase
+    });
+  }
   if (event.__bcuBarrierShieldVisualSpawned === true) return event.__bcuBarrierShieldVisualEffect || null;
 
   const effect = spawnWaveBundleEffect(scene, {

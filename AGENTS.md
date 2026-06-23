@@ -1,103 +1,101 @@
 # AGENTS.md
 
-Repository-wide entrypoint for AI coding agents working on `rhgrive2/game`.
+Repository-wide entrypoint for coding agents working on `Rainforest-2/rhg`.
 
 ## Mission
 
-Complete Battle Cats Ultimate (BCU) battle parity for `rhgrive2/game` using local BCU references, current JS runtime analysis, deterministic checks, ZIP-bundle evidence, and maintainable incremental changes.
+Improve Battle Cats Ultimate (BCU) battle parity from local BCU references while preserving existing runtime behavior, semantic ZIP asset rules, deterministic checks, and documented uncertainty.
 
-## Current source of truth
+## Read first
 
-Read these before relying on older notes:
+Use these current documents before any historical note:
 
-- `docs/ability-logic/current-ability-parity-status.md`
-- `docs/ability-logic/bcu-unresolved-evidence-blockers.md`
-- `docs/ability-logic/bcu-visual-review-checklist.md`
-- `docs/ability-logic/bcu-parity-codex-workplan.md`
-- `docs/ability-logic/bcu-fact-first-update-procedure.md`
-- `docs/bcu-migration-status.md`
-- `docs/agent/README.md`
+1. `README.md`
+2. `docs/bcu-migration-status.md`
+3. `docs/ability-logic/current-ability-parity-status.md`
+4. `docs/ability-logic/bcu-unresolved-evidence-blockers.md`
+5. `docs/ability-logic/bcu-visual-review-checklist.md`
+6. `docs/ability-logic/bcu-ability-source-evidence.md`
+7. `docs/ability-logic/bcu-parity-codex-workplan.md`
+8. `docs/ability-logic/bcu-fact-first-update-procedure.md`
+9. `docs/agent/README.md`
 
-Treat older docs as historical notes unless the current source-of-truth docs confirm the same claim.
+Treat old reports as historical unless current code and these docs confirm the same claim.
 
-## Fact-first update rule
+## Non-negotiable workflow
 
-Use this order for every BCU parity update:
-
-```txt
-fact -> existing JS audit -> minimal update -> deterministic check -> docs/status update
+```text
+BCU fact -> current JS owner audit -> minimal change -> deterministic check -> focused docs update
 ```
 
-Do not change gameplay because a field or ability name looks familiar. First prove the BCU behavior, then prove where the current JS runtime owns that behavior.
+Before changing runtime behavior, identify:
 
-Detailed procedure: `docs/ability-logic/bcu-fact-first-update-procedure.md`.
+- the BCU file/class/method and field/state transition;
+- the current rhg file/function that owns the behavior;
+- the exact test or fixture that can catch regression;
+- whether the remaining issue is runtime, source loading, visual acceptance, or schema compatibility.
 
-## Required details
+## Current audit priorities
 
-- Agent doc index: `docs/agent/README.md`
-- BCU parity rules, status vocabulary, evidence rule, source priority, runtime asset rule, naming discipline, and known gaps: `docs/agent/bcu-parity-rules.md`
-- Fact-first procedure link and stop conditions: `docs/agent/fact-first-update-procedure.md`
-- Checks and verification requirements: `docs/agent/checks-and-verification.md`
-- Final report format: `docs/agent/report-format.md`
-- Markdown/agent-instruction maintenance rules: `docs/agent/md-maintenance-rules.md`
+1. Real custom-pack SUMMON proc-object loading; do not invent a normal CSV holder.
+2. Persistence boundary: repository-local `localStorage` state is not a BCU save/lineup compatibility claim.
+3. Real-data `targetForms` and external-modifier fixtures.
+4. Manual browser acceptance for visible effects/UI.
+5. Non-basic cannon ATK/EXT aliases and extend/waved timing.
 
 ## Prohibited shortcuts
 
 Do not:
 
-- mark rows `code-complete` based on comments, old docs, or visual appearance only.
-- invent missing CSV indexes.
-- infer effect aliases without `unzip -l` and loader verification.
-- add browser runtime fallback to raw `public/assets/bcu` files.
-- replace wrapper chains without auditing import order and callers.
-- hide uncertain behavior behind broad try/catch.
-- silently change random behavior.
-- collapse unit/enemy side behavior unless BCU proves it identical.
-- conflate `strong`, `strongAttack`, and `strengthen`.
-- classify approximate visual placement as `fully-complete`.
-- promote historical or unverified analysis to current source of truth without a passing deterministic check.
-- change implementation code, public assets, ZIP bundles, or generated manifests during Markdown-only maintenance.
+- mark rows complete from comments, old docs, or one fixture;
+- invent BCU CSV indexes, proc holders, save schemas, or effect aliases;
+- silently fall back from semantic ZIP assets to loose `public/assets/bcu/**`;
+- replace wrapper chains without auditing import order, original calls, and callers;
+- hide uncertainty behind broad `try/catch` or silent fallback;
+- change random behavior, target selection, or side ownership without source proof;
+- create a generic castle-owned attack runtime—plain BCU castles do not own one;
+- call browser-local persistence “BCU compatible” without a proven BCU serialization owner and round-trip fixtures;
+- mark visual parity accepted from deterministic traces alone;
+- change code, assets, ZIP bundles, or manifests during Markdown-only maintenance.
 
-## Required checks
+## Checks
 
-Prefer small deterministic Node scripts under `scripts/check-*.mjs`. Each script must exit nonzero on failure.
-
-Use relevant checks from the current workplan and status docs. Common checks include:
-
-- `scripts/check-bcu-parser-indexes.mjs`
-- `scripts/check-projectile-damage-parity.mjs`
-- `scripts/check-proc-immunity-resistance-parity.mjs`
-- `scripts/check-effect-bundle-aliases.mjs`
-- `scripts/check-effect-coordinate-traces.mjs`
-- `scripts/check-bcu-delay-runtime.mjs`
-- `scripts/check-bcu-burrow-lifecycle-parity.mjs`
-- `scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs`
-- `scripts/check-bcu-summon-runtime-parity.mjs`
-- `scripts/check-bcu-spirit-bundle-manifest-parity.mjs`
-- `scripts/check-bcu-castle-guard-parity.mjs`
-- `scripts/check-ability-partial-blockers.mjs`
-
-Run `node --check` on every touched JS/MJS file. Do not assume `package.json` exists.
-
-For effect work, also run:
+Use focused Node checks under `scripts/check-*.mjs`. Common checks include:
 
 ```bash
-unzip -l public/assets/bundles/effect/status-effects.zip
-unzip -l public/assets/bundles/effect/wave.zip
-unzip -l public/assets/bundles/effect/kbeff.zip
+node scripts/check-bcu-parser-indexes.mjs
+node scripts/check-projectile-damage-parity.mjs
+node scripts/check-proc-immunity-resistance-parity.mjs
+node scripts/check-bcu-delay-runtime.mjs
+node scripts/check-bcu-summon-runtime-parity.mjs
+node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+node scripts/check-bcu-castle-guard-parity.mjs
+node scripts/check-bcu-wallet-runtime-parity.mjs
+node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
+node scripts/check-ability-partial-blockers.mjs
 ```
 
-Update `docs/ability-logic/effect-zip-audit.md` with exact entries when effect bundles change.
+Run only relevant checks, but do not silently skip a required one. Run `node --check` on every changed JS/MJS file.
 
-## Final report format
+## Documentation maintenance
 
-Every implementation batch must end with:
+When a parity claim changes, update existing docs rather than adding a parallel status file:
+
+1. `current-ability-parity-status.md`
+2. `bcu-unresolved-evidence-blockers.md`
+3. `bcu-visual-review-checklist.md` only after real browser review
+4. `bcu-migration-status.md`
+5. `README.md` / this file if the public or agent-facing summary changed
+
+## Final implementation report
+
+Every implementation batch ends with:
 
 ```md
 ## Summary
-- Rows moved to code-complete:
+- Rows moved to code-complete-candidate:
 - Rows moved to human-visual-review-needed:
-- Rows still partial:
+- Rows still partial / unconfirmed:
 
 ## BCU references inspected
 - files/classes/methods:
@@ -117,4 +115,4 @@ Every implementation batch must end with:
 - next action:
 ```
 
-Never report done without command output or an explicit statement that a required verification could not run.
+Do not report parity completion without command output or an explicit statement of what could not be verified.

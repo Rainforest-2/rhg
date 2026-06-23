@@ -1,12 +1,16 @@
-export async function installBattleProjectilePatches() {
+import { importWithProgress } from '../importProgress.js';
+
+export async function installBattleProjectilePatches(onProgress) {
   // Projectile runtimes feed later StageBasis and renderer wrappers.
-  await import('../../battle/BattleWaveRuntimePatch.js');
-  await import('../../battle/BattleSceneBcuWaveOnBlockedHitPatch.js');
-  await import('../../battle/BattleSurgeRuntimePatch.js');
-  await import('../../battle/BattleBlastRuntimePatch.js');
-  await import('../../battle/BattleBaseProjectileProcPatch.js');
-  await import('../../battle/BattleProjectileRuntimeBugfixPatch.js');
-  await import('../../battle/BattleSceneStageRuntimeWiring.js');
-  await import('../../battle/BattleSceneRendererOrderPatch.js');
-  await import('../../battle/BattleSceneUnitLayerPatch.js');
+  await importWithProgress([
+    () => import('../../battle/BattleWaveRuntimePatch.js'),
+    () => import('../../battle/BattleSceneBcuWaveOnBlockedHitPatch.js'),
+    () => import('../../battle/BattleSurgeRuntimePatch.js'),
+    () => import('../../battle/BattleBlastRuntimePatch.js'),
+    () => import('../../battle/BattleBaseProjectileProcPatch.js'),
+    () => import('../../battle/BattleProjectileRuntimeBugfixPatch.js'),
+    () => import('../../battle/BattleSceneStageRuntimeWiring.js'),
+    () => import('../../battle/BattleSceneRendererOrderPatch.js'),
+    () => import('../../battle/BattleSceneUnitLayerPatch.js')
+  ], onProgress);
 }

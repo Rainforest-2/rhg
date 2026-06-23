@@ -23,9 +23,9 @@ Manual browser review is tracked in [`bcu-visual-review-checklist.md`](./bcu-vis
 | curse / seal / toxic | `code-complete-candidate` | Runtime and resistance paths exist; retain edge coverage discipline. |
 | warp lifecycle | `code-complete-candidate` | Lifecycle, interruption, targetability, exit position, and replacement/death cases are tested. Exact WaprCont appearance remains manual-review work. |
 | P_DELAY | `human-visual-review-needed` | Player cooldown and enemy stage-line owners, same-tick aggregation, effect alias, and coordinate traces are covered. |
-| wave / mini-wave / surge / mini-surge / blast | `code-complete-candidate` | Projectile runtime and focused damage/effect checks exist. Broad visual acceptance is separate. |
+| wave / mini-wave / surge / mini-surge / blast | `code-complete-candidate` | Projectile runtime and focused damage/effect checks exist. Real enemy 562 now guards enemy-side and player-side `ContVolcano` lifetime as frame duration. Broad visual acceptance is separate. |
 | barrier / demon shield / shield breaker | `human-visual-review-needed` | Gate order, phases, offsets, layer, and shield-regeneration timing are covered by deterministic checks. |
-| death soul / AB_GLASS | `code-complete-candidate` | Parser, death runtime, fallback cleanup, and deterministic checks exist. |
+| death soul / death-surge / AB_GLASS | `code-complete-candidate` | Parser, death runtime, fallback cleanup/recovery, and deterministic checks exist. Full death-surge is owned by the demon-soul death runtime and triggers at soul frame 21; the old priority-effect immediate path is guarded against. |
 | standard zombie corpse / soulstrike / revive | `human-visual-review-needed` | Deterministic coverage includes corpse targetability, soulstrike, zombie killer suppression, revive HP, phase timing, cleanup, and death-surge single spawn. Real extra/custom revive source coverage remains partial. |
 | burrow | `code-complete-candidate` | Count/distance parse, down/underground/up lifecycle, collision/targetability, movement clamp, guards, and cleanup are tested. |
 | spirit lifecycle | `human-visual-review-needed` | Spawn lifecycle, attack-only form bundle registration, semantic ZIP loading, and factory path are tested. Normal actor/A_IMUATK appearance is unaccepted. |
@@ -55,6 +55,7 @@ These rows graduated from `partial` once a real BCU-format data source was loade
 | Area | Status | Current boundary | Safe next step |
 |---|---|---|---|
 | summon entry appearance | `human-visual-review-needed` | Loader is proven; `Entity.setSummon(anim_type)` appearance, placement, and layer are not manually accepted. | Review in browser using a loader-backed summon fixture. |
+| death-surge demon-soul appearance | `human-visual-review-needed` | Full death-surge timing, single-spawn ownership, and loader-recovery are deterministic-test covered; exact browser demon-soul appearance has not been manually accepted. | Review a full `DEATHSURGE` fixture in browser and compare demon soul + WT_VOLC start frame. |
 | mini-death-surge | `human-visual-review-needed` | Proven ORB_DEATH_SURGE holder and mutually-exclusive full/mini roll runtime are tested. | Review mini demon-soul and WT_MIVC browser appearance. |
 | bounty/money visual | `logic-only-unless-future-visual-proof` | Economy behavior is source-backed; BCU shows no dedicated battle visual owner or stable effect alias (negative evidence on the visual side). | Keep it logic/economy only; there is nothing to visually accept unless new BCU source proves an owner. |
 | BCU save / lineup import-export compatibility | `out-of-scope` | rhg ships no BCU save import/export feature and no BCU serialization owner exists in this checkout. This is not an ability-parity defect. | Only if an import/export feature is ever added: identify the BCU serialization owner and add round-trip fixtures first. |

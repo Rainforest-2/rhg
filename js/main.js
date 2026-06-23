@@ -106,11 +106,13 @@ async function boot() {
     const { installUiPatches } = await import('./boot/installUiPatches.js');
     const { installBcuPatches } = await import('./boot/installBcuPatches.js');
     const { installBattlePatches } = await import('./boot/installBattlePatches.js');
-    await installUiPatches();
+    // Each install phase loads dozens of modules; thread its own per-module fraction
+    // into its band so the bar moves continuously instead of hanging between steps.
+    await installUiPatches((f) => showBootStatus('読み込み中…', progressInBand(BOOT_PROGRESS.start, BOOT_PROGRESS.uiPatches - BOOT_PROGRESS.start, f)));
     showBootStatus('読み込み中…', BOOT_PROGRESS.uiPatches);
     await installBcuPatches();
     showBootStatus('読み込み中…', BOOT_PROGRESS.bcuPatches);
-    await installBattlePatches();
+    await installBattlePatches((f) => showBootStatus('読み込み中…', progressInBand(BOOT_PROGRESS.bcuPatches, BOOT_PROGRESS.battlePatches - BOOT_PROGRESS.bcuPatches, f)));
     const { installBattleTouchGuard } = await import('./ui/BattleTouchGuard.js');
     installBattleTouchGuard(document);
     showBootStatus('読み込み中…', BOOT_PROGRESS.battlePatches);

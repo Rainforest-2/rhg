@@ -1,23 +1,27 @@
-export async function installBattleScenePatches() {
-  await import('../../battle/BattleSceneBcuTimerPatch.js');
-  await import('../../battle/BattleSceneBcuLineupPatch.js');
-  await import('../../battle/BattleSceneBcuStageSpawnPatch.js');
-  await import('../../battle/BattleSceneBcuCastleGuardPatch.js');
-  await import('../../battle/BattleSceneBcuCatCannonPatch.js');
-  await import('../../battle/BattleSceneBcuSpiritPatch.js');
-  await import('../../battle/BattleSceneCustomStageBattlePatch.js');
-  await import('../../battle/BattleSceneStageSpawnHeaderPatch.js');
-  await import('../../battle/BattleSceneBcuAttackPhasePatch.js');
-  await import('../../battle/BattleSceneProcApplyPatch.js');
-  await import('../../battle/BattleSceneBcuWaveInvalidApplyPatch.js');
-  await import('../../battle/BattleSceneBcuProcRuntimePatch.js');
-  await import('../../battle/BattleSceneBcuSummonPatch.js');
-  await import('../../battle/BattleSceneBcuStageBasisPhaseBridgePatch.js');
-  await import('../../battle/BattleBountyRuntimePatch.js');
-  await import('../../battle/BattleSceneBcuStatusIconPatch.js');
-  await import('../../battle/BattleSceneBcuStatusEffectRenderPatch.js');
-  await import('../../battle/BattleSceneBcuStageBasisTickPatch.js');
-  await import('../../battle/BattleSceneCustomStageBaseHpPatch.js');
+import { importWithProgress } from '../importProgress.js';
+
+export async function installBattleScenePatches(onProgress) {
+  await importWithProgress([
+    () => import('../../battle/BattleSceneBcuTimerPatch.js'),
+    () => import('../../battle/BattleSceneBcuLineupPatch.js'),
+    () => import('../../battle/BattleSceneBcuStageSpawnPatch.js'),
+    () => import('../../battle/BattleSceneBcuCastleGuardPatch.js'),
+    () => import('../../battle/BattleSceneBcuCatCannonPatch.js'),
+    () => import('../../battle/BattleSceneBcuSpiritPatch.js'),
+    () => import('../../battle/BattleSceneCustomStageBattlePatch.js'),
+    () => import('../../battle/BattleSceneStageSpawnHeaderPatch.js'),
+    () => import('../../battle/BattleSceneBcuAttackPhasePatch.js'),
+    () => import('../../battle/BattleSceneProcApplyPatch.js'),
+    () => import('../../battle/BattleSceneBcuWaveInvalidApplyPatch.js'),
+    () => import('../../battle/BattleSceneBcuProcRuntimePatch.js'),
+    () => import('../../battle/BattleSceneBcuSummonPatch.js'),
+    () => import('../../battle/BattleSceneBcuStageBasisPhaseBridgePatch.js'),
+    () => import('../../battle/BattleBountyRuntimePatch.js'),
+    () => import('../../battle/BattleSceneBcuStatusIconPatch.js'),
+    () => import('../../battle/BattleSceneBcuStatusEffectRenderPatch.js'),
+    () => import('../../battle/BattleSceneBcuStageBasisTickPatch.js'),
+    () => import('../../battle/BattleSceneCustomStageBaseHpPatch.js')
+  ], onProgress);
   // NOTE: the combo (Nyanko combo) and talent (PCoin) registries are NOT loaded here. Their data
   // now lives inside core-db.zip and is read through the semantic asset provider, which only
   // exists after BcuBootLoader.loadGame() runs. They are installed from main.js once the provider

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { DamageCalculator } from '../js/battle/DamageCalculator.js';
-import { BCU_ABI, BCU_TRAITS } from '../js/battle/BcuCombatModel.js';
+import { BcuCombatModel, BCU_ABI, BCU_TRAITS } from '../js/battle/BcuCombatModel.js';
 import { attackAtFrame, buildInitialWave } from '../js/battle/BattleWaveRuntimePatch.js';
 import { attackTick, buildSurge } from '../js/battle/BattleSurgeRuntimePatch.js';
 import { attackBlast, rangesFor, targetsInRanges } from '../js/battle/BattleBlastRuntimePatch.js';
@@ -104,6 +105,24 @@ miniSurgeItem.t = 16;
 attackTick(miniSurgeScene, miniSurgeItem);
 assert.equal(miniSurgeScene.calls[0].event.damage, 200, 'mini-surge runtime applies 20% once before queueAttackDamage');
 assert.equal(miniSurgeScene.calls[0].meta.bcuSurge, 'miniSurge', 'mini-surge runtime marks projectile metadata');
+
+const coreEnemies = JSON.parse(execFileSync('unzip', ['-p', 'public/assets/bundles/core/core-db.zip', 'enemies.json'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })).enemies;
+const enemy562Raw = coreEnemies['enemy:562']?.stats?.rawValues;
+assert.ok(Array.isArray(enemy562Raw), 'core-db enemy:562 stats are available');
+const enemy562Model = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: enemy562Raw });
+assert.equal(enemy562Model.proc.volcano.prob, 100, 'enemy 562 has a real BCU surge proc');
+assert.equal(enemy562Model.proc.volcano.aliveTimeFrames, 20, 'enemy 562 surge level maps to 20F lifetime');
+const enemy562Payload = { volcano: enemy562Model.proc.volcano };
+const enemy562EnemySide = buildSurge({ ...surgeAttacker, side: 'cat-enemy', direction: 1, instanceId: 'enemy-562' }, { key: 'surge', payload: enemy562Payload }, 4000, 'enemy-562-surge', { damage: 4000 }, 0, null, () => 0);
+const enemy562PlayerSide = buildSurge({ ...surgeAttacker, side: 'dog-player', direction: -1, instanceId: 'dog-player-562' }, { key: 'surge', payload: enemy562Payload }, 4000, 'dog-562-surge', { damage: 4000 }, 0, null, () => 0);
+for (const item of [enemy562EnemySide, enemy562PlayerSide]) {
+  assert.equal(item.aliveTime, 20, `${item.id} keeps ContVolcano aliveTime in frames`);
+  assert.equal(item.time, 20, `${item.id} exposes time as frames for sync patches`);
+  assert.equal(item.timeFrames, 20, `${item.id} exposes timeFrames for sync patches`);
+  assert.equal(item.aliveTimeFrames, 20, `${item.id} exposes aliveTimeFrames for sync patches`);
+}
+assert.equal(enemy562EnemySide.effectKey, 'enemySurge', 'enemy-side enemy 562 uses enemy surge effect asset');
+assert.equal(enemy562PlayerSide.effectKey, 'unitSurge', 'player-side enemy 562 uses unit surge effect asset');
 
 const blastTargets = [
   runtimeActor({ x: 0, label: 'blast-0' }),

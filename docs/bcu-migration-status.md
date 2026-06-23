@@ -15,6 +15,7 @@ This is the high-level source of truth. It supersedes historical README/ZIP-anal
 - Generated semantic ZIP bundles are the authoritative runtime asset source for bundled families.
 - Loose `public/assets/bcu/**` files remain source material and must not become a silent runtime fallback.
 - Core boot remains `public/assets/bundles/core/core-db.zip` through `BcuBootLoader` / `SemanticAssetProvider`.
+- Playable dog roster visibility is gated by local semantic actor readiness; stale external `error-enemy` exclusions do not hide full bundled actors such as enemy 562 and 661–669.
 - Formation and production icons resolve through semantic UI assets, not actor-image fallbacks.
 - BCU sound ids `0..190` resolve from vendored music assets with stage-map BGM lookup and lazy sound-cache warming.
 
@@ -47,6 +48,7 @@ No confirmed `Critical` parity defect was found in the inspected scope. The non-
 | `Trait.targetForms` / special traits | `code-complete-candidate` | A real `Trait` file (targetType/targetForms) drives the single `bcuTraitCompatible` gate across proc and Target-Only cross-paths (`check-bcu-trait-targetforms-loader-parity`). |
 | Combo / orb / treasure / talent / PCoin | `code-complete-candidate` (non-visual) | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order and orbs fold through the resolver (`check-bcu-modifier-realdata-sweep-parity`). In-battle visual acceptance is a separate review item. |
 | Extra/custom zombie revive | `code-complete-candidate` | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter (`check-bcu-zombie-extra-revive-source-range-parity`). Corpse appearance remains visual. |
+| Playable dog roster actor visibility | `code-complete-candidate` | `buildDogSpecs` keeps locally full semantic actor bundles visible even when stale external enemy skip lists include their display ids. `check-dog-playable-roster-readiness` covers enemy 562 and 661–669. |
 | Non-basic cat cannon visuals | `code-complete-candidate` for runtime | Per-cannon ATK/EXT bitmap aliases and exact extend/waved traveling/sweep timing remain unaccepted. |
 | Visible-effect / UI acceptance | `human-visual-review-needed` or `partial` | P_DELAY, shield families, spirit, castle guard, summon, zombie revive, cat cannon, and BASE_WALL require fixture-backed browser review before visual-complete claims. |
 

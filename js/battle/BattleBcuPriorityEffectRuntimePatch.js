@@ -28,11 +28,6 @@ function hasCounterSurge(actor) {
   return model?.ability?.flags?.counterSurge === true || (abi & BCU_ABI.AB_CSUR) !== 0;
 }
 
-function roll(scene) {
-  const rng = scene?.getBcuRandom?.();
-  return typeof rng === 'function' ? rng() : Math.random();
-}
-
 function shouldMirrorUnitSide(actor) {
   return directionForActor(actor) === -1;
 }
@@ -223,25 +218,14 @@ function maybeDeathSurge(scene, actor) {
   const ds = procModel(actor)?.deathSurge || null;
   const prob = Number(ds?.prob || 0);
   if (!ds || prob <= 0) return;
-  actor.__bcuDeathSurgeDone = true;
-  if (roll(scene) * 100 >= prob) {
-    scene.pushEvent?.({ type: 'bcuDeathSurgeSkipped', actor: actor.instanceId || actor.label || null, prob, source: 'BattleBcuPriorityEffectRuntimePatch' });
-    return;
-  }
-  enqueueBcuSurgeFromPayload(scene, actor, {
-    key: 'surge',
-    payload: ds,
-    damage: Math.max(1, Math.trunc(Number(actor.damage || 1) || 1)),
-    event: { damage: Math.max(1, Math.trunc(Number(actor.damage || 1) || 1)), attackKind: 'surge', bcuDeathSurge: true },
-    id: `${scene.logicFrame || 0}:${actor.instanceId || actor.label || 'actor'}:death-surge`
-  });
+  if (actor.__bcuDeathSurgeLegacyDeferred === true) return;
+  actor.__bcuDeathSurgeLegacyDeferred = true;
   scene.pushEvent?.({
-    type: 'bcuDeathSurgeCreated',
+    type: 'bcuDeathSurgeDeferredToDeathAnimation',
     actor: actor.instanceId || actor.label || null,
     prob,
-    payload: ds,
     source: 'BattleBcuPriorityEffectRuntimePatch',
-    bcuReference: 'AtkModelEntity death surge creates ContVolcano with WT_VOLC|WT_SOUL'
+    bcuReference: 'Entity.AnimManager.update owns death surge timing: soul.len() - dead == 21; priority-effect runtime must not enqueue immediately'
   });
 }
 

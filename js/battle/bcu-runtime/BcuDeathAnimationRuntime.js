@@ -103,8 +103,36 @@ export function spawnBcuDeathSoulEffect(scene, actor, state) {
   state.maxFrame = runtime.maxFrame;
   state.deadRemaining = runtime.frameCount;
   state.assetSource = asset.source || null;
+  state.assetLoadPending = false;
   state.visualMissing = false;
   state.visualFallback = false;
+  state.visualFallbackReason = null;
+  return effect;
+}
+
+function recoverPendingSoulEffect(scene, actor, state) {
+  if (!scene || !actor || !state?.active || state.effectId || state.assetLoadPending !== true) return null;
+  const asset = scene.soulEffectAssets?.[state.assetKey] || null;
+  if (!asset?.loaded) {
+    scene.ensureBcuSoulEffectLoading?.();
+    return null;
+  }
+  const frame = Math.max(0, Math.trunc(Number(state.frame) || 0));
+  const effect = spawnBcuDeathSoulEffect(scene, actor, state);
+  if (!effect) return null;
+  state.frame = frame;
+  state.deadRemaining = Math.max(0, state.frameCount - frame);
+  state.assetLoadRecovered = true;
+  effect.elapsedMs = Math.max(-BCU_BATTLE_TIMER_PERIOD_MS, (frame - 1) * BCU_BATTLE_TIMER_PERIOD_MS);
+  scene.pushEvent?.({
+    type: 'bcuDeathSoulEffectRecovered',
+    actor: actor.instanceId || actor.label || null,
+    assetKey: state.assetKey,
+    frame,
+    frameCount: state.frameCount,
+    source: 'BcuDeathAnimationRuntime',
+    bcuReference: 'JS loader recovery for BCU Entity.AnimManager soul draw; logical dead/death-surge frame remains owned by death runtime'
+  });
   return effect;
 }
 
@@ -155,6 +183,7 @@ export function tickBcuDeathAnimation(actor, dt = BCU_BATTLE_TIMER_PERIOD_MS, { 
   const state = actor?.bcuDeathAnimation;
   if (!state?.active) return { active: false };
   if (!Number.isFinite(state.frameCount) || state.frameCount <= 0) { applySafeSoulFallback(state, scene, state.assetKey, 'invalid-frame-count'); state.deadRemaining = state.frameCount; }
+  recoverPendingSoulEffect(scene, actor, state);
   const frame = Number.isFinite(actor.lastSceneLogicFrame) ? actor.lastSceneLogicFrame : null;
   if (frame !== null && actor.__lastBcuDeathAnimationLogicFrame === frame) return { active: true, skipped: true, state };
   actor.__lastBcuDeathAnimationLogicFrame = frame;

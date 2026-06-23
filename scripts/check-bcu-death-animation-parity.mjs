@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { BattleActor } from '../js/battle/BattleActor.js';
 import { BattleScene } from '../js/battle/BattleScene.js';
 import '../js/battle/BattleBcuDeathAnimationRuntimePatch.js';
+import '../js/battle/BattleBcuPriorityEffectRuntimePatch.js';
 import '../js/battle/BattleActorGlassPatch.js';
 import { BcuCombatModel, BCU_ABI } from '../js/battle/BcuCombatModel.js';
 import { BCU_DEATH_SOUL_FALLBACK_FRAMES, BCU_DEATH_SOUL_Y_OFFSET, BCU_DEATH_SURGE_TRIGGER_FRAME, startBcuDeathAnimation, tickBcuDeathAnimation } from '../js/battle/bcu-runtime/BcuDeathAnimationRuntime.js';
@@ -111,6 +112,23 @@ assert.equal(missingActor.bcuDeathAnimation.frameCount, BCU_DEATH_SOUL_FALLBACK_
 assert.equal(missingActor.bcuDeathAnimation.visualMissing, true, 'missing soul asset records visualMissing');
 assert.equal(missingActor.bcuDeathAnimation.visualFallback, true, 'missing soul asset records visualFallback');
 assert.equal(missingActor.isRemovable(100000), false, 'fallback lifecycle still blocks fixed removeAfterMs before fallback duration');
+
+const recoveryScene = fakeScene();
+recoveryScene.soulEffectAssets = {};
+const recoveryActor = actorWithModel(unit, recoveryScene, 'dog-player');
+recoveryActor.enterDeadState(0);
+assert.equal(recoveryScene.effects.length, 0, 'pending soul recovery starts without a fake effect');
+recoveryActor.lastSceneLogicFrame = 201;
+tickBcuDeathAnimation(recoveryActor, 33, { scene: recoveryScene, nowMs: 33 });
+assert.equal(recoveryActor.bcuDeathAnimation.frame, 1, 'fallback death runtime advances while soul asset is pending');
+recoveryScene.soulEffectAssets['soul-003'] = fakeAsset(8);
+recoveryActor.lastSceneLogicFrame = 202;
+tickBcuDeathAnimation(recoveryActor, 33, { scene: recoveryScene, nowMs: 66 });
+assert.equal(recoveryScene.effects.length, 1, 'pending soul asset spawns when loader becomes ready');
+assert.equal(recoveryActor.bcuDeathAnimation.visualFallback, false, 'recovered soul clears visualFallback');
+assert.equal(recoveryActor.bcuDeathAnimation.assetLoadRecovered, true, 'recovered soul records loader recovery');
+assert.equal(recoveryActor.bcuDeathAnimation.frame, 2, 'recovered soul keeps logical death frame progression');
+
 for (let i = 0; i < BCU_DEATH_SOUL_FALLBACK_FRAMES; i += 1) {
   missingActor.lastSceneLogicFrame = i + 100;
   missingActor.tick(33);
@@ -141,6 +159,22 @@ assert.equal(glassPathActor.removeAfterMs, 0, 'AB_GLASS self-remove path remains
 assert.equal(glassScene.events.some((event) => event.type === 'bcuGlassSelfRemoved'), true, 'AB_GLASS self-remove path emits debug event');
 
 const dsModel = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [[54, 7], [89, 100], [90, 40], [91, 120], [92, 3]]) });
+const legacyDsScene = Object.create(BattleScene.prototype);
+legacyDsScene.logicFrame = 77;
+legacyDsScene.timeMs = 0;
+legacyDsScene.events = [];
+legacyDsScene.actors = [];
+legacyDsScene.__bcuSurgeContainers = [];
+legacyDsScene.pushEvent = function pushEvent(event) { this.events.push(event); };
+const legacyDsActor = actorWithModel(dsModel, legacyDsScene, 'cat-enemy');
+legacyDsActor.state = 'dying';
+legacyDsActor.deathPending = true;
+legacyDsScene.actors = [legacyDsActor];
+legacyDsScene.runTickPhase('knockback-death', () => {});
+assert.equal(legacyDsScene.__bcuSurgeContainers.length, 0, 'priority-effect phase must not enqueue death surge before demon soul frame 21');
+assert.equal(legacyDsActor.__bcuDeathSurgeDone === true, false, 'priority-effect phase must not consume death surge before death runtime rolls it');
+assert.equal(legacyDsScene.events.some((event) => event.type === 'bcuDeathSurgeDeferredToDeathAnimation'), true, 'priority-effect phase records delegation to death animation runtime');
+
 const dsScene = fakeScene();
 const dsActor = actorWithModel(dsModel, dsScene, 'cat-enemy');
 dsActor.currentLayer = 4;

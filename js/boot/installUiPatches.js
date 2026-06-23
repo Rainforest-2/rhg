@@ -1,22 +1,26 @@
-export async function installUiPatches() {
+import { importWithProgress } from './importProgress.js';
+
+export async function installUiPatches(onProgress) {
   // Formation patches must run before PreviewApp constructs FormationEditor.
-  await import('../ui/FormationEditorPerformancePatch.js');
-  await import('../ui/FormationCatalogVirtualDomPatch.js');
-  await import('../ui/NyankoPresentationPatch.js');
-  await import('../ui/FormationJapaneseBootPatch.js');
-  await import('../ui/NyankoUiBehaviorPatch.js');
-  await import('../ui/ProductionCardDogIconFitPatch.js');
-  await import('../ui/FormationEditorBcuUnitLevelPatch.js');
-  await import('../ui/FormationCharacterTuningMobileLandscapePatch.js');
-  await import('../ui/FormationCustomStageBattlePatch.js');
-  await import('../ui/FormationStageDifficultyPatch.js');
-  // Depends on FormationStageDifficultyPatch's scoped flag; it used to poll from index.html.
-  await import('../ui/FormationStageDifficultyFilterControlPatch.js');
-  await import('../ui/FormationUiRegressionFixPatch.js');
-  await import('../ui/FormationPhoneLandscapeLayoutPatch.js');
-  await import('../ui/FormationCustomStageBattleHpPatch.js');
-  await import('../ui/FormationCustomStageBattleApplyHpConfigPatch.js');
-  await import('../ui/FormationStageNameBcuPatch.js');
-  // Must stay last: its motion wrappers need to run outermost around the patched prototype.
-  await import('../ui/FormationPremiumMotionPatch.js');
+  await importWithProgress([
+    () => import('../ui/FormationEditorPerformancePatch.js'),
+    () => import('../ui/FormationCatalogVirtualDomPatch.js'),
+    () => import('../ui/NyankoPresentationPatch.js'),
+    () => import('../ui/FormationJapaneseBootPatch.js'),
+    () => import('../ui/NyankoUiBehaviorPatch.js'),
+    () => import('../ui/ProductionCardDogIconFitPatch.js'),
+    () => import('../ui/FormationEditorBcuUnitLevelPatch.js'),
+    () => import('../ui/FormationCharacterTuningMobileLandscapePatch.js'),
+    () => import('../ui/FormationCustomStageBattlePatch.js'),
+    () => import('../ui/FormationStageDifficultyPatch.js'),
+    // Depends on FormationStageDifficultyPatch's scoped flag; it used to poll from index.html.
+    () => import('../ui/FormationStageDifficultyFilterControlPatch.js'),
+    () => import('../ui/FormationUiRegressionFixPatch.js'),
+    () => import('../ui/FormationPhoneLandscapeLayoutPatch.js'),
+    () => import('../ui/FormationCustomStageBattleHpPatch.js'),
+    () => import('../ui/FormationCustomStageBattleApplyHpConfigPatch.js'),
+    () => import('../ui/FormationStageNameBcuPatch.js'),
+    // Must stay last: its motion wrappers need to run outermost around the patched prototype.
+    () => import('../ui/FormationPremiumMotionPatch.js')
+  ], onProgress);
 }

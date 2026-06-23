@@ -1,8 +1,12 @@
-export async function installBattleRendererPatches() {
+import { importWithProgress } from '../importProgress.js';
+
+export async function installBattleRendererPatches(onProgress) {
   // Renderer wrappers are last so they see the final scene/effect metadata.
-  await import('../../battle/BattleSceneRendererBcuOriginPatch.js');
-  await import('../../battle/BattleSceneRendererHudPatch.js');
-  await import('../../battle/BattleSceneRendererBcuGlowPatch.js');
-  await import('../../battle/BattleSceneRendererEffectGlowPatch.js');
-  await import('../../battle/BattleDebugStripPatch.js');
+  await importWithProgress([
+    () => import('../../battle/BattleSceneRendererBcuOriginPatch.js'),
+    () => import('../../battle/BattleSceneRendererHudPatch.js'),
+    () => import('../../battle/BattleSceneRendererBcuGlowPatch.js'),
+    () => import('../../battle/BattleSceneRendererEffectGlowPatch.js'),
+    () => import('../../battle/BattleDebugStripPatch.js')
+  ], onProgress);
 }

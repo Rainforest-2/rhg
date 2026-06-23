@@ -7,12 +7,6 @@ export const DOG_DEFAULT_COOLDOWN_MS = 3500;
 export const DOG_ENEMY_ID_RANGE = Object.freeze({ start: 0, end: 777 });
 export const CAT_UNIT_ID_RANGE = Object.freeze({ start: 0, end: 859 });
 
-const FALLBACK_ERROR_ENEMY_DISPLAY_IDS = Object.freeze([
-  1, 21, 22, 315, 347, 417, 450, 453, 467, 468, 469, 472, 473, 474, 475, 476, 477,
-  524, 525, 526, 527, 566, 567, 568, 569, 570, 571, 646, 663, 664, 665, 666, 667,
-  668, 669, 670, 671, 688, 689, 749
-]);
-
 export function formatBcuId(id) {
   if (!Number.isInteger(id) || id < 0 || id > 999) throw new Error(`Invalid BCU id: ${id}`);
   return String(id).padStart(3, '0');
@@ -22,10 +16,35 @@ function range(start, end) {
   return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => i + start);
 }
 
+function enemyActorEntry(db, id) {
+  const key = `enemy:${id}`;
+  return db?.semanticProvider?.getActorEntry?.(key) || db?.semanticIndexes?.actors?.byKey?.[key] || null;
+}
+
+function enemyHasRuntimeActorBundle(db, id) {
+  const entry = enemyActorEntry(db, id);
+  const bundleKey = entry?.bundleRef?.bundleKey || null;
+  if (entry?.status === 'full' && bundleKey) {
+    const bundles = db?.semanticProvider?.indexes?.bundleManifest?.bundles
+      || db?.semanticIndexes?.bundleManifest?.bundles
+      || db?.manifest?.semanticIndexes?.bundleManifest?.bundles
+      || null;
+    return !bundles || !!bundles[bundleKey];
+  }
+  return !!db?.assets?.resolveEnemyAsset?.(id);
+}
+
 function excludedEnemyAssetIds(db = null) {
   const fromDb = db?.playable?.enemies?.excludedAssetIds;
-  if (Array.isArray(fromDb)) return new Set(fromDb);
-  return new Set(FALLBACK_ERROR_ENEMY_DISPLAY_IDS.map((id) => id - 2).filter((id) => id >= 0));
+  if (!Array.isArray(fromDb)) return new Set();
+  const excluded = new Set();
+  for (const raw of fromDb) {
+    const id = Number(raw);
+    if (!Number.isInteger(id) || id < 0) continue;
+    if (enemyHasRuntimeActorBundle(db, id)) continue;
+    excluded.add(id);
+  }
+  return excluded;
 }
 
 function excludedAllyAssetIds(db = null) {

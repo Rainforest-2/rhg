@@ -27,7 +27,7 @@ These have runtime and deterministic evidence but remain visually unaccepted:
 - burrow DOWN / underground / UP appearance;
 - spirit actor and A_IMUATK appearance;
 - castle/base guard hold/break;
-- zombie corpse DOWN/REVIVE and mini-death-surge visuals;
+- zombie corpse DOWN/REVIVE and full/mini death-surge demon-soul visuals;
 - basic cannon firing/wave effect, non-basic cannon sweep, and BASE_WALL entry/idle.
 
 Track outcomes only in `bcu-visual-review-checklist.md`. A passing headless test is not a manual browser acceptance.
@@ -46,6 +46,7 @@ Do not re-list these as current implementation blockers without a current code r
 | Historical StageDefinitionLoader gaps | Current code already handles the historical `rowIndex`, castle `noContinue`, `-1` enemy-castle fallback, and `bossGuard` source-row issues. Treat old README claims as historical only. |
 | Castle/base guard owner | Implemented as scene/base state; only browser appearance remains. |
 | Standard zombie corpse/soulstrike | Deterministic runtime coverage exists; remaining scope is visual acceptance. |
+| Full death-surge timing ownership | Resolved (non-visual): `BcuDeathAnimationRuntime` owns the BCU `soul.len() - dead == 21` trigger, the old priority-effect immediate spawn path is guarded against, and pending demon-soul asset recovery is tested. Browser appearance remains visual acceptance. |
 | Basic/non-basic cannon runtime | Dedicated owners and deterministic checks exist. Visual asset/timing acceptance is separate. |
 | Plain castle-owned attack | Negative evidence: plain `ECastle` has no attack owner. Boss-base attacks are ordinary `EEnemy`; stage threshold/kill spawns are stage-owned. |
 | Special castle boss-spawn coordinate | Runtime wiring and formula coverage are implemented. |

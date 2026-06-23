@@ -90,6 +90,7 @@ const commands = [
   ['node', ['scripts/check-formation-storage-failure-visibility.mjs']],
   ['node', ['scripts/check-bcu-battle-sound-effects-parity.mjs']],
   ['node', ['scripts/check-bcu-counter-surge-reflect-parity.mjs']],
+  ['node', ['scripts/check-boot-import-progress.mjs']],
   ['node', ['scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs']],
   ['node', ['scripts/check-bcu-demon-shield-regen-timing.mjs']],
   ['node', ['scripts/check-projectile-damage-parity.mjs']],

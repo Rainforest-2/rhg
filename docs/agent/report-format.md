@@ -1,15 +1,24 @@
 # Report Format
 
-Every implementation batch must end with:
+Every implementation or documentation-maintenance batch ends with a fact-bound report.
 
 ```md
 ## Summary
-- Rows moved to code-complete:
+- Rows moved to code-complete-candidate:
 - Rows moved to human-visual-review-needed:
-- Rows still partial:
+- Rows still partial / unconfirmed / negative-evidence:
 
 ## BCU references inspected
 - files/classes/methods:
+- holder fields / state transitions:
+
+## Current rhg owner audited
+- parser/loader:
+- runtime/wrapper:
+- renderer/UI/persistence, when relevant:
+
+## Gap classification
+- runtime / real-data loader / visual acceptance / schema compatibility / negative-evidence:
 
 ## Changed files
 - code:
@@ -18,7 +27,8 @@ Every implementation batch must end with:
 - generated assets:
 
 ## Verification
-- command: result
+- command or review fixture: result
+- checks not run: reason
 
 ## Remaining risks
 - risk:
@@ -26,4 +36,6 @@ Every implementation batch must end with:
 - next action:
 ```
 
-Never report done without command output or an explicit statement that a required verification could not run.
+For Markdown-only maintenance, explicitly state that no runtime, asset, or generated-bundle file changed and list the documentation consistency checks performed.
+
+Never report broad BCU parity, BCU save compatibility, or visual acceptance without evidence matching that exact claim.

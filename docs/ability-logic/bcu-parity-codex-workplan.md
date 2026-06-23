@@ -1,246 +1,118 @@
-# BCU parity Codex workplan
+# BCU parity workplan
 
-This document is the current implementation order for moving `rhgrive2/game` BCU battle ability/proc/effect rows toward `code-complete` or `fully-complete` parity.
+Updated: 2026-06-23.
 
-It is written for Codex-style agents that can read files, edit code, run terminal checks, inspect ZIP contents, and produce deterministic logs, but cannot perform manual browser visual inspection. Browser/manual checks are not blockers for `code-complete`. If a row has visual behavior, the agent must provide deterministic coordinate/effect traces and mark any remaining manual-only concern as `human-visual-review-needed` in docs.
+This is the current implementation order for `Rainforest-2/rhg`. It reflects the latest BCU audit: most central runtime work is no longer a blank implementation problem; the priority is source completeness, compatibility boundaries, and visual acceptance.
 
-## Required status vocabulary
+## Status rules
 
-Use these statuses in docs and final reports:
+- `code-complete-candidate`: source evidence, current JS owner, and deterministic tests exist.
+- `human-visual-review-needed`: runtime evidence exists; browser appearance is not accepted.
+- `partial`: source loading, real-data fixtures, runtime coverage, or tests are incomplete.
+- `unconfirmed`: source owner or schema has not been established.
+- `negative-evidence`: BCU disproves the proposed owner; do not implement it there.
 
-- `partial`: facts, implementation, tests, or bundle evidence are missing.
-- `code-complete`: BCU source, JS implementation, ZIP evidence, deterministic tests, and coordinate/effect traces pass. Browser/manual inspection is not required.
-- `human-visual-review-needed`: code-complete for logic/effect wiring, but exact human visual appearance has not been manually inspected.
-- `fully-complete`: only use if code-complete evidence exists and a human/manual visual check has also been recorded.
+Never use historical README findings as current defects without a fresh code comparison.
 
-Do not use `complete` ambiguously. Prefer `code-complete` or `fully-complete`.
+## Required order for every change
 
-## Current source of truth
+```text
+BCU fact -> current JS owner audit -> minimal change -> deterministic check -> focused docs update
+```
 
-Use the focused status docs first:
+No runtime fallback to loose `public/assets/bcu/**`. Preserve wrapper chains and random behavior. Do not invent CSV fields or generic visual aliases.
 
-| Purpose | File |
-|---|---|
-| Current row status | `docs/ability-logic/current-ability-parity-status.md` |
-| Current unresolved blockers | `docs/ability-logic/bcu-unresolved-evidence-blockers.md` |
-| Manual visual review tracking | `docs/ability-logic/bcu-visual-review-checklist.md` |
-| High-level migration summary | `docs/bcu-migration-status.md` |
+## Priority order
 
-Old task wording in this workplan must not override those files.
+### W0 — keep the proof harness and docs truthful
 
-## Global implementation constraints
+Before any behavior change:
 
-1. Preserve wrapper chains. Every wrapper must call the captured original with the same `this` and compatible arguments.
-2. Do not read production runtime assets from loose `public/assets/bcu/**` paths. Runtime must use ZIP bundles.
-3. Do not use direct HP mutation for damage that BCU routes through damage/proc guards.
-4. Do not classify a row as `code-complete` without a deterministic test that can fail on regression.
-5. Keep browser visual verification out of Codex hard requirements.
-6. Update the focused status docs after each implementation batch.
-7. Update `docs/ability-logic/effect-zip-audit.md` after every effect bundle change.
+- read `current-ability-parity-status.md`, `bcu-unresolved-evidence-blockers.md`, and the source evidence inventory;
+- add or strengthen a deterministic check before changing a behavior-bearing owner;
+- update the focused status/blocker docs in the same batch;
+- update the visual checklist only after real manual browser review.
 
-## Current baseline already implemented or covered by deterministic checks
+### W1 — real custom-pack SUMMON loader coverage
 
-These rows are no longer "runtime missing" tasks. Do not reimplement them from scratch unless a check or source comparison proves a concrete bug.
+**Why first:** SUMMON runtime exists, but real data may never reach it.
 
-| Area | Current state | Required next step |
-|---|---|---|
-| `P_DELAY` runtime/effect | `human-visual-review-needed`; `BcuDelayRuntime`, effect bundle aliases, and coordinate traces are covered by deterministic checks. | Manual browser visual review only, unless a deterministic check fails. |
-| Burrow lifecycle | `code-complete-candidate`; `BcuBurrowLifecycleRuntime` / `BattleActorBcuBurrowPatch` cover lifecycle, movement, targetability, collision, renderability, and cleanup. | Optional manual visual review for exact DOWN/MOVE/UP appearance. |
-| Barrier / demon shield / shield breaker | `human-visual-review-needed`; gate order, phases, y offset, scale, layer, and demon shield regen timing are covered. | Manual browser visual review. |
-| Castle/base guard | `human-visual-review-needed`; `BcuCastleGuardRuntime` / `BattleSceneBcuCastleGuardPatch` implement active/hold/break state and `check-bcu-castle-guard-parity.mjs` covers behavior. | Manual browser visual review for hold/break appearance. |
-| Spirit lifecycle | `human-visual-review-needed`; parser, lifecycle runtime, attack-only partial actor bundle registration, semantic ZIP loading, and spawn-ready factory checks exist. | Manual browser visual review for actor/IMUATK appearance. |
-| Standard zombie corpse / soulstrike / revive visual trace | `human-visual-review-needed`; `check-bcu-zombie-corpse-soulstrike-parity.mjs` covers standard revive, targetability, soulstrike cancellation, DOWN/REVIVE timing, render override, cleanup, and HP restoration. | Manual browser visual review plus extra/custom revive fixtures if broadening claims. |
-| Summon explicit proc-object runtime | `partial`; explicit proc-object runtime and deterministic checks exist, but normal CSV holder and automatic custom/proc-object loading remain unresolved. | Implement source-backed loader/fixtures before status upgrade. |
+Required work:
 
-## Current priority order
+1. discover/load real custom pack proc-object `CustomEntity.atks[].proc.SUMMON` sources;
+2. preserve the existing `attachBcuProcObjectSummonsToAttackHits()` handoff boundary;
+3. validate immediate/on-hit/on-kill, side, inheritance, layer, allow/group, same_health, bond_hp, and ignore_limit with real loader-backed fixtures;
+4. do not add a normal unit/enemy CSV SUMMON parser without source proof.
 
-### W0 — keep proof harness current
+### W2 — persistence scope and failure handling
 
-Maintain and extend deterministic Node checks before behavior edits.
+**Why second:** browser-local state is currently mistaken easily for BCU compatibility.
 
-Required checks or equivalents:
+Required work:
+
+1. keep current repository-local migrations stable;
+2. make `FormationStore` / `StageRegistry` storage read/write failure observable;
+3. explicitly separate self-compatibility from BCU import/export compatibility;
+4. before any BCU import/export feature, identify the BCU save/lineup serialization owner and add round-trip fixtures.
+
+### W3 — real-data modifier and trait fixtures
+
+**Why third:** primary modifier hooks exist, but broad compatibility claims lack real data coverage.
+
+Required work:
+
+- add real custom `Trait.targetForms` / `targetType` loader fixtures;
+- test capture, proc, targetOnly, and damage-family paths together;
+- sweep real combo/orb/treasure/talent/PCoin combinations;
+- keep source-proven resistance holders centralized; do not add enemy toxic immunity.
+
+### W4 — visual acceptance ledger
+
+**Why fourth:** visible behavior cannot be marked complete from traces alone.
+
+Review in this order:
+
+1. P_DELAY and barrier/demon shield/shield breaker;
+2. spirit and castle guard;
+3. zombie revive and mini-death-surge;
+4. basic cannon firing/wave;
+5. non-basic cannon sweep and BASE_WALL;
+6. SUMMON entry once W1 supplies a real fixture.
+
+For every review record fixture, BCU reference, browser/device, result, and mismatch evidence.
+
+### W5 — non-basic cannon asset parity
+
+Add exact per-cannon ATK/EXT bitmap-animation aliases and then compare extend/waved behavior frame by frame. Do not replace missing assets with generic traces or unit proc effects.
+
+### W6 — optional performance cleanup
+
+Only after behavior-bearing paths are covered by tests:
+
+- remove/gate diagnostic allocations that do not affect logic;
+- preserve wrapper calls, effect creation, coordinate metadata, and renderer ordering;
+- run the relevant safe suite after every cleanup.
+
+## Explicit non-tasks
+
+- Do not create a generic castle-owned attack runtime: BCU evidence assigns plain castles no attack owner.
+- Do not treat a direct parser field as proof that a corresponding runtime is missing or complete.
+- Do not claim BCU save compatibility from `localStorage` persistence.
+- Do not promote headless traces to visual acceptance.
+
+## Common checks
 
 ```bash
 node scripts/check-bcu-parser-indexes.mjs
 node scripts/check-projectile-damage-parity.mjs
 node scripts/check-proc-immunity-resistance-parity.mjs
-node scripts/check-effect-bundle-aliases.mjs
-node scripts/check-effect-coordinate-traces.mjs
 node scripts/check-bcu-delay-runtime.mjs
-node scripts/check-bcu-burrow-lifecycle-parity.mjs
-node scripts/check-bcu-death-animation-parity.mjs
-node scripts/check-bcu-warp-lifecycle-parity.mjs
-node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
-node scripts/check-bcu-barrier-shield-effect-parity.mjs
-node scripts/check-bcu-demon-shield-regen-timing.mjs
 node scripts/check-bcu-summon-runtime-parity.mjs
 node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
 node scripts/check-bcu-castle-guard-parity.mjs
+node scripts/check-bcu-wallet-runtime-parity.mjs
+node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```
 
-Only run commands relevant to the files touched. If a command references a missing script, add or update the script when it is part of the task rather than silently skipping.
-
-### W1 — projectile damage source model
-
-Projectile rows remain high priority whenever evidence shows projectile damage still risks inheriting the first direct target's final adjusted damage.
-
-Target files may include:
-
-- `js/battle/DamageCalculator.js`
-- `js/battle/DamageAbilityResolver.js`
-- `js/battle/BattleWaveRuntimePatch.js`
-- `js/battle/BattleSurgeRuntimePatch.js`
-- `js/battle/BattleBlastRuntimePatch.js`
-- `js/battle/BattleSceneProcApplyPatch.js`
-- `js/battle/BattleSceneBcuProcRuntimePatch.js`
-- attack event metadata producers used by `BattleSceneBcuAttackPhasePatch.js`
-
-Required behavior:
-
-1. Preserve an explicit raw/projectile attack basis.
-2. Do not reuse a first target's `finalDamage` as universal projectile damage unless BCU source and tests prove that exact behavior.
-3. Preserve mini-wave and mini-surge 20% damage exactly once.
-4. Preserve blast 100/70/40% falloff exactly once.
-5. Prevent recursive projectile spawning from projectile damage unless BCU explicitly permits it.
-6. Verify with `node scripts/check-projectile-damage-parity.mjs`.
-
-### W2 — resistance and external modifier completeness
-
-Keep full immunity, partial resistance, sage/AB_SKILL behavior, and external modifier sources centralized and evidence-backed.
-
-Do not mark rows `code-complete` if they still depend on missing combo/orb/treasure/talent/PCoin loaders or targetForms fixtures.
-
-Target areas:
-
-- `js/battle/bcu-runtime/BcuResistRuntime.js`
-- `js/battle/BcuProcImmunityPatch.js`
-- `js/battle/BcuCombatModel.js`
-- `js/battle/ProcResolver.js`
-- `js/battle/BattleActorProcStatusPatch.js`
-- `js/battle/DamageAbilityResolver.js`
-- combo/orb/talent/treasure loader/model files once identified
-- targetForms fixture/data loader path once identified
-
-Required behavior:
-
-1. Use BCU source-backed holder paths.
-2. Do not invent CSV fields for missing holder sources.
-3. Treat enemy toxic immunity as nonexistent in supported enemy data; do not add an enemy `IMUPOIATK` CSV or loader holder.
-4. Add loader-backed fixtures before broad resolver changes.
-5. Verify with `node scripts/check-proc-immunity-resistance-parity.mjs` and `node scripts/check-ability-partial-blockers.mjs`.
-
-### W3 — source-backed summon completion
-
-Summon runtime exists for explicitly supplied `Proc.SUMMON` objects. The remaining work is not a blank runtime implementation.
-
-Remaining blockers:
-
-1. Normal unit/enemy CSV `SUMMON` holder is not proven.
-2. BCU custom/proc-object `SUMMON` handoff is implemented for supplied proc objects, but broad automatic discovery/loading of real custom pack proc-object files is not implemented.
-3. Exact `Entity.setSummon(anim_type)` entry appearance has not been manually reviewed.
-
-Safe next steps:
-
-- Add real custom-pack loader fixtures beyond the supplied proc-object `SUMMON` handoff.
-- Keep normal CSV parser unchanged unless a source holder is proven.
-- Keep the row `partial` until those blockers are resolved.
-
-### W4 — zombie revive and death-surge edge completion
-
-Standard zombie corpse / soulstrike / revive visual trace is covered by deterministic checks. Remaining work is narrower.
-
-Remaining blockers:
-
-1. Manual browser visual acceptance for DOWN/REVIVE appearance.
-2. Mini-death-surge browser visual acceptance.
-3. Broad extra/custom revive source/range interactions and cleanup variants.
-
-Safe next steps:
-
-- Add real source/range fixtures before broad extra-reviver behavior claims.
-- Add end-to-end extra/custom revive lifecycle variants beyond the explicit fixture handoff.
-- Keep broad visual claims at `human-visual-review-needed` until manual review is recorded.
-
-### W5 — effect scale and coordinate model maintenance
-
-Stage/projectile/status/priority effects must carry explicit scale and coordinate metadata.
-
-Required metadata should include, as relevant:
-
-- `effectKey`
-- `phase`
-- `worldX`
-- `worldY`
-- `screenOffsetX`
-- `bcuSmokeYOffset`
-- `layer`
-- `bcuScaleMode`
-- `effectScale`
-- `renderFlipX`
-- `source`
-- `bcuReference`
-
-Do not fall back to one generic visual formula unless BCU proof says the effect class uses it.
-
-Verify with:
-
-```bash
-node scripts/check-effect-bundle-aliases.mjs
-node scripts/check-effect-coordinate-traces.mjs
-```
-
-### W6 — debug allocation cleanup without logic changes
-
-Performance work is allowed only when behavior-bearing paths are protected by tests.
-
-Targets include files writing heavy `globalThis.__BCU_*_DEBUG__`, `globalThis.__BATTLE_*_DEBUG__`, or large `last*Debug` objects per frame.
-
-Rules:
-
-1. Gate heavy debug objects behind an explicit debug flag or reduce to concise counters.
-2. Do not remove behavior-bearing events, effect creation, wrapper calls, or renderer metadata.
-3. Do not change wave/surge smoke kind, offsets, layer, lifetime, or effect filtering.
-4. Verify with `node scripts/check-bcu-ability-parity-safe-suite.mjs` plus relevant battle checks. (The BCU trace-channel instrumentation and its `check-debug-allocation-guards.mjs` guard were removed; runtime no longer carries `BcuTraceRuntime`/`__BCU_*_TRACE__` allocation paths.)
-
-## Required syntax checks
-
-Run `node --check` on every touched JS/MJS file. Do not assume `package.json` exists.
-
-For effect bundle work, also inspect ZIP entries with commands such as:
-
-```bash
-unzip -l public/assets/bundles/effect/status-effects.zip
-unzip -l public/assets/bundles/effect/wave.zip
-unzip -l public/assets/bundles/effect/kbeff.zip
-```
-
-## Required final report format for Codex
-
-Every implementation batch must end with:
-
-```md
-## Summary
-- Rows moved to code-complete:
-- Rows moved to human-visual-review-needed:
-- Rows still partial:
-
-## BCU references inspected
-- files/classes/methods:
-
-## Changed files
-- code:
-- tests:
-- docs:
-- generated assets:
-
-## Verification
-- command: result
-
-## Remaining risks
-- risk:
-- reason:
-- next action:
-```
-
-Never report done without command output or an explicit statement that a required verification could not run.
+Run only the checks relevant to touched files, but never silently skip a missing required check. Run `node --check` on every changed JS/MJS file.

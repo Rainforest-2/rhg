@@ -24,6 +24,14 @@ No runtime fallback to loose `public/assets/bcu/**`. Preserve wrapper chains and
 
 ## Priority order
 
+> Status (2026-06-23): the non-visual loader/data work in **W1, W2, and W3 is
+> complete** — each is proven by a real BCU-format fixture file threaded through
+> the existing runtime by a deterministic check (`check-bcu-summon-procobject-loader-parity`,
+> `check-bcu-trait-targetforms-loader-parity`, `check-bcu-modifier-realdata-sweep-parity`,
+> `check-bcu-zombie-extra-revive-source-range-parity`, `check-formation-storage-failure-visibility`).
+> The remaining work is **W4 visual acceptance** and **W5 cannon asset parity**, both
+> of which require manual browser review.
+
 ### W0 — keep the proof harness and docs truthful
 
 Before any behavior change:

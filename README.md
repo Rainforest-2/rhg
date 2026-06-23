@@ -18,19 +18,21 @@ The old long ZIP-analysis README was historical. It described code that has sinc
 
 A 2026-06-23 comparison of `Rainforest-2/rhg` against the BCU references found no confirmed `Critical` defect in the inspected scope. The principal remaining parity risks are evidence coverage and acceptance coverage, not the already-corrected historical Stage/Spawn parser issues.
 
-### High priority
+### Loader-proven (non-visual complete)
+
+| Area | Current conclusion | Evidence |
+|---|---|---|
+| SUMMON source loading | A real `CustomEntity.atks[].proc.SUMMON` file is loaded from disk and driven end to end (no normal CSV holder is invented; BCU stores SUMMON only on proc objects). | `check-bcu-summon-procobject-loader-parity` |
+| `Trait.targetForms` | A real `Trait` file (targetType/targetForms) drives the single `bcuTraitCompatible` gate across the proc and Target-Only cross-paths. | `check-bcu-trait-targetforms-loader-parity` |
+| Combo / orb / treasure / talent / PCoin | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order; equipped orbs fold through the resolver. In-battle appearance is a separate review item. | `check-bcu-modifier-realdata-sweep-parity` |
+| Extra/custom zombie revive | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter. | `check-bcu-zombie-extra-revive-source-range-parity` |
+| Repository-local persistence | `FormationStore`/`StageRegistry` round-trip their own state and surface read/write failures instead of a silent catch. Self-persistence only — not a BCU save claim. | `check-formation-storage-failure-visibility` |
+
+### Remaining (visual / out of scope)
 
 | Area | Current conclusion | What must happen next |
 |---|---|---|
-| SUMMON source loading | Runtime works for explicit proc objects, but automatic discovery/loading of real custom-pack proc-object `SUMMON` data is not demonstrated. A normal unit/enemy CSV holder is still unproven. | Add real custom-pack loader fixtures. Do not invent a normal CSV holder. |
-| Save / lineup compatibility | Browser persistence is repository-local `localStorage` JSON. BCU save/lineup import-export compatibility is unconfirmed. Current load/save paths also need explicit failure surfacing instead of silently falling back. | Identify the BCU serialization owner before claiming import/export support; add visible/logged storage failure handling. |
-
-### Medium priority
-
-| Area | Current conclusion | What must happen next |
-|---|---|---|
-| `Trait.targetForms` | Focused runtime fixtures exist, but broad real custom trait/form data and capture/proc edge coverage do not. | Add loader-backed real-data fixtures and a cross-path regression matrix. |
-| Combo / orb / treasure / talent / PCoin | Main hooks exist, but broad real-data acceptance and in-battle visual acceptance remain partial. | Sweep real fixtures before broadening the completion claim. |
+| BCU save / lineup import-export | rhg ships no such feature and no BCU serialization owner exists in this checkout — out of scope, not a defect. | Only if added: find the BCU owner and add round-trip fixtures first. |
 | Non-basic cat cannons | Gameplay runtime is present, including BASE_WALL. Per-cannon ATK/EXT bitmap aliases and exact extend/waved visual timing remain open. | Add aliases, then perform frame-by-frame browser comparison. |
 | Visible effects and UI | Several deterministic paths remain unreviewed in a browser: P_DELAY, shield families, spirit, castle guard, summon, zombie revive, cannon effects. | Use the visual checklist; record `accepted`, `mismatch`, or `blocked` with a fixed fixture. |
 

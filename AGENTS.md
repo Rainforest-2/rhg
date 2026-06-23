@@ -37,11 +37,11 @@ Before changing runtime behavior, identify:
 
 ## Current audit priorities
 
-1. Real custom-pack SUMMON proc-object loading; do not invent a normal CSV holder.
-2. Persistence boundary: repository-local `localStorage` state is not a BCU save/lineup compatibility claim.
-3. Real-data `targetForms` and external-modifier fixtures.
-4. Manual browser acceptance for visible effects/UI.
-5. Non-basic cannon ATK/EXT aliases and extend/waved timing.
+Loader/data priorities 1–3 are now closed by real BCU-format fixture files threaded through the existing runtime (SUMMON proc-object, `Trait.targetForms`, combo/orb/treasure/talent/PCoin, extra/custom revive, and observable storage failure). The remaining priorities are visual:
+
+1. Manual browser acceptance for visible effects/UI (P_DELAY, shields, spirit, guard, zombie corpse/revive, summon entry, cannon).
+2. Non-basic cannon ATK/EXT aliases and extend/waved timing (visual).
+3. Guardrails to preserve: do not invent a normal CSV SUMMON holder; repository-local `localStorage` state is self-persistence only, **not** a BCU save/lineup compatibility claim.
 
 ## Prohibited shortcuts
 
@@ -68,6 +68,11 @@ node scripts/check-projectile-damage-parity.mjs
 node scripts/check-proc-immunity-resistance-parity.mjs
 node scripts/check-bcu-delay-runtime.mjs
 node scripts/check-bcu-summon-runtime-parity.mjs
+node scripts/check-bcu-summon-procobject-loader-parity.mjs
+node scripts/check-bcu-trait-targetforms-loader-parity.mjs
+node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
+node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
+node scripts/check-formation-storage-failure-visibility.mjs
 node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
 node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-bcu-wallet-runtime-parity.mjs

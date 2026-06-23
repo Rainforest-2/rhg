@@ -39,17 +39,64 @@ function reviveType(rev = {}) {
   return rev?.type || {};
 }
 
+function entityPosBcu(entity) {
+  const p = entity?.posBcu ?? entity?.x;
+  return Number.isFinite(p) ? p : null;
+}
+
+function reviveSourceWarping(source) {
+  const kbType = source?.kb?.kbType;
+  if (kbType === 'warp' || kbType === 'INT_WARP') return true;
+  if (source?.isWarping === true) return true;
+  const warp = source?.bcuProcStatuses?.warp;
+  return !!(warp && (warp.active === true || (Number.isFinite(warp.framesRemaining) && warp.framesRemaining > 0)));
+}
+
+// BCU Entity.java ZombX.updateRevive source/range filtering:
+//   d0 = em.pos + REVIVE.dis_0; d1 = em.pos + REVIVE.dis_1;
+//   if ((d0 - e.pos) * (d1 - e.pos) > 0) continue;          // e outside [d0,d1] window
+//   if (em.kb.kbType == INT_WARP) continue;                 // warping reviver excluded
+//   if (!conf.revive_non_zombie && e is zombie) continue;   // zombie target needs revive_non_zombie
+// The range window is only enforced when the source carries proc-object dis_0/dis_1
+// data and both positions are known; CSV/explicit sources without dis keep BCU's
+// unbounded "always in range" behavior.
+function extraReviveSourceEligible(source, actor) {
+  if (reviveSourceWarping(source)) return false;
+  const rev = source?.revive || procModel(source)?.revive || {};
+  const type = reviveType(rev);
+  const reviveNonZombie = type.reviveNonZombie === true || type.revive_non_zombie === true || source?.reviveNonZombie === true;
+  if (!reviveNonZombie && isZombie(actor)) return false;
+  const dis0 = Number(rev.dis0 ?? rev.dis_0 ?? source?.dis0 ?? source?.dis_0);
+  const dis1 = Number(rev.dis1 ?? rev.dis_1 ?? source?.dis1 ?? source?.dis_1);
+  if (Number.isFinite(dis0) && Number.isFinite(dis1)) {
+    const ePos = entityPosBcu(actor);
+    const emPos = entityPosBcu(source);
+    if (Number.isFinite(ePos) && Number.isFinite(emPos)) {
+      const d0 = emPos + dis0;
+      const d1 = emPos + dis1;
+      if ((d0 - ePos) * (d1 - ePos) > 0) return false;
+    }
+  }
+  return true;
+}
+
 function explicitExtraReviveSources(actor) {
   const scene = actor?.scene || globalThis.__APP__?.scene || null;
   const direct = actor?.bcuZombieExtraReviveSources || actor?.rawStats?.bcuZombieExtraReviveSources || actor?.stats?.bcuZombieExtraReviveSources;
-  if (Array.isArray(direct)) return direct;
-  return (scene?.actors || []).filter((source) => source && source !== actor && reviveType(procModel(source)?.revive).reviveOthers === true);
+  const reviveOthersFlag = (source) => {
+    const t = reviveType(procModel(source)?.revive);
+    return t.reviveOthers === true || t.revive_others === true;
+  };
+  const candidates = Array.isArray(direct)
+    ? direct
+    : (scene?.actors || []).filter((source) => source && source !== actor && reviveOthersFlag(source));
+  return candidates.filter((source) => extraReviveSourceEligible(source, actor));
 }
 
 function extraReviveSpecFromSource(source) {
   const rev = source?.revive || procModel(source)?.revive || {};
   const type = reviveType(rev);
-  if (type.reviveOthers !== true && source?.reviveOthers !== true) return null;
+  if (type.reviveOthers !== true && type.revive_others !== true && source?.reviveOthers !== true) return null;
   const count = Number(rev.count ?? source.count ?? 0);
   const time = Number(rev.time ?? source.timeFrames ?? 0);
   const health = Number(rev.health ?? source.healthPercent ?? 0);
@@ -67,9 +114,11 @@ function extraReviveSpecFromSource(source) {
 function resolveRevivePlan(actor) {
   const own = reviveSpec(actor);
   if (own) return { ...own, mode: 'own-revive', zombieKillerBlocked: false };
+  // explicitExtraReviveSources already applies BCU's per-source range / warp /
+  // revive_non_zombie eligibility (Entity.java ZombX.updateRevive), so a zombie
+  // target keeps only revive_non_zombie sources and an out-of-range source is gone.
   const extras = explicitExtraReviveSources(actor).map(extraReviveSpecFromSource).filter(Boolean);
   if (!extras.length) return null;
-  if (isZombie(actor) && extras.every((spec) => spec.reviveNonZombie === true)) return null;
   if (!actor.__bcuZombieExtraReviveUsed) actor.__bcuZombieExtraReviveUsed = 0;
   const finiteTotal = extras.some((spec) => spec.count < 0) ? -1 : extras.reduce((sum, spec) => sum + Math.max(0, spec.count), 0);
   if (finiteTotal !== -1 && finiteTotal <= actor.__bcuZombieExtraReviveUsed) return null;

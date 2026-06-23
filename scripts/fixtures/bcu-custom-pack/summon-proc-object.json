@@ -1,0 +1,58 @@
+{
+  "_source": "BCU CustomEntity proc-object excerpt (battle/data/CustomEntity.java: AtkDataModel[] atks; util/Data.java SUMMON @Order layout). Only the atks[].proc.SUMMON holder that AtkModelEntity#setProc copies is reproduced here; CSV unit/enemy holders are intentionally absent because BCU stores SUMMON only on per-attack proc objects.",
+  "_identifier_format": "pack/Identifier.java fields cls/pack/id; DEF pack = \"000000\".",
+  "atks": [
+    {
+      "atk": 0,
+      "proc": {
+        "SUMMON": {
+          "prob": 100,
+          "id": { "cls": "common.util.unit.Unit", "pack": "000000", "id": 7 },
+          "form": 1,
+          "mult": 30,
+          "dis": 100,
+          "max_dis": 150,
+          "min_layer": -1,
+          "max_layer": -1,
+          "time": 1,
+          "tba": -1,
+          "type": {
+            "anim_type": 0,
+            "ignore_limit": true,
+            "fix_buff": false,
+            "same_health": false,
+            "bond_hp": false,
+            "on_hit": false,
+            "on_kill": false
+          }
+        }
+      }
+    },
+    {
+      "atk": 1,
+      "proc": {
+        "SUMMON": {
+          "prob": 100,
+          "id": { "cls": "common.util.unit.Enemy", "pack": "000000", "id": 9 },
+          "form": 1,
+          "mult": 100,
+          "dis": 0,
+          "max_dis": 0,
+          "min_layer": -1,
+          "max_layer": -1,
+          "time": 2,
+          "tba": -1,
+          "type": {
+            "anim_type": 0,
+            "ignore_limit": true,
+            "fix_buff": false,
+            "same_health": false,
+            "bond_hp": false,
+            "on_hit": true,
+            "on_kill": false
+          }
+        }
+      }
+    }
+  ]
+}

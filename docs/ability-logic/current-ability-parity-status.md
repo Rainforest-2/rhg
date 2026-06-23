@@ -37,19 +37,27 @@ Manual browser review is tracked in [`bcu-visual-review-checklist.md`](./bcu-vis
 | special castle boss-spawn coordinate | `code-complete-candidate` | Source formula, core bundle, StageDefinition enrichment, and StageRuntime consumption are tested. |
 | enemy castle / stage “special attack” | `negative-evidence` | Plain `ECastle` has no attack owner. Boss bases use `EEnemy`; threshold/kill-count spawn behavior belongs to stage runtime. |
 
-## Partial / evidence-limited areas
+## Loader-backed code-complete areas (non-visual)
+
+These rows graduated from `partial` once a real BCU-format data source was loaded from a fixture file and threaded through the existing runtime by a deterministic check. The only remaining work is the manual browser appearance, tracked separately.
+
+| Area | Status | Current evidence boundary |
+|---|---|---|
+| SUMMON | `code-complete-candidate` | Explicit proc-object runtime, delay, triggers, inheritance, limits, same_health, bond_hp, and `SCDef` allow/group behavior exist. A real BCU `CustomEntity.atks[].proc.SUMMON` file is now loaded from disk and driven end to end (loader → `BattleAttackProfile` → immediate/on_hit spawn) by `check-bcu-summon-procobject-loader-parity`. No normal CSV holder is added (BCU stores SUMMON only on proc objects). Summon-entry appearance is the only open item (see visual review). |
+| `Trait.targetForms` / special traits | `code-complete-candidate` | A real BCU `Trait` file (name/id/targetType/targetForms) loads and drives the single `bcuTraitCompatible` gate across the proc (`ProcResolver`) and Target-Only cross-paths in `check-bcu-trait-targetforms-loader-parity`. The damage resolver still reports its own narrow capture-edge caveat as omitted runtime state. |
+| combo / orb / treasure / talent / PCoin | `code-complete-candidate` | Real 150300 combo (`NyancomboData`/`NyancomboParam`) and talent/PCoin (`SkillAcquisition`) data plus treasure/orb constants compose multiplicatively in BCU's level→combo→treasure→talent order with BCU truncation, and equipped orbs fold through `DamageAbilityResolver`, swept in `check-bcu-modifier-realdata-sweep-parity`. In-battle visual acceptance remains a separate review item. |
+| extra/custom zombie revive | `code-complete-candidate` | A real BCU `REVIVE` proc-object file (`revive_others` + dis window + `imu_zkill`/`revive_non_zombie`) drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter (`check-bcu-zombie-extra-revive-source-range-parity`). CSV/explicit sources without `dis` keep BCU's unbounded behavior. Corpse DOWN/REVIVE appearance remains visual review. |
+| AB_SKILL / status resistance extensions | `code-complete-candidate` for proven sources | Sage, resist orb, and combo immunity sources are covered; speculative talent/custom resistance loaders are not. Add only source-proven PCoin/custom holders. |
+| repository-local persistence | `code-complete-candidate` | `FormationStore`/`StageRegistry` round-trip their own state and now surface read/write failures (quota/security) through `BcuStorageDiagnostics` instead of a silent catch (`check-formation-storage-failure-visibility`). This is a repository-local self-persistence claim only — **not** a BCU save/lineup compatibility claim. |
+
+## Remaining non-complete areas
 
 | Area | Status | Current boundary | Safe next step |
 |---|---|---|---|
-| SUMMON | `partial` | Explicit proc-object runtime, delay, triggers, inheritance, limits, same_health, bond_hp, and fixture-backed `SCDef` allow/group behavior exist. Normal CSV holder is unproven; automatic real custom-pack proc-object discovery/loading is not demonstrated. | Add real custom-pack loader fixtures. Do not add a normal CSV shortcut. |
-| summon entry appearance | `partial` | Logic runtime exists, but `Entity.setSummon(anim_type)` appearance, placement, and layer are not manually accepted. | Review in browser after a real loader-backed fixture exists. |
-| `Trait.targetForms` / special traits | `partial` | `BcuTraitCompatibility` and `DamageAbilityResolver` cover focused targetType/targetForms fixtures. | Add real custom trait/form loader fixtures plus capture/proc/targetOnly coverage. |
-| combo / orb / treasure / talent / PCoin | `partial` | Core modifier paths—including speed, crit, proc duration, KB, orb damage families, treasure, and PCoin payloads—are wired. | Run broad real-data fixture sweeps and record in-battle acceptance. |
-| AB_SKILL / status resistance extensions | `code-complete-candidate` for proven sources | Sage, resist orb, and combo immunity sources are covered; speculative talent/custom resistance loaders are not. | Add only source-proven PCoin/custom holders. |
+| summon entry appearance | `human-visual-review-needed` | Loader is proven; `Entity.setSummon(anim_type)` appearance, placement, and layer are not manually accepted. | Review in browser using a loader-backed summon fixture. |
 | mini-death-surge | `human-visual-review-needed` | Proven ORB_DEATH_SURGE holder and mutually-exclusive full/mini roll runtime are tested. | Review mini demon-soul and WT_MIVC browser appearance. |
-| extra/custom zombie revive | `partial` | Fixture-backed aggregate revive handoff exists. | Add real source/range fixtures and visual acceptance. |
-| bounty/money visual | `logic-only-unless-future-visual-proof` | Economy behavior is source-backed; no dedicated battle visual owner or stable effect alias is proven. | Keep it logic/economy only unless new source evidence appears. |
-| persistence / BCU save compatibility | `unconfirmed` | This is outside ability runtime. rhg persists repository-local browser state, not a proven BCU save schema. | Identify BCU serialization owner and round-trip fixtures before any import/export claim. |
+| bounty/money visual | `logic-only-unless-future-visual-proof` | Economy behavior is source-backed; BCU shows no dedicated battle visual owner or stable effect alias (negative evidence on the visual side). | Keep it logic/economy only; there is nothing to visually accept unless new BCU source proves an owner. |
+| BCU save / lineup import-export compatibility | `out-of-scope` | rhg ships no BCU save import/export feature and no BCU serialization owner exists in this checkout. This is not an ability-parity defect. | Only if an import/export feature is ever added: identify the BCU serialization owner and add round-trip fixtures first. |
 
 ## Audit consistency rules
 
@@ -57,10 +65,10 @@ The 2026-06-23 audit found that several old Stage/Spawn findings were already fi
 
 In particular, current status must distinguish:
 
-1. **runtime exists but its real data source is incomplete** — SUMMON is the primary case;
-2. **runtime and checks exist but appearance is unaccepted** — P_DELAY, shield families, spirit, guard, zombie revive, and cannon visuals;
+1. **runtime exists and a real data source is now loader-proven** — SUMMON proc-object, special `Trait.targetForms`, combo/orb/treasure/talent/PCoin, and extra/custom revive each load real BCU-format data from a fixture file through the existing runtime;
+2. **runtime and checks exist but appearance is unaccepted** — P_DELAY, shield families, spirit, guard, zombie corpse/revive visuals, summon entry, and cannon visuals;
 3. **source owner is disproven** — a generic castle-owned attack runtime;
-4. **compatibility scope is unconfirmed** — BCU save/lineup serialization.
+4. **compatibility scope is out of scope** — BCU save/lineup import/export (no in-product feature; repository-local persistence is self-round-trip only).
 
 ## Required checks before status upgrades
 
@@ -76,6 +84,11 @@ node scripts/check-bcu-warp-interrupt-scene-parity.mjs
 node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
 node scripts/check-bcu-barrier-shield-effect-parity.mjs
 node scripts/check-bcu-summon-runtime-parity.mjs
+node scripts/check-bcu-summon-procobject-loader-parity.mjs
+node scripts/check-bcu-trait-targetforms-loader-parity.mjs
+node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
+node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
+node scripts/check-formation-storage-failure-visibility.mjs
 node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
 node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-bcu-wallet-runtime-parity.mjs

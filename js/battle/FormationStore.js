@@ -1,5 +1,6 @@
 import { getCharacterById, getCharacterBaseId } from './CharacterCatalog.js';
 import { BCU_DEFAULT_PREF_LEVEL } from './bcu-runtime/BcuUnitLevelRuntime.js';
+import { reportStorageFailure, clearStorageFailure, getLastStorageFailure, onStorageFailure } from './BcuStorageDiagnostics.js';
 
 export const LINEUP_ROWS = 2;
 export const LINEUP_COLS = 5;
@@ -242,17 +243,32 @@ export const FormationStore = {
     if (!canUseStorage()) return getDefaultFormation();
     try {
       const raw = globalThis.localStorage.getItem(FORMATION_STORAGE_KEY) || globalThis.localStorage.getItem('wanko-battle.formation.v1');
+      clearStorageFailure('formation', 'read');
       if (!raw) return getDefaultFormation();
       return sanitizeFormation(JSON.parse(raw));
-    } catch { return getDefaultFormation(); }
+    } catch (error) {
+      // Read failure (private-mode SecurityError, corrupt JSON): degrade to the
+      // default lineup but make the failure observable instead of silent.
+      reportStorageFailure('formation', 'read', error);
+      return getDefaultFormation();
+    }
   },
   save(formation) {
     const sanitized = sanitizeFormation(formation);
     if (canUseStorage()) {
-      try { globalThis.localStorage.setItem(FORMATION_STORAGE_KEY, JSON.stringify(sanitized)); } catch {}
+      try {
+        globalThis.localStorage.setItem(FORMATION_STORAGE_KEY, JSON.stringify(sanitized));
+        clearStorageFailure('formation', 'write');
+      } catch (error) {
+        // Write failure (QuotaExceededError, SecurityError): the in-memory result
+        // is still returned, but the lost persistence is now reported.
+        reportStorageFailure('formation', 'write', error);
+      }
     }
     return sanitized;
   },
+  getLastStorageError() { return getLastStorageFailure(); },
+  onStorageError(listener) { return onStorageFailure(listener); },
   reset() { return this.save(getDefaultFormation()); },
   getDefault() { return getDefaultFormation(); },
   sanitize(formation) { return sanitizeFormation(formation); },

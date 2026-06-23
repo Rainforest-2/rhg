@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import '../js/battle/BcuDelayRuntimePatch.js';
 import { BcuCombatModel } from '../js/battle/BcuCombatModel.js';
 import { ProcResolver } from '../js/battle/ProcResolver.js';
@@ -44,16 +44,36 @@ const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 
 for (const phrase of [
   '| P_DELAY | `human-visual-review-needed`',
   '| burrow | `code-complete-candidate`',
-  '| combo / orb / treasure / talent / PCoin | `partial`',
+  // Loader-backed graduations: each is proven by a real BCU-format fixture file
+  // threaded through the existing runtime (see the per-row checks below).
+  '| SUMMON | `code-complete-candidate`',
+  '| `Trait.targetForms` / special traits | `code-complete-candidate`',
+  '| combo / orb / treasure / talent / PCoin | `code-complete-candidate`',
+  '| extra/custom zombie revive | `code-complete-candidate`',
+  '| repository-local persistence | `code-complete-candidate`',
   '| AB_SKILL / status resistance extensions | `code-complete-candidate`',
+  // Genuinely-open items: visual review or disproven/out-of-scope owner.
+  '| summon entry appearance | `human-visual-review-needed`',
   '| mini-death-surge | `human-visual-review-needed`',
-  '| extra/custom zombie revive | `partial`',
-  '| SUMMON | `partial`',
-  'automatic real custom-pack proc-object discovery/loading is not demonstrated',
-  '| persistence / BCU save compatibility | `unconfirmed`',
+  '| BCU save / lineup import-export compatibility | `out-of-scope`',
   '| enemy castle / stage “special attack” | `negative-evidence`'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
+}
+
+// Loader-backed evidence files must exist for the graduated rows (no row may be
+// upgraded without its real-data fixture + deterministic check on disk).
+for (const evidence of [
+  'scripts/fixtures/bcu-custom-pack/summon-proc-object.json',
+  'scripts/fixtures/bcu-custom-pack/special-traits.json',
+  'scripts/fixtures/bcu-custom-pack/revive-proc-object.json',
+  'scripts/check-bcu-summon-procobject-loader-parity.mjs',
+  'scripts/check-bcu-trait-targetforms-loader-parity.mjs',
+  'scripts/check-bcu-modifier-realdata-sweep-parity.mjs',
+  'scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs',
+  'scripts/check-formation-storage-failure-visibility.mjs'
+]) {
+  assert.ok(existsSync(evidence), `loader-backed evidence present: ${evidence}`);
 }
 
 console.log('check-ability-partial-blockers: OK');

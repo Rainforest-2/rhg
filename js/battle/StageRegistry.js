@@ -1,5 +1,6 @@
 import { BCU_STAGE_MANIFEST } from '../data/bcuStageManifest.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
+import { reportStorageFailure, clearStorageFailure } from './BcuStorageDiagnostics.js';
 
 export const SELECTED_STAGE_STORAGE_KEY = 'bcu.selectedStageId';
 
@@ -53,8 +54,10 @@ function findStageInList(stages, stageId) {
 export function readPersistedStageId() {
   try {
     const value = globalThis.localStorage?.getItem?.(SELECTED_STAGE_STORAGE_KEY);
+    clearStorageFailure('stage', 'read');
     return value ? String(value) : null;
-  } catch {
+  } catch (error) {
+    reportStorageFailure('stage', 'read', error);
     return null;
   }
 }
@@ -64,7 +67,10 @@ export function writePersistedStageId(stageId) {
   try {
     if (value) globalThis.localStorage?.setItem?.(SELECTED_STAGE_STORAGE_KEY, value);
     else globalThis.localStorage?.removeItem?.(SELECTED_STAGE_STORAGE_KEY);
-  } catch {}
+    clearStorageFailure('stage', 'write');
+  } catch (error) {
+    reportStorageFailure('stage', 'write', error);
+  }
   return value || null;
 }
 

@@ -1,0 +1,20 @@
+{
+  "_source": "BCU util/unit/Trait.java JSON shape: name, id (Identifier cls/pack/id), boolean targetType, ArrayList<Form> targetForms. DataUnit.getTraits() adds such a user-pack trait to a unit when trait.targetForms.contains(form) || (trait.targetType && Trait.isTargetTraited(traits)). targetForms entries are Form references (FormJson) reduced here to their form id.",
+  "_identifier_format": "pack/Identifier.java fields cls/pack/id; user pack ids are non-DEF hex.",
+  "traits": [
+    {
+      "name": "Slayer of Form 042-f",
+      "id": { "cls": "common.util.unit.Trait", "pack": "ZZ0001", "id": 0 },
+      "targetType": false,
+      "targetForms": [
+        { "id": "cat-unit-042-f" }
+      ]
+    },
+    {
+      "name": "Slayer of all target-traited",
+      "id": { "cls": "common.util.unit.Trait", "pack": "ZZ0001", "id": 1 },
+      "targetType": true,
+      "targetForms": []
+    }
+  ]
+}

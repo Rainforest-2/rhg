@@ -1,0 +1,16 @@
+{
+  "_source": "BCU util/Data.java Proc.REVIVE @Order layout: count(0)/time(1)/health(2)/dis_0(3)/dis_1(4)/type(5){range_type,imu_zkill,revive_non_zombie,revive_others}. The normal unit/enemy CSV revive holder carries only count/time/health; dis_0/dis_1 and the type bits (extra/custom 'revive others' + range) live on the per-attack / body proc object.",
+  "revive": {
+    "count": 1,
+    "time": 5,
+    "health": 40,
+    "dis_0": -200,
+    "dis_1": 200,
+    "type": {
+      "range_type": 0,
+      "imu_zkill": true,
+      "revive_non_zombie": true,
+      "revive_others": true
+    }
+  }
+}

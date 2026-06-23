@@ -31,21 +31,22 @@ This is the high-level source of truth. It supersedes historical README/ZIP-anal
 
 ## 2026-06-23 audit summary
 
-No confirmed `Critical` parity defect was found in the inspected scope. The dominant remaining risks are source-loading completeness, proof coverage, manual visual acceptance, and persistence scope.
+No confirmed `Critical` parity defect was found in the inspected scope. The non-visual source-loading gaps (SUMMON proc-object, `Trait.targetForms`, combo/orb/treasure/talent/PCoin, extra/custom revive, storage-failure visibility) are now loader-proven by real BCU-format fixtures. The dominant remaining risk is manual visual acceptance; BCU save/lineup import-export stays out of scope.
 
 ### High priority
 
 | Area | Current status | Risk / required next action |
 |---|---|---|
-| SUMMON source loading | `partial` | `BcuSummonRuntime` consumes explicit proc-object data, but automatic discovery/loading of real custom-pack proc objects is not demonstrated. Normal unit/enemy CSV `SUMMON` remains unproven. Add real custom-pack loader fixtures; do not invent a CSV holder. |
-| Save / lineup compatibility | `unconfirmed` | `FormationStore` and `StageRegistry` persist repository-local JSON in browser `localStorage`. BCU save/lineup import-export is not proven. Identify the BCU serialization owner before adding or claiming BCU compatibility. Surface storage read/write failures instead of silently falling back. |
+| SUMMON source loading | `code-complete-candidate` | A real `CustomEntity.atks[].proc.SUMMON` file is loaded from disk and driven loader → `BattleAttackProfile` → immediate/on_hit spawn by `check-bcu-summon-procobject-loader-parity`. No normal CSV holder is added (BCU stores SUMMON only on proc objects). Only summon-entry appearance remains (visual). |
+| Save / lineup compatibility | `code-complete-candidate` (self-persistence); BCU import-export `out-of-scope` | `FormationStore`/`StageRegistry` round-trip their own state and now surface read/write failures via `BcuStorageDiagnostics` (`check-formation-storage-failure-visibility`) instead of a silent catch. BCU save/lineup import-export is an out-of-scope feature, not a defect. |
 
 ### Medium priority
 
 | Area | Current status | Risk / required next action |
 |---|---|---|
-| `Trait.targetForms` / special traits | `partial` | Focused runtime fixtures pass, but broad real custom trait/form loader fixtures and capture/proc edge coverage are missing. |
-| Combo / orb / treasure / talent / PCoin | `partial` | Main construction/resolver hooks exist. Broad real-data acceptance and in-battle visual acceptance remain incomplete. |
+| `Trait.targetForms` / special traits | `code-complete-candidate` | A real `Trait` file (targetType/targetForms) drives the single `bcuTraitCompatible` gate across proc and Target-Only cross-paths (`check-bcu-trait-targetforms-loader-parity`). |
+| Combo / orb / treasure / talent / PCoin | `code-complete-candidate` (non-visual) | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order and orbs fold through the resolver (`check-bcu-modifier-realdata-sweep-parity`). In-battle visual acceptance is a separate review item. |
+| Extra/custom zombie revive | `code-complete-candidate` | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter (`check-bcu-zombie-extra-revive-source-range-parity`). Corpse appearance remains visual. |
 | Non-basic cat cannon visuals | `code-complete-candidate` for runtime | Per-cannon ATK/EXT bitmap aliases and exact extend/waved traveling/sweep timing remain unaccepted. |
 | Visible-effect / UI acceptance | `human-visual-review-needed` or `partial` | P_DELAY, shield families, spirit, castle guard, summon, zombie revive, cat cannon, and BASE_WALL require fixture-backed browser review before visual-complete claims. |
 
@@ -55,7 +56,7 @@ Do not reopen these as present defects without a current code comparison:
 
 - Historical StageDefinitionLoader findings (`rowIndex`, castle `noContinue`, `-1` enemy-castle resolution, and `bossGuard` source row) were corrected in current code and are not the principal current risk.
 - Castle/base guard JS ownership is implemented. Its remaining gap is browser appearance, not a missing runtime owner.
-- Standard zombie corpse/soulstrike/revive runtime is deterministically covered. Broader extra/custom revive source coverage and browser appearance remain open.
+- Standard zombie corpse/soulstrike/revive runtime is deterministically covered, and extra/custom revive source/range filtering is now loader-proven (`check-bcu-zombie-extra-revive-source-range-parity`). Browser appearance remains open.
 - Basic and non-basic cat cannon runtime are present; visual asset aliases and browser acceptance are separate work.
 - Plain castles do not own a generic attack runtime. Boss bases use the ordinary `EEnemy` owner; stage HP/kill triggers belong to stage spawn logic.
 

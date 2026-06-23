@@ -1,77 +1,67 @@
 # Death soul and warp lifecycle current status
 
-This note records the current implementation state for the dedicated BCU death animation and warp lifecycle task.
+Updated: 2026-06-23.
 
-## Scope
+This note is the current source of truth for the dedicated BCU death, zombie-revive, mini-death-surge, and warp lifecycle work in `Rainforest-2/rhg`.
 
-This file is the current source of truth for death-soul and warp-lifecycle state. The repository contains runtime implementation and deterministic checks for both, so treat the status below as the live record.
+## Status boundary
 
-Browser/manual visual inspection remains outside Codex hard requirements. Status below is non-visual: source reading, JS runtime wiring, ZIP/loader evidence, and deterministic test coverage.
+- `code-complete-candidate` means source evidence, runtime wiring, and deterministic checks exist.
+- `human-visual-review-needed` means browser appearance has not been manually accepted.
+- `partial` is reserved for broad source/loader/fixture gaps, not for a runtime that is already present.
 
-## Death soul animation
+## Death soul and standard zombie lifecycle
 
-Status: `code-complete-candidate`; `human-visual-review-needed` for exact appearance.
+**Status:** `code-complete-candidate` for death-soul runtime; `human-visual-review-needed` for exact death/zombie appearance; `partial` only for broad extra/custom revive source coverage.
 
-Implemented evidence:
+### Current evidence
 
 - `BcuCombatModel.parseDeathAnimation` reads unit `DataUnit.ints[67]` and enemy `DataEnemy.ints[54]`.
-- Enemy fallback `rawSoulId == -1 && ints[63] == 1` maps to Soul 9.
+- Enemy fallback `rawSoulId == -1 && ints[63] == 1` resolves Soul 9.
 - `BattleBcuDeathAnimationRuntimePatch` wires `BattleActor.enterDeadState` and dead-state ticking to `BcuDeathAnimationRuntime`.
-- `BcuDeathAnimationRuntime` hides the base actor while death soul is active.
-- `BcuSoulEffectLoader` loads death soul entries from `public/assets/bundles/effect/soul.zip`.
-- `BCU_DEATH_SOUL_FALLBACK_FRAMES` is a JS safety fallback only, not a claimed BCU visual frame value. It prevents permanent actor retention when a soul asset is missing or not loaded.
-- `scripts/check-bcu-death-animation-parity.mjs` covers parser indexes, normal soul death, missing-asset fallback cleanup, AB_GLASS skip-soul behavior, and death-surge trigger frame.
-- `scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs` covers zombie revive indexes, `AB_ZKILL`, `AB_CKILL`, `REVIVE_SHOW_TIME` corpse targetability, non-soulstrike exclusion, soulstrike cancellation, zombie killer suppression, revive HP, death-surge frame 21, and no double-spawn.
+- `BcuSoulEffectLoader` reads death-soul assets from `public/assets/bundles/effect/soul.zip`.
+- The missing-asset lifetime fallback is a JS safety guard only; it is not a claimed BCU frame value.
+- `check-bcu-death-animation-parity.mjs` covers parser indexes, normal death soul, missing-asset cleanup, AB_GLASS skip-soul behavior, and death-surge trigger timing.
+- `check-bcu-zombie-corpse-soulstrike-parity.mjs` covers revive indexes, corpse show-window targetability, AB_ZKILL/AB_CKILL behavior, soulstrike cancellation, zombie-killer suppression, revive HP, DOWN/REVIVE state timing, render override, cleanup, and no double death-surge spawn.
 
-Known remaining partials:
+### Remaining boundaries
 
-- Zombie corpse / soulstrike logic is now covered for BCU show-window targetability and revive cancellation, but the row remains `partial` because zombie revive visual trace and extra-reviver interactions are not proven.
-- Death surge has deterministic 21-frame trigger and zombie-corpse cleanup coverage, but mini-death-surge split remains `partial`.
+- Standard zombie corpse/revive behavior is no longer a blanket runtime-missing or parsed-only row. The remaining standard-path gap is browser acceptance of DOWN/REVIVE appearance.
+- Extra/custom revive sources are fixture-backed only. Real source discovery, range filtering, and broader interaction coverage remain `partial`.
+- Mini-death-surge has a proven ORB_DEATH_SURGE holder and deterministic selection/runtime coverage. Its remaining gap is browser appearance, not holder ownership.
 
 ## Warp lifecycle
 
-Status: `code-complete-candidate`; `human-visual-review-needed` for exact appearance.
+**Status:** `code-complete-candidate`; `human-visual-review-needed` for exact WaprCont appearance.
 
-Implemented evidence:
+### Current evidence
 
-- `BcuWarpLifecycleRuntime` models warp as a lifecycle rather than a simple countdown.
-- Entrance `WaprCont` equivalent spawns warp hole and warp chara effects at start.
-- The base actor is hidden, untargetable, and untouchable while warp lifecycle is active.
-- Actor movement occurs at the exit transition, not at proc start.
-- Exit `WaprCont` equivalent spawns on the same tick as the move.
-- The base actor remains hidden through exit animation and becomes renderable/targetable/touchable only after lifecycle completion.
-- `IMUWARP` blocks warp lifecycle creation.
-- Stale warp state is cleared if the actor dies during warp.
-- A warped actor is fully interrupted like BCU `Entity.update` with `kbTime > 0`: the scene tick (`BattleSceneBcuStageBasisTickPatch` movement/target-search/attack-start/attack-timeline phases and the `BattleScene.tick` fallback) skips walking, retargeting, and attacking while the lifecycle is active, so the exit position is exactly `entry pos - min(distance, getLim()) * dire` with no forward walk drift.
-- Warp start mirrors `KBManager.doInterrupt` (`atkm.stopAtk()` cancels an in-progress attack) and `updateKB` (`setAnim(UType.IDLE, false)` holds a frozen idle pose during the warp); warp end mirrors `updateKB` `kbTime == 0` (`setAnim(UType.WALK, true)` resumes the walk animation).
-- `scripts/check-bcu-warp-lifecycle-parity.mjs` covers normal lifecycle, move timing, exit hidden behavior, IMUWARP, stale-dead cleanup, replacement warp lifecycle, and death during exit.
-- `scripts/check-bcu-warp-interrupt-scene-parity.mjs` covers scene-tick interruption (no walking/animation during warp), backward and forward (negative-distance) exit positions, attack cancellation at warp start, and walk resumption after the warp ends.
+- `BcuWarpLifecycleRuntime` models entrance, hidden interval, exit movement, exit animation, and completion rather than a simple countdown.
+- The actor is hidden, untargetable, and untouchable during warp.
+- Position changes at the exit transition; no normal walk drift is allowed while warp is active.
+- Scene-tick stages skip walking, retargeting, attack start, and attack timeline progression during the lifecycle.
+- Warp start cancels in-progress attack and holds idle; warp completion resumes walking.
+- `IMUWARP` prevents lifecycle creation; stale state clears on death; replacement lifecycle behavior is tested.
+- `check-bcu-warp-lifecycle-parity.mjs` and `check-bcu-warp-interrupt-scene-parity.mjs` cover normal/replacement/death paths, forward/backward exit, attack cancellation, and walk resumption.
 
-Known remaining partials:
+### Remaining boundaries
 
-- Exact pixel-perfect WaprCont appearance is not browser-verified.
-- If future BCU source reading proves a different overlap/priority rule for multiple warp procs, update `BcuWarpLifecycleRuntime` and the replacement-lifecycle test.
+- Exact WaprCont pixels, overlap ordering for multiple warps if future BCU reading changes the rule, and browser-level effect acceptance remain open.
+
+## 2026-06-23 audit rule
+
+The current audit found no confirmed death/warp runtime regression in the inspected scope. Do not restore old wording that calls standard zombie or mini-death-surge runtime “unimplemented” or “parsed-only” without a current code and test failure.
 
 ## Required verification
-
-Run these commands after edits touching death or warp behavior:
 
 ```bash
 node --check js/battle/bcu-runtime/BcuDeathAnimationRuntime.js
 node --check js/battle/bcu-runtime/BcuWarpLifecycleRuntime.js
-node --check scripts/check-bcu-death-animation-parity.mjs
-node --check scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
-node --check scripts/check-bcu-warp-lifecycle-parity.mjs
-node --check scripts/check-bcu-warp-interrupt-scene-parity.mjs
 node scripts/check-bcu-death-animation-parity.mjs
 node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+node scripts/check-bcu-mini-death-surge-parity.mjs
 node scripts/check-bcu-warp-lifecycle-parity.mjs
 node scripts/check-bcu-warp-interrupt-scene-parity.mjs
 ```
 
-If bundle content changes, also run:
-
-```bash
-unzip -l public/assets/bundles/effect/soul.zip
-unzip -l public/assets/bundles/effect/wave.zip
-```
+If effect bundles change, also inspect `soul.zip` and `wave.zip` entries. Record visual results only in `bcu-visual-review-checklist.md`.

@@ -42,15 +42,16 @@ assert.ok(omitted.includes('sage status resistance'), 'damage resolver still rep
 
 const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 'utf8');
 for (const phrase of [
-  '`P_DELAY`',
-  'code-complete-candidate',
-  'burrow | `code-complete-candidate`',
-  'combo / orb / treasure / talent / PCoin damage modifiers | `partial`',
-  'AB_SKILL status resistance side | `code-complete-candidate`',
-  'mini-death-surge | `code-complete-candidate`',
-  'zombie extra-revive / custom revive edge cases | `partial`',
-  'source-backed `smap`/`sdef`/`SCGroup` stage allow fixtures',
-  'BCU custom/proc-object `SUMMON` holders now normalize into per-hit attack events'
+  '| P_DELAY | `human-visual-review-needed`',
+  '| burrow | `code-complete-candidate`',
+  '| combo / orb / treasure / talent / PCoin | `partial`',
+  '| AB_SKILL / status resistance extensions | `code-complete-candidate`',
+  '| mini-death-surge | `human-visual-review-needed`',
+  '| extra/custom zombie revive | `partial`',
+  '| SUMMON | `partial`',
+  'automatic real custom-pack proc-object discovery/loading is not demonstrated',
+  '| persistence / BCU save compatibility | `unconfirmed`',
+  '| enemy castle / stage “special attack” | `negative-evidence`'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
 }

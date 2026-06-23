@@ -1,190 +1,115 @@
 # BCU Parity Rules
 
-Detailed BCU battle-parity rules for agents working on `rhgrive2/game`.
+Detailed BCU parity rules for agents working on `Rainforest-2/rhg`.
 
-## Status Vocabulary
+## Status vocabulary
 
-Use these statuses consistently in docs and final reports:
+Use these terms consistently:
 
-- `partial`: facts, implementation, tests, or bundle evidence are missing.
-- `code-complete`: local BCU reference, JS parser/runtime implementation, ZIP evidence, deterministic tests, and coordinate/effect traces pass.
-- `human-visual-review-needed`: code-complete for logic/effect wiring, but exact manual visual appearance has not been inspected by a human.
-- `fully-complete`: code-complete evidence exists and a human/manual visual review has also been recorded.
+- `code-complete-candidate`: BCU source evidence, current JS owner/wiring, semantic bundle evidence where relevant, and deterministic checks exist. Browser appearance is not yet accepted.
+- `human-visual-review-needed`: logic/effect wiring is supported, but exact browser appearance has not been manually accepted.
+- `partial`: a source holder, real-data loader, runtime path, broad fixture set, or deterministic check remains incomplete.
+- `unconfirmed`: the BCU source owner, serialization format, or compatibility rule is not established.
+- `negative-evidence`: BCU source disproves the proposed owner. Do not implement it under that owner.
+- `logic-only-unless-future-visual-proof`: gameplay/economy behavior is source-backed but no dedicated battle visual owner is proven.
 
-Do not use bare `complete` ambiguously. Prefer `code-complete` or `fully-complete`.
+Do not use bare `complete`.
 
-## Codex Verification Boundary
+## Evidence rule
 
-Codex-style agents cannot perform manual browser visual inspection. Therefore:
+A broad parity claim needs all applicable evidence:
 
-- Do not require browser/manual visual verification before marking a row `code-complete`.
-- For visual/effect rows, require deterministic coordinate/effect traces instead.
-- If exact appearance still needs human judgment, mark the row `human-visual-review-needed`, not `partial`, provided code/bundle/runtime/test evidence is complete.
-- If code evidence is missing, keep the row `partial`.
+1. BCU source behavior from local references under `references/bcu/`.
+2. A current rhg parser/loader and runtime-owner audit.
+3. Correct numeric rules: probability, frames, percentages, distance, random range, rounding, level scaling, order, overwrite, and suppression.
+4. Matching battle-phase ownership and wrapper order.
+5. Production assets from semantic ZIP bundles, never loose raw runtime fallback.
+6. Deterministic tests that fail on the asserted behavior.
+7. Loader-backed fixtures when the claim concerns real custom data.
+8. Manual browser review when the claim says visible behavior matches BCU.
 
-## Evidence Rule
+A parser field, headless trace, old README, or one synthetic fixture does not establish broad parity by itself.
 
-A row may be marked `code-complete` only when applicable evidence exists:
+## Reference priority
 
-1. BCU source behavior is identified from local references under `references/bcu/`.
-2. JS parser/runtime behavior is implemented for the relevant holder/source.
-3. Numeric rules match BCU: probability, frames, percent, distance, random range, rounding, level scaling, ordering, overwrite, and suppression.
-4. Runtime hooks fire at the matching logical battle phase and ordering point.
-5. Required visual/effect animation is loaded from production ZIP bundles, not loose raw assets.
-6. Effect timing/position/direction/camera scale/layer/lifetime/phase are represented in deterministic debug traces.
-7. Focused automated checks exist and pass.
-8. Documentation records references, hooks, tests, ZIP entries, and remaining human visual review status.
+1. Checked-in BCU common source ZIP.
+2. Checked-in BCU Android source ZIP.
+3. Other checked-in BCU source/reference material.
+4. Current rhg code, semantic bundle inventories, and deterministic checks.
+5. PC draw-side sources only where common/Android cannot decide a rendering/UI claim.
+6. Historical docs only as supporting context, never as sole proof of current rhg behavior.
 
-Do not mark a row `code-complete` because it only appears to work.
+## Runtime asset rule
 
-## Reference Priority
+Production runtime resolves generated semantic ZIP bundles. Files under `public/assets/bcu/**` are source material and must not become a silent browser fallback.
 
-Use sources in this order:
+When a required asset is absent:
 
-1. `references/bcu/BCU_java_util_common.zip`
-2. `references/bcu/BCU_Android-master.zip`
-3. Markdown under `references/bcu/`, especially `キャラクターの特殊性能_全文_リンク削除.md`
-4. Current repository code and generated assets
-5. PC source only as rendering/UI support when common/Android do not answer the question
-6. Existing docs under `docs/ability-logic/` as historical notes, never as sole proof
-
-Before behavior edits, extract local references if needed:
-
-```bash
-mkdir -p /tmp/bcu-ref
-python3 - <<'PY'
-import pathlib, shutil, zipfile
-pairs = [
-    ('references/bcu/BCU_java_util_common.zip', '/tmp/bcu-ref/common'),
-    ('references/bcu/BCU_Android-master.zip', '/tmp/bcu-ref/android'),
-]
-for z, out in pairs:
-    p = pathlib.Path(z)
-    o = pathlib.Path(out)
-    if o.exists():
-        shutil.rmtree(o)
-    o.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(p) as f:
-        f.extractall(o)
-    print('extracted', p, '->', o)
-PY
-```
-
-## Runtime Asset Rule
-
-Production runtime must use ZIP bundles only:
-
-- `public/assets/bundles/effect/status-effects.zip`
-- `public/assets/bundles/effect/wave.zip`
-- `public/assets/bundles/effect/kbeff.zip`
-- other existing semantic bundles under `public/assets/bundles/**/*.zip`
-
-Files under `public/assets/bcu/...` are build-time inputs only. Do not add production browser runtime fallback to loose raw assets.
-
-If an effect is missing:
-
-1. Extend the relevant builder.
-2. Rebuild the ZIP.
-3. Update generated manifests/inventories.
-4. Verify entries with `unzip -l`.
-5. Add or update deterministic loader/alias tests.
+1. prove the BCU asset owner/alias;
+2. extend the appropriate bundle builder;
+3. regenerate bundle/manifests;
+4. inspect entries with `unzip -l`;
+5. add deterministic loader/alias tests;
+6. update the effect/bundle audit.
 
 Never hand-edit ZIP contents.
 
-## Required First Task Order
+## Current priority groups
 
-Follow `../ability-logic/bcu-parity-codex-workplan.md`.
+1. **W0 — proof harness and docs:** keep tests and current status truthful.
+2. **W1 — real custom-pack SUMMON loading:** runtime exists; real data discovery/loading is the gap.
+3. **W2 — persistence scope:** distinguish repository-local browser persistence from BCU save/lineup compatibility; surface storage failure.
+4. **W3 — real-data trait/modifier fixtures:** `targetForms`, combo, orb, treasure, talent, and PCoin acceptance.
+5. **W4 — manual browser review:** visible effects/UI with fixed BCU fixtures.
+6. **W5 — non-basic cannon visual assets/timing:** ATK/EXT aliases plus extend/waved frame behavior.
+7. **W6 — performance cleanup:** only after behavior-bearing paths are protected by checks.
 
-Current priority groups:
+Do not reimplement a current code-complete-candidate or human-visual-review-needed row unless a source comparison or deterministic check proves a concrete regression.
 
-1. W0: keep proof harness scripts current.
-2. W1: projectile source model.
-3. W2: resistance and external modifier completeness.
-4. W3: source-backed summon completion.
-5. W4: zombie revive and death-surge edge completion.
-6. W5: effect scale and coordinate model maintenance.
-7. W6: debug allocation cleanup without logic changes.
+## Current critical boundaries
 
-Do not reimplement rows that current status docs already classify as `code-complete-candidate` or `human-visual-review-needed` unless a deterministic check or source comparison proves a concrete bug.
+### SUMMON
 
-## Current Known Gaps
+The explicit proc-object runtime exists. The remaining hard boundary is automatic real custom-pack proc-object discovery/loading. A normal unit/enemy CSV holder is unproven and must not be invented.
 
-### Projectile Source Model
+### Persistence
 
-Wave, surge, and blast must preserve source attack data for each target-specific resolution. Do not reuse a first target's already-adjusted result as a universal projectile result unless BCU source and tests prove that exact behavior.
+`localStorage` persistence proves only rhg’s own browser-state continuity. It does not prove BCU save or lineup import/export compatibility. Identify the BCU serialization owner and add round-trip fixtures before claiming compatibility.
 
-### Resistance And External Modifiers
+### Trait/modifier coverage
 
-Keep full immunity and partial resistance centralized. Do not mark external modifier rows `code-complete` until combo/orb/treasure/talent/PCoin loaders and targetForms fixtures are source-backed and tested.
+Focused `targetForms` and modifier fixtures exist. Broad claims require real loader-backed custom data plus capture/proc/targetOnly and in-battle acceptance coverage.
 
-### Source-Backed Summon Completion
+### Visual acceptance
 
-The explicit proc-object summon runtime exists, but normal CSV summon holder, automatic BCU custom/proc-object loading, source-backed stage `allow` / group semantics, and exact summon entry appearance remain blockers.
+P_DELAY, shield families, burrow, spirit, castle guard, zombie revive, basic/non-basic cannon behavior, and BASE_WALL need manual browser review where the current checklist says so.
 
-### Zombie Revive And Death-Surge Edge Completion
+### Negative evidence
 
-The standard zombie corpse / soulstrike / revive visual trace path is covered. Remaining blockers are manual browser acceptance, mini-death-surge holder proof, and extra/custom revive interactions.
+Do not build a generic castle-owned attack runtime. Plain BCU `ECastle` does not own one; boss bases use `EEnemy`, and HP/kill trigger spawns are stage-owned.
 
-### Visual Review-Only Rows
+## Documentation requirements
 
-Do not call the following runtime-missing unless a current check proves regression:
-
-- `P_DELAY` runtime/effect
-- burrow lifecycle
-- barrier / demon shield / shield breaker
-- castle/base guard states
-- spirit lifecycle
-- standard zombie corpse / soulstrike / revive trace path
-
-These may still be `human-visual-review-needed`, but that is not the same as missing runtime implementation.
-
-### Effect Coordinate Model
-
-Stage/projectile effects require explicit scale and coordinate metadata. Do not rely on one generic visual formula unless BCU proof says that is correct for that effect class. Add deterministic coordinate traces.
-
-### Debug Allocation Cleanup
-
-Reduce or gate per-frame debug object allocation only after behavior-bearing paths are protected by tests. Do not change rendering, combat, proc, or wrapper semantics for optimization alone.
-
-## Documentation Requirements
-
-Update in the same commit as code/bundle work:
+Update existing docs in the same change batch:
 
 - `../ability-logic/current-ability-parity-status.md`
 - `../ability-logic/bcu-unresolved-evidence-blockers.md`
-- `../ability-logic/bcu-visual-review-checklist.md`, only after actual human/manual visual review
+- `../ability-logic/bcu-visual-review-checklist.md` only after actual browser review
 - `../ability-logic/effect-zip-audit.md` when effects/bundles change
-- `../ability-logic/bcu-parity-codex-workplan.md` if the plan changes
-- focused audit docs if added
-- generated manifests/inventories if builders change them
+- `../ability-logic/bcu-parity-codex-workplan.md` when priority changes
+- `../bcu-migration-status.md` when the high-level audit changes
+- root `README.md` / `AGENTS.md` when the public or agent-facing summary changes
 
-For `code-complete` rows, document:
+For an incomplete row, state exactly whether the missing piece is source evidence, data loader, runtime owner, deterministic test, browser review, or serialization compatibility.
 
-- BCU reference source
-- holder field/index
-- numeric rule
-- JS parser
-- JS runtime hook
-- visual ID if any
-- ZIP path and exact internal entries if any
-- loader alias if any
-- spawn/attach call if any
-- coordinate/effect trace if any
-- test commands and results
-- whether human visual review is still needed
+## Naming discipline
 
-For incomplete rows, document the exact missing fact/hook/asset/test and why implementation would require guessing.
-
-## Naming Discipline
-
-Use stable names:
-
-- `strengthen` for attack-up `P_STRONG` threshold status.
-- `strongAttack` for `P_SATK` 渾身の一撃.
-- `strong` for `AB_GOOD` めっぽう強い damage family.
-- `weaken` for `P_WEAK` attack-down.
-- `freeze` internally for `P_STOP`, but document as `P_STOP`.
-- `toxic` internally for `P_POIATK`, but document as `P_POIATK`.
-- `surge` internally for BCU volcano/烈波.
-- `blast` for 爆波.
-- `seal` only when BCU `P_SEAL` source is proven. Do not mix it with curse.
+- `strengthen`: attack-up `P_STRONG` threshold state.
+- `strongAttack`: `P_SATK`.
+- `strong`: `AB_GOOD` damage family.
+- `weaken`: `P_WEAK`.
+- `freeze`: internal name for `P_STOP`; document the BCU name too.
+- `toxic`: internal name for `P_POIATK`; document the BCU name too.
+- `surge`: BCU volcano / 烈波.
+- `blast`: 爆波.
+- `seal`: only with proven BCU `P_SEAL` source; never conflate it with curse.

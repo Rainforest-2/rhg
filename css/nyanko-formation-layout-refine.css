@@ -287,23 +287,15 @@ body.nyanko-ui-polish .formation-current-stage{
   color:#ffe9a4;
   opacity:.92;
   word-break:normal;
+  text-shadow:none!important;
 }
 
 body.nyanko-ui-polish .apply-battle-button{
   color:#fff8d1!important;
   -webkit-text-fill-color:#fff8d1!important;
-  -webkit-text-stroke:0!important;
-  paint-order:normal!important;
-  text-shadow:
-    2px 0 0 #050505,
-    -2px 0 0 #050505,
-    0 2px 0 #050505,
-    0 -2px 0 #050505,
-    2px 2px 0 #050505,
-    -2px 2px 0 #050505,
-    2px -2px 0 #050505,
-    -2px -2px 0 #050505,
-    0 4px 0 rgba(0,0,0,.72)!important;
+  -webkit-text-stroke:1px #050505!important;
+  paint-order:stroke fill!important;
+  text-shadow:none!important;
 }
 
 body.nyanko-ui-polish .formation-action-hint{
@@ -359,7 +351,8 @@ body.nyanko-ui-polish .formation-action-hint{
     height:56px;
   }
   body.nyanko-ui-polish .apply-battle-button{
-    -webkit-text-stroke:0!important;
+    -webkit-text-stroke:1px #050505!important;
+    text-shadow:none!important;
   }
 }
 

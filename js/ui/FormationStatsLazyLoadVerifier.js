@@ -1,4 +1,4 @@
-import fs from 'node'+':fs'+'/promises';
+const fs = await import('node'+':fs'+'/promises');
 import { FormationEditor } from './FormationEditor.js';
 
 export async function verifyFormationStatsLazyLoadContract() {

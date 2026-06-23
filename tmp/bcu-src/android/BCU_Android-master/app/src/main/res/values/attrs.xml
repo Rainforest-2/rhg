@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="colorPrimary" format="color"/>
+    <attr name="colorPrimaryDark" format="color"/>
+    <attr name="stageSelect" format="color"/>
+    <attr name="colorAccent" format="color"/>
+    <attr name="unitinfButton" format="color"/>
+    <attr name="backgroundPrimary" format="color"/>
+    <attr name="ButtonPrimary" format="color"/>
+    <attr name="TextPrimary" format="color"/>
+    <attr name="TableBorder" format="color"/>
+    <attr name="UnitinfoName" format="color"/>
+    <attr name="iconPrimary" format="color"/>
+    <attr name="SelectionPrimary" format="color"/>
+    <attr name="HintPrimary" format="color"/>
+    <attr name="themes" format="reference"/>
+    <attr name="TILtheme" format="reference"/>
+    <attr name="ErrorPrimary" format="color"/>
+    <attr name="SemiBackgroundPrimary" format="color"/>
+    <attr name="BorderPrimary" format="color"/>
+    <attr name="SemiWarningPrimary" format="color"/>
+    <attr name="SemiCautionPrimary" format="color"/>
+</resources>

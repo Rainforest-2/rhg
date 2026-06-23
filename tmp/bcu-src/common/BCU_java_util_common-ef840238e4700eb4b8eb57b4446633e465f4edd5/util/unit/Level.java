@@ -1,0 +1,223 @@
+package common.util.unit;
+
+import common.battle.data.PCoin;
+import common.io.json.JsonClass;
+import common.io.json.JsonClass.NoTag;
+import common.io.json.JsonField;
+import common.util.BattleStatic;
+
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static common.util.Data.ORB_INTS;
+
+@SuppressWarnings("unused")
+@JsonClass(noTag = NoTag.LOAD)
+public class Level implements BattleStatic, LevelInterface {
+
+	private int level, plusLevel;
+	@Nonnull
+	private int[] talents;
+
+	private int[][] orbs = null;
+
+	public static Level lvList(Unit u, int[] arr, int[][] orbs) {
+		int talentNumber = 0;
+		PCoin coin = null;
+
+		for(Form f : u.forms) {
+			PCoin pc = f.du.getPCoin();
+
+			if(pc != null && talentNumber < pc.max.length) {
+				talentNumber = pc.max.length;
+				coin = pc;
+			}
+		}
+
+		Level lv = new Level(talentNumber);
+
+		if (arr.length > 0) {
+			lv.level = Math.max(1, Math.min(arr[0], u.max));
+		}
+
+		if(arr.length > 1) {
+			lv.plusLevel = Math.max(0, Math.min(arr[1], u.maxp));
+		}
+
+		if(coin != null) {
+			int[] talents = new int[coin.max.length];
+			int min = Math.min(arr.length - 2, talents.length);
+			if (min >= 0)
+                System.arraycopy(arr, 2, talents, 0, min);
+			lv.setTalents(talents);
+		}
+
+		lv.orbs = orbs;
+
+		return lv;
+	}
+
+	@JsonClass.JCConstructor
+	public Level() {
+		level = 1;
+		talents = new int[0];
+	}
+
+	public Level(int talentNumber) {
+		level = 1;
+		talents = new int[talentNumber];
+	}
+
+	public Level(int level, int plusLevel, @Nonnull int[] talents) {
+		this.level = Math.max(1, level);
+		this.plusLevel = plusLevel;
+
+		this.talents = talents.clone();
+	}
+
+	public Level(int level, int plusLevel, @Nonnull int[] talents, int[][] orbs) {
+		this(level, plusLevel, talents);
+
+		if (orbs == null) {
+			return;
+		}
+
+		boolean valid = true;
+
+		for (int[] data : orbs) {
+			if (data == null) {
+				valid = false;
+				break;
+			}
+
+			if (data.length == 0) {
+				continue;
+			}
+
+			if (data.length != ORB_INTS) {
+				valid = false;
+				break;
+			}
+		}
+
+		if (valid) {
+			this.orbs = orbs;
+		}
+	}
+
+	@Override
+	public Level clone() {
+		try {
+			return (Level) super.clone();
+		} catch (CloneNotSupportedException ignored) {
+			if (orbs != null)
+				return new Level(level, plusLevel, talents, orbs.clone());
+
+			return new Level(level, plusLevel, talents);
+		}
+	}
+
+	public int getLv() {
+		return level;
+	}
+
+	public int getPlusLv() {
+		return plusLevel;
+	}
+
+	public int[][] getOrbs() {
+		return orbs;
+	}
+
+	public int[] getTalents() {
+		return talents;
+	}
+
+	public void setLevel(int lv) {
+		level = lv;
+	}
+
+	public void setPlusLevel(int plusLevel) {
+		this.plusLevel = plusLevel;
+	}
+
+	public void setTalents(@Nonnull int[] talents) {
+		this.talents = talents.clone();
+	}
+
+	public void setLvs(Level lv) {
+		level = Math.max(1, lv.level);
+		plusLevel = lv.plusLevel;
+
+		if(lv.talents.length < talents.length) {
+			System.arraycopy(lv.talents, 0, talents, 0, lv.talents.length);
+		} else {
+			talents = lv.talents.clone();
+		}
+
+		if (lv.orbs != null) {
+			orbs = lv.orbs.clone();
+		}
+	}
+
+	public void setOrbs(int[][] orb) {
+		if (orb == null) {
+			orbs = null;
+			return;
+		}
+
+		boolean valid = true;
+
+		for (int[] data : orb) {
+			if (data == null) {
+				valid = false;
+				break;
+			}
+			if (data.length == 0)
+				continue;
+			if (data.length != ORB_INTS) {
+				valid = false;
+				break;
+			}
+		}
+
+		if (valid) {
+			orbs = orb;
+		}
+	}
+
+	public void revalidateOrb(Unit u) {
+		int slotCount = u.orbs.size();
+		if (orbs != null && slotCount != orbs.length) {
+			int[][] newOrbs = new int[slotCount][0];
+			System.arraycopy(orbs, 0, newOrbs, 0, Math.min(slotCount, orbs.length));
+			orbs = newOrbs;
+		}
+	}
+
+	@JsonField(tag = "lvs", io = JsonField.IOType.R, generic = Integer.class)
+	public void parseOldLevel(ArrayList<Integer> levels) {
+		if (!levels.isEmpty()) {
+			level = levels.get(0);
+		}
+
+		if (levels.size() > 1) {
+			talents = new int[levels.size() - 1];
+
+			for (int i = 0; i < talents.length; i++) {
+				talents[i] = levels.get(i + 1);
+			}
+		}
+	}
+
+	@Override
+	public String toString() {
+		return "Level{" +
+				"level=" + level +
+				", plusLevel=" + plusLevel +
+				", talents=" + Arrays.toString(talents) +
+				", orbs=" + Arrays.deepToString(orbs) +
+				'}';
+	}
+}

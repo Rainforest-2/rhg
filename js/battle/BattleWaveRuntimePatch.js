@@ -82,17 +82,19 @@ function getPayloadNumber(payload, keys, fallback) {
   return fallback;
 }
 
-function rollInclusive(min, max) {
+function rollInclusive(min, max, random = Math.random) {
   const lo = Math.trunc(Math.min(min, max));
   const hi = Math.trunc(Math.max(min, max));
   if (hi <= lo) return lo;
-  return lo + Math.floor(Math.random() * (hi - lo + 1));
+  return lo + Math.floor(random() * (hi - lo + 1));
 }
 
-function initWaveLevel(payload = {}) {
+function initWaveLevel(payload = {}, random = Math.random) {
   const lv = Math.max(1, Math.trunc(getPayloadNumber(payload, ['level', 'lv'], 1)));
   const maxlv = Math.max(lv, Math.trunc(getPayloadNumber(payload, ['maxLevel', 'maxlv'], lv)));
-  return maxlv > lv ? rollInclusive(lv, maxlv) : lv;
+  // BCU AttackSimple: if (maxlv > lv) lv = lv + (int)(b.r.nextFloat() * ((maxlv - lv) + 1));
+  // The draw is gated on maxlv > lv and consumes the seeded scene CopRand (basis.r).
+  return maxlv > lv ? rollInclusive(lv, maxlv, random) : lv;
 }
 
 function makeGroup() {
@@ -135,14 +137,14 @@ function effectKeyFor(kind, direction) {
   return enemy ? 'enemyWave' : 'unitWave';
 }
 
-export function buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
+export function buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target, random = Math.random) {
   const payload = proc.payload || {};
   const d = dire(attacker);
   const origin = pos(attacker);
   const width = d === 1 ? W_E_WID : W_U_WID;
   const addp = (d === 1 ? W_E_INI : W_U_INI) + width / 2;
   const isMini = proc.key === 'miniWave';
-  const level = initWaveLevel(payload);
+  const level = initWaveLevel(payload, random);
   const inverted = !!payload.inverted;
   const initialOffset = inverted ? W_PROG * (level - 1) * d : 0;
   const p0 = origin + d * addp + initialOffset;
@@ -373,7 +375,10 @@ function enqueueFromResult(scene, attacker, target, event, calc, result, meta = 
   if (projectileBaseDamage <= 0) return;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
   const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${target?.instanceId || 'target'}:${hitIndex}`;
-  for (const proc of items) enqueue(scene, buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target));
+  // Wave level (when maxlv > lv) is drawn from the seeded scene CopRand (BCU basis.r),
+  // matching the blast/spawn paths instead of bypassing determinism with Math.random.
+  const random = meta.random || scene.getBcuRandom?.() || Math.random;
+  for (const proc of items) enqueue(scene, buildInitialWave(attacker, proc, projectileBaseDamage, key, event, hitIndex, target, random));
 }
 
 export function installBattleWaveRuntimePatch() {

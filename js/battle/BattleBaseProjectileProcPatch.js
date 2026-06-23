@@ -41,25 +41,26 @@ function getPayloadNumber(payload, keys, fallback) {
   return fallback;
 }
 
-function rollInclusive(min, max) {
+function rollInclusive(min, max, random = Math.random) {
   const lo = Math.trunc(Math.min(min, max));
   const hi = Math.trunc(Math.max(min, max));
   if (hi <= lo) return lo;
-  return lo + Math.floor(Math.random() * (hi - lo + 1));
+  return lo + Math.floor(random() * (hi - lo + 1));
 }
 
-function rollExclusiveLikeBcu(min, max) {
-  const lo = Math.trunc(min);
-  const hi = Math.trunc(max);
-  const span = hi - lo;
-  if (span <= 0) return lo;
-  return lo + Math.floor(Math.random() * span);
+// BCU AttackSimple: int addp = dis_0 + (int) (b.r.nextFloat() * (dis_1 - dis_0));
+// Unconditional seeded draw (consumed even when dis_0 == dis_1), using dis_0/dis_1 directly.
+function rollVolcanoPosition(d0, d1, random = Math.random) {
+  const lo = Math.trunc(d0);
+  const hi = Math.trunc(d1);
+  return lo + Math.trunc(random() * (hi - lo));
 }
 
-function initWaveLevel(payload = {}) {
+function initWaveLevel(payload = {}, random = Math.random) {
   const lv = Math.max(1, Math.trunc(getPayloadNumber(payload, ['level', 'lv'], 1)));
   const maxlv = Math.max(lv, Math.trunc(getPayloadNumber(payload, ['maxLevel', 'maxlv'], lv)));
-  return maxlv > lv ? rollInclusive(lv, maxlv) : lv;
+  // BCU AttackSimple: if (maxlv > lv) lv = lv + (int)(b.r.nextFloat() * ((maxlv - lv) + 1));
+  return maxlv > lv ? rollInclusive(lv, maxlv, random) : lv;
 }
 
 function waveItems(calc) {
@@ -176,14 +177,14 @@ function cloneSurgeEvent(event = {}, damage, kind) {
   };
 }
 
-function buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, target) {
+function buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, target, random = Math.random) {
   const payload = proc.payload || {};
   const d = dire(attacker);
   const origin = pos(attacker);
   const width = d === 1 ? W_E_WID : W_U_WID;
   const addp = (d === 1 ? W_E_INI : W_U_INI) + width / 2;
   const isMini = proc.key === 'miniWave';
-  const level = initWaveLevel(payload);
+  const level = initWaveLevel(payload, random);
   const inverted = !!payload.inverted;
   const initialOffset = inverted ? W_PROG * (level - 1) * d : 0;
   const p0 = origin + d * addp + initialOffset;
@@ -223,16 +224,20 @@ function extractVolc(payload = {}, isMini = false) {
   return isMini ? (payload.miniVolcano || payload.miniVolc || payload || {}) : (payload.volcano || payload.deathSurge || payload || {});
 }
 
-function resolveAliveTime(volc) {
+function resolveAliveTime(volc, random = Math.random) {
   const explicitFrames = numAny(volc, ['aliveTimeFrames', 'timeFrames'], NaN);
   if (Number.isFinite(explicitFrames) && explicitFrames > 0) return Math.max(1, Math.trunc(explicitFrames));
   const base = Math.max(1, Math.trunc(numAny(volc, ['time'], 20)));
   const max = Math.max(base, Math.trunc(numAny(volc, ['maxtime', 'maxTime'], base)));
-  if (max > base) return Math.floor(rollExclusiveLikeBcu(base, max) / 20) * 20;
+  // BCU AttackSimple: if (maxtime > time) { time += (int)(b.r.nextFloat()*((maxtime-time)+1)); time = floor(time/20)*20; }
+  if (max > base) {
+    const rolled = base + Math.trunc(random() * ((max - base) + 1));
+    return Math.floor(rolled / 20) * 20;
+  }
   return base;
 }
 
-function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
+function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target, random = Math.random) {
   const payload = proc.payload || {};
   const isMini = proc.key === 'miniSurge';
   const volc = extractVolc(payload, isMini);
@@ -240,12 +245,13 @@ function buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target) {
   const origin = pos(attacker);
   const d0 = numAny(volc, ['dis0', 'dis_0', 'dis0Raw'], 0);
   const d1 = numAny(volc, ['dis1', 'dis_1', 'dis1Raw'], d0);
-  const addp = rollExclusiveLikeBcu(d0, d1);
+  // BCU draw order at spawn: position (addp) first, then alive-time. Both consume basis.r.
+  const addp = rollVolcanoPosition(d0, d1, random);
   const center = origin + d * addp;
   const sta = center + (d === 1 ? W_VOLC_PIERCE : W_VOLC_INNER);
   const end = center - (d === 1 ? W_VOLC_INNER : W_VOLC_PIERCE);
   const mult = isMini ? Math.max(0, Number(volc.mult ?? payload.mult ?? 20)) / 100 : 1;
-  const aliveTime = resolveAliveTime(volc);
+  const aliveTime = resolveAliveTime(volc, random);
   const kind = proc.key;
   const damage = Math.max(1, Math.trunc(finalDamage * mult));
   return {
@@ -285,17 +291,21 @@ function enqueueBaseProjectiles(scene, attacker, target, event, calc, result, me
   const targetId = target?.instanceId || target?.label || target?.side || 'base';
   const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${targetId}:${hitIndex}`;
 
+  // Wave level / surge position+time draws consume the seeded scene CopRand (BCU basis.r),
+  // matching the actor projectile path instead of bypassing determinism with Math.random.
+  const random = (typeof meta?.random === 'function') ? meta.random : (scene.getBcuRandom?.() || Math.random);
+
   const waveItemsToSpawn = waveItems(calc);
   if (waveItemsToSpawn.length && (scene.__bcuWaveContainers?.length || 0) === beforeWaveCount) {
     if (!scene.__bcuWaveContainers) scene.__bcuWaveContainers = [];
-    for (const proc of waveItemsToSpawn) scene.__bcuWaveContainers.push(buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, target));
+    for (const proc of waveItemsToSpawn) scene.__bcuWaveContainers.push(buildInitialWave(attacker, proc, finalDamage, key, event, hitIndex, target, random));
   }
 
   const surgeItemsToSpawn = surgeItems(calc);
   if (surgeItemsToSpawn.length && (scene.__bcuSurgeContainers?.length || 0) === beforeSurgeCount) {
     if (!scene.__bcuSurgeContainers) scene.__bcuSurgeContainers = [];
     scene.ensureWaveEffectLoading?.();
-    for (const proc of surgeItemsToSpawn) scene.__bcuSurgeContainers.push(buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target));
+    for (const proc of surgeItemsToSpawn) scene.__bcuSurgeContainers.push(buildSurge(attacker, proc, finalDamage, key, event, hitIndex, target, random));
   }
 
   if (waveItemsToSpawn.length || surgeItemsToSpawn.length) {

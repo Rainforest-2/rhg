@@ -1,4 +1,4 @@
-import { readFile } from 'node'+':fs'+'/promises';
+const { readFile } = await import('node'+':fs'+'/promises');
 import { parseModel } from './BcuModelParser.js';
 import { parseAnim } from './BcuAnimParser.js';
 import { parseImgcut } from './BcuImgcutParser.js';

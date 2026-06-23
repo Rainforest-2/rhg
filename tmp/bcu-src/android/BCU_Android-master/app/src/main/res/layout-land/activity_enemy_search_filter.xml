@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgroundPrimary"
+    tools:context=".SearchFilter">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/cstool"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/schreset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:background="@android:color/transparent"
+        android:backgroundTint="?attr/colorPrimary"
+        android:contentDescription="@string/def_schreset_cont"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:borderWidth="0dp"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="@+id/cstool"
+        app:layout_constraintEnd_toEndOf="@+id/cstool"
+        app:layout_constraintTop_toTopOf="@+id/cstool"
+        app:srcCompat="@drawable/ic_refresh_black_24dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/eschstat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:backgroundTint="?attr/colorPrimary"
+        app:borderWidth="0dp"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        android:focusable="true"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="@+id/cstool"
+        app:layout_constraintEnd_toStartOf="@+id/schreset"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_baseline_format_list_numbered_24"
+        android:contentDescription="@null" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/eschbck"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/transparent"
+        android:backgroundTint="?attr/colorPrimary"
+        android:contentDescription="@string/def_schbck"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:borderWidth="0dp"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="@+id/cstool"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/cstool"
+        app:srcCompat="@drawable/back_button" />
+
+    <TextView
+        android:id="@+id/eschnm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/sch_nm"
+        android:textColor="?attr/UnitinfoName"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/cstool"
+        app:layout_constraintStart_toEndOf="@+id/eschbck"
+        app:layout_constraintTop_toTopOf="@+id/cstool" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/animsc"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cstool"
+        app:layout_constraintVertical_bias="0.0">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:descendantFocusability="blocksDescendants">
+
+            <TextView
+                android:id="@+id/eschtg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="8dp"
+                android:text="@string/enemy_info_trait"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.05"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <CheckBox
+                android:id="@+id/eschstar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="@string/unit_info_starred"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintBottom_toBottomOf="@+id/eschrgtg"
+                app:layout_constraintStart_toEndOf="@+id/eschrgtg"
+                app:layout_constraintTop_toTopOf="@+id/eschrgtg" />
+
+            <RadioGroup
+                android:id="@+id/eschrgtg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="@+id/eschtg"
+                app:layout_constraintStart_toEndOf="@+id/eschtg"
+                app:layout_constraintTop_toTopOf="@+id/eschtg">
+
+                <RadioButton
+                    android:id="@+id/eschrdtgor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:paddingStart="0dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/sch_or"
+                    android:textColor="?attr/TextPrimary" />
+
+                <RadioButton
+                    android:id="@+id/eschrdtgand"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:text="@string/sch_and"
+                    android:textColor="?attr/TextPrimary" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/eschatk"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sch_atk"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="@+id/eschrgatkor"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.05"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/eschrgatkor" />
+
+            <RadioGroup
+                android:id="@+id/eschrgatk"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                app:layout_constraintStart_toEndOf="@+id/eschrgatkor"
+                app:layout_constraintTop_toBottomOf="@+id/schview">
+
+                <RadioButton
+                    android:id="@+id/eschrdatksi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:text="@string/sch_atk_si"
+                    android:textColor="?attr/TextPrimary"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/eschrdatkmu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:text="@string/sch_atk_ra"
+                    android:textColor="?attr/TextPrimary"
+                    android:textSize="14sp" />
+            </RadioGroup>
+
+            <CheckBox
+                android:id="@+id/eschchld"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+
+                android:text="@string/sch_atk_ld"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/eschrgatk" />
+
+            <CheckBox
+                android:id="@+id/eschchom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="@string/sch_atk_om"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/eschchld" />
+
+            <CheckBox
+                android:id="@+id/eschchmu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+
+                android:text="@string/sch_atk_mu"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="14sp"
+                app:layout_constraintBottom_toBottomOf="@+id/eschchom"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.9"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/eschchom" />
+
+            <TextView
+                android:id="@+id/eschabil"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sch_abil"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="@+id/eschrgab"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.05"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/eschrgab" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/eschchabrec"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/eschrgab" />
+
+            <RadioGroup
+                android:id="@+id/eschrgab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                app:layout_constraintStart_toEndOf="@+id/eschabil"
+                app:layout_constraintTop_toBottomOf="@+id/schview1">
+
+                <RadioButton
+                    android:id="@+id/eschrdabor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:paddingStart="0dp"
+                    android:paddingEnd="@dimen/default_gap"
+                    android:text="@string/sch_or"
+                    android:textColor="?attr/TextPrimary" />
+
+                <RadioButton
+                    android:id="@+id/eschrdaband"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:text="@string/sch_and"
+                    android:textColor="?attr/TextPrimary" />
+            </RadioGroup>
+
+            <RadioGroup
+                android:id="@+id/eschrgatkor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="@+id/eschrgatk"
+                app:layout_constraintStart_toEndOf="@+id/eschatk"
+                app:layout_constraintTop_toTopOf="@+id/eschrgatk">
+
+                <RadioButton
+                    android:id="@+id/eschrdatkor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:paddingStart="0dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/sch_or"
+                    android:textColor="?attr/TextPrimary" />
+
+                <RadioButton
+                    android:id="@+id/eschrdatkand"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+
+                    android:text="@string/sch_and"
+                    android:textColor="?attr/TextPrimary" />
+            </RadioGroup>
+
+            <View
+                android:id="@+id/schview"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="?attr/TableBorder"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/eschchtgrec" />
+
+            <View
+                android:id="@+id/schview1"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="?attr/TableBorder"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/eschchom" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/eschchtgrec"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/eschrgtg" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

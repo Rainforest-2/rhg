@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_descriptor"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
+        android:windowSoftInputMode="stateAlwaysHidden|adjustPan"
+        tools:ignore="GoogleAppIndexingWarning"
+        tools:targetApi="s">
+
+        <service android:name=".androidutil.io.AssetDownloadService" />
+
+        <activity
+            android:name=".ErrorScreen"
+            android:exported="false" />
+        <activity
+            android:name=".DataResetManager"
+            android:exported="true" />
+        <activity android:name=".EffectList" />
+        <activity android:name=".FileViewer" />
+        <activity android:name=".AssetBrowser" />
+
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity android:name=".CastleList" />
+        <activity
+            android:name=".PackManagement"
+            android:configChanges="locale"
+            android:exported="true">
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.bcuzip"
+                    android:scheme="file" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".StatSearchFilter"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".PackConflictDetail"
+            android:configChanges="locale" />
+        <activity
+            android:name=".PackConflictSolve"
+            android:configChanges="locale" />
+        <activity
+            android:name=".StageSearchFilter"
+            android:configChanges="locale" />
+        <activity
+            android:name=".MusicPlayer"
+            android:configChanges="locale" />
+        <activity
+            android:name=".MusicList"
+            android:configChanges="locale" />
+        <activity
+            android:name=".BattlePrepare"
+            android:configChanges="locale" />
+        <activity
+            android:name=".BattleSimulation"
+            android:configChanges="locale"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="sensorLandscape" />
+        <activity
+            android:name=".BackgroundList"
+            android:configChanges="locale" />
+        <activity android:name=".MedalList" />
+        <activity
+            android:name=".LineUpScreen"
+            android:hardwareAccelerated="true" />
+        <activity
+            android:name=".ImageViewer"
+            android:hardwareAccelerated="true" />
+        <activity android:name=".StageInfo" />
+        <activity android:name=".StageList" />
+        <activity
+            android:name=".CheckUpdateScreen"
+            android:configChanges="keyboardHidden|orientation|screenSize|locale"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".EnemySearchFilter" />
+        <activity android:name=".EnemyInfo" />
+        <activity android:name=".EnemyList" />
+        <activity
+            android:name=".ConfigScreen"
+            android:configChanges="locale" />
+        <activity
+            android:name=".ApkDownload"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+        <activity android:name=".UnitInfo" />
+        <activity android:name=".SearchFilter" />
+        <activity android:name=".MapList" />
+        <activity android:name=".AnimationViewer" />
+        <activity android:name=".MainActivity" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.mandarin.bcu.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_path" />
+        </provider>
+
+        <receiver
+            android:name=".MusicPlayer$MusicReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.HEADSET_PLUG" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".CheckUpdateScreen$ServiceBroadCastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.mandarin.bcu::Progress-Text" />
+                <action android:name="com.mandarin.bcu::Progress-Progression" />
+                <action android:name="com.mandarin.bcu::Success" />
+                <action android:name="com.mandarin.bcu::Failed" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

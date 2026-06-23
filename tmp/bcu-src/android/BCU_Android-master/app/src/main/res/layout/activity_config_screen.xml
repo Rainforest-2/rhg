@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgroundPrimary"
+    android:theme="?attr/TILtheme"
+    tools:context=".ConfigScreen">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.075"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/configback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:backgroundTint="?attr/colorPrimary"
+        android:contentDescription="@string/def_schbck"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:tint="?attr/UnitinfoName"
+        app:borderWidth="0dp"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="@+id/toolbar3"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/back_button"
+        app:tint="?attr/UnitinfoName" />
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar3"
+        app:layout_constraintVertical_bias="1.0">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/configunitinflay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/config_unit_inf_lay"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/tableRow2"
+                app:layout_constraintTop_toBottomOf="@+id/tableRow2" />
+
+            <TableRow
+                android:id="@+id/tableRow2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="24dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linesave">
+
+                <TextView
+                    android:id="@+id/configdeflev"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.7"
+                    android:text="@string/config_deflev"
+                    android:textColor="?attr/TextPrimary"
+                    android:textSize="14sp" />
+
+                <Spinner
+                    android:id="@+id/configdeflevsp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.3"
+                    android:popupBackground="?attr/backgroundPrimary" />
+
+            </TableRow>
+
+            <TextView
+                android:id="@+id/configtheme"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="@string/config_theme"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@+id/configcheckup"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/configcheckup" />
+
+            <RadioGroup
+                android:id="@+id/configrgtheme"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="24dp"
+                android:orientation="horizontal"
+                android:scrollbarAlwaysDrawHorizontalTrack="false"
+                android:weightSum="2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configtheme">
+
+                <RadioButton
+                    android:id="@+id/themeday"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/theme_light"
+                    android:textColor="?attr/TextPrimary"
+                    android:textColorSecondary="?attr/UnitinfoName" />
+
+                <RadioButton
+                    android:id="@+id/themenight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/theme_dark"
+                    android:textColor="?attr/TextPrimary"
+                    android:textColorSecondary="?attr/UnitinfoName" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/configunit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:text="@string/config_frse"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configrgtheme" />
+
+            <RadioGroup
+                android:id="@+id/configfrse"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="24dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configunit">
+
+                <RadioButton
+                    android:id="@+id/configframe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_frames"
+                    android:textColor="?attr/TextPrimary" />
+
+                <RadioButton
+                    android:id="@+id/configsecond"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_seconds"
+                    android:textColor="?attr/TextPrimary" />
+            </RadioGroup>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/apktest"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="24dp"
+                android:text="@string/config_testapk"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/senderror" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/linesave"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="24dp"
+                android:text="@string/config_lazy"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/apktest" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/senderror"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/config_send_err"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/tableRow3"
+                app:layout_constraintStart_toStartOf="@+id/tableRow3"
+                app:layout_constraintTop_toBottomOf="@+id/tableRow3" />
+
+            <TableRow
+                android:id="@+id/tableRow3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="24dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configfrse">
+
+                <TextView
+                    android:id="@+id/configlang"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.6"
+                    android:text="@string/config_lang"
+                    android:textColor="?attr/TextPrimary" />
+
+                <Spinner
+                    android:id="@+id/configlangsp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.4"
+                    android:popupBackground="?attr/backgroundPrimary" />
+            </TableRow>
+
+            <TextView
+                android:id="@+id/configunitinfland"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_land"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="16sp"
+                app:layout_constraintStart_toStartOf="@+id/configunitinflay"
+                app:layout_constraintTop_toBottomOf="@+id/configunitinflay" />
+
+            <RadioGroup
+                android:id="@+id/configinfland"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="24dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/configunitinfland"
+                app:layout_constraintTop_toBottomOf="@+id/configunitinfland">
+
+                <RadioButton
+                    android:id="@+id/configlaylandlist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_lay_list"
+                    android:textColor="?attr/TextPrimary"
+                    tools:ignore="DuplicateSpeakableTextCheck" />
+
+                <RadioButton
+                    android:id="@+id/configlaylandslide"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_lay_slide"
+                    android:textColor="?attr/TextPrimary"
+                    tools:ignore="DuplicateSpeakableTextCheck" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/configunitinfport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_port"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="16sp"
+                app:layout_constraintStart_toStartOf="@+id/configinfland"
+                app:layout_constraintTop_toBottomOf="@+id/configinfland" />
+
+            <RadioGroup
+                android:id="@+id/configinfport"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="@+id/configinfland"
+                app:layout_constraintStart_toStartOf="@+id/configunitinfport"
+                app:layout_constraintTop_toBottomOf="@+id/configunitinfport">
+
+                <RadioButton
+                    android:id="@+id/configlayportlist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_lay_list"
+                    android:textColor="?attr/TextPrimary" />
+
+                <RadioButton
+                    android:id="@+id/configlayportslide"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/config_lay_slide"
+                    android:textColor="?attr/TextPrimary" />
+            </RadioGroup>
+
+            <Button
+                android:id="@+id/configcheckup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="?attr/ButtonPrimary"
+                android:text="@string/config_check_up"
+                android:textAllCaps="false"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/animation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/anim_anim"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/configinfport"
+                app:layout_constraintTop_toBottomOf="@+id/configinfport" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configaxis"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/confg_axis"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configinfport"
+                app:layout_constraintStart_toStartOf="@+id/animation"
+                app:layout_constraintTop_toBottomOf="@+id/animation" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configfps"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_fps"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configaxis"
+                app:layout_constraintStart_toStartOf="@+id/configaxis"
+                app:layout_constraintTop_toBottomOf="@+id/configaxis" />
+
+            <TextView
+                android:id="@+id/configgif"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_gif"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintStart_toStartOf="@+id/configfps"
+                app:layout_constraintTop_toBottomOf="@+id/configfps" />
+
+            <TextView
+                android:id="@+id/configgifsize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/config_gifsize"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="12sp"
+                app:layout_constraintStart_toStartOf="@+id/configgif"
+                app:layout_constraintTop_toBottomOf="@+id/configgif" />
+
+            <SeekBar
+                android:id="@+id/configgifseek"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configgifsize" />
+
+            <TextView
+                android:id="@+id/configperf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/config_performance"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/configperfanim"
+                app:layout_constraintTop_toBottomOf="@+id/viewcolpick" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configperfanim"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/config_perfanim"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configinfport"
+                app:layout_constraintStart_toStartOf="@+id/viewcolreset"
+                app:layout_constraintTop_toBottomOf="@+id/configperf" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configperfbattle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingBottom="24dp"
+                android:text="@string/config_perfbattle"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configinfport"
+                app:layout_constraintStart_toStartOf="@+id/viewcolreset"
+                app:layout_constraintTop_toBottomOf="@+id/configperfanim" />
+
+            <TextView
+                android:id="@+id/configcaution"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:paddingBottom="24dp"
+                android:text="@string/config_warn"
+                android:textColor="@color/status_warning"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="@+id/configperfanim"
+                app:layout_constraintStart_toStartOf="@+id/configperfanim"
+                app:layout_constraintTop_toBottomOf="@+id/configperfbattle" />
+
+            <TextView
+                android:id="@+id/sound"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/config_sound"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/configmus"
+                app:layout_constraintTop_toBottomOf="@+id/configcaution" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configmus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_music"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configfps"
+                app:layout_constraintStart_toStartOf="@+id/configfps"
+                app:layout_constraintTop_toBottomOf="@+id/sound" />
+
+            <SeekBar
+                android:id="@+id/configmusvol"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configmus" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configse"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/config_se"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configmus"
+                app:layout_constraintStart_toStartOf="@+id/configmus"
+                app:layout_constraintTop_toBottomOf="@+id/configmusvol" />
+
+            <SeekBar
+                android:id="@+id/configsevol"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:layout_constraintEnd_toEndOf="@+id/configmusvol"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="@+id/configmusvol"
+                app:layout_constraintTop_toBottomOf="@+id/configse" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configui"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/ui_sound"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configse"
+                app:layout_constraintStart_toStartOf="@+id/configse"
+                app:layout_constraintTop_toBottomOf="@+id/configsevol" />
+
+            <SeekBar
+                android:id="@+id/configuivol"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:layout_constraintEnd_toEndOf="@+id/configsevol"
+                app:layout_constraintStart_toStartOf="@+id/configsevol"
+                app:layout_constraintTop_toBottomOf="@+id/configui" />
+
+            <TextView
+                android:id="@+id/configappname"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/config_app_name"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintStart_toStartOf="@+id/configse"
+                app:layout_constraintTop_toTopOf="@+id/configreset" />
+
+            <TextView
+                android:id="@+id/configbuildver"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="8dp"
+                android:text="@string/config_build_ver"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintBottom_toBottomOf="@+id/configreset"
+                app:layout_constraintEnd_toStartOf="@+id/configreset"
+                app:layout_constraintStart_toStartOf="@+id/configappname"
+                app:layout_constraintTop_toBottomOf="@+id/configappname" />
+
+            <TextView
+                android:id="@+id/textView5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="24dp"
+                android:text="@string/config_battle"
+                android:textColor="?attr/TextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configuivol" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configrow"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/battle_tworow"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configse"
+                app:layout_constraintStart_toStartOf="@+id/configse"
+                app:layout_constraintTop_toBottomOf="@+id/textView5" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/configreset"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:text="@string/config_reset"
+                android:textAllCaps="false"
+                android:textColor="?attr/ErrorPrimary"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/configreallv"
+                app:layout_constraintVertical_bias="0.0"
+                app:strokeColor="?attr/ErrorPrimary" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configbgeff"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_bgeff"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configrow"
+                app:layout_constraintStart_toStartOf="@+id/configrow"
+                app:layout_constraintTop_toBottomOf="@+id/configrow" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configdelay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_delay"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configbgeff"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="@+id/configbgeff"
+                app:layout_constraintTop_toBottomOf="@+id/configbgeff" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configex"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_ex"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configbgeff"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="@+id/configbgeff"
+                app:layout_constraintTop_toBottomOf="@+id/configdelay" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configrealex"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_realex"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configbgeff"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="@+id/configbgeff"
+                app:layout_constraintTop_toBottomOf="@+id/configex" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configshake"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_shake"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configbgeff"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="@+id/configbgeff"
+                app:layout_constraintTop_toBottomOf="@+id/configrealex" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configshowst"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_showst"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configbgeff"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="@+id/configbgeff"
+                app:layout_constraintTop_toBottomOf="@+id/configshake" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configshowres"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_showres"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configbgeff"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="@+id/configbgeff"
+                app:layout_constraintTop_toBottomOf="@+id/configshowst" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/configreallv"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_reallv"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintEnd_toEndOf="@+id/configbgeff"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="@+id/configbgeff"
+                app:layout_constraintTop_toBottomOf="@+id/configshowres" />
+
+            <TextView
+                android:id="@+id/viewercolor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/config_viewcol"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintStart_toStartOf="@+id/configgif"
+                app:layout_constraintTop_toBottomOf="@+id/configgifseek" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/viewcolpick"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="?attr/ButtonPrimary"
+                android:text="@string/change"
+                android:textAllCaps="false"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintStart_toEndOf="@+id/viewcolreset"
+                app:layout_constraintTop_toBottomOf="@+id/viewcolcurr" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/viewcolreset"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="?attr/ButtonPrimary"
+                android:text="@string/reset"
+                android:textAllCaps="false"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintBottom_toBottomOf="@+id/viewcolpick"
+                app:layout_constraintStart_toStartOf="@+id/viewercolor"
+                app:layout_constraintTop_toTopOf="@+id/viewcolpick" />
+
+            <TextView
+                android:id="@+id/viewcolcurr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/config_currcol"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintStart_toStartOf="@+id/viewercolor"
+                app:layout_constraintTop_toBottomOf="@+id/viewercolor" />
+
+            <TextView
+                android:id="@+id/viewcurrentcol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/TextPrimary"
+                app:layout_constraintBottom_toBottomOf="@+id/viewcolcurr"
+                app:layout_constraintStart_toEndOf="@+id/viewcolcurr"
+                app:layout_constraintTop_toTopOf="@+id/viewcolcurr" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:text="@string/config_name"
+        android:textColor="?attr/UnitinfoName"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="@+id/toolbar3"
+        app:layout_constraintStart_toEndOf="@+id/configback"
+        app:layout_constraintTop_toTopOf="@+id/toolbar3" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

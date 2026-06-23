@@ -1,4 +1,4 @@
-import { readFile } from 'node'+':fs'+'/promises';
+const { readFile } = await import('node'+':fs'+'/promises');
 
 const read = (p) => readFile(new URL(p, import.meta.url), 'utf8');
 const ok = (checks) => checks.every(Boolean);

@@ -1,4 +1,4 @@
-import { readFile } from 'node'+':fs'+'/promises';
+const { readFile } = await import('node'+':fs'+'/promises');
 export async function verifyBattleInitialPreloadIsMinimal(){const s=await readFile(new URL('./BattleScene.js',import.meta.url),'utf8');const checks=[s.includes('preloadInitialTemplates'),s.includes('getRequiredInitialTemplateDefs'),!s.includes('await this.preloadRosters();')];return {ok:checks.every(Boolean),checks};}
 export async function verifyBcuLoaderCachesTextAndAnimations(){const t=await readFile(new URL('../bcu/BcuText.js',import.meta.url),'utf8');const l=await readFile(new URL('../bcu/BcuAssetLoader.js',import.meta.url),'utf8');const checks=[t.includes('textCache'),l.includes('animationCache'),l.includes('imageCache')];return {ok:checks.every(Boolean),checks};}
 export async function verifyBattleTemplatePreloadCanRunInParallel(){const s=await readFile(new URL('./BattleActorFactory.js',import.meta.url),'utf8');const checks=[s.includes('Promise.all('),s.includes('Promise.allSettled'),!s.includes('for (const animId')];return {ok:checks.every(Boolean),checks};}

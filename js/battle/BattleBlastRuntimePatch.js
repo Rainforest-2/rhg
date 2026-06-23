@@ -106,10 +106,9 @@ function cloneEvent(event = {}, damage) {
 function rollOffset(payload = {}, random = Math.random) {
   const d0 = Math.trunc(Number(payload.dis0 ?? payload.blast?.dis0 ?? 0) || 0);
   const d1 = Math.trunc(Number(payload.dis1 ?? payload.blast?.dis1 ?? d0) || d0);
-  const lo = Math.min(d0, d1);
-  const hi = Math.max(d0, d1);
-  if (hi <= lo) return lo;
-  return lo + Math.trunc(random() * (hi - lo));
+  // BCU AttackSimple: int addp = blast.dis_0 + (int) (b.r.nextFloat() * (blast.dis_1 - blast.dis_0));
+  // The seeded draw is UNCONDITIONAL (consumed even when dis_0 == dis_1) and uses dis_0/dis_1 directly.
+  return d0 + Math.trunc(random() * (d1 - d0));
 }
 
 function effectKeyFor(direction) {

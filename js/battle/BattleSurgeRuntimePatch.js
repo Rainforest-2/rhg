@@ -251,24 +251,30 @@ function numAny(obj, names, fallback = 0) {
   return fallback;
 }
 
-function rollExclusiveLikeBcu(min, max) {
-  const lo = Math.trunc(min);
-  const hi = Math.trunc(max);
-  const span = hi - lo;
-  if (span <= 0) return lo;
-  return lo + Math.floor(Math.random() * span);
+// BCU AttackSimple: int addp = volc.dis_0 + (int) (b.r.nextFloat() * (volc.dis_1 - volc.dis_0));
+// The draw is UNCONDITIONAL (the seeded scene CopRand is consumed even when dis_0 == dis_1,
+// where it resolves to dis_0) and uses dis_0/dis_1 directly, not min/max.
+function rollVolcanoPosition(d0, d1, random = Math.random) {
+  const lo = Math.trunc(d0);
+  const hi = Math.trunc(d1);
+  return lo + Math.trunc(random() * (hi - lo));
 }
 
-function resolveAliveTime(volc) {
+function resolveAliveTime(volc, random = Math.random) {
   const explicitFrames = numAny(volc, ['aliveTimeFrames', 'timeFrames'], NaN);
   if (Number.isFinite(explicitFrames) && explicitFrames > 0) return Math.max(1, Math.trunc(explicitFrames));
   const base = Math.max(1, Math.trunc(numAny(volc, ['time'], 20)));
   const max = Math.max(base, Math.trunc(numAny(volc, ['maxtime', 'maxTime'], base)));
-  if (max > base) return Math.floor(rollExclusiveLikeBcu(base, max) / 20) * 20;
+  // BCU AttackSimple: if (maxtime > time) { time += (int)(b.r.nextFloat()*((maxtime-time)+1)); time = floor(time/20)*20; }
+  // Inclusive span (+1) and seeded CopRand draw, then quantized to a multiple of 20.
+  if (max > base) {
+    const rolled = base + Math.trunc(random() * ((max - base) + 1));
+    return Math.floor(rolled / 20) * 20;
+  }
   return base;
 }
 
-export function buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target) {
+export function buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target, random = Math.random) {
   const payload = proc.payload || {};
   const isMini = proc.key === 'miniSurge';
   const volc = extractVolc(payload, isMini);
@@ -276,12 +282,13 @@ export function buildSurge(attacker, proc, projectileBaseDamage, key, event, hit
   const origin = pos(attacker);
   const d0 = numAny(volc, ['dis0', 'dis_0', 'dis0Raw'], 0);
   const d1 = numAny(volc, ['dis1', 'dis_1', 'dis1Raw'], d0);
-  const addp = rollExclusiveLikeBcu(d0, d1);
+  // BCU draw order at spawn: position (addp) first, then alive-time. Both consume basis.r.
+  const addp = rollVolcanoPosition(d0, d1, random);
   const center = origin + d * addp;
   const sta = center + (d === 1 ? W_VOLC_PIERCE : W_VOLC_INNER);
   const end = center - (d === 1 ? W_VOLC_INNER : W_VOLC_PIERCE);
   const mult = isMini ? Math.max(0, Number(volc.mult ?? payload.mult ?? 20)) / 100 : 1;
-  const aliveTime = resolveAliveTime(volc);
+  const aliveTime = resolveAliveTime(volc, random);
   return {
     id: `${key}:${proc.key}`,
     kind: proc.key,
@@ -438,7 +445,10 @@ function enqueueFromResult(scene, attacker, target, event, calc, result, meta = 
   if (projectileBaseDamage <= 0) return;
   const hitIndex = meta.hitIndex ?? event?.hitIndex ?? null;
   const key = meta.key || `${scene.logicFrame}:${attacker?.instanceId || 'atk'}:${target?.instanceId || 'target'}:${hitIndex}`;
-  for (const proc of items) enqueue(scene, buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target));
+  // Surge position and alive-time draws consume the seeded scene CopRand (BCU basis.r),
+  // matching the blast/spawn paths instead of bypassing determinism with Math.random.
+  const random = meta.random || scene.getBcuRandom?.() || Math.random;
+  for (const proc of items) enqueue(scene, buildSurge(attacker, proc, projectileBaseDamage, key, event, hitIndex, target, random));
 }
 
 export function enqueueBcuSurgeFromPayload(scene, attacker, {
@@ -454,7 +464,8 @@ export function enqueueBcuSurgeFromPayload(scene, attacker, {
   const kind = key === 'miniSurge' ? 'miniSurge' : 'surge';
   const projectileBaseDamage = Math.max(1, Math.trunc(Number(damage ?? event?.damage ?? attacker?.damage ?? 1) || 1));
   const proc = { key: kind, payload: kind === 'miniSurge' ? { miniVolcano: payload, ...payload } : { volcano: payload, ...payload } };
-  const surge = buildSurge(attacker, proc, projectileBaseDamage, id || `${scene.logicFrame || 0}:${attacker?.instanceId || 'actor'}:explicit-${kind}`, event, hitIndex, target);
+  const random = scene.getBcuRandom?.() || Math.random;
+  const surge = buildSurge(attacker, proc, projectileBaseDamage, id || `${scene.logicFrame || 0}:${attacker?.instanceId || 'actor'}:explicit-${kind}`, event, hitIndex, target, random);
   enqueue(scene, surge);
   return surge;
 }

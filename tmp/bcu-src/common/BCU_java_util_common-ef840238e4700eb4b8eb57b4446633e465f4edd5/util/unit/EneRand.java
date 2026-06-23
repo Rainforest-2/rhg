@@ -1,0 +1,143 @@
+package common.util.unit;
+
+import common.CommonStatic;
+import common.battle.StageBasis;
+import common.battle.entity.EEnemy;
+import common.io.InStream;
+import common.io.json.JsonClass;
+import common.io.json.JsonDecoder;
+import common.io.json.JsonField;
+import common.pack.Identifier;
+import common.pack.PackData;
+import common.pack.Source;
+import common.system.VImg;
+import common.util.EREnt;
+import common.util.EntRand;
+
+import java.util.Set;
+import java.util.TreeSet;
+
+@JsonClass.JCGeneric(Identifier.class)
+@JsonClass
+public class EneRand extends EntRand<Identifier<AbEnemy>> implements AbEnemy {
+
+	@JsonClass.JCIdentifier
+	@JsonField
+	public final Identifier<AbEnemy> id;
+
+	@JsonField
+	public String name = "";
+
+	public VImg icon;
+
+	@JsonClass.JCConstructor
+	public EneRand() {
+		id = null;
+	}
+
+	public EneRand(Identifier<AbEnemy> ID) {
+		id = ID;
+	}
+
+	public void fillPossible(Set<Enemy> se, Set<EneRand> sr) {
+		sr.add(this);
+		for (EREnt<Identifier<AbEnemy>> e : list) {
+			AbEnemy ae = Identifier.get(e.ent);
+			if (ae instanceof Enemy)
+				se.add((Enemy) ae);
+			if (ae instanceof EneRand) {
+				EneRand er = (EneRand) ae;
+				if (!sr.contains(er))
+					er.fillPossible(se, sr);
+			}
+		}
+	}
+
+	@Override
+	public EEnemy getEntity(StageBasis sb, Object obj, float mul, float mul2, int d0, int d1, int m, int l) {
+		sb.rege.add(this);
+		return get(getSelection(sb, obj), sb, obj, mul, mul2, d0, d1, m, l);
+	}
+
+	@Override
+	public VImg getIcon() {
+		return icon == null ? CommonStatic.getBCAssets().ico[0][0] : icon;
+	}
+
+	@Override
+	public Identifier<AbEnemy> getID() {
+		return id;
+	}
+
+	@Override
+	public Set<Enemy> getPossible() {
+		Set<Enemy> te = new TreeSet<>();
+		fillPossible(te, new TreeSet<>());
+		return te;
+	}
+
+	@Override
+	public String toString() {
+		return id.id + " - " + name + " (" + id.pack + ")";
+	}
+
+	public void zread(InStream is) {
+		int ver = getVer(is.nextString());
+		if (ver >= 400)
+			zread$000400(is);
+	}
+
+	private EEnemy get(EREnt<Identifier<AbEnemy>> x, StageBasis sb, Object obj, float mul, float mul2, int d0, int d1,
+			int m, int l) {
+		return Identifier.getOr(x.ent, AbEnemy.class).getEntity(sb, obj, x.multi * mul / 100, x.multi * mul2 / 100, d0,
+				d1, m, l);
+	}
+
+	private void zread$000400(InStream is) {
+		name = is.nextString();
+		type = is.nextInt();
+		int n = is.nextInt();
+		for (int i = 0; i < n; i++) {
+			EREnt<Identifier<AbEnemy>> ere = new EREnt<>();
+			list.add(ere);
+			ere.ent = Identifier.parseInt(is.nextInt(), AbEnemy.class);
+			ere.multi = is.nextInt();
+			ere.share = is.nextInt();
+		}
+	}
+
+	@Override
+	public boolean contains(Identifier<AbEnemy> e, Identifier<AbEnemy> origin) {
+		for(EREnt<Identifier<AbEnemy>> id :list) {
+			Identifier<AbEnemy> i = id.ent;
+
+			if(i == null)
+				continue;
+
+			if(origin.equals(i))
+				continue;
+
+			if(i.cls == EneRand.class) {
+				EneRand rand = (EneRand) Identifier.get(i);
+
+				if(rand != null && rand.contains(e, origin))
+					return true;
+			} else if(i.cls == Enemy.class) {
+				if(i.pack.equals(e.pack) && i.id == e.id)
+					return true;
+			}
+		}
+
+		return false;
+	}
+
+	@JsonDecoder.OnInjected
+	public void onInjected() {
+		reloadIcon();
+	}
+
+	public void reloadIcon() {
+		if (id != null)
+			icon = ((PackData.UserPack) getCont()).source.readImage(Source.BasePath.ENERAND.toString(), id.id);
+	}
+}

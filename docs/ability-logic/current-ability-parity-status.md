@@ -1,6 +1,6 @@
 # Current BCU ability parity status
 
-Updated: 2026-06-23.
+Updated: 2026-06-24.
 
 This document records current non-visual BCU ability/proc/effect parity for `Rainforest-2/rhg`. It is intentionally conservative: a parser field, old note, or one fixture does not prove broad runtime parity.
 
@@ -28,12 +28,12 @@ Manual browser review is tracked in [`bcu-visual-review-checklist.md`](./bcu-vis
 | death soul / death-surge / AB_GLASS | `code-complete-candidate` | Parser, death runtime, fallback cleanup/recovery, and deterministic checks exist. Full death-surge is owned by the demon-soul death runtime and triggers at soul frame 21; the old priority-effect immediate path is guarded against. |
 | standard zombie corpse / soulstrike / revive | `human-visual-review-needed` | Deterministic coverage includes corpse targetability, soulstrike, zombie killer suppression, revive HP, phase timing, cleanup, and death-surge single spawn. Real extra/custom revive source coverage remains partial. |
 | burrow | `code-complete-candidate` | Count/distance parse, down/underground/up lifecycle, collision/targetability, movement clamp, guards, and cleanup are tested. |
-| spirit lifecycle | `human-visual-review-needed` | Spawn lifecycle, attack-only form bundle registration, semantic ZIP loading, and factory path are tested. Normal actor/A_IMUATK appearance is unaccepted. |
+| spirit lifecycle | `human-visual-review-needed` | Spawn lifecycle, cooldown, one-spirit-per-summoner, attack-only form bundle registration, semantic ZIP loading, factory path, pre-warp summon origin, and BCU side-capacity rejection are tested. Normal actor/A_IMUATK appearance is unaccepted. |
 | castle/base guard | `human-visual-review-needed` | Active/hold/break state, base-damage hold, and effect phase trace are tested. Browser appearance remains unaccepted. |
-| wallet / worker-cat level | `code-complete-candidate` | BCU ownership/formulas, strict upgrade gate, income, Lv8 handling, and action `-1` are wired and tested. |
+| wallet / worker-cat level / unit deploy cost | `code-complete-candidate` | BCU ownership/formulas, strict upgrade gate, income, Lv8 handling, action `-1`, and default unit deploy cost `DataUnit.price * 1.5` (`StageMap.price=1`) are wired and tested. |
 | wallet and cannon UI bitmaps | `human-visual-review-needed` | BCU `img002` assets, sprite font layout, gauge/flash state, and headless checks are present; on-device/browser acceptance is pending. |
 | basic cat cannon | `code-complete-candidate` | Dedicated cannon owner, action `-2`, charge/reset, 18F preTime, traveling wave bands, INT_ASS timing, lifetime, and draw math are tested. |
-| non-basic cat cannon | `code-complete-candidate` | SLOW/STOP/WATER/GROUND/BARRIER/CURSE and BASE_WALL have dedicated runtime ownership and checks. ATK/EXT bitmap aliases and exact extend/waved visual timing remain open. |
+| non-basic cat cannon | `code-complete-candidate` | SLOW/STOP/WATER/GROUND/BARRIER/CURSE and BASE_WALL have dedicated runtime ownership and checks. Each cannon now loads and spawns its own BCU `NyCastle.aux.atks[id]` BASE/ATK eanim (the ATK eanim doubles as the ContExtend EXT sweep for slow/curse) via the per-id `getBcuCatCannonAnimFiles` / `spawnCatCannonNonBasicEffect` path, with the no-image trace kept only as an observable load-fallback (`check-bcu-non-basic-cat-cannon-anim-parity`). Browser acceptance and exact extend/waved sweep/travel timing remain open. |
 | special castle boss-spawn coordinate | `code-complete-candidate` | Source formula, core bundle, StageDefinition enrichment, and StageRuntime consumption are tested. |
 | enemy castle / stage “special attack” | `negative-evidence` | Plain `ECastle` has no attack owner. Boss bases use `EEnemy`; threshold/kill-count spawn behavior belongs to stage runtime. |
 

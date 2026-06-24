@@ -1,7 +1,7 @@
 import { BattleScene } from './BattleScene.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
-import { ProductionRuntime } from './ProductionRuntime.js';
+import { BCU_DEFAULT_STAGE_PRICE, ProductionRuntime, getBcuUnitDeployCost } from './ProductionRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-timer-patch.v2');
 
@@ -76,10 +76,15 @@ export function installBattleSceneBcuTimerPatch() {
       const tpl = this.actorFactory.templates.get(u.slotId);
       const st = tpl?.stats;
       if (Number.isFinite(st?.price)) {
-        u.cost = st.price;
-        u.costSource = 'bcu-unit-price';
+        const stagePrice = BCU_DEFAULT_STAGE_PRICE;
+        const deployCost = getBcuUnitDeployCost(st.price, stagePrice);
+        u.cost = deployCost;
+        u.defaultCost = deployCost;
+        u.costSource = 'bcu-unit-deploy-cost';
         u.productionCostSource = u.productionCostSource || u.costSource;
         u.bcuPrice = st.price;
+        u.bcuStagePrice = stagePrice;
+        u.bcuDeployCost = deployCost;
       }
       if (Number.isFinite(st?.respawnFrames)) {
         u.bcuRespawnFrames = st.respawnFrames;

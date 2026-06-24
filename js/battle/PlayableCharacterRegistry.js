@@ -1,4 +1,5 @@
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+import { BCU_DEFAULT_STAGE_PRICE, getBcuUnitDeployCost } from './ProductionRuntime.js';
 import { formCodeFromIndex } from '../bcu/BcuIdentifier.js';
 
 export const PLAYABLE_REGISTRY_VERSION = '0.15.0-bcu-unit-level';
@@ -97,22 +98,27 @@ function getCatEconomyFromStats(stats) {
     };
   }
   const price = Number.isFinite(stats.price) ? Math.max(0, Math.floor(stats.price)) : null;
+  const deployCost = price === null ? null : getBcuUnitDeployCost(price, BCU_DEFAULT_STAGE_PRICE);
   const respawnFrames = Number.isFinite(stats.respawnFrames) ? Math.max(0, Math.floor(stats.respawnFrames)) : null;
   const respawnMs = Number.isFinite(respawnFrames) ? respawnFrames * BCU_BATTLE_TIMER_PERIOD_MS : null;
   return {
-    cost: price,
-    defaultCost: price,
+    cost: deployCost,
+    defaultCost: deployCost,
     cooldownMs: respawnMs,
     defaultCooldownMs: respawnMs,
     bcuPrice: price,
+    bcuStagePrice: BCU_DEFAULT_STAGE_PRICE,
+    bcuDeployCost: deployCost,
     bcuRespawnFrames: respawnFrames,
     bcuRespawnMs: respawnMs,
-    productionCostSource: 'BCU DataUnit.price raw[6]',
+    productionCostSource: 'BCU ELineUp/Form.getPrice default StageMap.price=1',
     productionCooldownSource: 'BCU DataUnit.respawn raw[7] * 2 frames',
     productionSourceDebug: {
       source: 'PlayableCharacterRegistry.getCatEconomyFromStats',
-      bcuReference: 'DataUnit.java: price=ints[6]; respawn=ints[7]*2',
+      bcuReference: 'DataUnit.java price=ints[6]; Form/EForm.getPrice(sta)=price*(1+sta*0.5); StageMap.price default=1',
       price,
+      stagePrice: BCU_DEFAULT_STAGE_PRICE,
+      deployCost,
       respawnFrames,
       respawnMs,
       statsSource: stats.source || null
@@ -283,6 +289,8 @@ export function buildCatRosterEntry(spec, options = {}) {
     cooldownMs: economy.cooldownMs,
     defaultCooldownMs: economy.defaultCooldownMs,
     bcuPrice: economy.bcuPrice,
+    bcuStagePrice: economy.bcuStagePrice,
+    bcuDeployCost: economy.bcuDeployCost,
     bcuRespawnFrames: economy.bcuRespawnFrames,
     bcuRespawnMs: economy.bcuRespawnMs,
     bcuUnitLevelMeta,
@@ -311,7 +319,7 @@ export const buildDogCatalogEntry = (spec, options = {}) => {
 
 export const buildCatCatalogEntry = (spec, options = {}) => {
   const e = buildCatRosterEntry(spec, options);
-  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, form: e.form, formIndex: e.formIndex, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, bcuPrice: e.bcuPrice, bcuRespawnFrames: e.bcuRespawnFrames, bcuRespawnMs: e.bcuRespawnMs, bcuUnitLevelMeta: e.bcuUnitLevelMeta, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
+  return { characterId: e.slotId, baseCharacterId: e.baseCharacterId, faction: e.faction, factionLabel: e.factionLabel, form: e.form, formIndex: e.formIndex, label: e.label, labelSource: e.labelSource, labelLocale: e.labelLocale, labelKey: e.labelKey, labelWarnings: e.labelWarnings, sourceKind: e.sourceKind, sourceRoster: e.sourceRoster, sourceSlotId: e.sourceSlotId, cost: e.cost, defaultCost: e.defaultCost, cooldownMs: e.cooldownMs, defaultCooldownMs: e.defaultCooldownMs, bcuPrice: e.bcuPrice, bcuStagePrice: e.bcuStagePrice, bcuDeployCost: e.bcuDeployCost, bcuRespawnFrames: e.bcuRespawnFrames, bcuRespawnMs: e.bcuRespawnMs, bcuUnitLevelMeta: e.bcuUnitLevelMeta, productionCostSource: e.productionCostSource, productionCooldownSource: e.productionCooldownSource, productionSourceDebug: e.productionSourceDebug, productionOverrides: e.productionOverrides, uiIcon: e.uiIcon };
 };
 
 export const buildDogPreviewAsset = (spec, ANIM4_E, options = {}) => {

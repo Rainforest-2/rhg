@@ -2,7 +2,7 @@
 
 ## Last updated
 
-- date: 2026-06-23 (UTC)
+- date: 2026-06-24 (UTC)
 - repository: `Rainforest-2/rhg`
 - scope: current BCU ZIP/runtime/ability parity, rendering/UI acceptance, data loading, and persistence compatibility.
 - audit basis: current rhg code plus the checked-in BCU reference ZIPs under `references/bcu/`.
@@ -17,6 +17,8 @@ This is the high-level source of truth. It supersedes historical README/ZIP-anal
 - Core boot remains `public/assets/bundles/core/core-db.zip` through `BcuBootLoader` / `SemanticAssetProvider`.
 - Playable dog roster visibility is gated by local semantic actor readiness; stale external `error-enemy` exclusions do not hide full bundled actors such as enemy 562 and 661–669.
 - Formation and production icons resolve through semantic UI assets, not actor-image fallbacks.
+- Cat-unit production costs use BCU default `StageMap.price=1`, so raw `DataUnit.price` becomes a 1.5x deploy cost for catalog display, affordability, and money subtraction.
+- Spirit summon runtime covers BCU production/stage state, cooldown, one-spirit-per-summoner, pre-warp summon origin, and side-capacity rejection; actor/A_IMUATK browser appearance remains manual-review work.
 - BCU sound ids `0..190` resolve from vendored music assets with stage-map BGM lookup and lazy sound-cache warming.
 
 ## Current focused documents
@@ -49,7 +51,7 @@ No confirmed `Critical` parity defect was found in the inspected scope. The non-
 | Combo / orb / treasure / talent / PCoin | `code-complete-candidate` (non-visual) | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order and orbs fold through the resolver (`check-bcu-modifier-realdata-sweep-parity`). In-battle visual acceptance is a separate review item. |
 | Extra/custom zombie revive | `code-complete-candidate` | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter (`check-bcu-zombie-extra-revive-source-range-parity`). Corpse appearance remains visual. |
 | Playable dog roster actor visibility | `code-complete-candidate` | `buildDogSpecs` keeps locally full semantic actor bundles visible even when stale external enemy skip lists include their display ids. `check-dog-playable-roster-readiness` covers enemy 562 and 661–669. |
-| Non-basic cat cannon visuals | `code-complete-candidate` for runtime | Per-cannon ATK/EXT bitmap aliases and exact extend/waved traveling/sweep timing remain unaccepted. |
+| Non-basic cat cannon visuals | `code-complete-candidate` for runtime | Per-cannon ATK/EXT bitmap aliases are now wired (each cannon loads its own `NyCastle.aux.atks[id]` BASE/ATK eanim and spawns it via `spawnCatCannonNonBasicEffect`; `check-bcu-non-basic-cat-cannon-anim-parity`). Exact extend/waved traveling/sweep timing remains unaccepted in browser. |
 | Visible-effect / UI acceptance | `human-visual-review-needed` or `partial` | P_DELAY, shield families, spirit, castle guard, summon, zombie revive, cat cannon, and BASE_WALL require fixture-backed browser review before visual-complete claims. |
 
 ## Corrected historical claims

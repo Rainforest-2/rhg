@@ -68,10 +68,12 @@ assert.match(prodUi, /SBCtrl\.actions action -2 -> StageBasis\.act_can/, 'cannon
 
 // 6) Cat-cannon firing animation wiring + unchanged 18-frame timing.
 const cannonPatch = readFileSync('js/battle/BattleSceneBcuCatCannonPatch.js', 'utf8');
-assert.match(cannonPatch, /nyankoCastle_001_00_01\.mamodel/, 'cannon patch must load the BCU BASE cannon model');
+assert.match(cannonPatch, /getBcuCatCannonAnimFiles/, 'cannon patch must load the BCU BASE/ATK cannon model via the per-cannon-id file helper');
 assert.match(cannonPatch, /spawnCatCannonFireEffect/, 'cannon patch must spawn the firing animation effect');
 assert.match(cannonPatch, /new BcuModelInstance/, 'cannon firing effect must use the BCU model-effanim render path');
 const cannonRuntime = readFileSync('js/battle/bcu-runtime/BcuCatCannonRuntime.js', 'utf8');
+// The BASE cannon model filename is now derived per cannon id (NyCastle aux.atks[t] = _0<t>_01).
+assert.match(cannonRuntime, /nyankoCastle_001_\$\{t\}_01\.mamodel/, 'runtime must derive the BCU BASE cannon model filename per cannon id');
 assert.match(cannonRuntime, /BCU_CAT_CANNON_BASIC_PRE_FRAMES\s*=\s*18/, 'press-to-hit delay must stay NYPRE[BASE_H] = 18 frames');
 assert.match(cannonRuntime, /spawnCatCannonFireEffect\?\.\(\)/, 'activate must trigger the firing animation on press');
 

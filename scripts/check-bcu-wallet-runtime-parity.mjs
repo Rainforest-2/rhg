@@ -6,6 +6,7 @@ import {
   getBcuWalletMoneyIncrementInternal,
   getBcuWalletUpgradeCost
 } from '../js/battle/BattleEconomy.js';
+import { getBcuUnitDeployCost } from '../js/battle/ProductionRuntime.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from '../js/battle/BattleFrameClock.js';
 
 const defaultWallet = {
@@ -23,6 +24,8 @@ assert.equal(getBcuWalletMaxMoney(1, { walletTech: 30, walletTreasure: 300 }), 6
 assert.equal(getBcuWalletMaxMoney(2, { walletTech: 30, walletTreasure: 300 }), 7500, 'BCU default Lv2 wallet visual max is 7500');
 assert.equal(getBcuWalletMoneyIncrementInternal(1, { workerTech: 30, workerTreasure: 300 }), 615, 'BCU default Lv1 money increment is internal 615 per frame');
 assert.equal(getBcuWalletMoneyIncrementInternal(2, { workerTech: 30, workerTreasure: 300 }), 646, 'BCU default Lv2 money increment floors to internal 646 per frame');
+assert.equal(getBcuUnitDeployCost(100), 150, 'BCU default StageMap.price=1 makes unit deploy cost 1.5x raw DataUnit.price');
+assert.equal(getBcuUnitDeployCost(75), 112, 'BCU deploy cost truncates after applying Form/EForm.getPrice multiplier');
 
 const exactCost = new BattleEconomy({ startMoney: 560, wallet: defaultWallet });
 assert.equal(exactCost.getWalletStatus().canUpgrade, false, 'BCU act_mon uses internal money > upgradeCost, not >=');
@@ -49,6 +52,15 @@ assert.equal(econ.lastTickDebug.wallet.level, 2);
 const legacy = new BattleEconomy({ startMoney: 0, maxMoney: 6000, incomePerSecond: 60 });
 legacy.tick(BCU_BATTLE_TIMER_PERIOD_MS);
 assert.equal(legacy.money, Math.floor(Math.floor((60 * 100 * BCU_BATTLE_TIMER_PERIOD_MS) / 1000) / 100), 'non-wallet economy keeps previous incomePerSecond behavior');
+
+const deployCost = getBcuUnitDeployCost(100);
+const deployEcon = new BattleEconomy({ startMoney: deployCost - 1, maxMoney: 6000, incomePerSecond: 0 });
+assert.equal(deployEcon.produce({ slotId: 'cat-raw-100', cost: deployCost, cooldownMs: 0 }), false, 'cat deployment uses 1.5x cost for affordability');
+assert.equal(deployEcon.lastProduceDebug.reason, 'not-enough-money');
+deployEcon.internalMoney = deployCost * 100;
+deployEcon.money = deployCost;
+assert.equal(deployEcon.produce({ slotId: 'cat-raw-100', cost: deployCost, cooldownMs: 0 }), true, 'cat deployment succeeds at the 1.5x BCU cost');
+assert.equal(deployEcon.money, 0, 'cat deployment subtracts the 1.5x BCU cost');
 
 const prodUi = readFileSync('js/ui/PlayerProductionBar.js', 'utf8');
 assert.match(prodUi, /wallet-upgrade/, 'production UI must render the wallet button');

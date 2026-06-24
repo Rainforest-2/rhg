@@ -22,7 +22,11 @@
    it to 100% pins text to the author sizes so phones match the iPad layout. */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{width:100%;height:100%;overflow:hidden}
-body{margin:0;background:#05070d;color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:#05070d;color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* Long-press must not pop the native image "save photo" callout or a text selection on the
+   game/UI surfaces; editable fields keep native selection/paste. */
+input,textarea,select,[contenteditable=""],[contenteditable="true"]{-webkit-touch-callout:default;-webkit-user-select:text;user-select:text}
+img,picture,canvas{-webkit-user-drag:none;-webkit-touch-callout:none}
 /* height:100dvh keeps the shell inside the visually-available area when the
    mobile URL bar is shown; the 100vh line is only a fallback for engines without
    dvh. The old min-height:100vh forced the shell taller than the visible area and

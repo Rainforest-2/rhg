@@ -64,8 +64,12 @@ export class AudioEngine {
   get supported() { return this._supported; }
 
   // ---- volume ----
+  // Global SE output trim: every sound effect plays at 75% of the configured SE volume
+  // (SE felt too loud relative to BGM). Single chokepoint so it applies to all playSe calls
+  // and stays 0 when muted (0 * 0.75 == 0).
+  static SE_OUTPUT_SCALE = 0.75;
   _bgmVolume() { return clampGain(this.audio?.getEffectiveBgmVolume?.() ?? 0.7); }
-  _seVolume() { return clampGain(this.audio?.getEffectiveSeVolume?.() ?? 0.8); }
+  _seVolume() { return clampGain((this.audio?.getEffectiveSeVolume?.() ?? 0.8) * AudioEngine.SE_OUTPUT_SCALE); }
   _applyVolumes() {
     if (this._bgmEl && !this._userPaused) {
       try { this._bgmEl.volume = this._bgmVolume(); } catch {}

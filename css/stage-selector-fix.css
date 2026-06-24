@@ -13,10 +13,14 @@
   backdrop-filter:blur(5px) saturate(1.05);
   -webkit-backdrop-filter:blur(5px) saturate(1.05);
   pointer-events:auto!important;
-  /* The backdrop itself must never scroll. Only .formation-stage-list scrolls
-     internally; the dialog is height-capped to the padded content box below. */
+  /* The backdrop itself must never scroll (overflow:hidden); only .formation-stage-list
+     scrolls internally. Keep this pan-y rather than `none`: Android intersects touch-action
+     down the ancestor chain, so a `none` backdrop blocks the inner list's vertical pan when a
+     drag begins on a stage-card button (iOS ignores the intersection, which is why it only broke
+     on Android). pan-y lets the inner list scroll while the capped backdrop still has nothing to
+     scroll. */
   overflow:hidden!important;
-  touch-action:none!important;
+  touch-action:pan-y!important;
   -webkit-overflow-scrolling:touch;
 }
 

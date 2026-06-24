@@ -431,11 +431,18 @@
 }
 
 @media (prefers-reduced-motion:reduce){
-  .app-loading-progress-bar,
+  /* Disable only decorative motion (the shimmer sweep + the indeterminate boot rail). */
   .app-loading-progress-bar::after,
   #boot-status-panel .boot-loading-rail span{
     animation:none!important;
     transition:none!important;
+  }
+  /* Keep the fill bar's width transition: it conveys real boot progress, not gratuitous
+     motion. With transition:none the bar snaps instantly between reported values, so on
+     Android battery-saver / "remove animations" the loader looked frozen ("no movement").
+     Only the decorative sweep above is suppressed. */
+  .app-loading-progress-bar{
+    animation:none!important;
   }
 }
 

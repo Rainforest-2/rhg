@@ -133,6 +133,15 @@ function injectStyle() {
   style.textContent = `
 @font-face{font-family:HakusyuTuningLocal;src:url('./public/assets/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block}
 html body.nyanko-ui-polish .formation-slot{position:relative!important;overflow:visible!important}
+/* Long-press-to-open-overlay reliability on Android. A formation slot is a <button> that
+   contains the unit <img>; on Android Chrome a touch-hold over the image fires the native
+   image gesture (callout/selection) and a pointercancel, which clears the 520ms long-press
+   timer before it can fire (iOS suppresses this, so it only broke on Android). Disable native
+   selection/callout on the slot and route the touch to the button itself (children become
+   non-interactive) so the pointer stream survives the full hold. Unscoped so it applies even
+   without the polish theme. */
+.formation-slot[data-slot]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+.formation-slot[data-slot] *{pointer-events:none;-webkit-user-drag:none;-webkit-touch-callout:none}
 html body.nyanko-ui-polish .formation-tuning-badge{position:absolute;right:5px;bottom:5px;z-index:6;min-width:46px;height:22px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;border:3px solid #000;border-radius:999px;background:#f15212;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-size:.72rem;font-weight:900;line-height:1;letter-spacing:.01em;box-shadow:0 2px 0 #000;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,1px 1px #000,-1px 1px #000,1px -1px #000,-1px -1px #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-tuning-overlay{position:fixed;inset:0;z-index:99980;display:none;place-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));background:rgba(0,0,0,.48);backdrop-filter:blur(2px);touch-action:none}
 html body.nyanko-ui-polish .formation-tuning-overlay.is-open{display:grid;opacity:1!important;animation:none!important}

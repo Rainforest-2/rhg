@@ -92,6 +92,41 @@ export function getBcuCatCannonDrawOffsets(cannonId = 0) {
   return { offsetX: BCU_CAT_CANNON_DRAW_OFFSET_X[id], offsetY: BCU_CAT_CANNON_DRAW_OFFSET_Y[id] };
 }
 
+// BCU util/pack/NyCastle.java loads each cannon part t as aux.atks[t] from nyankoCastle_001_0<t>_*.
+// Every cannon ships the same two-eanim layout proven for the basic cannon (t=0):
+//   BASE eanim (firing animation drawn at the player base) = _0<t>_01.mamodel/.maanim
+//   ATK  eanim (the projectile/wave/AOE effect, and the ContExtend EXT sweep for slow/curse) =
+//        _0<t>_00.mamodel/.maanim
+//   both share the _0<t>_00.imgcut/.png sprite sheet.
+// The files physically exist per id (0..7) inside nyankoCastle/001.zip, so this is a faithful
+// generalization of the id-0 mapping rather than a new alias. (id 6 also ships a _02 eanim; it is
+// not one of the BASE/ATK pair and is left for a separate evidence pass.)
+export function getBcuCatCannonAnimPart(cannonId = 0) {
+  const id = Number.isInteger(cannonId) && cannonId >= 0 && cannonId <= 7 ? cannonId : 0;
+  return String(id).padStart(2, '0');
+}
+
+export function getBcuCatCannonAnimFiles(cannonId = 0) {
+  const t = getBcuCatCannonAnimPart(cannonId);
+  return {
+    part: t,
+    model: `nyankoCastle_001_${t}_01.mamodel`,
+    anim: `nyankoCastle_001_${t}_01.maanim`,
+    atkModel: `nyankoCastle_001_${t}_00.mamodel`,
+    atkAnim: `nyankoCastle_001_${t}_00.maanim`,
+    imgcut: `nyankoCastle_001_${t}_00.imgcut`,
+    png: `nyankoCastle_001_${t}_00.png`
+  };
+}
+
+export function getBcuCatCannonAnimSources(cannonId = 0) {
+  const t = getBcuCatCannonAnimPart(cannonId);
+  return {
+    base: `bcu-effanim-cat-cannon-base:nyankoCastle:001/nyankoCastle_001_${t}_01`,
+    atk: `bcu-effanim-cat-cannon-atk:nyankoCastle:001/nyankoCastle_001_${t}_00`
+  };
+}
+
 // Resolve the full BCU behavior spec for a cannon id from battle/entity/Cannon.java `update()`.
 // `magnification` supplies the level-curve numbers (Treasure.getCannonMagnification -> CannonLevelCurve),
 // which are NOT shipped in this checkout. Any magnification-derived value left null is reported as an
@@ -383,19 +418,26 @@ export function fireBcuNonBasicCannon(scene, state, { tuning = {} } = {}) {
     hits = captureEnemiesInRange(scene, playerBasePos - reach, playerBasePos, filterTrait);
     state.lastAnchorDebug = { playerBasePos, reach, lo: playerBasePos - reach, hi: playerBasePos };
   }
-  if (Array.isArray(scene?.effects) && scene.effects.length < (scene?.maxEffects ?? 60)) {
+  // BCU Cannon.update draws this cannon's own ATK eanim (atks[id].getEAnim(ATK)); for slow/curse the
+  // ContExtend sweep reuses that same ATK eanim. Spawn the real per-cannon animation through the scene
+  // hook; only fall back to the no-image trace when the asset is not loaded (the same gate the basic
+  // wave uses), so a non-basic cannon never silently shows the basic cannon's effect.
+  const effectX = state.lastAnchorDebug?.anchor ?? state.lastAnchorDebug?.playerBasePos ?? getPlayerBasePos(scene);
+  const animSpawned = scene?.spawnCatCannonNonBasicEffect?.(effectX, spec) === true;
+  if (!animSpawned && Array.isArray(scene?.effects) && scene.effects.length < (scene?.maxEffects ?? 60)) {
     scene.effects.push(EffectRuntime.createEffect({
       id: `bcu-cat-cannon-${spec.name}-${scene?.logicFrame ?? 0}`,
       type: `cat-cannon-${spec.name}`,
-      x: state.lastAnchorDebug?.anchor ?? getPlayerBasePos(scene),
+      x: effectX,
       y: 0,
       source: `bcu-effanim-cat-cannon-${spec.name}`,
       createdAtMs: scene?.timeMs ?? 0,
       durationMs: 600,
       layer: 9,
-      debug: { effectKey: `cat-cannon/${spec.name}`, source: 'BcuCatCannonRuntime.fireBcuNonBasicCannon', bcuReference: spec.bcuReference, phase: 'attack', cannonId: spec.id }
+      debug: { effectKey: `cat-cannon/${spec.name}`, source: 'BcuCatCannonRuntime.fireBcuNonBasicCannon', bcuReference: spec.bcuReference, phase: 'attack', cannonId: spec.id, animFallback: true }
     }));
   }
+  state.lastEffectDebug = { cannonId: spec.id, geometry: spec.geometry, effectX, animSpawned };
   return applyBcuNonBasicCannonEffect(scene, state, hits, { tuning });
 }
 

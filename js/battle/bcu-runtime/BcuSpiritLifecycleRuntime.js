@@ -1,4 +1,5 @@
 import { TEMPLATE_LOAD_LEVEL } from '../BattleActorFactory.js';
+import { BATTLE_CONFIG } from '../BattleConfig.js';
 
 export const SPIRIT_SUMMON_DELAY = 15;
 export const SPIRIT_SUMMON_RANGE = 150;
@@ -92,6 +93,47 @@ function livingSpirits(scene, slotId) {
   return (scene?.actors || []).filter((actor) => actor?.bcuIsSpirit && actor?.bcuSummonerSlotId === slotId && (typeof actor.isAlive !== 'function' || actor.isAlive()));
 }
 
+function getEntityWill(entityOrDef) {
+  const w = Number(
+    entityOrDef?.will
+    ?? entityOrDef?.bcuWill
+    ?? entityOrDef?.rawStats?.will
+    ?? entityOrDef?.bcuCombatModel?.will
+    ?? entityOrDef?.stats?.will
+    ?? entityOrDef?.stats?.bcuCombatModel?.will
+  );
+  return Number.isFinite(w) && w > 0 ? Math.floor(w) : 0;
+}
+
+function isBcuDeadForCapacity(actor, nowMs = 0) {
+  if (!actor || actor.state === 'removed') return true;
+  if (actor.state === 'dead') {
+    if (typeof actor.isRemovable === 'function') return actor.isRemovable(nowMs);
+    return true;
+  }
+  return false;
+}
+
+function getBcuSideCapacityUsed(scene, side, nowMs = scene?.timeMs || 0) {
+  let used = 0;
+  for (const actor of scene?.actors || []) {
+    if (actor?.side !== side) continue;
+    if (isBcuDeadForCapacity(actor, nowMs)) continue;
+    used += getEntityWill(actor) + 1;
+  }
+  return used;
+}
+
+function getBcuSideCapacityMax(scene) {
+  const n = Number(
+    scene?.maxAliveActorsPerSide
+    ?? scene?.maxCatSpawns
+    ?? scene?.stage?.runtime?.maxCatSpawns
+    ?? BATTLE_CONFIG.tuning?.maxAliveActorsPerSide
+  );
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 15;
+}
+
 function basePos(scene, side) {
   const base = (scene?.bases || []).find((b) => b?.side === side);
   const pos = Number.isFinite(base?.getBattlePosBcu?.()) ? base.getBattlePosBcu() : (Number.isFinite(base?.posBcu) ? base.posBcu : base?.x);
@@ -102,7 +144,10 @@ export function resolveBcuSpiritSpawnX(scene, summoner, spiritUnitDef = null) {
   const enemyBasePos = basePos(scene, 'cat-enemy');
   const unitBasePos = basePos(scene, summoner?.side || 'dog-player');
   const range = Number(spiritUnitDef?.range ?? spiritUnitDef?.stats?.range ?? spiritUnitDef?.detectionRangeBcu ?? summoner?.detectionRangeBcu ?? 0) || 0;
-  const sPos = Number.isFinite(summoner?.x) ? summoner.x : 0;
+  const warpOrigin = summoner?.bcuWarpLifecycle?.active === true && Number.isFinite(summoner.bcuWarpLifecycle.worldXBefore)
+    ? summoner.bcuWarpLifecycle.worldXBefore
+    : null;
+  const sPos = Number.isFinite(warpOrigin) ? warpOrigin : (Number.isFinite(summoner?.x) ? summoner.x : 0);
   if (!Number.isFinite(enemyBasePos) || !Number.isFinite(unitBasePos)) return sPos + SPIRIT_SUMMON_RANGE;
   return Math.max(enemyBasePos + range, Math.min(sPos + SPIRIT_SUMMON_RANGE, unitBasePos));
 }
@@ -158,6 +203,23 @@ export function requestBcuSpiritSpawn(scene, slotIdOrActor) {
   if (st.spiritSummoned || livingSpirits(scene, slotId).length) return { ok: false, spiritAttempt: true, reason: 'spirit-already-summoned' };
   if (st.cooldownFrames > 0) return { ok: false, spiritAttempt: true, reason: 'cooldown-active', cooldownFrames: st.cooldownFrames };
   const spawned = [];
+  const firstUnitDef = st.spiritUnitDef || resolveBcuSpiritUnitDef(scene, slotId, summoners[0]);
+  if (!firstUnitDef) return { ok: false, spiritAttempt: true, reason: 'spirit-unit-def-missing' };
+  const side = summoners[0]?.side || firstUnitDef?.side || 'dog-player';
+  const capacityUsed = getBcuSideCapacityUsed(scene, side);
+  const capacityMax = getBcuSideCapacityMax(scene);
+  const spiritWill = getEntityWill(firstUnitDef);
+  if (capacityUsed >= capacityMax - spiritWill * summoners.length) {
+    return {
+      ok: false,
+      spiritAttempt: true,
+      reason: 'spirit-capacity-full',
+      capacityUsed,
+      capacityMax,
+      spiritWill,
+      summonerCount: summoners.length
+    };
+  }
   for (const summoner of summoners) {
     const unitDef = st.spiritUnitDef || resolveBcuSpiritUnitDef(scene, slotId, summoner);
     if (!unitDef) return { ok: false, spiritAttempt: true, reason: 'spirit-unit-def-missing' };

@@ -58,7 +58,8 @@ assert.match(prodUi, /SBCtrl\.actions action -1 -> StageBasis\.act_mon/, 'wallet
 // 5) CSS must expose the BCU icon and keep the bottom-left anchor.
 const css = readFileSync('css/bcu-battle-ui-fix.css', 'utf8');
 assert.match(css, /\.prod-ui \.wallet-upgrade/, 'wallet button must remain positioned in battle UI CSS');
-assert.match(css, /bottom:calc\(6px \+ env\(safe-area-inset-bottom,0px\)\)/, 'wallet button keeps BCU bottom-left anchor');
+// Flush to the bottom edge (only the iOS home-indicator safe-area inset, no extra gap).
+assert.match(css, /\.prod-ui \.wallet-upgrade\{[^}]*bottom:env\(safe-area-inset-bottom,0px\)/, 'wallet button sits flush at the bottom-left (safe-area inset only)');
 assert.match(css, /\.wallet-upgrade\.has-bcu-icon \.wallet-icon/, 'CSS must reveal the BCU icon canvas when loaded');
 
 console.log('check-bcu-wallet-button-icon-parity: OK');

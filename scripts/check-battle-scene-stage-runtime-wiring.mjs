@@ -54,8 +54,9 @@ assert.ok(indexHtml.includes('preview-canvas'), 'index.html must render preview 
 assert.ok(main.includes('async function boot()'), 'main.js must use async boot()');
 assert.ok(
   main.includes('installBattlePatches')
-    && bootBattle.includes("runInstaller('./battle/installBattleProjectilePatches.js'")
-    && bootBattleProjectiles.includes("await import('../../battle/BattleSceneStageRuntimeWiring.js')"),
+    && bootBattle.includes("path: './battle/installBattleProjectilePatches.js'")
+    && bootBattle.includes('runInstaller(step.path, step.name, stepProgress)')
+    && bootBattleProjectiles.includes("import('../../battle/BattleSceneStageRuntimeWiring.js')"),
   'boot battle module must dynamically import stage runtime wiring (via grouped projectile installer) before PreviewApp starts'
 );
 assert.ok(main.includes("await import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp');
@@ -572,8 +573,9 @@ assert.equal(getCharacterBaseId('cat-unit-013-f'), 'cat-unit-013');
 
 console.log('check-battle-scene-stage-runtime-wiring: OK');
 
-const { ProductionRuntime } = await import('../js/battle/ProductionRuntime.js');
+const { ProductionRuntime, getBcuUnitDeployCost } = await import('../js/battle/ProductionRuntime.js');
 const { BattleEconomy } = await import('../js/battle/BattleEconomy.js');
+assert.equal(getBcuUnitDeployCost(100), 150, 'BCU production helper applies default StageMap.price=1 cost multiplier');
 const econ = new BattleEconomy({ startMoney: 100, maxMoney: 1000, incomePerSecond: 60 });
 econ.tick(1000);
 assert.equal(econ.money, 159);
@@ -598,6 +600,9 @@ const pr2 = ProductionRuntime.produce({ scene:{ battleState:'running' }, unitDef
 assert.equal(pr2.ok, false);
 const summary = FormationStoreDyn.getFormationSummary(FormationStoreDyn.getDefault());
 assert.equal(summary.rows, 2); assert.equal(summary.cols, 5); assert.equal(summary.total, 10);
+const bcuTimerPatchSrc = fs.readFileSync('js/battle/BattleSceneBcuTimerPatch.js', 'utf8');
+assert.ok(battleSceneSrc.includes('getBcuUnitDeployCost(st.price'), 'BattleScene template stats must store BCU deploy cost, not raw DataUnit.price');
+assert.ok(bcuTimerPatchSrc.includes('getBcuUnitDeployCost(st.price'), 'BCU timer patch template stats must store BCU deploy cost, not raw DataUnit.price');
 
 const formationEditorSrc = fs.readFileSync('js/ui/FormationEditor.js', 'utf8');
 assert.ok(formationEditorSrc.includes('searchText'));

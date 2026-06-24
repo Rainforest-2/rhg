@@ -1,6 +1,8 @@
 import { BattleScene } from './BattleScene.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import {
+  getBcuCatCannonAnimFiles,
+  getBcuCatCannonAnimSources,
   getBcuCatCannonDrawOffsets,
   getBcuCatCannonStatus,
   initializeBcuCatCannon,
@@ -27,15 +29,8 @@ const PATCH_FLAG = Symbol.for('wanko-battle.bcu-cat-cannon-runtime.v1');
 // sets anim = atks[id].getEAnim(NyType.BASE), i.e. model/anim *_01 with sprite/imgcut *_00.
 const CAT_CANNON_ANIM_BUNDLE_REF = Object.freeze({ bundleKey: 'nyankoCastle:001', bundlePath: 'public/assets/bundles/castle/nyanko/001.zip' });
 // BCU util/pack/NyCastle.java: for cannon t, BASE = *_0<t>_01.mamodel/.maanim, ATK = *_0<t>_00.mamodel/.maanim,
-// both sharing sprite/imgcut *_0<t>_00.png/.imgcut. (basic cannon t=0)
-const CAT_CANNON_ANIM_FILES = Object.freeze({
-  model: 'nyankoCastle_001_00_01.mamodel',
-  anim: 'nyankoCastle_001_00_01.maanim',
-  atkModel: 'nyankoCastle_001_00_00.mamodel',
-  atkAnim: 'nyankoCastle_001_00_00.maanim',
-  imgcut: 'nyankoCastle_001_00_00.imgcut',
-  png: 'nyankoCastle_001_00_00.png'
-});
+// both sharing sprite/imgcut *_0<t>_00.png/.imgcut. The basic cannon is t=0; non-basic cannons (slow/
+// wall/freeze/water/ground/blast/curse) load their own t=id assets through getBcuCatCannonAnimFiles.
 // Cat-cannon level curve (Treasure.getCannonMagnification -> CannonLevelCurve), shipped semantically
 // inside core-db.zip as cannon-curve.json. Parsed once and shared so non-basic cannons resolve their
 // magnification (slow/freeze/water/ground/blast/curse) instead of failing closed. Basic cannon (id 0)
@@ -51,9 +46,6 @@ async function loadBcuCannonCurveData() {
   return cannonCurveDataPromise;
 }
 
-const CAT_CANNON_ANIM_SOURCE = 'bcu-effanim-cat-cannon-base:nyankoCastle:001/nyankoCastle_001_00_01';
-const CAT_CANNON_WAVE_ANIM_SOURCE = 'bcu-effanim-cat-cannon-wave:nyankoCastle:001/nyankoCastle_001_00_00';
-
 const loadCannonImage = (src) => new Promise((res, rej) => {
   if (typeof Image === 'undefined') { rej(new Error('no Image')); return; }
   const i = new Image();
@@ -62,31 +54,35 @@ const loadCannonImage = (src) => new Promise((res, rej) => {
   i.src = src;
 });
 
-async function loadBcuCatCannonBaseAnim() {
+async function loadBcuCatCannonBaseAnim(cannonId = 0) {
   const provider = getBcuAssetDatabase()?.semanticProvider || null;
   if (!provider) return { ok: false, reason: 'missing-semantic-provider' };
   const ref = CAT_CANNON_ANIM_BUNDLE_REF;
+  const files = getBcuCatCannonAnimFiles(cannonId);
+  const sources = getBcuCatCannonAnimSources(cannonId);
   const [modelText, animText, atkModelText, atkAnimText, imgcutText] = await Promise.all([
-    provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.model),
-    provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.anim),
-    provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.atkModel),
-    provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.atkAnim),
-    provider.readTextByBundleRef(ref, CAT_CANNON_ANIM_FILES.imgcut)
+    provider.readTextByBundleRef(ref, files.model),
+    provider.readTextByBundleRef(ref, files.anim),
+    provider.readTextByBundleRef(ref, files.atkModel),
+    provider.readTextByBundleRef(ref, files.atkAnim),
+    provider.readTextByBundleRef(ref, files.imgcut)
   ]);
-  const url = await provider.createObjectUrl(ref, CAT_CANNON_ANIM_FILES.png, 'image/png');
+  const url = await provider.createObjectUrl(ref, files.png, 'image/png');
   const image = await loadCannonImage(url);
   return {
     ok: true,
+    cannonId,
     image,
     imgcut: parseImgcut(imgcutText),
     model: parseModel(modelText),
     anim: parseAnim(animText),
-    // ATK eanim = ContWaveCanon traveling wave (Cannon basic uses atks[0].getEAnim(ATK)).
+    // ATK eanim = the cannon's projectile/wave/AOE effect (basic: ContWaveCanon traveling wave;
+    // non-basic: localized AOE / ContExtend EXT sweep), atks[id].getEAnim(ATK).
     atkModel: parseModel(atkModelText),
     atkAnim: parseAnim(atkAnimText),
-    source: CAT_CANNON_ANIM_SOURCE,
-    waveSource: CAT_CANNON_WAVE_ANIM_SOURCE,
-    bcuReference: 'NyCastle.read aux.atks[0]; Cannon.activate anim = atks[0].getEAnim(BASE); ContWaveCanon anim = atks[0].getEAnim(ATK)'
+    source: sources.base,
+    waveSource: sources.atk,
+    bcuReference: `NyCastle.read aux.atks[${cannonId}]; Cannon.activate anim = atks[${cannonId}].getEAnim(BASE); effect anim = atks[${cannonId}].getEAnim(ATK)`
   };
 }
 
@@ -171,7 +167,8 @@ export function installBattleSceneBcuCatCannonPatch() {
 
   proto.ensureCatCannonAnimLoading = function ensureCatCannonAnimLoading() {
     if (this._bcuCatCannonAnimPromise) return this._bcuCatCannonAnimPromise;
-    this._bcuCatCannonAnimPromise = loadBcuCatCannonBaseAnim()
+    const cannonId = Number.isInteger(this.bcuCatCannon?.id) ? this.bcuCatCannon.id : 0;
+    this._bcuCatCannonAnimPromise = loadBcuCatCannonBaseAnim(cannonId)
       .then((asset) => {
         this.bcuCatCannonAnim = asset?.ok ? asset : null;
         this.lastCatCannonAnimLoad = { source: 'BattleSceneBcuCatCannonPatch.ensureCatCannonAnimLoading', ok: !!this.bcuCatCannonAnim, reason: asset?.reason || null, animSource: this.bcuCatCannonAnim?.source || null };
@@ -212,7 +209,7 @@ export function installBattleSceneBcuCatCannonPatch() {
       model,
       animator,
       scale: 1,
-      source: CAT_CANNON_ANIM_SOURCE,
+      source: asset.source,
       createdAtMs: this.timeMs,
       // Draw-order only; the BCU draw Y uses the base ground line (layer 0) + cany offset explicitly.
       layer: 9,
@@ -273,7 +270,7 @@ export function installBattleSceneBcuCatCannonPatch() {
       model,
       animator,
       scale: 1,
-      source: CAT_CANNON_WAVE_ANIM_SOURCE,
+      source: asset.waveSource,
       createdAtMs: this.timeMs,
       layer: 9,
       // x = getX(pos) - 37*siz : -wave(28) - pus.x(9). Applied as bcuScreenOffsetX * cameraScale.
@@ -288,6 +285,54 @@ export function installBattleSceneBcuCatCannonPatch() {
     effect.frameDurationMs = stepMs;
     this.effects.push(effect);
     this.lastCatCannonWaveEffect = { source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonWaveEffect', worldX, waveIndex, durationMs: effect.durationMs, animSource: asset.waveSource, effectId: effect.id };
+    return true;
+  };
+
+  // BCU Cannon.update for a non-basic cannon draws this cannon's own ATK eanim (atks[id].getEAnim(ATK))
+  // at the effect anchor: the localized AOE for freeze/water/blast, or the ContExtend EXT sweep for
+  // slow/curse (which reuses the same ATK eanim — NyCastle ships no separate EXT file per cannon).
+  // Mirrors spawnCatCannonWaveEffect but anchors at the cannon's resolved effect X. Returns false when
+  // the per-cannon asset is not loaded so the runtime keeps its observable trace fallback.
+  proto.spawnCatCannonNonBasicEffect = function spawnCatCannonNonBasicEffect(worldX, spec = {}) {
+    const asset = this.bcuCatCannonAnim;
+    if (!asset?.ok || !asset.atkModel || !asset.atkAnim || !asset.image || !asset.imgcut?.parts?.length) {
+      if (!this._bcuCatCannonAnimPromise) this.ensureCatCannonAnimLoading?.();
+      return false;
+    }
+    if (!Array.isArray(this.effects)) return false;
+    if (this.effects.length >= (BATTLE_CONFIG.tuning?.maxEffects ?? 40)) return false;
+    const cannonId = Number.isInteger(this.bcuCatCannon?.id) ? this.bcuCatCannon.id : (Number.isInteger(spec?.id) ? spec.id : 0);
+    const model = new BcuModelInstance(asset.atkModel);
+    const animator = new BcuAnimator(asset.atkAnim);
+    animator.setLoop?.(false);
+    animator.restart?.();
+    const x = Number.isFinite(worldX) ? worldX : getCatCannonBasePosBcu(this);
+    const stepMs = this.frameClock?.fixedStepMs || (1000 / 30);
+    const effect = EffectRuntime.createHitEffect({
+      id: `bcu-cat-cannon-${spec?.name || cannonId}-atk-${this.logicFrame || 0}-${this.effects.length}`,
+      type: `cat-cannon-${spec?.name || cannonId}`,
+      x,
+      y: 0,
+      image: asset.image,
+      imgcut: asset.imgcut,
+      model,
+      animator,
+      scale: 1,
+      source: asset.waveSource,
+      createdAtMs: this.timeMs,
+      layer: 9,
+      debug: { source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonNonBasicEffect', bcuReference: `Cannon.update atks[${cannonId}].getEAnim(ATK) (${spec?.geometry || 'effect'})`, effectKey: `cat-cannon/${spec?.name || cannonId}`, phase: 'attack', worldX: x, cannonId, geometry: spec?.geometry || null }
+    });
+    // Same layer-9 sweep placement as the basic traveling wave; per-cannon sweep/travel timing is the
+    // separate visual-acceptance item, so reuse the proven wave anchor offsets here.
+    effect.bcuCannonWaveAnim = true;
+    effect.bcuCannonWaveLayer = 9;
+    effect.bcuCannonWaveOffsetY = -40;
+    effect.bcuCannonWaveScale = 2.5;
+    effect.durationMs = animator.getFrameCount?.() ? animator.getFrameCount() * stepMs : effect.durationMs;
+    effect.frameDurationMs = stepMs;
+    this.effects.push(effect);
+    this.lastCatCannonNonBasicEffect = { source: 'BattleSceneBcuCatCannonPatch.spawnCatCannonNonBasicEffect', worldX: x, cannonId, geometry: spec?.geometry || null, durationMs: effect.durationMs, animSource: asset.waveSource, effectId: effect.id };
     return true;
   };
 

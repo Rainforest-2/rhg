@@ -1,3 +1,16 @@
+export const BCU_DEFAULT_STAGE_PRICE = 1;
+
+function toFinite(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export function getBcuUnitDeployCost(rawPrice, stagePrice = BCU_DEFAULT_STAGE_PRICE) {
+  const price = Math.max(0, Math.floor(toFinite(rawPrice, 0)));
+  const stage = Math.floor(toFinite(stagePrice, BCU_DEFAULT_STAGE_PRICE));
+  return Math.floor(price * (1 + stage * 0.5));
+}
+
 export class ProductionRuntime {
   static getContract() {
     return {
@@ -18,7 +31,7 @@ export class ProductionRuntime {
   }
 
   static describeProductionSources(unitDef) {
-    return { sourceRoster: unitDef?.sourceRoster ?? null, sourceSlotId: unitDef?.sourceSlotId ?? null, sourceKind: unitDef?.isProductionUnit ? 'production-unit' : null, statsType: unitDef?.statsType ?? null, statsId: unitDef?.statsId ?? null, formRow: unitDef?.form ?? null, costSource: unitDef?.costSource ?? null, cooldownSource: unitDef?.cooldownSource ?? null, productionCostSource: unitDef?.productionCostSource ?? null, productionCooldownSource: unitDef?.productionCooldownSource ?? null, defaultCost: unitDef?.defaultCost ?? null, defaultCooldownMs: unitDef?.defaultCooldownMs ?? null, bcuPrice: unitDef?.bcuPrice ?? null, bcuRespawnFrames: unitDef?.bcuRespawnFrames ?? null, bcuRespawnMs: unitDef?.bcuRespawnMs ?? null };
+    return { sourceRoster: unitDef?.sourceRoster ?? null, sourceSlotId: unitDef?.sourceSlotId ?? null, sourceKind: unitDef?.isProductionUnit ? 'production-unit' : null, statsType: unitDef?.statsType ?? null, statsId: unitDef?.statsId ?? null, formRow: unitDef?.form ?? null, costSource: unitDef?.costSource ?? null, cooldownSource: unitDef?.cooldownSource ?? null, productionCostSource: unitDef?.productionCostSource ?? null, productionCooldownSource: unitDef?.productionCooldownSource ?? null, defaultCost: unitDef?.defaultCost ?? null, defaultCooldownMs: unitDef?.defaultCooldownMs ?? null, bcuPrice: unitDef?.bcuPrice ?? null, bcuStagePrice: unitDef?.bcuStagePrice ?? null, bcuDeployCost: unitDef?.bcuDeployCost ?? null, bcuRespawnFrames: unitDef?.bcuRespawnFrames ?? null, bcuRespawnMs: unitDef?.bcuRespawnMs ?? null };
   }
 
   static getUnitStatus(unitDef, economy = null) {
@@ -31,7 +44,7 @@ export class ProductionRuntime {
       cooldownReady: status.cooldownReady !== false, cooldownRemainingMs: status.cooldownRemainingMs ?? 0, cooldownProgressRatio: status.cooldownProgressRatio ?? 1,
       costSource: status.costSource ?? unitDef.costSource ?? unitDef.productionCostSource ?? null,
       cooldownSource: status.cooldownSource ?? unitDef.cooldownSource ?? unitDef.productionCooldownSource ?? null,
-      bcuPrice: unitDef.bcuPrice ?? null, bcuRespawnFrames: unitDef.bcuRespawnFrames ?? null, bcuRespawnMs: unitDef.bcuRespawnMs ?? null,
+      bcuPrice: unitDef.bcuPrice ?? null, bcuStagePrice: unitDef.bcuStagePrice ?? null, bcuDeployCost: unitDef.bcuDeployCost ?? null, bcuRespawnFrames: unitDef.bcuRespawnFrames ?? null, bcuRespawnMs: unitDef.bcuRespawnMs ?? null,
       productionSourceDebug: status.productionSourceDebug ?? unitDef.productionSourceDebug ?? this.describeProductionSources(unitDef),
       statusSource: status.source ?? (economy ? 'economy.getStatus' : 'unitDef-only')
     };

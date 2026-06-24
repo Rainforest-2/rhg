@@ -153,4 +153,61 @@ assert.equal(scene.bcuSpiritState.get('summoner-slot').spiritSummoned, false, 'c
   assert.equal(ready.spawned[0].bcuIsSpirit, true, 'live-path spirit is marked as a spirit actor');
 }
 
+{
+  const sModel = BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, [[110, 77]]) });
+  const spModel = BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, []) });
+  const warpedSummoner = makeActor('warped-summoner', sModel, 2600);
+  warpedSummoner.bcuWarpLifecycle = { active: true, worldXBefore: 3000, worldXAfter: 2600, moved: true };
+  const scene3 = {
+    logicFrame: 0,
+    timeMs: 0,
+    actors: [warpedSummoner],
+    bases: [
+      { side: 'cat-enemy', posBcu: 800, getBattlePosBcu() { return this.posBcu; } },
+      { side: 'dog-player', posBcu: 3200, getBattlePosBcu() { return this.posBcu; } }
+    ],
+    actorFactory: { templates: new Map([['spirit-slot-3', { unitDef: { slotId: 'spirit-slot-3' }, loadingLevel: 'spawn-ready' }]]) },
+    bcuSpiritUnitDefs: new Map([['warped-summoner', { slotId: 'spirit-slot-3', statsType: 'unit', statsId: 77, side: 'dog-player', direction: -1, facing: -1, moveAnimId: 'anim00', idleAnimId: 'anim01', attackAnimId: 'anim02', knockbackAnimId: 'anim03', bcuCombatModel: spModel }]]),
+    spawnActor(unitDef, side, isPlayerProduced, options) {
+      const a = makeActor(`spirit3-${this.actors.length}`, spModel, options.x);
+      a.slotId = unitDef.slotId;
+      a.side = side;
+      this.actors.push(a);
+      return a;
+    },
+    pushEvent() {}
+  };
+  markBcuSummonerSpawned(scene3, warpedSummoner, { slotId: 'warped-summoner' });
+  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) tickBcuSpiritState(scene3);
+  const warped = requestBcuSpiritSpawn(scene3, 'warped-summoner');
+  assert.equal(warped.ok, true, 'warped summoner can still conjure after cooldown');
+  assert.equal(warped.spawned[0].x, Math.max(800 + 100, Math.min(3000 + SPIRIT_SUMMON_RANGE, 3200)), 'warped summoner uses pre-warp position for spirit spawn');
+}
+
+{
+  const sModel = BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, [[110, 77]]) });
+  const spModel = BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, []) });
+  const cappedSummoner = makeActor('capacity-summoner', sModel, 3000);
+  const scene4 = {
+    logicFrame: 0,
+    timeMs: 0,
+    maxAliveActorsPerSide: 1,
+    actors: [cappedSummoner],
+    bases: [
+      { side: 'cat-enemy', posBcu: 800, getBattlePosBcu() { return this.posBcu; } },
+      { side: 'dog-player', posBcu: 3200, getBattlePosBcu() { return this.posBcu; } }
+    ],
+    actorFactory: { templates: new Map([['spirit-slot-4', { unitDef: { slotId: 'spirit-slot-4' }, loadingLevel: 'spawn-ready' }]]) },
+    bcuSpiritUnitDefs: new Map([['capacity-summoner', { slotId: 'spirit-slot-4', statsType: 'unit', statsId: 77, side: 'dog-player', direction: -1, facing: -1, moveAnimId: 'anim00', idleAnimId: 'anim01', attackAnimId: 'anim02', knockbackAnimId: 'anim03', bcuCombatModel: spModel }]]),
+    spawnActor() { throw new Error('capacity-full spirit must not spawn'); },
+    pushEvent() {}
+  };
+  markBcuSummonerSpawned(scene4, cappedSummoner, { slotId: 'capacity-summoner' });
+  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) tickBcuSpiritState(scene4);
+  const capped = requestBcuSpiritSpawn(scene4, 'capacity-summoner');
+  assert.equal(capped.ok, false, 'spirit spawn is rejected when BCU side capacity is full');
+  assert.equal(capped.reason, 'spirit-capacity-full', 'capacity rejection is explicit');
+  assert.equal(capped.capacityUsed, 1, 'summoner itself occupies one BCU side-capacity slot');
+}
+
 console.log('check-bcu-spirit-lifecycle-parity: OK');

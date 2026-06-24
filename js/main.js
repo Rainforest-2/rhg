@@ -1,3 +1,13 @@
+// © 2026 Rainforest-2. All Rights Reserved. Unauthorized copying, rehosting, or reuse of
+// this code is prohibited. 無断複製・再配布・流用を禁じます。
+try {
+  console.log(
+    '%cワンコ大戦争%c © 2026 Rainforest-2 — All Rights Reserved.\n無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited.',
+    'color:#ff8f3d;font-weight:bold;font-size:13px',
+    'color:#9aa4b2'
+  );
+} catch {}
+
 function safeBootText(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
 }

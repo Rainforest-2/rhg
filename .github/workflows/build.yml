@@ -24,11 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - uses: actions/configure-pages@v5
 
       - name: Remove raw BCU sources from deploy artifact
         run: |
-          rm -rf public/assets/bcu 
+          rm -rf public/assets/bcu
           rm -rf tmp
           rm -rf scripts
           rm -rf docs
@@ -36,6 +40,40 @@ jobs:
           rm -rf package.json
           rm -rf node_modules
           rm -rf references
+
+      # Harden the published client: obfuscate + minify every shipped JS module so the
+      # Pages output is hard to read/reuse, and inject anti-debug/self-defending guards
+      # (this is a game; end users never need devtools). ESM is preserved because globals
+      # and properties are NOT renamed (cross-module exports/imports and DOM APIs keep
+      # their names) and dynamic import() path strings survive in the string array. A
+      # copyright banner is prepended afterward. Runs only on the deploy artifact, never on
+      # the repo source, so local development is unaffected. If obfuscation fails for any
+      # reason the original JS is kept so a deploy never breaks.
+      - name: Obfuscate shipped JS + add copyright banner
+        run: |
+          set -o pipefail
+          BANNER='/*! ワンコ大戦争 (rhg) — © 2026 Rainforest-2. All Rights Reserved. 無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited. */'
+          OBF="npx --yes javascript-obfuscator@4.1.1"
+          # ESM-safe base config: globals/properties are NOT renamed so cross-module
+          # export/import names and DOM APIs survive, and dynamic import('./x.js') path
+          # strings stay resolvable inside the (base64) string array.
+          COMMON="--compact true --string-array true --string-array-threshold 0.75 --string-array-encoding base64 --identifier-names-generator mangled --control-flow-flattening false --dead-code-injection false --rename-globals false --rename-properties false --source-map false --target browser"
+          if $OBF js --output js-obf $COMMON; then
+            rm -rf js && mv js-obf js
+            # Anti-debug + self-defending only on the single entry module, so the whole app
+            # is guarded by ONE interval instead of one per file (291 debugger loops would
+            # jank the game). End users never need devtools, so this is acceptable here.
+            if $OBF js/main.js --output js/main.obf.js $COMMON --self-defending true --debug-protection true --debug-protection-interval 4000; then
+              mv js/main.obf.js js/main.js
+            fi
+            echo "Obfuscation succeeded; prepending copyright banner."
+          else
+            echo "::warning::JS obfuscation failed; shipping original JS with banner only."
+            rm -rf js-obf
+          fi
+          find js -name '*.js' -print0 | while IFS= read -r -d '' f; do
+            printf '%s\n' "$BANNER" | cat - "$f" > "$f.__b" && mv "$f.__b" "$f"
+          done
 
       - uses: actions/upload-pages-artifact@v3
         with:

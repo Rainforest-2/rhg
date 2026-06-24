@@ -70,7 +70,7 @@ function injectStyle() {
 .bcu-pause-btn.abort:active{box-shadow:0 2px 0 #3c2710,inset 0 2px 0 rgba(255,255,255,.35)}
 .bcu-pause-abort-label{width:220px;max-width:100%;height:47.638px;background-image:url('${ATLAS_URL}');background-repeat:no-repeat;background-size:443.465px 443.465px;background-position:-160.236px -274.567px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.4))}
 .bcu-pause-confirm{position:absolute;left:16px;right:16px;top:50%;z-index:2;display:grid;gap:12px;padding:15px;border:4px solid #050505;border-radius:15px;background:linear-gradient(180deg,#fffdf3,#f3d88f);box-shadow:0 6px 0 #4a210d,0 18px 30px rgba(0,0,0,.34),inset 0 2px 0 rgba(255,255,255,.78);transform:translateY(-50%) scale(.98);opacity:0;pointer-events:none}
-.bcu-pause-confirm:not(.bcu-pause-hidden){animation:bcuPauseConfirmIn .13s cubic-bezier(.16,1,.3,1) both;pointer-events:auto}
+.bcu-pause-confirm:not(.bcu-pause-hidden){opacity:1;transform:translateY(-50%) scale(1);animation:bcuPauseConfirmIn .13s cubic-bezier(.16,1,.3,1) both;pointer-events:auto}
 .bcu-pause-confirm>p{margin:0;text-align:center;font-weight:900;font-size:clamp(16px,3.6vw,20px);line-height:1.25;color:#2a1606}
 .bcu-pause-confirm-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bcu-pause-confirm-row button{appearance:none;border:3px solid var(--nyanko-black,#050505);border-radius:999px;font-family:inherit;font-weight:900;font-size:clamp(15px,3.4vw,18px);padding:10px;cursor:pointer;touch-action:manipulation;text-shadow:0 1px 0 rgba(0,0,0,.25)}

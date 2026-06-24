@@ -1,6 +1,6 @@
 # BCU visual review checklist
 
-Updated: 2026-06-23.
+Updated: 2026-06-24.
 
 This ledger records **manual browser** acceptance for parity areas whose runtime and deterministic checks already exist. It is not a parser/checklist substitute.
 
@@ -20,14 +20,14 @@ This ledger records **manual browser** acceptance for parity areas whose runtime
 | P_DELAY | `human-visual-review-needed` | Player cooldown delay and enemy stage-row delay | effect placement, actor layer, timing, cooldown/row delay feedback | `not-reviewed` | Runtime/effect/coordinate checks exist. |
 | Barrier / demon shield / shield breaker | `human-visual-review-needed` | Barrier break, demon shield break, regen | phase order, y offset, scale, layer, regen timing | `not-reviewed` | Deterministic gate/metadata checks exist. |
 | Burrow | `code-complete-candidate` | One normal burrow enemy and one `TCH_UG` interaction | DOWN, underground move, UP, targetability/renderability transition | `not-reviewed` | Lifecycle is tested; appearance remains unaccepted. |
-| Spirit | `human-visual-review-needed` | Conjurer plus attack-only spirit form | spawn, attack animation, A_IMUATK, cleanup after attack | `not-reviewed` | Semantic ZIP/factory path exists. |
+| Spirit | `human-visual-review-needed` | Conjurer plus attack-only spirit form | spawn, attack animation, A_IMUATK, cleanup after attack | `not-reviewed` | Semantic ZIP/factory path exists; pre-warp origin and capacity gating are deterministic-test covered. |
 | Castle/base guard | `human-visual-review-needed` | Guarded boss stage | hold appearance, held base-damage feedback, break timing/cleanup | `not-reviewed` | State and effect trace are tested. |
 | SUMMON entry | `partial` | Loader-backed real custom proc-object summon fixture | `anim_type`, entry phase, placement, layer, same_health/bond_hp visible consequences | `blocked` | Automatic real custom-pack discovery/loading remains incomplete. |
 | Zombie revive | `human-visual-review-needed` for standard path | Standard revive zombie with/without zombie killer | corpse DOWN, show-window targetability, REVIVE, hide/show, completion | `not-reviewed` | Extra/custom revive sources remain separate partial work. |
 | Mini-death-surge | `human-visual-review-needed` | ORB_DEATH_SURGE fixture | demon soul, surge start frame, WT_MIVC appearance, cleanup | `not-reviewed` | Holder/runtime are deterministic-test covered. |
 | Wallet button | `human-visual-review-needed` | unaffordable, affordable flash, Lv8 max | bitmap frame, BCU sprite text, bottom-left anchoring, flash cadence | `not-reviewed` | Headless UI checks exist. |
 | Basic cat cannon button/firing | `human-visual-review-needed` | partial charge, full-flash, fire | button/gauge/FIRE frames, base firing animation, 18F preTime, traveling wave | `not-reviewed` | Logic/draw math are tested. |
-| Non-basic cannon: SLOW/STOP/WATER/GROUND/BARRIER/CURSE | `code-complete-candidate` runtime | one fixture per cannon id | source animation availability, target range, sweep/travel timing, hit/effect placement | `blocked` | Per-cannon ATK/EXT bitmap aliases remain incomplete. |
+| Non-basic cannon: SLOW/STOP/WATER/GROUND/BARRIER/CURSE | `code-complete-candidate` runtime | one fixture per cannon id | source animation availability, target range, sweep/travel timing, hit/effect placement | `not-reviewed` | Per-cannon ATK/EXT bitmap aliases are now wired (`getBcuCatCannonAnimFiles` + `spawnCatCannonNonBasicEffect`, `check-bcu-non-basic-cat-cannon-anim-parity`); exact sweep/travel timing still needs browser acceptance. |
 | BASE_WALL cannon | `code-complete-candidate` runtime | Form 339 wall spawn with enemy front and no-enemy fallback | entry, idle, spawn position, anchor+100, early death, self-destruct | `not-reviewed` | Runtime lifecycle is tested; visual assets/placement need acceptance. |
 
 ## Result values

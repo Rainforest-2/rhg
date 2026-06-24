@@ -1,13 +1,8 @@
-import { getBcuResistValue, applyBcuProcDuration, applyBcuProcDistance } from './BcuResistRuntime.js';
+import { resolveBcuProcRuntimePayload } from './BcuResistRuntime.js';
 
 export class BcuProcRuntime {
   performProc({ attacker, target, attack, proc, rng } = {}) {
-    const resist = getBcuResistValue({ target, attack, procName: proc?.key, procResist: proc?.resist });
-    const rawTime = proc?.payload?.timeFrames ?? proc?.payload?.time ?? 0;
-    const rawDistance = proc?.payload?.distance ?? proc?.payload?.dist ?? 0;
-    const finalTime = applyBcuProcDuration({ rawTime, fruit: proc?.fruit || 0, attack, resist: resist.resist });
-    const finalDistance = applyBcuProcDistance({ rawDistance, fruit: proc?.fruit || 0, resist: resist.resist });
-    const runtimePayload = { ...(proc?.payload || {}), timeFrames: finalTime, time: finalTime, distance: finalDistance, dist: finalDistance };
+    const { resist, rawTime, rawDistance, finalTime, finalDistance, runtimePayload } = resolveBcuProcRuntimePayload({ target, attack, proc });
     let application = { applied: false, delegatedToLegacy: true, reason: 'not-yet-ported' };
     const runtimeKeys = new Set(['freeze', 'slow', 'weaken', 'curse', 'seal', 'knockbackProc', 'warp', 'toxic']);
     if (proc?.alreadyApplied === true) {

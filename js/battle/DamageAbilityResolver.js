@@ -238,6 +238,16 @@ function makeSharedInfoForAttack(attacker, target) {
   return { mode: 'generic-side-fallback', attackTraits, targetTraits, shared, compatible: shared.length > 0 };
 }
 
+// BCU battle/entity/Entity.getFruit(trait, dire, e): the proc-time/distance treasure
+// bonus. It only applies when the receiver is an enemy (player unit -> enemy) and uses
+// the player's treasure fruit over the attack∩target shared traits — the same getFruit()
+// that scales GOOD/MASSIVE/RESIST. Returns 0 for enemy->unit / base attacks.
+export function resolveBcuProcFruit(attacker, target) {
+  const info = makeSharedInfoForAttack(attacker, target);
+  if (info.mode !== 'EEnemy.getDamage unit->enemy') return 0;
+  return getFruit(info.shared);
+}
+
 function applyFixedKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference, allowAttack = true, allowDefense = true }) {
   let ans = currentDamage;
   if (allowAttack && hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {

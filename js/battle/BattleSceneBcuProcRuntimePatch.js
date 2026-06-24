@@ -1,6 +1,7 @@
 import { BattleScene } from './BattleScene.js';
 import { BcuProcRuntime } from './bcu-runtime/BcuProcRuntime.js';
 import { guardBcuDamage } from './bcu-runtime/BcuDamageGuardRuntime.js';
+import { resolveBcuProcFruit } from './DamageAbilityResolver.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-proc-runtime-trace-patch.v1');
 
@@ -66,6 +67,8 @@ export function installBattleSceneBcuProcRuntimePatch() {
         .map(procApplyDedupeKey)
     );
     const seen = new Set();
+    // BCU Entity.getFruit treasure bonus for disruption time/distance (player unit -> enemy).
+    const procFruit = resolveBcuProcFruit(attacker, target);
     for (const proc of [...(calc?.proc?.pending || []), ...(calc?.proc?.applied || [])]) {
       const key = proc?.key || '';
       const dedupeKey = `${key}:${proc?.hitIndex ?? ''}:${proc?.attackEventKey ?? ''}`;
@@ -76,8 +79,8 @@ export function installBattleSceneBcuProcRuntimePatch() {
         target,
         attack: event,
         proc: appliedKeys.has(dedupeKey)
-          ? { ...proc, alreadyApplied: true, handledBy: 'BattleSceneProcApplyPatch' }
-          : proc
+          ? { ...proc, fruit: procFruit, alreadyApplied: true, handledBy: 'BattleSceneProcApplyPatch' }
+          : { ...proc, fruit: procFruit }
       });
     }
     return result;

@@ -205,3 +205,18 @@ export function applyBcuProcDistance({ rawDistance = 0, fruit = 0, resist = 0 } 
 export function applyBcuProcPercent({ rawPercent = 0, resist = 0 } = {}) {
   return Number(rawPercent || 0) * Math.max(0, 100 - clampPercent(resist)) / 100;
 }
+
+// Single BCU proc-payload builder shared by both apply paths (BcuProcRuntime and the
+// legacy BattleSceneProcApplyPatch) so a disruption's final STOP/SLOW/... time and KB
+// distance are identical regardless of route: raw payload scaled by the treasure fruit
+// bonus (Entity.getFruit) and the target's resistance (getResistValue). Mirrors BCU
+// Entity.update where fruit time/dist and IMU* resist are applied together.
+export function resolveBcuProcRuntimePayload({ target, attack, proc } = {}) {
+  const resist = getBcuResistValue({ target, attack, procName: proc?.key, procResist: proc?.resist });
+  const rawTime = proc?.payload?.timeFrames ?? proc?.payload?.time ?? 0;
+  const rawDistance = proc?.payload?.distance ?? proc?.payload?.dist ?? 0;
+  const finalTime = applyBcuProcDuration({ rawTime, fruit: proc?.fruit || 0, attack, resist: resist.resist });
+  const finalDistance = applyBcuProcDistance({ rawDistance, fruit: proc?.fruit || 0, resist: resist.resist });
+  const runtimePayload = { ...(proc?.payload || {}), timeFrames: finalTime, time: finalTime, distance: finalDistance, dist: finalDistance };
+  return { resist, rawTime, rawDistance, finalTime, finalDistance, runtimePayload };
+}

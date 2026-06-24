@@ -1,11 +1,16 @@
 import { BattleScene } from './BattleScene.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
+import { resolveBcuProcFruit } from './DamageAbilityResolver.js';
+import { resolveBcuProcRuntimePayload } from './bcu-runtime/BcuResistRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.scene-proc-apply-patch.v1');
 
-function applyDamageProc(scene, attacker, target, damageResult, meta = {}) {
+function applyDamageProc(scene, attacker, target, event, damageResult, meta = {}) {
   const procItems = damageResult?.proc?.applied || [];
   if (!Array.isArray(procItems) || procItems.length === 0) return [];
+  // BCU Entity.getFruit treasure bonus for disruption time/distance, plus IMU* resist —
+  // applied here identically to the BcuProcRuntime path so both routes match.
+  const procFruit = resolveBcuProcFruit(attacker, target);
   const out = [];
   for (const item of procItems) {
     const hitIndex = meta.hitIndex ?? item.hitIndex ?? null;
@@ -20,7 +25,8 @@ function applyDamageProc(scene, attacker, target, damageResult, meta = {}) {
       });
       continue;
     }
-    const result = target.applyBcuProc(item, {
+    const { runtimePayload } = resolveBcuProcRuntimePayload({ target, attack: event, proc: { ...item, fruit: procFruit } });
+    const result = target.applyBcuProc({ ...item, payload: runtimePayload }, {
       attacker,
       scene,
       nowMs: scene.timeMs,
@@ -62,7 +68,7 @@ export function installBattleSceneProcApplyPatch() {
     const result = originalQueueAttackDamage.call(this, attacker, target, targetType, event, meta);
     const damageResult = result?.damageCalculation || result?.damageResult || target?.pendingHits?.[target.pendingHits.length - 1]?.damageCalculation || null;
     if (result?.accepted && targetType === 'actor' && damageResult?.proc) {
-      const procApply = applyDamageProc(this, attacker, target, damageResult, meta);
+      const procApply = applyDamageProc(this, attacker, target, event, damageResult, meta);
       result.procApply = procApply;
     }
     return result;

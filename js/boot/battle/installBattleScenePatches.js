@@ -8,6 +8,8 @@ export async function installBattleScenePatches(onProgress) {
     () => import('../../battle/BattleSceneBcuCastleGuardPatch.js'),
     () => import('../../battle/BattleSceneBcuCatCannonPatch.js'),
     () => import('../../battle/BattleSceneBcuSpiritPatch.js'),
+    // After spirit so the button-delay requestPlayerSpawn gate is the outermost wrapper.
+    () => import('../../battle/BattleSceneBcuButtonDelayPatch.js'),
     () => import('../../battle/BattleSceneCustomStageBattlePatch.js'),
     () => import('../../battle/BattleSceneStageSpawnHeaderPatch.js'),
     () => import('../../battle/BattleSceneBcuAttackPhasePatch.js'),

@@ -11,7 +11,7 @@ import { ProductionRuntime } from './ProductionRuntime.js';
 import { FormationStore } from './FormationStore.js';
 import { CharacterCatalogRuntime } from './CharacterCatalogRuntime.js';
 import { PREVIEW_ASSETS } from '../data/previewAssets.js';
-import { CHARACTER_CATALOG_VERSION, getCharacterCatalogSummary, validateCharacterCatalog, getCharacterCatalogDiagnostics, getAvailableCharacters, getCharactersByFaction, getCharacterById } from './CharacterCatalog.js';
+import { CHARACTER_CATALOG_VERSION, getCharacterCatalogSummary, validateCharacterCatalog, getCharacterCatalogDiagnostics, getAvailableCharacters, getCharacterById } from './CharacterCatalog.js';
 import { PLAYABLE_REGISTRY_VERSION, getPlayableRegistrySummary, validatePlayableRegistry, buildPlayableRosters } from './PlayableCharacterRegistry.js';
 
 export class DebugBattleInspector {

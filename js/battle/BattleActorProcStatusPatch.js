@@ -59,13 +59,14 @@ function decrementStatusFrames(actor) {
   }
 }
 
+// BCU Entity.java:2021 — interrupt(INT_WARP, warp.dis_0 + (int)(basis.r.nextFloat() * (warp.dis_1 - warp.dis_0))).
+// The draw is unconditional: BCU advances basis.r even when dis_0 == dis_1 (the product is 0 but the
+// stream still moves), uses dis_0/dis_1 directly (no min/max), and (int) truncates toward zero — so a
+// forward range (dis_1 < dis_0) yields a value below dis_0 rather than being clamped to dis_0.
 function rollWarpDistance(payload = {}, random = Math.random) {
   const d0 = Math.trunc(Number(payload.dis0 ?? payload.dis_0 ?? payload.distance ?? 0) || 0);
   const d1 = Math.trunc(Number(payload.dis1 ?? payload.dis_1 ?? d0) || d0);
-  const lo = Math.min(d0, d1);
-  const hi = Math.max(d0, d1);
-  if (hi <= lo) return lo;
-  return lo + Math.floor(random() * (hi - lo));
+  return d0 + Math.trunc(random() * (d1 - d0));
 }
 
 function applyWarp(actor, payload = {}, meta = {}) {
@@ -75,7 +76,14 @@ function applyWarp(actor, payload = {}, meta = {}) {
   if (actor?.bcuWarpImmune === true || immunity?.full === true || Number(immunity?.mult || immunity?.block || 0) >= 100) {
     return { applied: false, blocked: true, reason: 'warp-immunity', bcuReference: 'DataUnit/DataEnemy IMUWARP full immunity blocks P_WARP before INT_WARP lifecycle starts' };
   }
-  const random = typeof meta.random === 'function' ? meta.random : Math.random;
+  // Warp distance must draw from the scene's single seeded CopRand (BCU basis.r), like every other
+  // gameplay roll. meta.random is the per-attack stream when present; otherwise this proc runs after the
+  // RANDOM_STACK frame was popped (BattleSceneProcApplyPatch wraps queueAttackDamage outside the
+  // deterministic patch), so fall back to scene.getBcuRandom() — the same CopRand instance — before
+  // bare Math.random, which would desync replay. Matches BattleBaseProjectileProcPatch / surge runtime.
+  const random = typeof meta.random === 'function'
+    ? meta.random
+    : (typeof meta.scene?.getBcuRandom === 'function' ? meta.scene.getBcuRandom() : Math.random);
   const distance = rollWarpDistance(payload, random);
   const nowMs = Number.isFinite(meta.nowMs) ? meta.nowMs : 0;
   const durationMs = framesToMs(durationFrames);

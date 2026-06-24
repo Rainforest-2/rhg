@@ -159,6 +159,36 @@ while (isBcuWarpLifecycleActive(clampActor) && !clampActor.bcuWarpLifecycle.move
 }
 assert.equal(clampActor.x, 600, 'warp move is clamped by EUnit.getLim (stageLen - pos - limit) like BCU kbmove');
 
+// --- BCU basis.r parity (Entity.java:2021) ---
+// interrupt(INT_WARP, warp.dis_0 + (int)(basis.r.nextFloat() * (warp.dis_1 - warp.dis_0)))
+// Without meta.random, applyWarp must consume the scene's single seeded CopRand via getBcuRandom()
+// (not bare Math.random), draw unconditionally, and use dis_0/dis_1 directly without min/max.
+function seededScene(value) {
+  const s = fakeScene();
+  s.bcuDrawCount = 0;
+  s.getBcuRandom = function getBcuRandom() {
+    return () => { s.bcuDrawCount += 1; return value; };
+  };
+  return s;
+}
+
+const rngScene = seededScene(0.5);
+const rngActor = makeActor(rngScene);
+rngActor.applyBcuProc({ key: 'warp', payload: { timeFrames: 3, time: 3, dis0: 100, dis1: 300 } }, { scene: rngScene, nowMs: 0 });
+assert.equal(rngActor.bcuWarpLifecycle.distance, 200, 'warp distance = dis_0 + trunc(r*(dis_1-dis_0)) drawn from the scene seeded stream');
+assert.equal(rngScene.bcuDrawCount, 1, 'warp distance consumes exactly one seeded CopRand draw (not Math.random)');
+
+const eqScene = seededScene(0.9);
+const eqActor = makeActor(eqScene);
+eqActor.applyBcuProc({ key: 'warp', payload: { timeFrames: 3, time: 3, dis0: 120, dis1: 120 } }, { scene: eqScene, nowMs: 0 });
+assert.equal(eqActor.bcuWarpLifecycle.distance, 120, 'dis_0 == dis_1 still resolves to dis_0');
+assert.equal(eqScene.bcuDrawCount, 1, 'BCU advances basis.r even when dis_0 == dis_1 (unconditional nextFloat)');
+
+const fwdScene = seededScene(0.25);
+const fwdActor = makeActor(fwdScene);
+fwdActor.applyBcuProc({ key: 'warp', payload: { timeFrames: 3, time: 3, dis0: 300, dis1: 100 } }, { scene: fwdScene, nowMs: 0 });
+assert.equal(fwdActor.bcuWarpLifecycle.distance, 250, 'reversed range dis_1 < dis_0 follows BCU direct math (dis_0 + trunc(r*(dis_1-dis_0))), not a min/max clamp');
+
 const trace = getBcuWarpLifecycleTrace(actor) || actor.lastBcuWarpLifecycleDoneDebug;
 assert.ok(trace, 'warp lifecycle exposes deterministic trace');
 

@@ -1,4 +1,4 @@
-import { enemyCastleKey, nyCastleKey, pad3, toInt } from './BcuIdentifier.js';
+import { enemyCastleKey, nyCastleKey, toInt } from './BcuIdentifier.js';
 import { resolveEnemyCastleAsset, toFetchPath } from './BcuPathResolver.js';
 
 class EnemyCastleRepository {

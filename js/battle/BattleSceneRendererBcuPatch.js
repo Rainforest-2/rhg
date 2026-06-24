@@ -1,4 +1,3 @@
-import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-renderer-patch.v1');

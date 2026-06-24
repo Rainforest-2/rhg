@@ -456,11 +456,16 @@ export function installBattleSceneCustomStageBattlePatch() {
       } else {
         this.__customStageProgress = null;
       }
+      // Tell the base init that custom stage battle will override enemy spawning, so the standard
+      // BcuStageSpawnRuntime it builds does NOT draw from the scene CopRand (its draws would shift
+      // the seeded stream that this patch's own per-side spawn runtimes consume).
+      this.__customStageBattleWillOverride = config.enabled === true;
       try {
         const result = await originalInit.call(this, initOptions, ...rest);
         await initializeCustomStageBattle(this);
         return result;
       } finally {
+        this.__customStageBattleWillOverride = false;
         this.__customStageProgress = null;
       }
     };

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { BcuStageSpawnRuntime } from '../js/battle/BcuStageSpawnRuntime.js';
 import { BCU_STAGE_ENEMY_COLUMNS, StageDefinitionLoader } from '../js/battle/StageDefinitionLoader.js';
+import { BcuCopRand } from '../js/battle/bcu-runtime/BcuCopRand.js';
 
 function mkRow(overrides={}){return {rowIndex:0,enemyId:3,sourceEnemyId:5,rawEnemyId:7,count:2,isInfinite:false,firstFrame:10,respawnMinFrame:5,respawnMaxFrame:5,baseHpTrigger:100,baseHpTriggerPercent:100,magnification:120,hpMagnification:120,attackMagnification:130,layerMin:1,layerMax:2,frontLayer:1,backLayer:2,bossFlag:0,...overrides};}
 function mkRuntime(row, overrides={}){
@@ -190,5 +191,33 @@ assert.equal(ev[0].healthWindowDebug.inHealth,true);
 rt=new BcuStageSpawnRuntime(mkRuntime(mkRow({baseHpTriggerPercent:30,baseHpTriggerUpperPercent:80})),[mkDef()]);
 assert.equal(rt.tick(10,{logicFrame:10,aliveEnemyCount:0,maxEnemyCount:5,enemyBaseHpPercent:25}).length,0);
 assert.equal(rt.rows[0].lastBlockedReason,'base-hp-trigger');
+
+// --- Seeded-stream parity: BattleScene now wires the standard-path spawn runtime with a CopRand
+// (BCU StageBasis basis.r) closure instead of Math.random. A CopRand-backed closure must make the
+// whole schedule (first-frames, row respawn intervals, spawn layers, global respawn) reproducible
+// from the seed and must actually consume the stream — Math.random could do neither. ---
+function runSeededSpawnSim(seed) {
+  const cop = new BcuCopRand(seed);
+  const random = () => cop.nextFloat();
+  const row = mkRow({ count: 0, isInfinite: true, firstFrameMin: 5, firstFrameMax: 20, respawnMinFrame: 10, respawnMaxFrame: 30, layerMin: 0, layerMax: 3 });
+  const rt = new BcuStageSpawnRuntime(mkRuntime(row, { minSpawnFrame: 8, maxSpawnFrame: 24 }), [mkDef()], { random });
+  const spawns = [];
+  for (let f = 0; f <= 1000 && spawns.length < 6; f += 1) {
+    const evs = rt.tick(f, { logicFrame: f, aliveEnemyCount: 0, maxEnemyCount: 5, enemyBaseHpPercent: 100 });
+    for (const e of evs) {
+      const res = rt.commitSpawn(e, { random });
+      spawns.push({ frame: f, layer: res?.currentLayer ?? null });
+    }
+  }
+  return { spawns, draws: cop.drawCount };
+}
+
+const simA = runSeededSpawnSim(123456789n);
+const simB = runSeededSpawnSim(123456789n);
+const simC = runSeededSpawnSim(987654321n);
+assert.ok(simA.draws > 0, 'seeded spawn runtime consumes the CopRand stream (constructor first-frame/global + commit draws)');
+assert.ok(simA.spawns.length >= 6, 'infinite row keeps spawning across the seeded simulation');
+assert.deepStrictEqual(simA.spawns, simB.spawns, 'same seed -> identical spawn schedule (deterministic CopRand wiring, replayable)');
+assert.notDeepStrictEqual(simA.spawns, simC.spawns, 'different seed -> different schedule (genuinely seed-driven, not constant/Math.random)');
 
 console.log('check-bcu-stage-spawn-runtime: OK');

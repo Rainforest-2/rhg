@@ -12,6 +12,7 @@
 import { getBcuAssetDatabase } from '../../bcu/BcuAssetDatabase.js';
 import { parseNyancomboData, parseNyancomboParam } from '../BcuComboData.js';
 import { setComboRegistry, getComboRegistry } from './BcuComboStatModifier.js';
+import { reportModifierRegistryResult } from './BcuModifierDiagnostics.js';
 
 // core-db.zip internal entry produced by scripts/build-bcu-core-db-bundle.mjs.
 export const COMBO_BUNDLE_ENTRY = 'nyancombo.json';
@@ -51,10 +52,16 @@ export async function loadBcuComboRegistry(options = {}) {
   return setComboRegistry({ combos, values });
 }
 
-/** Boot installer: load the combo registry, logging (not throwing) on failure. */
+/**
+ * Boot installer: load the combo registry. On failure it does NOT throw (boot
+ * continues), but the failure is recorded on the modifier-diagnostics surface so
+ * the battle UI can warn that configured combos are not applied, instead of the
+ * silent fail-open this used to be.
+ */
 export async function installBcuComboRegistry(options = {}) {
   try {
     await loadBcuComboRegistry(options);
+    reportModifierRegistryResult('combo', true);
     return true;
   } catch (error) {
     console.warn('[battle boot] combo registry load failed; combos disabled', error);
@@ -62,6 +69,7 @@ export async function installBcuComboRegistry(options = {}) {
       ...(globalThis.__BATTLE_BOOT_PATCH_ERRORS__ || []),
       { path: 'BcuComboRegistryLoader', message: error?.message || String(error), stack: error?.stack || null }
     ];
+    reportModifierRegistryResult('combo', false, error);
     return false;
   }
 }

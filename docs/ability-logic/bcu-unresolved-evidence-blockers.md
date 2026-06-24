@@ -1,15 +1,17 @@
 # BCU unresolved evidence and compatibility blockers
 
-Updated: 2026-06-23.
+Updated: 2026-06-24.
 
 This file lists blockers for broad parity claims in `Rainforest-2/rhg`. A row here can coexist with an implemented runtime: the blocker may be its real data source, a browser acceptance gap, or a compatibility boundary.
 
 ## Active blockers
 
-All remaining blockers are either manual browser acceptance, an absent draw-side source, or an out-of-scope feature. The non-visual loader/data gaps were closed (see Resolved).
+Most remaining blockers are manual browser acceptance, an absent draw-side source, or an out-of-scope feature. One non-visual runtime-ordering divergence (same-frame attack resolution) is now evidence-confirmed and tracked below; the loader/data gaps were closed (see Resolved).
 
 | Severity | Area | Current blocker | Required next step |
 |---|---|---|---|
+| High | Same-frame attack-resolution ordering | BCU `StageBasis.updateEntities` (`battle/StageBasis.java:1086–1102`) excuses player-side (`dire != 1`) attacks and resolves their death **before** enemy-side (`dire != -1`) `update2()` creates the enemy strike, so a unit killed by the player this frame never lands its own strike (player-side precedence). rhg's tick (`BattleSceneBcuStageBasisTickPatch.js`) collects/captures both sides' due hits before any damage and applies all of it together in the `knockback-death` phase; `processDeferredAttackDamage` (`BattleSceneBcuAttackPhasePatch.js:51`) only skips an already-dead **target**, never a same-frame-killed **attacker**. Net: rhg permits symmetric same-frame mutual kills that BCU suppresses on the player side. | Add a deterministic same-frame mutual-kill fixture, then restructure the tick so player damage/death resolves before enemy strikes are excused. Must be browser-confirmed against a fixed BCU capture before any parity-complete claim (do not land the core-loop change from a trace alone). |
+| Low | Asset load-state vs combat logic | rhg streams unit/cannon assets (staged critical-path + background warmup, see `BattleScene.js:1` memo and `BcuLoadingStrategyVerifier`), so a not-yet-loaded template can defer a spawn/first-attack or fail the wall cannon (Form 339) closed; BCU has all data in memory. This is observable, not silent — `spawnStageEnemy`/`spawnEnemy` push `enemySpawnRejected`, `startActorAttack` pushes `attackDeferredAnimationLoading`, and the wall cannon records `wall-template-loading` and stays charged. Early-firing assets (initial enemies with attack anims, wall cannon) are already warmed on the critical path. | Treat the long-tail streaming defer as an intentional browser boundary, not a silent fail-open. A full blocking preflight would regress the deliberate staged-load UX, so escalate only if a fixed BCU capture shows an opening-frame spawn/attack/cannon frame actually diverges. |
 | Medium | Non-basic cannon visual assets | Dedicated cannon runtime is present—including BASE_WALL—but per-cannon ATK/EXT bitmap-animation aliases remain incomplete. | Add aliases from BCU assets; do not replace them with a generic effect approximation. (Visual.) |
 | Medium | Extend/waved cannon timing | Exact per-frame sweep/travel coordinates are not manually accepted. | Capture a fixed BCU reference and compare frames in browser. (Visual.) |
 | Medium | Summon entry visual | `Entity.setSummon(anim_type)` start appearance, placement, layer, and cleanup are not manually accepted (the loader is now proven). | Review in browser using the loader-backed summon fixture. (Visual.) |
@@ -43,6 +45,7 @@ Do not re-list these as current implementation blockers without a current code r
 | Combo/orb/treasure/talent/PCoin real-data sweep | Resolved (non-visual): `check-bcu-modifier-realdata-sweep-parity` composes real 150300 combo + talent/PCoin data with treasure/orb constants in BCU order. In-battle appearance remains a separate visual item. |
 | Zombie extra/custom revive source/range | Resolved: `check-bcu-zombie-extra-revive-source-range-parity` drives the BCU `ZombX.updateRevive` range/warp/`revive_non_zombie`/`imu_zkill` filter from a real `REVIVE` proc-object file. |
 | Storage failure visibility | Resolved: `FormationStore`/`StageRegistry` report read/write failures via `BcuStorageDiagnostics` (`check-formation-storage-failure-visibility`) instead of a silent catch; self-persistence round-trips. |
+| Modifier registry fail-open visibility | Resolved: combo / talent (PCoin) registry load failures now report through `BcuModifierDiagnostics` (`reportModifierRegistryResult` → listeners + `wanko-modifier-registry-error` event), so a failed bundle is queryable instead of only landing in the `__BATTLE_BOOT_PATCH_ERRORS__` dead-letter array. `check-bcu-modifier-registry-failure-visibility` proves a load failure is observable and a success reports clean. UI surfacing of the warning to a player who has combos/talents configured remains a Codex-owned UI follow-up. |
 | Historical StageDefinitionLoader gaps | Current code already handles the historical `rowIndex`, castle `noContinue`, `-1` enemy-castle fallback, and `bossGuard` source-row issues. Treat old README claims as historical only. |
 | Castle/base guard owner | Implemented as scene/base state; only browser appearance remains. |
 | Standard zombie corpse/soulstrike | Deterministic runtime coverage exists; remaining scope is visual acceptance. |

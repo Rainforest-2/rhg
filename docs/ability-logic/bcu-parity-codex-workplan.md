@@ -1,8 +1,8 @@
 # BCU parity workplan
 
-Updated: 2026-06-23.
+Updated: 2026-06-24.
 
-This is the current implementation order for `Rainforest-2/rhg`. It reflects the latest BCU audit: most central runtime work is no longer a blank implementation problem; the priority is source completeness, compatibility boundaries, and visual acceptance.
+This is the current implementation order for `Rainforest-2/rhg`. It reflects the latest BCU audit: most central runtime work is no longer a blank implementation problem; the priority is source completeness, compatibility boundaries, and visual acceptance. A 2026-06-24 source-verified re-audit added one non-visual runtime divergence (W7, same-frame attack-resolution ordering) and resolved the modifier-registry fail-open visibility gap.
 
 ## Status rules
 
@@ -30,7 +30,9 @@ No runtime fallback to loose `public/assets/bcu/**`. Preserve wrapper chains and
 > `check-bcu-trait-targetforms-loader-parity`, `check-bcu-modifier-realdata-sweep-parity`,
 > `check-bcu-zombie-extra-revive-source-range-parity`, `check-formation-storage-failure-visibility`).
 > The remaining work is **W4 visual acceptance** and **W5 cannon asset parity**, both
-> of which require manual browser review.
+> of which require manual browser review, plus **W7 same-frame attack-resolution
+> ordering** (a confirmed non-visual divergence that needs a fixture + core-loop
+> change + browser confirmation before any parity-complete claim).
 
 ### W0 — keep the proof harness and docs truthful
 
@@ -74,6 +76,12 @@ Required work:
 - sweep real combo/orb/treasure/talent/PCoin combinations;
 - keep source-proven resistance holders centralized; do not add enemy toxic immunity.
 
+Done (2026-06-24): combo / talent (PCoin) registry **load-failure** is now observable
+via `BcuModifierDiagnostics` (`check-bcu-modifier-registry-failure-visibility`)
+instead of a silent fail-open buried in `__BATTLE_BOOT_PATCH_ERRORS__`. Surfacing the
+warning in the battle UI for a player who configured combos/talents is a remaining
+Codex-owned UI follow-up, not a loader gap.
+
 ### W4 — visual acceptance ledger
 
 **Why fourth:** visible behavior cannot be marked complete from traces alone.
@@ -100,6 +108,34 @@ Only after behavior-bearing paths are covered by tests:
 - remove/gate diagnostic allocations that do not affect logic;
 - preserve wrapper calls, effect creation, coordinate metadata, and renderer ordering;
 - run the relevant safe suite after every cleanup.
+
+### W7 — same-frame attack-resolution ordering (status: partial / blocked on browser)
+
+**BCU fact.** `StageBasis.updateEntities` (`battle/StageBasis.java:1086–1102`) runs
+player-side (`dire != 1`) `update2()`, then `la.forEach(capture); la.forEach(excuse)`
+(damage + death applied), then base `update2()`, then enemy-side (`dire != -1`)
+`update2()`. A unit killed by the player's excuse this frame has its `update2()`
+skipped (dead), so it never creates its own strike — BCU gives the player side
+same-frame precedence.
+
+**Current JS owner.** The tick (`BattleSceneBcuStageBasisTickPatch.js`) already
+splits capture (`hit-target-capture`) from excuse (`damage-resolve` →
+`processDeferredAttackDamage` in `BattleSceneBcuAttackPhasePatch.js`) and excuses
+player-first via FIFO/dire-sort. The gap: both sides' due hits are collected and
+captured before any damage, and all HP damage/death lands together in the
+`knockback-death` phase (`KBRuntime.resolvePostDamage`); excuse only skips an
+already-dead **target** (`BattleSceneBcuAttackPhasePatch.js:51`), never a
+same-frame-killed **attacker**. Net: rhg permits symmetric same-frame mutual kills
+that BCU suppresses on the player side.
+
+**Required work (in order).**
+1. add a deterministic same-frame mutual-kill fixture/check that pins the BCU
+   outcome (player kills enemy this frame → enemy strike does **not** land);
+2. restructure the tick so player excuse + death resolves before enemy strikes are
+   captured/excused (interleave like BCU), as a minimal change to the existing
+   phase model — do not rewrite the wrapper chain;
+3. browser-confirm against a fixed BCU capture before any parity-complete claim.
+   Do not land the core-loop change from a deterministic trace alone.
 
 ## Explicit non-tasks
 

@@ -16,6 +16,7 @@ import {
   setTalentInfoRegistry,
   getTalentInfoForUnit
 } from './BcuTalentInfoData.js';
+import { reportModifierRegistryResult } from './BcuModifierDiagnostics.js';
 
 // core-db.zip internal entry produced by scripts/build-bcu-core-db-bundle.mjs.
 export const TALENT_BUNDLE_ENTRY = 'skill-acquisition.json';
@@ -64,9 +65,16 @@ export async function loadBcuTalentRegistry(options = {}) {
   return registry;
 }
 
+/**
+ * Boot installer: load the talent (PCoin) registry. On failure it does NOT throw
+ * (boot continues), but the failure is recorded on the modifier-diagnostics
+ * surface so the battle UI can warn that configured talents are not applied,
+ * instead of the silent fail-open this used to be.
+ */
 export async function installBcuTalentRegistry(options = {}) {
   try {
     await loadBcuTalentRegistry(options);
+    reportModifierRegistryResult('talent', true);
     return true;
   } catch (error) {
     console.warn('[battle boot] talent registry load failed; talents disabled', error);
@@ -74,6 +82,7 @@ export async function installBcuTalentRegistry(options = {}) {
       ...(globalThis.__BATTLE_BOOT_PATCH_ERRORS__ || []),
       { path: 'BcuTalentRegistryLoader', message: error?.message || String(error), stack: error?.stack || null }
     ];
+    reportModifierRegistryResult('talent', false, error);
     return false;
   }
 }

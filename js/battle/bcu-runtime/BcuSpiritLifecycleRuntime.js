@@ -51,10 +51,33 @@ function stateFor(scene, slotId) {
       cooldownFrames: 0,
       summonerSummoned: false,
       spiritSummoned: false,
-      source: 'BCU StageBasis spiritCooldown/summonerSummoned/spiritSummoned'
+      // BCU StageBasis spiritEmphasizeCount/spiritEmphasizeStartTime: the conjure-card
+      // "ready" cue that flashes when spiritCooldown reaches 0.
+      spiritReady: false,
+      spiritEmphasizeCount: 0,
+      spiritEmphasizeStartFrame: 0,
+      source: 'BCU StageBasis spiritCooldown/summonerSummoned/spiritSummoned/spiritEmphasize'
     });
   }
   return state.get(slotId);
+}
+
+// Read-only view of a conjure slot's BCU production state for the UI / card layer:
+// summoner presence, the spiritCooldown countdown, and the cooldown-ready emphasize
+// cue (StageBasis spiritEmphasizeCount). Returns null for non-conjurer slots so the
+// production roster can omit the spirit card decoration entirely.
+export function getBcuSpiritProductionState(scene, slotId) {
+  const st = scene?.bcuSpiritState?.get?.(slotId);
+  if (!st || !st.summonerSummoned) return null;
+  return {
+    slotId,
+    summonerSummoned: st.summonerSummoned === true,
+    spiritSummoned: st.spiritSummoned === true,
+    cooldownFrames: Math.max(0, Math.trunc(st.cooldownFrames || 0)),
+    spiritReady: st.spiritReady === true && st.spiritSummoned !== true,
+    spiritEmphasizeCount: Math.max(0, Math.trunc(st.spiritEmphasizeCount || 0)),
+    source: 'BCU StageBasis spiritCooldown/spiritEmphasizeCount/spiritSummoned'
+  };
 }
 
 export function markBcuSummonerSpawned(scene, actor, { slotId = null } = {}) {
@@ -236,6 +259,9 @@ export function requestBcuSpiritSpawn(scene, slotIdOrActor) {
     spawned.push(spirit);
   }
   st.spiritSummoned = true;
+  // The conjure consumed the ready cue (BCU clears the emphasize once the spirit is out).
+  st.spiritReady = false;
+  st.spiritEmphasizeCount = 0;
   scene.pushEvent?.({ type: 'bcuSpiritSpawned', slotId, count: spawned.length });
   return { ok: true, spiritAttempt: true, spawned, state: st };
 }
@@ -276,13 +302,39 @@ export function rejectBcuSpiritDamage(actor, meta = {}) {
 
 export function tickBcuSpiritState(scene) {
   if (!scene?.bcuSpiritState) return { active: false };
+  // BCU StageBasis.update advances spiritCooldown / spiritEmphasize exactly once per
+  // game frame. The scene patch wraps this tick around several tick phases, so it runs
+  // multiple times per logicFrame; gate the per-frame countdown so a 15-frame cooldown
+  // does not expire 3x too fast. The summoner/spirit/self-kill housekeeping below is
+  // idempotent and still runs every call. Scenes without a logicFrame (legacy unit
+  // mocks) fall back to one decrement per call.
+  const frame = Number.isFinite(scene.logicFrame) ? scene.logicFrame : null;
+  const advanceFrame = frame === null || scene.bcuSpiritLastTickFrame !== frame;
+  if (advanceFrame) scene.bcuSpiritLastTickFrame = frame;
   for (const st of scene.bcuSpiritState.values()) {
-    if (st.cooldownFrames > 0) st.cooldownFrames -= 1;
+    if (advanceFrame) {
+      // BCU StageBasis 781-784: spiritEmphasizeCount decays every 4 frames after ready.
+      if (st.spiritEmphasizeCount > 0) {
+        const since = (frame ?? 0) - (st.spiritEmphasizeStartFrame ?? 0);
+        if (since > 0 && since % 4 === 0) st.spiritEmphasizeCount -= 1;
+      }
+      if (st.cooldownFrames > 0) {
+        st.cooldownFrames -= 1;
+        if (st.cooldownFrames === 0) {
+          // BCU StageBasis 788-791: cooldown hit 0 -> arm the conjure-card ready cue.
+          st.spiritReady = true;
+          st.spiritEmphasizeStartFrame = frame ?? 0;
+          st.spiritEmphasizeCount = 10;
+        }
+      }
+    }
     const summoners = livingSummoners(scene, st.slotId);
     const spirits = livingSpirits(scene, st.slotId);
     if (!summoners.length) {
       st.summonerSummoned = false;
       st.spiritSummoned = false;
+      st.spiritReady = false;
+      st.spiritEmphasizeCount = 0;
     } else {
       st.spiritSummoned = spirits.length > 0;
     }

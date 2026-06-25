@@ -67,7 +67,7 @@ const scene = {
 markBcuSummonerSpawned(scene, summoner, { slotId: 'summoner-slot' });
 assert.equal(scene.bcuSpiritState.get('summoner-slot').cooldownFrames, SPIRIT_SUMMON_DELAY, 'summoner spawn sets cooldown 15');
 assert.equal(requestBcuSpiritSpawn(scene, 'summoner-slot').ok, false, 'spirit cannot spawn before cooldown');
-for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) tickBcuSpiritState(scene);
+for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) { scene.logicFrame += 1; tickBcuSpiritState(scene); }
 assert.equal(scene.bcuSpiritState.get('summoner-slot').cooldownFrames, 0, 'cooldown ticks to zero');
 
 const spawned = requestBcuSpiritSpawn(scene, 'summoner-slot');
@@ -140,7 +140,7 @@ assert.equal(scene.bcuSpiritState.get('summoner-slot').spiritSummoned, false, 'c
   assert.equal(onCooldown.ok, false, 'spirit cannot spawn during cooldown');
   assert.equal(onCooldown.spiritAttempt, true, 'cooldown tap is a consumed spirit attempt, not a second summoner deploy');
 
-  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) tickBcuSpiritState(scene2);
+  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) { scene2.logicFrame += 1; tickBcuSpiritState(scene2); }
   const loading = requestBcuSpiritSpawn(scene2, 'summoner2');
   assert.equal(loading.ok, false, 'spirit does not spawn while its template is still loading');
   assert.equal(loading.reason, 'spirit-template-loading', 'unready spirit template yields an explicit loading reason');
@@ -178,7 +178,7 @@ assert.equal(scene.bcuSpiritState.get('summoner-slot').spiritSummoned, false, 'c
     pushEvent() {}
   };
   markBcuSummonerSpawned(scene3, warpedSummoner, { slotId: 'warped-summoner' });
-  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) tickBcuSpiritState(scene3);
+  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) { scene3.logicFrame += 1; tickBcuSpiritState(scene3); }
   const warped = requestBcuSpiritSpawn(scene3, 'warped-summoner');
   assert.equal(warped.ok, true, 'warped summoner can still conjure after cooldown');
   assert.equal(warped.spawned[0].x, Math.max(800 + 100, Math.min(3000 + SPIRIT_SUMMON_RANGE, 3200)), 'warped summoner uses pre-warp position for spirit spawn');
@@ -203,7 +203,7 @@ assert.equal(scene.bcuSpiritState.get('summoner-slot').spiritSummoned, false, 'c
     pushEvent() {}
   };
   markBcuSummonerSpawned(scene4, cappedSummoner, { slotId: 'capacity-summoner' });
-  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) tickBcuSpiritState(scene4);
+  for (let i = 0; i < SPIRIT_SUMMON_DELAY; i += 1) { scene4.logicFrame += 1; tickBcuSpiritState(scene4); }
   const capped = requestBcuSpiritSpawn(scene4, 'capacity-summoner');
   assert.equal(capped.ok, false, 'spirit spawn is rejected when BCU side capacity is full');
   assert.equal(capped.reason, 'spirit-capacity-full', 'capacity rejection is explicit');

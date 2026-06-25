@@ -16,8 +16,8 @@ Implement only killer/special-target damage multipliers that are explicitly docu
 - `js/battle/BcuCombatModel.js`
   - target traits already include `baron`, `beast`, `sage`, `villain`, `witch`, and `eva`.
   - unit ability bits already include `AB_BAKILL` for colossus, `AB_SKILL` for sage, `AB_WKILL` for witch, and `AB_EKILL` for eva.
-  - `AB_VKILL` exists, but no current unit CSV parse sets it. It can still be honored if a future combo/runtime source sets the bit.
-  - no confirmed existing ability bit or parser path is present for beast killer.
+  - `AB_VKILL` is not a normal unit CSV bit; BCU `EUnit.getAbi()` grants it from a positive `C_VKILL` combo increment.
+  - beast hunter is `P_BSTHUNT`, not an `AB_*` bit.
 - `js/battle/DamageAbilityResolver.js`
   - existing resolver already applies colossus attack-side multiplier but used the wrong holder check for the defense-side branch.
 
@@ -30,8 +30,9 @@ Implement only killer/special-target damage multipliers that are explicitly docu
   - attacker has `AB_SKILL` and target has `sage`: damage x1.2.
   - target has `AB_SKILL` and attacker has `sage`: damage x0.5.
 - Villain special:
-  - attacker has `AB_VKILL` and target has `villain`: damage x2.5.
-  - target has `AB_VKILL` and attacker has `villain`: damage x0.4.
+  - active `C_VKILL` combo increment synthesizes `AB_VKILL` for damage resolution.
+  - attacker has synthesized or explicit `AB_VKILL` and target has `villain`: damage x2.5.
+  - target has synthesized or explicit `AB_VKILL` and attacker has `villain`: damage x0.4.
 - Witch killer:
   - attacker has `AB_WKILL` and target has `witch`: damage x5.
   - target has `AB_WKILL` and attacker has `witch`: damage x0.1.
@@ -41,9 +42,7 @@ Implement only killer/special-target damage multipliers that are explicitly docu
 
 ## Explicitly not implemented
 
-- `超獣特効` damage and attack-nullify are not implemented here because the current parser does not expose a confirmed ability bit/source for the holder. Adding one without a reference-backed CSV column or combo/orb source would be speculation.
-- Sage special status resistance and sage-resistance bypass are not implemented here because this pass is limited to damage multipliers.
-- Combo/orb enhancement of witch/eva killer is not implemented because no current combo/orb runtime source is wired into the resolver.
+- None for the rows above after the 2026-06-25 audit. Remaining boundaries are visual acceptance and future source-proven holders, not these damage multipliers.
 
 ## Runtime files changed
 

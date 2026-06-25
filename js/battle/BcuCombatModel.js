@@ -107,7 +107,7 @@ function parseUnitAbilities(rawValues) {
   set(BCU_ABI.AB_ZKILL,52,'zombieKiller');
   set(BCU_ABI.AB_WKILL,53,'witchKiller');
   if (n(rawValues,58,0) === 2) { abi |= BCU_ABI.AB_GLASS; sources.push({ index:58, key:'glass', bit:BCU_ABI.AB_GLASS }); }
-  set(BCU_ABI.AB_IMUSW,56,'immuneSurge');
+  set(BCU_ABI.AB_IMUSW,56,'bossShockwaveImmune');
   set(BCU_ABI.AB_EKILL,77,'evaKiller');
   set(BCU_ABI.AB_RESISTS,80,'insanelyTough');
   set(BCU_ABI.AB_MASSIVES,81,'insaneDamage');

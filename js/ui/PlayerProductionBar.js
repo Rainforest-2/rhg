@@ -1,5 +1,6 @@
 import { LINEUP_COLS } from '../battle/FormationStore.js';
 import { ProductionRuntime } from '../battle/ProductionRuntime.js';
+import { getBcuSpiritProductionState } from '../battle/bcu-runtime/BcuSpiritLifecycleRuntime.js';
 import { BcuSpriteText } from './BcuSpriteText.js';
 import { ProductionCardSkin, PRODUCTION_CARD_CANVAS } from './ProductionCardSkin.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
@@ -140,7 +141,10 @@ export function getCardStackRenderModel(scene, col, context = null) {
       cooldownMs: backStatus?.cooldownMs ?? 0,
       cooldownRemainingMs: backStatus?.cooldownRemainingMs ?? 0,
       productionSourceDebug: backStatus?.productionSourceDebug ?? null,
-      statusSource: backStatus?.statusSource ?? null
+      statusSource: backStatus?.statusSource ?? null,
+      // BCU StageBasis spiritCooldown/spiritEmphasize: the conjure-card "spirit ready"
+      // cue. null for non-conjurer cards so the skin only decorates active conjurers.
+      bcuSpirit: getBcuSpiritProductionState(scene, backUnit?.slotId) || null
     },
     front: {
       unitDef: frontUnit,
@@ -153,7 +157,8 @@ export function getCardStackRenderModel(scene, col, context = null) {
       cooldownMs: frontStatus?.cooldownMs ?? 0,
       cooldownRemainingMs: frontStatus?.cooldownRemainingMs ?? 0,
       productionSourceDebug: frontStatus?.productionSourceDebug ?? null,
-      statusSource: frontStatus?.statusSource ?? null
+      statusSource: frontStatus?.statusSource ?? null,
+      bcuSpirit: getBcuSpiritProductionState(scene, frontUnit?.slotId) || null
     }
   };
 }

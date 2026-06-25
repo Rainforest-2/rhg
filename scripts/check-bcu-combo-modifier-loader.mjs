@@ -20,6 +20,7 @@ import {
   computeActiveCombos,
   getInc
 } from '../js/battle/BcuComboData.js';
+import { computeUnitComboIncrements } from '../js/battle/bcu-runtime/BcuComboStatModifier.js';
 import { DamageAbilityResolver } from '../js/battle/DamageAbilityResolver.js';
 
 const DATA_DIR = 'public/assets/bcu/150300/org/data';
@@ -89,6 +90,7 @@ const expectedAtk = values[COMBO_TYPE.C_ATK][1]; // 15
 assert.equal(getInc(COMBO_TYPE.C_STRONG, synthetic, values), expectedStrong, 'getInc sums same-type combos');
 assert.equal(getInc(COMBO_TYPE.C_ATK, synthetic, values), expectedAtk, 'getInc isolates by type');
 assert.equal(getInc(COMBO_TYPE.C_DEF, synthetic, values), 0, 'getInc is 0 for an absent type');
+assert.equal(computeUnitComboIncrements([{ type: COMBO_TYPE.C_VKILL, lv: 1 }], values).villainKiller, values[COMBO_TYPE.C_VKILL][1], 'C_VKILL is exposed as villainKiller for runtime AB_VKILL synthesis');
 
 // CharaGroup-scoped getInc gate (BasisLU.getInc(type, unit)).
 assert.equal(getInc(COMBO_TYPE.C_STRONG, synthetic, values, () => false), 0, 'unitMatcher=false zeroes the increment');

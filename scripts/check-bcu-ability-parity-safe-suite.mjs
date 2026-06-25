@@ -50,6 +50,7 @@ const commands = [
   ['node', ['--check', 'scripts/check-bcu-castle-guard-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-spirit-bundle-manifest-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-spirit-lifecycle-parity.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-spirit-cooldown-emphasize-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-summon-runtime-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-demon-shield-regen-timing.mjs']],

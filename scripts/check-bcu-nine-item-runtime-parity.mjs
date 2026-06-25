@@ -74,7 +74,7 @@ function enemy({ traits = [], specialTraits = [], slotId = 'enemy-special' } = {
 }
 
 {
-  const combo = { increments: { massive: 10, witchKiller: 100 } };
+  const combo = { increments: { massive: 10, witchKiller: 100, villainKiller: 1 } };
   const massive = DamageAbilityResolver.resolve({
     attacker: unit({ abi: BCU_ABI.AB_MASSIVE, targetTraits: [BCU_TRAITS.red], combo }),
     target: enemy({ traits: [BCU_TRAITS.red] }),
@@ -90,6 +90,22 @@ function enemy({ traits = [], specialTraits = [], slotId = 'enemy-special' } = {
     baseDamage: 100
   });
   assert.equal(witch.finalDamage, 500, 'C_WKILL combo increment drives Treasure.getWKAtk');
+
+  const villainAttack = DamageAbilityResolver.resolve({
+    attacker: unit({ targetTraits: [BCU_TRAITS.villain], combo }),
+    target: enemy({ traits: [BCU_TRAITS.villain] }),
+    targetType: 'actor',
+    baseDamage: 100
+  });
+  assert.equal(villainAttack.finalDamage, 250, 'C_VKILL combo increment grants AB_VKILL attack multiplier');
+
+  const villainDefense = DamageAbilityResolver.resolve({
+    attacker: enemy({ traits: [BCU_TRAITS.villain] }),
+    target: unit({ combo }),
+    targetType: 'actor',
+    baseDamage: 100
+  });
+  assert.equal(villainDefense.finalDamage, 40, 'C_VKILL combo increment grants AB_VKILL defense multiplier');
 }
 
 {

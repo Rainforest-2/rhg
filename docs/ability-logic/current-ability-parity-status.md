@@ -1,6 +1,6 @@
 # Current BCU ability parity status
 
-Updated: 2026-06-24.
+Updated: 2026-06-25.
 
 This document records current non-visual BCU ability/proc/effect parity for `Rainforest-2/rhg`. It is intentionally conservative: a parser field, old note, or one fixture does not prove broad runtime parity.
 
@@ -28,7 +28,7 @@ Manual browser review is tracked in [`bcu-visual-review-checklist.md`](./bcu-vis
 | death soul / death-surge / AB_GLASS | `code-complete-candidate` | Parser, death runtime, fallback cleanup/recovery, and deterministic checks exist. Full death-surge is owned by the demon-soul death runtime and triggers at soul frame 21; the old priority-effect immediate path is guarded against. |
 | standard zombie corpse / soulstrike / revive | `human-visual-review-needed` | Deterministic coverage includes corpse targetability, soulstrike, zombie killer suppression, revive HP, phase timing, cleanup, and death-surge single spawn. Real extra/custom revive source coverage remains partial. |
 | burrow | `code-complete-candidate` | Count/distance parse, down/underground/up lifecycle, collision/targetability, movement clamp, guards, and cleanup are tested. |
-| spirit lifecycle | `human-visual-review-needed` | Spawn lifecycle, cooldown, one-spirit-per-summoner, attack-only form bundle registration, semantic ZIP loading, factory path, pre-warp summon origin, and BCU side-capacity rejection are tested. Normal actor/A_IMUATK appearance is unaccepted. |
+| spirit lifecycle | `human-visual-review-needed` | Spawn lifecycle, once-per-frame cooldown countdown, cooldown-ready emphasize cue (`spiritEmphasizeCount`/`spiritEmphasizeStartTime`), one-spirit-per-summoner, attack-only form bundle registration, semantic ZIP loading, factory path, pre-warp summon origin, BCU side-capacity rejection, boss-shockwave immunity (`bcuIsSpirit`), the `unitRespawnTime` one-frame post-conjure production lock, and the `getBcuSpiritProductionState` ready/cooldown state wired into the production-card render model are tested. Only the on-screen pixels — the conjure-card ready flash and spirit/A_IMUATK appearance — remain for browser acceptance. |
 | castle/base guard | `human-visual-review-needed` | Active/hold/break state, base-damage hold, and effect phase trace are tested. Browser appearance remains unaccepted. |
 | wallet / worker-cat level / unit deploy cost | `code-complete-candidate` | BCU ownership/formulas, strict upgrade gate, income, Lv8 handling, action `-1`, and default unit deploy cost `DataUnit.price * 1.5` (`StageMap.price=1`) are wired and tested. |
 | wallet and cannon UI bitmaps | `human-visual-review-needed` | BCU `img002` assets, sprite font layout, gauge/flash state, and headless checks are present; on-device/browser acceptance is pending. |
@@ -36,6 +36,83 @@ Manual browser review is tracked in [`bcu-visual-review-checklist.md`](./bcu-vis
 | non-basic cat cannon | `code-complete-candidate` | SLOW/STOP/WATER/GROUND/BARRIER/CURSE and BASE_WALL have dedicated runtime ownership and checks. Each cannon now loads and spawns its own BCU `NyCastle.aux.atks[id]` BASE/ATK eanim (the ATK eanim doubles as the ContExtend EXT sweep for slow/curse) via the per-id `getBcuCatCannonAnimFiles` / `spawnCatCannonNonBasicEffect` path, with the no-image trace kept only as an observable load-fallback (`check-bcu-non-basic-cat-cannon-anim-parity`). Browser acceptance and exact extend/waved sweep/travel timing remain open. |
 | special castle boss-spawn coordinate | `code-complete-candidate` | Source formula, core bundle, StageDefinition enrichment, and StageRuntime consumption are tested. |
 | enemy castle / stage “special attack” | `negative-evidence` | Plain `ECastle` has no attack owner. Boss bases use `EEnemy`; threshold/kill-count spawn behavior belongs to stage runtime. |
+
+## Reference Markdown one-to-one audit
+
+This audit maps `references/bcu/キャラクターの特殊性能_全文_リンク削除.md` headings to current JS ownership. The user-requested exclusion is the `精霊` subheading under `召喚`; the ordinary `召喚` ability remains in scope. `Implemented` below means runtime/data ownership exists; visual rows still require the browser ledger before any visual-complete claim.
+
+### Effects
+
+| Reference heading | Current JS owner | Audit result |
+|---|---|---|
+| 攻撃力ダウン | `BcuCombatModel` weaken columns, `ProcResolver`, `BattleActorProcStatusPatch`, `DamageCalculator` | Implemented. |
+| 動きを止める | `BcuCombatModel` freeze columns, `ProcResolver`, `BattleActorProcStatusPatch` | Implemented. |
+| 動きを遅くする | `BcuCombatModel` slow columns, `ProcResolver`, `BattleActorProcStatusPatch` | Implemented. |
+| 攻撃ターゲット限定 | `AB_ONLY`, `BcuTraitCompatibility`, `BattleAttackResolver` / `DamageAbilityResolver` | Implemented, including `Trait.targetForms` fixture coverage. |
+| めっぽう強い | `AB_GOOD`, `DamageAbilityResolver`, `BcuTreasureModifier`, combo/orb modifiers | Implemented. |
+| 打たれ強い | `AB_RESIST`, `DamageAbilityResolver`, `BcuTreasureModifier`, combo/orb modifiers | Implemented. |
+| 超打たれ強い | `AB_RESISTS`, `DamageAbilityResolver` | Implemented. |
+| 超ダメージ | `AB_MASSIVE`, `DamageAbilityResolver`, combo/orb modifiers | Implemented. |
+| 極ダメージ | `AB_MASSIVES`, `DamageAbilityResolver` | Implemented. |
+| ふっとばす | `ProcResolver` knockback proc, `BcuKnockbackRuntimePatch` / `KBRuntime` | Implemented. |
+| ワープ | `BcuWarpRuntime`, `BcuWarpLifecycleRuntime`, `BattleActorProcStatusPatch` | Implemented. |
+| 呪い | `ProcResolver` curse, status suppression in proc/damage/surge paths | Implemented. |
+| 攻撃無効 | `BattleActorAttackNullifyPatch` (`IMUATK` / beast-hunter nullify) | Implemented. |
+| 古代の呪い | `ProcResolver` seal, `BattleActorProcStatusPatch`, status icon/effect specs | Implemented for source-proven seal/custom/talent paths. |
+| 毒撃 | `BcuCombatModel` toxic columns, `ProcResolver`, `BcuDamageGuardRuntime` | Implemented. |
+| 遅延 | `BcuDelayRuntimePatch`, `BcuDelayRuntime`, `BcuButtonDelayRuntime` | Runtime implemented; browser appearance remains `human-visual-review-needed`. |
+
+### Abilities
+
+| Reference heading | Current JS owner | Audit result |
+|---|---|---|
+| 攻撃力アップ | `BcuCombatModel` strengthen columns, `BattleActorStrengthenLethalPatch`, `DamageCalculator` | Implemented. |
+| 生き残る | `BcuCombatModel` lethal columns, `BattleActorStrengthenLethalPatch` | Implemented. |
+| 城破壊が得意 | `P_ATKBASE`, `DamageAbilityResolver`, `BattleBase` damage path | Implemented. |
+| クリティカル | `BcuCombatModel` critical proc, `DamageAbilityResolver` | Implemented. |
+| メタルキラー | `BcuCombatModel` `METALKILL`, `DamageAbilityResolver` | Implemented. |
+| ゾンビキラー | `AB_ZKILL`, `BattleActorZombieRevivePatch` | Implemented. |
+| 魂攻撃 | `AB_CKILL`, `BattleSoulstrikePatch` | Implemented. |
+| バリアブレイカー | `ProcResolver` barrierBreaker, `BattleActorBarrierShieldPatch` | Implemented; visual review pending. |
+| シールドブレイカー | `ProcResolver` shieldPierce, `BattleActorBarrierShieldPatch` | Implemented; visual review pending. |
+| 渾身の一撃 | `strongAttack` / `SATK`, `DamageAbilityResolver` | Implemented. |
+| 撃破時お金アップ | `P_BOUNTY`, `BattleBountyRuntimePatch` | Economy implemented; no dedicated battle visual owner is proven. |
+| メタル | `AB_METALIC` / metal trait, `DamageAbilityResolver` | Implemented. |
+| 波動 | `BattleWaveRuntimePatch`, `BcuAttackWaveRuntime`, `BattleBaseProjectileProcPatch` | Implemented. |
+| 小波動 | `miniWave`, `BattleMiniProcParityPatch`, `BattleWaveRuntimePatch` | Implemented. |
+| 烈波 | `BattleSurgeRuntimePatch`, `BcuAttackVolcanoRuntime` | Implemented. |
+| 小烈波 | `miniVolcano`, `BattleMiniProcParityPatch`, `BattleSurgeRuntimePatch` | Implemented. |
+| 波動ストッパー | `AB_WAVES`, `BcuWaveStopperRuntime` / wave invalid path | Implemented. |
+| デス烈波 | `deathSurge`, `BcuDeathAnimationRuntime` | Runtime implemented; demon-soul visual acceptance pending. |
+| 烈波カウンター | `AB_CSUR`, `BattleSurgeRuntimePatch` | Implemented. |
+| 召喚 | `BcuSummonRuntime`, `BattleSceneBcuSummonPatch`, proc-object loader | Runtime and real proc-object loading implemented; entry appearance pending. |
+| 爆波 | `blast`, `BattleBlastRuntimePatch` | Implemented. |
+| バリア | `BcuBarrierRuntime`, `BattleActorBarrierShieldPatch` | Implemented; visual review pending. |
+| 悪魔シールド | `BcuDemonShieldRuntime`, `BattleActorBarrierShieldPatch` | Implemented; visual review pending. |
+| 地中移動 | `BcuBurrowLifecycleRuntime`, `BattleActorBcuBurrowPatch` | Implemented. |
+| 蘇生 | `BcuZombieReviveRuntime`, `BattleActorZombieRevivePatch` | Implemented; corpse/revive visual review pending. |
+| 遠方攻撃 | `BattleStatsLoader` LD fields, `BattleAttackProfile`, `BattleAttackResolver` | Implemented. |
+| 全方位攻撃 | `BattleStatsLoader` LD/omni fields, `BattleAttackResolver` | Implemented. |
+| 超生命体特効 | `AB_BAKILL`, `DamageAbilityResolver` | Implemented. |
+| 超獣特効 | `P_BSTHUNT`, `DamageAbilityResolver`, `BattleActorAttackNullifyPatch` | Implemented. |
+| 超賢者特効 | `AB_SKILL`, `DamageAbilityResolver`, `BcuResistRuntime` | Implemented, including sage status-resistance bypass/reduction. |
+| 怪人特効 | `C_VKILL` combo increment -> `AB_VKILL`, `DamageAbilityResolver` | Implemented in this batch. |
+| 各種妨害無効 | `BcuProcImmunityPatch`, `BcuResistRuntime`, parsed `IMU*` fields | Implemented for source-proven holders. |
+| 波動無効 | `IMUWAVE`, `BcuDamageGuardRuntime` | Implemented. |
+| 烈波無効 | `IMUVOLC`, `BcuDamageGuardRuntime` | Implemented. |
+| 爆波無効 | `IMUBLAST`, `BcuDamageGuardRuntime` | Implemented. |
+| 毒撃無効 | `IMUPOIATK`, `BcuDamageGuardRuntime` | Implemented for unit holder; enemy toxic-immunity CSV holder remains negative evidence. |
+| 1回攻撃 | `AB_GLASS`, `BattleActorGlassPatch`, `BcuDeathAnimationRuntime` | Implemented. |
+| 連続攻撃 | `BcuStatsSchema`, `BattleStatsLoader`, `BattleAttackProfile` per-hit `abi` | Implemented. |
+| 魔女キラー | `AB_WKILL`, `C_WKILL`, `DamageAbilityResolver` | Implemented; BCU multiplier depends on active combo increment. |
+| 使徒キラー | `AB_EKILL`, `C_EKILL`, `DamageAbilityResolver` | Implemented; BCU multiplier depends on active combo increment. |
+
+### Other
+
+| Reference heading | Current JS owner | Audit result |
+|---|---|---|
+| 衝撃波無効 | `AB_IMUSW`, `BattleBossShockwaveRuntimePatch` | Implemented in this batch; `INT_SW` boss shockwave skips immune actors. |
+| わんこ城バリア | `BcuCastleGuardRuntime`, `BattleSceneBcuCastleGuardPatch` | Runtime implemented; browser appearance pending. |
 
 ## Loader-backed code-complete areas (non-visual)
 

@@ -2,7 +2,7 @@
 
 ## Last updated
 
-- date: 2026-06-24 (UTC)
+- date: 2026-06-25 (UTC)
 - repository: `Rainforest-2/rhg`
 - scope: current BCU ZIP/runtime/ability parity, rendering/UI acceptance, data loading, and persistence compatibility.
 - audit basis: current rhg code plus the checked-in BCU reference ZIPs under `references/bcu/`.
@@ -35,6 +35,10 @@ This is the high-level source of truth. It supersedes historical README/ZIP-anal
 ## 2026-06-23 audit summary
 
 No confirmed `Critical` parity defect was found in the inspected scope. The non-visual source-loading gaps (SUMMON proc-object, `Trait.targetForms`, combo/orb/treasure/talent/PCoin, extra/custom revive, storage-failure visibility) are now loader-proven by real BCU-format fixtures. The dominant remaining risk is manual visual acceptance; BCU save/lineup import-export stays out of scope.
+
+## 2026-06-25 reference Markdown audit summary
+
+The checked-in character ability reference Markdown was audited one-to-one against the current JS owners, excluding the `精霊` subheading per the audit scope. Two non-visual runtime gaps were closed: `C_VKILL` combo increments now synthesize `AB_VKILL` for `怪人特効`, and `AB_IMUSW` now excludes actors from boss-spawn `INT_SW` shockwave interruption. The remaining ability-family risk is still browser visual acceptance, not missing deterministic runtime ownership.
 
 ### High priority
 

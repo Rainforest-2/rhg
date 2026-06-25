@@ -92,12 +92,16 @@ function getEffectiveSharedTraits(attacker, target, attackTraits = [], targetTra
 
 function getAttackerAbi(attacker) {
   const cm = getCombatModel(attacker);
-  return Number(cm?.ability?.abi ?? attacker?.bcuAbi ?? attacker?.rawStats?.bcuAbi ?? attacker?.abilityModel?.bcuAbi ?? 0) || 0;
+  let abi = Number(cm?.ability?.abi ?? attacker?.bcuAbi ?? attacker?.rawStats?.bcuAbi ?? attacker?.abilityModel?.bcuAbi ?? 0) || 0;
+  if (comboInc(attacker, 'villainKiller') > 0) abi |= BCU_ABI.AB_VKILL;
+  return abi;
 }
 
 function getTargetAbi(target) {
   const cm = getCombatModel(target);
-  return Number(cm?.ability?.abi ?? target?.bcuAbi ?? target?.rawStats?.bcuAbi ?? target?.abilityModel?.bcuAbi ?? 0) || 0;
+  let abi = Number(cm?.ability?.abi ?? target?.bcuAbi ?? target?.rawStats?.bcuAbi ?? target?.abilityModel?.bcuAbi ?? 0) || 0;
+  if (comboInc(target, 'villainKiller') > 0) abi |= BCU_ABI.AB_VKILL;
+  return abi;
 }
 
 function getEquippedOrbs(entity) {

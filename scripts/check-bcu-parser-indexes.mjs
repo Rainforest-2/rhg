@@ -19,6 +19,7 @@ const unit = BcuCombatModel.parseStats({ kind: 'unit', rawValues: raw(120, [
   [84, 25], [85, 70],
   [110, 42],
   [67, 3],
+  [56, 1],
   [46, 1], [91, 1], [116, 1],
   [111, 1]
 ]) });
@@ -48,6 +49,7 @@ assert.equal(unit.proc.metalKiller.mult, 12, 'unit metal killer index 112');
 assert.equal(unit.proc.attackNullify.prob, 25, 'unit attack-nullify prob index 84');
 assert.equal(unit.proc.attackNullify.time, 70, 'unit attack-nullify time index 85');
 assert.equal(unit.proc.spirit.id, 42, 'unit spirit id index 110');
+assert.equal((unit.ability.abi & BCU_ABI.AB_IMUSW) !== 0, true, 'unit AB_IMUSW boss shockwave immunity index 56');
 assert.equal((unit.ability.abi & BCU_ABI.AB_SKILL) !== 0, true, 'unit AB_SKILL index 111');
 assert.equal(unit.proc.IMUWAVE.full, true, 'unit IMUWAVE index 46');
 assert.equal(unit.proc.IMUVOLC.full, true, 'unit IMUVOLC index 91');

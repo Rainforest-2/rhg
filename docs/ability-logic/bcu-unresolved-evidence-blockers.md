@@ -1,6 +1,6 @@
 # BCU unresolved evidence and compatibility blockers
 
-Updated: 2026-06-24.
+Updated: 2026-06-25.
 
 This file lists blockers for broad parity claims in `Rainforest-2/rhg`. A row here can coexist with an implemented runtime: the blocker may be its real data source, a browser acceptance gap, or a compatibility boundary.
 
@@ -45,6 +45,8 @@ Do not re-list these as current implementation blockers without a current code r
 | Zombie extra/custom revive source/range | Resolved: `check-bcu-zombie-extra-revive-source-range-parity` drives the BCU `ZombX.updateRevive` range/warp/`revive_non_zombie`/`imu_zkill` filter from a real `REVIVE` proc-object file. |
 | Storage failure visibility | Resolved: `FormationStore`/`StageRegistry` report read/write failures via `BcuStorageDiagnostics` (`check-formation-storage-failure-visibility`) instead of a silent catch; self-persistence round-trips. |
 | Modifier registry fail-open visibility | Resolved: combo / talent (PCoin) registry load failures now report through `BcuModifierDiagnostics` (`reportModifierRegistryResult` → listeners + `wanko-modifier-registry-error` event), so a failed bundle is queryable instead of only landing in the `__BATTLE_BOOT_PATCH_ERRORS__` dead-letter array. `check-bcu-modifier-registry-failure-visibility` proves a load failure is observable and a success reports clean. UI surfacing of the warning to a player who has combos/talents configured remains a Codex-owned UI follow-up. |
+| `怪人特効` combo grant | Resolved: BCU `EUnit.getAbi()` grants `AB_VKILL` from a positive `C_VKILL` combo increment, and `DamageAbilityResolver` now synthesizes that bit before applying the fixed villain attack/resist multipliers. |
+| `衝撃波無効` boss shockwave skip | Resolved: BCU `Entity.interrupt(INT_SW)` rejects actors with `AB_IMUSW`, and `BattleBossShockwaveRuntimePatch` now excludes those actors from boss shockwave interruption. Visual effect acceptance remains separate. |
 | Historical StageDefinitionLoader gaps | Current code already handles the historical `rowIndex`, castle `noContinue`, `-1` enemy-castle fallback, and `bossGuard` source-row issues. Treat old README claims as historical only. |
 | Castle/base guard owner | Implemented as scene/base state; only browser appearance remains. |
 | Standard zombie corpse/soulstrike | Deterministic runtime coverage exists; remaining scope is visual acceptance. |

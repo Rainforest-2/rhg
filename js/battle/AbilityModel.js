@@ -7,7 +7,7 @@ export const ABILITY_STATUS = Object.freeze({
 });
 
 const ABILITY_KEYS = [
-  'critical','savageBlow','baseDestroyer','wave','miniWave','surge','miniSurge','blast','freeze','slow','weaken','knockbackProc','warp','curse','toxic','attackNullify','beastHunter','barrierBreaker','shieldPierce','zombieKiller','soulstrike','resistant','massiveDamage','insaneDamage','tough','insanelyTough','metal','traitTarget','strong','targetOnly','witchKiller','evaKiller','baronKiller','sageSlayer','metalKiller'
+  'critical','savageBlow','baseDestroyer','wave','miniWave','surge','miniSurge','blast','freeze','slow','weaken','knockbackProc','warp','curse','toxic','attackNullify','beastHunter','barrierBreaker','shieldPierce','zombieKiller','soulstrike','resistant','massiveDamage','insaneDamage','tough','insanelyTough','metal','traitTarget','strong','targetOnly','witchKiller','evaKiller','villainKiller','baronKiller','sageSlayer','metalKiller'
 ];
 
 export const ABILITY_CATALOG = Object.freeze(Object.fromEntries(ABILITY_KEYS.map((key) => {

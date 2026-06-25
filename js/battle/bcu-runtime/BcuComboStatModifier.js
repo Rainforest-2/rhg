@@ -80,6 +80,7 @@ const INCREMENT_TYPES = Object.freeze({
   crit: COMBO_TYPE.C_CRIT,
   witchKiller: COMBO_TYPE.C_WKILL,
   evaKiller: COMBO_TYPE.C_EKILL,
+  villainKiller: COMBO_TYPE.C_VKILL,
   // Proc-buff increments applied to the attacker's cloned attack proc in the
   // AtkModelUnit constructor / getAttack (not damage-family factors).
   freezeTime: COMBO_TYPE.C_STOP,

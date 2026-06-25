@@ -5,6 +5,7 @@ import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
 import { EffectRuntime } from './EffectRuntime.js';
 import { KBRuntime } from './KBRuntime.js';
 import { getBcuKnockbackSpec } from './BcuKnockbackSpec.js';
+import { BCU_ABI } from './BcuCombatModel.js';
 import { BcuModelInstance } from '../bcu/BcuModelInstance.js';
 import { BcuAnimator } from '../bcu/BcuAnimator.js';
 
@@ -33,6 +34,15 @@ function sideOpponent(side) {
   return side === 'dog-player' ? 'cat-enemy' : 'dog-player';
 }
 
+function actorAbi(actor) {
+  return Number(actor?.bcuCombatModel?.ability?.abi
+    ?? actor?.rawStats?.bcuCombatModel?.ability?.abi
+    ?? actor?.stats?.bcuCombatModel?.ability?.abi
+    ?? actor?.abilityModel?.bcuAbi
+    ?? actor?.bcuAbi
+    ?? 0) || 0;
+}
+
 function getShockwaveWorldX(scene, side) {
   if (side === 'cat-enemy') return BCU_BOSS_SHOCKWAVE_X;
   const runtime = scene?.stage?.runtime || {};
@@ -48,7 +58,11 @@ function isActorShockwaveTouchable(actor) {
   if (!actor) return false;
   if (actor.state === 'dead' || actor.state === 'removed') return false;
   if (actor.isAlive?.() !== true) return false;
-  if (actor.isSpirit === true || actor.rawStats?.isSpirit === true || actor.stageSpawn?.isSpirit === true) return false;
+  // BCU StageBasis.update shock loop excludes spirits: `!(entity instanceof EUnit) ||
+  // !((EUnit) entity).isSpirit`. Conjured spirits are flagged bcuIsSpirit by the spirit
+  // lifecycle runtime, so include that flag or the shockwave would interrupt them.
+  if (actor.bcuIsSpirit === true || actor.isSpirit === true || actor.rawStats?.isSpirit === true || actor.stageSpawn?.isSpirit === true) return false;
+  if ((actorAbi(actor) & BCU_ABI.AB_IMUSW) !== 0) return false;
   if (typeof actor.isTouchable === 'function' && actor.isTouchable() === false) return false;
   if (typeof actor.isTargetable === 'function' && actor.isTargetable() === false) return false;
   return true;
@@ -340,4 +354,4 @@ export function installBattleBossShockwaveRuntimePatch() {
 
 installBattleBossShockwaveRuntimePatch();
 
-export { BCU_BOSS_SHOCKWAVE_SOURCE, processPendingBossShockwaves };
+export { BCU_BOSS_SHOCKWAVE_SOURCE, processPendingBossShockwaves, isActorShockwaveTouchable };

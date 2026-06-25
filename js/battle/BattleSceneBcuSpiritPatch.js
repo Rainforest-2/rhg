@@ -1,6 +1,7 @@
 import { BattleActor } from './BattleActor.js';
 import { BattleScene } from './BattleScene.js';
 import {
+  getBcuSpiritProductionState,
   getBcuSpiritSpec,
   markBcuSummonerSpawned,
   rejectBcuSpiritDamage,
@@ -43,8 +44,18 @@ export function installBattleSceneBcuSpiritPatch() {
     const originalRequestPlayerSpawn = sceneProto.requestPlayerSpawn;
     sceneProto.requestPlayerSpawn = function requestPlayerSpawnWithBcuSpirit(slotId, row = this.frontLineup, col = null) {
       const resolvedSlotId = (col === null ? slotId : this.getPlayerLineupRows?.()?.[row]?.[col]?.slotId) || slotId;
+      // BCU StageBasis.produce sets unitRespawnTime = 1 after a spirit conjure and bails
+      // (`if (unitRespawnTime > 0) return false`) until update decrements it once per
+      // frame. So a successful conjure locks ALL production for the rest of that frame.
+      if (Number.isFinite(this.logicFrame) && this.bcuUnitRespawnLockFrame === this.logicFrame) {
+        this.pushEvent?.({ type: 'bcuSpiritSummonBlocked', slotId: resolvedSlotId, reason: 'unit-respawn-lock' });
+        return false;
+      }
       const spirit = requestBcuSpiritSpawn(this, resolvedSlotId);
-      if (spirit.ok) return true;
+      if (spirit.ok) {
+        if (Number.isFinite(this.logicFrame)) this.bcuUnitRespawnLockFrame = this.logicFrame;
+        return true;
+      }
       // BCU StageBasis 527: once a conjurer is on the field, tapping its card is a
       // spirit-summon attempt. While the spirit is on cooldown / still loading / one
       // is already out, the tap is consumed (SE_SPEND_FAIL) and must NOT deploy a
@@ -55,6 +66,24 @@ export function installBattleSceneBcuSpiritPatch() {
       }
       return originalRequestPlayerSpawn.call(this, slotId, row, col);
     };
+
+    // Surface the per-conjurer cooldown / ready-emphasize state into the production-roster
+    // data model so the card layer can render the BCU "spirit ready" flash. The pixel
+    // appearance of that flash remains a manual visual-review item; the data is exposed here.
+    const originalGetStatsSourceReport = sceneProto.getStatsSourceReport;
+    if (typeof originalGetStatsSourceReport === 'function') {
+      sceneProto.getStatsSourceReport = function getStatsSourceReportWithBcuSpirit() {
+        const report = originalGetStatsSourceReport.call(this);
+        if (Array.isArray(report?.productionRoster)) {
+          for (const entry of report.productionRoster) {
+            if (!entry || entry.empty) continue;
+            const spiritState = getBcuSpiritProductionState(this, entry.slotId);
+            if (spiritState) entry.bcuSpirit = spiritState;
+          }
+        }
+        return report;
+      };
+    }
 
     const originalRunTickPhase = sceneProto.runTickPhase;
     sceneProto.runTickPhase = function runTickPhaseWithBcuSpirit(phase, fn = () => {}) {

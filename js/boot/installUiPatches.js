@@ -6,7 +6,6 @@ export async function installUiPatches(onProgress) {
     () => import('../ui/FormationEditorPerformancePatch.js'),
     () => import('../ui/FormationCatalogVirtualDomPatch.js'),
     () => import('../ui/NyankoPresentationPatch.js'),
-    () => import('../ui/SafeAreaViewportTracker.js'),
     () => import('../ui/FormationJapaneseBootPatch.js'),
     () => import('../ui/NyankoUiBehaviorPatch.js'),
     () => import('../ui/ProductionCardDogIconFitPatch.js'),

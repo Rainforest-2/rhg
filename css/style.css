@@ -30,8 +30,13 @@ img,picture,canvas{-webkit-user-drag:none;-webkit-touch-callout:none}
 /* height:100dvh keeps the shell inside the visually-available area when the
    mobile URL bar is shown; the 100vh line is only a fallback for engines without
    dvh. The old min-height:100vh forced the shell taller than the visible area and
-   pushed the cannon/cards below the fold. */
-.app-shell,.app-shell.game-shell{width:100vw;height:100vh;height:100dvh;min-height:0;padding:0;display:block;overflow:hidden}.main-area,.game-stage{position:relative;width:100%;height:100%;display:block;min-height:0}.canvas-panel{position:relative;width:100%;height:100%;min-height:0;padding:0;border:0;border-radius:0;overflow:hidden;background:#000}#preview-canvas{width:100%;height:100%;min-height:0;display:block;background:#0b111a}
+   pushed the cannon/cards below the fold. --bcu-app-vh (set from visualViewport by
+   js/ui/SafeAreaViewportTracker.js) wins last: iOS Safari does not reliably
+   recompute 100dvh after the toolbar is toggled mid-session, leaving the shell
+   stale-tall so its bottom (and the bottom-pinned cannon/wallet buttons) floats
+   above the real visible bottom; visualViewport.height is always the live visible
+   height. Falls back to 100dvh where the var is unset. */
+.app-shell,.app-shell.game-shell{width:100vw;height:100vh;height:100dvh;height:var(--bcu-app-vh,100dvh);min-height:0;padding:0;display:block;overflow:hidden}.main-area,.game-stage{position:relative;width:100%;height:100%;display:block;min-height:0}.canvas-panel{position:relative;width:100%;height:100%;min-height:0;padding:0;border:0;border-radius:0;overflow:hidden;background:#000}#preview-canvas{width:100%;height:100%;min-height:0;display:block;background:#0b111a}
 .control-panel,.log-panel{display:none}body.debug-ui-enabled .control-panel,body.debug-ui-enabled .log-panel{display:block}.control-panel.is-hidden,.log-panel.is-hidden,.dev-panel[hidden],.dev-log[hidden]{display:none!important}
 button,input[type=range],select,input[type=text],input[type=search],.formation-search-input{width:100%;background:#0f1520;border:1px solid #38465c;color:var(--text);border-radius:10px;padding:9px 10px}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:hover{border-color:#60a5fa}button:disabled{opacity:.65;cursor:progress}
 

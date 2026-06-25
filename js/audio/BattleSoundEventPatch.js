@@ -132,27 +132,25 @@ function hasAppliedDamageAbility(event = {}, key) {
   return event?.abilityResolver?.applied?.[key] === true || event?.damageApplied?.[key] === true;
 }
 
-function procKeys(event = {}) {
-  const keys = new Set();
-  for (const bucket of [event.applied, event.pending]) {
-    if (!Array.isArray(bucket)) continue;
-    for (const item of bucket) {
-      const key = item?.key || item?.pendingType || item?.category;
-      if (key) keys.add(String(key));
-    }
-  }
-  return keys;
-}
+// BCU plays a proc's SE at the moment the effect is actually applied to a target
+// Entity, not when the attack rolls the proc:
+//   Entity.damaged: POIATK with rst != 100 -> basis.lea.add(A_POISON) + setSE(SE_POISON)
+//     (rst == 100 full immunity shows INV and plays no sound);
+//   Entity.getEff(P_WARP) -> setSE(SE_WARP_ENTER) once the WARP status is set.
+// `bcuProcApplied` is pushed only for actor targets (BattleSceneProcApplyPatch
+// guards targetType === 'actor'), and each entry's `applied` already reflects the
+// IMU*/resistance gate, so a proc that whiffs on the base/castle or a fully-immune
+// target plays nothing. Driving SE from here (not the proc roll) mirrors BCU and
+// matches how barrier/shield SE already follow bcuBarrierShieldStateChange.
+const APPLIED_PROC_SE = Object.freeze({ toxic: BCU_SE.POISON, warp: BCU_SE.WARP_ENTER });
 
-function playProcSe(scene, event = {}, engine = undefined) {
-  const keys = procKeys(event);
-  if (keys.has('toxic') && throttle(scene, 'se-poison', 120)) playBcuSe(BCU_SE.POISON, engine);
-  // Barrier/shield SE are driven by the actual barrier/shield STATE change
-  // (bcuBarrierShieldStateChange), not the attacker proc, so the exact BCU
-  // getEff(BREAK_*/SHIELD_*) sound plays even when no breaker proc is present.
-  if (keys.has('warp') && throttle(scene, 'se-warp', 180)) playBcuSe(BCU_SE.WARP_ENTER, engine);
-  if (keys.has('delay') && throttle(scene, 'se-delay', 160)) playBcuSe(BCU_SE.DELAY_COOLDOWN, engine);
-  if (keys.has('spirit') && throttle(scene, 'se-spirit', 160)) playBcuSe(BCU_SE.SPIRIT_SUMMON, engine);
+function playAppliedProcSe(scene, event = {}, engine = undefined) {
+  const procs = Array.isArray(event.procs) ? event.procs : [];
+  for (const proc of procs) {
+    if (proc?.applied !== true) continue;
+    const id = APPLIED_PROC_SE[proc.key];
+    if (id != null) playBcuSetSe(scene, id, engine);
+  }
 }
 
 // BCU Entity.AnimManager.getEff barrier/shield SE sites (Entity.java):
@@ -216,7 +214,11 @@ export function playForEvent(scene, event = {}, engine = undefined) {
       else if (Number(event.damage || 0) > 0 && throttle(scene, 'hit', 70)) playHitSe(engine, BCU_SE.HIT_0);
       break;
     case 'procResolved':
-      playProcSe(scene, event, engine);
+      // The proc roll is silent in BCU; SE fire on actual application via
+      // bcuProcApplied (poison/warp) and bcuBarrierShieldStateChange (barrier/shield).
+      break;
+    case 'bcuProcApplied':
+      playAppliedProcSe(scene, event, engine);
       break;
     case 'bcuBarrierShieldStateChange': {
       // BCU getEff(BREAK_*/SHIELD_*) -> setSE; per-frame de-dup via playBcuSetSe.

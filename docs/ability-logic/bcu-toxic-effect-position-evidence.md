@@ -107,3 +107,18 @@ psiz    = siz * sprite * effectScale
 ```
 
 For `A_POISON`, `offsetY = 0`, so the visual anchor is exactly the BCU layer baseline.
+
+## SE timing (SE_POISON)
+
+BCU `Entity.damaged` plays `SE_POISON` on the same line it adds the `A_POISON`
+`EAnimCont`, and only when `POIATK.mult > 0` and the target's `IMUPOIATK` resist
+`rst != 100` (full immunity shows `INV` and is silent). The hit is processed on an
+`Entity`, so the base/castle never reaches this path.
+
+rhg therefore drives `SE_POISON` from the actual effect application
+(`bcuProcApplied` proc entries with `applied === true`, emitted only for
+`targetType === 'actor'` and gated by `BcuProcImmunityPatch`), not from the proc
+roll. A poison proc that whiffs on the base/castle or a fully poison-immune target
+produces no `applied === true` entry and so plays nothing. See
+`BattleSoundEventPatch.playAppliedProcSe`. `SE_WARP_ENTER` follows the same
+application-driven rule (`Entity.getEff(P_WARP)` setSE).

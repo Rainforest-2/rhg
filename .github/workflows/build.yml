@@ -59,6 +59,15 @@ jobs:
           # strings stay resolvable inside the (base64) string array.
           COMMON="--compact true --string-array true --string-array-threshold 0.75 --string-array-encoding base64 --identifier-names-generator mangled --control-flow-flattening false --dead-code-injection false --rename-globals false --rename-properties false --source-map false --target browser"
           if $OBF js --output js-obf $COMMON; then
+            # javascript-obfuscator only emits *.js files; any other shipped
+            # source module (e.g. js/ui/UiMotion.mjs) is dropped from js-obf,
+            # which 404s at runtime and breaks the import chain / boot. Carry
+            # over every non-.js source file so the module graph stays intact.
+            find js -type f ! -name '*.js' | while IFS= read -r f; do
+              dest="js-obf/${f#js/}"
+              mkdir -p "$(dirname "$dest")"
+              cp "$f" "$dest"
+            done
             rm -rf js && mv js-obf js
             # Anti-debug + self-defending only on the single entry module, so the whole app
             # is guarded by ONE interval instead of one per file (291 debugger loops would

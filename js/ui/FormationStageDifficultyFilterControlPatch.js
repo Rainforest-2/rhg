@@ -1,4 +1,5 @@
 import { FormationEditor } from './FormationEditor.js';
+import { normalizeCrownStar } from '../battle/bcu-runtime/BcuStageCrownRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty-filter-controls.v3');
 const DIFFICULTY_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
@@ -21,37 +22,45 @@ function filterState(editor) {
   const f = editor.__bcuStageDifficultyFilter || {};
   return {
     q: norm(f.q),
-    min: f.min === '' || f.min == null ? null : Number(f.min),
-    max: f.max === '' || f.max == null ? null : Number(f.max)
+    star: normalizeCrownStar(f.star ?? 1)
   };
 }
 
 function isFiltering(f) {
-  return !!f.q || Number.isFinite(f.min) || Number.isFinite(f.max);
+  return !!f.q || Number.isFinite(f.star);
 }
 
-function parseDifficultyRange(card) {
+function parseCrownStars(card) {
+  const rawStars = String(card.dataset.stageCrownStars || '').split(',').map((value) => Number(value)).filter(Number.isFinite);
+  if (rawStars.length) {
+    const stars = [...new Set(rawStars.map((value) => normalizeCrownStar(value)))].sort((a, b) => a - b);
+    return { stars, text: stars.map((star) => `★${star}`).join(' ') };
+  }
   const rawMin = card.dataset.stageDifficultyMin ?? card.dataset.stageDifficulty;
   const rawMax = card.dataset.stageDifficultyMax ?? card.dataset.stageDifficulty;
   const dataMin = rawMin === '' || rawMin == null ? NaN : Number(rawMin);
   const dataMax = rawMax === '' || rawMax == null ? NaN : Number(rawMax);
   if (Number.isFinite(dataMin) && Number.isFinite(dataMax)) {
-    return { min: Math.min(dataMin, dataMax), max: Math.max(dataMin, dataMax), text: `★${dataMin}${dataMax === dataMin ? '' : `-${dataMax}`}` };
+    const min = Math.min(dataMin, dataMax);
+    const max = Math.max(dataMin, dataMax);
+    const stars = Array.from({ length: Math.max(1, max - min + 1) }, (_, index) => normalizeCrownStar(min + index));
+    return { stars, text: stars.map((star) => `★${star}`).join(' ') };
   }
   const text = card.querySelector('.formation-stage-difficulty-badge')?.textContent || '';
   const match = text.match(/★\s*(\d+)(?:\s*-\s*(\d+))?/);
-  if (!match) return null;
+  if (!match) return { stars: [1], text: '★1' };
   const min = Number(match[1]);
   const max = Number(match[2] ?? match[1]);
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
-  return { min: Math.min(min, max), max: Math.max(min, max), text };
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return { stars: [1], text: '★1' };
+  const lo = Math.min(min, max);
+  const hi = Math.max(min, max);
+  return { stars: Array.from({ length: Math.max(1, hi - lo + 1) }, (_, index) => normalizeCrownStar(lo + index)), text };
 }
 
 function cardMatchesFilter(card, f) {
   if (!isFiltering(f)) return true;
-  const range = parseDifficultyRange(card);
-  if (Number.isFinite(f.min) && (!range || range.max < f.min)) return false;
-  if (Number.isFinite(f.max) && (!range || range.min > f.max)) return false;
+  const crown = parseCrownStars(card);
+  if (!crown.stars.includes(normalizeCrownStar(f.star))) return false;
   if (!f.q) return true;
   return norm(card.textContent).includes(f.q) || norm(card.dataset.stageMap || card.dataset.stageId || '').includes(f.q);
 }
@@ -98,7 +107,7 @@ function applyDomDifficultyFilter(editor) {
     sample: cards.slice(0, 12).map((card) => ({
       key: card.dataset.stageMap || card.dataset.stageId || null,
       text: card.textContent,
-      range: parseDifficultyRange(card),
+      crown: parseCrownStars(card),
       hidden: card.hidden,
       classHidden: card.classList.contains('is-difficulty-filtered'),
       display: getComputedStyle(card).display
@@ -110,16 +119,14 @@ function applyDomDifficultyFilter(editor) {
 
 function updateFilterFromTarget(editor, target) {
   const q = target?.closest?.('[data-stage-search-input]');
-  const min = target?.closest?.('[data-stage-difficulty-min]');
-  const max = target?.closest?.('[data-stage-difficulty-max]');
-  if (!(q || min || max) || !editor.root?.contains(target)) return false;
+  const star = target?.closest?.('[data-stage-crown-star]');
+  if (!(q || star) || !editor.root?.contains(target)) return false;
 
   const previous = editor.__bcuStageDifficultyDraftFilter || editor.__bcuStageDifficultyFilter || {};
   editor.__bcuStageDifficultyDraftFilter = {
     ...previous,
     ...(q ? { q: q.value } : {}),
-    ...(min ? { min: min.value } : {}),
-    ...(max ? { max: max.value } : {})
+    ...(star ? { star: star.value } : {})
   };
   return true;
 }
@@ -129,8 +136,7 @@ function commitFilterFromControls(editor) {
   const draft = editor.__bcuStageDifficultyDraftFilter || editor.__bcuStageDifficultyFilter || {};
   editor.__bcuStageDifficultyFilter = {
     q: root?.querySelector?.('[data-stage-search-input]')?.value ?? draft.q ?? '',
-    min: root?.querySelector?.('[data-stage-difficulty-min]')?.value ?? draft.min ?? null,
-    max: root?.querySelector?.('[data-stage-difficulty-max]')?.value ?? draft.max ?? null
+    star: normalizeCrownStar(root?.querySelector?.('[data-stage-crown-star]')?.value ?? draft.star ?? 1)
   };
   editor.__bcuStageDifficultyDraftFilter = { ...editor.__bcuStageDifficultyFilter };
   if (editor.stageSelectorVirtual?.active === true) editor.renderStageSelector?.();
@@ -141,7 +147,7 @@ function wireFilterControls(editor) {
   ensureProStyles();
   const root = editor.root;
   if (!root) return;
-  const selector = '[data-stage-search-input],[data-stage-difficulty-min],[data-stage-difficulty-max]';
+  const selector = '[data-stage-search-input],[data-stage-crown-star]';
   for (const input of root.querySelectorAll(selector)) {
     if (input.dataset.bcuDifficultyFilterWired === '1') continue;
     input.dataset.bcuDifficultyFilterWired = '1';

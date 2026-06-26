@@ -11,7 +11,7 @@ if (!/formation-catalog-grid/.test(css) || !/grid-template-columns:\s*repeat\(au
 if (!/formation-catalog-spacer/.test(js)) failures.push('formation catalog must use spacer-based windowing');
 if (!/estimateCatalogColumns/.test(js)) failures.push('FormationEditor must estimate catalog columns for virtualization');
 if (!/formation-stage-virtual-spacer/.test(perfPatch)) failures.push('stage selector must use spacer-based windowing for large map/stage lists');
-if (!/buildScopedDifficultyFilterCandidates/.test(perfPatch)) failures.push('stage selector virtualization must honor scoped difficulty/search filters');
+if (!/crownDataHasStar/.test(perfPatch) || !/mapCrownData/.test(perfPatch)) failures.push('stage selector virtualization must honor scoped crown/search filters');
 // Stage selector search is commit-on-action (検索 button / Enter / blur), not per-keystroke,
 // so typing stays light. Verify the input listener is draft-only and commit is bound to change + Enter.
 const inputHandler = filterControlPatch.match(/addEventListener\('input',\s*\(event\)\s*=>\s*\{([\s\S]*?)\n\s*\}\);/);

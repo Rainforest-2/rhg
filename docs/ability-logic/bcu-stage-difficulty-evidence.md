@@ -53,10 +53,10 @@ if (diff < 0) none else "★$diff"
 - `js/ui/FormationStageDifficultyPatch.js`
   - preserves the existing category -> map -> stage navigation
   - category root remains category-only
-  - map-list level filters only maps inside the currently opened category, e.g. イベントステージ
-  - stage-list level filters only stages inside the currently opened map
-  - adds difficulty badges to map cards and stage cards
-  - resolves catalog wrapper `mapColcId/mapNo/stageNo` before raw stage filename fallback so scoped category/map UI does not collapse to `---`
+  - map-list level now filters by BCU stage-crown availability from `public/assets/generated/bcu-stage-crown-index.json`, not by raw `Difficulty.txt`'s 1..12 display values
+  - the selector exposes four crown stages (`★1`..`★4`), defaults to `★1`, and treats maps absent from the crown index as single-crown `★1` maps
+  - stage-list level still shows every stage in the opened map; the selected crown applies to the whole map at battle launch through `crownMagnificationPercent` / `crownStarIndex`
+  - map name search remains scoped to the currently opened category, e.g. イベントステージ
 
 ## Tests
 
@@ -71,3 +71,9 @@ if (diff < 0) none else "★$diff"
 - runtime difficulty resolution
 - real `public/assets/bcu/lang/Difficulty.txt` representative stages: `stage:0-0-0 -> ★1`, `stage:13-0-0 -> ★10`, `stage:1-0-0 -> ★2`
 - current category/map scoped filter candidates without all-stage leakage
+
+`scripts/check-bcu-stage-crown-parity.mjs` separately locks the four-stage crown selector contract:
+
+- Map_option-derived crown data is `★1`..`★4`, not raw 1..12 `Difficulty.txt`
+- absent/single-crown maps match only `★1`
+- selector source uses `data-stage-crown-star`, DOM fallback uses `data-stage-crown-stars`, and virtual map rendering checks `crownDataHasStar`

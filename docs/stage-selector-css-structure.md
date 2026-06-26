@@ -45,7 +45,7 @@ Category cards still keep their visible `.formation-stage-card-meta` map-count l
 
 ## Difficulty filter rules
 
-`FormationStageDifficultyPatch.js` still resolves difficulty values for filtering, text search, diagnostics, and `data-stage-difficulty`, but it does not create hidden `.formation-stage-difficulty-badge` nodes for the current red-bar map/stage UI.
+`FormationStageDifficultyPatch.js` now uses Map_option-derived crown availability (`★1`..`★4`) for map filtering, text search, diagnostics, and `data-stage-crown-stars`. It does not create hidden `.formation-stage-difficulty-badge` nodes for the current red-bar map/stage UI.
 
 ## Non-goals
 

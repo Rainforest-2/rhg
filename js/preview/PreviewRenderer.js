@@ -1,4 +1,12 @@
 const ROLE_SHORT = { 'player-dog-candidate': 'DOG', 'enemy-cat-candidate': 'CAT', 'battle-effect': 'FX', castle: 'CASTLE' };
+const DEFAULT_MAX_CANVAS_DPR = 2;
+
+function getCanvasPixelRatio() {
+  const raw = Number(window.devicePixelRatio || 1);
+  const configured = Number(globalThis.__BCU_CANVAS_MAX_DPR__);
+  const cap = Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_CANVAS_DPR;
+  return Math.max(1, Math.min(Number.isFinite(raw) ? raw : 1, cap));
+}
 
 export class PreviewRenderer {
   constructor(canvas) {
@@ -14,12 +22,17 @@ export class PreviewRenderer {
     this.lastCssW = 0;
     this.lastCssH = 0;
     this.lastDpr = 0;
+    this.lastRawDpr = 0;
     this.hasPendingResizeRetry = false;
+    this.hasResizeObserver = false;
+    this.lastEnsureCheckAt = 0;
+    this.ensureCheckIntervalMs = 250;
     this.lastSizeLog = '';
 
     this.resize();
 
     if (typeof ResizeObserver !== 'undefined') {
+      this.hasResizeObserver = true;
       this.resizeObserver = new ResizeObserver(() => this.resize());
       this.resizeObserver.observe(this.canvas);
     }
@@ -28,10 +41,14 @@ export class PreviewRenderer {
   }
 
   ensureCanvasSize() {
+    if (this.hasResizeObserver) return;
+    const now = performance.now();
+    if (now - this.lastEnsureCheckAt < this.ensureCheckIntervalMs) return;
+    this.lastEnsureCheckAt = now;
     const rect = this.canvas.getBoundingClientRect();
     const cssW = Math.floor(rect.width);
     const cssH = Math.floor(rect.height);
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = getCanvasPixelRatio();
     const expectedW = Math.max(1, Math.floor(cssW * dpr));
     const expectedH = Math.max(1, Math.floor(cssH * dpr));
 
@@ -42,7 +59,8 @@ export class PreviewRenderer {
   }
 
   logCanvasSize(rect, dpr) {
-    const msg = `[PreviewRenderer] canvas rect=${rect.width.toFixed(2)}x${rect.height.toFixed(2)} backing=${this.canvas.width}x${this.canvas.height} dpr=${dpr.toFixed(2)}`;
+    const rawDpr = Number(window.devicePixelRatio || 1);
+    const msg = `[PreviewRenderer] canvas rect=${rect.width.toFixed(2)}x${rect.height.toFixed(2)} backing=${this.canvas.width}x${this.canvas.height} dpr=${dpr.toFixed(2)} rawDpr=${rawDpr.toFixed(2)}`;
     if (msg !== this.lastSizeLog) {
       console.log(msg);
       this.lastSizeLog = msg;
@@ -51,7 +69,8 @@ export class PreviewRenderer {
 
   resize() {
     const rect = this.canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = getCanvasPixelRatio();
+    const rawDpr = Number(window.devicePixelRatio || 1);
 
     this.logCanvasSize(rect, dpr);
 
@@ -85,6 +104,7 @@ export class PreviewRenderer {
     this.lastCssW = Math.floor(rect.width);
     this.lastCssH = Math.floor(rect.height);
     this.lastDpr = dpr;
+    this.lastRawDpr = Number.isFinite(rawDpr) ? rawDpr : dpr;
 
     this.logCanvasSize(rect, dpr);
   }
@@ -94,7 +114,7 @@ export class PreviewRenderer {
     c.fillStyle = '#dbeafe'; c.font = '14px ui-monospace,monospace';
     c.fillText(`[${ROLE_SHORT[state.assetMeta?.role] || 'UNK'}] ${state.assetMeta?.label || '-'} (${state.assetMeta?.group || '-'})`, 18, 30);
     c.fillText(`frame:${s.frame ?? '0.00'} / max:${s.maxFrame ?? 0} tracks:${s.tracks ?? 0} applied:${s.appliedCount ?? 0} anim:${s.currentAnimLabel || '-'}`, 18, 52);
-    c.fillText(`canvas css:${this.lastCssW}x${this.lastCssH} backing:${this.canvas.width}x${this.canvas.height} dpr:${this.lastDpr || (window.devicePixelRatio || 1)}`, 18, 74);
+    c.fillText(`canvas css:${this.lastCssW}x${this.lastCssH} backing:${this.canvas.width}x${this.canvas.height} dpr:${this.lastDpr || getCanvasPixelRatio()} raw:${this.lastRawDpr || (window.devicePixelRatio || 1)}`, 18, 74);
   }
 
   drawStaticImage(state, ox, oy) {

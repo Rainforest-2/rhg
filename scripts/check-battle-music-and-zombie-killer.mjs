@@ -120,6 +120,17 @@ check(bakedIriomote?.music?.startMusicId === 4 && bakedIriomote?.music?.bossMusi
 const bakedRna = stageIndexBaked.entries.find((e) => e.basename === 'stageRNA001_00');
 check(bakedRna?.music?.startMusicId === 3,
   `stage index must bake stageRNA001_00 music id 3, got ${JSON.stringify(bakedRna?.music)}`);
+// 3b-RA. Category RA ships StageRRA/stageRA*.csv with MSDRA/MapStageDataA_*.csv, so
+// the MSD bundle-dir suffix ("RA", from the group dir) differs from the MSD
+// filename suffix ("A", from the basename). deriveMsdRef must use each in its own
+// place; using the basename suffix for both left RA stages (e.g. ヒュージゴマ強襲)
+// with no music and fell back to 000.m4a.
+const hugeGomaEntry = stageIndexBaked.entries.find((e) => e.category === 'RA' && e.basename === 'stageRA020_00');
+const hugeGomaRef = deriveMsdRef(hugeGomaEntry);
+check(/\/RA\/MSDRA$/.test(hugeGomaRef?.bundleRef?.bundleKey || '') && hugeGomaRef?.bundleRef?.internalPath === 'MapStageDataA_020.csv',
+  `deriveMsdRef must map category RA StageRRA to MSDRA/MapStageDataA_*.csv, got ${JSON.stringify(hugeGomaRef?.bundleRef)}`);
+check(hugeGomaEntry?.music?.source === 'MapStageData' && Number.isInteger(hugeGomaEntry?.music?.startMusicId),
+  `stage index must bake category RA (ヒュージゴマ強襲 stageRA020_00) music, got ${JSON.stringify(hugeGomaEntry?.music)}`);
 // musicFromBakedEntry must read the baked value, and resolveStageMusic must prefer
 // it even when no MSD reader is supplied (the browser second-fetch failure case).
 const bakedDescriptor = musicFromBakedEntry(bakedIriomote, catalog);

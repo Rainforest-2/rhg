@@ -6,7 +6,12 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
   BCU_DEFAULT_CROWN_STARS,
+  BCU_MAX_CROWN_STAR,
   clampCrownIndex,
+  crownDataHasStar,
+  crownStarIndexFromUiStar,
+  crownStarsForData,
+  normalizeCrownStar,
   resolveCrownMagnificationPercent,
   applyCrownToMagnification,
   applyCrownToEnemyRow,
@@ -30,8 +35,22 @@ const legend = index.entries.find((e) => e.name.includes('伝説の始まり'));
 assert.ok(legend, 'legend first map present in crown index');
 assert.deepEqual(legend.stars, [100, 150, 200, 300], 'legend map has 4 crowns at 100/150/200/300');
 
+// --- selector UI guard --------------------------------------------------------------------------
+const difficultyPatchSource = readFileSync('js/ui/FormationStageDifficultyPatch.js', 'utf8');
+const filterPatchSource = readFileSync('js/ui/FormationStageDifficultyFilterControlPatch.js', 'utf8');
+const performancePatchSource = readFileSync('js/ui/FormationEditorPerformancePatch.js', 'utf8');
+assert.ok(difficultyPatchSource.includes('data-stage-crown-star'), 'stage selector exposes a four-star crown selector');
+assert.ok(!difficultyPatchSource.includes("data-stage-difficulty-min='1'"), 'stage selector no longer exposes raw 1..12 difficulty lower-bound input');
+assert.ok(filterPatchSource.includes('stageCrownStars'), 'DOM fallback filters by crown stars');
+assert.ok(performancePatchSource.includes('crownDataHasStar'), 'virtual map list filters by crown availability');
+
 // --- magnification resolution -------------------------------------------------------------------
 assert.deepEqual([...BCU_DEFAULT_CROWN_STARS], [100, 150, 200, 300]);
+assert.equal(BCU_MAX_CROWN_STAR, 4, 'stage selector crown UI is four-star, not raw 12-level difficulty');
+assert.equal(normalizeCrownStar(null), 1, 'empty UI crown defaults to ★1');
+assert.equal(normalizeCrownStar(12), 4, 'UI crown clamps above ★4');
+assert.equal(crownStarIndexFromUiStar(1), 0, '★1 UI star maps to BCU star index 0');
+assert.equal(crownStarIndexFromUiStar(4), 3, '★4 UI star maps to BCU star index 3');
 const stars = [100, 150, 200, 300];
 assert.equal(resolveCrownMagnificationPercent(0, stars), 100, '★1 -> 100%');
 assert.equal(resolveCrownMagnificationPercent(1, stars), 150, '★2 -> 150%');
@@ -64,8 +83,13 @@ assert.deepEqual(crownedRows.map((r) => r.magnification), [150, 300], '★2 scal
 // --- map crown lookup ---------------------------------------------------------------------------
 const byName = resolveMapCrownData(index, { name: legend.name });
 assert.equal(byName.crownCount, 4, 'resolveMapCrownData finds the legend map crowns by name');
+assert.deepEqual(crownStarsForData(byName), [1, 2, 3, 4], '4-crown maps expose ★1..★4 to the selector');
+assert.equal(crownDataHasStar(byName, 4), true, '4-crown maps match the ★4 selector');
 const missing = resolveMapCrownData(index, { name: 'no-such-map-xyzzy' });
 assert.deepEqual(missing.stars, [100], 'absent map defaults to single ★1 crown');
+assert.deepEqual(crownStarsForData(missing), [1], 'maps without difficulty changes are searchable only as ★1');
+assert.equal(crownDataHasStar(missing, 1), true, 'single-crown maps match ★1');
+assert.equal(crownDataHasStar(missing, 2), false, 'single-crown maps do not match ★2');
 
 // --- StageRuntime wiring: a ★4 launch triples enemy magnifications -------------------------------
 const stageDef = {

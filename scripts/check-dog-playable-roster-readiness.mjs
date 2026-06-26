@@ -21,17 +21,26 @@ function assertRosterHas(specs, id, label) {
   assert.equal(specs.some((spec) => spec.id === id && spec.characterId === cid), true, `${label}: ${cid} must be visible in dog playable roster`);
 }
 
+function assertRosterMissing(specs, id, label) {
+  const cid = `dog-enemy-${String(id).padStart(3, '0')}`;
+  assert.equal(specs.some((spec) => spec.id === id), false, `${label}: ${cid} must be excluded from dog playable roster`);
+}
+
 const defaultDogSpecs = buildDogSpecs();
 assert.equal(defaultDogSpecs.length, DOG_ENEMY_ID_RANGE.end - DOG_ENEMY_ID_RANGE.start + 1, 'fallback dog roster should expose every runtime-ready enemy id in range');
 for (const spec of defaultDogSpecs) assertActorReady(spec.id, 'fallback roster');
 for (const id of requiredDogEnemyIds) assertRosterHas(defaultDogSpecs, id, 'fallback roster');
 
-const staleExcludedDb = {
+// error-enemy.json exclusions are authoritative: a listed asset id is removed from the
+// formation roster even when it still has a ready actor bundle. There is no longer a
+// "semantic actor readiness override" keeping bundled error enemies visible.
+const excludedDb = {
   playable: { enemies: { excludedAssetIds: requiredDogEnemyIds } },
   semanticIndexes: { actors: actor, bundleManifest: manifest },
   assets: { resolveEnemyAsset: () => null }
 };
-const dbDogSpecs = buildDogSpecs({ bcuDb: staleExcludedDb });
-for (const id of requiredDogEnemyIds) assertRosterHas(dbDogSpecs, id, 'semantic actor readiness override');
+const dbDogSpecs = buildDogSpecs({ bcuDb: excludedDb });
+for (const id of requiredDogEnemyIds) assertRosterMissing(dbDogSpecs, id, 'error-enemy exclusion');
+assert.equal(dbDogSpecs.length, defaultDogSpecs.length - requiredDogEnemyIds.length, 'excluded asset ids must be removed from the dog roster');
 
-console.log(`dog playable roster readiness ok checked=${defaultDogSpecs.length} required=${requiredDogEnemyIds.join(',')}`);
+console.log(`dog playable roster readiness ok checked=${defaultDogSpecs.length} excluded=${requiredDogEnemyIds.join(',')}`);

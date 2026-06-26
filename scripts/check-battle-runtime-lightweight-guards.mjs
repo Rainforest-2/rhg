@@ -52,6 +52,13 @@ assert.match(bossShockwave, /let writeIndex = 0/, 'boss shockwave queue must use
 const economy = read('js/battle/BattleEconomy.js');
 assert.doesNotMatch(economy, /\[\.\.\.this\.cooldowns\.entries\(\)\]/, 'BattleEconomy tick must not clone cooldown Map entries');
 
+const audioEngine = read('js/audio/AudioEngine.js');
+assert.match(audioEngine, /SE_POOL_MAX_SIZE/, 'AudioEngine must grow the SE voice pool during dense bursts');
+assert.match(audioEngine, /_createSeElement\(\)/, 'AudioEngine must centralize SE element creation');
+assert.match(audioEngine, /mode = 'stolen-oldest'/, 'AudioEngine must only steal the oldest voice after the growth cap');
+assert.match(audioEngine, /lastSeVoiceDebug/, 'AudioEngine must expose compact SE voice diagnostics');
+assert.doesNotMatch(audioEngine, /SE_SAME_ID_MIN_INTERVAL_MS|SE_MAX_STARTS_PER_BURST_WINDOW|_canStartSe/, 'AudioEngine must not suppress SE requests with a flood throttle');
+
 const productionBar = read('js/ui/PlayerProductionBar.js');
 assert.match(productionBar, /lastMoneyDrawKey/, 'production bar money canvas must skip unchanged redraws');
 assert.match(productionBar, /lastWalletDrawKey/, 'production bar wallet button must skip unchanged redraws');

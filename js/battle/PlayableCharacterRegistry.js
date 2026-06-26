@@ -17,24 +17,9 @@ function range(start, end) {
   return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => i + start);
 }
 
-function enemyActorEntry(db, id) {
-  const key = `enemy:${id}`;
-  return db?.semanticProvider?.getActorEntry?.(key) || db?.semanticIndexes?.actors?.byKey?.[key] || null;
-}
-
-function enemyHasRuntimeActorBundle(db, id) {
-  const entry = enemyActorEntry(db, id);
-  const bundleKey = entry?.bundleRef?.bundleKey || null;
-  if (entry?.status === 'full' && bundleKey) {
-    const bundles = db?.semanticProvider?.indexes?.bundleManifest?.bundles
-      || db?.semanticIndexes?.bundleManifest?.bundles
-      || db?.manifest?.semanticIndexes?.bundleManifest?.bundles
-      || null;
-    return !bundles || !!bundles[bundleKey];
-  }
-  return !!db?.assets?.resolveEnemyAsset?.(id);
-}
-
+// error-enemy.json lists enemy ids that must not appear in the formation roster.
+// Exclude every listed asset id unconditionally (mirroring excludedAllyAssetIds);
+// a present runtime bundle must not keep a user-flagged error enemy visible.
 function excludedEnemyAssetIds(db = null) {
   const fromDb = db?.playable?.enemies?.excludedAssetIds;
   if (!Array.isArray(fromDb)) return new Set();
@@ -42,7 +27,6 @@ function excludedEnemyAssetIds(db = null) {
   for (const raw of fromDb) {
     const id = Number(raw);
     if (!Number.isInteger(id) || id < 0) continue;
-    if (enemyHasRuntimeActorBundle(db, id)) continue;
     excluded.add(id);
   }
   return excluded;

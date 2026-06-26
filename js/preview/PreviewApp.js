@@ -167,6 +167,7 @@ export class PreviewApp {
       hasCamera: !!camera,
       cameraState: camera?.getState?.() || null,
       selectedStageId: this.selectedStageId || scene?.stage?.selectedStageId || null,
+      selectedStageCrown: this.formationEditor?.__bcuSelectedStageCrown || null,
       stageKey: scene?.stage?.stageKey || null,
       semanticMode: this.bcuDb?.semanticMode || provider?.mode || null,
       timings,
@@ -248,7 +249,13 @@ export class PreviewApp {
       overlay?.startTimer();
       overlay?.setProgress({ phase: 'battle-scene', message: '戦闘画面を準備中…', value: 0.05 });
       await nextFrame();
-      const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), { selectedStageId: this.selectedStageId || undefined, bcuDb: this.bcuDb });
+      const crown = this.formationEditor?.__bcuSelectedStageCrown || null;
+      const nextScene = new BattleScene((level, msg) => this.ui?.log(level, msg), {
+        selectedStageId: this.selectedStageId || undefined,
+        bcuDb: this.bcuDb,
+        crownMagnificationPercent: crown?.crownMagnificationPercent,
+        crownStarIndex: crown?.crownStarIndex
+      });
       await nextScene.init({ onProgress: (p) => overlay?.setProgress(p) });
       console.info('battleScene:init:ok');
 

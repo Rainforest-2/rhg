@@ -13,10 +13,32 @@
 // passes the resolved percentage here; this module owns only the BCU multiplier application.
 
 export const BCU_DEFAULT_CROWN_STARS = Object.freeze([100, 150, 200, 300]);
+export const BCU_MIN_CROWN_STAR = 1;
+export const BCU_MAX_CROWN_STAR = 4;
 
 function toFinite(value, fallback) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+export function normalizeCrownStar(value, fallback = BCU_MIN_CROWN_STAR) {
+  const raw = Number(value);
+  const n = Number.isFinite(raw) ? Math.trunc(raw) : Math.trunc(toFinite(fallback, BCU_MIN_CROWN_STAR));
+  return Math.max(BCU_MIN_CROWN_STAR, Math.min(BCU_MAX_CROWN_STAR, n));
+}
+
+export function crownStarIndexFromUiStar(star) {
+  return normalizeCrownStar(star) - 1;
+}
+
+export function crownStarsForData(crownData = {}) {
+  const rawCount = Number(crownData?.crownCount ?? crownData?.stars?.length ?? 1);
+  const count = Math.max(1, Math.min(BCU_MAX_CROWN_STAR, Number.isFinite(rawCount) ? Math.trunc(rawCount) : 1));
+  return Array.from({ length: count }, (_, index) => index + 1);
+}
+
+export function crownDataHasStar(crownData = {}, star = BCU_MIN_CROWN_STAR) {
+  return crownStarsForData(crownData).includes(normalizeCrownStar(star));
 }
 
 // Clamp a requested crown index into a map's available crowns. starIndex is 0-based (0 = ★1).

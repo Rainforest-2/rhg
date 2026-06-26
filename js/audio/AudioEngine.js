@@ -28,9 +28,11 @@ import { musicCatalog } from './MusicCatalog.js';
 
 // Voice pool for one-shot SE. Each play grabs a FREE element (so the same SE can
 // layer over its own still-ringing tail = real overlap), preferring one that already
-// holds that SE's src so a repeat costs no reload. 12 voices is plenty of simultaneity
-// while staying light (idle media elements cost no CPU).
+// holds that SE's src so a repeat costs no reload. Start with a small pool and grow
+// only during dense SE bursts; this preserves every SE request without constantly
+// stealing and restarting a still-playing element.
 const SE_POOL_SIZE = 12;
+const SE_POOL_MAX_SIZE = 32;
 // ~0.01s of silence, played once per element inside a user gesture to satisfy the
 // iOS autoplay policy so the element can be replayed programmatically afterwards.
 const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -53,6 +55,7 @@ export class AudioEngine {
     this._unlocked = false;
     this._userPaused = false;
     this._gestureBound = null;
+    this.lastSeVoiceDebug = null;
     // Track volume changes live without restarting playback.
     this._unsubscribe = this.audio?.subscribe?.(() => this._applyVolumes()) || null;
     // Bind the gesture-unlock listeners eagerly, before any element exists, so an
@@ -89,10 +92,17 @@ export class AudioEngine {
   _ensureSePool() {
     if (!this._supported) return;
     while (this._sePool.length < SE_POOL_SIZE) {
-      const el = new Audio();
-      el.preload = 'auto';
-      this._sePool.push(el);
+      this._sePool.push(this._createSeElement());
     }
+  }
+
+  _createSeElement() {
+    const el = new Audio();
+    el.preload = 'auto';
+    el.__bcuSeId = null;
+    el.__bcuSeSrc = '';
+    el.__bcuSeStart = 0;
+    return el;
   }
 
   _now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
@@ -279,14 +289,27 @@ export class AudioEngine {
     let oldestStart = Infinity;
     for (const el of pool) {
       const free = el.ended || el.paused;
-      if (free && Number(el.dataset.seId) === norm && el.getAttribute('src') === url) { freeSameId = el; break; }
+      if (free && el.__bcuSeId === norm && el.__bcuSeSrc === url) { freeSameId = el; break; }
       if (free && !freeAny) freeAny = el;
-      const started = Number(el.dataset.seStart) || 0;
+      const started = Number(el.__bcuSeStart) || 0;
       if (started < oldestStart) { oldestStart = started; oldest = el; }
     }
-    if (freeSameId) return freeSameId;
-    const el = freeAny || oldest;
-    if (el.getAttribute('src') !== url) { try { el.src = url; el.dataset.seId = String(norm); } catch {} }
+    let el = freeSameId || freeAny || null;
+    let mode = freeSameId ? 'free-same-id' : freeAny ? 'free-any' : 'expanded';
+    if (!el && pool.length < SE_POOL_MAX_SIZE) {
+      el = this._createSeElement();
+      pool.push(el);
+    }
+    if (!el) {
+      el = oldest;
+      mode = 'stolen-oldest';
+    }
+    if (el.__bcuSeSrc !== url) {
+      try { el.src = url; } catch {}
+      el.__bcuSeSrc = url;
+    }
+    el.__bcuSeId = norm;
+    this.lastSeVoiceDebug = { id: norm, mode, poolSize: pool.length };
     return el;
   }
 
@@ -297,6 +320,7 @@ export class AudioEngine {
     if (norm == null || !this._supported || this._userPaused) return false;
     this._ensureSePool();
     if (!this._sePool.length) return false;
+    const now = this._now();
     // Reuse the in-memory blob if we have it (zero network); otherwise stream the
     // server URL this once and warm the blob in the background so the NEXT play (and
     // every future battle) is served from memory instead of re-fetching.
@@ -306,8 +330,9 @@ export class AudioEngine {
     if (!cached) this._ensureBlob(norm);
     const el = this._acquireSeElement(norm, url);
     try {
+      el.__bcuSeStart = now;
       el.dataset.seId = String(norm);
-      el.dataset.seStart = String(this._now());
+      el.dataset.seStart = String(now);
       try { el.currentTime = 0; } catch {}
       el.volume = this._seVolume();
       const p = el.play?.();

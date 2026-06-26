@@ -1,6 +1,6 @@
 import { getAvailableStages } from '../battle/StageRegistry.js';
 import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
-import { buildScopedDifficultyFilterCandidates } from '../bcu/BcuStageDifficultyRuntime.js';
+import { crownDataHasStar, normalizeCrownStar, resolveMapCrownData } from '../battle/bcu-runtime/BcuStageCrownRuntime.js';
 import { FormationEditor } from './FormationEditor.js';
 import { buildBcuStageCatalog, normalizeStageDisplayLabel } from './BcuStageCatalogBuilder.js';
 
@@ -47,17 +47,16 @@ function stageFilterState(editor) {
   const raw = editor.__bcuStageDifficultyFilter || {};
   return {
     q: normalizeFilterValue(raw.q),
-    min: raw.min === '' || raw.min == null ? null : Number(raw.min),
-    max: raw.max === '' || raw.max == null ? null : Number(raw.max)
+    star: normalizeCrownStar(raw.star ?? 1)
   };
 }
 
 function isStageFiltering(filter) {
-  return !!filter.q || Number.isFinite(filter.min) || Number.isFinite(filter.max);
+  return !!filter.q || Number.isFinite(filter.star);
 }
 
 function stageFilterSignature(filter) {
-  return `${filter.q}|${Number.isFinite(filter.min) ? filter.min : ''}|${Number.isFinite(filter.max) ? filter.max : ''}`;
+  return `${filter.q}|${normalizeCrownStar(filter.star)}`;
 }
 
 function stageSearchText(item) {
@@ -85,24 +84,19 @@ function mapSearchText(map) {
   ].filter(Boolean).join(' '));
 }
 
+function mapCrownData(editor, map) {
+  return resolveMapCrownData(editor.__bcuStageCrownIndex || null, { name: map?.label, mapId: map?.mapNo });
+}
+
 function filteredStageItems(editor, kind, items) {
   // Stage-level search/filter is intentionally removed: once a map is opened, show every stage it
-  // contains. Map-level search is preserved below. (User request: keep map search, drop stage search.)
+  // contains. The selected crown applies to the whole map at battle launch.
   if (kind === 'stage') return items || [];
   const filter = stageFilterState(editor);
   if (!isStageFiltering(filter)) return items || [];
-  let bcuDb = null;
-  try { bcuDb = getBcuAssetDatabase(); } catch {}
-  return buildScopedDifficultyFilterCandidates(items || [], {
-    kind,
-    table: editor.__bcuStageDifficultyTable || null,
-    db: bcuDb,
-    query: kind === 'map' ? '' : filter.q,
-    min: filter.min,
-    max: filter.max
-  })
-    .map((candidate) => candidate.item)
-    .filter((item) => kind !== 'map' || !filter.q || mapSearchText(item).includes(filter.q));
+  return (items || [])
+    .filter((item) => crownDataHasStar(mapCrownData(editor, item), filter.star))
+    .filter((item) => !filter.q || mapSearchText(item).includes(filter.q));
 }
 
 function countStageColumns(list) {
@@ -183,13 +177,18 @@ function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
 }
 
 function selectedStageLabel(editor, catalog) {
+  const crown = editor.__bcuSelectedStageCrown;
+  const withCrown = (label) => {
+    const star = normalizeCrownStar(crown?.star ?? 1);
+    return crown && star > 1 ? `${label} ★${star}` : label;
+  };
   const selected = catalog.getStage(editor.selectedStageId);
   if (selected) {
     const mapLabel = normalizeStageDisplayLabel(selected.mapLabel);
     const stageLabel = normalizeStageDisplayLabel(selected.label);
-    if (!stageLabel) return mapLabel || '未選択';
-    if (!mapLabel || normalizeFilterValue(mapLabel) === normalizeFilterValue(stageLabel)) return stageLabel || mapLabel || '未選択';
-    return `${mapLabel} - ${stageLabel}`;
+    if (!stageLabel) return withCrown(mapLabel || '未選択');
+    if (!mapLabel || normalizeFilterValue(mapLabel) === normalizeFilterValue(stageLabel)) return withCrown(stageLabel || mapLabel || '未選択');
+    return withCrown(`${mapLabel} - ${stageLabel}`);
   }
   const selectedStage = (editor.stageOptions || []).find((stage) => getStageId(stage) === editor.selectedStageId || stage.stageId === editor.selectedStageId);
   if (selectedStage) {
@@ -198,11 +197,11 @@ function selectedStageLabel(editor, catalog) {
     try {
       const meta = editor.stageMeta?.get?.(selectedStage.stageKey || selectedStage.stageId) || {};
       const display = editor.resolveStageDisplay?.(selectedStage, meta)?.displayName;
-      if (display) return normalizeStageDisplayLabel(display);
+      if (display) return withCrown(normalizeStageDisplayLabel(display));
     } catch {}
-    return normalizeStageDisplayLabel(selectedStage.label || selectedStage.stageId || editor.selectedStageId || '未選択');
+    return withCrown(normalizeStageDisplayLabel(selectedStage.label || selectedStage.stageId || editor.selectedStageId || '未選択'));
   }
-  return normalizeStageDisplayLabel(editor.selectedStageId || '未選択');
+  return withCrown(normalizeStageDisplayLabel(editor.selectedStageId || '未選択'));
 }
 
 function renderBackControl(state, category, map) {

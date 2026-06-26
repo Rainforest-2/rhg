@@ -100,26 +100,39 @@ export function deriveMsdRef(stageEntry) {
   const layoutRef = stageEntry.bundleRef || {};
   const m = LAYOUT_BASENAME_RE.exec(stageEntry.basename || '');
   if (m) {
-    const suf = m[1];
+    // Two suffixes can differ. The MSD *filename* suffix comes from the layout
+    // basename (stageR<fileSuf><map>_<stage> -> MapStageData<fileSuf>_<map>.csv),
+    // while the MSD *bundle dir* suffix comes from the layout's group dir
+    // (StageR<dirSuf> -> MSD<dirSuf>). They match for most categories, but BCU
+    // ships category RA as StageRRA/stageRA*.csv with MSDRA/MapStageDataA_*.csv,
+    // i.e. dirSuf="RA" but fileSuf="A". Using the basename suffix for both (the
+    // old behavior) replaced nothing on the StageRRA bundleKey, so RA stages
+    // resolved no music and fell back to the catalog default.
+    const fileSuf = m[1];
     const map = m[2];
     const stageIndex = Number.parseInt(m[3], 10);
     if (!Number.isFinite(stageIndex)) return null;
+    const dirMatch = /\/StageR([A-Za-z]+)$/.exec(layoutRef.bundleKey || '');
+    const dirSuf = dirMatch ? dirMatch[1] : fileSuf;
     const bundleKey = typeof layoutRef.bundleKey === 'string'
-      ? layoutRef.bundleKey.replace(`/StageR${suf}`, `/MSD${suf}`)
+      ? layoutRef.bundleKey.replace(`/StageR${dirSuf}`, `/MSD${dirSuf}`)
       : null;
     const bundlePath = typeof layoutRef.bundlePath === 'string'
-      ? layoutRef.bundlePath.replace(`__StageR${suf}`, `__MSD${suf}`)
+      ? layoutRef.bundlePath.replace(`__StageR${dirSuf}`, `__MSD${dirSuf}`)
       : null;
     if (!bundleKey || !bundlePath) return null;
+    // The replacement must actually apply, else the ref would point at the layout
+    // bundle (which holds no MapStageData) and read as a silent miss.
+    if (bundleKey === layoutRef.bundleKey || bundlePath === layoutRef.bundlePath) return null;
     return {
       bundleRef: {
         bundleKey,
         bundlePath,
-        internalPath: `MapStageData${suf}_${map}.csv`,
+        internalPath: `MapStageData${fileSuf}_${map}.csv`,
         readMode: layoutRef.readMode || 'zip-text'
       },
       stageIndex,
-      debug: { suf, map, stageIndex }
+      debug: { dirSuf, fileSuf, map, stageIndex }
     };
   }
   // CH main-story families (EoC stage / ITF stageW / CotC stageSpace / zombie

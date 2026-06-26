@@ -134,10 +134,19 @@ async function checkViewport(browser, width, height) {
   await page.screenshot({ path: `${OUT_DIR}/category-${label}.png`, fullPage: false });
 
   if (width === 1024 && height === 768) {
-    await page.locator('.formation-stage-card-category[data-stage-category]').first().click();
+    await page.locator('.formation-stage-card-category[data-stage-category="legend"]').click();
     await page.waitForSelector('.formation-stage-card-map', { state: 'visible', timeout: 20000 });
     const mapCountBefore = await visibleCount(page, '.formation-stage-card-map');
     assert(mapCountBefore > 0, 'map cards did not render');
+    const starSelector = page.locator('[data-stage-crown-star]').first();
+    assert(await starSelector.inputValue() === '1', 'stage crown selector did not default to ★1');
+    await starSelector.selectOption('4');
+    await page.waitForTimeout(350);
+    const mapCountStar4 = await visibleCount(page, '.formation-stage-card-map');
+    assert(mapCountStar4 > 0, '★4 crown filter hid every legend map');
+    const starDebug = await page.evaluate(() => globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ || null);
+    assert(starDebug?.filter?.star === 4, `crown filter debug did not record ★4 (${JSON.stringify(starDebug?.filter)})`);
+    assert(starDebug.matchedCount > 0 && starDebug.matchedCount < starDebug.total, `★4 crown filter did not reduce legend map candidates (${starDebug.matchedCount} / ${starDebug.total})`);
     await page.screenshot({ path: `${OUT_DIR}/map-${label}.png`, fullPage: false });
 
     const search = page.locator('[data-stage-search-input]').first();
@@ -152,7 +161,10 @@ async function checkViewport(browser, width, height) {
     await page.locator('[data-stage-filter-reset]').click();
     await page.waitForTimeout(350);
     assert(await visibleCount(page, '.formation-stage-card-map') === mapCountBefore, 'reset did not restore map cards');
+    assert(await starSelector.inputValue() === '1', 'reset did not restore the crown selector to ★1');
 
+    await starSelector.selectOption('4');
+    await page.waitForTimeout(350);
     await page.locator('.formation-stage-card-map[data-stage-map]').first().click();
     await page.waitForSelector('.formation-stage-card-stage', { state: 'visible', timeout: 20000 });
     assert(await visibleCount(page, '.formation-stage-card-stage') > 0, 'stage cards did not render');
@@ -168,6 +180,8 @@ async function checkViewport(browser, width, height) {
     await page.waitForFunction(() => document.querySelector('.app-loading-overlay')?.dataset.loadingMode === 'battle', null, { timeout: 15000 });
     await page.screenshot({ path: `${OUT_DIR}/battle-loading-${label}.png`, fullPage: false });
     await page.waitForSelector('.app-loading-overlay.is-hidden', { state: 'attached', timeout: 90000 });
+    const battleCrown = await page.evaluate(() => globalThis.__LAST_APPLY_BATTLE_REPORT__?.selectedStageCrown || null);
+    assert(battleCrown?.star === 4 && battleCrown?.crownStarIndex === 3, `battle launch did not preserve ★4 crown selection: ${JSON.stringify(battleCrown)}`);
   }
 
   const filteredVisible = await page.locator('.formation-stage-card.is-difficulty-filtered').evaluateAll((nodes) => nodes.filter((node) => getComputedStyle(node).display !== 'none').length);

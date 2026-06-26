@@ -2,7 +2,7 @@
 
 ## Last updated
 
-- date: 2026-06-25 (UTC)
+- date: 2026-06-26 (UTC)
 - repository: `Rainforest-2/rhg`
 - scope: current BCU ZIP/runtime/ability parity, rendering/UI acceptance, data loading, and persistence compatibility.
 - audit basis: current rhg code plus the checked-in BCU reference ZIPs under `references/bcu/`.
@@ -19,7 +19,7 @@ This is the high-level source of truth. It supersedes historical README/ZIP-anal
 - Formation and production icons resolve through semantic UI assets, not actor-image fallbacks.
 - Cat-unit production costs use BCU default `StageMap.price=1`, so raw `DataUnit.price` becomes a 1.5x deploy cost for catalog display, affordability, and money subtraction.
 - Spirit summon runtime covers BCU production/stage state, cooldown, one-spirit-per-summoner, pre-warp summon origin, and side-capacity rejection; actor/A_IMUATK browser appearance remains manual-review work.
-- BCU sound ids `0..190` resolve from vendored music assets with stage-map BGM lookup and lazy sound-cache warming.
+- BCU sound ids `0..190` resolve from vendored music assets with stage-map BGM lookup, lazy sound-cache warming, and a grow-on-burst HTMLAudio SE voice pool that preserves every SE request while reducing still-playing voice theft.
 
 ## Current focused documents
 

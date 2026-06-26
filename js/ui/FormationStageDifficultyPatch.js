@@ -1,10 +1,20 @@
 import { FormationEditor } from './FormationEditor.js';
-import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
-import { loadBcuStageDifficultyTable, resolveStageDifficulty } from '../bcu/BcuStageDifficultyRuntime.js';
+import {
+  BCU_MAX_CROWN_STAR,
+  crownStarIndexFromUiStar,
+  crownStarsForData,
+  normalizeCrownStar,
+  resolveCrownMagnificationPercent,
+  resolveMapCrownData
+} from '../battle/bcu-runtime/BcuStageCrownRuntime.js';
 
 const FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
 const STYLE_ID = 'formation-stage-difficulty-style';
 const CUSTOM_LEVEL = 'custom-stage-battle';
+const CROWN_INDEX_URLS = Object.freeze([
+  './assets/generated/bcu-stage-crown-index.json',
+  './public/assets/generated/bcu-stage-crown-index.json'
+]);
 
 function esc(v) { return String(v ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])); }
 function norm(v) { return String(v ?? '').normalize('NFKC').toLowerCase(); }
@@ -17,32 +27,29 @@ function ensureStyle() {
 }
 function filterState(ed) {
   const f = ed.__bcuStageDifficultyFilter || {};
-  return { q: norm(f.q).trim(), min: f.min === '' || f.min == null ? null : Number(f.min), max: f.max === '' || f.max == null ? null : Number(f.max) };
+  return { q: norm(f.q).trim(), star: normalizeCrownStar(f.star ?? 1) };
 }
 function rawDraftFilter(ed) {
   return ed.__bcuStageDifficultyDraftFilter || ed.__bcuStageDifficultyFilter || {};
 }
 function draftFilterState(ed) {
   const f = rawDraftFilter(ed);
-  return { q: norm(f.q).trim(), min: f.min === '' || f.min == null ? null : Number(f.min), max: f.max === '' || f.max == null ? null : Number(f.max) };
+  return { q: norm(f.q).trim(), star: normalizeCrownStar(f.star ?? 1) };
 }
 function setDraftFromTarget(ed, target) {
   const q = target?.closest?.('[data-stage-search-input]');
-  const min = target?.closest?.('[data-stage-difficulty-min]');
-  const max = target?.closest?.('[data-stage-difficulty-max]');
-  if (!(q || min || max) || !ed.root?.contains(target)) return false;
+  const star = target?.closest?.('[data-stage-crown-star]');
+  if (!(q || star) || !ed.root?.contains(target)) return false;
   const previous = ed.__bcuStageDifficultyDraftFilter || ed.__bcuStageDifficultyFilter || {};
-  ed.__bcuStageDifficultyDraftFilter = { ...previous, ...(q ? { q: q.value } : {}), ...(min ? { min: min.value } : {}), ...(max ? { max: max.value } : {}) };
+  ed.__bcuStageDifficultyDraftFilter = { ...previous, ...(q ? { q: q.value } : {}), ...(star ? { star: star.value } : {}) };
   return true;
 }
 function commitDraftFilter(ed) {
   const draft = ed.__bcuStageDifficultyDraftFilter || ed.__bcuStageDifficultyFilter || {};
-  ed.__bcuStageDifficultyFilter = { q: draft.q || '', min: draft.min ?? null, max: draft.max ?? null };
+  ed.__bcuStageDifficultyFilter = { q: draft.q || '', star: normalizeCrownStar(draft.star ?? 1) };
   ed.__bcuStageDifficultyDraftFilter = { ...ed.__bcuStageDifficultyFilter };
 }
-function isFiltering(f) { return !!f.q || Number.isFinite(f.min) || Number.isFinite(f.max); }
-function table(ed) { return ed.__bcuStageDifficultyTable || null; }
-function db() { try { return getBcuAssetDatabase(); } catch { return null; } }
+function isFiltering(f) { return !!f.q || Number.isFinite(f.star); }
 function stageOptionOf(item) {
   if (!item?.stage) return item || {};
   return {
@@ -60,35 +67,71 @@ function stageOptionOf(item) {
     }
   };
 }
-function diffOf(ed, item) { return resolveStageDifficulty(stageOptionOf(item), { table: table(ed), db: db() }); }
-function stageText(item, d) { return norm([item?.key, item?.id, item?.label, item?.mapLabel, item?.collectionLabel, item?.stageNoRaw, item?.rawId, stageOptionOf(item)?.stageId, stageOptionOf(item)?.stageKey, d?.diff >= 0 ? `★${d.diff}` : ''].filter(Boolean).join(' ')); }
-function stageMatches(ed, item, f = filterState(ed)) {
-  const d = diffOf(ed, item);
-  if (Number.isFinite(f.min) && (!(d.diff >= 0) || d.diff < f.min)) return false;
-  if (Number.isFinite(f.max) && (!(d.diff >= 0) || d.diff > f.max)) return false;
-  return !f.q || stageText(item, d).includes(f.q);
+function crownIndex(ed) { return ed.__bcuStageCrownIndex || null; }
+function mapCrownData(ed, map) {
+  return resolveMapCrownData(crownIndex(ed), { name: map?.label, mapId: map?.mapNo });
 }
-function mapDifficultyStats(ed, map) {
-  const resolutions = (map?.stages || []).map((st) => diffOf(ed, st));
-  const values = resolutions.map((r) => r.diff).filter((n) => Number.isFinite(n) && n >= 0);
-  const unresolved = resolutions.find((r) => !(Number.isFinite(r?.diff) && r.diff >= 0));
-  if (!values.length) return { min: -1, max: -1, label: '', candidateCount: resolutions.length, matchedCount: 0, unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || 'difficulty-not-defined' };
-  const min = Math.min(...values), max = Math.max(...values);
-  return { min, max, label: min === max ? `★${min}` : `★${min}-${max}`, candidateCount: resolutions.length, matchedCount: values.length, unresolvedReason: unresolved?.unresolvedReason || unresolved?.fallbackReason || null };
+function stageCrownData(ed, item) {
+  return resolveMapCrownData(crownIndex(ed), { name: item?.mapLabel, mapId: item?.mapNo });
+}
+function stageText(item, crownData) {
+  const starText = crownStarsForData(crownData).map((star) => `★${star}`).join(' ');
+  return norm([item?.key, item?.id, item?.label, item?.mapLabel, item?.collectionLabel, item?.stageNoRaw, item?.rawId, stageOptionOf(item)?.stageId, stageOptionOf(item)?.stageKey, starText].filter(Boolean).join(' '));
+}
+function mapCrownStats(ed, map) {
+  const crownData = mapCrownData(ed, map);
+  const stars = crownStarsForData(crownData);
+  const min = stars[0] || 1;
+  const max = stars[stars.length - 1] || 1;
+  return {
+    min,
+    max,
+    stars,
+    label: min === max ? `★${min}` : `★${min}-${max}`,
+    candidateCount: map?.stages?.length || 0,
+    matchedCount: stars.length,
+    unresolvedReason: crownData?.source === 'single-crown-default' ? null : null,
+    source: crownData?.source || 'single-crown-default',
+    crownCount: stars.length,
+    crownMagnifications: crownData?.stars || [100]
+  };
 }
 function mapText(map, stats) { return norm([map?.key, map?.label, map?.collectionLabel, ...(map?.collectionLabels || []), map?.mapNoRaw, stats.label].filter(Boolean).join(' ')); }
 function mapMatches(ed, map, f = filterState(ed)) {
-  const stats = mapDifficultyStats(ed, map);
-  if (Number.isFinite(f.min) && !(stats.max >= f.min)) return false;
-  if (Number.isFinite(f.max) && !(stats.min >= 0 && stats.min <= f.max)) return false;
+  const stats = mapCrownStats(ed, map);
+  if (!stats.stars.includes(normalizeCrownStar(f.star))) return false;
   if (!f.q) return true;
-  return mapText(map, stats).includes(f.q) || (map?.stages || []).some((st) => stageText(st, diffOf(ed, st)).includes(f.q));
+  return mapText(map, stats).includes(f.q) || (map?.stages || []).some((st) => stageText(st, mapCrownData(ed, map)).includes(f.q));
 }
-function semanticProvider() { try { return getBcuAssetDatabase()?.semanticProvider || null; } catch { return null; } }
-async function ensureDifficulty(ed) {
-  if (ed.__bcuStageDifficultyPromise) return ed.__bcuStageDifficultyPromise;
-  ed.__bcuStageDifficultyPromise = loadBcuStageDifficultyTable({ provider: semanticProvider() }).then((r) => { ed.__bcuStageDifficultyTable = r.table; ed.__bcuStageDifficultyDiagnostics = r.diagnostics; globalThis.__BCU_STAGE_DIFFICULTY_DEBUG__ = r.diagnostics; ed.renderStageSelector?.(); return r; });
-  return ed.__bcuStageDifficultyPromise;
+async function ensureCrownIndex(ed) {
+  if (ed.__bcuStageCrownIndexPromise) return ed.__bcuStageCrownIndexPromise;
+  ed.__bcuStageCrownIndexPromise = (async () => {
+    const errors = [];
+    for (const url of CROWN_INDEX_URLS) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`stage crown index fetch failed: ${response.status}`);
+        const index = await response.json();
+        return { index, source: url };
+      } catch (error) {
+        errors.push(`${url}: ${error?.message || error}`);
+      }
+    }
+    throw new Error(errors.join('; '));
+  })()
+    .then((index) => {
+      ed.__bcuStageCrownIndex = index.index;
+      ed.__bcuStageCrownIndexDiagnostics = { source: index.source, loadMode: 'generated-crown-index', count: index.index?.count || 0 };
+      globalThis.__BCU_STAGE_CROWN_FILTER_DEBUG__ = ed.__bcuStageCrownIndexDiagnostics;
+      ed.renderStageSelector?.();
+      return index.index;
+    })
+    .catch((error) => {
+      ed.__bcuStageCrownIndex = null;
+      ed.__bcuStageCrownIndexDiagnostics = { source: CROWN_INDEX_URLS.join(' | '), loadMode: 'load-failed', error: String(error?.message || error) };
+      return null;
+    });
+  return ed.__bcuStageCrownIndexPromise;
 }
 function currentScope(ed) {
   const catalog = ed.stageCatalog;
@@ -117,7 +160,11 @@ function insertControls(ed, scope, matched, shown) {
   const placeholder = scope.type === 'map' ? 'マップ名でさがす' : 'ステージ名でさがす';
   const summary = isFiltering(f) ? `表示中 ${matched} / ${scope.items.length}` : `表示中 ${shown} / ${scope.items.length}`;
   box.className = 'formation-stage-difficulty-tools';
-  box.innerHTML = `<label class='formation-stage-search-field'><span>${itemLabel}検索</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(draft.q)}'></label><div class='formation-stage-difficulty-range' aria-label='難易度の範囲'><span class='formation-stage-filter-label'>難易度</span><label><span>下限</span><input type='number' inputmode='numeric' data-stage-difficulty-min='1' placeholder='★1' min='0' max='12' value='${draft.min ?? ''}'></label><span class='formation-stage-range-sep'>から</span><label><span>上限</span><input type='number' inputmode='numeric' data-stage-difficulty-max='1' placeholder='★12' min='0' max='12' value='${draft.max ?? ''}'></label></div><button type='button' class='formation-stage-filter-apply' data-stage-filter-apply='1'>検索</button><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>条件リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
+  const starOptions = Array.from({ length: BCU_MAX_CROWN_STAR }, (_, index) => {
+    const star = index + 1;
+    return `<option value='${star}' ${normalizeCrownStar(draft.star) === star ? 'selected' : ''}>★${star}</option>`;
+  }).join('');
+  box.innerHTML = `<label class='formation-stage-search-field'><span>${itemLabel}検索</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(draft.q)}'></label><div class='formation-stage-difficulty-range' aria-label='星の段階'><span class='formation-stage-filter-label'>星</span><label><span>段階</span><select data-stage-crown-star='1'>${starOptions}</select></label></div><button type='button' class='formation-stage-filter-apply' data-stage-filter-apply='1'>検索</button><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>条件リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
   if (anchor?.nextSibling) list.insertBefore(box, anchor.nextSibling);
   else list.prepend(box);
 }
@@ -134,7 +181,7 @@ function setScopeDebug(ed, scope, detail = {}) {
     unresolvedReason: detail.unresolvedReason || (scope ? null : 'category-root-or-custom-stage'),
     candidateKeys: (scope?.items || []).map((item) => item.key).slice(0, 20),
     filter: filterState(ed),
-    diagnostics: ed.__bcuStageDifficultyDiagnostics || null
+    diagnostics: ed.__bcuStageCrownIndexDiagnostics || null
   };
   ed.__bcuStageDifficultyLastScopeDebug = debug;
   globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ = debug;
@@ -146,35 +193,35 @@ function removeHiddenDifficultyBadge(card) {
 function decorateMapLevel(ed, scope) {
   const f = filterState(ed);
   const matched = new Set(scope.items.filter((m) => mapMatches(ed, m, f)).map((m) => m.key));
-  const unresolved = [];
   for (const card of ed.root.querySelectorAll('.formation-stage-card-map[data-stage-map]')) {
     const map = scope.items.find((m) => m.key === card.dataset.stageMap);
-    const stats = mapDifficultyStats(ed, map);
-    if (stats.unresolvedReason) unresolved.push(stats.unresolvedReason);
-    card.dataset.stageDifficultyMin = stats.min >= 0 ? String(stats.min) : '';
-    card.dataset.stageDifficultyMax = stats.max >= 0 ? String(stats.max) : '';
+    const stats = mapCrownStats(ed, map);
+    card.dataset.stageCrownStars = stats.stars.join(',');
+    card.dataset.stageCrownCount = String(stats.crownCount);
+    card.dataset.stageDifficultyMin = String(stats.min);
+    card.dataset.stageDifficultyMax = String(stats.max);
     removeHiddenDifficultyBadge(card);
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
   }
   const shown = scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length;
   insertControls(ed, scope, matched.size, shown);
-  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown, unresolvedReason: unresolved[0] || null });
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown });
 }
 function decorateStageLevel(ed, scope) {
-  // Stage-level search/filter UI is removed (keep map search only). Decorate difficulty datasets for
-  // display but never hide a stage card and never insert the search/filter tools at this level.
-  const unresolved = [];
+  // Stage-level search/filter UI is removed (keep map search only). The selected crown applies to
+  // the whole opened map, so every stage in that map remains visible.
   for (const card of ed.root.querySelectorAll('.formation-stage-card-stage[data-stage-id]')) {
     const st = scope.items.find((s) => s.key === card.dataset.stageId || s.id === card.dataset.stageId);
-    const d = diffOf(ed, st || { key: card.dataset.stageId });
-    if (d.unresolvedReason || d.fallbackReason) unresolved.push(d.unresolvedReason || d.fallbackReason);
+    const crownData = stageCrownData(ed, st || { key: card.dataset.stageId });
+    const stars = crownStarsForData(crownData);
     removeHiddenDifficultyBadge(card);
-    card.dataset.stageDifficulty = d.diff >= 0 ? String(d.diff) : '';
-    card.dataset.stageDifficultyMin = d.diff >= 0 ? String(d.diff) : '';
-    card.dataset.stageDifficultyMax = d.diff >= 0 ? String(d.diff) : '';
+    card.dataset.stageCrownStars = stars.join(',');
+    card.dataset.stageDifficulty = stars.join(',');
+    card.dataset.stageDifficultyMin = String(stars[0] || 1);
+    card.dataset.stageDifficultyMax = String(stars[stars.length - 1] || 1);
     card.classList.remove('is-difficulty-filtered');
   }
-  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: scope.items.length, shownCount: scope.items.length, unresolvedReason: unresolved[0] || null });
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: scope.items.length, shownCount: scope.items.length });
 }
 function decorate(ed) {
   const scope = currentScope(ed);
@@ -189,15 +236,38 @@ export function installFormationStageDifficultyPatch() {
   const load = p.loadStageOptions;
   p.loadStageOptions = async function loadStageOptionsWithScopedDifficulty(...args) {
     const r = await load.apply(this, args);
-    await ensureDifficulty(this);
+    await ensureCrownIndex(this);
     this.renderStageSelector?.();
     return r;
   };
   const render = p.renderStageSelector;
-  p.renderStageSelector = function renderStageSelectorWithScopedDifficulty(...args) { void ensureDifficulty(this); const r = render.apply(this, args); decorate(this); return r; };
+  p.renderStageSelector = function renderStageSelectorWithScopedDifficulty(...args) { void ensureCrownIndex(this); const r = render.apply(this, args); decorate(this); return r; };
   const input = p.onInput;
   p.onInput = function onInputWithScopedStageDifficulty(e) { if (setDraftFromTarget(this, e.target)) return; return input.call(this, e); };
+  const select = p.selectStage;
+  p.selectStage = function selectStageWithCrown(stageId, ...args) {
+    const catalog = this.stageCatalog;
+    const stage = catalog?.getStage?.(stageId);
+    const map = stage?.mapKey ? catalog?.getMap?.(stage.mapKey) : null;
+    const f = filterState(this);
+    const crownData = map ? mapCrownData(this, map) : stageCrownData(this, stage || {});
+    const star = normalizeCrownStar(f.star);
+    const starIndex = crownStarIndexFromUiStar(star);
+    const resolvedIndex = Math.min(starIndex, Math.max(0, (crownStarsForData(crownData).length || 1) - 1));
+    const percent = resolveCrownMagnificationPercent(resolvedIndex, crownData?.stars || [100]);
+    this.__bcuSelectedStageCrown = {
+      star: resolvedIndex + 1,
+      requestedStar: star,
+      crownStarIndex: resolvedIndex,
+      crownMagnificationPercent: percent,
+      crownCount: crownStarsForData(crownData).length,
+      mapLabel: map?.label || stage?.mapLabel || null,
+      source: crownData?.source || 'single-crown-default'
+    };
+    globalThis.__BCU_SELECTED_STAGE_CROWN_DEBUG__ = this.__bcuSelectedStageCrown;
+    return select.call(this, stageId, ...args);
+  };
   const click = p.onClick;
-  p.onClick = function onClickWithScopedStageDifficulty(e) { const apply = e.target.closest?.('[data-stage-filter-apply]'); if (apply && this.root?.contains(apply)) { e.preventDefault(); e.stopPropagation(); commitDraftFilter(this); this.renderStageSelector(); return; } const reset = e.target.closest?.('[data-stage-filter-reset]'); if (reset && this.root?.contains(reset)) { e.preventDefault(); e.stopPropagation(); this.__bcuStageDifficultyFilter = { q: '', min: null, max: null }; this.__bcuStageDifficultyDraftFilter = { q: '', min: null, max: null }; this.renderStageSelector(); return; } return click.call(this, e); };
+  p.onClick = function onClickWithScopedStageDifficulty(e) { const apply = e.target.closest?.('[data-stage-filter-apply]'); if (apply && this.root?.contains(apply)) { e.preventDefault(); e.stopPropagation(); commitDraftFilter(this); this.renderStageSelector(); return; } const reset = e.target.closest?.('[data-stage-filter-reset]'); if (reset && this.root?.contains(reset)) { e.preventDefault(); e.stopPropagation(); this.__bcuStageDifficultyFilter = { q: '', star: 1 }; this.__bcuStageDifficultyDraftFilter = { q: '', star: 1 }; this.renderStageSelector(); return; } return click.call(this, e); };
 }
 installFormationStageDifficultyPatch();

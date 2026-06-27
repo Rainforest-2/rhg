@@ -8,6 +8,14 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_ASSETS_DIR = path.join(ROOT, 'public', 'assets');
 const DIST_ASSETS_DIR = path.join(ROOT, 'dist', 'assets');
 
+// GitHub Pages serves this project under https://<user>.github.io/rhg/, so every
+// emitted URL (entry chunk, hashed CSS, public assets, in-HTML/CSS references)
+// must carry the /rhg/ base. The same base is used for `vite dev` and
+// `vite preview` so dev, preview and the Pages build resolve identical paths;
+// runtime asset URLs read it back via import.meta.env.BASE_URL (js/assetBase.js).
+const BASE = '/rhg/';
+const BASE_PREFIX = BASE.replace(/\/$/, ''); // '/rhg'
+
 const MIME_TYPES = new Map([
   ['.css', 'text/css; charset=utf-8'],
   ['.json', 'application/json; charset=utf-8'],
@@ -53,7 +61,12 @@ function selectedPublicAssetsPlugin() {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url || '/', 'http://localhost');
-        const pathname = decodeURIComponent(url.pathname);
+        // Requests arrive base-prefixed (e.g. /rhg/assets/...) under `vite dev`;
+        // strip the base so the asset lookup below stays base-agnostic.
+        let pathname = decodeURIComponent(url.pathname);
+        if (pathname === BASE_PREFIX || pathname.startsWith(BASE_PREFIX + '/')) {
+          pathname = pathname.slice(BASE_PREFIX.length) || '/';
+        }
         const fromAssets = pathname.startsWith('/assets/') ? pathname.slice('/assets/'.length) : null;
         const fromLegacyPublic = pathname.startsWith('/public/assets/') ? pathname.slice('/public/assets/'.length) : null;
         const assetPath = fromAssets || fromLegacyPublic;
@@ -124,6 +137,7 @@ async function copySelectedPublicAssets(sourceDir, targetDir, rel = '') {
 }
 
 export default defineConfig({
+  base: BASE,
   publicDir: false,
   plugins: [selectedPublicAssetsPlugin()],
   build: {

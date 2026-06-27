@@ -11,13 +11,15 @@
 //   2. cdnBaseUrl / remoteBaseUrl — optional remote fallbacks; empty by default,
 //      so resolveUrls skips them. Re-add a base URL to restore a remote fallback.
 
-const MANIFEST_URL = '/assets/music/musicmap.json';
+import { assetUrl } from '../assetBase.js';
+
+const MANIFEST_URL = assetUrl('music/musicmap.json');
 
 const FALLBACK_MANIFEST = Object.freeze({
   schemaVersion: 1,
   cdnBaseUrl: '',
   remoteBaseUrl: '',
-  localBaseUrl: '/assets/music/',
+  localBaseUrl: assetUrl('music/'),
   // .m4a (AAC) so iOS/Safari can decode the BGM (Ogg Vorbis is unsupported there).
   extension: '.m4a',
   pad: 3,

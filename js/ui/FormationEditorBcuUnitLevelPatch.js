@@ -12,6 +12,7 @@ import { ORB_ID, ORB_TRAIT_NAMES } from '../battle/bcu-runtime/BcuOrbModifier.js
 import { PC_CORRES, getTalentAbilityName, getTalentInfoForUnit, isTalentAbilityNameRegistryLoaded, isTalentRegistryLoaded } from '../battle/bcu-runtime/BcuTalentInfoData.js';
 import { PC_CATEGORY, PC_SUBTYPE } from '../battle/bcu-runtime/BcuTalentModifier.js';
 import { loadBcuTalentAbilityNames, loadBcuTalentRegistry } from '../battle/bcu-runtime/BcuTalentRegistryLoader.js';
+import { ASSET_BASE } from '../assetBase.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-bcu-unit-level.v4-premium-motion');
 const STYLE_ID = 'formation-character-tuning-overlay-style';
@@ -131,7 +132,7 @@ function injectStyle() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-@font-face{font-family:HakusyuTuningLocal;src:url('/assets/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block}
+@font-face{font-family:HakusyuTuningLocal;src:url('${ASSET_BASE}/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block}
 html body.nyanko-ui-polish .formation-slot{position:relative!important;overflow:visible!important}
 /* Long-press-to-open-overlay reliability on Android. A formation slot is a <button> that
    contains the unit <img>; on Android Chrome a touch-hold over the image fires the native

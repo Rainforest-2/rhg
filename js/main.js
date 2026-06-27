@@ -1,6 +1,8 @@
 // © 2026 Rainforest-2. All Rights Reserved. Unauthorized copying, rehosting, or reuse of
 // this code is prohibited. 無断複製・再配布・流用を禁じます。
 
+import { ASSET_BASE } from './assetBase.js';
+
 try {
   console.log(
     '%cワンコ大戦争%c © 2026 Rainforest-2 — All Rights Reserved.\n無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited.',
@@ -27,7 +29,10 @@ const BOOT_PROGRESS = Object.freeze({
   done: 1
 });
 
-const ASSET_ROOT = '/assets';
+// Derived from the Vite base (import.meta.env.BASE_URL): '/rhg/assets' on Pages
+// and in dev/preview. Published as a global so the BCU path resolvers
+// (BcuPathResolver / SemanticAssetProvider) prefix every fetched asset with it.
+const ASSET_ROOT = ASSET_BASE;
 globalThis.__RHG_ASSET_BASE__ = ASSET_ROOT;
 
 function clamp01(value) {

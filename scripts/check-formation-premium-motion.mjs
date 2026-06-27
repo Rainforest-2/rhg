@@ -18,7 +18,7 @@ const formationEditor = read('js/ui/FormationEditor.js');
 const customStagePatch = read('js/ui/FormationCustomStageBattlePatch.js');
 const customStageHpPatch = read('js/ui/FormationCustomStageBattleHpPatch.js');
 const indexHtml = read('index.html');
-const installUiPatches = read('js/boot/installUiPatches.js');
+const installUiPatches = read('js/boot/groups/uiPatches.js');
 
 // 1. index.html loads the premium sheet after every other stylesheet.
 const linkOrder = [...indexHtml.matchAll(/href="\.\/css\/([^"]+)"/g)].map((m) => m[1]);
@@ -26,7 +26,7 @@ assert.ok(linkOrder.includes('nyanko-premium-polish.css'), 'premium css linked i
 assert.equal(linkOrder.at(-1), 'nyanko-premium-polish.css', 'premium css must be the last stylesheet so its equal-specificity rules win');
 
 // 2. The premium motion patch installs last so its prototype wrappers are outermost.
-const importOrder = [...installUiPatches.matchAll(/import\('\.\.\/ui\/([^']+)'\)/g)].map((m) => m[1]);
+const importOrder = [...installUiPatches.matchAll(/import '\.\.\/\.\.\/ui\/([^']+)'/g)].map((m) => m[1]);
 assert.equal(importOrder.at(-1), 'FormationPremiumMotionPatch.js', 'premium motion patch must be the last ui patch import');
 
 // 3. Transient classes toggled by FormationPremiumMotionPatch exist in the premium sheet.

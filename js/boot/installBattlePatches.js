@@ -1,7 +1,5 @@
 import { subProgress } from './importProgress.js';
 
-const IS_VITE_PROD = import.meta.env?.PROD === true;
-
 async function runInstaller(step, onProgress) {
   const { path, exportName, load } = step;
   try {
@@ -26,28 +24,16 @@ async function runInstaller(step, onProgress) {
   }
 }
 
-// The two patches kept as direct imports (moving them into a helper was blocked by
-// the connector safety pass). Each failure is isolated and still advances the bar.
+// Touch/mobile-input patches load as one group (single source of truth in
+// ./groups/battleDirectPatches.js). The failure is isolated and still advances the bar.
 async function runDirectImports(onProgress) {
-  if (IS_VITE_PROD) {
-    await import('./prod/battleDirectPatches.js');
-    onProgress?.(1);
-    return;
+  try {
+    await import('./groups/battleDirectPatches.js');
+  } catch (error) {
+    console.warn('[battle boot] direct patches failed; continuing', error);
+    globalThis.__BATTLE_BOOT_PATCH_ERRORS__.push({ path: './groups/battleDirectPatches.js', message: error?.message || String(error), stack: error?.stack || null });
   }
-  const direct = [
-    '../battle/BattleSceneBcuTouchPatch.js',
-    '../battle/BattleSceneBcuMobileInputPatch.js'
-  ];
-  for (let i = 0; i < direct.length; i += 1) {
-    try {
-      if (i === 0) await import('../battle/BattleSceneBcuTouchPatch.js');
-      else await import('../battle/BattleSceneBcuMobileInputPatch.js');
-    } catch (error) {
-      console.warn('[battle boot] direct patch failed; continuing', { path: direct[i], error });
-      globalThis.__BATTLE_BOOT_PATCH_ERRORS__.push({ path: direct[i], message: error?.message || String(error), stack: error?.stack || null });
-    }
-    onProgress?.((i + 1) / direct.length);
-  }
+  onProgress?.(1);
 }
 
 export async function installBattlePatches(onProgress) {

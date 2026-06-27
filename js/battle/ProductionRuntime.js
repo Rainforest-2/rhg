@@ -1,4 +1,6 @@
 export const BCU_DEFAULT_STAGE_PRICE = 1;
+export const BCU_DEFAULT_RESEARCH_TECH = 30;
+export const BCU_DEFAULT_RESPAWN_TREASURE = 300;
 
 function toFinite(value, fallback = 0) {
   const n = Number(value);
@@ -9,6 +11,63 @@ export function getBcuUnitDeployCost(rawPrice, stagePrice = BCU_DEFAULT_STAGE_PR
   const price = Math.max(0, Math.floor(toFinite(rawPrice, 0)));
   const stage = Math.floor(toFinite(stagePrice, BCU_DEFAULT_STAGE_PRICE));
   return Math.floor(price * (1 + stage * 0.5));
+}
+
+export function getBcuDiscountedDeployCost(deployCost, discountPercent = 0) {
+  const cost = Math.max(0, Math.floor(toFinite(deployCost, 0)));
+  const discount = Math.max(0, Math.floor(toFinite(discountPercent, 0)));
+  if (discount <= 0) return cost;
+  return Math.max(0, cost - Math.floor(cost * discount / 100));
+}
+
+export function getBcuFinalRespawnFrames(rawRespawnFrames, {
+  researchTech = BCU_DEFAULT_RESEARCH_TECH,
+  researchTreasure = BCU_DEFAULT_RESPAWN_TREASURE,
+  comboRespawnPercent = 0,
+  globalCooldownLimit = false
+} = {}) {
+  const ori = Math.max(0, Math.floor(toFinite(rawRespawnFrames, 0)));
+  const combo = Math.floor(toFinite(comboRespawnPercent, 0));
+  if (globalCooldownLimit && ori <= 60) return ori;
+  const research = (Math.floor(toFinite(researchTech, BCU_DEFAULT_RESEARCH_TECH)) - 1) * 6
+    + Math.floor(toFinite(researchTreasure, BCU_DEFAULT_RESPAWN_TREASURE)) * 0.3;
+  const deduction = globalCooldownLimit ? Math.floor(research * combo / 100) : research + Math.floor(research * combo / 100);
+  return Math.floor(Math.max(60, ori - deduction));
+}
+
+export function resolveBcuProductionValues(stats = {}, {
+  stagePrice = BCU_DEFAULT_STAGE_PRICE,
+  researchTech = BCU_DEFAULT_RESEARCH_TECH,
+  researchTreasure = BCU_DEFAULT_RESPAWN_TREASURE,
+  globalCooldownLimit = false
+} = {}) {
+  const inc = stats?.bcuComboModifiers?.increments || {};
+  const rawPrice = Number.isFinite(stats?.price) ? Math.max(0, Math.floor(stats.price)) : null;
+  const baseDeployCost = rawPrice === null ? null : getBcuUnitDeployCost(rawPrice, stagePrice);
+  const discountPercent = Math.max(0, Math.floor(toFinite(inc.discount, 0)));
+  const deployCost = baseDeployCost === null ? null : getBcuDiscountedDeployCost(baseDeployCost, discountPercent);
+  const rawRespawnFrames = Number.isFinite(stats?.respawnFrames) ? Math.max(0, Math.floor(stats.respawnFrames)) : null;
+  const comboRespawnPercent = Math.max(0, Math.floor(toFinite(inc.respawn, 0)));
+  const respawnFrames = rawRespawnFrames === null ? null : getBcuFinalRespawnFrames(rawRespawnFrames, {
+    researchTech,
+    researchTreasure,
+    comboRespawnPercent,
+    globalCooldownLimit
+  });
+  return {
+    rawPrice,
+    stagePrice,
+    baseDeployCost,
+    discountPercent,
+    deployCost,
+    rawRespawnFrames,
+    researchTech,
+    researchTreasure,
+    comboRespawnPercent,
+    globalCooldownLimit,
+    respawnFrames,
+    source: 'BCU ELineUp price/maxC: EForm.getPrice + C_DISCOUNT; Treasure.getFinRes(respawn, C_RESP)'
+  };
 }
 
 export class ProductionRuntime {
@@ -31,7 +90,7 @@ export class ProductionRuntime {
   }
 
   static describeProductionSources(unitDef) {
-    return { sourceRoster: unitDef?.sourceRoster ?? null, sourceSlotId: unitDef?.sourceSlotId ?? null, sourceKind: unitDef?.isProductionUnit ? 'production-unit' : null, statsType: unitDef?.statsType ?? null, statsId: unitDef?.statsId ?? null, formRow: unitDef?.form ?? null, costSource: unitDef?.costSource ?? null, cooldownSource: unitDef?.cooldownSource ?? null, productionCostSource: unitDef?.productionCostSource ?? null, productionCooldownSource: unitDef?.productionCooldownSource ?? null, defaultCost: unitDef?.defaultCost ?? null, defaultCooldownMs: unitDef?.defaultCooldownMs ?? null, bcuPrice: unitDef?.bcuPrice ?? null, bcuStagePrice: unitDef?.bcuStagePrice ?? null, bcuDeployCost: unitDef?.bcuDeployCost ?? null, bcuRespawnFrames: unitDef?.bcuRespawnFrames ?? null, bcuRespawnMs: unitDef?.bcuRespawnMs ?? null };
+    return { sourceRoster: unitDef?.sourceRoster ?? null, sourceSlotId: unitDef?.sourceSlotId ?? null, sourceKind: unitDef?.isProductionUnit ? 'production-unit' : null, statsType: unitDef?.statsType ?? null, statsId: unitDef?.statsId ?? null, formRow: unitDef?.form ?? null, costSource: unitDef?.costSource ?? null, cooldownSource: unitDef?.cooldownSource ?? null, productionCostSource: unitDef?.productionCostSource ?? null, productionCooldownSource: unitDef?.productionCooldownSource ?? null, defaultCost: unitDef?.defaultCost ?? null, defaultCooldownMs: unitDef?.defaultCooldownMs ?? null, bcuPrice: unitDef?.bcuPrice ?? null, bcuStagePrice: unitDef?.bcuStagePrice ?? null, bcuDeployCost: unitDef?.bcuDeployCost ?? null, bcuRespawnFrames: unitDef?.bcuRespawnFrames ?? null, bcuRespawnMs: unitDef?.bcuRespawnMs ?? null, bcuProduction: unitDef?.bcuProduction ?? null };
   }
 
   static getUnitStatus(unitDef, economy = null) {

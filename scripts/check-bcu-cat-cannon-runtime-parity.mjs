@@ -131,7 +131,7 @@ assert.match(scenePatch, /phase === 'economy'/, 'cat cannon charge must be on a 
 assert.match(scenePatch, /phase === 'proc-resolve'/, 'cat cannon attack must resolve separately from unit attack capture');
 assert.match(scenePatch, /phase === 'knockback-death'/, 'cat cannon assist KB must run after damage resolution');
 
-const boot = readFileSync('js/boot/battle/installBattleScenePatches.js', 'utf8');
+const boot = readFileSync('js/boot/groups/battleScenePatches.js', 'utf8');
 assert.match(boot, /BattleSceneBcuCatCannonPatch/, 'cat cannon patch must be installed by battle boot');
 
 const ui = readFileSync('js/ui/PlayerProductionBar.js', 'utf8');

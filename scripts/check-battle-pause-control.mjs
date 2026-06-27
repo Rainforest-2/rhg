@@ -76,8 +76,10 @@ for (const piece of ['bcu-battle-enter', 'bcu-battle-leave', 'applyFormationToBa
 }
 check(/installPreviewAppPageTransitionPatch\(\);\s*$/.test(transitionPatch.trim() + '\n'), 'PageTransitionPatch: must self-install at module load');
 const main = await read('js/main.js');
-check(main.includes('PreviewAppBattlePauseOverlayPatch.js'), 'main.js: must import the pause overlay patch');
-check(main.includes('PreviewAppPageTransitionPatch.js'), 'main.js: must import the page transition patch');
+check(main.includes('./boot/groups/runtimePatches.js'), 'main.js: must import the runtime patch group');
+const runtimeGroup = await read('js/boot/groups/runtimePatches.js');
+check(runtimeGroup.includes('PreviewAppBattlePauseOverlayPatch.js'), 'runtime patch group: must import the pause overlay patch');
+check(runtimeGroup.includes('PreviewAppPageTransitionPatch.js'), 'runtime patch group: must import the page transition patch');
 
 // 4. Real BCU sprite regions + atlas integrity
 const imgcut = await read('public/assets/bcu/000001/org/page/img002.imgcut');

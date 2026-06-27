@@ -40,7 +40,10 @@
 - **ELineUp**
   - priceは `MaskUnit.getPrice()` 由来。
   - cooldownは `MaskUnit.getRespawn()` 由来。
-  - stage limit / combo / orb で補正される。
+  - PCoin本能は `PC2_COST` / `PC2_CD` で `price` / `respawn` を先に変える。
+  - deploy costは `Form/EForm.getPrice(sta)` の後に C_DISCOUNT を通す。
+  - cooldownは `Treasure.getFinRes(respawn, C_RESP)` を通し、通常経路では最低 60F。
+  - stage limit / combo / orb でさらに補正される。
 - **EUnit**
   - `MaskUnit` を受け取り、level / talent / PCoin / treasure / combo補正つきで戦闘entity化。
   - front/back から spawnLayer/currentLayer を決定。
@@ -78,6 +81,9 @@
   - `event.targetMode / attackKind / interval` でcapture。
 - **BattleScene**
   - `moveSpeed / detectionRangePx / attackProfile / damage / HP` を戦闘進行で使用。
+- **ProductionRuntime / BattleScene.applyBcuProductionStatsFromTemplates**
+  - `stats.price` / `stats.respawnFrames` から BCU `ELineUp` 相当の生産値を作る。
+  - `StageMap.price=1` の 1.5x cost、C_DISCOUNT、PCoin cost/CD、`Treasure.getFinRes(respawn, C_RESP)` を production card / affordability / money subtraction / cooldown に反映する。
 
 ## F. 今後の注意
 - BCU unit stats を dog-player へ直接使うとは限らない。
@@ -85,4 +91,4 @@
 - side名だけで `loadUnitStats/loadEnemyStats` を決めない。
 - 必ず `roster.statsType` を source of truth にする。
 - unit/enemy CSVのindexを共通化しない。
-- BCU unitのprice/respawnは将来production system連携候補だが、今回は未接続。
+- BCU unitのprice/respawnは production system に接続済み。古い `defaultCost/defaultCooldownMs` 表示ではなく、テンプレート読み込み後の `resolveBcuProductionValues` 結果を確認する。

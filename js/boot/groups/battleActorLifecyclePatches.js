@@ -1,3 +1,6 @@
+// Single source of truth for the battle "actor lifecycle" boot patch group (dev + prod).
+// Static imports execute top-to-bottom, so the order below IS the install order.
+// BcuProcImmunityPatch wraps applyBcuProc, which the core group defines first.
 import '../../battle/BcuKnockbackRuntimePatch.js';
 import '../../battle/BcuKnockbackProcPriorityPatch.js';
 import '../../battle/BattleActorStrengthenLethalPatch.js';

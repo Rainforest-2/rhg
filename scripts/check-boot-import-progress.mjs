@@ -1,39 +1,9 @@
-// Deterministic check for the boot loading-progress granularity helpers.
-// These turn the silent module-loading bands (notably the 18%->24% battle-patch
-// band) into a continuously moving bar by reporting per-module sub-progress.
+// Deterministic check for the boot loading-progress helper.
+// subProgress maps each weighted boot patch group into its slice of the shared
+// 18%->24% battle-patch band so the bar advances proportionally per group.
 
 import assert from 'node:assert/strict';
-import { importWithProgress, subProgress } from '../js/boot/importProgress.js';
-
-// --- importWithProgress: order preserved + monotonic per-module fractions ----
-{
-  const order = [];
-  const reports = [];
-  const thunks = ['a', 'b', 'c', 'd'].map((id) => async () => { order.push(id); });
-  await importWithProgress(thunks, (f) => reports.push(f));
-  assert.deepEqual(order, ['a', 'b', 'c', 'd'], 'thunks run in array order (load order preserved)');
-  assert.deepEqual(reports, [0.25, 0.5, 0.75, 1], 'progress is reported after every module, ending at 1');
-  for (let i = 1; i < reports.length; i += 1) assert.ok(reports[i] > reports[i - 1], 'progress is strictly increasing');
-}
-
-// --- empty list never reports ------------------------------------------------
-{
-  let called = 0;
-  await importWithProgress([], () => { called += 1; });
-  assert.equal(called, 0, 'an empty import list reports no progress');
-}
-
-// --- a throwing thunk stops and does not advance progress past it -------------
-{
-  const reports = [];
-  const thunks = [
-    async () => {},
-    async () => { throw new Error('boom'); },
-    async () => {}
-  ];
-  await assert.rejects(importWithProgress(thunks, (f) => reports.push(f)), /boom/, 'a failing module propagates (caller isolates the group)');
-  assert.deepEqual(reports, [1 / 3], 'progress only advanced past the one module that actually loaded');
-}
+import { subProgress } from '../js/boot/importProgress.js';
 
 // --- subProgress maps a child fraction into [start, start+span] --------------
 {
@@ -48,22 +18,25 @@ import { importWithProgress, subProgress } from '../js/boot/importProgress.js';
   assert.equal(subProgress(null, 0, 1), undefined, 'no parent callback yields no child callback');
 }
 
-// --- the battle-patch band yields many sub-updates (no silent 18->24 hang) ---
+// --- the battle-patch band advances per weighted group, in-band, monotonically ---
 {
-  // Simulate installBattlePatches weighting: 6 steps, each emitting per-module ticks
-  // into the 0.18->0.24 band; assert the bar reports far more than the old single jump.
+  // Mirror installBattlePatches: 6 weighted steps, each reporting its completion
+  // into the 0.18->0.24 band. The bar must stay inside the band, never move
+  // backwards, and reach the band end.
   const band = [];
   const onProgress = subProgress((v) => band.push(v), 0.18, 0.06);
-  const total = 16 + 9 + 21 + 2 + 17 + 5;
+  const WEIGHTS = [16, 9, 21, 2, 17, 5];
+  const total = WEIGHTS.reduce((sum, w) => sum + w, 0);
   let done = 0;
-  for (const weight of [16, 9, 21, 2, 17, 5]) {
+  for (const weight of WEIGHTS) {
     const step = subProgress(onProgress, done / total, weight / total);
-    for (let i = 1; i <= weight; i += 1) step(i / weight);
+    step(1); // the group resolved (single source of truth loads as one chunk)
     done += weight;
     onProgress(done / total);
   }
-  assert.ok(band.length >= 60, `battle-patch band reports per-module progress (${band.length} updates, was 1)`);
-  assert.ok(band[0] >= 0.18 && band[band.length - 1] <= 0.24 + 1e-9, 'all updates stay inside the 18%-24% band');
+  assert.ok(band.length >= WEIGHTS.length, `band reports at least once per group (${band.length} updates)`);
+  assert.ok(band[0] >= 0.18 - 1e-9 && band[band.length - 1] <= 0.24 + 1e-9, 'all updates stay inside the 18%-24% band');
+  assert.ok(Math.abs(band[band.length - 1] - 0.24) < 1e-9, 'the band reaches its end (24%) when every group is done');
   for (let i = 1; i < band.length; i += 1) assert.ok(band[i] >= band[i - 1] - 1e-9, 'band progress never moves backwards');
 }
 

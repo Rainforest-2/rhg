@@ -73,6 +73,8 @@ const INCREMENT_TYPES = Object.freeze({
   attack: COMBO_TYPE.C_ATK,
   health: COMBO_TYPE.C_DEF,
   speed: COMBO_TYPE.C_SPE,
+  respawn: COMBO_TYPE.C_RESP,
+  discount: COMBO_TYPE.C_DISCOUNT,
   strong: COMBO_TYPE.C_STRONG,
   good: COMBO_TYPE.C_GOOD,
   massive: COMBO_TYPE.C_MASSIVE,

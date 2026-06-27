@@ -18,6 +18,7 @@ import {
   getTalentHpMultiplier
 } from './BcuTalentModifier.js';
 import { BCU_ABI, BCU_TRAITS, BCU_PROC_IMMUNITY_FIELDS } from '../BcuCombatModel.js';
+import { BCU_BATTLE_TIMER_PERIOD_MS } from '../BattleFrameClock.js';
 
 const TALENT_SLOT_LEN = 14;
 const TALENT_SLOT_COUNT = 8;
@@ -369,7 +370,6 @@ function applyTalentSideEffects(stats, info, talents) {
   const cm = cloneCombatModel(stats);
   const bcuTalentEffects = [];
   let out = stats;
-  if (!cm) return { stats: out, bcuTalentEffects };
   const levels = Array.isArray(talents) ? talents : [];
   for (let i = 0; i < info.length; i++) {
     const entry = info[i];
@@ -383,6 +383,7 @@ function applyTalentSideEffects(stats, info, talents) {
     const value = talentModValue(entry, level, 0);
     const modifs = [0, 1, 2, 3, 4].map((j) => talentModValue(entry, level, j));
     if (category === PC_CATEGORY.PC_AB) {
+      if (!cm) continue;
       cm.ability = cm.ability || { abi: 0, flags: {}, sources: [] };
       cm.ability.abi = (Number(cm.ability.abi) || 0) | Number(target);
       cm.ability.flags = { ...(cm.ability.flags || {}) };
@@ -397,6 +398,7 @@ function applyTalentSideEffects(stats, info, talents) {
       if (target === BCU_ABI.AB_SKILL) cm.ability.flags.sageSlayer = true;
       bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_AB', bit: target });
     } else if (category === PC_CATEGORY.PC_IMU) {
+      if (!cm) continue;
       const field = String(target);
       const proc = ensureProcField(cm.proc, field);
       proc.mult = 100;
@@ -404,6 +406,7 @@ function applyTalentSideEffects(stats, info, talents) {
       proc.full = true;
       bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_IMU', field, mult: 100 });
     } else if (category === PC_CATEGORY.PC_P && String(target).startsWith('IMU')) {
+      if (!cm) continue;
       const field = String(target);
       const proc = ensureProcField(cm.proc, field);
       const mult = Math.max(0, Math.min(100, Math.trunc(Number(proc.mult || proc.block || 0) + value)));
@@ -412,9 +415,11 @@ function applyTalentSideEffects(stats, info, talents) {
       proc.full = mult >= 100;
       bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_P_RESIST', field, mult });
     } else if (category === PC_CATEGORY.PC_P) {
+      if (!cm) continue;
       const applied = applyPcProcTalent(cm, String(target), modifs);
       if (applied) bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_P', target: String(target), modifs, proc: applied.proc, payload: applied.payload });
     } else if (category === PC_CATEGORY.PC_TRAIT) {
+      if (!cm) continue;
       const trait = String(target);
       cm.traits = cm.traits || { list: [], flags: {} };
       cm.targetTraits = cm.targetTraits || { list: [], flags: {} };
@@ -426,26 +431,37 @@ function applyTalentSideEffects(stats, info, talents) {
       bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_TRAIT', trait });
     } else if (category === PC_CATEGORY.PC_BASE) {
       if (target === PC_SUBTYPE.PC2_SPEED && Number.isFinite(out.speed)) out = { ...out, speed: out.speed + value };
-      else if (target === PC_SUBTYPE.PC2_COST && Number.isFinite(out.cost)) out = { ...out, cost: Math.max(0, out.cost - value) };
-      else if (target === PC_SUBTYPE.PC2_CD && Number.isFinite(out.respawn)) out = { ...out, respawn: Math.max(0, out.respawn - value) };
+      else if (target === PC_SUBTYPE.PC2_COST) {
+        if (Number.isFinite(out.price)) out = { ...out, price: Math.max(0, out.price - value), costOrReward: Math.max(0, out.price - value) };
+        else if (Number.isFinite(out.cost)) out = { ...out, cost: Math.max(0, out.cost - value) };
+      } else if (target === PC_SUBTYPE.PC2_CD) {
+        if (Number.isFinite(out.respawnFrames)) {
+          const respawnFrames = Math.max(0, out.respawnFrames - value);
+          out = { ...out, respawnFrames, respawnSeconds: respawnFrames * BCU_BATTLE_TIMER_PERIOD_MS / 1000 };
+        } else if (Number.isFinite(out.respawn)) {
+          out = { ...out, respawn: Math.max(0, out.respawn - value) };
+        }
+      }
       else if (target === PC_SUBTYPE.PC2_HB && Number.isFinite(out.knockbacks)) out = { ...out, knockbacks: out.knockbacks + value };
       else if (target === PC_SUBTYPE.PC2_TBA && Number.isFinite(out.tbaFrames)) out = { ...out, tbaFrames: Math.trunc(out.tbaFrames * (100 - value) / 100) };
       bcuTalentEffects.push({ slot: i, abilityID: typeCode, category: 'PC_BASE', subtype: target, value });
     }
   }
   if (!bcuTalentEffects.length) return { stats, bcuTalentEffects };
-  out = {
+  const combatAttach = cm ? {
     ...out,
     bcuCombatModel: cm,
     bcuProc: cm.proc,
     bcuAbi: cm.ability?.abi ?? out.bcuAbi,
     bcuAbilityFlags: cm.ability?.flags || out.bcuAbilityFlags,
     traits: cm.traits?.list || out.traits,
-    traitFlags: cm.traits?.flags || out.traitFlags,
-    bcuTalentEffects
-  };
-  cm.immunity = rebuildTalentImmunity(cm.proc);
-  cm.resistance = Object.fromEntries(Object.entries(cm.immunity).filter(([, value]) => value.partial));
+    traitFlags: cm.traits?.flags || out.traitFlags
+  } : out;
+  out = { ...combatAttach, bcuTalentEffects };
+  if (cm) {
+    cm.immunity = rebuildTalentImmunity(cm.proc);
+    cm.resistance = Object.fromEntries(Object.entries(cm.immunity).filter(([, value]) => value.partial));
+  }
   return { stats: out, bcuTalentEffects };
 }
 

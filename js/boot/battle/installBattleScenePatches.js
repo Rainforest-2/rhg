@@ -1,36 +1,7 @@
-import { importWithProgress } from '../importProgress.js';
-
-const IS_VITE_PROD = import.meta.env?.PROD === true;
-
+// The patch list + load order is the single source of truth in ../groups/battleScenePatches.js.
 export async function installBattleScenePatches(onProgress) {
-  if (IS_VITE_PROD) {
-    await import('../prod/battleScenePatches.js');
-    onProgress?.(1);
-    return;
-  }
-  await importWithProgress([
-    () => import('../../battle/BattleSceneBcuTimerPatch.js'),
-    () => import('../../battle/BattleSceneBcuLineupPatch.js'),
-    () => import('../../battle/BattleSceneBcuStageSpawnPatch.js'),
-    () => import('../../battle/BattleSceneBcuCastleGuardPatch.js'),
-    () => import('../../battle/BattleSceneBcuCatCannonPatch.js'),
-    () => import('../../battle/BattleSceneBcuSpiritPatch.js'),
-    // After spirit so the button-delay requestPlayerSpawn gate is the outermost wrapper.
-    () => import('../../battle/BattleSceneBcuButtonDelayPatch.js'),
-    () => import('../../battle/BattleSceneCustomStageBattlePatch.js'),
-    () => import('../../battle/BattleSceneStageSpawnHeaderPatch.js'),
-    () => import('../../battle/BattleSceneBcuAttackPhasePatch.js'),
-    () => import('../../battle/BattleSceneProcApplyPatch.js'),
-    () => import('../../battle/BattleSceneBcuWaveInvalidApplyPatch.js'),
-    () => import('../../battle/BattleSceneBcuProcRuntimePatch.js'),
-    () => import('../../battle/BattleSceneBcuSummonPatch.js'),
-    () => import('../../battle/BattleSceneBcuStageBasisPhaseBridgePatch.js'),
-    () => import('../../battle/BattleBountyRuntimePatch.js'),
-    () => import('../../battle/BattleSceneBcuStatusIconPatch.js'),
-    () => import('../../battle/BattleSceneBcuStatusEffectRenderPatch.js'),
-    () => import('../../battle/BattleSceneBcuStageBasisTickPatch.js'),
-    () => import('../../battle/BattleSceneCustomStageBaseHpPatch.js')
-  ], onProgress);
+  await import('../groups/battleScenePatches.js');
+  onProgress?.(1);
   // NOTE: the combo (Nyanko combo) and talent (PCoin) registries are NOT loaded here. Their data
   // now lives inside core-db.zip and is read through the semantic asset provider, which only
   // exists after BcuBootLoader.loadGame() runs. They are installed from main.js once the provider

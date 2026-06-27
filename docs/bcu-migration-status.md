@@ -17,7 +17,7 @@ This is the high-level source of truth. It supersedes historical README/ZIP-anal
 - Core boot remains `public/assets/bundles/core/core-db.zip` through `BcuBootLoader` / `SemanticAssetProvider`.
 - Playable dog roster visibility is gated by local semantic actor readiness; stale external `error-enemy` exclusions do not hide full bundled actors such as enemy 562 and 661–669.
 - Formation and production icons resolve through semantic UI assets, not actor-image fallbacks.
-- Cat-unit production costs use BCU default `StageMap.price=1`, so raw `DataUnit.price` becomes a 1.5x deploy cost for catalog display, affordability, and money subtraction.
+- Cat-unit production values use the BCU `ELineUp` path: `StageMap.price=1` makes `DataUnit.price` a 1.5x deploy cost, PCoin `PC2_COST`/`PC2_CD` mutate price/respawn first, C_DISCOUNT applies to deploy cost, and `Treasure.getFinRes(respawn, C_RESP)` produces the battle cooldown floor.
 - Spirit summon runtime covers BCU production/stage state, cooldown, one-spirit-per-summoner, pre-warp summon origin, and side-capacity rejection; actor/A_IMUATK browser appearance remains manual-review work.
 - BCU sound ids `0..190` resolve from vendored music assets with stage-map BGM lookup, lazy sound-cache warming, and a grow-on-burst HTMLAudio SE voice pool that preserves every SE request while reducing still-playing voice theft.
 
@@ -52,7 +52,7 @@ The checked-in character ability reference Markdown was audited one-to-one again
 | Area | Current status | Risk / required next action |
 |---|---|---|
 | `Trait.targetForms` / special traits | `code-complete-candidate` | A real `Trait` file (targetType/targetForms) drives the single `bcuTraitCompatible` gate across proc and Target-Only cross-paths (`check-bcu-trait-targetforms-loader-parity`). |
-| Combo / orb / treasure / talent / PCoin | `code-complete-candidate` (non-visual) | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order and orbs fold through the resolver (`check-bcu-modifier-realdata-sweep-parity`). In-battle visual acceptance is a separate review item. |
+| Combo / orb / treasure / talent / PCoin | `code-complete-candidate` (non-visual) | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order and orbs fold through the resolver (`check-bcu-modifier-realdata-sweep-parity`). PCoin cost/CD and ELineUp production cost/cooldown are covered by `check-bcu-talent-info-loader` and `check-battle-scene-stage-runtime-wiring`. In-battle visual acceptance is a separate review item. |
 | Extra/custom zombie revive | `code-complete-candidate` | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter (`check-bcu-zombie-extra-revive-source-range-parity`). Corpse appearance remains visual. |
 | Playable dog roster actor visibility | `code-complete-candidate` | `buildDogSpecs` keeps locally full semantic actor bundles visible even when stale external enemy skip lists include their display ids. `check-dog-playable-roster-readiness` covers enemy 562 and 661–669. |
 | Non-basic cat cannon visuals | `code-complete-candidate` for runtime | Per-cannon ATK/EXT bitmap aliases are now wired (each cannon loads its own `NyCastle.aux.atks[id]` BASE/ATK eanim and spawns it via `spawnCatCannonNonBasicEffect`; `check-bcu-non-basic-cat-cannon-anim-parity`). Exact extend/waved traveling/sweep timing remains unaccepted in browser. |

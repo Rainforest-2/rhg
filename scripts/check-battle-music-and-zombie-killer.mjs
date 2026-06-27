@@ -350,8 +350,10 @@ check(surgeRuntime.includes('bcuSurgeSe') && surgeRuntime.includes('SE_VOLC_STAR
 
 // 6. patch wiring + node --check
 const main = await read('js/main.js');
-check(main.includes('PreviewAppBattleMusicPatch.js'), 'main.js must import the battle music patch');
-check(main.includes('BattleSoundEventPatch.js'), 'main.js must import the battle sound event patch');
+check(main.includes('./boot/groups/runtimePatches.js'), 'main.js must import the runtime patch group');
+const runtimeGroup = await read('js/boot/groups/runtimePatches.js');
+check(runtimeGroup.includes('PreviewAppBattleMusicPatch.js'), 'runtime patch group must import the battle music patch');
+check(runtimeGroup.includes('BattleSoundEventPatch.js'), 'runtime patch group must import the battle sound event patch');
 const musicPatch = await read('js/preview/PreviewAppBattleMusicPatch.js');
 // 'stopBgm' dropped: leaving battle now switches to the formation BGM (002.m4a)
 // instead of stopping playback.

@@ -1,7 +1,7 @@
 import { BattleScene } from './BattleScene.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
-import { BCU_DEFAULT_STAGE_PRICE, ProductionRuntime, getBcuUnitDeployCost } from './ProductionRuntime.js';
+import { ProductionRuntime, resolveBcuProductionValues } from './ProductionRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-timer-patch.v2');
 
@@ -75,22 +75,23 @@ export function installBattleSceneBcuTimerPatch() {
       if (!u || u.statsType !== 'unit') continue;
       const tpl = this.actorFactory.templates.get(u.slotId);
       const st = tpl?.stats;
-      if (Number.isFinite(st?.price)) {
-        const stagePrice = BCU_DEFAULT_STAGE_PRICE;
-        const deployCost = getBcuUnitDeployCost(st.price, stagePrice);
-        u.cost = deployCost;
-        u.defaultCost = deployCost;
+      const prod = resolveBcuProductionValues(st);
+      u.bcuProduction = prod;
+      if (Number.isFinite(prod.deployCost)) {
+        u.cost = prod.deployCost;
+        u.defaultCost = prod.deployCost;
         u.costSource = 'bcu-unit-deploy-cost';
         u.productionCostSource = u.productionCostSource || u.costSource;
-        u.bcuPrice = st.price;
-        u.bcuStagePrice = stagePrice;
-        u.bcuDeployCost = deployCost;
+        u.bcuPrice = prod.rawPrice;
+        u.bcuStagePrice = prod.stagePrice;
+        u.bcuDeployCost = prod.deployCost;
       }
-      if (Number.isFinite(st?.respawnFrames)) {
-        u.bcuRespawnFrames = st.respawnFrames;
-        u.bcuRespawnMs = respawnFramesToMs(st.respawnFrames);
+      if (Number.isFinite(prod.respawnFrames)) {
+        u.bcuRespawnFrames = prod.respawnFrames;
+        u.bcuRawRespawnFrames = prod.rawRespawnFrames;
+        u.bcuRespawnMs = respawnFramesToMs(prod.respawnFrames);
         u.cooldownMs = u.bcuRespawnMs;
-        u.cooldownSource = 'bcu-unit-respawn';
+        u.cooldownSource = 'bcu-unit-respawn-final';
         u.productionCooldownSource = u.productionCooldownSource || u.cooldownSource;
       }
       u.productionSourceDebug = ProductionRuntime.describeProductionSources(u);

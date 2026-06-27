@@ -1,6 +1,5 @@
 // © 2026 Rainforest-2. All Rights Reserved. Unauthorized copying, rehosting, or reuse of
 // this code is prohibited. 無断複製・再配布・流用を禁じます。
-import { importWithProgress } from './boot/importProgress.js';
 
 try {
   console.log(
@@ -27,15 +26,6 @@ const BOOT_PROGRESS = Object.freeze({
   appConstructed: 0.94,
   done: 1
 });
-
-const RUNTIME_PATCH_MODULES = Object.freeze([
-  () => import('./audio/BattleSoundEventPatch.js'),
-  () => import('./preview/PreviewAppCustomStageBattleConfigPatch.js'),
-  () => import('./preview/PreviewAppBattleResultOverlayPatch.js'),
-  () => import('./preview/PreviewAppBattlePauseOverlayPatch.js'),
-  () => import('./preview/PreviewAppPageTransitionPatch.js'),
-  () => import('./preview/PreviewAppBattleMusicPatch.js')
-]);
 
 const ASSET_ROOT = '/assets';
 globalThis.__RHG_ASSET_BASE__ = ASSET_ROOT;
@@ -149,14 +139,11 @@ async function boot() {
     } catch (error) {
       console.warn('[main] combo/talent registry install failed; modifiers disabled', error);
     }
-    // Each runtime patch import advances the bar one notch across the 0.76–0.90 band.
-    const runtimePatchProgress = (fraction) => showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchSpan, fraction));
-    if (import.meta.env?.PROD === true) {
-      await import('./boot/prod/runtimePatches.js');
-      runtimePatchProgress(1);
-    } else {
-      await importWithProgress(RUNTIME_PATCH_MODULES, runtimePatchProgress);
-    }
+    // Post-loadGame runtime patches load as one group across the 0.76–0.90 band
+    // (single source of truth in ./boot/groups/runtimePatches.js).
+    showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchSpan, 0));
+    await import('./boot/groups/runtimePatches.js');
+    showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchSpan, 1));
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     showBootStatus('出撃準備中…', BOOT_PROGRESS.appConstructed);
     const app = new PreviewApp({ bcuDb: db });

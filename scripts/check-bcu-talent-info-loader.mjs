@@ -80,6 +80,16 @@ assert.equal(out.hp, Math.trunc(1000 * hpMul), 'hp scaled by talent HP multiplie
 assert.equal(out.attackHits[0].damage, Math.trunc(500 * atkMul), 'attack hit scaled by talent attack multiplier');
 assert.equal(out.bcuTalentModifier.applied, true, 'talent applied flag set');
 
+const costCdInfo = [
+  [25, 10, 20, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // PC2_COST -> DataUnit.price -= value
+  [26, 10, 15, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   // PC2_CD -> DataUnit.respawn -= value
+];
+const costCdOut = applyTalentToStats({ price: 500, costOrReward: 500, respawnFrames: 324 }, costCdInfo, [10, 10]);
+assert.equal(costCdOut.price, 300, 'PC2_COST talent mutates BCU DataUnit.price, not a dead cost field');
+assert.equal(costCdOut.costOrReward, 300, 'PC2_COST keeps catalog/debug cost mirror in sync');
+assert.equal(costCdOut.respawnFrames, 264, 'PC2_CD talent mutates BCU DataUnit.respawn frame field');
+assert.equal(costCdOut.bcuTalentModifier.applied, true, 'cost/CD talent counts as an applied PCoin side effect');
+
 // All-zero levels => no-op.
 assert.equal(applyTalentToStats({ hp: 1000, damage: 500 }, unit9, unit9.map(() => 0)).bcuTalentModifier.applied, false, 'no talent levels => no-op');
 

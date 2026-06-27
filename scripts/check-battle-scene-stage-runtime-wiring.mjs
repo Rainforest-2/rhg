@@ -43,7 +43,7 @@ for (const path of Object.values(files)) assert.ok(fs.existsSync(path), `${path}
 const main = fs.readFileSync(files.main, 'utf8');
 const indexHtml = fs.readFileSync(files.index, 'utf8');
 const bootBattle = fs.readFileSync('js/boot/installBattlePatches.js', 'utf8');
-const bootBattleProjectiles = fs.readFileSync('js/boot/battle/installBattleProjectilePatches.js', 'utf8');
+const bootBattleProjectiles = fs.readFileSync('js/boot/groups/battleProjectilePatches.js', 'utf8');
 const wiring = fs.readFileSync(files.wiring, 'utf8');
 const adapter = fs.readFileSync(files.adapter, 'utf8');
 const runtime = fs.readFileSync(files.runtime, 'utf8');
@@ -55,9 +55,9 @@ assert.ok(main.includes('async function boot()'), 'main.js must use async boot()
 assert.ok(
   main.includes('installBattlePatches')
     && bootBattle.includes("path: './battle/installBattleProjectilePatches.js'")
-    && bootBattle.includes('runInstaller(step.path, step.name, stepProgress)')
-    && bootBattleProjectiles.includes("import('../../battle/BattleSceneStageRuntimeWiring.js')"),
-  'boot battle module must dynamically import stage runtime wiring (via grouped projectile installer) before PreviewApp starts'
+    && bootBattle.includes('runInstaller(step, stepProgress)')
+    && bootBattleProjectiles.includes("'../../battle/BattleSceneStageRuntimeWiring.js'"),
+  'boot battle module must import stage runtime wiring (via grouped projectile patch list) before PreviewApp starts'
 );
 assert.ok(main.includes("await import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp');
 assert.ok(main.includes('globalThis.__WAN_BOOT_ERROR__?.(error)'), 'main.js must report boot failures to the page overlay');
@@ -571,11 +571,14 @@ const { FormationStore: FormationStoreDyn } = await import('../js/battle/Formati
 assert.equal(FormationStoreDyn.getFormationSummary(FormationStoreDyn.getDefault()).total, 10);
 assert.equal(getCharacterBaseId('cat-unit-013-f'), 'cat-unit-013');
 
-console.log('check-battle-scene-stage-runtime-wiring: OK');
-
-const { ProductionRuntime, getBcuUnitDeployCost } = await import('../js/battle/ProductionRuntime.js');
+const { ProductionRuntime, getBcuUnitDeployCost, getBcuFinalRespawnFrames, resolveBcuProductionValues } = await import('../js/battle/ProductionRuntime.js');
 const { BattleEconomy } = await import('../js/battle/BattleEconomy.js');
 assert.equal(getBcuUnitDeployCost(100), 150, 'BCU production helper applies default StageMap.price=1 cost multiplier');
+assert.equal(getBcuFinalRespawnFrames(324), 60, 'BCU max research/treasure reduces short respawn to the 60F floor');
+assert.equal(getBcuFinalRespawnFrames(600, { comboRespawnPercent: 10 }), Math.floor(Math.max(60, 600 - (264 + Math.floor(264 * 10 / 100)))), 'C_RESP combo applies through Treasure.getFinRes');
+const prodValues = resolveBcuProductionValues({ price: 500, respawnFrames: 324, bcuComboModifiers: { increments: { discount: 10, respawn: 10 } } });
+assert.equal(prodValues.deployCost, 675, 'C_DISCOUNT is applied to the BCU deploy cost');
+assert.equal(prodValues.respawnFrames, 60, 'production values expose final ELineUp.maxC respawn frames');
 const econ = new BattleEconomy({ startMoney: 100, maxMoney: 1000, incomePerSecond: 60 });
 econ.tick(1000);
 assert.equal(econ.money, 159);
@@ -601,8 +604,8 @@ assert.equal(pr2.ok, false);
 const summary = FormationStoreDyn.getFormationSummary(FormationStoreDyn.getDefault());
 assert.equal(summary.rows, 2); assert.equal(summary.cols, 5); assert.equal(summary.total, 10);
 const bcuTimerPatchSrc = fs.readFileSync('js/battle/BattleSceneBcuTimerPatch.js', 'utf8');
-assert.ok(battleSceneSrc.includes('getBcuUnitDeployCost(st.price'), 'BattleScene template stats must store BCU deploy cost, not raw DataUnit.price');
-assert.ok(bcuTimerPatchSrc.includes('getBcuUnitDeployCost(st.price'), 'BCU timer patch template stats must store BCU deploy cost, not raw DataUnit.price');
+assert.ok(battleSceneSrc.includes('resolveBcuProductionValues(st)'), 'BattleScene template stats must resolve BCU production cost/respawn through ELineUp helpers');
+assert.ok(bcuTimerPatchSrc.includes('resolveBcuProductionValues(st)'), 'BCU timer patch template stats must resolve BCU production cost/respawn through ELineUp helpers');
 
 const formationEditorSrc = fs.readFileSync('js/ui/FormationEditor.js', 'utf8');
 assert.ok(formationEditorSrc.includes('searchText'));
@@ -630,3 +633,5 @@ assert.equal(sanitized.pages[0][0], 'cat-unit-013-f');
 assert.equal(FormationStoreDyn.getFormationSummary(sanitized).filledCount, 1);
 assert.equal(buildProductionLineupEntryFromCharacter(getCharacterById('cat-unit-013-f')).characterId, 'cat-unit-013-f');
 assert.equal(CharacterCatalogRuntime.validateCatalog(getAvailableCharacters()).ok, true);
+
+console.log('check-battle-scene-stage-runtime-wiring: OK');

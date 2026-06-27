@@ -24,7 +24,7 @@ A 2026-06-23 comparison of `Rainforest-2/rhg` against the BCU references found n
 |---|---|---|
 | SUMMON source loading | A real `CustomEntity.atks[].proc.SUMMON` file is loaded from disk and driven end to end (no normal CSV holder is invented; BCU stores SUMMON only on proc objects). | `check-bcu-summon-procobject-loader-parity` |
 | `Trait.targetForms` | A real `Trait` file (targetType/targetForms) drives the single `bcuTraitCompatible` gate across the proc and Target-Only cross-paths. | `check-bcu-trait-targetforms-loader-parity` |
-| Combo / orb / treasure / talent / PCoin | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order; equipped orbs fold through the resolver. In-battle appearance is a separate review item. | `check-bcu-modifier-realdata-sweep-parity` |
+| Combo / orb / treasure / talent / PCoin | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order; equipped orbs fold through the resolver. PCoin cost/CD and combo discount/research respawn feed production values. In-battle appearance is a separate review item. | `check-bcu-modifier-realdata-sweep-parity`, `check-battle-scene-stage-runtime-wiring`, `check-bcu-talent-info-loader` |
 | Extra/custom zombie revive | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter. | `check-bcu-zombie-extra-revive-source-range-parity` |
 | Repository-local persistence | `FormationStore`/`StageRegistry` round-trip their own state and surface read/write failures instead of a silent catch. Self-persistence only — not a BCU save claim. | `check-formation-storage-failure-visibility` |
 

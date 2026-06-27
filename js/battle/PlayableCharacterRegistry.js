@@ -1,5 +1,5 @@
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
-import { BCU_DEFAULT_STAGE_PRICE, getBcuUnitDeployCost } from './ProductionRuntime.js';
+import { BCU_DEFAULT_STAGE_PRICE, resolveBcuProductionValues } from './ProductionRuntime.js';
 import { formCodeFromIndex } from '../bcu/BcuIdentifier.js';
 
 export const PLAYABLE_REGISTRY_VERSION = '0.15.0-bcu-unit-level';
@@ -81,9 +81,10 @@ function getCatEconomyFromStats(stats) {
       productionSourceDebug: stats?.__statsError ? { source: 'PlayableCharacterRegistry.getCatEconomyFromStats', error: stats.__statsError } : { source: 'PlayableCharacterRegistry.getCatEconomyFromStats', reason: 'bcu-db-not-loaded' }
     };
   }
-  const price = Number.isFinite(stats.price) ? Math.max(0, Math.floor(stats.price)) : null;
-  const deployCost = price === null ? null : getBcuUnitDeployCost(price, BCU_DEFAULT_STAGE_PRICE);
-  const respawnFrames = Number.isFinite(stats.respawnFrames) ? Math.max(0, Math.floor(stats.respawnFrames)) : null;
+  const prod = resolveBcuProductionValues(stats, { stagePrice: BCU_DEFAULT_STAGE_PRICE });
+  const price = prod.rawPrice;
+  const deployCost = prod.deployCost;
+  const respawnFrames = prod.respawnFrames;
   const respawnMs = Number.isFinite(respawnFrames) ? respawnFrames * BCU_BATTLE_TIMER_PERIOD_MS : null;
   return {
     cost: deployCost,
@@ -96,15 +97,17 @@ function getCatEconomyFromStats(stats) {
     bcuRespawnFrames: respawnFrames,
     bcuRespawnMs: respawnMs,
     productionCostSource: 'BCU ELineUp/Form.getPrice default StageMap.price=1',
-    productionCooldownSource: 'BCU DataUnit.respawn raw[7] * 2 frames',
+    productionCooldownSource: 'BCU Treasure.getFinRes(DataUnit.respawn, C_RESP)',
     productionSourceDebug: {
       source: 'PlayableCharacterRegistry.getCatEconomyFromStats',
-      bcuReference: 'DataUnit.java price=ints[6]; Form/EForm.getPrice(sta)=price*(1+sta*0.5); StageMap.price default=1',
+      bcuReference: 'DataUnit.java price=ints[6]; Form/EForm.getPrice(sta)=price*(1+sta*0.5); ELineUp.maxC=Treasure.getFinRes(respawn, C_RESP); StageMap.price default=1',
       price,
-      stagePrice: BCU_DEFAULT_STAGE_PRICE,
+      stagePrice: prod.stagePrice,
       deployCost,
+      rawRespawnFrames: prod.rawRespawnFrames,
       respawnFrames,
       respawnMs,
+      production: prod,
       statsSource: stats.source || null
     }
   };

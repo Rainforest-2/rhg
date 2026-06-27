@@ -1,6 +1,7 @@
 export function isRawBcuUrl(url) {
   const s = String(url || '').replace(/\\/g, '/');
-  return /(^|\/|\.\/)public\/assets\/bcu\//.test(s) || /(^|\/|\.\/)public\/assets\/bcu-manifest\.json$/.test(s);
+  return /(^|\/|\.\/)(?:public\/)?assets\/bcu\//.test(s)
+    || /(^|\/|\.\/)(?:public\/)?assets\/bcu-manifest\.json$/.test(s);
 }
 
 function normalizeGuardUrl(url) {

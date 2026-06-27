@@ -36,6 +36,11 @@ export const BCU_STAGE_CSV_COLUMNS = Object.freeze({
 const stripComment = (line) => String(line || '').split('//')[0].trim();
 const parseCsvLine = (line) => stripComment(line).split(',').map((x) => x.trim());
 const toNum = (v, d = null) => {
+  // An empty/whitespace CSV cell means "no value" -> default, NOT 0. Number('') is 0 (finite), so
+  // without this guard a missing field (e.g. the absent magnification column on legacy EoC
+  // `stageNN.csv` rows, where a trailing comma leaves raw[M] = '') would collapse to 0 and zero out
+  // enemy HP/ATK. Treat blank like undefined so the caller's default (e.g. magnification 100) applies.
+  if (v === undefined || v === null || String(v).trim() === '') return d;
   const n = Number(v);
   return Number.isFinite(n) ? n : d;
 };

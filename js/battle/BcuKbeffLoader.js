@@ -15,10 +15,14 @@ const TYPE_TO_ENUM = { INT_HB: 'KB', INT_SW: 'SW', INT_ASS: 'ASS' };
 // use is disabled until the effect is rendered as its own BCU EffAnim/EAnimCont layer.
 const DISABLE_UNVERIFIED_KBEFF_RUNTIME = true;
 
+async function importNode(specifier) {
+  return await Function('specifier', 'return import(specifier)')(specifier);
+}
+
 async function readText(path) {
   if (typeof window === 'undefined') {
-    const { readFile } = await import('node'+':fs'+'/promises');
-    const { fileURLToPath, pathToFileURL } = await import('node:url');
+    const { readFile } = await importNode('node:fs/promises');
+    const { fileURLToPath, pathToFileURL } = await importNode('node:url');
     const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
     return readFile(fileURLToPath(new URL(path, cwdBase)), 'utf8');
   }

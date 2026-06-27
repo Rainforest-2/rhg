@@ -1,5 +1,7 @@
 // © 2026 Rainforest-2. All Rights Reserved. Unauthorized copying, rehosting, or reuse of
 // this code is prohibited. 無断複製・再配布・流用を禁じます。
+import { importWithProgress } from './boot/importProgress.js';
+
 try {
   console.log(
     '%cワンコ大戦争%c © 2026 Rainforest-2 — All Rights Reserved.\n無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited.',
@@ -27,13 +29,16 @@ const BOOT_PROGRESS = Object.freeze({
 });
 
 const RUNTIME_PATCH_MODULES = Object.freeze([
-  './audio/BattleSoundEventPatch.js',
-  './preview/PreviewAppCustomStageBattleConfigPatch.js',
-  './preview/PreviewAppBattleResultOverlayPatch.js',
-  './preview/PreviewAppBattlePauseOverlayPatch.js',
-  './preview/PreviewAppPageTransitionPatch.js',
-  './preview/PreviewAppBattleMusicPatch.js'
+  () => import('./audio/BattleSoundEventPatch.js'),
+  () => import('./preview/PreviewAppCustomStageBattleConfigPatch.js'),
+  () => import('./preview/PreviewAppBattleResultOverlayPatch.js'),
+  () => import('./preview/PreviewAppBattlePauseOverlayPatch.js'),
+  () => import('./preview/PreviewAppPageTransitionPatch.js'),
+  () => import('./preview/PreviewAppBattleMusicPatch.js')
 ]);
+
+const ASSET_ROOT = '/assets';
+globalThis.__RHG_ASSET_BASE__ = ASSET_ROOT;
 
 function clamp01(value) {
   const n = Number(value);
@@ -51,7 +56,7 @@ function showBootStatus(message, ratio) {
     el.id = 'boot-status-panel';
     el.style.cssText = 'position:fixed;inset:0;z-index:999999;display:grid;place-items:center';
     el.innerHTML = `<div class="boot-loading-card" role="status" aria-live="polite">
-      <img class="boot-loading-icon" src="./public/assets/ui/game-icon.png" alt="" decoding="async">
+      <img class="boot-loading-icon" src="${ASSET_ROOT}/ui/game-icon.png" alt="" decoding="async">
       <div class="boot-loading-kicker">WANKO BATTLE</div>
       <div class="boot-loading-title">準備中</div>
       <div class="boot-loading-message"></div>
@@ -128,8 +133,8 @@ async function boot() {
     showBootStatus('読み込み中…', BOOT_PROGRESS.battlePatches);
     const { BcuBootLoader, setBcuAssetDatabase } = await import('./bcu/BcuBootLoader.js');
     const db = await BcuBootLoader.loadGame({
-      assetRoot: './public/assets',
-      bcuRoot: './public/assets/bcu',
+      assetRoot: ASSET_ROOT,
+      bcuRoot: null,
       locale: 'jp',
       preloadMode: 'metadata-and-current-battle',
       onProgress: (fraction) => showBootStatus('読み込み中…', progressInBand(BOOT_PROGRESS.loadGameStart, BOOT_PROGRESS.loadGameSpan, fraction))
@@ -145,9 +150,12 @@ async function boot() {
       console.warn('[main] combo/talent registry install failed; modifiers disabled', error);
     }
     // Each runtime patch import advances the bar one notch across the 0.76–0.90 band.
-    for (let i = 0; i < RUNTIME_PATCH_MODULES.length; i += 1) {
-      await import(RUNTIME_PATCH_MODULES[i]);
-      showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchSpan, (i + 1) / RUNTIME_PATCH_MODULES.length));
+    const runtimePatchProgress = (fraction) => showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchSpan, fraction));
+    if (import.meta.env?.PROD === true) {
+      await import('./boot/prod/runtimePatches.js');
+      runtimePatchProgress(1);
+    } else {
+      await importWithProgress(RUNTIME_PATCH_MODULES, runtimePatchProgress);
     }
     const { PreviewApp } = await import('./preview/PreviewApp.js');
     showBootStatus('出撃準備中…', BOOT_PROGRESS.appConstructed);

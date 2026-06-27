@@ -16,3 +16,5 @@ public/assets/generated/bcu-icon-source-audit.md
 public/assets/generated/bcu-diagnostics.json
 public/assets/generated/bcu-lang-prune-report.json
 public/assets/generated/bcu-lang-prune-report.md
+node_modules/
+dist/

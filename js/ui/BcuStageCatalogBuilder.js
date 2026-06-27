@@ -176,8 +176,66 @@ function chapterAddress(stage) {
   if (g === 'stage') {
     m = rawId.match(/^stage(\d{2})$/i);
     if (!m) return null;
+    // 日本編/EoC is split into its 3 real BCU chapters (Map_option 3000/3001/3002 = mapColc 3,
+    // mapId 0/1/2). The chapters share the same prefecture stage CSVs (stage00-46 = 長崎県…沖縄県,
+    // jp-StageName 003-<chapter>-<stageNo>), so a chapter variant is attached to each clone in
+    // expandEocChapters() before the build loop. Without that hint (defensive) fall back to the
+    // legacy single aggregate map (mapId 9).
+    const ch = stage?.__eocChapter;
+    if (ch && Number.isInteger(ch.mapId) && Number.isInteger(ch.stageNo)) {
+      return { mapColcId: 3, mapId: ch.mapId, mapNo: ch.mapId, mapNoRaw: String(ch.mapId), stageNo: ch.stageNo, stageNoRaw: String(ch.stageNo).padStart(2, '0'), prefix: 'STAGE', rawId, source: EOC_CHAPTER_ADDRESS_SOURCE };
+    }
     return { mapColcId: 3, mapId: 9, mapNo: 9, mapNoRaw: '9', stageNo: Number(m[1]), stageNoRaw: m[1], prefix: 'STAGE', rawId, source: 'BCU CH stage' };
   }
+  return null;
+}
+
+// 日本編/EoC chapter split (verified against BCU jp-StageName.txt + Map_option.csv):
+//   - stage00-46 = the 47 prefecture stages (長崎県…沖縄県); every chapter replays the same CSVs,
+//     so each is fanned out into all 3 chapters as 003-<chapter>-<stageNo>.
+//   - stage47/49/50 = 西表島 第1/2/3章 -> each is that chapter's finale at stageNo 47
+//     (003-000-047 / 003-001-047 / 003-002-047 all resolve to 西表島).
+//   - stage48 (チャレンジバトル) / stage51 (ケリ姫降臨！) / stage52 are NOT part of the 3 chapters;
+//     they stay on the legacy aggregate map (mapId 9) so nothing is lost.
+const EOC_CHAPTER_ADDRESS_SOURCE = 'BCU CH stage chapter-split';
+const EOC_PREFECTURE_MAX_STAGE_NO = 46;
+const EOC_FINALE_CHAPTER_BY_STAGE = { 47: 0, 49: 1, 50: 2 };
+const EOC_LEFTOVER_MAP_ID = 9;
+
+function eocStageNumber(stage) {
+  if (collectionCodeOf(stage) !== 'CH' || groupOf(stage) !== 'stage') return null;
+  const m = basenameOf(stage).match(/^stage(\d{2})$/i);
+  return m ? Number(m[1]) : null;
+}
+
+// Expand each EoC `CH/stage/stageNN.csv` record into its chapter variant(s). Non-EoC stages and any
+// stageNN that does not match the chapter rules pass through unchanged (single element).
+function expandEocChapters(stages) {
+  const out = [];
+  for (const stage of stages || []) {
+    const num = eocStageNumber(stage);
+    if (num === null) { out.push(stage); continue; }
+    if (num <= EOC_PREFECTURE_MAX_STAGE_NO) {
+      for (const mapId of [0, 1, 2]) out.push({ ...stage, __eocChapter: { mapId, stageNo: num } });
+    } else if (num in EOC_FINALE_CHAPTER_BY_STAGE) {
+      out.push({ ...stage, __eocChapter: { mapId: EOC_FINALE_CHAPTER_BY_STAGE[num], stageNo: 47 } });
+    } else {
+      out.push({ ...stage, __eocChapter: { mapId: EOC_LEFTOVER_MAP_ID, stageNo: num } });
+    }
+  }
+  return out;
+}
+
+// Map_option.csv is authoritative for the chapter map names (3000/3001/3002 = 日本編第1章/2章/3章).
+// The raw jp-StageName.txt map-name line for 003-000/001/002 carries an erroneous "ゾンビ" suffix,
+// so override the resolved stageMap label for these split maps. Stage-level names (003-x-NN) are
+// correct and keep resolving normally.
+function eocChapterMapLabel(address) {
+  if (address?.source !== EOC_CHAPTER_ADDRESS_SOURCE || address?.mapColcId !== 3) return null;
+  if (address.mapId === 0) return '日本編 第1章';
+  if (address.mapId === 1) return '日本編 第2章';
+  if (address.mapId === 2) return '日本編 第3章';
+  if (address.mapId === EOC_LEFTOVER_MAP_ID) return '日本編 その他';
   return null;
 }
 
@@ -308,7 +366,7 @@ export function buildBcuStageCatalog(stages = [], { bcuDb = null } = {}) {
   const mapsByKey = new Map();
   const stageById = new Map();
 
-  for (const stage of stages || []) {
+  for (const stage of expandEocChapters(stages)) {
     const id = stageIdentity(stage);
     if (!id) continue;
     const collectionCode = collectionCodeOf(stage);
@@ -317,7 +375,10 @@ export function buildBcuStageCatalog(stages = [], { bcuDb = null } = {}) {
     const category = categoryById.get(categoryId) || categoryById.get('special');
     const address = parseStageAddress(stage, collectionCode);
     const mapColcId = address.mapColcId;
-    const mapInfo = mapLabelInfo(bcuDb, mapColcId, address.mapNo, Number.isFinite(address.mapNo) ? `マップ ${address.mapNo}` : '未分類マップ');
+    const eocLabel = eocChapterMapLabel(address);
+    const mapInfo = eocLabel
+      ? { value: normalizeStageDisplayLabel(eocLabel), source: 'bcu-map-option-eoc-chapter', file: null, key: null }
+      : mapLabelInfo(bcuDb, mapColcId, address.mapNo, Number.isFinite(address.mapNo) ? `マップ ${address.mapNo}` : '未分類マップ');
     const mapKey = mapDedupeKey(category.id, collectionCode, address, mapInfo);
     const rawKey = rawMapKey(collectionCode, address);
     let map = mapsByKey.get(mapKey);

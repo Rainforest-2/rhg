@@ -17,9 +17,20 @@ const SEMANTIC_INDEX_STEPS = Object.freeze([
   ['canonical', 'bcu-canonical-index.json', {}]
 ]);
 
+async function importNode(specifier) {
+  return await Function('specifier', 'return import(specifier)')(specifier);
+}
+
 function normalizeFetchPath(path) {
   if (!path) return null;
   const s = String(path).replace(/\\/g, '/');
+  if (typeof window !== 'undefined') {
+    const assetRoot = String(globalThis.__RHG_ASSET_BASE__ || '/assets').replace(/\/$/, '');
+    const normalized = s.replace(/^\.\//, '').replace(/^\/+/, '');
+    if (normalized === 'public/assets' || normalized === 'assets') return assetRoot;
+    if (normalized.startsWith('public/assets/')) return `${assetRoot}/${normalized.slice('public/assets/'.length)}`;
+    if (normalized.startsWith('assets/')) return `${assetRoot}/${normalized.slice('assets/'.length)}`;
+  }
   if (s.startsWith('http') || s.startsWith('/') || s.startsWith('./')) return s;
   return `./${s}`;
 }
@@ -75,7 +86,7 @@ function isRuntimeUsableActorBundleEntry(entry) {
 
 async function fetchJson(path) {
   if (typeof window === 'undefined') {
-    const { readFile } = await import('node:fs/promises');
+    const { readFile } = await importNode('node:fs/promises');
     return JSON.parse(await readFile(String(path).replace(/^\.\//, ''), 'utf8'));
   }
   const response = await fetch(normalizeFetchPath(path));
@@ -92,7 +103,7 @@ async function inflateRawBytes(data) {
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
   if (typeof window === 'undefined') {
-    const zlib = await import('node:zlib');
+    const zlib = await importNode('node:zlib');
     return new Uint8Array(zlib.inflateRawSync(Buffer.from(data)));
   }
   throw new Error('ZIP deflate is not supported in this runtime');
@@ -249,7 +260,7 @@ export class SemanticAssetProvider {
     if (!this.bundleFetchPromises.has(url)) {
       this.bundleFetchPromises.set(url, (async () => {
         if (typeof window === 'undefined') {
-          const { readFile } = await import('node:fs/promises');
+          const { readFile } = await importNode('node:fs/promises');
           const bytes = await readFile(url.replace(/^\.\//, ''));
           return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
         }

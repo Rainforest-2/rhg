@@ -20,7 +20,7 @@
 import { AudioSettings } from '../audio/AudioSettings.js';
 import { ensureSoundToggleStyles, soundTogglesMarkup, bindSoundToggles, syncSoundToggles } from './SoundToggleControls.js';
 
-const ATLAS_URL = './public/assets/ui/battle-option-atlas.png';
+const ATLAS_URL = '/assets/ui/battle-option-atlas.png';
 const STYLE_ID = 'bcu-battle-pause-menu-style';
 const CLOSE_MS = 140;
 
@@ -44,7 +44,7 @@ function injectStyle() {
   // old cold white/slate card that clashed with everything around it. Nyanko CSS
   // vars are reused with literal fallbacks so it still looks right standalone.
   style.textContent = `
-@font-face{font-family:"OedoPauseFont";src:url("./public/assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf") format("opentype");font-weight:900;font-style:normal;font-display:block}
+@font-face{font-family:"OedoPauseFont";src:url("/assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf") format("opentype");font-weight:900;font-style:normal;font-display:block}
 .bcu-pause-control{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));z-index:99972;width:52px;height:52px;padding:0;border:0;background:transparent;cursor:pointer;display:none;line-height:0;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));touch-action:manipulation;transition:transform .1s ease-out,filter .1s ease-out}
 .bcu-pause-control.is-visible{display:block}
 .bcu-pause-control:active{transform:translateY(2px) scale(.94);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)) brightness(.93)}

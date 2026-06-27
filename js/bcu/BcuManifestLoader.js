@@ -1,12 +1,16 @@
 import { toFetchPath } from './BcuPathResolver.js';
 import { assertRuntimeUrlAllowed } from './RuntimeAssetGuard.js';
 
+async function importNode(specifier) {
+  return await Function('specifier', 'return import(specifier)')(specifier);
+}
+
 export async function readText(path) {
   const fetchPath = toFetchPath(path);
   if (typeof window !== 'undefined') assertRuntimeUrlAllowed(fetchPath, 'BcuManifestLoader.readText', globalThis.__BCU_DB__?.semanticProvider || null);
   if (typeof window === 'undefined') {
-    const { readFile } = await import('node:fs/promises');
-    const { fileURLToPath, pathToFileURL } = await import('node:url');
+    const { readFile } = await importNode('node:fs/promises');
+    const { fileURLToPath, pathToFileURL } = await importNode('node:url');
     const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
     return await readFile(fileURLToPath(new URL(fetchPath, cwdBase)), 'utf8');
   }

@@ -1,6 +1,13 @@
 import { importWithProgress } from '../importProgress.js';
 
+const IS_VITE_PROD = import.meta.env?.PROD === true;
+
 export async function installBattleScenePatches(onProgress) {
+  if (IS_VITE_PROD) {
+    await import('../prod/battleScenePatches.js');
+    onProgress?.(1);
+    return;
+  }
   await importWithProgress([
     () => import('../../battle/BattleSceneBcuTimerPatch.js'),
     () => import('../../battle/BattleSceneBcuLineupPatch.js'),

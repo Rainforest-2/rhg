@@ -1,0 +1,16 @@
+import '../../battle/BattleUnifiedDamageDebugPatch.js';
+import '../../battle/BattleCriticalEffectPatch.js';
+import '../../battle/BattleBcuStrictConfigPatch.js';
+import '../../battle/StageDefinitionNegativeSpawnPatch.js';
+import '../../battle/BattleActorBcuKbTargetPatch.js';
+import '../../battle/BattleActorProcStatusPatch.js';
+import '../../battle/BattleToxicEffectAssetPatch.js';
+import '../../battle/BattleSceneBcuUnitLevelPatch.js';
+import '../../battle/BcuDelayRuntimePatch.js';
+import '../../battle/BattleActorBarrierShieldPatch.js';
+import '../../battle/BattleActorBarrierShieldVisualPatch.js';
+import '../../battle/BattleSoulstrikePatch.js';
+import '../../battle/BattleActorBcuBurrowPatch.js';
+import '../../battle/BattleActorBcuBurrowDiagnosticsPatch.js';
+import '../../battle/BattleDeterministicRandomPatch.js';
+import '../../battle/BattleActorAttackNullifyPatch.js';

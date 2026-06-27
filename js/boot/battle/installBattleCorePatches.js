@@ -1,6 +1,13 @@
 import { importWithProgress } from '../importProgress.js';
 
+const IS_VITE_PROD = import.meta.env?.PROD === true;
+
 export async function installBattleCorePatches(onProgress) {
+  if (IS_VITE_PROD) {
+    await import('../prod/battleCorePatches.js');
+    onProgress?.(1);
+    return;
+  }
   // queueAttackDamage wrappers are order-sensitive. Keep diagnostic capture first,
   // then BCU hit effects, then damage/proc/lifecycle runtime wrappers.
   await importWithProgress([

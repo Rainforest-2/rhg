@@ -6,6 +6,10 @@ const ENEMY_ICON_VERSION = '000010';
 
 const pad3 = (n) => String(n).padStart(3, '0');
 
+async function importNode(specifier) {
+  return await Function('specifier', 'return import(specifier)')(specifier);
+}
+
 export function getUnitRequiredAssetPaths(unitId, form = 'f') {
   const u = pad3(unitId);
   const p = `./public/assets/bcu/${UNIT_VERSION}/org/unit/${u}/${form}/`;
@@ -29,8 +33,8 @@ export function getEnemyRequiredAssetPaths(enemyId) {
 export async function verifyAssetPath(path) {
   try {
     if (typeof window === 'undefined') {
-      const { access } = await import('node'+':fs'+'/promises');
-      const { fileURLToPath, pathToFileURL } = await import('node:url');
+      const { access } = await importNode('node:fs/promises');
+      const { fileURLToPath, pathToFileURL } = await importNode('node:url');
       const cwdBase = pathToFileURL(`${process.cwd().replace(/\\/g, '/')}/`);
       await access(fileURLToPath(new URL(path, cwdBase)));
       return { path, ok: true, mode: 'node-fs' };

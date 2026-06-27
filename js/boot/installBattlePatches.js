@@ -1,8 +1,11 @@
 import { subProgress } from './importProgress.js';
 
-async function runInstaller(path, exportName, onProgress) {
+const IS_VITE_PROD = import.meta.env?.PROD === true;
+
+async function runInstaller(step, onProgress) {
+  const { path, exportName, load } = step;
   try {
-    const mod = await import(path);
+    const mod = await load();
     const fn = mod?.[exportName];
     if (typeof fn === 'function') {
       await fn(onProgress);
@@ -26,6 +29,11 @@ async function runInstaller(path, exportName, onProgress) {
 // The two patches kept as direct imports (moving them into a helper was blocked by
 // the connector safety pass). Each failure is isolated and still advances the bar.
 async function runDirectImports(onProgress) {
+  if (IS_VITE_PROD) {
+    await import('./prod/battleDirectPatches.js');
+    onProgress?.(1);
+    return;
+  }
   const direct = [
     '../battle/BattleSceneBcuTouchPatch.js',
     '../battle/BattleSceneBcuMobileInputPatch.js'
@@ -48,18 +56,18 @@ export async function installBattlePatches(onProgress) {
   // module counts so the shared bar advances proportionally to real load work
   // instead of jumping once per group (slight drift if a list changes is harmless).
   const STEPS = [
-    { kind: 'group', path: './battle/installBattleCorePatches.js', name: 'installBattleCorePatches', weight: 16 },
-    { kind: 'group', path: './battle/installBattleProjectilePatches.js', name: 'installBattleProjectilePatches', weight: 9 },
-    { kind: 'group', path: './battle/installBattleScenePatches.js', name: 'installBattleScenePatches', weight: 21 },
+    { kind: 'group', path: './battle/installBattleCorePatches.js', exportName: 'installBattleCorePatches', load: () => import('./battle/installBattleCorePatches.js'), weight: 16 },
+    { kind: 'group', path: './battle/installBattleProjectilePatches.js', exportName: 'installBattleProjectilePatches', load: () => import('./battle/installBattleProjectilePatches.js'), weight: 9 },
+    { kind: 'group', path: './battle/installBattleScenePatches.js', exportName: 'installBattleScenePatches', load: () => import('./battle/installBattleScenePatches.js'), weight: 21 },
     { kind: 'direct', weight: 2 },
-    { kind: 'group', path: './battle/installBattleActorLifecyclePatches.js', name: 'installBattleActorLifecyclePatches', weight: 17 },
-    { kind: 'group', path: './battle/installBattleRendererPatches.js', name: 'installBattleRendererPatches', weight: 5 }
+    { kind: 'group', path: './battle/installBattleActorLifecyclePatches.js', exportName: 'installBattleActorLifecyclePatches', load: () => import('./battle/installBattleActorLifecyclePatches.js'), weight: 17 },
+    { kind: 'group', path: './battle/installBattleRendererPatches.js', exportName: 'installBattleRendererPatches', load: () => import('./battle/installBattleRendererPatches.js'), weight: 5 }
   ];
   const total = STEPS.reduce((sum, step) => sum + step.weight, 0);
   let done = 0;
   for (const step of STEPS) {
     const stepProgress = subProgress(onProgress, done / total, step.weight / total);
-    if (step.kind === 'group') await runInstaller(step.path, step.name, stepProgress);
+    if (step.kind === 'group') await runInstaller(step, stepProgress);
     else await runDirectImports(stepProgress);
     done += step.weight;
     onProgress?.(done / total);

@@ -10,7 +10,7 @@ function injectStyle() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-@font-face{font-family:FormationTuningOtf;src:url('./public/assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf') format('opentype');font-weight:900;font-style:normal;font-display:block}
+@font-face{font-family:FormationTuningOtf;src:url('/assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf') format('opentype');font-weight:900;font-style:normal;font-display:block}
 html body.nyanko-ui-polish .formation-tuning-title,
 html body.nyanko-ui-polish .formation-tuning-title strong,
 html body.nyanko-ui-polish .formation-tuning-close,

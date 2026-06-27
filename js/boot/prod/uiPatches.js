@@ -1,0 +1,17 @@
+import '../../ui/FormationEditorPerformancePatch.js';
+import '../../ui/FormationCatalogVirtualDomPatch.js';
+import '../../ui/NyankoPresentationPatch.js';
+import '../../ui/FormationJapaneseBootPatch.js';
+import '../../ui/NyankoUiBehaviorPatch.js';
+import '../../ui/ProductionCardDogIconFitPatch.js';
+import '../../ui/FormationEditorBcuUnitLevelPatch.js';
+import '../../ui/FormationCharacterTuningMobileLandscapePatch.js';
+import '../../ui/FormationCustomStageBattlePatch.js';
+import '../../ui/FormationStageDifficultyPatch.js';
+import '../../ui/FormationStageDifficultyFilterControlPatch.js';
+import '../../ui/FormationUiRegressionFixPatch.js';
+import '../../ui/FormationPhoneLandscapeLayoutPatch.js';
+import '../../ui/FormationCustomStageBattleHpPatch.js';
+import '../../ui/FormationCustomStageBattleApplyHpConfigPatch.js';
+import '../../ui/FormationStageNameBcuPatch.js';
+import '../../ui/FormationPremiumMotionPatch.js';

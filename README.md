@@ -56,6 +56,12 @@ A 2026-06-23 comparison of `Rainforest-2/rhg` against the BCU references found n
 | Implementation order | [`docs/ability-logic/bcu-parity-codex-workplan.md`](docs/ability-logic/bcu-parity-codex-workplan.md) |
 | Agent entrypoint | [`AGENTS.md`](AGENTS.md) |
 
+## Development and build
+
+- `npm run dev` starts the Vite dev server.
+- `npm run build` bundles the app into `dist/`.
+- Vite serves/copies selected `public/assets/**` runtime assets as `/assets/**`; raw `public/assets/bcu/**` and `public/assets/bcu-manifest.json` are intentionally excluded from `dist/` and blocked in dev serving. Runtime BCU assets must continue to load through generated semantic ZIP bundles.
+
 ## Source and verification rule
 
 For every behavior change:

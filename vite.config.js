@@ -1,0 +1,136 @@
+import { createReadStream } from 'node:fs';
+import { copyFile, mkdir, readdir, stat } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vite';
+
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const PUBLIC_ASSETS_DIR = path.join(ROOT, 'public', 'assets');
+const DIST_ASSETS_DIR = path.join(ROOT, 'dist', 'assets');
+
+const MIME_TYPES = new Map([
+  ['.css', 'text/css; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'],
+  ['.m4a', 'audio/mp4'],
+  ['.otf', 'font/otf'],
+  ['.png', 'image/png'],
+  ['.svg', 'image/svg+xml'],
+  ['.ttf', 'font/ttf'],
+  ['.woff', 'font/woff'],
+  ['.woff2', 'font/woff2'],
+  ['.zip', 'application/zip']
+]);
+
+function isBlockedAssetPath(assetPath) {
+  const normalized = assetPath.replace(/\\/g, '/').replace(/^\/+/, '');
+  return normalized === 'bcu'
+    || normalized.startsWith('bcu/')
+    || normalized === 'bcu-manifest.json';
+}
+
+function contentTypeFor(filePath) {
+  return MIME_TYPES.get(path.extname(filePath).toLowerCase()) || 'application/octet-stream';
+}
+
+function parseRange(rangeHeader, size) {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(String(rangeHeader || ''));
+  if (!match) return null;
+  let start = match[1] ? Number(match[1]) : 0;
+  let end = match[2] ? Number(match[2]) : size - 1;
+  if (!match[1] && match[2]) {
+    const suffix = Number(match[2]);
+    start = Math.max(0, size - suffix);
+    end = size - 1;
+  }
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start || start >= size) return null;
+  return { start, end: Math.min(end, size - 1) };
+}
+
+function selectedPublicAssetsPlugin() {
+  return {
+    name: 'rhg-selected-public-assets',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = new URL(req.url || '/', 'http://localhost');
+        const pathname = decodeURIComponent(url.pathname);
+        const fromAssets = pathname.startsWith('/assets/') ? pathname.slice('/assets/'.length) : null;
+        const fromLegacyPublic = pathname.startsWith('/public/assets/') ? pathname.slice('/public/assets/'.length) : null;
+        const assetPath = fromAssets || fromLegacyPublic;
+        if (!assetPath) return next();
+        if (isBlockedAssetPath(assetPath)) {
+          res.statusCode = 404;
+          res.end('Not found');
+          return;
+        }
+        const filePath = path.resolve(PUBLIC_ASSETS_DIR, assetPath);
+        if (!filePath.startsWith(PUBLIC_ASSETS_DIR + path.sep)) {
+          res.statusCode = 403;
+          res.end('Forbidden');
+          return;
+        }
+        try {
+          const info = await stat(filePath);
+          if (!info.isFile()) return next();
+          const headers = {
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'no-cache',
+            'Content-Type': contentTypeFor(filePath)
+          };
+          if (req.method === 'HEAD') {
+            res.writeHead(200, { ...headers, 'Content-Length': info.size });
+            res.end();
+            return;
+          }
+          const range = parseRange(req.headers.range, info.size);
+          if (range) {
+            res.writeHead(206, {
+              ...headers,
+              'Content-Length': range.end - range.start + 1,
+              'Content-Range': `bytes ${range.start}-${range.end}/${info.size}`
+            });
+            createReadStream(filePath, range).pipe(res);
+            return;
+          }
+          res.writeHead(200, { ...headers, 'Content-Length': info.size });
+          createReadStream(filePath).pipe(res);
+        } catch {
+          next();
+        }
+      });
+    },
+    async closeBundle() {
+      await mkdir(DIST_ASSETS_DIR, { recursive: true });
+      await copySelectedPublicAssets(PUBLIC_ASSETS_DIR, DIST_ASSETS_DIR);
+    }
+  };
+}
+
+async function copySelectedPublicAssets(sourceDir, targetDir, rel = '') {
+  await mkdir(targetDir, { recursive: true });
+  const entries = await readdir(sourceDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const childRel = rel ? `${rel}/${entry.name}` : entry.name;
+    if (isBlockedAssetPath(childRel)) continue;
+    const sourcePath = path.join(sourceDir, entry.name);
+    const targetPath = path.join(targetDir, entry.name);
+    if (entry.isDirectory()) {
+      await copySelectedPublicAssets(sourcePath, targetPath, childRel);
+    } else if (entry.isFile()) {
+      await mkdir(path.dirname(targetPath), { recursive: true });
+      await copyFile(sourcePath, targetPath);
+    }
+  }
+}
+
+export default defineConfig({
+  publicDir: false,
+  plugins: [selectedPublicAssetsPlugin()],
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: path.join(ROOT, 'index.html')
+    }
+  }
+});

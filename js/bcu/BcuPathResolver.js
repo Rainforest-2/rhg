@@ -11,6 +11,13 @@ export function normalizeManifestPath(path) {
 export function toFetchPath(path) {
   if (!path) return null;
   const s = normalizeManifestPath(path);
+  if (typeof window !== 'undefined') {
+    const assetRoot = String(globalThis.__RHG_ASSET_BASE__ || '/assets').replace(/\/$/, '');
+    const normalized = s.replace(/^\/+/, '');
+    if (normalized === 'public/assets' || normalized === 'assets') return assetRoot;
+    if (normalized.startsWith('public/assets/')) return `${assetRoot}/${normalized.slice('public/assets/'.length)}`;
+    if (normalized.startsWith('assets/')) return `${assetRoot}/${normalized.slice('assets/'.length)}`;
+  }
   return s.startsWith('http') || s.startsWith('/') ? s : `./${s}`;
 }
 

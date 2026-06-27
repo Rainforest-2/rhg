@@ -1,6 +1,13 @@
 import { importWithProgress } from './importProgress.js';
 
+const IS_VITE_PROD = import.meta.env?.PROD === true;
+
 export async function installUiPatches(onProgress) {
+  if (IS_VITE_PROD) {
+    await import('./prod/uiPatches.js');
+    onProgress?.(1);
+    return;
+  }
   // Formation patches must run before PreviewApp constructs FormationEditor.
   await importWithProgress([
     () => import('../ui/FormationEditorPerformancePatch.js'),

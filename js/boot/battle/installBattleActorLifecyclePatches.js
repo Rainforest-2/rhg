@@ -1,6 +1,13 @@
 import { importWithProgress } from '../importProgress.js';
 
+const IS_VITE_PROD = import.meta.env?.PROD === true;
+
 export async function installBattleActorLifecyclePatches(onProgress) {
+  if (IS_VITE_PROD) {
+    await import('../prod/battleActorLifecyclePatches.js');
+    onProgress?.(1);
+    return;
+  }
   await importWithProgress([
     () => import('../../battle/BcuKnockbackRuntimePatch.js'),
     () => import('../../battle/BcuKnockbackProcPriorityPatch.js'),

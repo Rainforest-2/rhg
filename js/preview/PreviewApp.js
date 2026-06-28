@@ -22,6 +22,10 @@ function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
+function getHighSpeedBattleRenderIntervalMs(speedMultiplier = 1) {
+  const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
+  return speed >= 8 ? 1000 / 30 : 0;
+}
 
 function formatFormationForLog(f) {
   if (Array.isArray(f?.slots)) return f.slots.join(',');
@@ -66,7 +70,20 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.selectedStageId=options.selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.productionBar=null; this.speedControl=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; }
+  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.selectedStageId=options.selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.lastBattleRenderAt=0; this.productionBar=null; this.speedControl=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; }
+
+  shouldRenderBattleFrame(now) {
+    const intervalMs = getHighSpeedBattleRenderIntervalMs(this.battleSpeedMultiplier);
+    if (intervalMs <= 0) {
+      this.lastBattleRenderAt = now;
+      return true;
+    }
+    if (!Number.isFinite(this.lastBattleRenderAt) || this.lastBattleRenderAt <= 0 || now - this.lastBattleRenderAt >= intervalMs) {
+      this.lastBattleRenderAt = now;
+      return true;
+    }
+    return false;
+  }
 
   async start() {
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
@@ -106,8 +123,10 @@ export class PreviewApp {
           }
           const r=this.simulationClock.step(t,this.battleSpeedMultiplier,(stepDt)=>this.battleScene.tick(stepDt));
           if(r.dropped){this.battleScene?.pushEvent?.({type:'simulationDtDropped',rawDt:r.rawDt,clampedDt:r.clampedDt});}
-          this.productionBar?.update(this.battleScene);
-          this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
+          if (this.shouldRenderBattleFrame(t)) {
+            this.productionBar?.update(this.battleScene);
+            this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });
+          }
         }
         requestAnimationFrame(loop);
       };

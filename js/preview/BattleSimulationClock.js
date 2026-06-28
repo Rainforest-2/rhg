@@ -4,14 +4,16 @@ export class BattleSimulationClock {
     maxSubStepsPerFrame = 1,
     maxFrameDtMs = 100,
     catchUpMode = 'bcu-no-catchup',
-    dropRemainderOnStepLimit = true
+    dropRemainderOnStepLimit = true,
+    maxBcuNoCatchupBurstSteps = 4
   } = {}) {
     this.fixedStepMs = fixedStepMs;
     this.maxSubStepsPerFrame = maxSubStepsPerFrame;
     this.maxFrameDtMs = maxFrameDtMs;
     this.catchUpMode = catchUpMode;
     this.dropRemainderOnStepLimit = dropRemainderOnStepLimit !== false;
-    this.source = 'BCU-java-PC main.Timer.p = 33ms, no multi-step catch-up';
+    this.maxBcuNoCatchupBurstSteps = maxBcuNoCatchupBurstSteps;
+    this.source = 'BCU-java-PC main.Timer.p = 33ms; Android BattleView fast-forward update loop; no wall-clock catch-up';
     this.lastFrameTime = null;
     this.accumulatorMs = 0;
     this.paused = false;
@@ -32,14 +34,19 @@ export class BattleSimulationClock {
     this.lastResumeReason = reason;
   }
 
+  getBcuNoCatchupBurstCap() {
+    const configured = Number.isFinite(this.maxBcuNoCatchupBurstSteps) ? Math.floor(this.maxBcuNoCatchupBurstSteps) : 4;
+    return Math.max(1, configured);
+  }
+
   getEffectiveMaxSubSteps(speedMultiplier = 1) {
     const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
     if (this.catchUpMode === 'bcu-no-catchup') {
       // BCU runs the battle update `spd` times per render frame to fast-forward.
       // At 1x this stays at a single fixed step (no wall-clock catch-up); at
-      // 2x/3x/4x it allows that many fixed steps so higher speeds actually
-      // advance the simulation faster instead of dropping the extra time.
-      return Math.max(1, Math.ceil(speed));
+      // higher speeds it advances faster, but caps late-frame bursts so an
+      // already-slow browser frame cannot enqueue an 8-tick spike and freeze.
+      return Math.max(1, Math.min(Math.ceil(speed), this.getBcuNoCatchupBurstCap()));
     }
     const configured = Number.isFinite(this.maxSubStepsPerFrame) ? Math.floor(this.maxSubStepsPerFrame) : 1;
     if (this.catchUpMode === 'speed-aware') {
@@ -51,7 +58,7 @@ export class BattleSimulationClock {
   step(now, speedMultiplier = 1, tickFn = () => {}) {
     if (this.lastFrameTime == null) {
       this.lastFrameTime = now;
-      this.lastStepDebug = { rawDt: 0, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: this.paused, catchUpMode: this.catchUpMode, fixedStepMs: this.fixedStepMs, source: this.source };
+      this.lastStepDebug = { rawDt: 0, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: this.paused, catchUpMode: this.catchUpMode, maxSteps: this.getEffectiveMaxSubSteps(speedMultiplier), burstStepCap: this.catchUpMode === 'bcu-no-catchup' ? this.getBcuNoCatchupBurstCap() : null, fixedStepMs: this.fixedStepMs, source: this.source };
       return this.lastStepDebug;
     }
 
@@ -59,7 +66,7 @@ export class BattleSimulationClock {
     this.lastFrameTime = now;
 
     if (this.paused) {
-      this.lastStepDebug = { rawDt, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: true, catchUpMode: this.catchUpMode, fixedStepMs: this.fixedStepMs, source: this.source };
+      this.lastStepDebug = { rawDt, clampedDt: 0, scaledDt: 0, steps: 0, dropped: false, droppedMs: 0, paused: true, catchUpMode: this.catchUpMode, maxSteps: this.getEffectiveMaxSubSteps(speedMultiplier), burstStepCap: this.catchUpMode === 'bcu-no-catchup' ? this.getBcuNoCatchupBurstCap() : null, fixedStepMs: this.fixedStepMs, source: this.source };
       return this.lastStepDebug;
     }
 
@@ -70,6 +77,7 @@ export class BattleSimulationClock {
 
     let steps = 0;
     const maxSteps = this.getEffectiveMaxSubSteps(safeSpeedMultiplier);
+    const burstStepCap = this.catchUpMode === 'bcu-no-catchup' ? this.getBcuNoCatchupBurstCap() : null;
 
     while (this.accumulatorMs >= this.fixedStepMs && steps < maxSteps) {
       tickFn(this.fixedStepMs);
@@ -92,6 +100,7 @@ export class BattleSimulationClock {
       paused: false,
       catchUpMode: this.catchUpMode,
       maxSteps,
+      burstStepCap,
       accumulatorMs: this.accumulatorMs,
       fixedStepMs: this.fixedStepMs,
       source: this.source

@@ -4,6 +4,7 @@
 //  - BattleSpeedControl always exposes 1x->2x->3x->4x and uses the persisted flag
 //    only to unlock the navy-blue 8x step.
 import { BattleSimulationClock } from '../js/preview/BattleSimulationClock.js';
+import fs from 'node:fs';
 
 const checks = [];
 const check = (name, cond, detail) => { checks.push({ name, ok: !!cond, detail }); };
@@ -32,6 +33,23 @@ check('2x ~= 2x of 1x', s2 >= s1 * 1.8, { s1, s2 });
 check('3x > 2x', s3 > s2, { s2, s3 });
 check('4x ~= 4x of 1x', s4 >= s1 * 3.5, { s1, s4 });
 check('8x > 4x', s8 > s4, { s4, s8 });
+
+// ---- clock: 8x keeps fast-forward on healthy frames, but caps late-frame spikes ----
+{
+  const clock = new BattleSimulationClock();
+  const dts = [];
+  clock.resume(0);
+  const r = clock.step(100, 8, (dt) => dts.push(dt));
+  check('8x: late frame caps burst to 4 ticks', dts.length === 4 && dts.every((dt) => dt === 33), { dts, r });
+  check('8x: late-frame remainder is dropped instead of queued', r.dropped === true && r.maxSteps === 4 && r.burstStepCap === 4 && r.accumulatorMs === 0, r);
+}
+
+// ---- PreviewApp: 8x avoids rendering/UI work on every RAF while sim still steps ----
+{
+  const previewSrc = fs.readFileSync('js/preview/PreviewApp.js', 'utf8');
+  check('PreviewApp has high-speed render cadence guard', previewSrc.includes('getHighSpeedBattleRenderIntervalMs') && previewSrc.includes('shouldRenderBattleFrame'), null);
+  check('PreviewApp throttles only the 8x render path', /speed >= 8 \? 1000 \/ 30 : 0/.test(previewSrc), null);
+}
 
 // ---- BattleSpeedControl feature flag + cycle/colors ----
 const store = new Map();

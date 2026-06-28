@@ -2,7 +2,10 @@
 # Generated semantic bundles are runtime assets.
 # Keep public/assets/bundles/core/core-db.zip trackable because GitHub Pages must serve it.
 tmp/ui-polish-screens/
+tmp/agent-scratch/
 tmp/playwright-*/
+__probe*.mjs
+scratch-*.sh
 /playwright-report/
 /test-results/
 

@@ -17,6 +17,22 @@ Read these in order before using older notes:
 
 The 2026-06-23 audit established an important documentation rule: historical analysis can preserve source facts, but historical claims about the current rhg implementation are not current until code and deterministic checks confirm them.
 
+To reduce startup context before opening full documents, use the generated shortcut:
+
+```bash
+npm run agent:context -- --topic "<area>"
+```
+
+The output is derived from the current files listed above and highlights matching open status rows, blockers, visual-review rows, source-evidence rows, and candidate checks. Treat it as an index, not a source of truth.
+
+Runtime helpers for lower-token iteration:
+
+- `npm run agent:find -- --topic "<area>"` ranks likely JS owners, checks, tests, and docs with compact snippets.
+- `npm run agent:changed` prints changed files grouped by code/tests/docs/tooling without invoking full `git status`.
+- `npm run agent:checks -- --topic "<area>" --file js/path/File.js` suggests focused commands; `--changed --run` derives them from the current diff and executes short OK/failure tails.
+- `npm run agent:probe -- --expr "..."` runs one-off assertions with `assert` and `importProject()` injected, avoiding add/delete cycles for temporary test files.
+- `npm run agent:run -- "command"` runs arbitrary command lines with compact tails for long or noisy checks.
+
 ## Agent rule files
 
 - `bcu-parity-rules.md`: evidence hierarchy, status vocabulary, asset/runtime rules, and known constraints.

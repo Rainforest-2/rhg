@@ -58,6 +58,13 @@ A 2026-06-23 comparison of `Rainforest-2/rhg` against the BCU references found n
 
 ## Development and build
 
+- `npm run agent:context -- --topic "<area>"` prints a compact, generated orientation view for agents from the current BCU parity docs.
+- `npm run agent:changed` prints a compact changed-file summary without full `git status`.
+- `npm run agent:find -- --topic "<area>"` ranks likely owner/check/doc files with short snippets.
+- `npm run agent:checks -- --topic "<area>" --file js/path/File.js` suggests focused verification; add `--run` to execute and summarize.
+- `npm run agent:checks -- --changed --run` derives focused verification from the current diff.
+- `npm run agent:probe -- --expr "..."` runs disposable assertions without creating temporary test files.
+- `npm run agent:run -- "node scripts/check-name.mjs"` runs arbitrary command lines with compact success/failure tails.
 - `npm run dev` starts the Vite dev server.
 - `npm run build` bundles the app into `dist/`.
 - Vite serves/copies selected `public/assets/**` runtime assets as `/assets/**`; raw `public/assets/bcu/**` and `public/assets/bcu-manifest.json` are intentionally excluded from `dist/` and blocked in dev serving. Runtime BCU assets must continue to load through generated semantic ZIP bundles.

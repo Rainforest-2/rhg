@@ -11,6 +11,12 @@
     "vite": "^8.1.0"
   },
   "scripts": {
+    "agent:context": "node scripts/agent-context.mjs",
+    "agent:changed": "node scripts/agent-changed.mjs",
+    "agent:find": "node scripts/agent-find.mjs",
+    "agent:checks": "node scripts/agent-checks.mjs",
+    "agent:probe": "node scripts/agent-probe.mjs",
+    "agent:run": "node scripts/agent-run.mjs",
     "check": "node scripts/check-bcu-ability-parity-safe-suite.mjs",
     "test": "node --test tests/*.test.mjs",
     "verify": "npm run check && npm test",

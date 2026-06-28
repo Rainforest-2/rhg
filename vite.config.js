@@ -144,7 +144,26 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      input: path.join(ROOT, 'index.html')
+      input: path.join(ROOT, 'index.html'),
+      // Keep class/function names through minification. Rolldown's (oxc) minifier
+      // otherwise rewrites every class to a named class expression that reuses the
+      // same one-letter inner name (`var X = class e { static fromCoreDb(){ new e() } }`).
+      // The Pages deploy then runs javascript-obfuscator over each chunk, and its
+      // scope analysis conflates that reused inner `e` with other same-named locals,
+      // rewriting the `new e()` self-reference to the wrong binding. The result was a
+      // production-only boot crash (`TypeError: <obj>.add is not a function` from
+      // BcuLangStore.fromCoreDb). Preserving the real, unique class/function names
+      // makes the self-reference `new BcuLangStore()` resolve correctly, and keeps
+      // obfuscation (run with --rename-globals false) from touching it. Output stays
+      // minified (whitespace stripped, locals mangled); only top-level class/function
+      // identifiers — already preserved by the obfuscator's --rename-globals false —
+      // keep their names.
+      output: {
+        minify: {
+          compress: true,
+          mangle: { toplevel: true, keepNames: { function: true, class: true } }
+        }
+      }
     }
   }
 });

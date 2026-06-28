@@ -22,6 +22,27 @@ Use these current documents before any historical note:
 
 Treat old reports as historical unless current code and these docs confirm the same claim.
 
+For a compact generated orientation view, run:
+
+```bash
+npm run agent:context -- --topic "<area>"
+```
+
+This shortcut is derived from the current documents above and is useful for finding open rows, blockers, visual-review items, and likely checks before opening the full sources. It is not a replacement for the fact-first workflow when changing behavior.
+
+Use these low-token helper commands before creating disposable files:
+
+```bash
+npm run agent:find -- --topic "<area>"
+npm run agent:changed
+npm run agent:checks -- --topic "<area>" --file js/path/File.js
+npm run agent:checks -- --changed --run
+npm run agent:probe -- --expr "const m = await importProject('js/path/File.js'); assert.ok(m)"
+npm run agent:run -- "node scripts/check-name.mjs"
+```
+
+`agent:probe` is for temporary assertions during reasoning; prefer it over adding and deleting throwaway tests. Commit durable checks only when they protect behavior.
+
 ## Non-negotiable workflow
 
 ```text

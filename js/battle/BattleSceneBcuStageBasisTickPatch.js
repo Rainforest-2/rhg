@@ -97,6 +97,38 @@ function clearBcuTickScratch(scene) {
   else scene.__bcuDueAttackHits = [];
 }
 
+function isTargetableForBucket(actor) {
+  if (!actor) return false;
+  if (typeof actor.isTargetable === 'function') return !!actor.isTargetable();
+  if (typeof actor.isAlive === 'function') return !!actor.isAlive();
+  return false;
+}
+
+function refreshBcuTargetableActorBuckets(scene) {
+  let buckets = scene.__bcuTargetableActorBuckets;
+  if (!buckets) {
+    buckets = { dogPlayer: [], catEnemy: [], frame: -1, source: 'BattleSceneBcuStageBasisTickPatch targetable buckets' };
+    scene.__bcuTargetableActorBuckets = buckets;
+  }
+  buckets.dogPlayer.length = 0;
+  buckets.catEnemy.length = 0;
+  buckets.frame = scene.logicFrame;
+  for (const actor of (scene.actors || [])) {
+    if (!isTargetableForBucket(actor)) continue;
+    if (actor.side === 'dog-player') buckets.dogPlayer.push(actor);
+    else if (actor.side === 'cat-enemy') buckets.catEnemy.push(actor);
+  }
+  return buckets;
+}
+
+function invalidateBcuTargetableActorBuckets(scene) {
+  const buckets = scene?.__bcuTargetableActorBuckets;
+  if (!buckets) return;
+  buckets.frame = -1;
+  buckets.dogPlayer.length = 0;
+  buckets.catEnemy.length = 0;
+}
+
 function getSelection(scene, actor) {
   return scene.__bcuTargetSelections?.get(actor) || null;
 }
@@ -125,7 +157,7 @@ function attackWaitReady(actor, nowMs) {
 
 function selectionFromTouchState(touchState) {
   const attackTarget = touchState?.attackTarget || null;
-  const fallbackTarget = attackTarget || (Array.isArray(touchState?.candidates) ? touchState.candidates[0] : null);
+  const fallbackTarget = attackTarget || touchState?.firstCandidate || (Array.isArray(touchState?.candidates) ? touchState.candidates[0] : null);
   return {
     target: fallbackTarget?.target || null,
     targetType: fallbackTarget?.targetType || null,
@@ -176,6 +208,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     });
 
     this.runTickPhase('movement', () => {
+      refreshBcuTargetableActorBuckets(this);
       for (const actor of this.actors) {
         actor.lastSceneTimeMs = this.timeMs; actor.lastSceneLogicFrame = this.logicFrame;
         if (!isActorActive(actor)) continue;
@@ -268,6 +301,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
     });
 
     this.runTickPhase('hit-target-capture', () => {
+      refreshBcuTargetableActorBuckets(this);
       const dueHits = Array.isArray(this.__bcuDueAttackHits) ? this.__bcuDueAttackHits : [];
       for (const item of dueHits) this.resolveAttackHitEvent(item.actor, item.due);
       for (const actor of this.actors) {
@@ -281,7 +315,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
       }
     });
 
-    this.runTickPhase('damage-resolve', () => {});
+    this.runTickPhase('damage-resolve', () => { invalidateBcuTargetableActorBuckets(this); });
     this.runTickPhase('proc-resolve', () => {});
 
     this.runTickPhase('knockback-death', () => {

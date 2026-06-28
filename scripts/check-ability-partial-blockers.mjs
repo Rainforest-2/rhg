@@ -43,20 +43,18 @@ assert.ok(omitted.includes('sage status resistance'), 'damage resolver still rep
 const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 'utf8');
 for (const phrase of [
   '| P_DELAY | `human-visual-review-needed`',
-  '| burrow | `code-complete-candidate`',
+  '| 地中移動 | `code-complete-candidate`',
   // Loader-backed graduations: each is proven by a real BCU-format fixture file
   // threaded through the existing runtime (see the per-row checks below).
-  '| SUMMON | `code-complete-candidate`',
-  '| `Trait.targetForms` / special traits | `code-complete-candidate`',
-  '| combo / orb / treasure / talent / PCoin | `code-complete-candidate`',
-  '| extra/custom zombie revive | `code-complete-candidate`',
-  '| repository-local persistence | `code-complete-candidate`',
-  '| AB_SKILL / status resistance extensions | `code-complete-candidate`',
+  '- SUMMON: proc-object での実データ読込が確認済み。',
+  '- `Trait.targetForms`: 実データの `Trait` が読み込まれ、判定経路に接続されている。',
+  '- combo / orb / treasure / talent / PCoin: 既存の実行時と実データの組み合わせが確認済み。',
+  '- 追加 / カスタム zombie revive: 実データの proc-object から source/range フィルタが動く。',
+  '- リポジトリ内永続化: 読み書き失敗の可視化ができている。',
   // Genuinely-open items: visual review or disproven/out-of-scope owner.
-  '| summon entry appearance | `human-visual-review-needed`',
-  '| mini-death-surge | `human-visual-review-needed`',
-  '| BCU save / lineup import-export compatibility | `out-of-scope`',
-  '| enemy castle / stage “special attack” | `negative-evidence`'
+  '- summon entry の見た目',
+  '- death-surge の demon-soul 見た目',
+  '- BCU セーブや陣形の import/export 互換性は対象外'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
 }

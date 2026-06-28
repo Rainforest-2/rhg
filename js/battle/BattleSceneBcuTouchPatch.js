@@ -44,56 +44,67 @@ export function installBattleSceneBcuTouchPatch() {
   // attack it (touchEnemy false). The base counts as a valid Target Only target
   // (traitCompatible(..., true) returns true for a base).
   proto.computeBcuTouchState = function computeBcuTouchState(actor) {
-    const candidates = [];
+    const collectDebug = actor && shouldCollectTouchDebug(this);
+    const candidates = collectDebug ? [] : null;
     const targetOnly = !!actor && hasTargetOnly(actor);
     let touch = false;
     let touchEnemy = false;
     let attackTarget = null;
+    let firstCandidateTarget = null;
+    let firstCandidateTargetType = null;
+    let candidateCount = 0;
+    const rememberCandidate = (target, targetType) => {
+      candidateCount += 1;
+      if (!firstCandidateTarget) {
+        firstCandidateTarget = target;
+        firstCandidateTargetType = targetType;
+      }
+      if (candidates) candidates.push({ target, targetType });
+    };
     if (actor) {
       const enemyActors = typeof this.findEnemyActors === 'function' ? (this.findEnemyActors(actor) || []) : [];
       for (const target of enemyActors) {
         if (!this.isTargetAliveForAttack(target, 'actor')) continue;
         if (!BattleAttackResolver.isTargetTouchable(actor, target)) continue;
-        const candidate = { target, targetType: 'actor' };
-        candidates.push(candidate);
+        rememberCandidate(target, 'actor');
         touch = true;
         if (targetOnly) {
           if (bcuTraitCompatible({ attacker: actor, target, targetType: 'actor', targetOnly: true })) {
             touchEnemy = true;
-            if (!attackTarget) attackTarget = candidate;
+            if (!attackTarget) attackTarget = { target, targetType: 'actor' };
           }
         } else {
           touchEnemy = true;
-          if (!attackTarget) attackTarget = candidate;
+          if (!attackTarget) attackTarget = { target, targetType: 'actor' };
         }
       }
       const base = typeof this.findEnemyBase === 'function' ? this.findEnemyBase(actor) : null;
       if (base && this.isTargetAliveForAttack(base, 'base') && BattleAttackResolver.isTargetTouchable(actor, base)) {
-        const candidate = { target: base, targetType: 'base' };
-        candidates.push(candidate);
+        rememberCandidate(base, 'base');
         touch = true;
         if (targetOnly) {
           if (bcuTraitCompatible({ attacker: actor, target: base, targetType: 'base', targetOnly: true })) {
             touchEnemy = true;
-            if (!attackTarget) attackTarget = candidate;
+            if (!attackTarget) attackTarget = { target: base, targetType: 'base' };
           }
         } else {
           touchEnemy = true;
-          if (!attackTarget) attackTarget = candidate;
+          if (!attackTarget) attackTarget = { target: base, targetType: 'base' };
         }
       }
     }
-    if (actor && shouldCollectTouchDebug(this)) {
+    const firstCandidate = firstCandidateTarget ? { target: firstCandidateTarget, targetType: firstCandidateTargetType } : null;
+    if (collectDebug) {
       actor.lastBcuTouchStateDebug = {
         source: 'BCU Entity.checkTouch parity: touch (any in range) vs touchEnemy (AB_ONLY trait gate)',
         touch,
         touchEnemy,
         targetOnly,
-        candidateCount: candidates.length,
+        candidateCount,
         actorState: actor.state
       };
     }
-    return { touch, touchEnemy, candidates, targetOnly, attackTarget };
+    return { touch, touchEnemy, candidates: candidates || null, firstCandidate, candidateCount, targetOnly, attackTarget };
   };
 
   proto.canAttack = function canAttackBcuTouch(actor, target) {

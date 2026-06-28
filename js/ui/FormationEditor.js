@@ -92,11 +92,29 @@ export class FormationEditor {
     this.root.addEventListener('scroll', (e) => this.onScroll(e), true);
     ensureSoundToggleStyles();
     this.audioSettingsUnsubscribe = AudioSettings.subscribe(() => this.updateAudioSettingControls?.());
+    this.primeFormationIconLoads();
     this.refresh();
     this.loadStageOptions();
   }
 
   setVisible(v) { this.root.classList.toggle('is-visible', !!v); }
+
+  primeFormationIconLoads() {
+    let provider = null;
+    try { provider = getBcuAssetDatabase()?.semanticProvider || null; } catch {}
+    if (!provider) return;
+    const keys = new Set();
+    for (const slotId of this.formation?.pages?.flat?.() || []) {
+      if (!slotId) continue;
+      const character = getCharacterById(slotId);
+      const key = character?.uiIcon?.semanticKey || character?.assetDef?.semanticKey;
+      if (key) keys.add(key);
+    }
+    for (const key of keys) {
+      if (this.iconWork.has(key)) continue;
+      this.iconWork.set(key, provider.getActorUiIconUrl(key));
+    }
+  }
 
   setHint(text) {
     const hint = this.root.querySelector('.formation-action-hint');

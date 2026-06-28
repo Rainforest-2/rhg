@@ -23,11 +23,20 @@ assert.match(debugStrip, /getLastTickPhaseOrderDisabled/, 'BattleDebugStripPatch
 const stageBasisTick = read('js/battle/BattleSceneBcuStageBasisTickPatch.js');
 assert.match(stageBasisTick, /__bcuTargetSelections\.clear\(\)/, 'StageBasis tick scratch Map must be reused');
 assert.match(stageBasisTick, /__bcuDueAttackHits\.length = 0/, 'StageBasis due-hit scratch array must be reused');
+assert.match(stageBasisTick, /function refreshBcuTargetableActorBuckets\(scene\)/, 'StageBasis tick must build per-frame targetable actor buckets');
+assert.match(stageBasisTick, /function invalidateBcuTargetableActorBuckets\(scene\)/, 'StageBasis targetable buckets must be invalidated before damage can change targetability');
 assert.doesNotMatch(stageBasisTick, /findTargetForActor\(actor\)/, 'StageBasis tick must reuse computeBcuTouchState instead of rescanning/sorting targets');
 
 const touch = read('js/battle/BattleSceneBcuTouchPatch.js');
 assert.match(touch, /function shouldCollectTouchDebug\(scene\)/, 'touch debug allocations must be explicitly gated');
+assert.match(touch, /firstCandidate/, 'touch state must keep a single fallback candidate without a normal-play candidates array');
+assert.match(touch, /const candidates = collectDebug \? \[\] : null;/, 'touch state must allocate the candidates array only for debug');
 assert.doesNotMatch(touch, /for \(const c of candidates\)/, 'touch state must not rescan candidates after collection');
+
+const scene = read('js/battle/BattleScene.js');
+assert.match(scene, /countAliveActorsBySide\(side\)/, 'BattleScene must count alive actors without filter-length arrays');
+assert.doesNotMatch(scene, /actors\.filter\(a=>a\.isAlive\(\)&&a\.side==='cat-enemy'\)\.length/, 'enemy spawn count must not allocate a filtered actors array');
+assert.doesNotMatch(scene, /es\.sort\(\(a,b\)=>/, 'findTargetForActor must scan for the nearest target instead of sorting candidates');
 
 const rendererOrder = read('js/battle/BattleSceneRendererOrderPatch.js');
 assert.doesNotMatch(rendererOrder, /\.map\(\(actor, index\) => \(\{ actor, index \}\)\)/, 'renderer order must not allocate wrapper objects per actor');

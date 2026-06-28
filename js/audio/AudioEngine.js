@@ -57,6 +57,8 @@ export class AudioEngine {
     this._unlocked = false;
     this._userPaused = false;
     this._gestureBound = null;
+    this._bgmRetryTimer = null;
+    this._bgmRetryCount = 0;
     this.lastSeVoiceDebug = null;
     this.lastBgmStartDebug = null;
     // Track volume changes live without restarting playback.
@@ -172,12 +174,13 @@ export class AudioEngine {
   _unlock() {
     if (this._unlocked || !this._supported) return;
     this._unlocked = true;
-    this._ensureSePool();
+    // Keep the first user gesture light. The BGM element is the one that must be
+    // activated immediately; SE pool elements are created lazily on first SE use.
     // Only pause if the element is still on the silent unlock clip — guards the
     // (theoretical) race where real BGM started on the reused element before this
     // silent play's promise resolved, so we never pause live music.
     const finishPause = (el) => { try { if (el.getAttribute('src') === SILENT_WAV_DATA_URI) { el.pause(); el.currentTime = 0; } } catch {} };
-    const els = [this._ensureBgmEl(), ...this._sePool].filter(Boolean);
+    const els = [this._ensureBgmEl()].filter(Boolean);
     for (const el of els) {
       try {
         if (!el.getAttribute('src')) el.src = SILENT_WAV_DATA_URI;
@@ -249,6 +252,29 @@ export class AudioEngine {
     return this._playBgmElement(norm, { loop });
   }
 
+  _clearBgmRetry() {
+    if (this._bgmRetryTimer != null) {
+      clearTimeout(this._bgmRetryTimer);
+      this._bgmRetryTimer = null;
+    }
+    this._bgmRetryCount = 0;
+  }
+
+  _scheduleBgmRetry(norm) {
+    if (this._userPaused || this._wantedBgmId !== norm || this._bgmRetryTimer != null) return;
+    const delay = Math.min(1500, 150 + this._bgmRetryCount * 150);
+    this._bgmRetryTimer = setTimeout(() => {
+      this._bgmRetryTimer = null;
+      if (this._wantedBgmId !== norm || this._userPaused) return;
+      if (this._bgmEl && this._bgmId === norm && !this._bgmEl.paused) {
+        this._clearBgmRetry();
+        return;
+      }
+      this._bgmRetryCount += 1;
+      this._playBgmElement(norm).catch(() => {});
+    }, delay);
+  }
+
   async _playBgmElement(norm, { loop = true } = {}) {
     const el = this._ensureBgmEl();
     if (!el) return false;
@@ -267,6 +293,7 @@ export class AudioEngine {
       el.currentTime = 0;
       this._bgmId = norm;
       if (!this._userPaused) await el.play();
+      this._clearBgmRetry();
       this.lastBgmStartDebug = { id: norm, status: 'playing', unlocked: this._unlocked, userPaused: this._userPaused };
       return true;
     } catch (error) {
@@ -280,11 +307,13 @@ export class AudioEngine {
         unlocked: this._unlocked,
         userPaused: this._userPaused
       };
+      this._scheduleBgmRetry(norm);
       return false;
     }
   }
 
   stopBgm() {
+    this._clearBgmRetry();
     this._wantedBgmId = null;
     this._bgmId = null;
     if (!this._bgmEl) return;
@@ -371,9 +400,12 @@ export class AudioEngine {
     this._userPaused = !!paused;
     if (!this._bgmEl) return;
     if (paused) {
+      this._clearBgmRetry();
       try { this._bgmEl.pause(); } catch {}
     } else if (this._bgmId != null) {
       try { this._bgmEl.volume = this._bgmVolume(); this._bgmEl.play?.().catch(() => {}); } catch {}
+    } else if (this._wantedBgmId != null) {
+      this._playBgmElement(this._wantedBgmId).catch(() => {});
     }
   }
 

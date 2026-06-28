@@ -14,16 +14,28 @@ export class BcuModelInstance {
         current: { ...normalized, hf: 1, vf: 1, gsca: this.baseScale, extendX: 0, extendY: 0, extType: 0 }
       };
     });
+    // O(1) parent resolution: part.parent is matched against another part's `.index`
+    // (which equals its array position from BcuModelParser). A Map preserves the exact
+    // semantics of the previous `.find(x => x.index === parent)` without the per-call
+    // O(n) scan that made getPartGraphicsMatrix/getPartSize/getPartOpacity O(n^2).
+    this._partIndexMap = new Map();
+    for (const p of this.parts) this._partIndexMap.set(p.index, p);
+    // Per-frame draw-list memoization. `_revision` is bumped on every state mutation
+    // (reset/applyTrack); the cache is reused only while revision AND parentMatrix are
+    // unchanged, so all redundant getBattleDrawList() callers in a single render frame
+    // share one computation without ever desyncing from real BCU animation state.
+    this._revision = 0;
+    this._drawListCache = null;
   }
   identityMatrix() { return [1, 0, 0, 1, 0, 0]; }
   multiplyMatrix(a, b) { return [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]]; }
   translateMatrix(x, y) { return [1, 0, 0, 1, x, y]; }
   rotateMatrix(rad) { const c = Math.cos(rad), s = Math.sin(rad); return [c, s, -s, c, 0, 0]; }
   scaleMatrix(sx, sy) { return [sx, 0, 0, sy, 0, 0]; }
-  reset() { this.parts.forEach((p) => { p.current = { ...p.base }; }); }
+  reset() { this.parts.forEach((p) => { p.current = { ...p.base }; }); this._revision++; }
   getState() { return { source: 'BcuModelInstance', partCount: this.parts?.length || 0, baseScale: this.baseScale, baseAngle: this.baseAngle, baseOpacity: this.baseOpacity, lastAppliedTrackDebug: this.lastAppliedTrackDebug || null, lastDrawListDebug: this.lastDrawListDebug || null }; }
   getPartCurrent(part) { return part.current || part.base || part; }
-  getPartParent(part) { return this.parts.find((x) => x.index === (this.getPartCurrent(part).parent)); }
+  getPartParent(part) { return this._partIndexMap.get(this.getPartCurrent(part).parent); }
   isParentValid(partIndex, parentIndex, visited = new Set()) {
     if (!Number.isInteger(parentIndex) || parentIndex < 0 || parentIndex >= this.parts.length) return false;
     if (parentIndex === partIndex) return false;
@@ -48,6 +60,10 @@ export class BcuModelInstance {
       if (debug) this.lastAppliedTrackDebug = { partId, prop, modification, applied: false, value: v };
       return { applied: false };
     }
+    // Any valid-part track is a potential mutation of `current`; invalidate the draw-list
+    // cache. Over-counting no-op tracks is harmless — it only forces a rebuild on the next
+    // getBattleDrawList() call, which already had to happen because the animator advanced.
+    this._revision++;
     const b = p.base, c = p.current;
     const bs = this.baseScale, bo = this.baseOpacity;
     switch (modification) {
@@ -121,7 +137,17 @@ export class BcuModelInstance {
     m = this.multiplyMatrix(m, this.scaleMatrix(hf, vf)); m = this.multiplyMatrix(m, this.rotateMatrix(angle));
     mCache.set(part.index, m); return m;
   }
+  _sameParentMatrix(a, b) {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    for (let i = 0; i < 6; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
   getBattleDrawList({ parentMatrix = null } = {}) {
+    const cache = this._drawListCache;
+    if (cache && cache.revision === this._revision && this._sameParentMatrix(cache.parentMatrix, parentMatrix)) {
+      return cache.list;
+    }
     const sCache = new Map(), bCache = new Map(), gCache = new Map(), oCache = new Map();
     const drawList = this.parts.map((part) => {
       const c = this.getPartCurrent(part);
@@ -148,6 +174,15 @@ export class BcuModelInstance {
         z: (c.zOrder ?? part.zOrder ?? 0) * Math.max(1, this.parts.length) + part.index
       };
     }).sort((a, b) => a.z - b.z);
+    // The per-entry stats loop and its lastDrawListDebug object only feed inspect-only
+    // surfaces (DebugBattleInspector / AnimationRuntime debug summary / dev globals). Skip
+    // it during normal play; production callers only ever read lastDrawListDebug.count.
+    const debug = globalThis.__BCU_DEBUG_ALLOCATIONS__ === true;
+    if (!debug) {
+      this._drawListCache = { revision: this._revision, parentMatrix: parentMatrix ? parentMatrix.slice(0, 6) : null, list: drawList };
+      this.lastDrawListDebug = { source: 'BcuModelInstance.getBattleDrawList', count: drawList.length };
+      return drawList;
+    }
     let visibleCount = 0;
     let opacityZeroCount = 0;
     let glowCount = 0;
@@ -155,9 +190,8 @@ export class BcuModelInstance {
     let minZ = null;
     let maxZ = null;
     let hasMatrix = false;
-    const debug = globalThis.__BCU_DEBUG_ALLOCATIONS__ === true;
-    const glowModes = debug ? {} : null;
-    const examples = debug ? [] : null;
+    const glowModes = {};
+    const examples = [];
     for (const d of drawList) {
       if (d.opacity > 0 && Number.isFinite(d.partIndex) && Number.isFinite(d.imgcutIndex)) visibleCount += 1;
       if (d.opacity <= 0) opacityZeroCount += 1;
@@ -174,9 +208,8 @@ export class BcuModelInstance {
       if (!hasMatrix && Array.isArray(d.matrix) && d.matrix.length === 6) hasMatrix = true;
       if (debug && examples.length < 3) examples.push({ index: d.index, partIndex: d.partIndex, imgcutIndex: d.imgcutIndex, z: d.z, opacity: d.opacity, glow: d.glow, extendX: d.extendX, extendY: d.extendY, extType: d.extType, matrix: Array.isArray(d.matrix) ? d.matrix.slice(0, 6) : null });
     }
-    this.lastDrawListDebug = debug
-      ? { source: 'BcuModelInstance.getBattleDrawList', count: drawList.length, visibleCount, opacityZeroCount, glowCount, glowModes, extendedCount, minZ, maxZ, hasMatrix, examples }
-      : { source: 'BcuModelInstance.getBattleDrawList', count: drawList.length, visibleCount, opacityZeroCount, glowCount, extendedCount, minZ, maxZ, hasMatrix };
+    this.lastDrawListDebug = { source: 'BcuModelInstance.getBattleDrawList', count: drawList.length, visibleCount, opacityZeroCount, glowCount, glowModes, extendedCount, minZ, maxZ, hasMatrix, examples };
+    this._drawListCache = { revision: this._revision, parentMatrix: parentMatrix ? parentMatrix.slice(0, 6) : null, list: drawList };
     return drawList;
   }
   buildWorld() { return this.getBattleDrawList(); }

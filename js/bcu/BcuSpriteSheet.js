@@ -1,14 +1,20 @@
 import { drawBcuImagePart, isBcuGlowSupported } from './BcuCanvasComposite.js';
 
+// Render-side debug instrumentation is inspect-only (dev globals / hand-read in devtools)
+// and runs once per visible part per frame. Keep it off the production hot path; enable it
+// explicitly with globalThis.__BCU_RENDER_DEBUG__ = true when diagnosing draw output.
+function spriteDrawDebugEnabled() { return globalThis.__BCU_RENDER_DEBUG__ === true; }
+
 function consumeQueuedDrawPart(sprite, partIndex) {
   const q = sprite?.__bcuDrawQueue;
   if (!Array.isArray(q) || !q.length) return null;
+  const debug = spriteDrawDebugEnabled();
   let skipped = 0;
   while (q.length) {
     const next = q.shift();
     const nextPartIndex = next?.partIndex ?? next?.current?.partIndex ?? next?.rawPart?.partIndex;
     if (nextPartIndex === partIndex) {
-      sprite.__lastBcuDrawQueueDebug = {
+      if (debug) sprite.__lastBcuDrawQueueDebug = {
         source: 'BcuSpriteSheet.consumeQueuedDrawPart',
         matched: true,
         partIndex,
@@ -22,7 +28,7 @@ function consumeQueuedDrawPart(sprite, partIndex) {
     }
     skipped += 1;
   }
-  sprite.__lastBcuDrawQueueDebug = {
+  if (debug) sprite.__lastBcuDrawQueueDebug = {
     source: 'BcuSpriteSheet.consumeQueuedDrawPart',
     matched: false,
     partIndex,
@@ -80,13 +86,10 @@ export class BcuSpriteSheet {
     const glow = Number(opt.glow ?? queued?.glow ?? 0);
     const dw = sw * (opt.scaleX ?? 1);
     const dh = sh * (opt.scaleY ?? 1);
-    const debug = {
-      ...(opt.debug || {}),
-      partIndex,
-      modelPartIndex: queued?.index ?? null,
-      partName: p.name || null,
-      semanticKey: queued?.semanticKey || null
-    };
+    const wantDebug = spriteDrawDebugEnabled();
+    const debug = wantDebug
+      ? { ...(opt.debug || {}), partIndex, modelPartIndex: queued?.index ?? null, partName: p.name || null, semanticKey: queued?.semanticKey || null }
+      : null;
 
     // BCU ImgCore.drawImg only switches to BLEND when glow is 1/2/3/-1.
     // For normal parts, preserve the caller's current transform/composite/globalAlpha.
@@ -94,7 +97,7 @@ export class BcuSpriteSheet {
     // and changed non-glow actor rendering as a side effect.
     if (!isBcuGlowSupported(glow)) {
       ctx.drawImage(this.image, sx, sy, sw, sh, dx, dy, dw, dh);
-      registerSpriteDrawDebug(this, { path: 'normal-canvas-draw', glow, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
+      if (wantDebug) registerSpriteDrawDebug(this, { path: 'normal-canvas-draw', glow, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
       return true;
     }
 
@@ -104,7 +107,7 @@ export class BcuSpriteSheet {
       glow,
       debug
     });
-    registerSpriteDrawDebug(this, { path: 'bcu-glow-composite', glow, opacity, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
+    if (wantDebug) registerSpriteDrawDebug(this, { path: 'bcu-glow-composite', glow, opacity, partIndex, partName: p.name || null, debug, timestamp: Date.now() });
     return result;
   }
 

@@ -22,21 +22,28 @@ if (!BattleSceneRenderer.prototype[PATCH_FLAG]) {
     const previousQueue = actor.sprite.__bcuDrawQueue;
     try {
       if (typeof actor.model.getBattleDrawList === 'function') {
+        // getBattleDrawList() is memoized per (revision, parentMatrix) on the model instance,
+        // so this call reuses the same computation the real drawActor() consumes within the
+        // frame instead of rebuilding the 94-part list a second time.
         const drawList = actor.model.getBattleDrawList({ parentMatrix: actor.kbeffEnabled ? actor.kbeffParentMatrix : null });
         actor.sprite.__bcuDrawQueue = drawList.map((entry) => cloneDrawEntryForSprite(actor, entry));
-        globalThis.__BCU_RENDERER_GLOW_PATCH_DEBUG__ = {
-          installed: true,
-          lastActor: actor.instanceId || actor.label || actor.semanticKey || null,
-          semanticKey: actor.semanticKey || actor.assetDef?.semanticKey || null,
-          drawListCount: drawList.length,
-          glowCount: drawList.filter((d) => [1, 2, 3, -1].includes(Number(d.glow))).length,
-          glowModes: drawList.reduce((acc, d) => {
-            const g = Number(d.glow);
-            if ([1, 2, 3, -1].includes(g)) acc[String(g)] = (acc[String(g)] || 0) + 1;
-            return acc;
-          }, {}),
-          timestamp: Date.now()
-        };
+        // Inspect-only summary; building it (with Date.now/filter/reduce) every actor every
+        // frame is pure waste during normal play. Gate behind the explicit render-debug flag.
+        if (globalThis.__BCU_RENDER_DEBUG__ === true) {
+          globalThis.__BCU_RENDERER_GLOW_PATCH_DEBUG__ = {
+            installed: true,
+            lastActor: actor.instanceId || actor.label || actor.semanticKey || null,
+            semanticKey: actor.semanticKey || actor.assetDef?.semanticKey || null,
+            drawListCount: drawList.length,
+            glowCount: drawList.filter((d) => [1, 2, 3, -1].includes(Number(d.glow))).length,
+            glowModes: drawList.reduce((acc, d) => {
+              const g = Number(d.glow);
+              if ([1, 2, 3, -1].includes(g)) acc[String(g)] = (acc[String(g)] || 0) + 1;
+              return acc;
+            }, {}),
+            timestamp: Date.now()
+          };
+        }
       }
       return originalDrawActor.call(this, ctx, actor);
     } finally {

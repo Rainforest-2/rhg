@@ -14,9 +14,11 @@ import { FormationEditor } from '../ui/FormationEditor.js';
 import { AppLoadingOverlay } from '../ui/AppLoadingOverlay.js';
 import { BattleSimulationClock } from './BattleSimulationClock.js';
 import { BattleCameraInputController } from './BattleCameraInputController.js';
-import { getDefaultStage } from '../battle/StageRegistry.js';
+import { getDefaultStage, getStageById } from '../battle/StageRegistry.js';
 import { audioEngine } from '../audio/AudioEngine.js';
 import { BATTLE_PRELOAD_SE_IDS, BATTLE_HOT_SE_IDS } from '../audio/BattleSoundEffects.js';
+import { musicCatalog } from '../audio/MusicCatalog.js';
+import { musicFromBakedEntry } from '../audio/StageMusicResolver.js';
 
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -54,6 +56,18 @@ function inferFailedSubsystem(error) {
   if (message.includes('camera')) return 'camera';
   if (message.includes('raw bcu')) return 'raw-guard';
   return 'unknown';
+}
+
+function primeSelectedStageBgmFromGesture(app) {
+  try {
+    const stage = getStageById(app?.selectedStageId);
+    const music = musicFromBakedEntry(stage?.semanticEntry || stage, musicCatalog);
+    if (music?.startMusicId == null) return false;
+    audioEngine.playBgm(music.startMusicId).catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function loadImage(url) {
@@ -194,6 +208,7 @@ export class PreviewApp {
 
   async applyFormationToBattle() {
     console.info('applyFormationToBattle:start');
+    primeSelectedStageBgmFromGesture(this);
     const attemptStart = performance.now();
     this.loadingOverlay?.show();
     this.loadingOverlay?.startTimer();

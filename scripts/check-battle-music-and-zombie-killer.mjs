@@ -251,6 +251,11 @@ const runtime = await read('js/battle/StageRuntime.js');
 check(runtime.includes('bossMusicId') && runtime.includes('bossMusicHpThresholdPercent'), 'StageRuntime must carry boss music fields');
 const scene = await read('js/battle/BattleScene.js');
 check(/musicId:def\?\.musicId/.test(scene) && scene.includes('bossMusicHpThresholdPercent'), 'BattleScene.buildStageRuntime must expose music fields');
+const previewApp = await read('js/preview/PreviewApp.js');
+check(previewApp.includes('primeSelectedStageBgmFromGesture') && previewApp.includes('musicFromBakedEntry') && previewApp.includes('getStageById'),
+  'PreviewApp must prime selected-stage BGM from the sortie gesture before async battle loading');
+check(/applyFormationToBattle\(\)[\s\S]*primeSelectedStageBgmFromGesture\(this\);[\s\S]*await this\.resetBattle/.test(previewApp),
+  'PreviewApp.applyFormationToBattle must start selected-stage BGM before the first async battle-load await');
 
 // 5. audio engine + SE
 const engine = await read('js/audio/AudioEngine.js');
@@ -291,7 +296,6 @@ const zombie = await read('js/battle/BattleActorZombieRevivePatch.js');
 check(zombie.includes("from '../audio/BattleSoundEffects.js'") && zombie.includes('playZombieKillerSe()'), 'Zombie revive patch must play the Zombie Killer SE');
 check(/zombieKillerBlocked: true[\s\S]{0,400}playZombieKillerSe\(\)/.test(zombie), 'Zombie Killer SE must fire in the revive-blocked branch');
 
-const previewApp = await read('js/preview/PreviewApp.js');
 check(previewApp.includes('BATTLE_PRELOAD_SE_IDS') && previewApp.includes('prepareTracks') && previewApp.includes('battleAudioPreloaded'),
   'PreviewApp must preload/cache selected battle BGM and common SE during battle start');
 const eventPatch = await read('js/audio/BattleSoundEventPatch.js');

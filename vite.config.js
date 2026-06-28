@@ -6,7 +6,16 @@ import { defineConfig } from 'vite';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_ASSETS_DIR = path.join(ROOT, 'public', 'assets');
+const DIST_DIR = path.join(ROOT, 'dist');
 const DIST_ASSETS_DIR = path.join(ROOT, 'dist', 'assets');
+
+// Root-level runtime configs fetched by the app via a web-root-relative path
+// (BcuBootLoader.loadPlayableErrorConfig -> readText('error-*.json') ->
+// `./error-*.json` -> /rhg/error-*.json). They are NOT under public/assets, so the
+// build must copy them into dist/ or production 404s and the formation roster keeps
+// every error/missing enemy and ally visible. Node tests read the same files from
+// cwd, so the source location and path string stay unchanged.
+const ROOT_RUNTIME_FILES = ['error-enemy.json', 'error-ally.json'];
 
 // GitHub Pages serves this project under https://<user>.github.io/rhg/, so every
 // emitted URL (entry chunk, hashed CSS, public assets, in-HTML/CSS references)
@@ -115,6 +124,14 @@ function selectedPublicAssetsPlugin() {
     async closeBundle() {
       await mkdir(DIST_ASSETS_DIR, { recursive: true });
       await copySelectedPublicAssets(PUBLIC_ASSETS_DIR, DIST_ASSETS_DIR);
+      await mkdir(DIST_DIR, { recursive: true });
+      for (const name of ROOT_RUNTIME_FILES) {
+        try {
+          await copyFile(path.join(ROOT, name), path.join(DIST_DIR, name));
+        } catch (error) {
+          this.warn?.(`failed to copy root runtime file ${name}: ${error?.message || error}`);
+        }
+      }
     }
   };
 }

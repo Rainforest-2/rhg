@@ -33,6 +33,8 @@ import { musicCatalog } from './MusicCatalog.js';
 // stealing and restarting a still-playing element.
 const SE_POOL_SIZE = 12;
 const SE_POOL_MAX_SIZE = 32;
+const UNLOCK_EVENTS = ['pointerdown', 'mousedown', 'click', 'keydown', 'touchstart', 'touchend'];
+const UNLOCK_LISTENER_OPTIONS = { passive: true, capture: true };
 // ~0.01s of silence, played once per element inside a user gesture to satisfy the
 // iOS autoplay policy so the element can be replayed programmatically afterwards.
 const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -56,6 +58,7 @@ export class AudioEngine {
     this._userPaused = false;
     this._gestureBound = null;
     this.lastSeVoiceDebug = null;
+    this.lastBgmStartDebug = null;
     // Track volume changes live without restarting playback.
     this._unsubscribe = this.audio?.subscribe?.(() => this._applyVolumes()) || null;
     // Bind the gesture-unlock listeners eagerly, before any element exists, so an
@@ -143,15 +146,23 @@ export class AudioEngine {
     if (this._gestureBound || typeof window === 'undefined' || !this._supported) return;
     const handler = () => {
       this._unlock();
-      // If BGM was wanted but blocked before unlock, start it now from the gesture.
-      if (this._wantedBgmId != null && !this._userPaused && (!this._bgmEl || this._bgmEl.paused)) {
-        this.playBgm(this._wantedBgmId);
-      }
+      this._retryWantedBgmFromGesture();
     };
     this._gestureBound = handler;
-    for (const ev of ['pointerdown', 'keydown', 'touchstart']) {
-      window.addEventListener(ev, handler, { passive: true });
+    for (const ev of UNLOCK_EVENTS) window.addEventListener(ev, handler, UNLOCK_LISTENER_OPTIONS);
+  }
+
+  _retryWantedBgmFromGesture() {
+    if (this._wantedBgmId == null || this._userPaused || !this._supported) return;
+    const wanted = this._wantedBgmId;
+    // Always retry from a real gesture. Some browsers do not preserve activation
+    // after a silent unlock if a UI control consumed the original event or the BGM
+    // src changes later, so do not rely on the paused flag as a proxy.
+    if (this._bgmEl && this._bgmId === wanted && !this._bgmEl.paused) {
+      this.lastBgmStartDebug = { id: wanted, status: 'playing', unlocked: this._unlocked, userPaused: this._userPaused };
+      return;
     }
+    this._playBgmElement(wanted).catch(() => {});
   }
 
   // Unlock every element once, inside a user gesture. Calling play() in the gesture
@@ -256,11 +267,19 @@ export class AudioEngine {
       el.currentTime = 0;
       this._bgmId = norm;
       if (!this._userPaused) await el.play();
+      this.lastBgmStartDebug = { id: norm, status: 'playing', unlocked: this._unlocked, userPaused: this._userPaused };
       return true;
-    } catch {
-      // Most often the autoplay policy before the first gesture; the gesture handler
-      // retries. Logged once, quietly.
-      console.info(`[AudioEngine] BGM track ${norm} could not start yet (will retry on next interaction)`);
+    } catch (error) {
+      // Most often the browser autoplay policy before the first gesture. This is an
+      // expected pending state, so keep it out of the console and expose compact
+      // diagnostics for checks/debug UI instead. The gesture handler retries.
+      this.lastBgmStartDebug = {
+        id: norm,
+        status: 'blocked',
+        reason: error?.name || error?.message || 'play-rejected',
+        unlocked: this._unlocked,
+        userPaused: this._userPaused
+      };
       return false;
     }
   }
@@ -363,7 +382,7 @@ export class AudioEngine {
     this._unsubscribe?.();
     this._unsubscribe = null;
     if (this._gestureBound && typeof window !== 'undefined') {
-      for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.removeEventListener(ev, this._gestureBound);
+      for (const ev of UNLOCK_EVENTS) window.removeEventListener(ev, this._gestureBound, UNLOCK_LISTENER_OPTIONS);
     }
     this._gestureBound = null;
     try { this._bgmEl?.pause?.(); } catch {}

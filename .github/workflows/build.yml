@@ -63,12 +63,16 @@ jobs:
           # Obfuscate each chunk in place (input==output), keeping the original on
           # failure. Per-file avoids the directory-mode pitfall of dropping the
           # co-located non-.js assets (png/zip/fonts/json) from the output.
+          # NB: javascript-obfuscator treats an --output path that does NOT end in
+          # .js as a directory (it would create "<name>.js.__o/" and fail the later
+          # mv), so every temp output must keep a .js extension.
           find dist/assets -name '*.js' -print0 | while IFS= read -r -d '' f; do
-            if $OBF "$f" --output "$f.__o" $COMMON; then
-              mv "$f.__o" "$f"
+            out="${f%.js}.__obf.js"
+            if $OBF "$f" --output "$out" $COMMON; then
+              mv "$out" "$f"
             else
               echo "::warning::JS obfuscation failed for $f; shipping original."
-              rm -f "$f.__o"
+              rm -rf "$out"
             fi
           done
           # Anti-debug + self-defending only on the single entry chunk referenced by
@@ -76,11 +80,12 @@ jobs:
           # of one per chunk (dozens of debugger loops would jank the game).
           ENTRY=$(grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' dist/index.html | head -n1)
           if [ -n "$ENTRY" ] && [ -f "dist/$ENTRY" ]; then
-            if $OBF "dist/$ENTRY" --output "dist/$ENTRY.__o" $COMMON --self-defending true --debug-protection true --debug-protection-interval 4000; then
-              mv "dist/$ENTRY.__o" "dist/$ENTRY"
+            ENTRY_OUT="dist/${ENTRY%.js}.__obf.js"
+            if $OBF "dist/$ENTRY" --output "$ENTRY_OUT" $COMMON --self-defending true --debug-protection true --debug-protection-interval 4000; then
+              mv "$ENTRY_OUT" "dist/$ENTRY"
             else
               echo "::warning::entry-chunk hardening failed for $ENTRY; shipping base-obfuscated entry."
-              rm -f "dist/$ENTRY.__o"
+              rm -rf "$ENTRY_OUT"
             fi
           fi
           find dist/assets -name '*.js' -print0 | while IFS= read -r -d '' f; do

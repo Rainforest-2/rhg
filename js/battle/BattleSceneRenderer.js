@@ -104,7 +104,9 @@ export class BattleSceneRenderer {
       const layer = this.getBcuEntityLayer(entity);
       const baseline = this.getBcuLayerScreenY(scene, layer, fallbackH);
       const legacyY = Number.isFinite(entity?.y) ? entity.y : this.getBcuStageGroundY(scene, fallbackH);
-      if (entity) entity.lastRenderYDebug = { source: cfg.source || 'bcu-entity-render', layer, baselineY: baseline, legacyY };
+      if (entity && (scene?.debugBattleEnabled || globalThis.__BCU_RENDER_DEBUG__ === true || globalThis.__BCU_DEBUG_ALLOCATIONS__ === true)) {
+        entity.lastRenderYDebug = { source: cfg.source || 'bcu-entity-render', layer, baselineY: baseline, legacyY };
+      }
       return baseline;
     }
     return Number.isFinite(entity?.y) ? entity.y : this.getBcuStageGroundY(scene, fallbackH);
@@ -291,9 +293,12 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     if (!m) return null;
     const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
     const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
-    const corners = [[-pivotX, -pivotY], [part.w - pivotX, -pivotY], [-pivotX, part.h - pivotY], [part.w - pivotX, part.h - pivotY]];
     let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
-    for (const [x, y] of corners) { const rx = m[0] * x + m[2] * y + m[4]; const ry = m[1] * x + m[3] * y + m[5]; minX = Math.min(minX, rx); minY = Math.min(minY, ry); maxX = Math.max(maxX, rx); maxY = Math.max(maxY, ry); }
+    const x0 = -pivotX; const y0 = -pivotY; const x1 = part.w - pivotX; const y1 = part.h - pivotY;
+    let rx = m[0] * x0 + m[2] * y0 + m[4]; let ry = m[1] * x0 + m[3] * y0 + m[5]; minX = Math.min(minX, rx); minY = Math.min(minY, ry); maxX = Math.max(maxX, rx); maxY = Math.max(maxY, ry);
+    rx = m[0] * x1 + m[2] * y0 + m[4]; ry = m[1] * x1 + m[3] * y0 + m[5]; minX = Math.min(minX, rx); minY = Math.min(minY, ry); maxX = Math.max(maxX, rx); maxY = Math.max(maxY, ry);
+    rx = m[0] * x0 + m[2] * y1 + m[4]; ry = m[1] * x0 + m[3] * y1 + m[5]; minX = Math.min(minX, rx); minY = Math.min(minY, ry); maxX = Math.max(maxX, rx); maxY = Math.max(maxY, ry);
+    rx = m[0] * x1 + m[2] * y1 + m[4]; ry = m[1] * x1 + m[3] * y1 + m[5]; minX = Math.min(minX, rx); minY = Math.min(minY, ry); maxX = Math.max(maxX, rx); maxY = Math.max(maxY, ry);
     if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
     return { modelPartIndex: Number.isInteger(p.index) ? p.index : p.rawPart?.index, partIndex, imgcutIndex, opacity, left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };
   }
@@ -379,13 +384,15 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     }
     actor.visualGroundContactInitialized = true;
     actor.visualGroundContactPartIndices = candidates;
+    actor.visualGroundContactPartIndexSet = new Set(candidates);
     actor.visualGroundReferenceBottomLocalY = overallBottom;
     actor.visualGroundAnchorLocalY = overallBottom;
   }
   getCurrentGroundContactBottomLocalY(actor, drawList) {
     const indices = actor.visualGroundContactPartIndices;
     if (!Array.isArray(indices) || !indices.length) return null;
-    const allowed = new Set(indices);
+    const allowed = actor.visualGroundContactPartIndexSet instanceof Set ? actor.visualGroundContactPartIndexSet : new Set(indices);
+    actor.visualGroundContactPartIndexSet = allowed;
     let bottom = -Infinity;
     for (const p of drawList) {
       const modelPartIndex = Number.isInteger(p.index) ? p.index : p.rawPart?.index;
@@ -409,9 +416,11 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
   getActorGroundAnchorLocalY(actor, drawList) {
     this.initializeActorStableGroundAnchor(actor, drawList);
     const stable = Number.isFinite(actor.stableGroundAnchorLocalY) ? actor.stableGroundAnchorLocalY : 0;
-    const current = this.getCurrentGroundContactBottomLocalY(actor, drawList);
     actor.lastGroundAnchorLocalY = stable;
-    actor.lastGroundAnchorDebug = { stable, current: Number.isFinite(current) ? current : null, delta: Number.isFinite(current) ? current - stable : null, source: 'stable-ground-anchor-v0113' };
+    if (this._scene?.debugBattleEnabled || globalThis.__BCU_RENDER_DEBUG__ === true || globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+      const current = this.getCurrentGroundContactBottomLocalY(actor, drawList);
+      actor.lastGroundAnchorDebug = { stable, current: Number.isFinite(current) ? current : null, delta: Number.isFinite(current) ? current - stable : null, source: 'stable-ground-anchor-v0113' };
+    }
     return stable;
   }
   drawActorLegacy(c, actor, drawList) {

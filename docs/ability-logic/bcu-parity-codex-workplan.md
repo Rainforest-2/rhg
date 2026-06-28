@@ -1,150 +1,124 @@
-# BCU parity workplan
+# BCU パリティ作業計画
 
-Updated: 2026-06-24.
+更新日: 2026-06-24
 
-This is the current implementation order for `Rainforest-2/rhg`. It reflects the latest BCU audit: most central runtime work is no longer a blank implementation problem; the priority is source completeness, compatibility boundaries, and visual acceptance. A 2026-06-24 source-verified re-audit added one non-visual runtime divergence (W7, same-frame attack-resolution ordering) and resolved the modifier-registry fail-open visibility gap.
+これは `RHgrive/rhg` の現行実装順です。最新の監査では、中心的なランタイム実装は既に空っぽの問題ではなく、ソースの網羅性・互換性境界・見た目受け入れが優先事項です。2026-06-24 の再監査では、1 つの非見た目差分（W7: 同フレーム攻撃解決順）を確認し、modifier-registry の fail-open 可視化ギャップは解消しました。
 
-## Status rules
+## 状態ルール
 
-- `code-complete-candidate`: source evidence, current JS owner, and deterministic tests exist.
-- `human-visual-review-needed`: runtime evidence exists; browser appearance is not accepted.
-- `partial`: source loading, real-data fixtures, runtime coverage, or tests are incomplete.
-- `unconfirmed`: source owner or schema has not been established.
-- `negative-evidence`: BCU disproves the proposed owner; do not implement it there.
+- `code-complete-candidate`: ソース根拠・現在の JS オーナー・決定的テストが存在する。
+- `human-visual-review-needed`: 実行時根拠はあるが、ブラウザ上の見た目は未受け入れ。
+- `partial`: ソース読み込み、実データフィクスチャ、実行時カバレッジ、テストのどれかが不足。
+- `unconfirmed`: ソースオーナーやスキーマが未確定。
+- `negative-evidence`: BCU がそのオーナーを否定している。
 
-Never use historical README findings as current defects without a fresh code comparison.
+歴史的な README の指摘を、現行コード比較なしにそのまま欠陥として扱わないでください。
 
-## Required order for every change
+## すべての変更で守る順序
 
 ```text
-BCU fact -> current JS owner audit -> minimal change -> deterministic check -> focused docs update
+BCU の事実 -> 現在の JS オーナー監査 -> 最小変更 -> 決定的なチェック -> 集中したドキュメント更新
 ```
 
-No runtime fallback to loose `public/assets/bcu/**`. Preserve wrapper chains and random behavior. Do not invent CSV fields or generic visual aliases.
+`public/assets/bcu/**` への実行時フォールバックは行わず、wrapper chain とランダム挙動は保持してください。CSV フィールドや汎用の見た目別名も作らないでください。
 
-## Priority order
+## 優先度
 
-> Status (2026-06-23): the non-visual loader/data work in **W1, W2, and W3 is
-> complete** — each is proven by a real BCU-format fixture file threaded through
-> the existing runtime by a deterministic check (`check-bcu-summon-procobject-loader-parity`,
-> `check-bcu-trait-targetforms-loader-parity`, `check-bcu-modifier-realdata-sweep-parity`,
-> `check-bcu-zombie-extra-revive-source-range-parity`, `check-formation-storage-failure-visibility`).
-> The remaining work is **W4 visual acceptance** and **W5 cannon asset parity**, both
-> of which require manual browser review, plus **W7 same-frame attack-resolution
-> ordering** (a confirmed non-visual divergence that needs a fixture + core-loop
-> change + browser confirmation before any parity-complete claim).
+- W1: 実カスタムパック SUMMON のローダー網羅
+- W2: 永続化のスコープと失敗可視化
+- W3: 実データの modifier / trait フィクスチャ
+- W4: 見た目受け入れの台帳
+- W5: 非基本キャノンのアセット整合性
+- W6: パフォーマンス関連のクリーンアップ
+- W7: 同フレーム攻撃解決順（部分的 / ブラウザ確認待ち）
 
-### W0 — keep the proof harness and docs truthful
+### W0 — 証明ハーネスと docs の真実性を保つ
 
-Before any behavior change:
+変更前に次を行います。
 
-- read `current-ability-parity-status.md`, `bcu-unresolved-evidence-blockers.md`, and the source evidence inventory;
-- add or strengthen a deterministic check before changing a behavior-bearing owner;
-- update the focused status/blocker docs in the same batch;
-- update the visual checklist only after real manual browser review.
+- `current-ability-parity-status.md`、`bcu-unresolved-evidence-blockers.md`、ソース根拠一覧を読む
+- 挙動に関わるオーナー変更前に、決定的なチェックを追加・強化する
+- 同バッチで focused status / blocker docs を更新する
+- 実際のブラウザレビュー後だけ、視覚チェックリストを更新する
 
-### W1 — real custom-pack SUMMON loader coverage
+### W1 — 実カスタムパック SUMMON の読み込み
 
-**Why first:** SUMMON runtime exists, but real data may never reach it.
+目的: SUMMON 実行時はあるが、実データが届いていない可能性があるためです。
 
-Required work:
+必要作業:
 
-1. discover/load real custom pack proc-object `CustomEntity.atks[].proc.SUMMON` sources;
-2. preserve the existing `attachBcuProcObjectSummonsToAttackHits()` handoff boundary;
-3. validate immediate/on-hit/on-kill, side, inheritance, layer, allow/group, same_health, bond_hp, and ignore_limit with real loader-backed fixtures;
-4. do not add a normal unit/enemy CSV SUMMON parser without source proof.
+1. 実カスタムパックの proc-object `CustomEntity.atks[].proc.SUMMON` を読み込む
+2. 既存の `attachBcuProcObjectSummonsToAttackHits()` の境界は維持する
+3. immediate / on-hit / on-kill、side、inheritance、layer、allow/group、same_health、bond_hp、ignore_limit を実データで検証する
+4. ソース根拠がない限り、通常のユニット / 敵 CSV SUMMON パーサを追加しない
 
-### W2 — persistence scope and failure handling
+### W2 — 永続化の範囲と失敗可視化
 
-**Why second:** browser-local state is currently mistaken easily for BCU compatibility.
+目的: ブラウザ側の状態が BCU 互換と誤解されやすいためです。
 
-Required work:
+必要作業:
 
-1. keep current repository-local migrations stable;
-2. make `FormationStore` / `StageRegistry` storage read/write failure observable;
-3. explicitly separate self-compatibility from BCU import/export compatibility;
-4. before any BCU import/export feature, identify the BCU save/lineup serialization owner and add round-trip fixtures.
+1. 現在のリポジトリ内マイグレーションを維持する
+2. `FormationStore` / `StageRegistry` の読み書き失敗を可視化する
+3. 自己永続化と BCU import/export 互換を明確に分ける
+4. BCU セーブ / 陣形互換機能を作る前に、BCU のシリアライズオーナーと round-trip フィクスチャを確定する
 
-### W3 — real-data modifier and trait fixtures
+### W3 — 実データの modifier と trait フィクスチャ
 
-**Why third:** primary modifier hooks exist, but broad compatibility claims lack real data coverage.
+目的: 主要な modifier hook はあるが、広い互換性主張に実データが不足しているためです。
 
-Required work:
+必要作業:
 
-- add real custom `Trait.targetForms` / `targetType` loader fixtures;
-- test capture, proc, targetOnly, and damage-family paths together;
-- sweep real combo/orb/treasure/talent/PCoin combinations;
-- keep source-proven resistance holders centralized; do not add enemy toxic immunity.
+- 実カスタムの `Trait.targetForms` / `targetType` ローダーフィクスチャを追加する
+- capture / proc / targetOnly / damage-family 経路をまとめて確認する
+- 実 combo / orb / treasure / talent / PCoin の組み合わせを sweep する
+- ソース確認済みの耐性保持者だけを使い、敵側の toxic immunity を追加しない
 
-Done (2026-06-24): combo / talent (PCoin) registry **load-failure** is now observable
-via `BcuModifierDiagnostics` (`check-bcu-modifier-registry-failure-visibility`)
-instead of a silent fail-open buried in `__BATTLE_BOOT_PATCH_ERRORS__`. Surfacing the
-warning in the battle UI for a player who configured combos/talents is a remaining
-Codex-owned UI follow-up, not a loader gap.
+### W4 — 見た目受け入れ台帳
 
-### W4 — visual acceptance ledger
+目的: トレースだけで見た目を完了扱いしないためです。
 
-**Why fourth:** visible behavior cannot be marked complete from traces alone.
+レビュー順:
 
-Review in this order:
+1. P_DELAY と barrier / demon shield / shield breaker
+2. spirit と castle guard
+3. zombie revive と mini-death-surge
+4. basic cannon の発射 / wave
+5. non-basic cannon の sweep と BASE_WALL
+6. W1 の実フィクスチャが出たら SUMMON entry
 
-1. P_DELAY and barrier/demon shield/shield breaker;
-2. spirit and castle guard;
-3. zombie revive and mini-death-surge;
-4. basic cannon firing/wave;
-5. non-basic cannon sweep and BASE_WALL;
-6. SUMMON entry once W1 supplies a real fixture.
+各レビューには、フィクスチャ・BCU 参照・ブラウザ / 端末・結果・差分を残します。
 
-For every review record fixture, BCU reference, browser/device, result, and mismatch evidence.
+### W5 — 非基本キャノンのアセット整合性
 
-### W5 — non-basic cannon asset parity
+キャノンごとの ATK/EXT ビットマップ別名を追加し、extend / waved の挙動をフレーム単位で比較します。欠けたアセットを汎用トレースで置き換えないでください。
 
-Add exact per-cannon ATK/EXT bitmap-animation aliases and then compare extend/waved behavior frame by frame. Do not replace missing assets with generic traces or unit proc effects.
+### W6 — パフォーマンスクリーンアップ
 
-### W6 — optional performance cleanup
+挙動に関わる経路がテストで保護された後にのみ行います。
 
-Only after behavior-bearing paths are covered by tests:
+- ロジックに影響しない診断用割り当てを消す / gate する
+- wrapper call、effect creation、座標メタデータ、renderer ordering を保持する
+- クリーンアップごとに関連する安全な suite を回す
 
-- remove/gate diagnostic allocations that do not affect logic;
-- preserve wrapper calls, effect creation, coordinate metadata, and renderer ordering;
-- run the relevant safe suite after every cleanup.
+### W7 — 同フレーム攻撃解決順（状態: partial / ブラウザ確認待ち）
 
-### W7 — same-frame attack-resolution ordering (status: partial / blocked on browser)
+BCU の事実として、player-side の strike が先に決着し、enemy-side の strike はそのフレームでは発火しないような順序が存在します。
 
-**BCU fact.** `StageBasis.updateEntities` (`battle/StageBasis.java:1086–1102`) runs
-player-side (`dire != 1`) `update2()`, then `la.forEach(capture); la.forEach(excuse)`
-(damage + death applied), then base `update2()`, then enemy-side (`dire != -1`)
-`update2()`. A unit killed by the player's excuse this frame has its `update2()`
-skipped (dead), so it never creates its own strike — BCU gives the player side
-same-frame precedence.
+必要な作業:
 
-**Current JS owner.** The tick (`BattleSceneBcuStageBasisTickPatch.js`) already
-splits capture (`hit-target-capture`) from excuse (`damage-resolve` →
-`processDeferredAttackDamage` in `BattleSceneBcuAttackPhasePatch.js`) and excuses
-player-first via FIFO/dire-sort. The gap: both sides' due hits are collected and
-captured before any damage, and all HP damage/death lands together in the
-`knockback-death` phase (`KBRuntime.resolvePostDamage`); excuse only skips an
-already-dead **target** (`BattleSceneBcuAttackPhasePatch.js:51`), never a
-same-frame-killed **attacker**. Net: rhg permits symmetric same-frame mutual kills
-that BCU suppresses on the player side.
+1. 同フレーム相互キルの決定的フィクスチャとチェックを追加する
+2. player excuse + death が先に解決するよう、既存フェーズモデルを最小変更で並び替える
+3. パリティ完了を宣言する前に、固定 BCU キャプチャでブラウザ確認する
 
-**Required work (in order).**
-1. add a deterministic same-frame mutual-kill fixture/check that pins the BCU
-   outcome (player kills enemy this frame → enemy strike does **not** land);
-2. restructure the tick so player excuse + death resolves before enemy strikes are
-   captured/excused (interleave like BCU), as a minimal change to the existing
-   phase model — do not rewrite the wrapper chain;
-3. browser-confirm against a fixed BCU capture before any parity-complete claim.
-   Do not land the core-loop change from a deterministic trace alone.
+## 明示的にやらないこと
 
-## Explicit non-tasks
+- 汎用の castle-owned attack runtime を作らない
+- パーサのフィールドだけを見て、実行時の有無を決めない
+- `localStorage` 永続化から BCU セーブ互換を主張しない
+- headless trace を見た目受け入れに昇格させない
 
-- Do not create a generic castle-owned attack runtime: BCU evidence assigns plain castles no attack owner.
-- Do not treat a direct parser field as proof that a corresponding runtime is missing or complete.
-- Do not claim BCU save compatibility from `localStorage` persistence.
-- Do not promote headless traces to visual acceptance.
-
-## Common checks
+## 共通チェック
 
 ```bash
 node scripts/check-bcu-parser-indexes.mjs
@@ -159,4 +133,4 @@ node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```
 
-Run only the checks relevant to touched files, but never silently skip a missing required check. Run `node --check` on every changed JS/MJS file.
+変更したファイルに関係するチェックだけを実行し、必要なチェックを見逃さないでください。変更した JS / MJS には `node --check` も必ず実行してください。

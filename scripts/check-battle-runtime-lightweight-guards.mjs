@@ -23,10 +23,20 @@ assert.match(debugStrip, /getLastTickPhaseOrderDisabled/, 'BattleDebugStripPatch
 const stageBasisTick = read('js/battle/BattleSceneBcuStageBasisTickPatch.js');
 assert.match(stageBasisTick, /__bcuTargetSelections\.clear\(\)/, 'StageBasis tick scratch Map must be reused');
 assert.match(stageBasisTick, /__bcuDueAttackHits\.length = 0/, 'StageBasis due-hit scratch array must be reused');
+assert.doesNotMatch(stageBasisTick, /findTargetForActor\(actor\)/, 'StageBasis tick must reuse computeBcuTouchState instead of rescanning/sorting targets');
+
+const touch = read('js/battle/BattleSceneBcuTouchPatch.js');
+assert.match(touch, /function shouldCollectTouchDebug\(scene\)/, 'touch debug allocations must be explicitly gated');
+assert.doesNotMatch(touch, /for \(const c of candidates\)/, 'touch state must not rescan candidates after collection');
 
 const rendererOrder = read('js/battle/BattleSceneRendererOrderPatch.js');
 assert.doesNotMatch(rendererOrder, /\.map\(\(actor, index\) => \(\{ actor, index \}\)\)/, 'renderer order must not allocate wrapper objects per actor');
+assert.doesNotMatch(rendererOrder, /sourceActors\.indexOf/, 'renderer order sort must not call indexOf inside the comparator');
 assert.match(rendererOrder, /debugAllocationsEnabled\(\)/, 'renderer order debug details must be gated');
+
+const sceneRenderer = read('js/battle/BattleSceneRenderer.js');
+assert.doesNotMatch(sceneRenderer, /const corners = \[\[/, 'renderer bounds must not allocate corner arrays per part');
+assert.match(sceneRenderer, /__BCU_RENDER_DEBUG__ === true[^]*getCurrentGroundContactBottomLocalY/, 'ground-contact bottom rescan must be debug-gated');
 
 const crowd = read('js/battle/BattleCrowdPerformancePatch.js');
 assert.match(crowd, /function shouldCollectCrowdDebug\(scene\)/, 'crowd performance debug must be explicitly gated');

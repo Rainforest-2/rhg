@@ -123,6 +123,19 @@ function attackWaitReady(actor, nowMs) {
   return ready;
 }
 
+function selectionFromTouchState(touchState) {
+  const attackTarget = touchState?.attackTarget || null;
+  const fallbackTarget = attackTarget || (Array.isArray(touchState?.candidates) ? touchState.candidates[0] : null);
+  return {
+    target: fallbackTarget?.target || null,
+    targetType: fallbackTarget?.targetType || null,
+    touch: touchState?.touch === true,
+    touchEnemy: touchState?.touchEnemy === true,
+    attackTarget,
+    canAttack: touchState?.touch === true
+  };
+}
+
 export function installBattleSceneBcuStageBasisTickPatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
@@ -174,11 +187,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         // `touchEnemy` (Target Only trait gate) drives attack-start. Selection target is the
         // nominal walk-direction target; the real attack target is re-captured at hit time.
         const touchState = this.computeBcuTouchState(actor);
-        const selection = this.findTargetForActor(actor);
-        const merged = selection
-          ? { ...selection, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch }
-          : { target: null, targetType: null, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch };
-        this.__bcuTargetSelections.set(actor, merged);
+        this.__bcuTargetSelections.set(actor, selectionFromTouchState(touchState));
         if (!touchState.touch) {
           // BCU update2: !checkTouch() => walking = true, walk anim. update(): walking && !checkTouch() => move.
           if (actor.state === 'attack-wait') {
@@ -206,10 +215,7 @@ export function installBattleSceneBcuStageBasisTickPatch() {
         if (isBcuWarpInterrupted(actor)) continue;
         if (this.__bcuTargetSelections.has(actor)) continue;
         const touchState = this.computeBcuTouchState(actor);
-        const selection = this.findTargetForActor(actor);
-        this.__bcuTargetSelections.set(actor, selection
-          ? { ...selection, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch }
-          : { target: null, targetType: null, touch: touchState.touch, touchEnemy: touchState.touchEnemy, attackTarget: touchState.attackTarget, canAttack: touchState.touch });
+        this.__bcuTargetSelections.set(actor, selectionFromTouchState(touchState));
       }
     });
 

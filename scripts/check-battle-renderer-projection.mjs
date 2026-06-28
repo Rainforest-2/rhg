@@ -37,8 +37,11 @@ assert(renderer.getBcuLayerScreenY({ camera: { siz: 2 }, groundY: 560 }, 3, 720)
 assert(renderer.getBcuSpriteScale({ camera: { siz: 2 } }, 1.25) === 1.25 * 2 * 0.8, 'BCU sprite scale should include sprite multiplier');
 const layerActor = { currentLayer: 2 };
 assert(renderer.getBcuEntityLayer(layerActor) === 2, 'renderer should read actor currentLayer as BCU layer');
-assert(renderer.getEntityRenderY({ camera: { siz: 1 }, groundY: 560 }, layerActor, 720) === 560 - (156 - 8), 'entity render Y should use BCU road baseline and DEP');
-assert(layerActor.lastRenderYDebug?.source, 'entity render Y should leave debug source');
+assert(renderer.getEntityRenderY({ camera: { siz: 1 }, groundY: 560, debugBattleEnabled: true }, layerActor, 720) === 560 - (156 - 8), 'entity render Y should use BCU road baseline and DEP');
+assert(layerActor.lastRenderYDebug?.source, 'entity render Y should leave debug source when debug is enabled');
+const quietLayerActor = { currentLayer: 2 };
+renderer.getEntityRenderY({ camera: { siz: 1 }, groundY: 560 }, quietLayerActor, 720);
+assert(!quietLayerActor.lastRenderYDebug, 'entity render Y debug allocation should be gated during normal rendering');
 
 const bgLayout = renderer.getBcuBackgroundLayout(
   { camera: { siz: 2, ratio: 0.32, pos: 10, bcuOff: 200 }, groundY: 560 },

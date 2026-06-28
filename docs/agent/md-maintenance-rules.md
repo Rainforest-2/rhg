@@ -1,6 +1,6 @@
 # Markdown Maintenance Rules
 
-Use these rules when organizing Markdown or agent instructions in `Rainforest-2/rhg`.
+Use these rules when organizing Markdown or agent instructions in `RHgrive/rhg`.
 
 ## Scope
 

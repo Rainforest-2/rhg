@@ -1,11 +1,11 @@
-// © 2026 Rainforest-2. All Rights Reserved. Unauthorized copying, rehosting, or reuse of
+// © 2026 RHgrive. All Rights Reserved. Unauthorized copying, rehosting, or reuse of
 // this code is prohibited. 無断複製・再配布・流用を禁じます。
 
 import { ASSET_BASE } from './assetBase.js';
 
 try {
   console.log(
-    '%cワンコ大戦争%c © 2026 Rainforest-2 — All Rights Reserved.\n無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited.',
+    '%cワンコ大戦争%c © 2026 RHgrive — All Rights Reserved.\n無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited.',
     'color:#ff8f3d;font-weight:bold;font-size:13px',
     'color:#9aa4b2'
   );
@@ -23,9 +23,11 @@ const BOOT_PROGRESS = Object.freeze({
   loadGameStart: 0.24,
   loadGameSpan: 0.46,
   loadGameDone: 0.70,
+  registriesDone: 0.76,
   runtimePatchStart: 0.76,
-  runtimePatchSpan: 0.14,
-  appConstructed: 0.94,
+  runtimePatchEnd: 0.86,
+  previewImported: 0.94,
+  appConstructed: 0.96,
   done: 1
 });
 
@@ -42,6 +44,43 @@ function clamp01(value) {
 
 function progressInBand(start, span, fraction) {
   return start + clamp01(fraction) * span;
+}
+
+// Force the boot bar's just-set width to actually paint before the next heavy
+// `await` begins. Without this, consecutive milestone widths set between fast
+// awaits never render (the browser coalesces them), so the last *painted* value
+// stays frozen and the bar appears to jump straight to 100%.
+function nextPaint() {
+  if (typeof requestAnimationFrame !== 'function') return Promise.resolve();
+  return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+}
+
+// Advance the boot bar smoothly across [start, end) while an OPAQUE async step runs
+// (a single dynamic import of a large chunk graph that cannot report sub-progress),
+// then snap to `end` once it settles. The creep decelerates toward a cap just below
+// `end`, never reaches it on its own, and never moves backward — so it reflects
+// "real work is in flight, bounded by the next real checkpoint" rather than a faked
+// timeline. Phases that DO have real sub-progress (loadGame, runtime patches) do not
+// use this.
+async function withBootCreep(message, start, end, task) {
+  const cap = end - 0.005;
+  let ratio = Math.max(start, Number(document.getElementById('boot-status-panel')?.dataset.bootRatio || 0));
+  let raf = 0;
+  let running = true;
+  const tick = () => {
+    if (!running) return;
+    ratio = Math.min(cap, ratio + Math.max(0.004, (cap - ratio) * 0.05));
+    showBootStatus(message, ratio);
+    raf = requestAnimationFrame(tick);
+  };
+  if (typeof requestAnimationFrame === 'function') raf = requestAnimationFrame(tick);
+  try {
+    return await task();
+  } finally {
+    running = false;
+    if (raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf);
+    showBootStatus(message, end);
+  }
 }
 
 function showBootStatus(message, ratio) {
@@ -136,26 +175,34 @@ async function boot() {
     });
     setBcuAssetDatabase(db);
     showBootStatus('読み込み中…', BOOT_PROGRESS.loadGameDone);
+    await nextPaint();
     // Combo/talent tables are read from the semantic provider's core-db bundle, so they install
     // only after the provider exists. Failures here disable the modifiers but never abort boot.
-    try {
-      const { installBcuBattleDataRegistries } = await import('./boot/battle/installBattleScenePatches.js');
-      await installBcuBattleDataRegistries(db?.semanticProvider || null);
-    } catch (error) {
-      console.warn('[main] combo/talent registry install failed; modifiers disabled', error);
-    }
-    // Post-loadGame runtime patches load as one group across the 0.76–0.90 band
-    // (single source of truth in ./boot/groups/runtimePatches.js).
-    showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchSpan, 0));
-    await import('./boot/groups/runtimePatches.js');
-    showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchSpan, 1));
-    const { PreviewApp } = await import('./preview/PreviewApp.js');
-    showBootStatus('出撃準備中…', BOOT_PROGRESS.appConstructed);
+    await withBootCreep('出撃準備中…', BOOT_PROGRESS.loadGameDone, BOOT_PROGRESS.registriesDone, async () => {
+      try {
+        const { installBcuBattleDataRegistries } = await import('./boot/battle/installBattleScenePatches.js');
+        await installBcuBattleDataRegistries(db?.semanticProvider || null);
+      } catch (error) {
+        console.warn('[main] combo/talent registry install failed; modifiers disabled', error);
+      }
+    });
+    // Post-loadGame runtime patches: imported one module at a time so the bar advances
+    // per-module across the 0.76–0.86 band (single source of truth in runtimePatches.js).
+    const { installRuntimePatches } = await import('./boot/groups/runtimePatches.js');
+    await installRuntimePatches((f) => showBootStatus('出撃準備中…', progressInBand(BOOT_PROGRESS.runtimePatchStart, BOOT_PROGRESS.runtimePatchEnd - BOOT_PROGRESS.runtimePatchStart, f)));
+    await nextPaint();
+    // The PreviewApp module pulls the large battle chunk graph (BattleScene, formation
+    // editor, UI). It is one opaque dynamic import with no sub-progress, so creep the
+    // bar across 0.86–0.94 while it downloads instead of freezing on a single await.
+    const { PreviewApp } = await withBootCreep('出撃準備中…', BOOT_PROGRESS.runtimePatchEnd, BOOT_PROGRESS.previewImported, () => import('./preview/PreviewApp.js'));
     const app = new PreviewApp({ bcuDb: db });
     globalThis.__APP__ = app;
     globalThis.app = app;
-    await app.start();
+    showBootStatus('出撃準備中…', BOOT_PROGRESS.appConstructed);
+    await nextPaint();
+    await withBootCreep('出撃準備中…', BOOT_PROGRESS.appConstructed, BOOT_PROGRESS.done, () => app.start());
     showBootStatus('出撃準備中…', BOOT_PROGRESS.done);
+    await nextPaint();
     hideBootStatus();
   } catch (error) {
     showBootError(error);

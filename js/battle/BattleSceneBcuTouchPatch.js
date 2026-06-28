@@ -17,6 +17,12 @@ function isBaseAlive(target) {
   return false;
 }
 
+function shouldCollectTouchDebug(scene) {
+  return globalThis.__BCU_DEBUG_ALLOCATIONS__ === true
+    || globalThis.__BCU_TOUCH_DEBUG__ === true
+    || scene?.debugBattleEnabled === true;
+}
+
 export function installBattleSceneBcuTouchPatch() {
   const proto = BattleScene?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
@@ -39,35 +45,45 @@ export function installBattleSceneBcuTouchPatch() {
   // (traitCompatible(..., true) returns true for a base).
   proto.computeBcuTouchState = function computeBcuTouchState(actor) {
     const candidates = [];
+    const targetOnly = !!actor && hasTargetOnly(actor);
+    let touch = false;
+    let touchEnemy = false;
+    let attackTarget = null;
     if (actor) {
       const enemyActors = typeof this.findEnemyActors === 'function' ? (this.findEnemyActors(actor) || []) : [];
       for (const target of enemyActors) {
         if (!this.isTargetAliveForAttack(target, 'actor')) continue;
-        if (BattleAttackResolver.isTargetTouchable(actor, target)) candidates.push({ target, targetType: 'actor' });
+        if (!BattleAttackResolver.isTargetTouchable(actor, target)) continue;
+        const candidate = { target, targetType: 'actor' };
+        candidates.push(candidate);
+        touch = true;
+        if (targetOnly) {
+          if (bcuTraitCompatible({ attacker: actor, target, targetType: 'actor', targetOnly: true })) {
+            touchEnemy = true;
+            if (!attackTarget) attackTarget = candidate;
+          }
+        } else {
+          touchEnemy = true;
+          if (!attackTarget) attackTarget = candidate;
+        }
       }
       const base = typeof this.findEnemyBase === 'function' ? this.findEnemyBase(actor) : null;
       if (base && this.isTargetAliveForAttack(base, 'base') && BattleAttackResolver.isTargetTouchable(actor, base)) {
-        candidates.push({ target: base, targetType: 'base' });
-      }
-    }
-    const touch = candidates.length > 0;
-    const targetOnly = !!actor && hasTargetOnly(actor);
-    let touchEnemy = touch;
-    let attackTarget = null;
-    if (touch) {
-      if (targetOnly) {
-        touchEnemy = false;
-        for (const c of candidates) {
-          if (bcuTraitCompatible({ attacker: actor, target: c.target, targetType: c.targetType, targetOnly: true })) {
+        const candidate = { target: base, targetType: 'base' };
+        candidates.push(candidate);
+        touch = true;
+        if (targetOnly) {
+          if (bcuTraitCompatible({ attacker: actor, target: base, targetType: 'base', targetOnly: true })) {
             touchEnemy = true;
-            if (!attackTarget) attackTarget = c;
+            if (!attackTarget) attackTarget = candidate;
           }
+        } else {
+          touchEnemy = true;
+          if (!attackTarget) attackTarget = candidate;
         }
-      } else {
-        attackTarget = candidates[0];
       }
     }
-    if (actor) {
+    if (actor && shouldCollectTouchDebug(this)) {
       actor.lastBcuTouchStateDebug = {
         source: 'BCU Entity.checkTouch parity: touch (any in range) vs touchEnemy (AB_ONLY trait gate)',
         touch,
@@ -86,16 +102,18 @@ export function installBattleSceneBcuTouchPatch() {
     const targetType = target?.side ? 'actor' : 'base';
     if (!this.isTargetAliveForAttack(target, targetType)) return false;
     const ok = BattleAttackResolver.isTargetTouchable(actor, target);
-    actor.lastCanAttackDebug = {
-      source: 'BCU Entity.checkTouch parity via BattleAttackResolver.isTargetTouchable',
-      target: target.instanceId || target.label || target.side || null,
-      targetType,
-      ok,
-      actorState: actor.state,
-      targetState: target.state || null,
-      actorPosBcu: BattleAttackResolver.getEntityPosBcu(actor),
-      targetPosBcu: BattleAttackResolver.getEntityPosBcu(target)
-    };
+    if (shouldCollectTouchDebug(this)) {
+      actor.lastCanAttackDebug = {
+        source: 'BCU Entity.checkTouch parity via BattleAttackResolver.isTargetTouchable',
+        target: target.instanceId || target.label || target.side || null,
+        targetType,
+        ok,
+        actorState: actor.state,
+        targetState: target.state || null,
+        actorPosBcu: BattleAttackResolver.getEntityPosBcu(actor),
+        targetPosBcu: BattleAttackResolver.getEntityPosBcu(target)
+      };
+    }
     return ok;
   };
 }

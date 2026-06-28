@@ -1,87 +1,87 @@
 # rhg
 
-Browser-based Battle Cats Ultimate (BCU) battle preview/runtime project.
+BCU の戦闘プレビューと実行時挙動をブラウザ上で再現するプロジェクトです。
 
-This repository aims to reproduce BCU battle behavior from local reference sources without treating a parser field, an old note, or a visual approximation as proof of parity.
+このリポジトリでは、パーサのフィールド・古いノート・見た目だけの近似を、整合性の証明として扱いません。ローカルにある BCU 参照ソースをもとに、挙動の再現性を確認することを重視しています。
 
-## Current status — 2026-06-23
+## 現在の状況 — 2026-06-23
 
-The current baseline is `semantic-strict`:
+現状の基準モードは `semantic-strict` です。
 
-- generated semantic ZIP bundles are the authoritative runtime asset path;
-- loose `public/assets/bcu/**` files are source material, not an implicit runtime fallback;
-- BCU behavior claims require source evidence, JS owner/wiring, deterministic checks, and—when visible behavior matters—manual browser review.
+- 生成済みの semantic ZIP バンドルを実行時アセットの正規経路として扱う
+- `public/assets/bcu/**` 配下のファイルは、暗黙の実行時フォールバックではなくソース素材として扱う
+- BCU の挙動主張は、ソース証拠・JS の担当箇所・実行時接続・決定的なチェック、さらに見た目に関わる場合はブラウザでの手動確認を前提とする
 
-The old long ZIP-analysis README was historical. It described code that has since changed and must not be used as the current defect list.
+従来の長大な ZIP 分析系 README は、現行コードと異なる箇所があるため、現時点の不具合一覧としては使いません。
 
-## Current audit result
+## 現在の監査結果
 
-A 2026-06-23 comparison of `Rainforest-2/rhg` against the BCU references found no confirmed `Critical` defect in the inspected scope. The principal remaining parity risks are evidence coverage and acceptance coverage, not the already-corrected historical Stage/Spawn parser issues.
+2026-06-23 時点の `RHgrive/rhg` と BCU 参照ソースの比較では、確認済みの `Critical` 欠陥はありません。残る主なリスクは、既に修正済みの過去の Stage/Spawn パーサ問題ではなく、証拠の網羅性と受け入れ確認の範囲です。
 
-### Loader-proven (non-visual complete)
+### ローダで確認済み（見た目以外は完了）
 
-| Area | Current conclusion | Evidence |
+| 領域 | 現在の結論 | 根拠 |
 |---|---|---|
-| SUMMON source loading | A real `CustomEntity.atks[].proc.SUMMON` file is loaded from disk and driven end to end (no normal CSV holder is invented; BCU stores SUMMON only on proc objects). | `check-bcu-summon-procobject-loader-parity` |
-| `Trait.targetForms` | A real `Trait` file (targetType/targetForms) drives the single `bcuTraitCompatible` gate across the proc and Target-Only cross-paths. | `check-bcu-trait-targetforms-loader-parity` |
-| Combo / orb / treasure / talent / PCoin | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order; equipped orbs fold through the resolver. PCoin cost/CD and combo discount/research respawn feed production values. In-battle appearance is a separate review item. | `check-bcu-modifier-realdata-sweep-parity`, `check-battle-scene-stage-runtime-wiring`, `check-bcu-talent-info-loader` |
-| Extra/custom zombie revive | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter. | `check-bcu-zombie-extra-revive-source-range-parity` |
-| Repository-local persistence | `FormationStore`/`StageRegistry` round-trip their own state and surface read/write failures instead of a silent catch. Self-persistence only — not a BCU save claim. | `check-formation-storage-failure-visibility` |
+| SUMMON の読み込み | 実在する `CustomEntity.atks[].proc.SUMMON` をディスクから読み込み、末端まで駆動できる。通常の CSV 置き場を勝手に作っていない。 | `check-bcu-summon-procobject-loader-parity` |
+| `Trait.targetForms` | 実在の `Trait` ファイルの `targetType/targetForms` が、proc 経路と Target-Only 経路の単一ゲート `bcuTraitCompatible` を通す。 | `check-bcu-trait-targetforms-loader-parity` |
+| Combo / orb / treasure / talent / PCoin | 実データの 150300 combo と talent/PCoin、treasure/orb 定数が BCU の順序で組み合わさり、装備オーブも解決経路に乗る。PCoin のコスト・CD と combo 割引・研究報酬も反映される。戦闘中の見た目は別レビュー項目。 | `check-bcu-modifier-realdata-sweep-parity`、`check-battle-scene-stage-runtime-wiring`、`check-bcu-talent-info-loader` |
+| 追加 / カスタム ゾンビ蘇生 | 実在の `REVIVE` proc-object が `ZombX.updateRevive` の source/range/zombie/warp フィルタを駆動する。 | `check-bcu-zombie-extra-revive-source-range-parity` |
+| リポジトリ内永続化 | `FormationStore` / `StageRegistry` が自身の状態を往復し、読み書き失敗を黙って握りつぶさずに通知する。これは BCU セーブ互換ではなく、ローカル自己永続化の範囲。 | `check-formation-storage-failure-visibility` |
 
-### Remaining (visual / out of scope)
+### 残っているもの（見た目 / 対象外）
 
-| Area | Current conclusion | What must happen next |
+| 領域 | 現在の結論 | 次に必要なこと |
 |---|---|---|
-| BCU save / lineup import-export | rhg ships no such feature and no BCU serialization owner exists in this checkout — out of scope, not a defect. | Only if added: find the BCU owner and add round-trip fixtures first. |
-| Non-basic cat cannons | Gameplay runtime is present, including BASE_WALL. Per-cannon ATK/EXT bitmap aliases and exact extend/waved visual timing remain open. | Add aliases, then perform frame-by-frame browser comparison. |
-| Visible effects and UI | Several deterministic paths remain unreviewed in a browser: P_DELAY, shield families, spirit, castle guard, summon, zombie revive, cannon effects. | Use the visual checklist; record `accepted`, `mismatch`, or `blocked` with a fixed fixture. |
+| BCU セーブ / 陣形の import/export | ここにはその機能も BCU シリアライズ担当も存在しない。対象外であり欠陥ではない。 | 追加する場合のみ、BCU 側の担当箇所を特定し、まず round-trip フィクスチャを用意する。 |
+| 非基本キャットキャノン | 実行時は BASE_WALL などを含めて存在する。キャノンごとの ATK/EXT ビットマップ別名と、extend/waved の正確な見た目タイミングは未確認。 | 別名を追加したうえで、フレーム単位のブラウザ比較を行う。 |
+| 見えるエフェクトと UI | P_DELAY、シールド系、霊魂、城のガード、召喚、ゾンビ蘇生、キャノン効果など、ブラウザ確認がまだ残っている。 | 視覚チェックリストを使い、`accepted` / `mismatch` / `blocked` を固定フィクスチャ付きで記録する。 |
 
-## Important non-claims
+## 重要な非主張
 
-- Plain BCU castles do not own a generic attack runtime. Boss enemy bases attack through the ordinary enemy owner; HP-threshold and kill-count spawns belong to stage spawn logic.
-- A runtime being present does not prove that every real custom pack can feed it.
-- Deterministic checks do not replace manual visual acceptance.
-- Repository-local persistence does not imply BCU save compatibility.
+- BCU の通常の城が汎用攻撃ランタイムを持つわけではありません。ボス側の砦は通常の敵オーナー経由で攻撃し、HP 閾値や撃破数による出現はステージの出現ロジックに属します。
+- 実行時が存在しても、実際のカスタムパックがその経路をすべて満たすとは限りません。
+- 決定的なチェックが通っても、手動の見た目受け入れに置き換わるものではありません。
+- リポジトリ内の永続化が BCU セーブ互換を意味するわけではありません。
 
-## Documentation map
+## ドキュメント地図
 
-| Purpose | Current document |
+| 用途 | 現在の文書 |
 |---|---|
-| High-level migration state and audit summary | [`docs/bcu-migration-status.md`](docs/bcu-migration-status.md) |
-| Ability/proc/effect status | [`docs/ability-logic/current-ability-parity-status.md`](docs/ability-logic/current-ability-parity-status.md) |
-| Open evidence and compatibility blockers | [`docs/ability-logic/bcu-unresolved-evidence-blockers.md`](docs/ability-logic/bcu-unresolved-evidence-blockers.md) |
-| Manual browser-review ledger | [`docs/ability-logic/bcu-visual-review-checklist.md`](docs/ability-logic/bcu-visual-review-checklist.md) |
-| Death and warp lifecycle status | [`docs/ability-logic/death-warp-current-status.md`](docs/ability-logic/death-warp-current-status.md) |
-| BCU source evidence inventory | [`docs/ability-logic/bcu-ability-source-evidence.md`](docs/ability-logic/bcu-ability-source-evidence.md) |
-| Implementation order | [`docs/ability-logic/bcu-parity-codex-workplan.md`](docs/ability-logic/bcu-parity-codex-workplan.md) |
-| Agent entrypoint | [`AGENTS.md`](AGENTS.md) |
+| 高水準の移行状況と監査サマリ | [docs/bcu-migration-status.md](docs/bcu-migration-status.md) |
+| 能力・proc・効果の状態 | [docs/ability-logic/current-ability-parity-status.md](docs/ability-logic/current-ability-parity-status.md) |
+| 未解決の根拠・互換性ブロッカー | [docs/ability-logic/bcu-unresolved-evidence-blockers.md](docs/ability-logic/bcu-unresolved-evidence-blockers.md) |
+| 手動ブラウザレビュー台帳 | [docs/ability-logic/bcu-visual-review-checklist.md](docs/ability-logic/bcu-visual-review-checklist.md) |
+| 死亡・ワープのライフサイクル状態 | [docs/ability-logic/death-warp-current-status.md](docs/ability-logic/death-warp-current-status.md) |
+| BCU ソース根拠の一覧 | [docs/ability-logic/bcu-ability-source-evidence.md](docs/ability-logic/bcu-ability-source-evidence.md) |
+| 実装順序 | [docs/ability-logic/bcu-parity-codex-workplan.md](docs/ability-logic/bcu-parity-codex-workplan.md) |
+| エージェント入口 | [AGENTS.md](AGENTS.md) |
 
-## Development and build
+## 開発とビルド
 
-- `npm run agent:context -- --topic "<area>"` prints a compact, generated orientation view for agents from the current BCU parity docs.
-- `npm run agent:changed` prints a compact changed-file summary without full `git status`.
-- `npm run agent:find -- --topic "<area>"` ranks likely owner/check/doc files with short snippets.
-- `npm run agent:checks -- --topic "<area>" --file js/path/File.js` suggests focused verification; add `--run` to execute and summarize.
-- `npm run agent:checks -- --changed --run` derives focused verification from the current diff.
-- `npm run agent:probe -- --expr "..."` runs disposable assertions without creating temporary test files.
-- `npm run agent:run -- "node scripts/check-name.mjs"` runs arbitrary command lines with compact success/failure tails.
-- `npm run dev` starts the Vite dev server.
-- `npm run build` bundles the app into `dist/`.
-- Vite serves/copies selected `public/assets/**` runtime assets as `/assets/**`; raw `public/assets/bcu/**` and `public/assets/bcu-manifest.json` are intentionally excluded from `dist/` and blocked in dev serving. Runtime BCU assets must continue to load through generated semantic ZIP bundles.
+- `npm run agent:context -- --topic "<area>"` で、現在の BCU parity ドキュメントからエージェント向けの短い案内ビューを生成します。
+- `npm run agent:changed` で、`git status` までは行わずに変更ファイルの要約を取得できます。
+- `npm run agent:find -- --topic "<area>"` で、候補のオーナー・チェック・ドキュメントを短いスニペット付きで並べます。
+- `npm run agent:checks -- --topic "<area>" --file js/path/File.js` で、重点的な検証コマンドを提案します。`--run` を付けると実行して要約します。
+- `npm run agent:checks -- --changed --run` で、現在の差分から焦点検証を自動で導きます。
+- `npm run agent:probe -- --expr "..."` で、一時的なアサーションをテストファイルを作らずに実行できます。
+- `npm run agent:run -- "node scripts/check-name.mjs"` で、任意のコマンドを短い成功/失敗サマリ付きで実行できます。
+- `npm run dev` で Vite の開発サーバーを起動します。
+- `npm run build` でアプリを `dist/` にバンドルします。
+- Vite は選択された `public/assets/**` を `/assets/**` として配信・コピーします。`public/assets/bcu/**` と `public/assets/bcu-manifest.json` は意図的に `dist/` には含めず、開発サーバーでも配信しません。BCU の実行時アセットは、生成された semantic ZIP バンドル経由で読み込む前提です。
 
-## Source and verification rule
+## ソースと検証のルール
 
-For every behavior change:
+挙動変更を行うたびに次の流れで進めます。
 
 ```text
-BCU source fact -> current JS owner audit -> minimal change -> deterministic check -> focused docs update
+BCU のソース事実 -> 現在の JS オーナー確認 -> 最小変更 -> 決定的なチェック -> 重点的なドキュメント更新
 ```
 
-References in `references/bcu/` are the primary behavior source. Do not substitute historical README claims for current source and runtime evidence.
+`references/bcu/` 配下の参照が主要な挙動ソースです。過去の README の主張を、現行ソースや実行時の証拠で置き換えてはいけません。
 
-## Checks
+## チェック
 
-Use only checks relevant to a touched subsystem. Common commands include:
+影響範囲に関連するチェックだけを実行します。よく使うコマンドは次のとおりです。
 
 ```bash
 node scripts/check-bcu-parser-indexes.mjs
@@ -95,4 +95,4 @@ node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```
 
-For visual claims, a passing script is necessary but not sufficient. Use `docs/ability-logic/bcu-visual-review-checklist.md` to record the browser comparison.
+見た目に関する主張は、スクリプトが通っても十分ではありません。[docs/ability-logic/bcu-visual-review-checklist.md](docs/ability-logic/bcu-visual-review-checklist.md) にブラウザ比較の結果を残してください。

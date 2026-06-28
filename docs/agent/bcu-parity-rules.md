@@ -1,6 +1,6 @@
 # BCU Parity Rules
 
-Detailed BCU parity rules for agents working on `Rainforest-2/rhg`.
+Detailed BCU parity rules for agents working on `RHgrive/rhg`.
 
 ## Status vocabulary
 

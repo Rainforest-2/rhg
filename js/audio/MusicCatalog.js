@@ -93,15 +93,24 @@ export class MusicCatalog {
     return f == null ? null : `${f}${this._manifest.extension}`;
   }
 
-  // Ordered list of URLs to try for a track: local override first (so a vendored
-  // file wins), then the CDN mirror (reliable primary), then the raw.github
-  // fallback. The engine fetches the first that succeeds; duplicates/empties are
-  // dropped so a manifest that omits a base never yields a broken candidate.
+  // Ordered list of URLs to try for a track: the vendored local copy first (so it
+  // always wins), then the CDN mirror, then the raw.github fallback. The engine
+  // fetches the first that succeeds; duplicates/empties are dropped so a manifest
+  // that omits a base never yields a broken candidate.
+  //
+  // The local base is ALWAYS the deploy's asset root (base-aware via assetBase.js:
+  // '/rhg/assets/music/' on Pages, '/assets/music/' in node checks). A static
+  // manifest cannot know the deploy base, so it must never dictate the local path —
+  // doing so shipped a `./public/assets/music/` localBaseUrl that 404'd every battle
+  // BGM/SE in production (the `public/` source dir does not exist once served).
+  // A manifest localBaseUrl is honored only when it is an absolute http(s) URL, i.e.
+  // a genuine remote-hosted override.
   resolveUrls(id) {
     const file = this.fileName(id);
     if (file == null) return [];
     const urls = [];
-    for (const base of [this._manifest.localBaseUrl, this._manifest.cdnBaseUrl, this._manifest.remoteBaseUrl]) {
+    const localOverride = isAbsoluteUrl(this._manifest.localBaseUrl) ? this._manifest.localBaseUrl : null;
+    for (const base of [assetUrl('music/'), localOverride, this._manifest.cdnBaseUrl, this._manifest.remoteBaseUrl]) {
       if (!base) continue;
       const url = joinUrl(base, file);
       if (!urls.includes(url)) urls.push(url);
@@ -123,6 +132,12 @@ export class MusicCatalog {
 function joinUrl(base, file) {
   if (!base) return file;
   return base.endsWith('/') ? `${base}${file}` : `${base}/${file}`;
+}
+
+// Only an absolute http(s) URL is a valid cross-deploy base; a relative/root path
+// in the manifest cannot be correct under an unknown deploy base.
+function isAbsoluteUrl(s) {
+  return typeof s === 'string' && /^https?:\/\//i.test(s);
 }
 
 export const musicCatalog = new MusicCatalog();

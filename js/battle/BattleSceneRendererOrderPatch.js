@@ -1,6 +1,7 @@
 import { BattleSceneRenderer } from './BattleSceneRenderer.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.stable-actor-render-order.v1');
+const SOURCE_INDEX = Symbol.for('wanko-battle.stable-actor-render-order.source-index');
 
 function debugAllocationsEnabled() {
   return globalThis.__BCU_DEBUG_ALLOCATIONS__ === true || globalThis.__BATTLE_RENDER_ORDER_DEBUG__ === true;
@@ -50,15 +51,19 @@ export function installBattleSceneRendererOrderPatch() {
   proto.getAliveActorsForRender = function getAliveActorsForRenderStable(scene) {
     const sourceActors = scene?.actors || [];
     const actors = [];
-    for (const actor of sourceActors) {
-      if (actor?.isRenderable ? actor.isRenderable() : actor?.isAlive?.()) actors.push(actor);
+    for (let i = 0; i < sourceActors.length; i += 1) {
+      const actor = sourceActors[i];
+      if (actor?.isRenderable ? actor.isRenderable() : actor?.isAlive?.()) {
+        actor[SOURCE_INDEX] = i;
+        actors.push(actor);
+      }
     }
     actors.sort((a, b) => {
         const ay = getLayer(this, a);
         const by = getLayer(this, b);
         if (ay !== by) return ay - by;
-        const ai = sourceActors.indexOf(a);
-        const bi = sourceActors.indexOf(b);
+        const ai = Number.isFinite(a?.[SOURCE_INDEX]) ? a[SOURCE_INDEX] : 0;
+        const bi = Number.isFinite(b?.[SOURCE_INDEX]) ? b[SOURCE_INDEX] : 0;
         const ao = getStableActorOrder(a, ai);
         const bo = getStableActorOrder(b, bi);
         if (ao !== bo) return ao - bo;
@@ -66,7 +71,7 @@ export function installBattleSceneRendererOrderPatch() {
       });
     if (debugAllocationsEnabled()) {
       actors.forEach((actor, renderIndex) => {
-        const sourceIndex = sourceActors.indexOf(actor);
+        const sourceIndex = Number.isFinite(actor?.[SOURCE_INDEX]) ? actor[SOURCE_INDEX] : renderIndex;
         actor.lastRenderOrderDebug = {
           source: 'BattleSceneRendererOrderPatch.getAliveActorsForRender',
           renderIndex,

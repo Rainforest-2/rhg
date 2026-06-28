@@ -1,58 +1,58 @@
-# Death soul and warp lifecycle current status
+# 死亡魂とワープライフサイクルの現状
 
-Updated: 2026-06-23.
+更新日: 2026-06-23
 
-This note is the current source of truth for the dedicated BCU death, zombie-revive, mini-death-surge, and warp lifecycle work in `Rainforest-2/rhg`.
+このメモは、`RHgrive/rhg` での BCU の死亡・ゾンビ蘇生・mini death-surge・ワープライフサイクルを担当する現行の一次資料です。
 
-## Status boundary
+## 状態の境界
 
-- `code-complete-candidate` means source evidence, runtime wiring, and deterministic checks exist.
-- `human-visual-review-needed` means browser appearance has not been manually accepted.
-- `partial` is reserved for broad source/loader/fixture gaps, not for a runtime that is already present.
+- `code-complete-candidate`: ソース根拠・実行時接続・決定的なチェックが揃っている。
+- `human-visual-review-needed`: ブラウザ上の見た目はまだ手動受け入れされていない。
+- `partial`: 実データ読み込みや source discovery の不足など、広いギャップがある。
 
-## Death soul and standard zombie lifecycle
+## 死亡魂と標準ゾンビライフサイクル
 
-**Status:** `code-complete-candidate` for death-soul runtime; `human-visual-review-needed` for exact death/zombie appearance; `partial` only for broad extra/custom revive source coverage.
+**状態:** 死亡魂の実行時は `code-complete-candidate`、死亡 / ゾンビの見た目は `human-visual-review-needed`、追加 / カスタム revive の広いソース網羅だけが `partial`。
 
-### Current evidence
+### 現在の根拠
 
-- `BcuCombatModel.parseDeathAnimation` reads unit `DataUnit.ints[67]` and enemy `DataEnemy.ints[54]`.
-- Enemy fallback `rawSoulId == -1 && ints[63] == 1` resolves Soul 9.
-- `BattleBcuDeathAnimationRuntimePatch` wires `BattleActor.enterDeadState` and dead-state ticking to `BcuDeathAnimationRuntime`.
-- `BcuSoulEffectLoader` reads death-soul assets from `public/assets/bundles/effect/soul.zip`.
-- The missing-asset lifetime fallback is a JS safety guard only; it is not a claimed BCU frame value.
-- `check-bcu-death-animation-parity.mjs` covers parser indexes, normal death soul, missing-asset cleanup, AB_GLASS skip-soul behavior, and death-surge trigger timing.
-- `check-bcu-zombie-corpse-soulstrike-parity.mjs` covers revive indexes, corpse show-window targetability, AB_ZKILL/AB_CKILL behavior, soulstrike cancellation, zombie-killer suppression, revive HP, DOWN/REVIVE state timing, render override, cleanup, and no double death-surge spawn.
+- `BcuCombatModel.parseDeathAnimation` がユニットの `DataUnit.ints[67]` と敵の `DataEnemy.ints[54]` を読む。
+- 敵側の fallback `rawSoulId == -1 && ints[63] == 1` で Soul 9 を解決する。
+- `BattleBcuDeathAnimationRuntimePatch` が `BattleActor.enterDeadState` と dead-state の tick を `BcuDeathAnimationRuntime` に接続する。
+- `BcuSoulEffectLoader` が `public/assets/bundles/effect/soul.zip` から死亡魂アセットを読む。
+- missing-asset の lifetime fallback は JS の安全装置であり、BCU のフレーム値を主張するものではない。
+- `check-bcu-death-animation-parity.mjs` は、パーサーのインデックス、通常の death soul、missing-asset cleanup、AB_GLASS の soul スキップ、death-surge の発火タイミングをカバーする。
+- `check-bcu-zombie-corpse-soulstrike-parity.mjs` は、revive インデックス、corpse show-window の targetability、AB_ZKILL / AB_CKILL、soulstrike のキャンセル、zombie-killer suppression、revive HP、DOWN / REVIVE の状態遷移、render override、cleanup、二重 death-surge spawn の抑制をカバーする。
 
-### Remaining boundaries
+### 残っている境界
 
-- Standard zombie corpse/revive behavior is no longer a blanket runtime-missing or parsed-only row. The remaining standard-path gap is browser acceptance of DOWN/REVIVE appearance.
-- Extra/custom revive sources are fixture-backed only. Real source discovery, range filtering, and broader interaction coverage remain `partial`.
-- Mini-death-surge has a proven ORB_DEATH_SURGE holder and deterministic selection/runtime coverage. Its remaining gap is browser appearance, not holder ownership.
+- 標準の zombie corpse / revive は、もはや「実行時未実装」や「parsed-only」ではない。残る差分は DOWN / REVIVE のブラウザ受け入れだけである。
+- 追加 / カスタム revive はフィクスチャベースであり、実データの source discovery や range filter はまだ `partial` である。
+- mini death-surge は ORB_DEATH_SURGE holder と決定的な実行時カバレッジがある。残る差分は見た目であり、holder 所有権ではない。
 
-## Warp lifecycle
+## ワープライフサイクル
 
-**Status:** `code-complete-candidate`; `human-visual-review-needed` for exact WaprCont appearance.
+**状態:** `code-complete-candidate`。見た目の受け入れだけが残る。
 
-### Current evidence
+### 現在の根拠
 
-- `BcuWarpLifecycleRuntime` models entrance, hidden interval, exit movement, exit animation, and completion rather than a simple countdown.
-- The actor is hidden, untargetable, and untouchable during warp.
-- Position changes at the exit transition; no normal walk drift is allowed while warp is active.
-- Scene-tick stages skip walking, retargeting, attack start, and attack timeline progression during the lifecycle.
-- Warp start cancels in-progress attack and holds idle; warp completion resumes walking.
-- `IMUWARP` prevents lifecycle creation; stale state clears on death; replacement lifecycle behavior is tested.
-- `check-bcu-warp-lifecycle-parity.mjs` and `check-bcu-warp-interrupt-scene-parity.mjs` cover normal/replacement/death paths, forward/backward exit, attack cancellation, and walk resumption.
+- `BcuWarpLifecycleRuntime` は、入口・隠蔽区間・退出移動・退出アニメーション・完了を単純な countdown ではなくライフサイクルとしてモデル化する。
+- ワープ中は actor を隠し、ターゲット不可能・接触不可能にする。
+- 退出遷移で位置が変わり、ワープ中の通常移動は許可されない。
+- scene tick の各段階で、歩行・再ターゲティング・攻撃開始・攻撃タイムライン進行がスキップされる。
+- ワープ開始で進行中の攻撃がキャンセルされ、ワープ完了後に歩行が再開する。
+- `IMUWARP` が lifecycle 生成を阻止し、死亡時に stale state がクリアされ、置き換えケースもテストされる。
+- `check-bcu-warp-lifecycle-parity.mjs` と `check-bcu-warp-interrupt-scene-parity.mjs` が、通常・置き換え・死亡経路、前進 / 後退退出、攻撃キャンセル、歩行再開をカバーする。
 
-### Remaining boundaries
+### 残っている境界
 
-- Exact WaprCont pixels, overlap ordering for multiple warps if future BCU reading changes the rule, and browser-level effect acceptance remain open.
+- WaprCont のピクセル表現、複数ワープの重なり順、ブラウザレベルの effect 受け入れは未解決のまま残る。
 
-## 2026-06-23 audit rule
+## 2026-06-23 監査ルール
 
-The current audit found no confirmed death/warp runtime regression in the inspected scope. Do not restore old wording that calls standard zombie or mini-death-surge runtime “unimplemented” or “parsed-only” without a current code and test failure.
+現行監査では、確認された死亡・ワープのランタイム回帰は見つかっていない。標準ゾンビや mini death-surge の実行時を「未実装」や「parsed-only」と再び呼ぶのは、現行コードとテスト失敗を伴わない限り避ける。
 
-## Required verification
+## 必須の検証
 
 ```bash
 node --check js/battle/bcu-runtime/BcuDeathAnimationRuntime.js
@@ -64,4 +64,4 @@ node scripts/check-bcu-warp-lifecycle-parity.mjs
 node scripts/check-bcu-warp-interrupt-scene-parity.mjs
 ```
 
-If effect bundles change, also inspect `soul.zip` and `wave.zip` entries. Record visual results only in `bcu-visual-review-checklist.md`.
+エフェクトバンドルが変わったら、`soul.zip` と `wave.zip` の内容も確認する。見た目結果は `bcu-visual-review-checklist.md` にのみ記録する。

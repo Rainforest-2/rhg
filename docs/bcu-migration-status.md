@@ -1,84 +1,84 @@
-# BCU migration status
+# BCU 移行状況
 
-## Last updated
+## 最終更新
 
-- date: 2026-06-26 (UTC)
-- repository: `Rainforest-2/rhg`
-- scope: current BCU ZIP/runtime/ability parity, rendering/UI acceptance, data loading, and persistence compatibility.
-- audit basis: current rhg code plus the checked-in BCU reference ZIPs under `references/bcu/`.
+- 日付: 2026-06-26 (UTC)
+- リポジトリ: `Rainforest-2/rhg`
+- 対象: BCU ZIP / 実行時 / 能力の整合性、描画・UI の受け入れ、データ読み込み、永続化互換性
+- 監査基盤: 現行の rhg コードと `references/bcu/` 配下に含まれる BCU 参照 ZIP
 
-This is the high-level source of truth. It supersedes historical README/ZIP-analysis claims where current code and focused status docs disagree.
+これは高水準の一次情報源です。現行コードと重点ドキュメントが食い違う場合、従来の README や ZIP 分析の主張より優先します。
 
-## Current runtime baseline
+## 現在の実行時基準
 
-- Default runtime mode: `semantic-strict`.
-- Generated semantic ZIP bundles are the authoritative runtime asset source for bundled families.
-- Loose `public/assets/bcu/**` files remain source material and must not become a silent runtime fallback.
-- Core boot remains `public/assets/bundles/core/core-db.zip` through `BcuBootLoader` / `SemanticAssetProvider`.
-- Playable dog roster visibility is gated by local semantic actor readiness; stale external `error-enemy` exclusions do not hide full bundled actors such as enemy 562 and 661–669.
-- Formation and production icons resolve through semantic UI assets, not actor-image fallbacks.
-- Cat-unit production values use the BCU `ELineUp` path: `StageMap.price=1` makes `DataUnit.price` a 1.5x deploy cost, PCoin `PC2_COST`/`PC2_CD` mutate price/respawn first, C_DISCOUNT applies to deploy cost, and `Treasure.getFinRes(respawn, C_RESP)` produces the battle cooldown floor.
-- Spirit summon runtime covers BCU production/stage state, cooldown, one-spirit-per-summoner, pre-warp summon origin, and side-capacity rejection; actor/A_IMUATK browser appearance remains manual-review work.
-- BCU sound ids `0..190` resolve from vendored music assets with stage-map BGM lookup, lazy sound-cache warming, and a grow-on-burst HTMLAudio SE voice pool that preserves every SE request while reducing still-playing voice theft.
+- 既定の実行時モード: `semantic-strict`
+- 生成済み semantic ZIP バンドルを、バンドル済みファミリの正式な実行時アセットソースとする
+- `public/assets/bcu/**` のファイルは、静かにフォールバックされるものではなく、引き続きソース素材として扱う
+- コア起動は `BcuBootLoader` / `SemanticAssetProvider` 経由で `public/assets/bundles/core/core-db.zip` を使う
+- 参加可能な犬のロスター表示は、ローカル semantic actor の準備状態で制御される。古い外部 `error-enemy` 除外リストでは、enemy 562 や 661–669 などの完全なバンドル済み actor を隠せない
+- 陣形や生産アイコンは、actor-image フォールバックではなく semantic UI アセットで解決する
+- キャットユニットの生産値は BCU の `ELineUp` 経路を使う。`StageMap.price=1` で `DataUnit.price` が 1.5 倍の配置コストになり、PCoin の `PC2_COST` / `PC2_CD` が先に価格・再配置時間に反映され、C_DISCOUNT が配置コストに適用され、`Treasure.getFinRes(respawn, C_RESP)` が戦闘中クールダウンの下限を決める
+- 霊魂召喚の実行時は、BCU の生産・ステージ状態、クールダウン、1 召喚者あたり 1 霊魂、ワープ前の召喚元、サイド容量制限までカバーする。actor / A_IMUATK の見た目は手動レビュー対象
+- BCU sound id `0..190` は、ステージマップ BGM 参照、遅延 sound-cache warming、再生中 SE の奪い合いを抑えて全リクエストを維持する HTMLAudio SE voice pool で解決する
 
-## Current focused documents
+## 現在の重点ドキュメント
 
-| Area | Current document |
+| 分野 | 対象文書 |
 |---|---|
-| Ability/proc/effect parity | `docs/ability-logic/current-ability-parity-status.md` |
-| Evidence and compatibility blockers | `docs/ability-logic/bcu-unresolved-evidence-blockers.md` |
-| Browser visual review | `docs/ability-logic/bcu-visual-review-checklist.md` |
-| Death and warp lifecycle | `docs/ability-logic/death-warp-current-status.md` |
-| BCU source evidence | `docs/ability-logic/bcu-ability-source-evidence.md` |
-| Implementation order | `docs/ability-logic/bcu-parity-codex-workplan.md` |
+| 能力・proc・効果の整合性 | `docs/ability-logic/current-ability-parity-status.md` |
+| 根拠・互換性ブロッカー | `docs/ability-logic/bcu-unresolved-evidence-blockers.md` |
+| ブラウザ上の見た目レビュー | `docs/ability-logic/bcu-visual-review-checklist.md` |
+| 死亡・ワープのライフサイクル | `docs/ability-logic/death-warp-current-status.md` |
+| BCU ソース根拠 | `docs/ability-logic/bcu-ability-source-evidence.md` |
+| 実装順序 | `docs/ability-logic/bcu-parity-codex-workplan.md` |
 
-## 2026-06-23 audit summary
+## 2026-06-23 監査サマリ
 
-No confirmed `Critical` parity defect was found in the inspected scope. The non-visual source-loading gaps (SUMMON proc-object, `Trait.targetForms`, combo/orb/treasure/talent/PCoin, extra/custom revive, storage-failure visibility) are now loader-proven by real BCU-format fixtures. The dominant remaining risk is manual visual acceptance; BCU save/lineup import-export stays out of scope.
+確認済みの `Critical` 整合性欠陥は見つかっていません。見た目以外のソース読み込みギャップ（SUMMON の proc-object、`Trait.targetForms`、combo/orb/treasure/talent/PCoin、追加 / カスタム revive、保存失敗の可視化）は、実際の BCU 形式のフィクスチャで確認済みです。残る主なリスクは、手動での見た目受け入れです。BCU セーブ / 陣形 import-export は対象外です。
 
-## 2026-06-25 reference Markdown audit summary
+## 2026-06-25 参照 Markdown 監査サマリ
 
-The checked-in character ability reference Markdown was audited one-to-one against the current JS owners, excluding the `精霊` subheading per the audit scope. Two non-visual runtime gaps were closed: `C_VKILL` combo increments now synthesize `AB_VKILL` for `怪人特効`, and `AB_IMUSW` now excludes actors from boss-spawn `INT_SW` shockwave interruption. The remaining ability-family risk is still browser visual acceptance, not missing deterministic runtime ownership.
+チェックイン済みのキャラ能力参照 Markdown を、現在の JS オーナーに対して 1 対 1 で監査しました。監査範囲では `精霊` 小見出しを除外しています。2 つの非見た目ランタイム差分は解消され、`C_VKILL` の combo 増加で `AB_VKILL` を合成し、`AB_IMUSW` がボス出現 `INT_SW` の衝撃波中断から対象を除外するようになりました。残る主要リスクは見た目のブラウザ受け入れであり、決定的なランタイム責務の欠如ではありません。
 
-### High priority
+### 高優先度
 
-| Area | Current status | Risk / required next action |
+| 領域 | 現在の状態 | リスク / 次のアクション |
 |---|---|---|
-| SUMMON source loading | `code-complete-candidate` | A real `CustomEntity.atks[].proc.SUMMON` file is loaded from disk and driven loader → `BattleAttackProfile` → immediate/on_hit spawn by `check-bcu-summon-procobject-loader-parity`. No normal CSV holder is added (BCU stores SUMMON only on proc objects). Only summon-entry appearance remains (visual). |
-| Save / lineup compatibility | `code-complete-candidate` (self-persistence); BCU import-export `out-of-scope` | `FormationStore`/`StageRegistry` round-trip their own state and now surface read/write failures via `BcuStorageDiagnostics` (`check-formation-storage-failure-visibility`) instead of a silent catch. BCU save/lineup import-export is an out-of-scope feature, not a defect. |
+| SUMMON の読み込み | `code-complete-candidate` | 実在の `CustomEntity.atks[].proc.SUMMON` をディスクから読み込み、loader → `BattleAttackProfile` → immediate/on_hit スポーンまで動かす。通常の CSV 保持者は追加しない。召喚エントリの見た目だけが残る。 |
+| セーブ / 陣形互換性 | `code-complete-candidate`（自己永続化）; BCU import/export は `out-of-scope` | `FormationStore` / `StageRegistry` が自身の状態を往復し、`BcuStorageDiagnostics` で読み書き失敗を通知する。BCU セーブ / 陣形 import-export は対象外の機能であり欠陥ではない。 |
 
-### Medium priority
+### 中優先度
 
-| Area | Current status | Risk / required next action |
+| 領域 | 現在の状態 | リスク / 次のアクション |
 |---|---|---|
-| `Trait.targetForms` / special traits | `code-complete-candidate` | A real `Trait` file (targetType/targetForms) drives the single `bcuTraitCompatible` gate across proc and Target-Only cross-paths (`check-bcu-trait-targetforms-loader-parity`). |
-| Combo / orb / treasure / talent / PCoin | `code-complete-candidate` (non-visual) | Real 150300 combo + talent/PCoin data plus treasure/orb constants compose in BCU order and orbs fold through the resolver (`check-bcu-modifier-realdata-sweep-parity`). PCoin cost/CD and ELineUp production cost/cooldown are covered by `check-bcu-talent-info-loader` and `check-battle-scene-stage-runtime-wiring`. In-battle visual acceptance is a separate review item. |
-| Extra/custom zombie revive | `code-complete-candidate` | A real `REVIVE` proc-object drives the BCU `ZombX.updateRevive` source/range/zombie/warp filter (`check-bcu-zombie-extra-revive-source-range-parity`). Corpse appearance remains visual. |
-| Playable dog roster actor visibility | `code-complete-candidate` | `buildDogSpecs` keeps locally full semantic actor bundles visible even when stale external enemy skip lists include their display ids. `check-dog-playable-roster-readiness` covers enemy 562 and 661–669. |
-| Non-basic cat cannon visuals | `code-complete-candidate` for runtime | Per-cannon ATK/EXT bitmap aliases are now wired (each cannon loads its own `NyCastle.aux.atks[id]` BASE/ATK eanim and spawns it via `spawnCatCannonNonBasicEffect`; `check-bcu-non-basic-cat-cannon-anim-parity`). Exact extend/waved traveling/sweep timing remains unaccepted in browser. |
-| Visible-effect / UI acceptance | `human-visual-review-needed` or `partial` | P_DELAY, shield families, spirit, castle guard, summon, zombie revive, cat cannon, and BASE_WALL require fixture-backed browser review before visual-complete claims. |
+| `Trait.targetForms` / 特殊 trait | `code-complete-candidate` | 実在の `Trait` ファイルが `bcuTraitCompatible` の単一ゲートを proc と Target-Only 経路の両方で動かす。 |
+| Combo / orb / treasure / talent / PCoin | `code-complete-candidate`（非見た目） | 実データ 150300 combo と talent/PCoin、treasure/orb 定数が BCU 順で構成され、orb も解決経路に乗る。PCoin の cost/CD と ELineUp の生産コスト/クールダウンもカバーされる。戦闘中の見た目受け入れは別項目。 |
+| 追加 / カスタム ゾンビ蘇生 | `code-complete-candidate` | 実在の `REVIVE` proc-object が BCU の `ZombX.updateRevive` の source/range/zombie/warp フィルタを駆動する。死体の見た目は引き続き視覚項目。 |
+| 参加可能な犬ロスターの actor 可視性 | `code-complete-candidate` | `buildDogSpecs` は、古い外部エネミー除外一覧に表示 id が入っていても、ローカル semantic actor バンドルを見えるように保つ。`check-dog-playable-roster-readiness` が enemy 562 と 661–669 をカバーする。 |
+| 非基本キャットキャノンの見た目 | 実行時は `code-complete-candidate` | キャノンごとの ATK/EXT ビットマップ別名が接続され、各キャノンが独自の `NyCastle.aux.atks[id]` BASE/ATK eanim を読み込み、`spawnCatCannonNonBasicEffect` で表示する。正確な extend/waved の移動・掃討タイミングはブラウザ未受け入れ。 |
+| 見えるエフェクト / UI の受け入れ | `human-visual-review-needed` または `partial` | P_DELAY、シールド系、霊魂、城のガード、召喚、ゾンビ蘇生、cat cannon、BASE_WALL は、固定フィクスチャ付きのブラウザレビューが必要。 |
 
-## Corrected historical claims
+## 修正した過去の主張
 
-Do not reopen these as present defects without a current code comparison:
+現行コードの比較なしにこれを現状の欠陥として再開しないこと。
 
-- Historical StageDefinitionLoader findings (`rowIndex`, castle `noContinue`, `-1` enemy-castle resolution, and `bossGuard` source row) were corrected in current code and are not the principal current risk.
-- Castle/base guard JS ownership is implemented. Its remaining gap is browser appearance, not a missing runtime owner.
-- Standard zombie corpse/soulstrike/revive runtime is deterministically covered, and extra/custom revive source/range filtering is now loader-proven (`check-bcu-zombie-extra-revive-source-range-parity`). Browser appearance remains open.
-- Basic and non-basic cat cannon runtime are present; visual asset aliases and browser acceptance are separate work.
-- Plain castles do not own a generic attack runtime. Boss bases use the ordinary `EEnemy` owner; stage HP/kill triggers belong to stage spawn logic.
+- 過去の StageDefinitionLoader の指摘（`rowIndex`、castle `noContinue`、`-1` の enemy-castle 解決、`bossGuard` ソース行）は、現行コードでは修正済みであり、現在の主なリスクではない。
+- 城 / 基地ガードの JS 所有権は実装済み。残る差分はブラウザ見た目であり、ランタイム担当の欠落ではない。
+- 標準的なゾンビの死体 / soulstrike / revive ランタイムは決定的にカバーされており、追加 / カスタム revive の source/range フィルタも loader で確認済み。見た目はまだ開放されている。
+- 基本 / 非基本キャットキャノンはともにランタイムが存在する。見た目のアセット別名とブラウザ受け入れは別作業。
+- 通常の城が汎用攻撃ランタイムを持つことはなく、ボス基地の攻撃は通常の `EEnemy` オーナーを使う。HP 閾値・撃破数による出現はステージ側の責務。 
 
-## Persistence boundary
+## 永続化の境界
 
-The project currently guarantees only repository-local persistence schema continuity where its own migrations support it. It does **not** claim:
+このプロジェクトは、自己管理するマイグレーションを支える範囲で、リポジトリ内の永続化スキーマ連続性のみを保証します。以下は主張しません。
 
-- import of BCU saves or lineups;
-- export consumable by BCU;
-- lossless persistence when browser storage is blocked, full, or unavailable.
+- BCU セーブや陣形の import
+- BCU でそのまま使える export
+- ブラウザストレージがブロック・満杯・利用不可のときの完全な永続化
 
-Any future BCU import/export work must first name the BCU save owner, serialization format, version rules, and round-trip fixtures.
+今後 BCU import/export を行う場合は、まず BCU セーブのオーナー、シリアライズ形式、バージョン規則、round-trip フィクスチャを明示する必要があります。
 
-## Required checks before status upgrades
+## 状態を上げる前に必要なチェック
 
 ```bash
 node scripts/check-bcu-parser-indexes.mjs
@@ -93,28 +93,28 @@ node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
 ```
 
-Use only checks relevant to a touched subsystem. A passing check proves only the behavior it asserts.
+対象サブシステムに関係するチェックだけを使ってください。通ったチェックが示すのは、その主張に対応する部分だけです。
 
-## Manual browser verification focus
+## 手動ブラウザ確認の焦点
 
-Use the visual checklist to record a fixed stage/unit/enemy fixture and a result of `accepted`, `mismatch`, or `blocked` for:
+視覚チェックリストを使い、固定ステージ・ユニット・敵・キャノンのフィクスチャに対して `accepted` / `mismatch` / `blocked` を記録してください。
 
-- P_DELAY and shield-family effects;
-- burrow down/underground/up transitions;
-- spirit actor and A_IMUATK;
-- castle guard hold/break;
-- summon `anim_type` entry and placement;
-- zombie corpse DOWN/REVIVE;
-- basic/non-basic cannon firing, traveling sweep, and BASE_WALL entry/idle.
+- P_DELAY とシールド系エフェクト
+- burrow の down / underground / up 遷移
+- 霊魂 actor と A_IMUATK
+- 城のガード hold / break
+- summon の `anim_type` 入場と配置
+- ゾンビの corpse DOWN / REVIVE
+- 基本 / 非基本キャノンの発射、移動 sweep、BASE_WALL の入場・待機
 
-## Documentation update rule
+## ドキュメント更新ルール
 
-After a parity change, update focused documents in this order:
+整合性変更後は、重点ドキュメントを次の順で更新します。
 
 1. `current-ability-parity-status.md`
 2. `bcu-unresolved-evidence-blockers.md`
-3. `bcu-visual-review-checklist.md` only after an actual browser review
-4. this file
-5. `README.md` and `AGENTS.md` when the public summary or agent workflow changes
+3. `bcu-visual-review-checklist.md`（実際のブラウザレビュー後のみ）
+4. このファイル
+5. `README.md` と `AGENTS.md`（公開サマリやエージェント手順が変わる場合）
 
-Never preserve a historical implementation gap as a current blocker after current code and checks prove it resolved.
+現行コードとチェックで解決済みなのに、過去の実装ギャップを現状のブロッカーとして残してはなりません。

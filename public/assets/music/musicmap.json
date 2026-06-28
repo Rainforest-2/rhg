@@ -1,9 +1,9 @@
 {
-  "_comment": "Music source map for in-battle BGM. The .m4a tracks are vendored under public/assets/music/<id>.m4a (000..190), so BGM loads entirely from local assets — no network fetch. A track id N resolves to `${id padded to `pad` digits}.m4a`. The format is .m4a (AAC) so iOS/Safari can decode it; Ogg Vorbis is not supported there. cdnBaseUrl/remoteBaseUrl are left empty: the remote hosts were unreachable on many networks, so the tracks were bundled instead. Re-add a base URL only if you want a remote fallback again.",
+  "_comment": "Music source map for in-battle BGM. The .m4a tracks are vendored under public/assets/music/<id>.m4a (000..190) and served from the deploy asset root (e.g. /rhg/assets/music/<id>.m4a). The runtime ALWAYS resolves the local path from the base-aware asset root (assetBase.js); localBaseUrl here is documentation only and is honored as an override ONLY if set to an absolute http(s) URL (a remote mirror). A track id N resolves to `${id padded to `pad` digits}.m4a`. The format is .m4a (AAC) so iOS/Safari can decode it; Ogg Vorbis is not supported there. cdnBaseUrl/remoteBaseUrl are left empty: the remote hosts were unreachable on many networks, so the tracks were bundled instead. Re-add a base URL only if you want a remote fallback again.",
   "schemaVersion": 1,
   "cdnBaseUrl": "",
   "remoteBaseUrl": "",
-  "localBaseUrl": "./public/assets/music/",
+  "localBaseUrl": "assets/music/",
   "extension": ".m4a",
   "pad": 3,
   "minId": 0,

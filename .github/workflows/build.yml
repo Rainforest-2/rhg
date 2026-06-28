@@ -53,7 +53,7 @@ jobs:
       - name: Obfuscate shipped JS + add copyright banner
         run: |
           set -o pipefail
-          BANNER='/*! ワンコ大戦争 (rhg) — © 2026 Rainforest-2. All Rights Reserved. 無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited. */'
+          BANNER='/*! ワンコ大戦争 (rhg) — © 2026 RHgrive. All Rights Reserved. 無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited. */'
           OBF="npx --yes javascript-obfuscator@4.1.1"
           # ESM-safe base config: globals/properties are NOT renamed so cross-module
           # export/import names and DOM APIs survive, and dynamic import('./x-hash.js')

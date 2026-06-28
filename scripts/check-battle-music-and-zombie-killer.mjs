@@ -44,7 +44,12 @@ const manifest = JSON.parse(await read('public/assets/music/musicmap.json'));
 // The tracks are vendored locally (no network fetch), so the remote bases are
 // intentionally empty; only the local override dir is required.
 check(manifest.cdnBaseUrl === '' && manifest.remoteBaseUrl === '', 'musicmap.json: cdn/remote bases must be empty (tracks are bundled locally)');
-check(typeof manifest.localBaseUrl === 'string' && manifest.localBaseUrl.includes('assets/music'), 'musicmap.json: localBaseUrl must be the local assets/music override dir');
+check(typeof manifest.localBaseUrl === 'string' && manifest.localBaseUrl.includes('assets/music'), 'musicmap.json: localBaseUrl must reference the local assets/music dir');
+// The vite `public/` source dir is stripped at build (its contents are served from
+// the deploy asset root, e.g. /rhg/assets/music/). A localBaseUrl pointing into
+// `public/` 404s every battle BGM/SE in production. The runtime always derives the
+// local path from the base-aware asset root, so the manifest must never carry it.
+check(!manifest.localBaseUrl.includes('public/'), 'musicmap.json: localBaseUrl must NOT point into the vite public/ source dir (it is stripped at build and 404s when served)');
 // iOS/Safari can't decode Ogg Vorbis, so the BGM is bundled as .m4a (AAC).
 check(manifest.extension === '.m4a' && manifest.pad === 3, 'musicmap.json: expected .m4a / pad=3');
 check(manifest.minId === BCU_SOUND_ID_MIN && manifest.maxId === BCU_SOUND_ID_MAX,
@@ -56,11 +61,17 @@ check(catalog.formatId(3) === '003', 'MusicCatalog.formatId(3) should be 003');
 check(catalog.normalizeId(0) === 0 && catalog.normalizeId(190) === 190, 'MusicCatalog must accept the full vendored BCU sound range endpoints');
 check(catalog.normalizeId(999) === null && catalog.normalizeId(-1) === null && catalog.normalizeId(191) === null, 'MusicCatalog must reject out-of-range ids');
 const urls = catalog.resolveUrls(3);
-check(urls.length === 1 && urls[0].includes('public/assets/music/003.m4a'),
-  `MusicCatalog.resolveUrls must be the single public/assets 003.m4a candidate, got ${JSON.stringify(urls)}`);
+check(urls.length === 1 && urls[0].endsWith('assets/music/003.m4a') && !urls[0].includes('public/'),
+  `MusicCatalog.resolveUrls must be the single base-aware assets/music 003.m4a candidate (no public/), got ${JSON.stringify(urls)}`);
 const url190 = catalog.resolveUrls(190);
-check(url190.length === 1 && url190[0].includes('public/assets/music/190.m4a'),
-  `MusicCatalog.resolveUrls must include the final vendored BCU sound 190.m4a, got ${JSON.stringify(url190)}`);
+check(url190.length === 1 && url190[0].endsWith('assets/music/190.m4a') && !url190[0].includes('public/'),
+  `MusicCatalog.resolveUrls must include the final vendored BCU sound 190.m4a (no public/), got ${JSON.stringify(url190)}`);
+// Regression guard: even when the manifest carries a bad relative localBaseUrl (the
+// shipped `./public/...` bug), resolveUrls must ignore it and use the base-aware root.
+const poisoned = new MusicCatalog({ ...manifest, localBaseUrl: './public/assets/music/' });
+const pUrls = poisoned.resolveUrls(3);
+check(pUrls.length === 1 && !pUrls[0].includes('public/'),
+  `MusicCatalog.resolveUrls must ignore a public/-relative localBaseUrl, got ${JSON.stringify(pUrls)}`);
 check(catalog.resolveUrls(99999).length === 0, 'MusicCatalog.resolveUrls must be empty for an invalid id');
 const catalogSource = await read('js/audio/MusicCatalog.js');
 check(catalogSource.includes("cache: 'no-cache'"), 'MusicCatalog must revalidate musicmap.json instead of force-caching stale manifests');

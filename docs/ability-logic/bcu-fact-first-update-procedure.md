@@ -1,94 +1,94 @@
-# BCU fact-first update procedure
+# BCU 事実優先の更新手順
 
-Use this procedure for every BCU parity update in `Rainforest-2/rhg`.
+`RHgrive/rhg` で BCU パリティを更新する際は、常にこの手順に従います。
 
-## Core rule
+## 中核ルール
 
 ```text
-BCU fact -> current JS owner audit -> minimal update -> deterministic check -> focused docs update
+BCU の事実 -> 現在の JS オーナー監査 -> 最小変更 -> 決定的なチェック -> 集中したドキュメント更新
 ```
 
-Do not change gameplay because a field, ability name, old README claim, or visual approximation looks familiar.
+フィールド名、能力名、古い README の主張、見た目の近似だけでゲームプレイを変えないでください。
 
-## Required order
+## 実施順序
 
-1. **Define the smallest target.**
-   - behavior / owner side / data source;
-   - timing and state transition;
-   - exact compatibility or visual claim to prove.
+1. **最小の対象を定義する**
+   - 挙動 / オーナー側 / データソース
+   - タイミングと状態遷移
+   - 証明したい互換性や見た目の主張
 
-2. **Take BCU facts first.**
-   - local BCU common source;
-   - local BCU Android/PC source when the claim depends on draw/UI behavior;
-   - checked-in BCU reference docs;
-   - historical docs only after current code confirms their implementation claim.
+2. **まず BCU の事実を確認する**
+   - ローカルの BCU 共通ソース
+   - 見た目 / UI 依存ならローカルの BCU Android / PC ソース
+   - チェックイン済みの BCU 参照ドキュメント
+   - 現行コードが実装主張を確認するまで、過去のドキュメントは参考にしない
 
-3. **Audit the current rhg owner before editing.**
-   - parser and source loader;
-   - runtime state owner;
-   - boot/import and wrapper chain;
-   - renderer/UI owner when visible;
-   - persistence owner when save/lineup compatibility is mentioned;
-   - existing deterministic checks and fixtures.
+3. **編集前に rhg の現在のオーナーを監査する**
+   - parser / source loader
+   - runtime state owner
+   - boot / import / wrapper chain
+   - visible なら renderer / UI owner
+   - save / lineup 互換が出るなら persistence owner
+   - 既存の決定的チェックとフィクスチャ
 
-4. **Classify the actual gap.**
-   - runtime missing;
-   - runtime exists but real source loading is incomplete;
-   - runtime exists but browser appearance is unaccepted;
-   - source owner/schema is unconfirmed;
-   - proposed owner is disproven by negative evidence.
+4. **実際のギャップを分類する**
+   - runtime missing
+   - runtime はあるが実データ読み込みが未完
+   - runtime はあるがブラウザ見た目は未受け入れ
+   - source owner / schema が未確認
+   - proposed owner が負の根拠で否定されている
 
-5. **Choose the safest change type.**
-   - docs-only;
-   - test-only;
-   - loader-fixture;
-   - runtime-minimal;
-   - runtime-wrapper;
-   - visual-acceptance record.
+5. **最も安全な変更タイプを選ぶ**
+   - docs-only
+   - test-only
+   - loader-fixture
+   - runtime-minimal
+   - runtime-wrapper
+   - visual-acceptance record
 
-6. **Protect existing behavior.**
-   - preserve wrapper order and original calls;
-   - do not invent CSV indexes, proc holders, effect aliases, or save schemas;
-   - do not add loose raw-asset runtime fallbacks;
-   - do not silently alter RNG, targeting, or side ownership;
-   - do not create a generic castle-owned attack owner;
-   - do not call browser-local persistence BCU-compatible without source schema proof.
+6. **既存挙動を保護する**
+   - wrapper order と元の呼び出しを維持する
+   - CSV インデックス、proc holder、effect alias、save schema を勝手に作らない
+   - ルーズな raw-asset runtime fallback を追加しない
+   - RNG、targeting、side ownership を静かに変えない
+   - 汎用の castle-owned attack owner を作らない
+   - source schema 根拠なしでブラウザローカル永続化を BCU 互換と呼ばない
 
-7. **Add or update focused checks.**
-   - positive and negative case;
-   - timing/order case;
-   - source-loader fixture for data-coverage claims;
-   - coordinate/effect trace for visible behavior;
-   - blocked/quota storage case for persistence changes.
+7. **焦点チェックを追加または更新する**
+   - positive / negative case
+   - timing / order case
+   - data-coverage claim には source-loader fixture
+   - visible behavior には coordinate / effect trace
+   - persistence 変更には blocked / quota storage case
 
-8. **Run the relevant verification.**
+8. **関連する検証を行う**
 
 ```bash
 node scripts/check-bcu-ability-parity-safe-suite.mjs
 ```
 
-Run the focused checks too. Do not silently skip an unavailable required command.
+関連する焦点チェックも実行し、利用できない必須コマンドを見逃さないでください。
 
-9. **Update existing documentation last.**
-   - `docs/ability-logic/current-ability-parity-status.md`;
-   - `docs/ability-logic/bcu-unresolved-evidence-blockers.md`;
-   - `docs/ability-logic/bcu-visual-review-checklist.md` only after actual browser review;
-   - `docs/bcu-migration-status.md`;
-   - `README.md` and `AGENTS.md` when the public/agent summary changes.
+9. **最後に既存ドキュメントを更新する**
+   - `docs/ability-logic/current-ability-parity-status.md`
+   - `docs/ability-logic/bcu-unresolved-evidence-blockers.md`
+   - `docs/ability-logic/bcu-visual-review-checklist.md`（実際のブラウザレビュー後のみ）
+   - `docs/bcu-migration-status.md`
+   - `README.md` と `AGENTS.md`（公開 / エージェント要約が変わる場合）
 
-## Stop conditions
+## 中止条件
 
-Stop and record a blocker instead of guessing when:
+次のいずれかに当たる場合は、推測せずにブロッカーとして記録してください。
 
-- BCU holder/source/schema is unproven;
-- current JS loader cannot supply real source data;
-- a change requires a guessed CSV index, effect alias, or save format;
-- wrapper order/callers cannot be audited;
-- non-BCU behavior would change;
-- deterministic negative cases cannot be written;
-- a visual-complete claim would require a manual review that has not happened.
+- BCU holder / source / schema が未確認
+- 現行 JS loader が実データを供給できない
+- CSV index、effect alias、save format を推測する変更が必要
+- wrapper order / caller を監査できない
+- 非 BCU 挙動が変わる
+- 決定的な negative case を書けない
+- 見た目完了を主張するにはまだ手動レビューが必要
 
-## Final report format
+## 最終レポート形式
 
 ```text
 BCU facts taken:

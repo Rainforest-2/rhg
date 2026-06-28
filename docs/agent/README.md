@@ -1,10 +1,10 @@
-# Agent Documentation
+# エージェント向けドキュメント
 
-This directory holds the longer agent rules referenced by the repository-root `AGENTS.md`.
+このディレクトリには、リポジトリ直下の `AGENTS.md` から参照される、長めのエージェントルールを置いています。
 
-## Current source of truth
+## 現在の一次情報源
 
-Read these in order before using older notes:
+古いノートを使う前に、次の順で読みます。
 
 1. `../../README.md`
 2. `../bcu-migration-status.md`
@@ -15,48 +15,48 @@ Read these in order before using older notes:
 7. `../ability-logic/bcu-parity-codex-workplan.md`
 8. `../ability-logic/bcu-fact-first-update-procedure.md`
 
-The 2026-06-23 audit established an important documentation rule: historical analysis can preserve source facts, but historical claims about the current rhg implementation are not current until code and deterministic checks confirm them.
+2026-06-23 の監査で、重要なドキュメントルールが確立されました。過去の分析はソース事実を残せますが、現在の rhg 実装についての主張は、コードと決定的なチェックで確認されるまで「現行のもの」とみなしてはいけません。
 
-To reduce startup context before opening full documents, use the generated shortcut:
+フル文書を開く前の起動コンテキストを減らすため、次のショートカットを使います。
 
 ```bash
 npm run agent:context -- --topic "<area>"
 ```
 
-The output is derived from the current files listed above and highlights matching open status rows, blockers, visual-review rows, source-evidence rows, and candidate checks. Treat it as an index, not a source of truth.
+この出力は、上記の文書から現在の状態を取り出し、未解決の状態行・ブロッカー・見た目レビュー項目・ソース根拠・候補チェックをハイライトします。あくまで索引であり、一次情報源ではありません。
 
-Runtime helpers for lower-token iteration:
+低トークンで反復するための実行補助です。
 
-- `npm run agent:find -- --topic "<area>"` ranks likely JS owners, checks, tests, and docs with compact snippets.
-- `npm run agent:changed` prints changed files grouped by code/tests/docs/tooling without invoking full `git status`.
-- `npm run agent:checks -- --topic "<area>" --file js/path/File.js` suggests focused commands; `--changed --run` derives them from the current diff and executes short OK/failure tails.
-- `npm run agent:probe -- --expr "..."` runs one-off assertions with `assert` and `importProject()` injected, avoiding add/delete cycles for temporary test files.
-- `npm run agent:run -- "command"` runs arbitrary command lines with compact tails for long or noisy checks.
+- `npm run agent:find -- --topic "<area>"` で、JS オーナー・チェック・テスト・ドキュメントを短いスニペット付きで並べます。
+- `npm run agent:changed` で、`git status` を呼ばずに、コード / テスト / ドキュメント / ツール変更のファイルをまとめて表示します。
+- `npm run agent:checks -- --topic "<area>" --file js/path/File.js` で、焦点を絞ったコマンドを提案します。`--changed --run` を付けると差分から導いたコマンドを実行して短い OK/NG サマリを返します。
+- `npm run agent:probe -- --expr "..."` で、`assert` と `importProject()` を注入した一時実行を行い、テストファイルの追加・削除サイクルを避けます。
+- `npm run agent:run -- "command"` で、長い出力やノイズの多いチェックを短いサマリ付きで実行できます。
 
-## Agent rule files
+## エージェントルールのファイル
 
-- `bcu-parity-rules.md`: evidence hierarchy, status vocabulary, asset/runtime rules, and known constraints.
-- `fact-first-update-procedure.md`: agent-facing link to the canonical fact-first workflow.
-- `checks-and-verification.md`: deterministic checks, ZIP inspection, and verification requirements.
-- `report-format.md`: final implementation-batch report format.
-- `md-maintenance-rules.md`: Markdown and agent-instruction maintenance rules.
+- `bcu-parity-rules.md`: 根拠の階層、状態語彙、アセット / 実行時ルール、既知制約。
+- `fact-first-update-procedure.md`: 事実優先のワークフローへのリンク。
+- `checks-and-verification.md`: 決定的なチェック、ZIP の確認、検証要件。
+- `report-format.md`: 実装バッチの最終レポート形式。
+- `md-maintenance-rules.md`: Markdown とエージェント指示の保守ルール。
 
-## Documentation classes
+## ドキュメントの分類
 
-`docs/` contains three distinct kinds of information:
+`docs/` には、次の 3 種類の情報があります。
 
-1. **Current status and workplan** — must remain synchronized with current code and checks.
-2. **BCU source evidence** — durable facts about BCU ownership, fields, timing, and negative evidence.
-3. **Historical reports** — useful context only; never a live defect list by themselves.
+1. **現在の状態と作業計画** — 現行コードとチェックに同期して保守する。
+2. **BCU ソース根拠** — BCU の所有権、フィールド、タイミング、negative evidence などの耐久的な事実。
+3. **履歴レポート** — 参考情報としては有効だが、単独では現行の欠陥一覧にはしない。
 
-Do not create parallel status documents when an existing source-of-truth file can be updated. For a parity change, update the current status, blocker, visual-review ledger, migration summary, and root README/AGENTS summary when their scope changes.
+既存の一次情報源ファイルがあるなら、並行して別ファイルを作らないでください。整合性変更では、現行状態・ブロッカー・見た目レビュー台帳・移行サマリ・ルートの README / AGENTS まとめまで、スコープ変更に合わせて更新してください。
 
-## Current audit focus
+## 現在の監査重点事項
 
-- real custom-pack SUMMON source loading;
-- persistence scope and failure visibility;
-- real-data targetForms/modifier fixture coverage;
-- browser visual acceptance;
-- non-basic cannon visual asset aliases and sweep timing.
+- 実カスタムパック SUMMON のソース読み込み
+- 永続化のスコープと失敗可視化
+- 実データの `targetForms` / modifier フィクスチャ網羅
+- ブラウザ上の見た目受け入れ
+- 非基本キャノンの見た目アセット別名と sweep タイミング
 
-Do not treat repository-local `localStorage` persistence as BCU save compatibility, and do not create a generic castle-owned attack owner: BCU evidence rejects both claims.
+リポジトリ内の `localStorage` 永続化を BCU セーブ互換性とみなさないでください。また、汎用の castle-owned attack オーナーを作らないでください。BCU の根拠が両方を否定しています。

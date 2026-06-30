@@ -21,3 +21,7 @@ public/assets/generated/bcu-lang-prune-report.json
 public/assets/generated/bcu-lang-prune-report.md
 node_modules/
 dist/
+
+# Python bytecode (tools/extract_bcuzip.py and other helper scripts).
+__pycache__/
+*.pyc

@@ -1,0 +1,56 @@
+name: AI Development Loop
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ai-loop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Check AI CLI availability
+        shell: bash
+        run: |
+          missing=0
+          if ! command -v claude >/dev/null 2>&1; then
+            echo "::error::The 'claude' CLI is not installed or not on PATH in this runner."
+            missing=1
+          fi
+          if ! command -v codex >/dev/null 2>&1; then
+            echo "::error::The 'codex' CLI is not installed or not on PATH in this runner."
+            missing=1
+          fi
+          if [ "${missing}" -ne 0 ]; then
+            echo "This workflow can run the orchestrator only when both CLIs are installed and authenticated."
+            echo "Primary operation is intended for Codespaces or another prepared developer environment."
+            echo "No secret names are assumed by this workflow. See .ai/RUN_MANUALLY.md for fallback steps."
+            exit 1
+          fi
+
+      - name: Run AI orchestrator
+        shell: bash
+        run: |
+          if ! bash .ai/orchestrator.sh; then
+            echo "::error::AI orchestrator failed. Check .ai/logs/ in a local or Codespaces run for round logs."
+            echo "GitHub-hosted runners usually need explicit CLI installation and authentication before this can succeed."
+            exit 1
+          fi
+
+      - name: Upload AI logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-orchestrator-logs
+          path: .ai/logs/
+          if-no-files-found: ignore

@@ -96,3 +96,37 @@ node scripts/check-ability-partial-blockers.mjs
 ```
 
 見た目に関する主張は、スクリプトが通っても十分ではありません。[docs/ability-logic/bcu-visual-review-checklist.md](docs/ability-logic/bcu-visual-review-checklist.md) にブラウザ比較の結果を残してください。
+
+## AI 開発ループ
+
+このリポジトリでは、Claude と Codex が協調して開発を進めるためのループ環境を [.ai](.ai) 配下に用意しています。これは Claude と Codex を直接つなぐものではなく、[.ai/orchestrator.sh](.ai/orchestrator.sh) が両方の CLI を交互に呼び出す仕組みです。
+
+### 起動方法
+- Codespaces または Claude Code CLI と Codex CLI がインストール・認証済みの開発環境で、`bash .ai/orchestrator.sh` を実行します。
+- 最大 5 周で停止します。
+- 自動 commit / push は行いません。
+- 各ラウンドのログは [.ai/logs](.ai/logs) に毎周保存され、失敗時の調査に利用できます。
+- 非対話モードが使えない場合の手動運用は [.ai/RUN_MANUALLY.md](.ai/RUN_MANUALLY.md) を参照してください。
+- GitHub Actions の「AI Development Loop」ワークフローは手動起動できますが、GitHub-hosted runner では `claude` / `codex` の導入と認証がない限り失敗します。主運用は Codespaces 上での実行です。
+
+### AI の役割
+- Claude: 全体解析、設計レビュー、バグ発見、レビュー記録の担当。
+- Codex: 実装、バグ修正、リファクタリング、テスト追加の担当。
+
+### 主要ファイル
+- [.ai/mission.md](.ai/mission.md): プロジェクトの目的、役割分担、開発ルール、完了条件。
+- [.ai/state.md](.ai/state.md): 現在の課題・作業内容・完了状況の共有。
+- [.ai/tasks.md](.ai/tasks.md): タスクの優先度と管理。
+- [.ai/review.md](.ai/review.md): Claude のレビュー記録。
+- [.ai/changelog.md](.ai/changelog.md): Codex の変更履歴。
+- [.ai/prompts/claude-review.md](.ai/prompts/claude-review.md): Claude レビュー用の固定プロンプト。
+- [.ai/prompts/codex-fix.md](.ai/prompts/codex-fix.md): Codex 修正用の固定プロンプト。
+- [.ai/orchestrator.sh](.ai/orchestrator.sh): Claude レビュー → Codex 実装 → 検証を最大 5 周実行するローカル向けオーケストレーター。
+- [.github/workflows/ai-development.yml](.github/workflows/ai-development.yml): 手動起動でオーケストレーターを試行するワークフロー。
+
+### 開発フロー
+1. `.ai/orchestrator.sh` が `git status --short` と `git diff --stat` を記録します。
+2. Claude が前回の Codex 出力、検証結果、現在の diff を読み、[.ai/review.md](.ai/review.md) に次の最小タスクを書きます。
+3. Codex が `.ai/review.md` の `Next Codex Task` だけを実装し、[.ai/changelog.md](.ai/changelog.md) に結果を追記します。
+4. `npm run check`、`npm test`、`npm run lint --if-present`、`npm run build --if-present` を実行します。
+5. すべて成功したら停止し、失敗した場合はログを次の Claude レビューに渡して次の周回に進みます。

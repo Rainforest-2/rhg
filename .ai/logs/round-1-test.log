@@ -1,5 +1,5 @@
 # Verification
-Date: 2026-06-30T14:17:32Z
+Date: 2026-06-30T16:22:21Z
 
 ## npm run check
 $ npm run check
@@ -511,61 +511,65 @@ $ npm test
 > rhg-bcu-battle@1.0.0 test
 > node --test tests/*.test.mjs
 
-✔ damage queue is excused in insertion order (no side/position/key resort) (1.662794ms)
-✔ player-before-enemy insertion order (the BCU direction-pass order) is preserved (0.217977ms)
-✔ BcuCombatModel parses unit full IMU* guard fields (2.407023ms)
-✔ BcuCombatModel parses enemy full IMU* guard fields with confirmed DataEnemy columns (0.780316ms)
-✔ applyBcuProc rejects full immunity status procs without state side effects (2.454722ms)
-✔ applyBcuProc applies partial resistance to status duration and toxic damage (1.747442ms)
-✔ IMUWEAK smartImu follows BCU checkSmartImu direction (0.463535ms)
-✔ applyBcuProc applies partial knockback resistance to proc KB distance (0.638181ms)
-✔ ProcResolver suppresses curse and seal proc groups before runtime apply (1.824115ms)
-✔ guardBcuDamage rejects wave, surge, blast, and toxic queue before damage is pending (0.752434ms)
-✔ queueAttackDamage applies partial wave resistance before enqueueing damage (4.011658ms)
-✔ queueAttackDamage guard rejection does not enqueue pending damage or procs (0.638452ms)
-✔ normal queueAttackDamage still enqueues regular attack damage (0.885483ms)
-✔ curse and seal suppress DamageAbilityResolver trait ability multipliers and restore when expired (1.572235ms)
-✔ seal suppresses strongAttack and critical procs in damage resolver (0.507448ms)
-✔ critical BattleScene wrapper chain remains callable after parity imports (0.375962ms)
-✔ BattleAttackProfile maps per-hit abi flags onto attack events as bcuHitAbi (1.408209ms)
-✔ ProcResolver gates attack procs per hit on bcuHitAbi != 1 (BCU abis[ind] == 1 setProc gate) (0.882527ms)
-✔ ProcResolver keeps entity-level zombieKiller/soulstrike exempt from the hit abi gate (0.494924ms)
-✔ DamageAbilityResolver gates strongAttack/critical procs per hit on bcuHitAbi != 1 (0.457514ms)
-✔ zombie revive enters attack-wait immediately when an enemy is in touch range (BCU update2 checkTouch) (10.508384ms)
-✔ CopRand nextFloat(seed=0) matches BCU/Java float vector exactly (1.690315ms)
-✔ CopRand nextFloat results are exact Java floats (Math.fround stable) (0.298307ms)
-✔ CopRand nextDouble consumes the seed identically to nextFloat (0.450481ms)
-✔ CopRand is reproducible from the same 64-bit seed (2.415819ms)
-✔ CopRand drawCount tracks the number of seeded draws (0.181078ms)
-✔ JavaRandom matches java.util.Random nextInt/nextLong for seed=0 (0.213228ms)
-✔ normalizeBattleSeed parses strings and clamps to signed 64-bit; randomBattleSeed is in range (0.322482ms)
-✔ direction sort is stable: dire -1 (player) before +1 (enemy), insertion order kept on ties (3.77836ms)
-✔ direction sort falls back to side when direction is absent (dog-player => -1) (0.349002ms)
-✔ layer sort is stable: ascending currentLayer, insertion order kept within a layer (0.373467ms)
-✔ same-direction, same-position entities are NOT reordered (no pos/instanceId tiebreak) (0.500755ms)
-✔ will=0 enemy occupies exactly 1 slot (1.083172ms)
-✔ will=2 enemy occupies 3 slots (will + 1) (0.172321ms)
-✔ an enemy in final knockback is still counted (0.158806ms)
-✔ a 'dead' enemy still playing its death animation (not removable) is counted (0.221393ms)
-✔ a 'dead' enemy that is BCU-removable is NOT counted (0.172993ms)
-✔ mixed roster sums will+1 per non-dead enemy and ignores removed/removable ones (0.289341ms)
-✔ boss-as-base (EEnemy) adds will+1; an ECastle base does not (0.259385ms)
-✔ constructor draws row first-frame BEFORE the global respawn (BCU StageBasis order) (1.453954ms)
-✔ commit draws row respawn -> spawn layer -> global respawn; spawn frame and layer are exact (1.583776ms)
-✔ a failed spawn (rejectSpawn) consumes no RNG (0.377975ms)
-✔ computeBcuTouchState: Target Only with only an incompatible enemy in range -> touch true, touchEnemy false (1.904605ms)
-✔ computeBcuTouchState: adding a trait-compatible enemy flips touchEnemy true (0.448607ms)
-✔ computeBcuTouchState: Target Only with only the enemy base in range -> touchEnemy true (base counts) (0.299429ms)
-✔ computeBcuTouchState: non-Target-Only unit attacks any in-range enemy (touchEnemy == touch) (0.207647ms)
-✔ computeBcuTouchState: nothing in range -> touch false, touchEnemy false (0.265556ms)
-ℹ tests 47
+✔ damage queue is excused in insertion order (no side/position/key resort) (2.526328ms)
+✔ player-before-enemy insertion order (the BCU direction-pass order) is preserved (0.371904ms)
+✔ known BCU battle actions map to lineup change sentinels (2.990463ms)
+✔ inherited object names fall through to slot indexes when slot is finite (1.275222ms)
+✔ inherited object names return null when no finite slot is present (0.876898ms)
+✔ unknown actions fall through to slot index or null (0.183553ms)
+✔ BcuCombatModel parses unit full IMU* guard fields (2.319212ms)
+✔ BcuCombatModel parses enemy full IMU* guard fields with confirmed DataEnemy columns (0.784064ms)
+✔ applyBcuProc rejects full immunity status procs without state side effects (2.434537ms)
+✔ applyBcuProc applies partial resistance to status duration and toxic damage (1.626247ms)
+✔ IMUWEAK smartImu follows BCU checkSmartImu direction (0.477491ms)
+✔ applyBcuProc applies partial knockback resistance to proc KB distance (0.629585ms)
+✔ ProcResolver suppresses curse and seal proc groups before runtime apply (1.793019ms)
+✔ guardBcuDamage rejects wave, surge, blast, and toxic queue before damage is pending (0.737227ms)
+✔ queueAttackDamage applies partial wave resistance before enqueueing damage (5.002927ms)
+✔ queueAttackDamage guard rejection does not enqueue pending damage or procs (0.719063ms)
+✔ normal queueAttackDamage still enqueues regular attack damage (1.628231ms)
+✔ curse and seal suppress DamageAbilityResolver trait ability multipliers and restore when expired (3.016705ms)
+✔ seal suppresses strongAttack and critical procs in damage resolver (0.434522ms)
+✔ critical BattleScene wrapper chain remains callable after parity imports (0.528156ms)
+✔ BattleAttackProfile maps per-hit abi flags onto attack events as bcuHitAbi (1.735291ms)
+✔ ProcResolver gates attack procs per hit on bcuHitAbi != 1 (BCU abis[ind] == 1 setProc gate) (0.929045ms)
+✔ ProcResolver keeps entity-level zombieKiller/soulstrike exempt from the hit abi gate (0.30523ms)
+✔ DamageAbilityResolver gates strongAttack/critical procs per hit on bcuHitAbi != 1 (0.300631ms)
+✔ zombie revive enters attack-wait immediately when an enemy is in touch range (BCU update2 checkTouch) (10.903124ms)
+✔ CopRand nextFloat(seed=0) matches BCU/Java float vector exactly (1.273138ms)
+✔ CopRand nextFloat results are exact Java floats (Math.fround stable) (0.201567ms)
+✔ CopRand nextDouble consumes the seed identically to nextFloat (0.260908ms)
+✔ CopRand is reproducible from the same 64-bit seed (1.725212ms)
+✔ CopRand drawCount tracks the number of seeded draws (0.234608ms)
+✔ JavaRandom matches java.util.Random nextInt/nextLong for seed=0 (0.195355ms)
+✔ normalizeBattleSeed parses strings and clamps to signed 64-bit; randomBattleSeed is in range (0.275925ms)
+✔ direction sort is stable: dire -1 (player) before +1 (enemy), insertion order kept on ties (1.514749ms)
+✔ direction sort falls back to side when direction is absent (dog-player => -1) (0.238526ms)
+✔ layer sort is stable: ascending currentLayer, insertion order kept within a layer (0.319196ms)
+✔ same-direction, same-position entities are NOT reordered (no pos/instanceId tiebreak) (0.327732ms)
+✔ will=0 enemy occupies exactly 1 slot (1.023952ms)
+✔ will=2 enemy occupies 3 slots (will + 1) (0.183031ms)
+✔ an enemy in final knockback is still counted (0.160821ms)
+✔ a 'dead' enemy still playing its death animation (not removable) is counted (0.216625ms)
+✔ a 'dead' enemy that is BCU-removable is NOT counted (0.166291ms)
+✔ mixed roster sums will+1 per non-dead enemy and ignores removed/removable ones (0.273371ms)
+✔ boss-as-base (EEnemy) adds will+1; an ECastle base does not (0.244827ms)
+✔ constructor draws row first-frame BEFORE the global respawn (BCU StageBasis order) (1.383875ms)
+✔ commit draws row respawn -> spawn layer -> global respawn; spawn frame and layer are exact (1.551929ms)
+✔ a failed spawn (rejectSpawn) consumes no RNG (0.389989ms)
+✔ computeBcuTouchState: Target Only with only an incompatible enemy in range -> touch true, touchEnemy false (1.639902ms)
+✔ computeBcuTouchState: adding a trait-compatible enemy flips touchEnemy true (0.336498ms)
+✔ computeBcuTouchState: Target Only with only the enemy base in range -> touchEnemy true (base counts) (0.286395ms)
+✔ computeBcuTouchState: non-Target-Only unit attacks any in-range enemy (touchEnemy == touch) (0.225301ms)
+✔ computeBcuTouchState: nothing in range -> touch false, touchEnemy false (0.237584ms)
+ℹ tests 51
 ℹ suites 0
-ℹ pass 47
+ℹ pass 51
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1580.514625
+ℹ duration_ms 1481.814771
 
 Exit code: 0
 
@@ -588,9 +592,9 @@ vite v8.1.0 building client environment for production...
 
 /rhg/assets/ui/nyanko-battle-load-bg.png referenced in /rhg/assets/ui/nyanko-battle-load-bg.png didn't resolve at build time, it will remain unchanged to be resolved at runtime
 
-/rhg/assets/FOT-大江戸勘亭流 Std E.otf referenced in /rhg/assets/FOT-大江戸勘亭流 Std E.otf didn't resolve at build time, it will remain unchanged to be resolved at runtime
-
 /rhg/assets/ui/nyanko-ui-stamp.svg referenced in /rhg/assets/ui/nyanko-ui-stamp.svg didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+/rhg/assets/FOT-大江戸勘亭流 Std E.otf referenced in /rhg/assets/FOT-大江戸勘亭流 Std E.otf didn't resolve at build time, it will remain unchanged to be resolved at runtime
 ✓ 282 modules transformed.
 rendering chunks...
 computing gzip size...
@@ -653,6 +657,6 @@ dist/assets/battleActorLifecyclePatches-DyKdNMTh.js              96.30 kB │ gz
 dist/assets/uiPatches-BvYPbo5W.js                               162.65 kB │ gzip: 40.40 kB
 dist/assets/BattleScene-DuD6VPMx.js                             315.94 kB │ gzip: 86.42 kB
 
-✓ built in 2.33s
+✓ built in 2.16s
 
 Exit code: 0

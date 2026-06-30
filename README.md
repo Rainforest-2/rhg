@@ -103,7 +103,7 @@ node scripts/check-ability-partial-blockers.mjs
 
 ### 起動方法
 - Codespaces または Claude Code CLI と Codex CLI がインストール・認証済みの開発環境で、`bash .ai/orchestrator.sh` を実行します。
-- 最大 5 周で停止します。
+- 最低 5 周は Claude レビュー → Codex 実装 → 検証を継続し、既定では最大 20 周まで試行します。
 - 自動 commit / push は行いません。
 - 各ラウンドのログは [.ai/logs](.ai/logs) に毎周保存され、失敗時の調査に利用できます。
 - 非対話モードが使えない場合の手動運用は [.ai/RUN_MANUALLY.md](.ai/RUN_MANUALLY.md) を参照してください。
@@ -121,7 +121,7 @@ node scripts/check-ability-partial-blockers.mjs
 - [.ai/changelog.md](.ai/changelog.md): Codex の変更履歴。
 - [.ai/prompts/claude-review.md](.ai/prompts/claude-review.md): Claude レビュー用の固定プロンプト。
 - [.ai/prompts/codex-fix.md](.ai/prompts/codex-fix.md): Codex 修正用の固定プロンプト。
-- [.ai/orchestrator.sh](.ai/orchestrator.sh): Claude レビュー → Codex 実装 → 検証を最大 5 周実行するローカル向けオーケストレーター。
+- [.ai/orchestrator.sh](.ai/orchestrator.sh): Claude レビュー → Codex 実装 → 検証を、最低周回数と監査完了条件に従って実行するローカル向けオーケストレーター。
 - [.github/workflows/ai-development.yml](.github/workflows/ai-development.yml): 手動起動でオーケストレーターを試行するワークフロー。
 
 ### 開発フロー
@@ -129,4 +129,4 @@ node scripts/check-ability-partial-blockers.mjs
 2. Claude が前回の Codex 出力、検証結果、現在の diff を読み、[.ai/review.md](.ai/review.md) に次の最小タスクを書きます。
 3. Codex が `.ai/review.md` の `Next Codex Task` だけを実装し、[.ai/changelog.md](.ai/changelog.md) に結果を追記します。
 4. `npm run check`、`npm test`、`npm run lint --if-present`、`npm run build --if-present` を実行します。
-5. すべて成功したら停止し、失敗した場合はログを次の Claude レビューに渡して次の周回に進みます。
+5. 検証が成功しても即停止せず、最低 5 周、重大・高優先度タスクなし、未監査の主要領域なし、検証成功のすべてを満たすまで次の周回に進みます。

@@ -4,8 +4,7 @@ export const BCU_BATTLE_ACTIONS = {
 };
 
 export function adaptBcuBattleAction(action, { frontLineup = 0, slot = null } = {}) {
-  if (action in BCU_BATTLE_ACTIONS) return BCU_BATTLE_ACTIONS[action];
+  if (typeof action === 'string' && Object.prototype.hasOwnProperty.call(BCU_BATTLE_ACTIONS, action)) return BCU_BATTLE_ACTIONS[action];
   if (Number.isFinite(slot)) return frontLineup * 5 + slot;
   return null;
 }
-

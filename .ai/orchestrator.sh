@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MAX_ROUNDS=5
+MIN_ROUNDS="${MIN_ROUNDS:-5}"
+MAX_ROUNDS="${MAX_ROUNDS:-10}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -151,6 +152,50 @@ run_verification() {
   return "${failed}"
 }
 
+section_body() {
+  local file="$1"
+  local section="$2"
+
+  awk -v section="${section}" '
+    $0 == "## " section { in_section = 1; next }
+    /^## / && in_section { exit }
+    in_section { print }
+  ' "${file}"
+}
+
+section_has_actionable_items() {
+  local file="$1"
+  local section="$2"
+  local body
+
+  body="$(section_body "${file}" "${section}" | sed '/^[[:space:]]*$/d')"
+  [[ -n "${body}" ]] || return 1
+  if printf '%s\n' "${body}" | grep -Eiq '^(none|no |no$|n/a|なし|該当なし|なし。|無し|無し。)$'; then
+    return 1
+  fi
+  return 0
+}
+
+review_has_priority_blockers() {
+  section_has_actionable_items "${REVIEW_FILE}" "Critical" || section_has_actionable_items "${REVIEW_FILE}" "High"
+}
+
+state_has_unaudited_major_areas() {
+  [[ -f "${STATE_FILE}" ]] || return 0
+  section_has_actionable_items "${STATE_FILE}" "Unaudited Major Areas"
+}
+
+can_stop_after_round() {
+  local round="$1"
+  local verification_status="$2"
+
+  [[ "${round}" -ge "${MIN_ROUNDS}" ]] || return 1
+  [[ "${verification_status}" -eq 0 ]] || return 1
+  ! review_has_priority_blockers || return 1
+  ! state_has_unaudited_major_areas || return 1
+  return 0
+}
+
 write_git_snapshot() {
   local round="$1"
   local log_file="$2"
@@ -213,6 +258,9 @@ require_command node
 require_command npm
 [[ -f "${CLAUDE_PROMPT}" ]] || die "missing ${CLAUDE_PROMPT}"
 [[ -f "${CODEX_PROMPT}" ]] || die "missing ${CODEX_PROMPT}"
+if [[ "${MIN_ROUNDS}" -lt 1 || "${MAX_ROUNDS}" -lt "${MIN_ROUNDS}" ]]; then
+  die "invalid round bounds: MIN_ROUNDS=${MIN_ROUNDS}, MAX_ROUNDS=${MAX_ROUNDS}"
+fi
 
 CLAUDE_HELP="$(capture_help claude)"
 CODEX_HELP="$(capture_help codex)"
@@ -221,6 +269,7 @@ CODEX_MODE="$(detect_codex_mode "${CODEX_HELP}")" || die "Codex CLI does not exp
 
 printf 'Using Claude mode: %s\n' "${CLAUDE_MODE}"
 printf 'Using Codex mode: %s\n' "${CODEX_MODE}"
+printf 'Round bounds: minimum %s, maximum %s\n' "${MIN_ROUNDS}" "${MAX_ROUNDS}"
 
 previous_codex_log=""
 previous_test_log=""
@@ -261,14 +310,33 @@ for round in $(seq 1 "${MAX_ROUNDS}"); do
     printf '\n'
   } >>"${CHANGELOG_FILE}"
 
+  verification_status=0
   if run_verification "${test_log}"; then
-    printf 'Verification passed after round %s. Stopping.\n' "${round}"
+    printf 'Verification passed after round %s.\n' "${round}"
+  else
+    verification_status=1
+    printf 'Verification failed after round %s. Continuing.\n' "${round}"
+  fi
+
+  previous_codex_log="${codex_log}"
+  previous_test_log="${test_log}"
+
+  if can_stop_after_round "${round}" "${verification_status}"; then
+    printf 'Stop conditions satisfied after round %s: minimum rounds met, no Critical/High review items, no unaudited major areas in state.md, and verification passed.\n' "${round}"
     exit 0
   fi
 
-  printf 'Verification failed after round %s. Continuing.\n' "${round}"
-  previous_codex_log="${codex_log}"
-  previous_test_log="${test_log}"
+  if [[ "${round}" -lt "${MIN_ROUNDS}" ]]; then
+    printf 'Continuing: minimum round count is %s.\n' "${MIN_ROUNDS}"
+  elif [[ "${verification_status}" -ne 0 ]]; then
+    printf 'Continuing: verification is still failing.\n'
+  elif review_has_priority_blockers; then
+    printf 'Continuing: Critical or High review items remain.\n'
+  elif state_has_unaudited_major_areas; then
+    printf 'Continuing: .ai/state.md still lists unaudited major areas.\n'
+  else
+    printf 'Continuing: stop conditions are not fully satisfied.\n'
+  fi
 done
 
-die "verification did not pass after ${MAX_ROUNDS} rounds"
+die "stop conditions were not satisfied after ${MAX_ROUNDS} rounds"

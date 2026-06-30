@@ -18,6 +18,6 @@ npm run build --if-present
 ```
 
 6. Save the command output in `.ai/logs/` or paste the relevant failure details into the next Claude review context.
-7. If any verification command fails, return the new logs to Claude and repeat the loop.
+7. Return the new logs to Claude and repeat the loop until all stop conditions are satisfied. Verification success alone is not enough to stop before the audit is complete.
 
-The loop is complete when Claude's `Stop Condition` is satisfied and the verification commands pass.
+The loop is complete only when at least 5 rounds have run, Claude reports no Critical or High tasks, `.ai/state.md` lists no unaudited major areas, and the verification commands pass.

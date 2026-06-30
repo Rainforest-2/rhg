@@ -9,6 +9,7 @@ Constraints:
 - Do not make unrequested specification changes.
 - Preserve existing runtime behavior unless the task explicitly requires changing it.
 - If facts are missing or the requested behavior cannot be proven, record the uncertainty in `.ai/state.md` under an `Unresolved` heading.
+- Update `.ai/state.md` when the `Next Codex Task` includes audit bookkeeping. Keep `## Audited Areas` and `## Unaudited Major Areas` current; remove an unaudited area only after it was actually inspected.
 - Add or update focused tests when the change needs test coverage.
 - Append a concise summary of your changes and verification notes to `.ai/changelog.md`.
 - Do not commit.

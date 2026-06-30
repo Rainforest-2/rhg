@@ -41,53 +41,13 @@ jobs:
       - name: Build (Vite)
         run: npm run build
 
-      # Harden the published client: obfuscate + minify every shipped JS chunk so the
-      # Pages output is hard to read/reuse, and inject anti-debug/self-defending guards
-      # (this is a game; end users never need devtools). ESM is preserved because globals
-      # and properties are NOT renamed (cross-module exports/imports and DOM APIs keep
-      # their names) and the hashed dynamic-import() path strings survive in the base64
-      # string array. A copyright banner is prepended afterward. Runs only on the built
-      # dist artifact, never on the repo source, so local development is unaffected. Each
-      # chunk is obfuscated in place with a fallback to the original file, so a single
-      # failure never breaks the deploy.
-      - name: Obfuscate shipped JS + add copyright banner
+      # Keep the published JS as the Vite output. Battle runtime responsiveness is more
+      # important than client-side obfuscation, so Pages no longer runs
+      # javascript-obfuscator, anti-debug, or self-defending transforms over the chunks.
+      # A small copyright banner is still prepended to shipped JS files.
+      - name: Add copyright banner
         run: |
-          set -o pipefail
           BANNER='/*! ワンコ大戦争 (rhg) — © 2026 RHgrive. All Rights Reserved. 無断複製・再配布・流用を禁じます / Unauthorized copying, rehosting or reuse is prohibited. */'
-          OBF="npx --yes javascript-obfuscator@4.1.1"
-          # ESM-safe base config: globals/properties are NOT renamed so cross-module
-          # export/import names and DOM APIs survive, and dynamic import('./x-hash.js')
-          # path strings stay resolvable inside the (base64) string array.
-          COMMON="--compact true --string-array true --string-array-threshold 0.75 --string-array-encoding base64 --identifier-names-generator mangled --control-flow-flattening false --dead-code-injection false --rename-globals false --rename-properties false --source-map false --target browser"
-          # Vite emits every shipped module as a hashed *.js chunk in dist/assets.
-          # Obfuscate each chunk in place (input==output), keeping the original on
-          # failure. Per-file avoids the directory-mode pitfall of dropping the
-          # co-located non-.js assets (png/zip/fonts/json) from the output.
-          # NB: javascript-obfuscator treats an --output path that does NOT end in
-          # .js as a directory (it would create "<name>.js.__o/" and fail the later
-          # mv), so every temp output must keep a .js extension.
-          find dist/assets -name '*.js' -print0 | while IFS= read -r -d '' f; do
-            out="${f%.js}.__obf.js"
-            if $OBF "$f" --output "$out" $COMMON; then
-              mv "$out" "$f"
-            else
-              echo "::warning::JS obfuscation failed for $f; shipping original."
-              rm -rf "$out"
-            fi
-          done
-          # Anti-debug + self-defending only on the single entry chunk referenced by
-          # index.html, so the whole app is guarded by ONE debugger interval instead
-          # of one per chunk (dozens of debugger loops would jank the game).
-          ENTRY=$(grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' dist/index.html | head -n1)
-          if [ -n "$ENTRY" ] && [ -f "dist/$ENTRY" ]; then
-            ENTRY_OUT="dist/${ENTRY%.js}.__obf.js"
-            if $OBF "dist/$ENTRY" --output "$ENTRY_OUT" $COMMON --self-defending true --debug-protection true --debug-protection-interval 4000; then
-              mv "$ENTRY_OUT" "dist/$ENTRY"
-            else
-              echo "::warning::entry-chunk hardening failed for $ENTRY; shipping base-obfuscated entry."
-              rm -rf "$ENTRY_OUT"
-            fi
-          fi
           find dist/assets -name '*.js' -print0 | while IFS= read -r -d '' f; do
             printf '%s\n' "$BANNER" | cat - "$f" > "$f.__b" && mv "$f.__b" "$f"
           done

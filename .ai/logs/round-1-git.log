@@ -1,21 +1,10 @@
 # Round 1 Git Snapshot
-Date: 2026-06-30T16:14:41Z
+Date: 2026-06-30T23:14:54Z
 
-## git status --short
- M .ai/RUN_MANUALLY.md
- M .ai/logs/round-1-git.log
+## git status --short --untracked-files=no
+[Limited to 200 lines; untracked files omitted.]
  M .ai/orchestrator.sh
- M .ai/prompts/claude-review.md
- M .ai/prompts/codex-fix.md
- M .ai/state.md
- M README.md
 
-## git diff --stat
- .ai/RUN_MANUALLY.md          |   4 +-
- .ai/logs/round-1-git.log     | 210 ++-----------------------------------------
- .ai/orchestrator.sh          |  78 ++++++++++++++--
- .ai/prompts/claude-review.md |  18 +++-
- .ai/prompts/codex-fix.md     |   1 +
- .ai/state.md                 |  24 ++++-
- README.md                    |   6 +-
- 7 files changed, 125 insertions(+), 216 deletions(-)
+## git diff --name-status
+[Limited to 20 files; .ai/logs and node_modules omitted.]
+M	.ai/orchestrator.sh

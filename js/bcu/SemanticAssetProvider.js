@@ -236,8 +236,8 @@ export class SemanticAssetProvider {
   getCastleEntry(key) { return this.indexes.castles?.byKey?.[key] || this.indexes.castles?.byKey?.[`enemyCastle:${key}`] || null; }
   getCoreEntry(key) { return this.indexes.core?.byKey?.[key] || this.indexes.core?.entries?.find((e) => e.key === key) || null; }
   getIconEntry(actorKey) {
-    if (String(actorKey || '').startsWith('enemy:')) return inferAggregateIconEntry(actorKey);
-    return this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || inferAggregateIconEntry(actorKey);
+    const indexed = this.indexes.icons?.byKey?.[actorKey] || this.indexes.icons?.entries?.find((e) => e.key === actorKey) || null;
+    return indexed || inferAggregateIconEntry(actorKey);
   }
   getActorIconEntry(actorKey) { return this.getIconEntry(actorKey); }
   getLanguageEntry(key) { return this.indexes.language?.byKey?.[key] || this.indexes.language?.entries?.find((e) => e.key === key) || null; }

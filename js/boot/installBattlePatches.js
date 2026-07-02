@@ -31,7 +31,10 @@ async function runDirectImports(onProgress) {
     await import('./groups/battleDirectPatches.js');
   } catch (error) {
     console.warn('[battle boot] direct patches failed; continuing', error);
-    globalThis.__BATTLE_BOOT_PATCH_ERRORS__.push({ path: './groups/battleDirectPatches.js', message: error?.message || String(error), stack: error?.stack || null });
+    globalThis.__BATTLE_BOOT_PATCH_ERRORS__ = [
+      ...(globalThis.__BATTLE_BOOT_PATCH_ERRORS__ || []),
+      { path: './groups/battleDirectPatches.js', message: error?.message || String(error), stack: error?.stack || null }
+    ];
   }
   onProgress?.(1);
 }

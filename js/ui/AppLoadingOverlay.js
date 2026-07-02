@@ -88,6 +88,9 @@ export class AppLoadingOverlay {
     this.root.classList.remove('is-hidden');
     this.root.classList.remove('is-error');
     if (this.root.dataset) this.root.dataset.loadingMode = 'normal';
+    this.lastProgressValue = 0;
+    const bar = this.root.querySelector('.app-loading-progress-bar');
+    if (bar) bar.style.width = '0%';
     this.startedAt = performance.now();
     this.elapsedMsOverride = null;
     this.root.querySelector('.app-loading-error').textContent = '';

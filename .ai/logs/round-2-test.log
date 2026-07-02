@@ -1,0 +1,671 @@
+# Verification
+Date: 2026-07-01T17:35:06Z
+
+## npm run check
+$ npm run check
+
+> rhg-bcu-battle@1.0.0 check
+> node scripts/check-bcu-ability-parity-safe-suite.mjs
+
+
+$ node --check js/battle/bcu-runtime/BcuDelayRuntime.js
+
+$ node --check js/battle/BcuDelayRuntimePatch.js
+
+$ node --check js/battle/bcu-runtime/BcuWaveInvalidRuntime.js
+
+$ node --check js/battle/BattleSceneBcuWaveInvalidApplyPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuBarrierShieldEffectRuntime.js
+
+$ node --check js/battle/BattleActorBarrierShieldVisualPatch.js
+
+$ node --check js/battle/BattleToxicEffectAssetPatch.js
+
+$ node --check js/battle/BcuProcImmunityVisualPatch.js
+
+$ node --check js/battle/BattleWaveEffectLoader.js
+
+$ node --check js/ui/PlayerProductionBar.js
+
+$ node --check js/ui/ProductionCardSkin.js
+
+$ node --check js/ui/ProductionCardDogIconFitPatch.js
+
+$ node --check js/bcu/BcuStageDifficultyRuntime.js
+
+$ node --check js/ui/FormationStageDifficultyPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuUnitLevelRuntime.js
+
+$ node --check js/battle/BattleSceneBcuUnitLevelPatch.js
+
+$ node --check js/ui/FormationEditorBcuUnitLevelPatch.js
+
+$ node --check js/bcu/BcuUnitRepository.js
+
+$ node --check js/battle/PlayableCharacterRegistry.js
+
+$ node --check js/battle/FormationStore.js
+
+$ node --check scripts/build-bcu-core-db-bundle.mjs
+
+$ node --check scripts/build-bcu-wave-effect-bundle.mjs
+
+$ node --check js/battle/BattleSceneBcuWaveOnBlockedHitPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuSummonRuntime.js
+
+$ node --check js/battle/BattleSceneBcuSummonPatch.js
+
+$ node --check js/battle/BattleActorZombieRevivePatch.js
+
+$ node --check js/battle/BcuStorageDiagnostics.js
+
+$ node --check js/battle/StageRegistry.js
+
+$ node --check js/battle/bcu-runtime/BcuCatCannonRuntime.js
+
+$ node --check js/battle/bcu-runtime/BcuCannonLevelCurve.js
+
+$ node --check js/battle/BattleSceneBcuCatCannonPatch.js
+
+$ node --check js/battle/BattleSceneRendererEffectGlowPatch.js
+
+$ node --check js/battle/BattleSceneAttackEffectPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuEnemyCastleBossSpawn.js
+
+$ node --check js/preview/PreviewAppBattleResultOverlayPatch.js
+
+$ node --check scripts/check-bcu-stage-difficulty-parity.mjs
+
+$ node --check scripts/check-production-card-icon-source-parity.mjs
+
+$ node --check scripts/check-bcu-parser-indexes.mjs
+
+$ node --check scripts/check-bcu-delay-runtime.mjs
+
+$ node --check scripts/check-bcu-stage-line-row-parity.mjs
+
+$ node --check scripts/check-bcu-wallet-runtime-parity.mjs
+
+$ node --check scripts/check-bcu-wave-invalid-parity.mjs
+
+$ node --check scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+
+$ node --check scripts/check-bcu-unit-level-runtime-parity.mjs
+
+$ node --check scripts/check-bcu-barrier-shield-effect-parity.mjs
+
+$ node --check scripts/check-bcu-burrow-lifecycle-parity.mjs
+
+$ node --check scripts/check-bcu-castle-guard-parity.mjs
+
+$ node --check scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+
+$ node --check scripts/check-bcu-spirit-lifecycle-parity.mjs
+
+$ node --check scripts/check-bcu-spirit-cooldown-emphasize-parity.mjs
+
+$ node --check scripts/check-bcu-summon-runtime-parity.mjs
+
+$ node --check scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+
+$ node --check scripts/check-bcu-demon-shield-regen-timing.mjs
+
+$ node --check scripts/check-projectile-damage-parity.mjs
+
+$ node --check scripts/check-proc-immunity-resistance-parity.mjs
+
+$ node --check scripts/check-bcu-toxic-effect-parity.mjs
+
+$ node --check scripts/check-effect-bundle-aliases.mjs
+
+$ node --check scripts/check-effect-coordinate-traces.mjs
+
+$ node --check scripts/check-bcu-death-animation-parity.mjs
+
+$ node --check scripts/check-bcu-warp-lifecycle-parity.mjs
+
+$ node --check scripts/check-bcu-warp-interrupt-scene-parity.mjs
+
+$ node --check scripts/check-bcu-combo-proc-duration-parity.mjs
+
+$ node --check scripts/check-bcu-combo-speed-crit-parity.mjs
+
+$ node --check scripts/check-ability-partial-blockers.mjs
+
+$ node --check scripts/check-bcu-wave-surge-point-capture-parity.mjs
+
+$ node --check scripts/check-bcu-metal-abi-double-apply.mjs
+
+$ node --check scripts/check-actor-render-bounds-guard.mjs
+
+$ node --check scripts/check-battle-runtime-lightweight-guards.mjs
+
+$ node scripts/check-bcu-stage-difficulty-parity.mjs
+check-bcu-stage-difficulty-parity: OK
+
+$ node scripts/check-production-card-icon-source-parity.mjs
+check-production-card-icon-source-parity: OK
+
+$ node scripts/check-bcu-parser-indexes.mjs
+check-bcu-parser-indexes: OK
+
+$ node scripts/check-bcu-delay-runtime.mjs
+check-bcu-delay-runtime: OK
+
+$ node scripts/check-bcu-stage-line-row-parity.mjs
+check-bcu-stage-line-row-parity: OK
+
+$ node scripts/check-bcu-wallet-runtime-parity.mjs
+check-bcu-wallet-runtime-parity: OK
+
+$ node scripts/check-bcu-wave-invalid-parity.mjs
+check-bcu-wave-invalid-parity: OK
+
+$ node scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+check-bcu-wave-on-barrier-shield-block-parity: OK
+
+$ node scripts/check-bcu-unit-level-runtime-parity.mjs
+check-bcu-unit-level-runtime-parity: OK
+
+$ node scripts/check-bcu-barrier-shield-effect-parity.mjs
+check-bcu-barrier-shield-effect-parity: OK
+
+$ node scripts/check-bcu-burrow-lifecycle-parity.mjs
+check-bcu-burrow-lifecycle-parity: OK
+
+$ node scripts/check-bcu-castle-guard-parity.mjs
+check-bcu-castle-guard-parity: OK
+
+$ node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+check-bcu-spirit-bundle-manifest-parity: OK spirits=21
+
+$ node scripts/check-bcu-spirit-lifecycle-parity.mjs
+check-bcu-spirit-lifecycle-parity: OK
+
+$ node scripts/check-bcu-summon-runtime-parity.mjs
+check-bcu-summon-runtime-parity: OK
+
+$ node scripts/check-bcu-summon-procobject-loader-parity.mjs
+check-bcu-summon-procobject-loader-parity: OK
+
+$ node scripts/check-bcu-trait-targetforms-loader-parity.mjs
+check-bcu-trait-targetforms-loader-parity: OK
+
+$ node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
+check-bcu-modifier-realdata-sweep-parity: OK
+
+$ node --check scripts/check-bcu-modifier-registry-failure-visibility.mjs
+
+$ node scripts/check-bcu-modifier-registry-failure-visibility.mjs
+[battle boot] combo registry load failed; combos disabled Error: loadBcuComboRegistry: semantic provider core-db unavailable
+    at loadBcuComboRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuComboRegistryLoader.js:44:13)
+    at installBcuComboRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuComboRegistryLoader.js:63:11)
+    at file:///workspaces/rhg/scripts/check-bcu-modifier-registry-failure-visibility.mjs:43:20
+[modifier] combo registry load failed; combo modifiers disabled: loadBcuComboRegistry: semantic provider core-db unavailable
+[battle boot] talent registry load failed; talents disabled Error: loadBcuTalentRegistry: semantic provider core-db unavailable
+    at loadBcuTalentRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuTalentRegistryLoader.js:54:13)
+    at installBcuTalentRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuTalentRegistryLoader.js:76:11)
+    at file:///workspaces/rhg/scripts/check-bcu-modifier-registry-failure-visibility.mjs:61:20
+[modifier] talent registry load failed; talent modifiers disabled: loadBcuTalentRegistry: semantic provider core-db unavailable
+check-bcu-modifier-registry-failure-visibility: OK
+
+$ node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
+check-bcu-zombie-extra-revive-source-range-parity: OK
+
+$ node scripts/check-formation-storage-failure-visibility.mjs
+[storage] formation write failed: quota exceeded
+[storage] formation read failed: read denied
+[storage] stage write failed: quota exceeded
+[storage] stage read failed: read denied
+check-formation-storage-failure-visibility: OK
+
+$ node scripts/check-bcu-battle-sound-effects-parity.mjs
+check-bcu-battle-sound-effects-parity: OK
+
+$ node scripts/check-bcu-counter-surge-reflect-parity.mjs
+check-bcu-counter-surge-reflect-parity: OK
+
+$ node scripts/check-boot-import-progress.mjs
+check-boot-import-progress: OK
+
+$ node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+check-bcu-zombie-corpse-soulstrike-parity: OK
+
+$ node scripts/check-bcu-demon-shield-regen-timing.mjs
+check-bcu-demon-shield-regen-timing: OK
+
+$ node scripts/check-projectile-damage-parity.mjs
+check-projectile-damage-parity: OK
+
+$ node scripts/check-proc-immunity-resistance-parity.mjs
+check-proc-immunity-resistance-parity: OK
+
+$ node scripts/check-bcu-toxic-effect-parity.mjs
+check-bcu-toxic-effect-parity: OK
+
+$ node scripts/check-effect-bundle-aliases.mjs
+check-effect-bundle-aliases: OK
+
+$ node scripts/check-effect-coordinate-traces.mjs
+check-effect-coordinate-traces: OK
+
+$ node scripts/check-bcu-death-animation-parity.mjs
+check-bcu-death-animation-parity: OK
+
+$ node scripts/check-bcu-warp-lifecycle-parity.mjs
+check-bcu-warp-lifecycle-parity: OK
+
+$ node scripts/check-bcu-warp-interrupt-scene-parity.mjs
+check-bcu-warp-interrupt-scene-parity: OK
+
+$ node scripts/check-bcu-combo-proc-duration-parity.mjs
+check-bcu-combo-proc-duration-parity: OK
+
+$ node scripts/check-bcu-combo-speed-crit-parity.mjs
+check-bcu-combo-speed-crit-parity: OK
+
+$ node scripts/check-ability-partial-blockers.mjs
+check-ability-partial-blockers: OK
+
+$ node scripts/check-bcu-wave-surge-point-capture-parity.mjs
+check-bcu-wave-surge-point-capture-parity: OK
+
+$ node scripts/check-bcu-metal-abi-double-apply.mjs
+check-bcu-metal-abi-double-apply: OK
+
+$ node scripts/check-bcu-cat-cannon-runtime-parity.mjs
+check-bcu-cat-cannon-runtime-parity: OK
+
+$ node scripts/check-bcu-cat-cannon-effect-position-parity.mjs
+check-bcu-cat-cannon-effect-position-parity: OK
+
+$ node scripts/check-bcu-cat-cannon-wave-anim-parity.mjs
+check-bcu-cat-cannon-wave-anim-parity: OK
+
+$ node scripts/check-bcu-cannon-level-curve-parity.mjs
+check-bcu-cannon-level-curve-parity: OK
+
+$ node scripts/check-bcu-non-basic-cat-cannon-spec-parity.mjs
+check-bcu-non-basic-cat-cannon-spec-parity: OK
+
+$ node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
+check-bcu-non-basic-cat-cannon-runtime-parity: OK
+
+$ node scripts/check-bcu-non-basic-cat-cannon-anim-parity.mjs
+OK check-bcu-non-basic-cat-cannon-anim-parity: per-cannon BASE/ATK(EXT) eanim mapping + real-anim spawn with observable trace fallback
+
+$ node scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs
+check-bcu-enemy-castle-boss-spawn-parity: OK
+
+$ node --check scripts/check-bcu-enemy-castle-resolution.mjs
+
+$ node scripts/check-bcu-enemy-castle-resolution.mjs
+OK: CH_CASTLES length -> 53
+OK: CH_CASTLES[0] -> 45
+OK: CH_CASTLES[45] -> 0
+OK: CH_CASTLES[46] -> 46
+OK: explicit id 7 -> 7
+OK: explicit id 0 -> 0
+OK: EoC1 Zombie (stageNormal0_0_Z) -> 1045
+OK: EoC2 Zombie (stageNormal0_1_Z) -> 1044
+OK: EoC3 Zombie (stageNormal0_2_Z) -> 1043
+OK: ItF1 (stageNormal1_0) -> 2042
+OK: ItF2 (stageNormal1_1) -> 2041
+OK: CotC1 (stageNormal2_0) -> 3039
+OK: path basename -> 1045
+OK: unknown -1 resolves real castle -> true
+check-bcu-enemy-castle-resolution: OK
+
+$ node scripts/check-actor-render-bounds-guard.mjs
+OK: enemy 393 ラミエル attack renders all 236 frames (peak bounds 15000x11625, old cap 4096)
+OK: actor render bounds guard rejects only non-finite/absurd, passes legitimate large animation frames
+
+$ node scripts/check-battle-runtime-lightweight-guards.mjs
+check-battle-runtime-lightweight-guards: OK
+
+$ node scripts/check-battle-pause-control.mjs
+check-battle-pause-control: OK (audio settings + pause/option control + sprite parity)
+
+$ node scripts/check-battle-music-and-zombie-killer.mjs
+check-battle-music-and-zombie-killer: OK (music pipeline + stage music + zombie killer SE)
+
+$ node --check scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+
+$ node scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+check-bcu-cat-cannon-wave-immunity-parity: OK
+
+$ node --check scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+
+$ node scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+check-bcu-boss-knockback-castle-limit-parity: OK
+
+$ node --check scripts/build-bcu-stage-crown-index.mjs
+
+$ node --check scripts/check-bcu-stage-crown-parity.mjs
+
+$ node scripts/check-bcu-stage-crown-parity.mjs
+check-bcu-stage-crown-parity: OK
+
+$ node --check scripts/check-bcu-special-castle-resolution-parity.mjs
+
+$ node scripts/check-bcu-special-castle-resolution-parity.mjs
+check-bcu-special-castle-resolution-parity: OK
+
+$ node --check scripts/build-bcu-slim-indexes.mjs
+
+$ node --check scripts/check-bcu-slim-indexes-sync.mjs
+
+$ node scripts/check-bcu-slim-indexes-sync.mjs
+OK: public/assets/generated/bcu-actor-index.slim.json in sync (4364KB)
+OK: public/assets/generated/bcu-background-index.slim.json in sync (1682KB)
+OK: public/assets/generated/bcu-stage-index.slim.json in sync (11486KB)
+check-bcu-slim-indexes-sync: OK
+
+BCU ability parity safe suite summary:
+- OK: node --check js/battle/bcu-runtime/BcuDelayRuntime.js
+- OK: node --check js/battle/BcuDelayRuntimePatch.js
+- OK: node --check js/battle/bcu-runtime/BcuWaveInvalidRuntime.js
+- OK: node --check js/battle/BattleSceneBcuWaveInvalidApplyPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuBarrierShieldEffectRuntime.js
+- OK: node --check js/battle/BattleActorBarrierShieldVisualPatch.js
+- OK: node --check js/battle/BattleToxicEffectAssetPatch.js
+- OK: node --check js/battle/BcuProcImmunityVisualPatch.js
+- OK: node --check js/battle/BattleWaveEffectLoader.js
+- OK: node --check js/ui/PlayerProductionBar.js
+- OK: node --check js/ui/ProductionCardSkin.js
+- OK: node --check js/ui/ProductionCardDogIconFitPatch.js
+- OK: node --check js/bcu/BcuStageDifficultyRuntime.js
+- OK: node --check js/ui/FormationStageDifficultyPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuUnitLevelRuntime.js
+- OK: node --check js/battle/BattleSceneBcuUnitLevelPatch.js
+- OK: node --check js/ui/FormationEditorBcuUnitLevelPatch.js
+- OK: node --check js/bcu/BcuUnitRepository.js
+- OK: node --check js/battle/PlayableCharacterRegistry.js
+- OK: node --check js/battle/FormationStore.js
+- OK: node --check scripts/build-bcu-core-db-bundle.mjs
+- OK: node --check scripts/build-bcu-wave-effect-bundle.mjs
+- OK: node --check js/battle/BattleSceneBcuWaveOnBlockedHitPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuSummonRuntime.js
+- OK: node --check js/battle/BattleSceneBcuSummonPatch.js
+- OK: node --check js/battle/BattleActorZombieRevivePatch.js
+- OK: node --check js/battle/BcuStorageDiagnostics.js
+- OK: node --check js/battle/StageRegistry.js
+- OK: node --check js/battle/bcu-runtime/BcuCatCannonRuntime.js
+- OK: node --check js/battle/bcu-runtime/BcuCannonLevelCurve.js
+- OK: node --check js/battle/BattleSceneBcuCatCannonPatch.js
+- OK: node --check js/battle/BattleSceneRendererEffectGlowPatch.js
+- OK: node --check js/battle/BattleSceneAttackEffectPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuEnemyCastleBossSpawn.js
+- OK: node --check js/preview/PreviewAppBattleResultOverlayPatch.js
+- OK: node --check scripts/check-bcu-stage-difficulty-parity.mjs
+- OK: node --check scripts/check-production-card-icon-source-parity.mjs
+- OK: node --check scripts/check-bcu-parser-indexes.mjs
+- OK: node --check scripts/check-bcu-delay-runtime.mjs
+- OK: node --check scripts/check-bcu-stage-line-row-parity.mjs
+- OK: node --check scripts/check-bcu-wallet-runtime-parity.mjs
+- OK: node --check scripts/check-bcu-wave-invalid-parity.mjs
+- OK: node --check scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+- OK: node --check scripts/check-bcu-unit-level-runtime-parity.mjs
+- OK: node --check scripts/check-bcu-barrier-shield-effect-parity.mjs
+- OK: node --check scripts/check-bcu-burrow-lifecycle-parity.mjs
+- OK: node --check scripts/check-bcu-castle-guard-parity.mjs
+- OK: node --check scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+- OK: node --check scripts/check-bcu-spirit-lifecycle-parity.mjs
+- OK: node --check scripts/check-bcu-spirit-cooldown-emphasize-parity.mjs
+- OK: node --check scripts/check-bcu-summon-runtime-parity.mjs
+- OK: node --check scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+- OK: node --check scripts/check-bcu-demon-shield-regen-timing.mjs
+- OK: node --check scripts/check-projectile-damage-parity.mjs
+- OK: node --check scripts/check-proc-immunity-resistance-parity.mjs
+- OK: node --check scripts/check-bcu-toxic-effect-parity.mjs
+- OK: node --check scripts/check-effect-bundle-aliases.mjs
+- OK: node --check scripts/check-effect-coordinate-traces.mjs
+- OK: node --check scripts/check-bcu-death-animation-parity.mjs
+- OK: node --check scripts/check-bcu-warp-lifecycle-parity.mjs
+- OK: node --check scripts/check-bcu-warp-interrupt-scene-parity.mjs
+- OK: node --check scripts/check-bcu-combo-proc-duration-parity.mjs
+- OK: node --check scripts/check-bcu-combo-speed-crit-parity.mjs
+- OK: node --check scripts/check-ability-partial-blockers.mjs
+- OK: node --check scripts/check-bcu-wave-surge-point-capture-parity.mjs
+- OK: node --check scripts/check-bcu-metal-abi-double-apply.mjs
+- OK: node --check scripts/check-actor-render-bounds-guard.mjs
+- OK: node --check scripts/check-battle-runtime-lightweight-guards.mjs
+- OK: node scripts/check-bcu-stage-difficulty-parity.mjs
+- OK: node scripts/check-production-card-icon-source-parity.mjs
+- OK: node scripts/check-bcu-parser-indexes.mjs
+- OK: node scripts/check-bcu-delay-runtime.mjs
+- OK: node scripts/check-bcu-stage-line-row-parity.mjs
+- OK: node scripts/check-bcu-wallet-runtime-parity.mjs
+- OK: node scripts/check-bcu-wave-invalid-parity.mjs
+- OK: node scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+- OK: node scripts/check-bcu-unit-level-runtime-parity.mjs
+- OK: node scripts/check-bcu-barrier-shield-effect-parity.mjs
+- OK: node scripts/check-bcu-burrow-lifecycle-parity.mjs
+- OK: node scripts/check-bcu-castle-guard-parity.mjs
+- OK: node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+- OK: node scripts/check-bcu-spirit-lifecycle-parity.mjs
+- OK: node scripts/check-bcu-summon-runtime-parity.mjs
+- OK: node scripts/check-bcu-summon-procobject-loader-parity.mjs
+- OK: node scripts/check-bcu-trait-targetforms-loader-parity.mjs
+- OK: node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
+- OK: node --check scripts/check-bcu-modifier-registry-failure-visibility.mjs
+- OK: node scripts/check-bcu-modifier-registry-failure-visibility.mjs
+- OK: node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
+- OK: node scripts/check-formation-storage-failure-visibility.mjs
+- OK: node scripts/check-bcu-battle-sound-effects-parity.mjs
+- OK: node scripts/check-bcu-counter-surge-reflect-parity.mjs
+- OK: node scripts/check-boot-import-progress.mjs
+- OK: node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+- OK: node scripts/check-bcu-demon-shield-regen-timing.mjs
+- OK: node scripts/check-projectile-damage-parity.mjs
+- OK: node scripts/check-proc-immunity-resistance-parity.mjs
+- OK: node scripts/check-bcu-toxic-effect-parity.mjs
+- OK: node scripts/check-effect-bundle-aliases.mjs
+- OK: node scripts/check-effect-coordinate-traces.mjs
+- OK: node scripts/check-bcu-death-animation-parity.mjs
+- OK: node scripts/check-bcu-warp-lifecycle-parity.mjs
+- OK: node scripts/check-bcu-warp-interrupt-scene-parity.mjs
+- OK: node scripts/check-bcu-combo-proc-duration-parity.mjs
+- OK: node scripts/check-bcu-combo-speed-crit-parity.mjs
+- OK: node scripts/check-ability-partial-blockers.mjs
+- OK: node scripts/check-bcu-wave-surge-point-capture-parity.mjs
+- OK: node scripts/check-bcu-metal-abi-double-apply.mjs
+- OK: node scripts/check-bcu-cat-cannon-runtime-parity.mjs
+- OK: node scripts/check-bcu-cat-cannon-effect-position-parity.mjs
+- OK: node scripts/check-bcu-cat-cannon-wave-anim-parity.mjs
+- OK: node scripts/check-bcu-cannon-level-curve-parity.mjs
+- OK: node scripts/check-bcu-non-basic-cat-cannon-spec-parity.mjs
+- OK: node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
+- OK: node scripts/check-bcu-non-basic-cat-cannon-anim-parity.mjs
+- OK: node scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs
+- OK: node --check scripts/check-bcu-enemy-castle-resolution.mjs
+- OK: node scripts/check-bcu-enemy-castle-resolution.mjs
+- OK: node scripts/check-actor-render-bounds-guard.mjs
+- OK: node scripts/check-battle-runtime-lightweight-guards.mjs
+- OK: node scripts/check-battle-pause-control.mjs
+- OK: node scripts/check-battle-music-and-zombie-killer.mjs
+- OK: node --check scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+- OK: node scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+- OK: node --check scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+- OK: node scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+- OK: node --check scripts/build-bcu-stage-crown-index.mjs
+- OK: node --check scripts/check-bcu-stage-crown-parity.mjs
+- OK: node scripts/check-bcu-stage-crown-parity.mjs
+- OK: node --check scripts/check-bcu-special-castle-resolution-parity.mjs
+- OK: node scripts/check-bcu-special-castle-resolution-parity.mjs
+- OK: node --check scripts/build-bcu-slim-indexes.mjs
+- OK: node --check scripts/check-bcu-slim-indexes-sync.mjs
+- OK: node scripts/check-bcu-slim-indexes-sync.mjs
+
+check-bcu-ability-parity-safe-suite: OK
+
+Exit code: 0
+
+## npm test
+$ npm test
+
+> rhg-bcu-battle@1.0.0 test
+> node --test tests/*.test.mjs
+
+✔ AppLoadingOverlay show resets progress for reused overlay instances (3.522042ms)
+✔ damage queue is excused in insertion order (no side/position/key resort) (1.740784ms)
+✔ player-before-enemy insertion order (the BCU direction-pass order) is preserved (0.211945ms)
+✔ known BCU battle actions map to lineup change sentinels (1.098667ms)
+✔ inherited object names fall through to slot indexes when slot is finite (0.233104ms)
+✔ inherited object names return null when no finite slot is present (0.17185ms)
+✔ unknown actions fall through to slot index or null (0.19343ms)
+✔ BcuCombatModel parses unit full IMU* guard fields (2.362572ms)
+✔ BcuCombatModel parses enemy full IMU* guard fields with confirmed DataEnemy columns (0.734859ms)
+✔ applyBcuProc rejects full immunity status procs without state side effects (3.373506ms)
+✔ applyBcuProc applies partial resistance to status duration and toxic damage (2.18425ms)
+✔ IMUWEAK smartImu follows BCU checkSmartImu direction (0.627339ms)
+✔ applyBcuProc applies partial knockback resistance to proc KB distance (0.898334ms)
+✔ ProcResolver suppresses curse and seal proc groups before runtime apply (1.82977ms)
+✔ guardBcuDamage rejects wave, surge, blast, and toxic queue before damage is pending (0.728007ms)
+✔ queueAttackDamage applies partial wave resistance before enqueueing damage (3.805971ms)
+✔ queueAttackDamage guard rejection does not enqueue pending damage or procs (0.700515ms)
+✔ normal queueAttackDamage still enqueues regular attack damage (0.879428ms)
+✔ curse and seal suppress DamageAbilityResolver trait ability multipliers and restore when expired (1.395831ms)
+✔ seal suppresses strongAttack and critical procs in damage resolver (0.431404ms)
+✔ critical BattleScene wrapper chain remains callable after parity imports (0.345634ms)
+✔ BattleAttackProfile maps per-hit abi flags onto attack events as bcuHitAbi (1.251672ms)
+✔ ProcResolver gates attack procs per hit on bcuHitAbi != 1 (BCU abis[ind] == 1 setProc gate) (0.915195ms)
+✔ ProcResolver keeps entity-level zombieKiller/soulstrike exempt from the hit abi gate (0.308354ms)
+✔ DamageAbilityResolver gates strongAttack/critical procs per hit on bcuHitAbi != 1 (0.290652ms)
+✔ zombie revive enters attack-wait immediately when an enemy is in touch range (BCU update2 checkTouch) (11.14753ms)
+✔ CopRand nextFloat(seed=0) matches BCU/Java float vector exactly (1.566549ms)
+✔ CopRand nextFloat results are exact Java floats (Math.fround stable) (0.248874ms)
+✔ CopRand nextDouble consumes the seed identically to nextFloat (0.263691ms)
+✔ CopRand is reproducible from the same 64-bit seed (2.505618ms)
+✔ CopRand drawCount tracks the number of seeded draws (0.220682ms)
+✔ JavaRandom matches java.util.Random nextInt/nextLong for seed=0 (0.200825ms)
+✔ normalizeBattleSeed parses strings and clamps to signed 64-bit; randomBattleSeed is in range (0.620927ms)
+✔ direction sort is stable: dire -1 (player) before +1 (enemy), insertion order kept on ties (2.016317ms)
+✔ direction sort falls back to side when direction is absent (dog-player => -1) (0.256779ms)
+✔ layer sort is stable: ascending currentLayer, insertion order kept within a layer (0.349351ms)
+✔ same-direction, same-position entities are NOT reordered (no pos/instanceId tiebreak) (0.400507ms)
+✔ will=0 enemy occupies exactly 1 slot (1.363029ms)
+✔ will=2 enemy occupies 3 slots (will + 1) (0.210272ms)
+✔ an enemy in final knockback is still counted (0.207467ms)
+✔ a 'dead' enemy still playing its death animation (not removable) is counted (0.267718ms)
+✔ a 'dead' enemy that is BCU-removable is NOT counted (0.22552ms)
+✔ mixed roster sums will+1 per non-dead enemy and ignores removed/removable ones (0.274461ms)
+✔ boss-as-base (EEnemy) adds will+1; an ECastle base does not (0.299007ms)
+✔ constructor draws row first-frame BEFORE the global respawn (BCU StageBasis order) (1.423402ms)
+✔ commit draws row respawn -> spawn layer -> global respawn; spawn frame and layer are exact (1.675232ms)
+✔ a failed spawn (rejectSpawn) consumes no RNG (0.389346ms)
+✔ computeBcuTouchState: Target Only with only an incompatible enemy in range -> touch true, touchEnemy false (1.668398ms)
+✔ computeBcuTouchState: adding a trait-compatible enemy flips touchEnemy true (0.350713ms)
+✔ computeBcuTouchState: Target Only with only the enemy base in range -> touchEnemy true (base counts) (0.326168ms)
+✔ computeBcuTouchState: non-Target-Only unit attacks any in-range enemy (touchEnemy == touch) (0.208669ms)
+✔ computeBcuTouchState: nothing in range -> touch false, touchEnemy false (0.235669ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1500.781937
+
+Exit code: 0
+
+## npm run lint --if-present
+$ npm run lint --if-present
+
+Exit code: 0
+
+## npm run build --if-present
+$ npm run build --if-present
+
+> rhg-bcu-battle@1.0.0 build
+> vite build
+
+vite v8.1.0 building client environment for production...
+[2Ktransforming...
+/rhg/assets/vendor/bootstrap-icons/bootstrap-icons.min.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+
+/rhg/assets/ui/nyanko-menu-bg.png referenced in /rhg/assets/ui/nyanko-menu-bg.png didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+/rhg/assets/ui/nyanko-battle-load-bg.png referenced in /rhg/assets/ui/nyanko-battle-load-bg.png didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+/rhg/assets/ui/nyanko-ui-stamp.svg referenced in /rhg/assets/ui/nyanko-ui-stamp.svg didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+/rhg/assets/FOT-大江戸勘亭流 Std E.otf referenced in /rhg/assets/FOT-大江戸勘亭流 Std E.otf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+✓ 282 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                   2.72 kB │ gzip:  1.34 kB
+dist/assets/nyanko-stage-selector-pro-DZ_9GIkk.css               20.22 kB │ gzip:  3.41 kB
+dist/assets/index-BqVnFC8Q.css                                  163.45 kB │ gzip: 26.21 kB
+dist/assets/installBcuPatches-CSxvAhkH.js                         0.39 kB │ gzip:  0.26 kB
+dist/assets/BcuModifierDiagnostics-0ktZapK-.js                    0.68 kB │ gzip:  0.41 kB
+dist/assets/installUiPatches-kxa96f9S.js                          0.73 kB │ gzip:  0.44 kB
+dist/assets/BcuImgCut-Dl3DzW60.js                                 0.76 kB │ gzip:  0.49 kB
+dist/assets/battleDirectPatches-CS5RroPu.js                       0.86 kB │ gzip:  0.45 kB
+dist/assets/installBattleRendererPatches-zdcy3iMT.js              0.93 kB │ gzip:  0.51 kB
+dist/assets/installBattleCorePatches-Be67e39S.js                  0.95 kB │ gzip:  0.52 kB
+dist/assets/installBattleProjectilePatches-DrbRUgW-.js            0.97 kB │ gzip:  0.52 kB
+dist/assets/BcuComboRegistryLoader-BoSRIusU.js                    1.02 kB │ gzip:  0.58 kB
+dist/assets/installBattleActorLifecyclePatches-BZFRxAQd.js        1.10 kB │ gzip:  0.58 kB
+dist/assets/BcuExtraActorAnimationBundlePatch-DVYv3haB.js         1.52 kB │ gzip:  0.79 kB
+dist/assets/AudioSettings-BjmvYlQ-.js                             1.66 kB │ gzip:  0.66 kB
+dist/assets/BcuTalentRegistryLoader-X_PTvVCz.js                   1.71 kB │ gzip:  0.88 kB
+dist/assets/installBattleScenePatches-Dy_FKrR2.js                 1.75 kB │ gzip:  0.76 kB
+dist/assets/BattleTouchGuard-sEjdcWfn.js                          1.76 kB │ gzip:  0.79 kB
+dist/assets/PreviewAppBattleMusicPatch-C30VvVHD.js                1.90 kB │ gzip:  0.84 kB
+dist/assets/PreviewAppCustomStageBattleConfigPatch-DySghrkS.js    1.97 kB │ gzip:  0.87 kB
+dist/assets/runtimePatches-iJeA1mxn.js                            2.12 kB │ gzip:  0.86 kB
+dist/assets/BattleSceneBcuTouchPatch-QuZjYXXX.js                  2.16 kB │ gzip:  0.90 kB
+dist/assets/PreviewAppPageTransitionPatch-Dd9NbpZf.js             2.19 kB │ gzip:  0.94 kB
+dist/assets/BcuWaveBundleEffectSpawner-CHiOw5hP.js                2.98 kB │ gzip:  1.45 kB
+dist/assets/installBattlePatches-D9FKvdJL.js                      3.21 kB │ gzip:  1.11 kB
+dist/assets/RuntimeAssetGuard-BRw2XkJD.js                         3.23 kB │ gzip:  1.39 kB
+dist/assets/BcuAssetDatabase-z22IXhrf.js                          3.35 kB │ gzip:  1.14 kB
+dist/assets/BattleSoundEventPatch-b28P0pYw.js                     4.74 kB │ gzip:  2.00 kB
+dist/assets/BcuResistRuntime-CNh-d7Eb.js                          4.90 kB │ gzip:  1.92 kB
+dist/assets/PreviewAppBattleResultOverlayPatch-BAezTWsN.js        5.06 kB │ gzip:  2.11 kB
+dist/assets/BcuComboStatModifier-DHuRy_8U.js                      5.10 kB │ gzip:  2.23 kB
+dist/assets/BcuBarrierShieldEffectRuntime-DPp0-MNg.js             6.10 kB │ gzip:  2.11 kB
+dist/assets/BcuWarpLifecycleRuntime-nin-FQIA.js                   6.67 kB │ gzip:  2.58 kB
+dist/assets/BcuSpriteText-Cxo1P_3f.js                             8.17 kB │ gzip:  2.59 kB
+dist/assets/index-feAXEv7K.js                                     9.08 kB │ gzip:  3.80 kB
+dist/assets/BattleSoundEffects-CP9l6PBd.js                        9.15 kB │ gzip:  3.30 kB
+dist/assets/BcuCombatModel-BV-AUOiZ.js                           10.16 kB │ gzip:  3.70 kB
+dist/assets/BattleSurgeRuntimePatch-Btib4sqW.js                  11.22 kB │ gzip:  4.23 kB
+dist/assets/StageRuntimeSceneAdapter-kia5Vaxm.js                 11.60 kB │ gzip:  3.22 kB
+dist/assets/BcuTalentInfoData-C0XKDm3m.js                        12.05 kB │ gzip:  4.03 kB
+dist/assets/BattleWaveEffectLoader-ByGdEngG.js                   13.22 kB │ gzip:  3.02 kB
+dist/assets/BcuAssetLoader-uyvXAJO_.js                           13.34 kB │ gzip:  4.43 kB
+dist/assets/PreviewAppBattlePauseOverlayPatch-D6td2AJ_.js        15.56 kB │ gzip:  4.78 kB
+dist/assets/BattleStatsLoader-CArpgFRO.js                        17.41 kB │ gzip:  5.70 kB
+dist/assets/BcuStatusEffectManager-CD_zNYNZ.js                   20.91 kB │ gzip:  6.90 kB
+dist/assets/battleRendererPatches-CXAL9dbN.js                    22.74 kB │ gzip:  7.88 kB
+dist/assets/BcuCatCannonRuntime-pIGvBvFn.js                      24.04 kB │ gzip:  8.10 kB
+dist/assets/BattleSceneRenderer-Bqchl5Qq.js                      32.09 kB │ gzip:  9.84 kB
+dist/assets/battleProjectilePatches-BimeWX6G.js                  39.34 kB │ gzip: 11.26 kB
+dist/assets/ProductionCardSkin-BWSeJKGr.js                       43.94 kB │ gzip: 13.70 kB
+dist/assets/BcuBootLoader-CiZy9j2z.js                            44.10 kB │ gzip: 12.37 kB
+dist/assets/BcuOrbModifier-2K13GtU-.js                           62.35 kB │ gzip: 19.19 kB
+dist/assets/PreviewApp-BsGG8b0p.js                               62.74 kB │ gzip: 19.22 kB
+dist/assets/battleCorePatches-AvjPpTf9.js                        74.45 kB │ gzip: 22.14 kB
+dist/assets/battleScenePatches-UGx4Xyrz.js                       77.13 kB │ gzip: 21.96 kB
+dist/assets/battleActorLifecyclePatches-0Z4afhmu.js              96.30 kB │ gzip: 27.64 kB
+dist/assets/uiPatches-DhnzwR5T.js                               162.65 kB │ gzip: 40.40 kB
+dist/assets/BattleScene-CePKhscw.js                             315.94 kB │ gzip: 86.42 kB
+
+[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - vite:css-post (48%)
+  - vite:css (15%)
+  - vite:worker (13%)
+  - vite:asset (10%)
+  - vite:prepare-out-dir (7%)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+
+✓ built in 3.13s
+
+Exit code: 0

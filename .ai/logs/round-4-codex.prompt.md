@@ -1,0 +1,72 @@
+# Codex Fix Prompt
+
+You are the implementation owner for this repository.
+
+Implement only the `Next Codex Task` from `.ai/review.md`. Do not implement other review findings unless they are strictly required to complete that task.
+
+Constraints:
+- Do not make huge changes.
+- Do not make unrequested specification changes.
+- Preserve existing runtime behavior unless the task explicitly requires changing it.
+- If facts are missing or the requested behavior cannot be proven, record the uncertainty in `.ai/state.md` under an `Unresolved` heading.
+- Update `.ai/state.md` when the `Next Codex Task` includes audit bookkeeping. Keep `## Audited Areas` and `## Unaudited Major Areas` current; remove an unaudited area only after it was actually inspected.
+- Add or update focused tests when the change needs test coverage.
+- Append a concise summary of your changes and verification notes to `.ai/changelog.md`.
+- Do not commit.
+- Do not push.
+
+Before finishing, run the verification commands that are relevant to the files you changed when they are available in this environment.
+
+
+# Runtime Context
+Round: 4 of 10
+Repository: /workspaces/rhg
+
+## Claude Review
+I've completed a thorough fresh audit of `js/preview` (all 10 files) and `js/data` (all 3 files). The concrete discovery is an orphaned data module. Here is my review.
+
+# Review
+
+## Critical
+None
+
+## High
+None
+
+## Medium
+- **`js/data/bcuAvailableEnemyAssets.js` is a fully orphaned module with a fabricated asset-availability index.** Verified by repo-wide grep (`.js`/`.mjs`/`.html`/`.json`, excluding `node_modules`/`.git`): there are **zero** references to `bcuAvailableEnemyAssets`, `hasBcuEnemyAsset`, or `BCU_AVAILABLE_ENEMY_IDS` outside the file itself — no static import, no dynamic import, no HTML/JSON manifest. (Control check confirms the sibling data files `previewAssets.js` and `bcuStageManifest.js` *are* imported by live `js/battle`/`js/preview` code, so the grep is reliable.) Beyond being dead code, the module hardcodes `new Set(0..299)` and `hasBcuEnemyAsset(id)` returns `true` for any id 0–299 **without consulting actual semantic ZIP asset presence**. If this were ever wired in, it would be a fabricated availability index — exactly the kind of invented BCU index/silent claim the repo guardrails forbid (`BCU の CSV インデックス…を勝手に作らない`). This mirrors the round-3 `js/bcu-render` orphan: the correct action is to **record** it (audit bookkeeping + an Unresolved decision item), **not** delete it this round, since removing scaffold needs an evidence-based decision.
+
+## Low
+- **`js/preview/PreviewAppBattleMusicPatch.js:54,63` — boss music can start at battle open.** `startBattleMusic`/`updateBattleMusic` both use `pct <= threshold`, and `stageMusicSpec` defaults `threshold` to `100` when `rt.bossMusicHpThresholdPercent` is non-finite (and `StageMusicResolver` likewise bakes `bossHpThresholdPercent: 100` on a missing cell). At battle start `pct === 100`, so a stage with a distinct boss-music id but no explicit threshold begins directly on boss music. Plausibly a BCU `mush` parity question, not a clear defect — record as Unresolved, do not change.
+- **`js/preview` is otherwise consistent.** The fit-to-height transform (`PreviewRenderer.resize`), the `bcu-no-catchup` fixed-step clock (`BattleSimulationClock`), the shared pause gate (`PreviewAppBattlePauseOverlayPatch.syncSimulationPause`), and the result/transition patches all check out; `PreviewUi.log` HTML-escapes runtime messages. No runtime defect found.
+
+## Next Codex Task
+No runtime code change this round (the only live discovery is orphaned scaffold, whose removal is deferred pending an evidence-based decision per the repo guardrails; the boss-music threshold is a parity question, not a defect). Record the fresh `js/preview` + `js/data` audit in `.ai/state.md`:
+
+1. **Audited Areas** — add:
+   - `js/preview` — full read-through of all 10 files (`PreviewApp.js`, `PreviewRenderer.js`, `PreviewUi.js`, `BattleSimulationClock.js`, `BattleCameraInputController.js`, `PreviewAppBattleMusicPatch.js`, `PreviewAppBattlePauseOverlayPatch.js`, `PreviewAppBattleResultOverlayPatch.js`, `PreviewAppCustomStageBattleConfigPatch.js`, `PreviewAppPageTransitionPatch.js`); found consistent. No runtime defect; the boss-music-start `<=` threshold default is recorded as a parity question below.
+   - `js/data` — full read-through of all 3 files (`bcuStageManifest.js`, `previewAssets.js`, `bcuAvailableEnemyAssets.js`). Confirmed `bcuStageManifest` (via `StageRegistry`) and `previewAssets` (via `BattleScene`/`BattleActorFactory`/`PreviewApp`/`DebugBattleInspector`) are imported by live code, and `bcuAvailableEnemyAssets.js` has zero importers across `js/`, `scripts/`, and `tests/` (orphaned).
+
+2. **Unaudited Major Areas** — remove `js/data` and `js/preview`, leaving exactly `js/battle`, `js/bcu`, `js/ui`, `scripts`, `tests`.
+
+3. **Discovered Issues / Current Task** — record: "Audited `js/preview` + `js/data`; found `js/data/bcuAvailableEnemyAssets.js` orphaned (no importer of `hasBcuEnemyAsset`/`BCU_AVAILABLE_ENEMY_IDS`) and it hardcodes enemy ids 0..299 as 'available', a fabricated availability index if ever wired in. Recorded as a decision item; no code removed."
+
+4. **Unresolved** — add:
+   - `js/data/bcuAvailableEnemyAssets.js` is orphaned (zero importers in `js/`/`scripts/`/`tests/`) and `hasBcuEnemyAsset` asserts enemy ids 0..299 are "available" without consulting real semantic ZIP asset presence; decide whether to remove the dead module or, if a consumer is intended, replace the hardcoded `0..299` set with a real asset-presence check — without fabricating a BCU asset index — before claiming `js/data` clean.
+   - `js/preview/PreviewAppBattleMusicPatch.js` `startBattleMusic`/`updateBattleMusic` use `pct <= threshold` with a default threshold of 100 (from `StageMusicResolver` when `bossHpThresholdPercent` is non-finite), so a stage with a distinct boss-music id and no explicit threshold begins battle directly on boss music; confirm against BCU MapStageData `mush` semantics whether boss music should start immediately at 100% or only strictly below threshold before changing this.
+
+5. Append a concise summary to `.ai/changelog.md`. Do not add new status files, do not delete or modify any `js/` runtime code, and do not change the music threshold comparison.
+
+## Verification Commands
+- `grep -rn "hasBcuEnemyAsset\|BCU_AVAILABLE_ENEMY_IDS" js scripts tests` (must match only `js/data/bcuAvailableEnemyAssets.js` — re-confirms the orphan claim)
+- `node --check js/data/bcuAvailableEnemyAssets.js`
+- `npm run check`
+- `npm test`
+- `npm run build`
+
+## Stop Condition
+Not satisfied. This is round 4 of at least 5; after this task lands `## Unaudited Major Areas` still lists five areas (`js/battle`, `js/bcu`, `js/ui`, `scripts`, `tests`); and verification has not yet run for this round. Continue the loop.
+
+
+## Latest Verification Output
+No verification output for this round yet.

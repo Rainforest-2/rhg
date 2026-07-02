@@ -1,0 +1,54 @@
+I have a confirmed, user-visible defect in the unaudited `js/ui` area. Let me verify the previous Codex patch has no regression, then write the review.
+
+The previous patch (`BattleSoundEventPatch.js` throttle guard) in the diff is exactly the recommended guarded form — correct, no regression. I have enough to write the review.
+
+# Review
+
+## Critical
+None
+
+## High
+- **`js/ui/AppLoadingOverlay.js:86-96` — the loading progress bar is permanently stuck at 100% on every battle load after the first.** `setProgress` clamps progress monotonically: `const next = Math.max(this.lastProgressValue, …)` (line 132) and stores it back (line 133). `lastProgressValue` is initialized to `0` only in the constructor (line 63); **`show()` never resets it**. The overlay is instantiated once (`PreviewApp.js:89`) and reused for every battle load — `applyFormationToBattle` (`PreviewApp.js:217`) and `resetBattle` (`PreviewApp.js:267`) both call `show()` on the same instance. The first load ramps the bar `0.05 → 0.83 → 0.84 → 0.9 → 1.0` (`resetBattle` ends at `value: 1.0`, `PreviewApp.js:350`), leaving `lastProgressValue === 1`. Every subsequent `show()` leaves it at `1`, so `setProgress({value: 0.05})` computes `Math.max(1, 0.05) === 1` and the bar renders full for the entire load. Since retrying a stage or returning to formation and starting another battle is routine, this is a confirmed user-visible regression: the prominent progress bar shows "complete" while the battle is still loading. The step chips still update (they key off `phase`, lines 136-142), which is exactly what makes the stuck bar misleading rather than obviously broken. `BattleLoadingProgressVerifier.verifyLoadingOverlayTimerAdvances` only does a static `s.includes('lastProgressValue')` text check (and is itself orphaned — no importer), so nothing catches this.
+
+## Medium
+None
+
+## Low
+- **`js/ui/FormationStageDifficultyFilterControlPatch.js:34-36` — `isFiltering(f)` is always true.** `filterState` sets `star: normalizeCrownStar(f.star ?? 1)`, and `normalizeCrownStar` always returns a finite integer clamped to `[MIN,MAX]` (`BcuStageCrownRuntime.js:24-28`), so `Number.isFinite(f.star)` never fails and the crown-star filter is applied even with an empty query — the map list defaults to showing only the selected crown star (★1). This is plausibly intended (a crown selector always has a value, matching BCU crown difficulty) and is covered by the passing `check-bcu-stage-difficulty-parity.mjs`; record as a parity question, do not change this round.
+- **`js/ui/BattleLoadingProgressVerifier.js` is orphaned** (no importer across `js/`, `scripts/`, `tests/`) and only performs static source-string assertions. Record as a decision item (wire into the safe-suite or remove), consistent with the round-3/round-4 orphan-scaffold handling; do not remove this round.
+- Previous round's `js/audio/BattleSoundEventPatch.js` `throttle()` guard fix reviewed for regressions: the applied form `scene?.timeMs ?? ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now())` matches `AudioEngine._now()` semantics and is correct. No action.
+
+## Next Codex Task
+Fix the loading-overlay progress reset and add focused coverage, plus `js/ui` audit bookkeeping.
+
+1. **`js/ui/AppLoadingOverlay.js` — reset progress in `show()`.** Inside `show()` (which already calls `ensureRoot()` first, so `this.root` exists), reset the monotonic progress state and clear the stale bar so a reused overlay starts each load from empty:
+   - Add `this.lastProgressValue = 0;`
+   - Reset the visible bar: `const bar = this.root.querySelector('.app-loading-progress-bar'); if (bar) bar.style.width = '0%';`
+   
+   Do **not** change the monotonic `Math.max(...)` clamp in `setProgress` (it is correct *within* one load), the timer logic, the step-chip logic, or any other method.
+
+2. **Add `tests/app-loading-overlay-progress-reset.test.mjs`** (picked up by `npm test`'s `node --test tests/*.test.mjs`). The module imports are node-safe (`assetBase.js` falls back to `/` when `import.meta.env` is undefined; `AppVersion.js` is a constant), so a lightweight DOM stub works. Before importing `AppLoadingOverlay.js`, install a minimal `globalThis.document` stub whose `createElement` returns a generic fake node that tolerates everything `ensureRoot`/`show`/`setProgress` touch — `className`, `dataset` (object), `innerHTML` setter (no-op), `classList` with `add/remove/toggle/contains`, `style` (object), `textContent`, `addEventListener`, `appendChild`, `remove`, `querySelector` (returns another fake node), and `querySelectorAll` (returns `[]`) — plus a `body`/`head`. Then assert on the plain instance field `overlay.lastProgressValue`:
+   - `new AppLoadingOverlay({ mount })`, `show()`, `setProgress({ phase: 'ready', value: 1.0 })` → `lastProgressValue === 1`.
+   - Second `show()` → `lastProgressValue === 0` (fails before the fix).
+   - `setProgress({ phase: 'battle-scene', value: 0.05 })` → `lastProgressValue === 0.05` (was pinned at `1` before the fix).
+   
+   Keep the stub minimal; do not add jsdom or any new dependency.
+
+3. **`.ai/state.md` bookkeeping** (this round audited part of `js/ui`, not all of it — keep uncertainty honest):
+   - **Audited Areas** — add a *partial* `js/ui` entry: read-through of `AppLoadingOverlay.js` (applied the `show()` progress-reset fix + new test), `BattleSpeedControl.js`, `BattlePauseMenu.js`, `SoundToggleControls.js`, `PlayerProductionBar.js`, `FormationStageDifficultyFilterControlPatch.js`, `BattleTouchGuard.js`.
+   - **Unaudited Major Areas** — keep `js/ui` listed, annotated `js/ui (partial — loading-overlay/battle-HUD subset audited round-6; ~30 files remain: FormationEditor*, ProductionCardSkin, BcuStageCatalogBuilder, Nyanko*/Formation* patches, *Verifier files, etc.)`. Do **not** remove `js/ui`.
+   - **Discovered Issues** — record: fixed `js/ui/AppLoadingOverlay.js` so `show()` resets `lastProgressValue` (and the visible bar), preventing the reused overlay's progress bar from sticking at 100% on every battle load after the first.
+   - **Unresolved** — add: (a) `FormationStageDifficultyFilterControlPatch.isFiltering` is always true because `filterState` coerces `star` through `normalizeCrownStar` to a finite value, so the stage-map list is always crown-star-filtered (default ★1) even with an empty query; confirm against intended BCU crown-difficulty default before treating as a defect. (b) `js/ui/BattleLoadingProgressVerifier.js` is orphaned (no importer) and only does static source-string checks; decide whether to wire it into the safe-suite or remove it.
+
+4. Append a concise summary to `.ai/changelog.md`. Do not modify other runtime code, do not add new status files.
+
+## Verification Commands
+- `node --check js/ui/AppLoadingOverlay.js`
+- `node --check tests/app-loading-overlay-progress-reset.test.mjs`
+- `node --test tests/app-loading-overlay-progress-reset.test.mjs`
+- `npm run check`
+- `npm test`
+- `npm run build`
+
+## Stop Condition
+Not satisfied. `High` is non-empty this round (the `AppLoadingOverlay` progress-reset regression), and `## Unaudited Major Areas` still lists `js/battle`, `js/bcu`, `js/ui` (only partially audited), `scripts`, and `tests`; verification for this round has not run yet. Continue the loop.

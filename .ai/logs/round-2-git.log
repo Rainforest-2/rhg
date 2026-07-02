@@ -1,39 +1,22 @@
 # Round 2 Git Snapshot
-Date: 2026-06-30T16:23:45Z
+Date: 2026-07-01T17:24:39Z
 
-## git status --short
- M .ai/RUN_MANUALLY.md
+## git status --short --untracked-files=no
+[Limited to 200 lines; untracked files omitted.]
  M .ai/changelog.md
- M .ai/logs/round-1-claude.log
- M .ai/logs/round-1-claude.prompt.md
- M .ai/logs/round-1-codex.log
- M .ai/logs/round-1-codex.prompt.md
- M .ai/logs/round-1-git.log
- M .ai/logs/round-1-test.log
- M .ai/orchestrator.sh
  M .ai/prompts/claude-review.md
- M .ai/prompts/codex-fix.md
  M .ai/review.md
  M .ai/state.md
- M README.md
- M js/input/BcuBattleInputAdapter.js
-?? .ai/logs/round-2-git.log
-?? tests/bcu-battle-input-adapter.test.mjs
+ M js/audio/BattleSoundEventPatch.js
+ M js/boot/installBattlePatches.js
+ M js/ui/AppLoadingOverlay.js
 
-## git diff --stat
- .ai/RUN_MANUALLY.md               |    4 +-
- .ai/changelog.md                  | 3245 ++++++++++++++++++++++++++++++++++++
- .ai/logs/round-1-claude.log       |   54 +-
- .ai/logs/round-1-claude.prompt.md | 1256 ++++++++++----
- .ai/logs/round-1-codex.log        | 3255 +++++++++++++++++++++++++++++--------
- .ai/logs/round-1-codex.prompt.md  |  714 +++++++-
- .ai/logs/round-1-git.log          |  218 +--
- .ai/logs/round-1-test.log         |  112 +-
- .ai/orchestrator.sh               |   78 +-
- .ai/prompts/claude-review.md      |   18 +-
- .ai/prompts/codex-fix.md          |    1 +
- .ai/review.md                     |   54 +-
- .ai/state.md                      |   26 +-
- README.md                         |    6 +-
- js/input/BcuBattleInputAdapter.js |    3 +-
- 15 files changed, 7736 insertions(+), 1308 deletions(-)
+## git diff --name-status
+[Limited to 20 files; .ai/logs and node_modules omitted.]
+M	.ai/changelog.md
+M	.ai/prompts/claude-review.md
+M	.ai/review.md
+M	.ai/state.md
+M	js/audio/BattleSoundEventPatch.js
+M	js/boot/installBattlePatches.js
+M	js/ui/AppLoadingOverlay.js

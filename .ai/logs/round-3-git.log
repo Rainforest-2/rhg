@@ -1,0 +1,22 @@
+# Round 3 Git Snapshot
+Date: 2026-07-01T17:36:01Z
+
+## git status --short --untracked-files=no
+[Limited to 200 lines; untracked files omitted.]
+ M .ai/changelog.md
+ M .ai/prompts/claude-review.md
+ M .ai/review.md
+ M .ai/state.md
+ M js/audio/BattleSoundEventPatch.js
+ M js/boot/installBattlePatches.js
+ M js/ui/AppLoadingOverlay.js
+
+## git diff --name-status
+[Limited to 20 files; .ai/logs and node_modules omitted.]
+M	.ai/changelog.md
+M	.ai/prompts/claude-review.md
+M	.ai/review.md
+M	.ai/state.md
+M	js/audio/BattleSoundEventPatch.js
+M	js/boot/installBattlePatches.js
+M	js/ui/AppLoadingOverlay.js

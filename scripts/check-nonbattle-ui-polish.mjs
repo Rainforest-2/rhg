@@ -156,11 +156,24 @@ async function checkViewport(browser, width, height) {
     await page.waitForTimeout(350);
     const mapCountAfter = await visibleCount(page, '.formation-stage-card-map');
     const hiddenDisplayCount = await page.locator('.formation-stage-card-map.is-difficulty-filtered').evaluateAll((nodes) => nodes.filter((node) => getComputedStyle(node).display === 'none').length);
+    const searchDebug = await page.evaluate(() => globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ || null);
     assert(mapCountAfter < mapCountBefore, 'search filter did not reduce visible map cards');
-    assert(hiddenDisplayCount > 0, 'filtered map cards are not display:none');
+    // Non-virtual renders keep filtered map cards in the DOM as display:none; the
+    // virtualized stage list (FormationEditorPerformancePatch) instead drops them from
+    // the render window entirely. Accept either hiding mechanism, but the no-match
+    // query must leave zero matched/visible cards.
+    assert(hiddenDisplayCount > 0 || (searchDebug?.matchedCount === 0 && mapCountAfter === 0),
+      `filtered map cards still rendered (hiddenDisplay=${hiddenDisplayCount}, matched=${searchDebug?.matchedCount}, visible=${mapCountAfter})`);
     await page.locator('[data-stage-filter-reset]').click();
     await page.waitForTimeout(350);
-    assert(await visibleCount(page, '.formation-stage-card-map') === mapCountBefore, 'reset did not restore map cards');
+    // The virtualized list may render a different window size after reset, so compare
+    // against the filter debug (every candidate matched again) rather than an exact
+    // pre-filter DOM count.
+    const resetVisible = await visibleCount(page, '.formation-stage-card-map');
+    const resetDebug = await page.evaluate(() => globalThis.__BCU_STAGE_DIFFICULTY_FILTER_DEBUG__ || null);
+    assert(resetVisible >= Math.min(mapCountBefore, 1)
+      && (resetVisible >= mapCountBefore || (resetDebug?.matchedCount === resetDebug?.candidateCount && resetDebug?.shownCount === resetDebug?.candidateCount)),
+      `reset did not restore map cards (visible=${resetVisible}, before=${mapCountBefore}, matched=${resetDebug?.matchedCount}/${resetDebug?.candidateCount})`);
     assert(await starSelector.inputValue() === '1', 'reset did not restore the crown selector to ★1');
 
     await starSelector.selectOption('4');

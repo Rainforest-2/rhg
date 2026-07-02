@@ -23,8 +23,9 @@ function nextFrame() {
 }
 
 function getHighSpeedBattleRenderIntervalMs(speedMultiplier = 1) {
-  const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
-  return speed >= 8 ? 1000 / 30 : 0;
+  // Battle simulation advances on BCU's 30fps timer. Rendering between logic
+  // ticks redraws the same actor/effect frame and is pure overhead on mobile.
+  return 1000 / 30;
 }
 
 function formatFormationForLog(f) {

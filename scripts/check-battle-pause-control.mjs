@@ -33,7 +33,7 @@ for (const key of [
 for (const api of ['getEffectiveBgmVolume', 'getEffectiveSeVolume', 'setBgmVolume', 'setSeVolume', 'setMuted', 'subscribe', 'snapshot']) {
   check(audio.includes(api), `AudioSettings: missing API ${api}()`);
 }
-check(/bgm:\s*0\.7/.test(audio) && /se:\s*0\.8/.test(audio), 'AudioSettings: expected BGM=0.7 / SE=0.8 defaults');
+check(/bgm:\s*0\.7/.test(audio) && /se:\s*0\b/.test(audio) && /seOn:\s*0\.8/.test(audio), 'AudioSettings: expected BGM=0.7 / SE default OFF with SE-on volume 0.8');
 check(audio.includes('if (raw == null) return fallback;'), 'AudioSettings: missing localStorage-null fallback for default BGM/SE volumes');
 check(/export const AudioSettings/.test(audio), 'AudioSettings: missing singleton export');
 
@@ -51,6 +51,7 @@ for (const piece of ['OedoPauseFont', 'FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%
 for (const piece of ['bcu-pause-sound-grid', 'bcu-pause-bgm', 'bcu-pause-se', 'bi-music-note-beamed', 'bi-volume-up-fill', 'setBgmVolume', 'setSeVolume', 'setMuted']) {
   check(soundToggles.includes(piece), `SoundToggleControls: missing "${piece}"`);
 }
+check(soundToggles.includes('オンにするとパフォーマンスが落ちます'), 'SoundToggleControls: SE toggle must warn about performance cost');
 check(/soundTogglesMarkup\s*\(\s*\)/.test(menu) && /from '\.\/SoundToggleControls\.js'/.test(menu), 'BattlePauseMenu: must render the shared sound toggles');
 check(menu.includes('top:50%') && menu.includes('translateY(-50%) scale'), 'BattlePauseMenu: confirm prompt should be centered, not appended downward');
 check(menu.includes('メインメニューに戻る'), 'BattlePauseMenu: missing メインメニューに戻る abort affordance');

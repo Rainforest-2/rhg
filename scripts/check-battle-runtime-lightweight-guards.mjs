@@ -37,6 +37,7 @@ const scene = read('js/battle/BattleScene.js');
 assert.match(scene, /countAliveActorsBySide\(side\)/, 'BattleScene must count alive actors without filter-length arrays');
 assert.doesNotMatch(scene, /actors\.filter\(a=>a\.isAlive\(\)&&a\.side==='cat-enemy'\)\.length/, 'enemy spawn count must not allocate a filtered actors array');
 assert.doesNotMatch(scene, /es\.sort\(\(a,b\)=>/, 'findTargetForActor must scan for the nearest target instead of sorting candidates');
+assert.match(scene, /cfg\.enabled!==false\|\|this\.debugBattleEnabled===true\|\|globalThis\.__BCU_BATTLE_EVENT_DEBUG__===true/, 'BattleScene pushEvent must keep debug event recording opt-in during normal battle');
 
 const rendererOrder = read('js/battle/BattleSceneRendererOrderPatch.js');
 assert.doesNotMatch(rendererOrder, /\.map\(\(actor, index\) => \(\{ actor, index \}\)\)/, 'renderer order must not allocate wrapper objects per actor');
@@ -76,7 +77,15 @@ assert.match(audioEngine, /SE_POOL_MAX_SIZE/, 'AudioEngine must grow the SE voic
 assert.match(audioEngine, /_createSeElement\(\)/, 'AudioEngine must centralize SE element creation');
 assert.match(audioEngine, /mode = 'stolen-oldest'/, 'AudioEngine must only steal the oldest voice after the growth cap');
 assert.match(audioEngine, /lastSeVoiceDebug/, 'AudioEngine must expose compact SE voice diagnostics');
+assert.match(audioEngine, /if \(this\._seVolume\(\) > 0\)/, 'AudioEngine must not warm SE blobs while SE is off');
+assert.match(audioEngine, /const volume = channel === 'bgm' \? this\._bgmVolume\(\) : this\._seVolume\(\);[\s\S]*if \(volume <= 0\) return false;/, 'AudioEngine playSe must return before pool/blob/play work when the selected audio channel is muted');
 assert.doesNotMatch(audioEngine, /SE_SAME_ID_MIN_INTERVAL_MS|SE_MAX_STARTS_PER_BURST_WINDOW|_canStartSe/, 'AudioEngine must not suppress SE requests with a flood throttle');
+
+const battleConfig = read('js/battle/BattleConfig.js');
+assert.match(battleConfig, /battleDebug: \{ enabled: false, maxEvents: 40, captureDiagnostics: false, captureEmptyEvents: false, hitQueueEvents: false, damageEvents: false/, 'BattleConfig must keep high-volume battle debug event capture off by default');
+
+const previewApp = read('js/preview/PreviewApp.js');
+assert.match(previewApp, /return 1000 \/ 30;/, 'PreviewApp must cap battle rendering to the BCU 30fps logic timer instead of redrawing unchanged frames every rAF');
 
 const productionBar = read('js/ui/PlayerProductionBar.js');
 assert.match(productionBar, /lastMoneyDrawKey/, 'production bar money canvas must skip unchanged redraws');

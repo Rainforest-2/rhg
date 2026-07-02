@@ -220,7 +220,9 @@ export class AudioEngine {
     // Fetch each battle SE into its in-memory blob ONCE here (fire-and-forget, deduped
     // by _ensureBlob across battles). After this first warm the blob Map is hit on
     // every later play / battle, so the server is never re-fetched for these files.
-    for (const id of unique(seIds.map((s) => this.catalog.normalizeId(s)))) this._ensureBlob(id);
+    if (this._seVolume() > 0) {
+      for (const id of unique(seIds.map((s) => this.catalog.normalizeId(s)))) this._ensureBlob(id);
+    }
     return {
       ok: true,
       total: normalizedIds.length,
@@ -363,9 +365,12 @@ export class AudioEngine {
 
   // One-shot SE. Synchronous (no await) so the SE fires on the same tick as the
   // gameplay event. Never throws.
-  playSe(id) {
+  playSe(id, options = {}) {
     const norm = this.catalog.normalizeId(id);
     if (norm == null || !this._supported || this._userPaused) return false;
+    const channel = options?.channel === 'bgm' ? 'bgm' : 'se';
+    const volume = channel === 'bgm' ? this._bgmVolume() : this._seVolume();
+    if (volume <= 0) return false;
     this._ensureSePool();
     if (!this._sePool.length) return false;
     const now = this._now();
@@ -381,8 +386,9 @@ export class AudioEngine {
       el.__bcuSeStart = now;
       el.dataset.seId = String(norm);
       el.dataset.seStart = String(now);
+      el.dataset.soundChannel = channel;
       try { el.currentTime = 0; } catch {}
-      el.volume = this._seVolume();
+      el.volume = volume;
       const p = el.play?.();
       if (p && typeof p.catch === 'function') p.catch(() => {});
       return true;

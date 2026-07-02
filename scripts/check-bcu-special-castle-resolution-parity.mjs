@@ -8,6 +8,8 @@
 // Castle group ids: rc=0xxx (default), ec=1xxx (Empire), wc=2xxx (Wave/波動城), sc=3xxx (Surge/烈波城).
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
+import { StageDefinitionLoader } from '../js/battle/StageDefinitionLoader.js';
+import { BcuCastleAssetLoader } from '../js/battle/BcuCastleAssetLoader.js';
 import { resolveBcuEnemyCastleId, CH_CASTLES } from '../js/battle/BcuEnemyCastleResolver.js';
 
 // Explicit castle ids (event/legend stages) pass through untouched, preserving rc-castle variety and
@@ -44,5 +46,22 @@ if (existsSync(INDEX_PATH)) {
   assert.ok(has(2005), 'wave castle wc005 (2005) is bundled');
   assert.ok(has(3005), 'surge castle sc005 (3005) is bundled');
 }
+
+const loader = new StageDefinitionLoader();
+const noCastleRowCsv = [
+  '3600,1000,1,1,0,3,0,0,0',
+  '2,1,0,60,80,100,0,9,0'
+].join('\n');
+const eocDef = loader.parse(noCastleRowCsv, 'CH/stage/stage00.csv');
+assert.equal(eocDef.castleId, eoc(0), 'CH/stage/stage00 without a castle row resolves to an Empire castle');
+assert.equal(eocDef.runtime.castleRawRow.length, 0, 'main-story stage keeps an empty castle row instead of inventing one');
+
+const castleLoader = new BcuCastleAssetLoader();
+const waveCastle = await castleLoader.load(2005, { source: 'check-special-castle' });
+assert.equal(waveCastle.ok, true, 'explicit wave special castle loads as an enemy castle asset');
+assert.equal(waveCastle.castleGroupName, 'wc', 'wave special castle keeps the wc group');
+const surgeCastle = await castleLoader.load(3005, { source: 'check-special-castle' });
+assert.equal(surgeCastle.ok, true, 'explicit surge special castle loads as an enemy castle asset');
+assert.equal(surgeCastle.castleGroupName, 'sc', 'surge special castle keeps the sc group');
 
 console.log('check-bcu-special-castle-resolution-parity: OK');

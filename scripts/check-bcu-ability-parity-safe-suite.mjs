@@ -134,6 +134,8 @@ const commands = [
   ['node', ['scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs']],
   ['node', ['--check', 'scripts/check-bcu-boss-knockback-castle-limit-parity.mjs']],
   ['node', ['scripts/check-bcu-boss-knockback-castle-limit-parity.mjs']],
+  ['node', ['--check', 'scripts/check-bcu-boss-shockwave-runtime-parity.mjs']],
+  ['node', ['scripts/check-bcu-boss-shockwave-runtime-parity.mjs']],
   ['node', ['--check', 'scripts/build-bcu-stage-crown-index.mjs']],
   ['node', ['--check', 'scripts/check-bcu-stage-crown-parity.mjs']],
   ['node', ['scripts/check-bcu-stage-crown-parity.mjs']],

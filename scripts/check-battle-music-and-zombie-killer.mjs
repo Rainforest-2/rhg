@@ -342,6 +342,14 @@ check(JSON.stringify(playedFor({ type: 'bcuWalletUpgradeRejected' })) === JSON.s
 check(JSON.stringify(playedFor({ type: 'bcuSetSe', bcuSeIds: [190, 190, 26] })) === JSON.stringify([190, 26]),
   'generic BCU setSE events must accept raw ids and dedupe duplicates in one event');
 {
+  const calls = [];
+  const fakeEngine = { playSe(id, options) { calls.push({ id, options }); return true; } };
+  soundTestFrame += 1;
+  playForEvent({ logicFrame: soundTestFrame, timeMs: soundTestFrame * 33 }, { type: 'battleResult', result: 'victory' }, fakeEngine);
+  check(calls.length === 1 && calls[0].id === 8 && calls[0].options?.channel === 'bgm',
+    'victory result sound must use the BGM channel, not the SE toggle channel');
+}
+{
   const played = [];
   const sharedFrameScene = { logicFrame: 2200, timeMs: 2200 * 33, bcuCatCannon: { id: 0 } };
   const fakeEngine = { playSe(id) { played.push(id); return true; } };

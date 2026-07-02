@@ -43,6 +43,20 @@ function actorAbi(actor) {
     ?? 0) || 0;
 }
 
+function actorMoveSpeed(actor) {
+  return finiteNumber(
+    actor?.moveSpeed,
+    actor?.speed,
+    actor?.stats?.moveSpeed,
+    actor?.stats?.speed,
+    actor?.rawStats?.moveSpeed,
+    actor?.rawStats?.speed,
+    actor?.unitDef?.stats?.moveSpeed,
+    actor?.unitDef?.stats?.speed,
+    actor?.bcuCombatModel?.speed
+  );
+}
+
 function getShockwaveWorldX(scene, side) {
   if (side === 'cat-enemy') return BCU_BOSS_SHOCKWAVE_X;
   const runtime = scene?.stage?.runtime || {};
@@ -54,7 +68,7 @@ function ensureBossShockwaveQueue(scene) {
   return scene.__bcuBossShockwaveQueue;
 }
 
-function isActorShockwaveTouchable(actor) {
+export function isActorShockwaveTouchable(actor) {
   if (!actor) return false;
   if (actor.state === 'dead' || actor.state === 'removed') return false;
   if (actor.isAlive?.() !== true) return false;
@@ -63,6 +77,7 @@ function isActorShockwaveTouchable(actor) {
   // lifecycle runtime, so include that flag or the shockwave would interrupt them.
   if (actor.bcuIsSpirit === true || actor.isSpirit === true || actor.rawStats?.isSpirit === true || actor.stageSpawn?.isSpirit === true) return false;
   if ((actorAbi(actor) & BCU_ABI.AB_IMUSW) !== 0) return false;
+  if (actorMoveSpeed(actor) === 0) return false;
   if (typeof actor.isTouchable === 'function' && actor.isTouchable() === false) return false;
   if (typeof actor.isTargetable === 'function' && actor.isTargetable() === false) return false;
   return true;
@@ -354,4 +369,4 @@ export function installBattleBossShockwaveRuntimePatch() {
 
 installBattleBossShockwaveRuntimePatch();
 
-export { BCU_BOSS_SHOCKWAVE_SOURCE, processPendingBossShockwaves, isActorShockwaveTouchable };
+export { BCU_BOSS_SHOCKWAVE_SOURCE, processPendingBossShockwaves };

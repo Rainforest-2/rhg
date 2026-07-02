@@ -13,7 +13,7 @@ const KEYS = Object.freeze({
   muted: 'wanko-battle.audio.muted'
 });
 
-const DEFAULTS = Object.freeze({ bgm: 0.7, se: 0.8, muted: false });
+const DEFAULTS = Object.freeze({ bgm: 0.7, se: 0, seOn: 0.8, muted: false });
 
 function clamp01(value) {
   const n = Number(value);

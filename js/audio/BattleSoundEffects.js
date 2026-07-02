@@ -3,7 +3,8 @@
 // Source: BCU_java_util_common CommonStatic.java SE_* constants and
 // BCU_Android SoundHandler.kt. BCU stores both BGM and SE as Music records; in
 // this repo they are vendored together under public/assets/music/<id>.m4a.
-// Runtime playback goes through AudioEngine's SE bus so the SE toggle/mute apply.
+// Runtime playback goes through AudioEngine's SE bus. Victory/defeat one-shots
+// intentionally use the BGM channel volume so the BGM toggle owns result sounds.
 
 import { audioEngine } from './AudioEngine.js';
 
@@ -106,4 +107,4 @@ export function playSpendFailSe(engine = audioEngine) { return playBcuSe(BCU_SE.
 export function playBaseHitSe(engine = audioEngine) { return playBcuSe(BCU_SE.HIT_BASE, engine); }
 export function playCannonSe(engine = audioEngine, id = BCU_SE.CANNON_BASIC_ATK) { return playBcuSe(id, engine); }
 export function playDecisionSe(engine = audioEngine) { return playBcuSe(BCU_SE.TOUCH, engine); }
-export function playResultSe(engine = audioEngine, victory = true) { return playBcuSe(victory ? BCU_SE.VICTORY : BCU_SE.DEFEAT, engine); }
+export function playResultSe(engine = audioEngine, victory = true) { return engine.playSe(victory ? BCU_SE.VICTORY : BCU_SE.DEFEAT, { channel: 'bgm' }); }

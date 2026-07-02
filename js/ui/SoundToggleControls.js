@@ -35,7 +35,9 @@ export function ensureSoundToggleStyles() {
 .bcu-pause-sound-text{display:grid;gap:1px;min-width:0}
 .bcu-pause-sound-text strong{font-size:clamp(17px,4vw,21px);font-weight:900;line-height:1.05;white-space:nowrap}
 .bcu-pause-sound-text span{font-size:clamp(12px,3vw,14px);font-weight:900;color:#6d451f}
+.bcu-pause-sound-note{font-size:10px!important;font-weight:800!important;line-height:1.15!important;color:#7b3213!important;white-space:normal!important}
 .bcu-pause-sound:not(.is-on) .bcu-pause-sound-text span{color:#4f4f4f}
+.bcu-pause-sound:not(.is-on) .bcu-pause-sound-note{color:#5f5f5f!important}
 @media (max-width:420px){.bcu-pause-sound-grid{gap:8px}.bcu-pause-sound{padding:8px;gap:7px}.bcu-pause-sound-icon{width:36px;height:36px;font-size:22px}}
 `;
   document.head.appendChild(style);
@@ -51,7 +53,7 @@ export function soundTogglesMarkup() {
       </button>
       <button type="button" class="bcu-pause-sound bcu-pause-se" aria-label="効果音(SE)を切り替え">
         <span class="bcu-pause-sound-icon" aria-hidden="true"><i class="bi bi-volume-up-fill"></i></span>
-        <span class="bcu-pause-sound-text"><strong>効果音</strong><span class="bcu-pause-se-val">ON</span></span>
+        <span class="bcu-pause-sound-text"><strong>効果音</strong><span class="bcu-pause-se-val">ON</span><small class="bcu-pause-sound-note">オンにするとパフォーマンスが落ちます</small></span>
       </button>
     </div>`;
 }
@@ -83,7 +85,7 @@ export function toggleBgm(audio = AudioSettings) {
 export function toggleSe(audio = AudioSettings) {
   const snap = audio.snapshot();
   if (snap.muted) audio.setMuted(false);
-  audio.setSeVolume(soundOn(snap.se) && !snap.muted ? 0 : (audio.defaults?.se ?? 0.8));
+  audio.setSeVolume(soundOn(snap.se) && !snap.muted ? 0 : (audio.defaults?.seOn ?? 0.8));
 }
 
 // Wire click handlers for the toggles under `root`. Returns an unbind function.

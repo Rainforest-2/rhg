@@ -140,7 +140,7 @@ spawnEnemy(slotId){const def=BATTLE_CONFIG.rosters.catEnemy.find(x=>x.slotId===s
   isActorAttackCooldownReady(actor){return this.timeMs >= (actor?.attackCooldownUntilMs||0);}
   enterAttackWait(actor, reason=''){if(!actor)return;BattleAttackTimeline.enterAttackWait(actor,{nowMs:this.timeMs,reason});this.pushEvent({type:'attackComplete',actor:actor.instanceId||actor.label,reason});}
 
-  pushEvent(event = {}){const cfg=BATTLE_CONFIG.tuning?.battleDebug||{};if(cfg.enabled===false)return;const entry={timeMs:this.timeMs,...event};this.debugEvents.push(entry);const max=Number.isFinite(cfg.maxEvents)?cfg.maxEvents:80;if(this.debugEvents.length>max)this.debugEvents.splice(0,this.debugEvents.length-max);}
+  pushEvent(event = {}){const cfg=BATTLE_CONFIG.tuning?.battleDebug||{};const debugEnabled=cfg.enabled!==false||this.debugBattleEnabled===true||globalThis.__BCU_BATTLE_EVENT_DEBUG__===true;if(!debugEnabled)return;const entry={timeMs:this.timeMs,...event};this.debugEvents.push(entry);const max=Number.isFinite(cfg.maxEvents)?cfg.maxEvents:80;if(this.debugEvents.length>max)this.debugEvents.splice(0,this.debugEvents.length-max);}
 
   captureHitTargets(attacker,event){const enemyActors=this.findEnemyActors(attacker);const enemyBase=this.findEnemyBase(attacker);return BattleAttackResolver.captureTargets({attacker,enemyActors,enemyBase,event});}
 

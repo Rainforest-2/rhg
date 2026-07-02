@@ -30,6 +30,7 @@
 | 地中移動 | `code-complete-candidate` | 移動・ターゲット可否・後始末までカバー済み。 |
 | 霊魂ライフサイクル | `human-visual-review-needed` | 生成・クールダウン・容量制限・ready 状態までは実装済み。 |
 | 城 / 基地ガード | `code-complete-candidate` | 実行時あり。見た目はユーザー確認で accepted（台帳参照）。 |
+| 特殊敵城 / EEnemy base | `code-complete-candidate` | ステージヘッダの base enemy id と一致する敵行を通常 spawn schedule から外し、BCU の `EStage.base()` / `StageBasis ebase=EEnemy` と同じく敵アクターとして初期配置する。例: `N/StageRN/stageRN036_05.csv`（ハリーウッド帝国 / ウニバーサンスタジオ）の raw enemy 317。通常の castle-owned attack runtime は作らない。 |
 | 財布 / 配置コスト / リスポーン | `code-complete-candidate` | BCU の式と生産ロジックが接続済み。 |
 | 基本 / 非基本キャノン | `code-complete-candidate` | 実行時所有権とチェックはある。見た目タイミングは未受け入れ。 |
 | AB_METALIC（能力による金属） | `code-complete-candidate` | dog-player 攻撃側ケースのパッチが boot group 未接続だった実バグを 2026-07-02 に修正。`check-bcu-metal-abi-double-apply` が配線も固定。 |

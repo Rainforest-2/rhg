@@ -21,3 +21,4 @@ import '../../battle/BattleSceneBcuStatusIconPatch.js';
 import '../../battle/BattleSceneBcuStatusEffectRenderPatch.js';
 import '../../battle/BattleSceneBcuStageBasisTickPatch.js';
 import '../../battle/BattleSceneCustomStageBaseHpPatch.js';
+import '../../battle/BattleSceneBcuEnemyEntityBasePatch.js';

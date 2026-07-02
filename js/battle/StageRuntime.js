@@ -91,7 +91,9 @@ export class StageRuntime {
       toFiniteNumber(stageDefinition?.crownMagnificationPercent, 100)
     ) || 100;
     this.crownStarIndex = toFiniteNumber(options.crownStarIndex, toFiniteNumber(stageDefinition?.crownStarIndex, 0)) || 0;
-    this.enemyRows = applyCrownToEnemyRows(rawEnemyRows, this.crownMagnificationPercent);
+    const crownedRows = applyCrownToEnemyRows(rawEnemyRows, this.crownMagnificationPercent);
+    this.enemyBaseRow = crownedRows.find((row) => row?.baseEnemy === true || row?.isBcuEnemyEntityBase === true) || null;
+    this.enemyRows = crownedRows.filter((row) => row !== this.enemyBaseRow);
     this.sourceEnemyRows = Array.isArray(stageDefinition?.runtime?.sourceEnemyRows) ? stageDefinition.runtime.sourceEnemyRows : rawEnemyRows;
 
     this.playerBase = makeBaseRuntime({
@@ -131,9 +133,6 @@ export class StageRuntime {
     this.bossSpawnWorldX = bossSpawnWorldX;
     this.bossSpawn = stageDefinition?.runtime?.bossSpawn || stageDefinition?.bossSpawn || null;
     this.bossSpawnSource = stageDefinition?.runtime?.bossSpawnSource || (Number.isFinite(bossSpawnWorldX) ? 'stage-definition-boss-spawn' : null);
-    const baseRowCandidate = this.enemyRows[this.enemyRows.length - 1] || null;
-    const baseRowC0 = Number(baseRowCandidate?.baseHpTriggerLowerPercent ?? baseRowCandidate?.baseHpTriggerPercent ?? baseRowCandidate?.baseHpTrigger ?? baseRowCandidate?.scdef?.baseHpTriggerLowerPercent ?? NaN);
-    this.enemyBaseRow = Number.isFinite(baseRowC0) && baseRowC0 === 0 ? baseRowCandidate : null;
     this.enemyBaseRowIndex = this.enemyBaseRow?.rowIndex ?? null;
     this.hasEnemyBaseEntity = !!this.enemyBaseRow;
     this.enemyBaseEntitySpawnWorldX = this.getEnemySpawnWorldX({ baseEnemy: true })?.worldX ?? this.enemyNormalSpawnWorldX;
@@ -248,6 +247,10 @@ export class StageRuntime {
       crownMagnificationPercent: this.crownMagnificationPercent,
       crownStarIndex: this.crownStarIndex,
       enemyRows: this.enemyRows,
+      enemyBaseRow: this.enemyBaseRow,
+      enemyBaseRowIndex: this.enemyBaseRowIndex,
+      hasEnemyBaseEntity: this.hasEnemyBaseEntity,
+      enemyBaseEntitySpawnWorldX: this.enemyBaseEntitySpawnWorldX,
       sourceEnemyRows: this.sourceEnemyRows,
       playerBase: this.playerBase,
       enemyBase: this.enemyBase,

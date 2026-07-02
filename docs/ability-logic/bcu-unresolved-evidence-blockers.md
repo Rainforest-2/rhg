@@ -54,6 +54,7 @@
 | 基本 / 非基本キャノン実行時 | 専用オーナーと決定的なチェックがある。見た目のアセット / タイミング受け入れは別。 |
 | 通常の城が持つ攻撃 | negative evidence: 通常の `ECastle` には攻撃オーナーがない。ボス基地の攻撃は通常の `EEnemy` で、HP 閾値 / 撃破数による出現はステージ側が担当。 |
 | 特殊城ボススポーン座標 | 実装済み。実行時接続と式のカバレッジがある。 |
+| 特殊敵城 / EEnemy base の初期配置 | 解決済み (2026-07-02): ステージヘッダの base enemy id に一致する敵行を通常 spawn schedule から除外し、敵アクター拠点として初期配置する。`check-bcu-enemy-entity-base-runtime` が `N/StageRN/stageRN036_05.csv`（ハリーウッド帝国 / ウニバーサンスタジオ）の raw enemy 317 を固定し、HP% / 勝敗 / placeholder 非表示も確認する。これは通常 `ECastle` に攻撃 runtime を追加するものではない。 |
 | 財布 income / max-money combo の式の非対称 | 解決済み (2026-07-02): BCU 自体が非対称。income は `StageBasis.java:806-809` の `mon *= (getInc(C_M_INC)/100 + 1)`（整数除算 = 100% 刻み）、max money は `Treasure.java:497-501` の `base * (100 + inc)`（加算）。rhg の式は両方一致し、`check-bcu-wallet-runtime-parity` に combo 経路のアサーションを追加済み。 |
 | Boss music の閾値セマンティクス | 解決済み (2026-07-02): BCU は閾値 0/100 の boss music を読み込まず（`DefStageInfo.java:42-45`）、戦闘中の切替は int 切り捨て HP% の strict `<`（`BattleView.kt:314-317`）。`PreviewAppBattleMusicPatch` を同セマンティクスに修正し、`check-battle-music-and-zombie-killer` にアサーションを追加済み。 |
 | モバイル lineup スワイプの閾値・方向 | 解決済み (2026-07-02): `BattleView.kt:440-481`（`height*0.15`、`tan(50°) >= |dx|/|dy|`、`v = dy/dragFrame; v<0 => UP`、guard 群）とライブ実装 `PlayerProductionBar` の一致を確認。孤立重複 `BcuMobileGestureRuntime.js` は削除し、`check-bcu-lineup-slide-gesture-parity` で固定。 |

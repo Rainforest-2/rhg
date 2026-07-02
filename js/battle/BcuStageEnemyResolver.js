@@ -139,5 +139,6 @@ export function buildStageEnemyUnitDef(row) {
 
 export function buildStageEnemyUnitDefs(stageRuntime) {
   const rows = Array.isArray(stageRuntime?.enemyRows) ? stageRuntime.enemyRows : [];
-  return rows.filter((r) => Number.isFinite(r?.enemyId) && r.enemyId >= 0).map((r) => buildStageEnemyUnitDef(r));
+  const allRows = stageRuntime?.enemyBaseRow ? [stageRuntime.enemyBaseRow, ...rows] : rows;
+  return allRows.filter((r) => Number.isFinite(r?.enemyId) && r.enemyId >= 0).map((r) => buildStageEnemyUnitDef(r));
 }

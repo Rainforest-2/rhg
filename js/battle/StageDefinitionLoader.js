@@ -223,6 +223,7 @@ export class StageDefinitionLoader {
       const respawnMinFrame = toNum(raw[csv.R0], 0) * FRAME_MUL;
       const respawnMaxFrame = toNum(raw[csv.R1], 0) * FRAME_MUL;
 
+      const isBaseEnemyRow = Number.isFinite(baseEnemyId) && enemyId === baseEnemyId;
       let baseHpTrigger = toNum(raw[csv.C0], 100);
       let magnification = toNum(raw[csv.M], 100);
       if (baseHpTrigger > 100 && magnification === 100) {
@@ -231,7 +232,7 @@ export class StageDefinitionLoader {
         rowWarnings.push('C0>100 moved to magnification');
         warnings.push(`row ${sourceOrder}: normalized baseHpTrigger>100 into magnification`);
       }
-      if (Number.isFinite(baseEnemyId) && enemyId === baseEnemyId) {
+      if (isBaseEnemyRow) {
         baseHpTrigger = 0;
         rowWarnings.push('base enemy row forced castle_0=0');
       }
@@ -326,6 +327,9 @@ export class StageDefinitionLoader {
         baseHpTriggerPercent: baseHpTrigger,
         baseHpTriggerLowerPercent: baseHpTrigger,
         baseHpTriggerUpperPercent: upper,
+        baseEnemy: isBaseEnemyRow,
+        isBcuEnemyEntityBase: isBaseEnemyRow,
+        baseEnemySource: isBaseEnemyRow ? 'bcu-stage-header-base-enemy-id' : null,
         frontLayer: toNum(raw[csv.L0], 0),
         backLayer: toNum(raw[csv.L1], 0),
         layerMin: toNum(raw[csv.L0], 0),

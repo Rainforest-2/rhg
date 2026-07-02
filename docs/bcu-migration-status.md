@@ -38,6 +38,7 @@
 
 - **実バグ修正**: `DamageAbilityResolverMetalAbiPatch`（AB_METALIC の dog-player 攻撃側金属キャップ）が boot group 未接続で本番未適用だったのを `battleCorePatches.js` へ接続し、チェックに配線アサーションを追加。
 - **BCU 根拠で 3 件のランタイム挙動を修正**: boss music 切替（閾値 0/100 無効 + int 切り捨て strict `<`、`DefStageInfo`/`BattleView.aboveBoss`）、被弾 SE（CRIT/SATK/HIT の独立再生 + フレーム毎 dedupe、`Entity.java:1722-1762`）、編成 roster から undeployable ユニット 43 件を除外（`error-ally.json`）。
+- **特殊敵城 / EEnemy base 接続を修正**: ステージヘッダの base enemy id と一致する敵行を通常 spawn schedule から除外し、敵アクター拠点として初期配置する。`N/StageRN/stageRN036_05.csv`（ハリーウッド帝国 / ウニバーサンスタジオ）の raw enemy 317 を `check-bcu-enemy-entity-base-runtime` で固定。通常の castle-owned attack runtime は追加していない。
 - **BCU 根拠で 6 件を accepted 分類**: 財布 combo 式の非対称、MSD 行 index、maanim keyframe leniency、★1 デフォルトフィルタ、`resolveUnitAsset` fallback、lineup スワイプ定数。
 - **孤立コード 36 ファイルを削除**: `js/bcu-render/**`、旧 bcu-runtime スキャフォールド、node:fs 系 Verifier 群、重複ゲスチャランタイム等。import graph で孤立ゼロを機械確認。
 - **チェック増強**: `check-bcu-msd-row-alignment-parity`、`check-bcu-maanim-keyframe-integrity`、`check-bcu-lineup-slide-gesture-parity` を新設し safe suite 登録。stale だった 3 チェックを現実装に同期、生成物依存の 4 チェックは再生成手順で成功確認。

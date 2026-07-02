@@ -10,21 +10,18 @@ const PUBLIC_ASSETS_DIR = path.join(ROOT, 'public', 'assets');
 const DIST_DIR = path.join(ROOT, 'dist');
 const DIST_ASSETS_DIR = path.join(ROOT, 'dist', 'assets');
 
-// Root-level runtime configs fetched by the app via a web-root-relative path
+// Root-level runtime configs fetched by the app via a document-relative path
 // (BcuBootLoader.loadPlayableErrorConfig -> readText('error-*.json') ->
-// `./error-*.json` -> /rhg/error-*.json). They are NOT under public/assets, so the
-// build must copy them into dist/ or production 404s and the formation roster keeps
-// every error/missing enemy and ally visible. Node tests read the same files from
-// cwd, so the source location and path string stay unchanged.
+// `./error-*.json`). They are NOT under public/assets, so the build must copy
+// them into dist/ or production 404s and the formation roster keeps every
+// error/missing enemy and ally visible. Node tests read the same files from cwd,
+// so the source location and path string stay unchanged.
 const ROOT_RUNTIME_FILES = ['error-enemy.json', 'error-ally.json'];
 
-// GitHub Pages serves this project under https://<user>.github.io/rhg/, so every
-// emitted URL (entry chunk, hashed CSS, public assets, in-HTML/CSS references)
-// must carry the /rhg/ base. The same base is used for `vite dev` and
-// `vite preview` so dev, preview and the Pages build resolve identical paths;
-// runtime asset URLs read it back via import.meta.env.BASE_URL (js/assetBase.js).
-const BASE = '/rhg/';
-const BASE_PREFIX = BASE.replace(/\/$/, ''); // '/rhg'
+// Keep emitted URLs relative so the same dist works both at Cloudflare Pages'
+// domain root and under GitHub Pages' /rhg/ project path.
+const BASE = './';
+const BASE_PATH_PREFIX = BASE.startsWith('/') ? BASE.replace(/\/$/, '') : '';
 const DIST_ASSET_SIZE_LIMIT = 25_000_000;
 const DIST_ICON_SHARD_TARGET_BYTES = 24_000_000;
 const ENEMY_ICON_BUNDLE_PATH = 'public/assets/bundles/icon/enemy.zip';
@@ -240,11 +237,11 @@ function selectedPublicAssetsPlugin() {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url || '/', 'http://localhost');
-        // Requests arrive base-prefixed (e.g. /rhg/assets/...) under `vite dev`;
-        // strip the base so the asset lookup below stays base-agnostic.
+        // Strip an absolute Vite base when one is configured; relative builds
+        // have no fixed request prefix.
         let pathname = decodeURIComponent(url.pathname);
-        if (pathname === BASE_PREFIX || pathname.startsWith(BASE_PREFIX + '/')) {
-          pathname = pathname.slice(BASE_PREFIX.length) || '/';
+        if (BASE_PATH_PREFIX && (pathname === BASE_PATH_PREFIX || pathname.startsWith(BASE_PATH_PREFIX + '/'))) {
+          pathname = pathname.slice(BASE_PATH_PREFIX.length) || '/';
         }
         const fromAssets = pathname.startsWith('/assets/') ? pathname.slice('/assets/'.length) : null;
         const fromLegacyPublic = pathname.startsWith('/public/assets/') ? pathname.slice('/public/assets/'.length) : null;

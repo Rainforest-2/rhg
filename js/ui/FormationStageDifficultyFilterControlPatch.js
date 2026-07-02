@@ -2,8 +2,8 @@ import { FormationEditor } from './FormationEditor.js';
 import { normalizeCrownStar } from '../battle/bcu-runtime/BcuStageCrownRuntime.js';
 // This stylesheet is injected lazily (only when the stage filter UI opens) rather
 // than linked from index.html, so Vite would otherwise never emit it into dist and
-// the runtime href would 404 under /rhg/. Importing it with `?url` makes Vite emit
-// the file as a hashed dist asset and hands back the base-prefixed, resolvable URL.
+// the runtime href would 404 in production. Importing it with `?url` makes Vite
+// emit the file as a hashed dist asset and hands back a deployment-relative URL.
 import PRO_STYLE_HREF from '../../css/nyanko-stage-selector-pro.css?url';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-stage-difficulty-filter-controls.v3');

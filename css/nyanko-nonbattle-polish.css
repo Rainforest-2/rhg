@@ -36,7 +36,7 @@ body.nyanko-ui-polish #boot-status-panel{
 body.nyanko-ui-polish .formation-ui{
   background:
     linear-gradient(180deg,rgba(79,39,17,.82),rgba(42,21,10,.88)),
-    url('/rhg/assets/ui/nyanko-ui-stamp.svg'),
+    url('../assets/ui/nyanko-ui-stamp.svg'),
     radial-gradient(circle at 20% 18%,rgba(255,255,255,.26),transparent 16%),
     repeating-radial-gradient(circle at 12px 12px,rgba(255,255,255,.16) 0 2px,transparent 3px 27px),
     linear-gradient(180deg,#b96d2d,#5d2d16);
@@ -468,7 +468,7 @@ body.nyanko-ui-polish .formation-stage-card em[hidden]{
 
 body.nyanko-ui-polish .app-loading-overlay{
   background:
-    url('/rhg/assets/ui/nyanko-ui-stamp.svg'),
+    url('../assets/ui/nyanko-ui-stamp.svg'),
     radial-gradient(circle at 50% 22%,rgba(255,255,255,.22),transparent 26%),
     linear-gradient(180deg,#b97039,#4b2413);
   background-size:220px 220px,auto,auto;
@@ -560,7 +560,7 @@ body.nyanko-ui-polish .app-loading-overlay{
 body.nyanko-ui-polish .formation-ui{
   background:
     linear-gradient(180deg,rgba(61,28,10,.08),rgba(61,28,10,.22)),
-    url('/rhg/assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
+    url('../assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
 }
 
 body.nyanko-ui-polish .formation-panel{

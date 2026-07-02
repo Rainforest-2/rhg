@@ -7,12 +7,12 @@ body.nyanko-ui-polish #boot-status-panel,
 body.nyanko-ui-polish .app-loading-overlay{
   background:
     linear-gradient(180deg,rgba(45,19,6,.08),rgba(45,19,6,.18)),
-    url('/rhg/assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
+    url('../assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
   color:#1b1207!important;
 }
 
 body.nyanko-ui-polish .app-loading-overlay[data-loading-mode="battle"]{
   background:
     linear-gradient(180deg,rgba(34,14,5,.04),rgba(34,14,5,.14)),
-    url('/rhg/assets/ui/nyanko-battle-load-bg.png') center/cover no-repeat!important;
+    url('../assets/ui/nyanko-battle-load-bg.png') center/cover no-repeat!important;
 }

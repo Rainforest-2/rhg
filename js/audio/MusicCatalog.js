@@ -98,11 +98,11 @@ export class MusicCatalog {
   // fetches the first that succeeds; duplicates/empties are dropped so a manifest
   // that omits a base never yields a broken candidate.
   //
-  // The local base is ALWAYS the deploy's asset root (base-aware via assetBase.js:
-  // '/rhg/assets/music/' on Pages, '/assets/music/' in node checks). A static
-  // manifest cannot know the deploy base, so it must never dictate the local path —
-  // doing so shipped a `./public/assets/music/` localBaseUrl that 404'd every battle
-  // BGM/SE in production (the `public/` source dir does not exist once served).
+  // The local base is ALWAYS the deploy's asset root (resolved by assetBase.js
+  // from document.baseURI in browsers). A static manifest cannot know the deploy
+  // base, so it must never dictate the local path — doing so shipped a
+  // `./public/assets/music/` localBaseUrl that 404'd every battle BGM/SE in
+  // production (the `public/` source dir does not exist once served).
   // A manifest localBaseUrl is honored only when it is an absolute http(s) URL, i.e.
   // a genuine remote-hosted override.
   resolveUrls(id) {

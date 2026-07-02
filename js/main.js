@@ -31,9 +31,9 @@ const BOOT_PROGRESS = Object.freeze({
   done: 1
 });
 
-// Derived from the Vite base (import.meta.env.BASE_URL): '/rhg/assets' on Pages
-// and in dev/preview. Published as a global so the BCU path resolvers
-// (BcuPathResolver / SemanticAssetProvider) prefix every fetched asset with it.
+// Derived from the current document URL so the same build works at / on
+// Cloudflare Pages and at /rhg/ on GitHub Pages. Published as a global so the
+// BCU path resolvers prefix every fetched asset with it.
 const ASSET_ROOT = ASSET_BASE;
 globalThis.__RHG_ASSET_BASE__ = ASSET_ROOT;
 

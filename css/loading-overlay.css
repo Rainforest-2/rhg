@@ -452,14 +452,14 @@
   font-family:"Arial Rounded MT Bold","Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif!important;
   background:
     linear-gradient(180deg,rgba(45,19,6,.10),rgba(45,19,6,.22)),
-    url('/rhg/assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
+    url('../assets/ui/nyanko-menu-bg.png') center/cover no-repeat!important;
   color:#1b1207!important;
 }
 
 .app-loading-overlay[data-loading-mode="battle"]{
   background:
     linear-gradient(180deg,rgba(34,14,5,.05),rgba(34,14,5,.16)),
-    url('/rhg/assets/ui/nyanko-battle-load-bg.png') center/cover no-repeat!important;
+    url('../assets/ui/nyanko-battle-load-bg.png') center/cover no-repeat!important;
 }
 
 #boot-status-panel::before,
@@ -494,7 +494,7 @@
   border-radius:22px!important;
   background:
     radial-gradient(circle at 16% 20%,rgba(255,255,255,.55),transparent 18%),
-    url('/rhg/assets/ui/nyanko-ui-stamp.svg') center/190px 190px repeat,
+    url('../assets/ui/nyanko-ui-stamp.svg') center/190px 190px repeat,
     linear-gradient(180deg,#fff9d6,#f6dc91)!important;
   color:#1b1207!important;
   box-shadow:0 10px 0 #321407,0 28px 64px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.86)!important;

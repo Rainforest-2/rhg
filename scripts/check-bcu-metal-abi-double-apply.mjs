@@ -54,4 +54,13 @@ assert.equal(player.finalDamage, 700, `dog-player attacker AB_METALIC should tot
 assert.equal(player.applied.metalKiller, true, 'dog-player metalKiller should apply once');
 assert.ok(player.debug && player.debug.metalAbiPatch, 'metal-abi patch should run for the dog-player attacker case');
 
+// Runtime wiring: the patch is self-installing, but only if something imports it.
+// It must stay in the battle-core boot group or the browser never applies it.
+{
+  const { readFileSync } = await import('node:fs');
+  const group = readFileSync('js/boot/groups/battleCorePatches.js', 'utf8');
+  assert.ok(group.includes('DamageAbilityResolverMetalAbiPatch.js'),
+    'battleCorePatches boot group must import DamageAbilityResolverMetalAbiPatch.js (runtime wiring)');
+}
+
 console.log('check-bcu-metal-abi-double-apply: OK');

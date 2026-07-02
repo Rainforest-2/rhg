@@ -91,10 +91,29 @@ export function applyCrownToEnemyRows(rows, crownPercent) {
   return rows.map((row) => applyCrownToEnemyRow(row, crownPercent));
 }
 
+function normalizeCrownLookupName(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/^(?:レジェンドステージ|真レジェンドステージ|レジェンドストーリー0|日本編|未来編|宇宙編)\s*[：:]\s*/u, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function pickBestCrownEntry(entries = []) {
+  let best = null;
+  for (const entry of entries) {
+    if (!entry) continue;
+    if (!best || (entry.crownCount || 0) > (best.crownCount || 0) || ((entry.crownCount || 0) === (best.crownCount || 0) && String(entry.packId || '') > String(best.packId || ''))) {
+      best = entry;
+    }
+  }
+  return best;
+}
+
 // Resolve a map's crown data from the generated crown index. byName is keyed by map display name
 // (the label the difficulty/selection UI already shows); byKey is keyed by `<packId>:<mapId>`.
 // Returns { crownCount, stars } with a single-crown default when the map is absent.
-export function resolveMapCrownData(crownIndex, { name = null, packId = null, mapId = null } = {}) {
+export function resolveMapCrownData(crownIndex, { name = null, packId = null, mapId = null, mapColcId = null } = {}) {
   if (crownIndex) {
     if (packId != null && mapId != null) {
       const hit = crownIndex.byKey?.[`${packId}:${mapId}`];
@@ -103,6 +122,24 @@ export function resolveMapCrownData(crownIndex, { name = null, packId = null, ma
     if (name && crownIndex.byName?.[name]) {
       const hit = crownIndex.byName[name];
       return { crownCount: hit.crownCount, stars: hit.stars, source: 'crown-index-byName' };
+    }
+    const numericMapId = mapId == null ? NaN : toFinite(mapId, NaN);
+    const numericMapColcId = mapColcId == null ? NaN : toFinite(mapColcId, NaN);
+    if (Number.isFinite(numericMapId) && Array.isArray(crownIndex.entries)) {
+      const ids = Number.isFinite(numericMapColcId)
+        ? [(numericMapColcId * 1000) + numericMapId, numericMapId]
+        : [numericMapId];
+      let hit = null;
+      for (const id of ids) {
+        hit = pickBestCrownEntry(crownIndex.entries.filter((entry) => Number(entry?.mapId) === id));
+        if (hit) break;
+      }
+      if (hit) return { crownCount: hit.crownCount, stars: hit.stars, source: 'crown-index-byMapId' };
+    }
+    const normalizedName = normalizeCrownLookupName(name);
+    if (normalizedName && Array.isArray(crownIndex.entries)) {
+      const hit = pickBestCrownEntry(crownIndex.entries.filter((entry) => normalizeCrownLookupName(entry?.name) === normalizedName));
+      if (hit) return { crownCount: hit.crownCount, stars: hit.stars, source: 'crown-index-byNormalizedName' };
     }
   }
   return { crownCount: 1, stars: [100], source: 'single-crown-default' };

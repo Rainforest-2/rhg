@@ -1,5 +1,15 @@
 # BCU stage difficulty evidence
 
+> **Status (2026-07-02): difficulty-label surface is out-of-scope.**
+> The live UI filters and launches by Map_option crown stars
+> (`js/battle/bcu-runtime/BcuStageCrownRuntime.js` + `js/ui/FormationStageDifficultyPatch.js`,
+> locked by `scripts/check-bcu-stage-crown-parity.mjs`); raw `Difficulty.txt` ★1..★12
+> labels are not rendered anywhere. The former label parser
+> `js/bcu/BcuStageDifficultyRuntime.js` and its check
+> `scripts/check-bcu-stage-difficulty-parity.mjs` had zero runtime consumers
+> (import-graph audit) and were deleted. The BCU evidence below is retained for
+> reference should a difficulty-label UI ever be wired in.
+
 ## BCU evidence
 
 ### common Java data fallback

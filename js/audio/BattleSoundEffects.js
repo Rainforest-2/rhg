@@ -103,7 +103,6 @@ export function playBcuSe(id, engine = audioEngine) {
 export function playZombieKillerSe(engine = audioEngine) { return playBcuSe(BCU_SE.ZOMBIE_KILLER, engine); }
 export function playDeploySe(engine = audioEngine) { return playBcuSe(BCU_SE.SPEND_SUCCESS, engine); }
 export function playSpendFailSe(engine = audioEngine) { return playBcuSe(BCU_SE.SPEND_FAIL, engine); }
-export function playHitSe(engine = audioEngine, id = BCU_SE.HIT_0) { return playBcuSe(id, engine); }
 export function playBaseHitSe(engine = audioEngine) { return playBcuSe(BCU_SE.HIT_BASE, engine); }
 export function playCannonSe(engine = audioEngine, id = BCU_SE.CANNON_BASIC_ATK) { return playBcuSe(id, engine); }
 export function playDecisionSe(engine = audioEngine) { return playBcuSe(BCU_SE.TOUCH, engine); }

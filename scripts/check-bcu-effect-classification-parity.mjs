@@ -36,7 +36,7 @@ assert.ok(proc.includes('BCU_EFFECT_CLASS.ENTITY_STATUS'), 'procInvalid debug ex
 const renderer = fs.readFileSync('js/battle/BattleSceneRendererEffectGlowPatch.js', 'utf8');
 assert.ok(renderer.includes('isBcuEntityStatusEffect'), 'renderer classifies entity status effects');
 assert.ok(renderer.includes('drawEntityStatusEffectsForActor'), 'renderer draws entity status effects during actor draw pass');
-assert.ok(renderer.includes('!isBcuStageLayeredEffect(effect) && !isBcuEntityStatusEffect(effect)'), 'drawEffects skips entity status effects after actor-pass draw');
+assert.ok(renderer.includes('if (isBcuStageLayeredEffect(effect) || isBcuEntityStatusEffect(effect)) continue;'), 'drawEffects skips stage-layered and entity status effects after actor-pass draw');
 assert.ok(renderer.includes('actorPassDraw'), 'renderer debug marks actor-pass entity status draws');
 
 console.log('check-bcu-effect-classification-parity: OK');

@@ -86,6 +86,37 @@ for (const [type, id] of Object.entries(expected)) {
   assert.deepEqual(engine.played, [BCU_SE.BARRIER_NON], 'a repeated same-frame barrier SE de-dups like BCU setSE');
 }
 
+// --- 6b. damageQueued: BCU Entity.damaged fires CRIT/SATK and HIT together ---
+// Entity.java:1722-1762: SE_CRIT (CRIT.mult>0) and SE_SATK (SATK.mult>0) are
+// independent of the generic SE_HIT_0/1 (50/50 irDouble roll); none suppresses
+// another. setSE's per-frame flag bounds repeats within one logic frame.
+{
+  const scene = freshScene();
+  const engine = mockEngine();
+  playForEvent(scene, {
+    type: 'damageQueued',
+    damage: 100,
+    damageApplied: { critical: true, strongAttack: true }
+  }, engine);
+  assert.ok(engine.played.includes(BCU_SE.CRIT), 'critical hit must play SE_CRIT');
+  assert.ok(engine.played.includes(BCU_SE.SATK), 'strong-attack hit must play SE_SATK');
+  assert.ok(engine.played.includes(BCU_SE.HIT_0) || engine.played.includes(BCU_SE.HIT_1),
+    'a damaging critical hit must ALSO play the generic SE_HIT_0/1 (BCU plays both)');
+  assert.equal(engine.played.length, 3, 'CRIT + SATK + one hit SE, nothing else');
+
+  // Same-frame repeat of the same ids de-dups like SoundHandler.play[ind].
+  const before = engine.played.length;
+  playForEvent(scene, {
+    type: 'damageQueued',
+    damage: 100,
+    damageApplied: { critical: true }
+  }, engine);
+  const added = engine.played.slice(before);
+  assert.ok(!added.includes(BCU_SE.CRIT), 'same-frame second critical must not replay SE_CRIT');
+  assert.ok(added.every((id) => id === BCU_SE.HIT_0 || id === BCU_SE.HIT_1),
+    'same-frame second hit may only add the other hit-SE variant, never a repeat id');
+}
+
 // --- 7. runtime emits the state-change event once per event object ----------
 {
   const pushed = [];

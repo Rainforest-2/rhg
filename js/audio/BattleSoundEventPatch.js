@@ -11,7 +11,6 @@ import {
   playBcuSe,
   playDecisionSe,
   playDeploySe,
-  playHitSe,
   playResultSe,
   playSpendFailSe
 } from './BattleSoundEffects.js';
@@ -209,9 +208,15 @@ export function playForEvent(scene, event = {}, engine = undefined) {
       playBcuSetSe(scene, BCU_SE.SPEND_SUCCESS, engine);
       break;
     case 'damageQueued':
-      if (hasAppliedDamageAbility(event, 'critical') && throttle(scene, 'critical', 120)) playBcuSe(BCU_SE.CRIT, engine);
-      else if (hasAppliedDamageAbility(event, 'strongAttack') && throttle(scene, 'strong-attack', 120)) playBcuSe(BCU_SE.SATK, engine);
-      else if (Number(event.damage || 0) > 0 && throttle(scene, 'hit', 70)) playHitSe(engine, BCU_SE.HIT_0);
+      // BCU Entity.damaged (Entity.java:1722-1762) fires these independently on
+      // one damaging hit: SE_CRIT when CRIT.mult > 0, SE_SATK when SATK.mult > 0,
+      // AND the generic SE_HIT_0/1 (50/50 irDouble roll — Math.random in BCU, not
+      // the seeded stream). They are not mutually exclusive; flooding is bounded
+      // by setSE's per-frame per-id flag (SoundHandler.play[ind]), mirrored here
+      // by playBcuSetSe.
+      if (hasAppliedDamageAbility(event, 'critical')) playBcuSetSe(scene, BCU_SE.CRIT, engine);
+      if (hasAppliedDamageAbility(event, 'strongAttack')) playBcuSetSe(scene, BCU_SE.SATK, engine);
+      if (Number(event.damage || 0) > 0) playBcuSetSe(scene, Math.random() < 0.5 ? BCU_SE.HIT_0 : BCU_SE.HIT_1, engine);
       break;
     case 'procResolved':
       // The proc roll is silent in BCU; SE fire on actual application via

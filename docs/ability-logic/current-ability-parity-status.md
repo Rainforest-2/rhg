@@ -1,6 +1,6 @@
 # BCU 能力整合性の現状
 
-更新日: 2026-06-25
+更新日: 2026-07-02
 
 この文書は、`RHgrive/rhg` における BCU の能力・proc・効果の、見た目以外の現状をまとめたものです。古いノートや単一フィクスチャだけで広い整合性を主張しないよう、保守的な記述にしています。
 
@@ -24,14 +24,20 @@
 | ワープライフサイクル | `code-complete-candidate` | 進入・隠蔽・退出・完了までの流れが実装済み。見た目は別途レビュー。 |
 | P_DELAY | `human-visual-review-needed` | 反映ロジックはあり、見た目の受け入れだけが残る。 |
 | 波動 / 小波動 / 烈波 / 爆波 | `code-complete-candidate` | 射出物系の実行時とチェックが揃っている。 |
-| バリア / 悪魔シールド / シールドブレイカー | `human-visual-review-needed` | 役割分担とフェーズ制御は実装済み。 |
+| バリア / 悪魔シールド / シールドブレイカー | `code-complete-candidate` | 役割分担とフェーズ制御は実装済み。見た目はユーザー確認で accepted（台帳参照）。 |
 | 死魂 / デス烈波 / AB_GLASS | `code-complete-candidate` | 死亡・蘇生・デス烈波の系統は実装済み。 |
-| ゾンビ corpse / soulstrike / revive | `human-visual-review-needed` | 実行時はあるが、corpse や revive の見た目は未受け入れ。 |
+| ゾンビ corpse / soulstrike / revive | `code-complete-candidate` | 実行時あり。標準 revive の見た目はユーザー確認で accepted（台帳参照）。 |
 | 地中移動 | `code-complete-candidate` | 移動・ターゲット可否・後始末までカバー済み。 |
 | 霊魂ライフサイクル | `human-visual-review-needed` | 生成・クールダウン・容量制限・ready 状態までは実装済み。 |
-| 城 / 基地ガード | `human-visual-review-needed` | 実行時はあるが、見た目のレビューが残る。 |
+| 城 / 基地ガード | `code-complete-candidate` | 実行時あり。見た目はユーザー確認で accepted（台帳参照）。 |
 | 財布 / 配置コスト / リスポーン | `code-complete-candidate` | BCU の式と生産ロジックが接続済み。 |
 | 基本 / 非基本キャノン | `code-complete-candidate` | 実行時所有権とチェックはある。見た目タイミングは未受け入れ。 |
+| AB_METALIC（能力による金属） | `code-complete-candidate` | dog-player 攻撃側ケースのパッチが boot group 未接続だった実バグを 2026-07-02 に修正。`check-bcu-metal-abi-double-apply` が配線も固定。 |
+| 被弾 / critical / strong SE | `code-complete-candidate` | BCU `Entity.damaged` と同じく CRIT / SATK / HIT_0・1 を独立再生（フレーム毎 dedupe）。`check-bcu-battle-sound-effects-parity` で固定。 |
+| Boss music 切替 | `code-complete-candidate` | 閾値 0/100 は boss track 無効、切替は int 切り捨て strict `<`（BCU `DefStageInfo` / `BattleView.aboveBoss`）。 |
+| lineup スワイプ（モバイル） | `code-complete-candidate` | ライブオーナーは `PlayerProductionBar`。BCU `BattleView.kt` と一致、`check-bcu-lineup-slide-gesture-parity` で固定。 |
+| 財布 income/max-money combo | `code-complete-candidate` | BCU の非対称式（整数除算 vs 加算）と一致。combo 経路も `check-bcu-wallet-runtime-parity` でカバー。 |
+| 編成 roster の deployability | `code-complete-candidate` | アセット不完全ユニットは `error-ally.json` / `error-enemy.json` で除外。`check-playable-roster-actor-readiness` が全 form を掃引。 |
 
 ## ローダーで裏付けられた完了候補
 
@@ -45,9 +51,13 @@
 
 ## 未完了の項目
 
-- summon entry の見た目
-- death-surge の demon-soul 見た目
-- spirit / guard / shield / cannon の見た目受け入れ
+（2026-07-02 監査後に残る項目。ガード / シールド / 標準 zombie revive / 財布ボタン / 基本キャノンの見た目はユーザー確認で accepted 済み。）
+
+- P_DELAY / burrow / spirit・A_IMUATK / summon entry / mini death-surge の見た目
+- 非基本キャノンの sweep / travel と BASE_WALL の見た目
+- 攻撃エフェクト・wave・surge・knockback・status icon のレイヤー / 終了処理の見た目
+- モバイル操作（production card / drag / slide / pause / camera）と音（BGM 切替 / SE 多重 / boss 切替）の実機受け入れ
+- SUMMON entry は実カスタムパックの自動発見が未完のため `blocked`（台帳参照）
 - BCU セーブや陣形の import/export 互換性は対象外
 
 ## 受け入れ前に必要なチェック

@@ -121,22 +121,16 @@ export class BcuEntityEffectIconRuntime {
     // not by global animation loop completion.
     this.animator.setLoop(false);
     this.animator.setRotate(false);
-    this.finished = false;
     this.lastAdvancedLogicFrame = null;
   }
 
   update(dt = BCU_FRAME_MS, scene = null) {
-    if (this.finished) return;
     const logicFrame = Number.isFinite(scene?.logicFrame) ? scene.logicFrame : null;
     if (logicFrame !== null && this.lastAdvancedLogicFrame === logicFrame) return;
     this.lastAdvancedLogicFrame = logicFrame;
     const stepDt = Number.isFinite(dt) && dt > 0 ? dt : BCU_FRAME_MS;
     this.animator.tick(stepDt);
     this.animator.apply(this.model);
-  }
-
-  isDone() {
-    return this.finished;
   }
 
   draw(ctx, { x, y, scale = 1, direction = 1 } = {}) {

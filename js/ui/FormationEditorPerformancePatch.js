@@ -85,7 +85,7 @@ function mapSearchText(map) {
 }
 
 function mapCrownData(editor, map) {
-  return resolveMapCrownData(editor.__bcuStageCrownIndex || null, { name: map?.label, mapId: map?.mapNo });
+  return resolveMapCrownData(editor.__bcuStageCrownIndex || null, { name: map?.label, mapId: map?.mapNo, mapColcId: map?.mapColcId });
 }
 
 function filteredStageItems(editor, kind, items) {

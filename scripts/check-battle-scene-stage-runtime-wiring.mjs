@@ -59,7 +59,7 @@ assert.ok(
     && bootBattleProjectiles.includes("'../../battle/BattleSceneStageRuntimeWiring.js'"),
   'boot battle module must import stage runtime wiring (via grouped projectile patch list) before PreviewApp starts'
 );
-assert.ok(main.includes("await import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp');
+assert.ok(main.includes("import('./preview/PreviewApp.js')"), 'main.js must dynamically import PreviewApp (progress-wrapped via withBootCreep)');
 assert.ok(main.includes('globalThis.__WAN_BOOT_ERROR__?.(error)'), 'main.js must report boot failures to the page overlay');
 assert.ok(wiring.includes("import { BattleScene } from './BattleScene.js'"), 'wiring must import BattleScene');
 assert.ok(wiring.includes('StageRuntimeSceneAdapter.build'), 'wiring must build StageRuntime through adapter');

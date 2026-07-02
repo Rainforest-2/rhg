@@ -3,7 +3,7 @@
   "source": {
     "name": "reserved ally error list",
     "definition": "Ally IDs in this file are display IDs. The BCU asset unit ID is display ID - 1.",
-    "reason": "Cat units whose jp-UnitName.txt name column is empty render their semantic key (unit:<id>:form:N) as the card label in the formation catalog. They are hidden from the formation list per user request.",
+    "reason": "Cat units whose jp-UnitName.txt name column is empty render their semantic key (unit:<id>:form:N) as the card label in the formation catalog. They are hidden from the formation list per user request. Display IDs whose asset unit (display-1) lacks a complete f-form actor runtime (missing bcu-actor-index entry or missing move/idle/kb maanim in every vendored pack) are also listed, so the roster only offers deployable units (locked by check-playable-roster-actor-readiness).",
     "excludedAssetIds": [
       155,
       182,
@@ -19,8 +19,31 @@
       498,
       499,
       500,
+      515,
+      656,
+      658,
+      659,
+      663,
+      664,
+      665,
+      669,
+      670,
       673,
+      675,
+      676,
+      685,
+      691,
+      697,
+      700,
+      706,
+      707,
+      713,
+      716,
+      717,
+      720,
+      724,
       729,
+      730,
       732,
       734,
       739,
@@ -31,8 +54,10 @@
       744,
       745,
       755,
+      757,
       761,
       764,
+      765,
       770,
       775,
       782,
@@ -45,11 +70,12 @@
       821,
       825,
       838,
-      839
+      839,
+      855
     ]
   },
-  "checkedMaxAllyId": 840,
-  "count": 41,
+  "checkedMaxAllyId": 856,
+  "count": 67,
   "missingAllyIds": [
     156,
     183,
@@ -65,8 +91,31 @@
     499,
     500,
     501,
+    516,
+    657,
+    659,
+    660,
+    664,
+    665,
+    666,
+    670,
+    671,
     674,
+    676,
+    677,
+    686,
+    692,
+    698,
+    701,
+    707,
+    708,
+    714,
+    717,
+    718,
+    721,
+    725,
     730,
+    731,
     733,
     735,
     740,
@@ -77,8 +126,10 @@
     745,
     746,
     756,
+    758,
     762,
     765,
+    766,
     771,
     776,
     783,
@@ -91,7 +142,8 @@
     822,
     826,
     839,
-    840
+    840,
+    856
   ],
   "missingAllyIdsPadded": [
     "156",
@@ -108,8 +160,31 @@
     "499",
     "500",
     "501",
+    "516",
+    "657",
+    "659",
+    "660",
+    "664",
+    "665",
+    "666",
+    "670",
+    "671",
     "674",
+    "676",
+    "677",
+    "686",
+    "692",
+    "698",
+    "701",
+    "707",
+    "708",
+    "714",
+    "717",
+    "718",
+    "721",
+    "725",
     "730",
+    "731",
     "733",
     "735",
     "740",
@@ -120,8 +195,10 @@
     "745",
     "746",
     "756",
+    "758",
     "762",
     "765",
+    "766",
     "771",
     "776",
     "783",
@@ -134,7 +211,8 @@
     "822",
     "826",
     "839",
-    "840"
+    "840",
+    "856"
   ],
   "missingRanges": [
     {
@@ -188,14 +266,89 @@
       "count": 4
     },
     {
+      "start": 516,
+      "end": 516,
+      "count": 1
+    },
+    {
+      "start": 657,
+      "end": 657,
+      "count": 1
+    },
+    {
+      "start": 659,
+      "end": 660,
+      "count": 2
+    },
+    {
+      "start": 664,
+      "end": 666,
+      "count": 3
+    },
+    {
+      "start": 670,
+      "end": 671,
+      "count": 2
+    },
+    {
       "start": 674,
       "end": 674,
       "count": 1
     },
     {
-      "start": 730,
-      "end": 730,
+      "start": 676,
+      "end": 677,
+      "count": 2
+    },
+    {
+      "start": 686,
+      "end": 686,
       "count": 1
+    },
+    {
+      "start": 692,
+      "end": 692,
+      "count": 1
+    },
+    {
+      "start": 698,
+      "end": 698,
+      "count": 1
+    },
+    {
+      "start": 701,
+      "end": 701,
+      "count": 1
+    },
+    {
+      "start": 707,
+      "end": 708,
+      "count": 2
+    },
+    {
+      "start": 714,
+      "end": 714,
+      "count": 1
+    },
+    {
+      "start": 717,
+      "end": 718,
+      "count": 2
+    },
+    {
+      "start": 721,
+      "end": 721,
+      "count": 1
+    },
+    {
+      "start": 725,
+      "end": 725,
+      "count": 1
+    },
+    {
+      "start": 730,
+      "end": 731,
+      "count": 2
     },
     {
       "start": 733,
@@ -218,14 +371,19 @@
       "count": 1
     },
     {
+      "start": 758,
+      "end": 758,
+      "count": 1
+    },
+    {
       "start": 762,
       "end": 762,
       "count": 1
     },
     {
       "start": 765,
-      "end": 765,
-      "count": 1
+      "end": 766,
+      "count": 2
     },
     {
       "start": 771,
@@ -286,6 +444,11 @@
       "start": 839,
       "end": 840,
       "count": 2
+    },
+    {
+      "start": 856,
+      "end": 856,
+      "count": 1
     }
   ],
   "notes": [

@@ -52,8 +52,10 @@ for (const phrase of [
   '- 追加 / カスタム zombie revive: 実データの proc-object から source/range フィルタが動く。',
   '- リポジトリ内永続化: 読み書き失敗の可視化ができている。',
   // Genuinely-open items: visual review or disproven/out-of-scope owner.
-  '- summon entry の見た目',
-  '- death-surge の demon-soul 見た目',
+  // (2026-07-02 doc reorganization merged the per-item bullets; the same open
+  // claims must stay listed.)
+  '- P_DELAY / burrow / spirit・A_IMUATK / summon entry / mini death-surge の見た目',
+  '- SUMMON entry は実カスタムパックの自動発見が未完のため `blocked`',
   '- BCU セーブや陣形の import/export 互換性は対象外'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);

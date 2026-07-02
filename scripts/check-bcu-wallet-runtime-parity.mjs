@@ -62,6 +62,18 @@ deployEcon.money = deployCost;
 assert.equal(deployEcon.produce({ slotId: 'cat-raw-100', cost: deployCost, cooldownMs: 0 }), true, 'cat deployment succeeds at the 1.5x BCU cost');
 assert.equal(deployEcon.money, 0, 'cat deployment subtracts the 1.5x BCU cost');
 
+// BCU combo application is intentionally asymmetric:
+// - income combo: StageBasis.java:806-809 `mon *= (b.getInc(C_M_INC) / 100 + 1)` (Java int division -> whole-100%-steps)
+// - max money combo: Treasure.java:497-501 `base * (100 + (noCombo ? 0 : b.getInc(C_M_MAX)))` (additive percent)
+const comboWallet = (extra) => new BattleEconomy({ startMoney: 0, wallet: { ...defaultWallet, ...extra } });
+assert.equal(comboWallet({ incomeComboPercent: 50 }).computeWalletIncomeInternal(1), 615, 'sub-100% income combo contributes nothing (Java int division in StageBasis)');
+assert.equal(comboWallet({ incomeComboPercent: 100 }).computeWalletIncomeInternal(1), 1230, '100% income combo doubles the increment');
+assert.equal(comboWallet({ incomeComboPercent: 250 }).computeWalletIncomeInternal(1), 1845, '250% income combo floors to x3');
+assert.equal(comboWallet({ incomeComboPercent: 250, noIncomeCombo: true }).computeWalletIncomeInternal(1), 615, 'C_M_INC combo ban skips the income multiplier');
+assert.equal(getBcuWalletMaxMoney(1, { walletTech: 30, walletTreasure: 300, maxMoneyComboPercent: 50 }), 9000, 'max-money combo is additive percent (Treasure.getMaxMon)');
+assert.equal(getBcuWalletMaxMoney(1, { walletTech: 30, walletTreasure: 300, maxMoneyComboPercent: 50, noCombo: true }), 6000, 'C_M_MAX combo ban keeps base capacity');
+assert.equal(comboWallet({ maxMoneyComboPercent: 50 }).maxMoney, 9000, 'wallet-enabled economy applies the additive max-money combo');
+
 const prodUi = readFileSync('js/ui/PlayerProductionBar.js', 'utf8');
 assert.match(prodUi, /wallet-upgrade/, 'production UI must render the wallet button');
 assert.match(prodUi, /upgradeWallet\?\.\(\)/, 'wallet button must call economy.upgradeWallet');

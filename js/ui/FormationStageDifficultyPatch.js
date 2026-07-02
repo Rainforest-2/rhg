@@ -69,10 +69,10 @@ function stageOptionOf(item) {
 }
 function crownIndex(ed) { return ed.__bcuStageCrownIndex || null; }
 function mapCrownData(ed, map) {
-  return resolveMapCrownData(crownIndex(ed), { name: map?.label, mapId: map?.mapNo });
+  return resolveMapCrownData(crownIndex(ed), { name: map?.label, mapId: map?.mapNo, mapColcId: map?.mapColcId });
 }
 function stageCrownData(ed, item) {
-  return resolveMapCrownData(crownIndex(ed), { name: item?.mapLabel, mapId: item?.mapNo });
+  return resolveMapCrownData(crownIndex(ed), { name: item?.mapLabel, mapId: item?.mapNo, mapColcId: item?.mapColcId });
 }
 function stageText(item, crownData) {
   const starText = crownStarsForData(crownData).map((star) => `★${star}`).join(' ');

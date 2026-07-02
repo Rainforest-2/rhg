@@ -31,7 +31,9 @@
       "Bash(sort -t: -k2 -n)",
       "Bash(rm -rf tmp/b3)",
       "Bash(perl -0pi -e \"s/orbMatchTraits: getTraitList\\\\\\(target\\\\\\)/orbMatchTraits: sharedInfo.attackTraits/g; s/orbMatchTraits: getTraitList\\\\\\(attacker\\\\\\)/orbMatchTraits: sharedInfo.attackTraits/g\" js/battle/DamageAbilityResolver.js)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(npm run *)",
+      "Bash(echo \"VERIFY:$?\")"
     ]
   }
 }

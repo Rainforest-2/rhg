@@ -1,6 +1,6 @@
 # BCU の未解決根拠・互換性ブロッカー
 
-更新日: 2026-06-25
+更新日: 2026-07-02
 
 この文書では、`RHgrive/rhg` で広範な整合性主張を出す際のブロッカーを列挙します。ここに載っていても、実行時が実装済みである場合があります。ブロッカーの内容は、実データソースの不足、ブラウザ受け入れのギャップ、互換性の境界のいずれかです。
 
@@ -11,7 +11,7 @@
 | 重要度 | 領域 | 現在のブロッカー | 次に必要なこと |
 |---|---|---|---|
 | 高 | 同フレーム攻撃解決順 | 以前のノートでは BCU が同フレームの相互キルを抑制するとされていたが、これは安全な整合性事実ではありません。相互キルは BCU でも起こりうるため、ソースラインだけでランタイムを抑制しない方がよいです。rhg は現状、同フレームの due-hit capture / damage 挙動を維持しています。 | 固定 BCU キャプチャと決定的な rhg フィクスチャで再監査し、変更前に確認する。キャプチャで相互キルが見えた場合は、ランタイム変更ではなくブロッカーから外す。 |
-| 低 | アセット読み込み状態と戦闘ロジック | rhg はユニット / キャノンのアセットをストリーミング読み込みしており（staged critical-path + background warmup、`BattleScene.js:1` メモと `BcuLoadingStrategyVerifier` 参照）、まだ読み込み前のテンプレートが生成遅延や wall cannon（Form 339）の失敗を引き起こす可能性があります。BCU はすべてメモリ上にあるので、これは静かに失敗しない観測可能な差分です。`spawnStageEnemy` / `spawnEnemy` が `enemySpawnRejected` を送信し、`startActorAttack` が `attackDeferredAnimationLoading` を送信し、wall cannon は `wall-template-loading` を記録して充電状態を維持します。最初に攻撃するアセット（最初の敵の攻撃アニメ、wall cannon）は critical path で事前に温められています。 | 長尾のストリーミング遅延は、意図的なブラウザ境界として扱う。完全な blocking preflight を入れると、意図した staged-load UX を壊すため、固定 BCU キャプチャで開幕フレームのスポーン / 攻撃 / キャノンの差分が見えた場合だけエスカレートする。 |
+| 低 | アセット読み込み状態と戦闘ロジック | rhg はユニット / キャノンのアセットをストリーミング読み込みしており（staged critical-path + background warmup、`BattleScene.js:1` メモ参照）、まだ読み込み前のテンプレートが生成遅延や wall cannon（Form 339）の失敗を引き起こす可能性があります。BCU はすべてメモリ上にあるので、これは静かに失敗しない観測可能な差分です。`spawnStageEnemy` / `spawnEnemy` が `enemySpawnRejected` を送信し、`startActorAttack` が `attackDeferredAnimationLoading` を送信し、wall cannon は `wall-template-loading` を記録して充電状態を維持します。最初に攻撃するアセット（最初の敵の攻撃アニメ、wall cannon）は critical path で事前に温められています。 | 長尾のストリーミング遅延は、意図的なブラウザ境界として扱う。完全な blocking preflight を入れると、意図した staged-load UX を壊すため、固定 BCU キャプチャで開幕フレームのスポーン / 攻撃 / キャノンの差分が見えた場合だけエスカレートする。 |
 | 中 | extend / waved キャノンタイミング | キャノンごとの ATK/EXT ビットマップ別名が接続され、各キャノンが自身の `NyCastle.aux.atks[id]` BASE/ATK eanim を読み込み、`spawnCatCannonNonBasicEffect` で実アニメを生成するようになりました。残るのは、フレームごとの sweep / travel 座標の正確さで、手動受け入れはまだありません。 | 固定の BCU 参照を取って、ブラウザで extend/waved フレームを比較する。 （見た目） |
 | 中 | 召喚エントリの見た目 | `Entity.setSummon(anim_type)` の開始時の見た目、配置、レイヤー、後始末は、ローダーは確認済みでも手動受け入れされていません。 | ローダー付き summon フィクスチャでブラウザ確認する。 （見た目） |
 | 中 | BCU の PC 描画側ソース | PC 専用の描画ヘルパーに依存する主張をするには、このチェックアウトに PC 描画側ソース ZIP がありません。 | PC 専用見た目主張をする前に、関連する PC ソースを追加する。 |
@@ -54,6 +54,17 @@
 | 基本 / 非基本キャノン実行時 | 専用オーナーと決定的なチェックがある。見た目のアセット / タイミング受け入れは別。 |
 | 通常の城が持つ攻撃 | negative evidence: 通常の `ECastle` には攻撃オーナーがない。ボス基地の攻撃は通常の `EEnemy` で、HP 閾値 / 撃破数による出現はステージ側が担当。 |
 | 特殊城ボススポーン座標 | 実装済み。実行時接続と式のカバレッジがある。 |
+| 財布 income / max-money combo の式の非対称 | 解決済み (2026-07-02): BCU 自体が非対称。income は `StageBasis.java:806-809` の `mon *= (getInc(C_M_INC)/100 + 1)`（整数除算 = 100% 刻み）、max money は `Treasure.java:497-501` の `base * (100 + inc)`（加算）。rhg の式は両方一致し、`check-bcu-wallet-runtime-parity` に combo 経路のアサーションを追加済み。 |
+| Boss music の閾値セマンティクス | 解決済み (2026-07-02): BCU は閾値 0/100 の boss music を読み込まず（`DefStageInfo.java:42-45`）、戦闘中の切替は int 切り捨て HP% の strict `<`（`BattleView.kt:314-317`）。`PreviewAppBattleMusicPatch` を同セマンティクスに修正し、`check-battle-music-and-zombie-killer` にアサーションを追加済み。 |
+| モバイル lineup スワイプの閾値・方向 | 解決済み (2026-07-02): `BattleView.kt:440-481`（`height*0.15`、`tan(50°) >= |dx|/|dy|`、`v = dy/dragFrame; v<0 => UP`、guard 群）とライブ実装 `PlayerProductionBar` の一致を確認。孤立重複 `BcuMobileGestureRuntime.js` は削除し、`check-bcu-lineup-slide-gesture-parity` で固定。 |
+| 被弾 SE の critical/strong/hit 排他 | 解決済み (2026-07-02): BCU `Entity.java:1722-1762` は SE_CRIT / SE_SATK / SE_HIT_0・1 を同一ヒットで独立に鳴らす（`else if` ではない）。HIT_0/1 は非シードの 50/50。`BattleSoundEventPatch` を setSE 相当のフレーム毎 dedupe（`playBcuSetSe`）に統一し、`check-bcu-battle-sound-effects-parity` に挙動アサーションを追加済み。 |
+| MapStageData 行 index のフィルタずれ | 解決済み (2026-07-02): BCU は厳密な位置ベース読み（`FileData.readLine` + `StageMap.StageMapInfo`）。rhg のフィルタ式 indexing は全ライブ stage 行 9,606 組で位置ベースと一致することを実測し、`check-bcu-msd-row-alignment-parity` で恒久ガード化。 |
+| `parseAnim` の不正 keyframe 行スキップ | 解決済み (2026-07-02): BCU `Part(Queue)` は不正行で throw。rhg の lenient skip は全 vendored .maanim 14,012 ファイルで未発動（junk 0 行）であることを実測し、既知の破損 30 ファイル（空 2 + pack 100204 のバイナリ破損 28、双方のエンジンでヘッダ検査により失敗）を `check-bcu-maanim-keyframe-integrity` で固定。 |
+| ステージ一覧の常時 ★1 フィルタ | 解決済み (2026-07-02): BCU Android のデフォルト star は index 0 = ★1（`LineUpScreen.kt:125`、スピナー position 0）。rhg の常時クラウンフィルタは BCU デフォルトと一致（accepted）。 |
+| `resolveUnitAsset` の固定 000004 base | 解決済み (2026-07-02): 固定 base は候補パスの供給のみで、存在確認（`pickFirstExisting` → null）と `assertRawAllowed`（rawOnly 明示なしの raw アクセスは throw）に守られる。捏造アセット内容や暗黙フォールバックにはならない（accepted）。 |
+| AB_METALIC の dog-player 攻撃側ケース | 解決済み (2026-07-02): `DamageAbilityResolverMetalAbiPatch` が boot group 未接続で本番未適用だった実バグを修正（`battleCorePatches.js` に接続）。`check-bcu-metal-abi-double-apply` に配線アサーションを追加。 |
+| 編成 roster の undeployable カード | 解決済み (2026-07-02): vendored パックに f-form actor runtime（または一部 form の maanim）が存在しない 43 ユニットを `error-ally.json` に display id で追加し、`check-playable-roster-actor-readiness` をランタイムと同じ除外変換（display−1）+ 全 indexed form 掃引に強化。 |
+| 孤立コード / 重複実装 / 未使用 verifier | 解決済み (2026-07-02): import graph 監査で到達不能を機械確認し、`js/bcu-render/**`、旧 bcu-runtime スキャフォールド 10 件、node:fs 系 Verifier 11 件、`BattleSceneRendererBcuPatch`、`BattleCastleResolver`、`BcuBattleInputAdapter`、`BcuStageDifficultyRuntime`（ラベル面は out-of-scope、evidence doc に記録）等 36 ファイルを削除。孤立ゼロを確認。 |
 
 ## ドキュメントルール
 

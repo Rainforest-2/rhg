@@ -1,13 +1,11 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { BattleBase } from '../js/battle/BattleBase.js';
-import { BattleCastleResolver } from '../js/battle/BattleCastleResolver.js';
 import { resolveEnemyCastleAssetCandidates, BcuCastleAssetLoader } from '../js/battle/BcuCastleAssetLoader.js';
 import { BattleSpawnResolver } from '../js/battle/BattleSpawnResolver.js';
 
 const files = [
   'js/battle/BattleSceneRenderer.js',
-  'js/battle/BattleCastleResolver.js',
   'js/battle/BcuCastleAssetLoader.js',
   'js/battle/BattleBase.js',
   'js/battle/BattleSpawnResolver.js'
@@ -66,10 +64,13 @@ assert.equal(player.visualX, 4064, 'visualX should become player castle visual c
 assert.equal(playerGeometry.visualWorldBox.left, 4000, 'player visual left edge should align to combat point');
 assert.equal(playerGeometry.anchor, 'player-combat-point-at-visual-left-edge');
 
-const visual = BattleCastleResolver.applyToBase(enemy, { asset: { image: { width: 165, height: 165 } }, source: 'test-visual' });
-assert.equal(visual.combatBodyBox, null, 'castle visual resolver must not create combat body from image width');
-assert.equal(visual.bodySource, 'none-visual-only-bcu-base-uses-pos-point');
-assert.equal(enemy.getCombatBodyBox().left, 800, 'visual helper must not change BCU point combat body');
+// Visual-size updates must never touch the BCU point combat body (the former
+// BattleCastleResolver helper was deleted as orphaned; BattleBase owns this).
+enemy.updateCombatBodyFromVisualBounds({ width: 165, height: 165 }, 1, 'cat-enemy', { source: 'test-visual' });
+const revisitBody = enemy.getCombatBodyBox();
+assert.equal(revisitBody.source, 'bcu-base-pos-point', 'combat body must stay the BCU pos point, never image-derived');
+assert.equal(revisitBody.width, 0, 'castle visual update must not create combat body from image width');
+assert.equal(revisitBody.left, 800, 'visual update must not change BCU point combat body');
 
 const loaderText = fs.readFileSync('js/battle/BcuCastleAssetLoader.js', 'utf8');
 const baseText = fs.readFileSync('js/battle/BattleBase.js', 'utf8');

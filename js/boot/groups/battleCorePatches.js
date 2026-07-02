@@ -4,6 +4,9 @@
 // BCU hit effects, then damage/proc/lifecycle runtime wrappers.
 import '../../battle/BattleUnifiedDamageDebugPatch.js';
 import '../../battle/BattleCriticalEffectPatch.js';
+// BCU AB_METALIC (metal-by-ability) crit-cap for dog-player attackers; sole
+// wrapper of DamageAbilityResolver.resolve, so its position is order-free.
+import '../../battle/DamageAbilityResolverMetalAbiPatch.js';
 import '../../battle/BattleBcuStrictConfigPatch.js';
 import '../../battle/StageDefinitionNegativeSpawnPatch.js';
 import '../../battle/BattleActorBcuKbTargetPatch.js';

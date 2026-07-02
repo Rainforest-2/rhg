@@ -2,7 +2,7 @@
 
 ## 最終更新
 
-- 日付: 2026-06-26 (UTC)
+- 日付: 2026-07-02 (UTC)
 - リポジトリ: `Rainforest-2/rhg`
 - 対象: BCU ZIP / 実行時 / 能力の整合性、描画・UI の受け入れ、データ読み込み、永続化互換性
 - 監査基盤: 現行の rhg コードと `references/bcu/` 配下に含まれる BCU 参照 ZIP
@@ -31,6 +31,18 @@
 | 死亡・ワープのライフサイクル | `docs/ability-logic/death-warp-current-status.md` |
 | BCU ソース根拠 | `docs/ability-logic/bcu-ability-source-evidence.md` |
 | 実装順序 | `docs/ability-logic/bcu-parity-codex-workplan.md` |
+
+## 2026-07-02 完成監査サマリ
+
+到達性・BCU 根拠・配線の全面監査を実施しました。
+
+- **実バグ修正**: `DamageAbilityResolverMetalAbiPatch`（AB_METALIC の dog-player 攻撃側金属キャップ）が boot group 未接続で本番未適用だったのを `battleCorePatches.js` へ接続し、チェックに配線アサーションを追加。
+- **BCU 根拠で 3 件のランタイム挙動を修正**: boss music 切替（閾値 0/100 無効 + int 切り捨て strict `<`、`DefStageInfo`/`BattleView.aboveBoss`）、被弾 SE（CRIT/SATK/HIT の独立再生 + フレーム毎 dedupe、`Entity.java:1722-1762`）、編成 roster から undeployable ユニット 43 件を除外（`error-ally.json`）。
+- **BCU 根拠で 6 件を accepted 分類**: 財布 combo 式の非対称、MSD 行 index、maanim keyframe leniency、★1 デフォルトフィルタ、`resolveUnitAsset` fallback、lineup スワイプ定数。
+- **孤立コード 36 ファイルを削除**: `js/bcu-render/**`、旧 bcu-runtime スキャフォールド、node:fs 系 Verifier 群、重複ゲスチャランタイム等。import graph で孤立ゼロを機械確認。
+- **チェック増強**: `check-bcu-msd-row-alignment-parity`、`check-bcu-maanim-keyframe-integrity`、`check-bcu-lineup-slide-gesture-parity` を新設し safe suite 登録。stale だった 3 チェックを現実装に同期、生成物依存の 4 チェックは再生成手順で成功確認。
+- **ブラウザ実走**: 全ビューポートで formation → ステージ選択 → バトルロード完了を headless Chromium で確認（`tmp/ui-polish-screens/`）。戦闘中フレームの追加スモークは実行環境のメモリ逼迫で完走せず（アプリ欠陥の証跡なし）。
+- **見た目台帳**: ユーザー確認済み 6 項目（バリア / 悪魔シールド / 城ガード / 標準 zombie revive / 財布ボタン / 基本キャノン）を accepted 記録。残りの見た目項目は human-visual-review-needed のまま（完成宣言はしない）。
 
 ## 2026-06-23 監査サマリ
 

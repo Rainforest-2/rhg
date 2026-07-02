@@ -371,6 +371,14 @@ const musicPatch = await read('js/preview/PreviewAppBattleMusicPatch.js');
 for (const piece of ['playBgm', 'setPaused', 'bossMusicHpThresholdPercent', 'getEnemyBaseHpPercent']) {
   check(musicPatch.includes(piece), `BattleMusicPatch: missing "${piece}"`);
 }
+// BCU boss-music gating (DefStageInfo: mush 0/100 never arms mus1;
+// BattleView.aboveBoss: int-truncated HP% strictly below mush).
+check(musicPatch.includes('threshold !== 0 && threshold !== 100'),
+  'BattleMusicPatch must disarm boss music for thresholds 0/100 (BCU DefStageInfo)');
+check(musicPatch.includes('Math.trunc(pct) < spec.threshold'),
+  'BattleMusicPatch initial boss pick must use int-truncated strict < (BCU BattleView.aboveBoss)');
+check(musicPatch.includes('Math.trunc(enemyBaseHpPercent(app)) < m.threshold'),
+  'BattleMusicPatch runtime switch must use int-truncated strict < (BCU BattleView.aboveBoss)');
 
 const touched = [
   'js/audio/MusicCatalog.js',

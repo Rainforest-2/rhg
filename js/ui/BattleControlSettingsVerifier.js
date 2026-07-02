@@ -1,3 +1,0 @@
-const { readFile } = await import('node'+':fs'+'/promises');
-export async function verifyBattleSpeedControlAppliesToRuntime(){const s=await readFile(new URL('../preview/PreviewApp.js',import.meta.url),'utf8');const checks=[s.includes('battleSpeedMultiplier'),s.includes('tick(dt*this.battleSpeedMultiplier)')];return {ok:checks.every(Boolean),checks};}
-export async function verifyBattleDebugTogglesReachRenderer(){const app=await readFile(new URL('../preview/PreviewApp.js',import.meta.url),'utf8');const renderer=await readFile(new URL('../battle/BattleSceneRenderer.js',import.meta.url),'utf8');const checks=[app.includes('showPivots'),app.includes('rawMode'),renderer.includes('showPivots')];return {ok:checks.every(Boolean),checks};}

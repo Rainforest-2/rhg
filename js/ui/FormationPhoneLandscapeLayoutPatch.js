@@ -90,6 +90,36 @@ function injectStyle() {
   html body.nyanko-ui-polish .stage-select-button{min-height:0!important;height:100%!important}
   html body.nyanko-ui-polish .formation-current-stage{height:100%!important;min-height:0!important;max-height:none!important;padding:5px 7px!important;border-width:2px!important;border-radius:9px!important;font-size:.55rem!important;line-height:1.18!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;white-space:normal!important;word-break:break-word!important;color:#261005!important;-webkit-text-fill-color:#261005!important;background:rgba(255,250,218,.92)!important}
   html body.nyanko-ui-polish .formation-action-hint{display:none!important}
+  html body.nyanko-ui-polish .formation-stage-dialog{height:calc(100dvh - 8px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;gap:4px!important;padding:5px 7px 6px!important;border-width:3px!important;border-radius:14px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog::before{inset:42px 6px 6px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog header{min-height:30px!important;padding:0 1px 3px!important;gap:6px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog header strong{font-size:.94rem!important;line-height:1!important;white-space:nowrap!important}
+  html body.nyanko-ui-polish .formation-stage-dialog header span{display:none!important}
+  html body.nyanko-ui-polish .formation-stage-dialog header button{min-height:28px!important;min-width:60px!important;padding:3px 8px!important;border-width:2px!important;font-size:.62rem!important;box-shadow:0 2px 0 #2a1207,inset 0 1px 0 rgba(255,255,255,.78)!important}
+  html body.nyanko-ui-polish .formation-stage-list{gap:5px!important;padding:5px 4px 4px!important;border-width:2px!important;border-radius:10px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog:has(.formation-custom-stage-battle){height:calc(100dvh - 8px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;gap:4px!important;padding:5px 6px!important;border-width:3px!important;border-radius:14px!important;background:linear-gradient(180deg,#bd7338 0 36px,#351305 36px 42px,#fff8d1 43px calc(100% - 8px),#351305 calc(100% - 8px) 100%)!important}
+  html body.nyanko-ui-polish .formation-stage-dialog:has(.formation-custom-stage-battle) header{min-height:28px!important;padding:0 2px 3px!important}
+  html body.nyanko-ui-polish .formation-stage-list:has(.formation-custom-stage-battle){padding:4px!important;border-width:2px!important;border-radius:10px!important}
+  html body.nyanko-ui-polish .formation-stage-list:has(.formation-custom-stage-battle) .formation-stage-breadcrumb{display:none!important}
+  html body.nyanko-ui-polish .formation-custom-stage-battle{height:100%!important;min-height:0!important;display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto!important;gap:5px!important;padding:5px!important;border-width:2px!important;border-radius:10px!important;box-shadow:0 2px 0 rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.86)!important;overflow:hidden!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header{min-height:30px!important;padding:4px 6px!important;gap:6px!important;border-width:2px!important;border-radius:9px!important;box-shadow:0 2px 0 rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.28)!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header span{display:none!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header strong{font-size:.76rem!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]{min-width:82px!important;max-width:92px!important;min-height:25px!important;border-width:2px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]::after{font-size:.58rem!important}
+  html body.nyanko-ui-polish .formation-custom-stage-controls{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-controls button{min-height:25px!important;padding:2px 4px!important;border-width:2px!important;border-radius:8px!important;font-size:.5rem!important;line-height:1.05!important;box-shadow:0 2px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns{min-height:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;overflow:hidden!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns>section{min-height:0!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) 27px!important;gap:4px!important;padding:5px!important;border-width:2px!important;border-radius:9px!important;background:linear-gradient(180deg,#fffdf0 0 28px,#f4dda0 28px 100%)!important;box-shadow:0 2px 0 rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.88)!important;overflow:hidden!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns h4{height:24px!important;padding:3px 7px!important;border-width:2px!important;font-size:.55rem!important;box-shadow:0 2px 0 rgba(0,0,0,.52)!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list-host{min-height:0!important;overflow:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list{max-height:none!important;display:grid!important;gap:4px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list li{min-height:34px!important;grid-template-columns:minmax(0,1fr) 42px!important;gap:4px!important;padding:4px 4px 4px 6px!important;border-width:2px!important;border-radius:8px!important;box-shadow:0 2px 0 rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.82)!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list li strong{font-size:.55rem!important;line-height:1.05!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list li button,
+  html body.nyanko-ui-polish .formation-custom-stage-columns [data-custom-stage-pick-side]{min-height:25px!important;padding:2px 5px!important;border-width:2px!important;border-radius:8px!important;font-size:.5rem!important;line-height:1!important;box-shadow:0 2px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important}
+  html body.nyanko-ui-polish .formation-custom-stage-empty{min-height:34px!important;padding:4px!important;border-width:2px!important;border-radius:8px!important;font-size:.55rem!important}
+  html body.nyanko-ui-polish .formation-custom-stage-note{min-height:25px!important;padding:4px 7px!important;border-width:2px!important;border-radius:8px!important;font-size:.52rem!important;line-height:1.15!important;box-shadow:0 2px 0 rgba(0,0,0,.54)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 }
 @media ${TINY_PHONE_LANDSCAPE_QUERY}{
   html body.nyanko-ui-polish .formation-ui{padding:4px!important}
@@ -121,6 +151,29 @@ function injectStyle() {
   html body.nyanko-ui-polish .apply-battle-button{min-height:0!important;height:100%!important;font-size:.8rem!important}
   html body.nyanko-ui-polish .formation-action-rail button{font-size:.56rem!important;border-radius:8px!important;padding:2px 4px!important}
   html body.nyanko-ui-polish .formation-current-stage{min-height:0!important;max-height:none!important;font-size:.5rem!important;padding:3px 5px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog{padding:4px 5px!important;gap:3px!important;border-width:2px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog header{min-height:26px!important;padding-bottom:2px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog header strong{font-size:.82rem!important}
+  html body.nyanko-ui-polish .formation-stage-dialog header button{min-height:24px!important;min-width:54px!important;padding:2px 6px!important;font-size:.54rem!important}
+  html body.nyanko-ui-polish .formation-stage-list{padding:3px!important;gap:4px!important}
+  html body.nyanko-ui-polish .formation-stage-dialog:has(.formation-custom-stage-battle){padding:4px!important;border-width:2px!important;background:linear-gradient(180deg,#bd7338 0 31px,#351305 31px 36px,#fff8d1 37px calc(100% - 7px),#351305 calc(100% - 7px) 100%)!important}
+  html body.nyanko-ui-polish .formation-stage-dialog:has(.formation-custom-stage-battle) header{min-height:25px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-battle{grid-template-rows:auto auto minmax(0,1fr) 22px!important;gap:3px!important;padding:4px!important;border-radius:8px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header{min-height:26px!important;padding:3px 5px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header strong{font-size:.66rem!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]{min-width:74px!important;max-width:78px!important;min-height:22px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]::after{font-size:.5rem!important}
+  html body.nyanko-ui-polish .formation-custom-stage-controls{gap:3px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-controls button{min-height:22px!important;font-size:.45rem!important;padding:1px 3px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns{gap:4px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns>section{grid-template-rows:auto minmax(0,1fr) 23px!important;gap:3px!important;padding:4px!important;border-radius:8px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns h4{height:21px!important;padding:2px 6px!important;font-size:.48rem!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list{gap:3px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list li{min-height:29px!important;grid-template-columns:minmax(0,1fr) 36px!important;padding:3px 3px 3px 5px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list li strong{font-size:.48rem!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list li button,
+  html body.nyanko-ui-polish .formation-custom-stage-columns [data-custom-stage-pick-side]{min-height:21px!important;font-size:.45rem!important;padding:1px 3px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-note{min-height:21px!important;padding:3px 6px!important;font-size:.46rem!important}
 }
 `;
   document.head.appendChild(style);

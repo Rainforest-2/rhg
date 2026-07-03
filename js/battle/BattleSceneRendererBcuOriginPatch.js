@@ -23,13 +23,17 @@ export function installBattleSceneRendererBcuOriginPatch() {
   proto.getActorGroundAnchorLocalY = function getActorGroundAnchorLocalYBcuOrigin(actor, drawList) {
     if (isBcuActor(actor) && BATTLE_CONFIG.visualLayout?.bcuEntityRender?.enabled) {
       actor.lastGroundAnchorLocalY = 0;
-      actor.lastGroundAnchorDebug = {
-        source: 'BattleSceneRendererBcuOriginPatch',
-        mode: 'bcu-model-origin',
-        anchor: 0,
-        reason: 'BCU EAnim draws mamodel at entity origin; no bounds-based foot alignment',
-        ignoredPreviousStableAnchor: Number.isFinite(actor?.stableGroundAnchorLocalY) ? actor.stableGroundAnchorLocalY : null
-      };
+      // Inspect-only detail: allocating this object per actor per frame is pure GC
+      // pressure during normal play; the returned anchor (0) is unchanged either way.
+      if (this._scene?.debugBattleEnabled || globalThis.__BCU_RENDER_DEBUG__ === true || globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+        actor.lastGroundAnchorDebug = {
+          source: 'BattleSceneRendererBcuOriginPatch',
+          mode: 'bcu-model-origin',
+          anchor: 0,
+          reason: 'BCU EAnim draws mamodel at entity origin; no bounds-based foot alignment',
+          ignoredPreviousStableAnchor: Number.isFinite(actor?.stableGroundAnchorLocalY) ? actor.stableGroundAnchorLocalY : null
+        };
+      }
       return 0;
     }
     return typeof originalGetActorGroundAnchorLocalY === 'function'

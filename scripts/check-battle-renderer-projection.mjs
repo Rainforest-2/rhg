@@ -70,6 +70,7 @@ assert(!src.includes('scene.stageLen ='), 'renderer must not mutate scene.stageL
 assert(src.includes('BCU-java-PC BattleBox.BBPainter'), 'renderer should cite BCU BattleBox render constants');
 assert(src.includes('BCU Background.draw parity'), 'renderer should expose BCU background layout source');
 assert(src.includes('BCU Background.draw ground-gradient-first'), 'background draw should record BCU ground-gradient-first source');
+assert(src.includes('Math.ceil(dw)+1'), 'tiled background draws must overlap by 1px to avoid Android canvas seam lines');
 assert(src.includes("ground.addColorStop(0,'#d8c59a')"), 'fallback background ground must be a gradient, not a solid band');
 assert(src.includes("base.side==='dog-player'?this.addScreenOffsetX"), 'player castle composite should use BCU left-edge drawNyCast anchor');
 assert(src.includes('bg.lastRenderDebug'), 'background rendering should leave debug layout data');

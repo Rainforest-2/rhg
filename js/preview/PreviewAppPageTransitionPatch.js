@@ -46,6 +46,21 @@ function runCanvasTransition(cls, ms) {
   }, ms);
 }
 
+function scheduleCanvasTransition(cls, ms, delayMs = 0) {
+  if (reduceMotion()) return;
+  const panel = canvasPanel();
+  if (panel?.__bcuPageTransitionDelayTimer) clearTimeout(panel.__bcuPageTransitionDelayTimer);
+  if (!delayMs) {
+    runCanvasTransition(cls, ms);
+    return;
+  }
+  if (panel) {
+    panel.__bcuPageTransitionDelayTimer = setTimeout(() => runCanvasTransition(cls, ms), delayMs);
+    return;
+  }
+  setTimeout(() => runCanvasTransition(cls, ms), delayMs);
+}
+
 export function installPreviewAppPageTransitionPatch() {
   const proto = PreviewApp?.prototype;
   if (!proto || proto[APP_PATCH_FLAG]) return;
@@ -60,14 +75,14 @@ export function installPreviewAppPageTransitionPatch() {
   const originalApplyFormationToBattle = proto.applyFormationToBattle;
   proto.applyFormationToBattle = async function applyFormationToBattleWithPageTransition(...args) {
     const result = await originalApplyFormationToBattle.apply(this, args);
-    if (this.sceneReady && this.battleScene) runCanvasTransition('bcu-battle-enter', 240);
+    if (this.sceneReady && this.battleScene) scheduleCanvasTransition('bcu-battle-enter', 420, 140);
     return result;
   };
 
   const originalReturnToFormation = proto.returnToFormationFromBattleResult;
   if (typeof originalReturnToFormation === 'function') {
     proto.returnToFormationFromBattleResult = function returnToFormationWithPageTransition(...args) {
-      runCanvasTransition('bcu-battle-leave', 190);
+      scheduleCanvasTransition('bcu-battle-leave', 240, 0);
       return originalReturnToFormation.apply(this, args);
     };
   }

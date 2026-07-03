@@ -38,13 +38,16 @@ export class BattleEffect {
     const idx = Math.min(this.frameParts.length - 1, Math.floor(this.elapsedMs / this.frameDurationMs));
     this.currentPart = this.frameParts[idx] || null;
     if (this.elapsedMs >= this.durationMs) this.finished = true;
-    this.lastTickDebug = {
-      elapsedMs: this.elapsedMs,
-      durationMs: this.durationMs,
-      finished: this.finished,
-      currentPartName: this.currentPart?.name || null,
-      animatorFrame: this.animator?.frame ?? null,
-      animatorMaxFrame: this.animator?.anim?.maxFrame ?? null
-    };
+    // Inspect-only snapshot; allocating it per effect per tick is pure GC pressure.
+    if (globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
+      this.lastTickDebug = {
+        elapsedMs: this.elapsedMs,
+        durationMs: this.durationMs,
+        finished: this.finished,
+        currentPartName: this.currentPart?.name || null,
+        animatorFrame: this.animator?.frame ?? null,
+        animatorMaxFrame: this.animator?.anim?.maxFrame ?? null
+      };
+    }
   }
 }

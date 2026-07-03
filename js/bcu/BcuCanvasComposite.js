@@ -53,6 +53,43 @@ function applyBcuBlendPixel(dst, src, glow, opacity) {
   }
 }
 
+// Pixel-blend kernel for the glow fallback path. Exported so the deterministic check
+// (scripts/check-bcu-canvas-composite-pixel-parity.mjs) can prove byte-identical output
+// against the original per-pixel array implementation (applyBcuBlendPixel above).
+// Identical arithmetic, but without allocating two 4-element arrays per pixel:
+// BCU BLEND glow=-1 => d - s * a on RGB; every glow merges alpha as max(d, round(s * op)).
+export function blendBcuPixelBuffers(d, s, glow, op) {
+  const isSubtract = glow === -1;
+  for (let i = 0; i < d.length; i += 4) {
+    const sa = s[i + 3];
+    if (sa === 0) continue;
+    const srcAlpha = (sa / 255) * op;
+    if (isSubtract && srcAlpha > 0) {
+      d[i] = clampByte(d[i] - s[i] * srcAlpha);
+      d[i + 1] = clampByte(d[i + 1] - s[i + 1] * srcAlpha);
+      d[i + 2] = clampByte(d[i + 2] - s[i + 2] * srcAlpha);
+    }
+    d[i + 3] = Math.max(d[i + 3], Math.min(255, Math.round(sa * op)));
+  }
+  return d;
+}
+
+// Shared scratch canvas for the pixel-blend fallback. Reused across calls because
+// assigning width/height clears the bitmap per the HTML spec, so each call still
+// starts from a fully transparent canvas exactly like a freshly created one.
+let pixelGlowScratchCanvas = null;
+let pixelGlowScratchCtx = null;
+
+function getPixelGlowScratch(w, h) {
+  if (!pixelGlowScratchCanvas) {
+    pixelGlowScratchCanvas = document.createElement('canvas');
+    pixelGlowScratchCtx = pixelGlowScratchCanvas.getContext('2d', { willReadFrequently: true });
+  }
+  pixelGlowScratchCanvas.width = w;
+  pixelGlowScratchCanvas.height = h;
+  return pixelGlowScratchCtx;
+}
+
 function drawFastCanvasGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { opacity = 1, glow = 0, debug = null } = {}) {
   const operation = FAST_CANVAS_GLOW.get(Number(glow));
   if (!operation) return false;
@@ -83,28 +120,13 @@ function drawPixelGlowImagePart(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, { op
     return false;
   }
 
-  const temp = document.createElement('canvas');
-  temp.width = bounds.w;
-  temp.height = bounds.h;
-  const tctx = temp.getContext('2d', { willReadFrequently: true });
+  const tctx = getPixelGlowScratch(bounds.w, bounds.h);
   tctx.setTransform(transform.a, transform.b, transform.c, transform.d, transform.e - bounds.x, transform.f - bounds.y);
   tctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
 
   const srcImage = tctx.getImageData(0, 0, bounds.w, bounds.h);
   const dstImage = ctx.getImageData(bounds.x, bounds.y, bounds.w, bounds.h);
-  const s = srcImage.data;
-  const d = dstImage.data;
-  const op = clampAlpha(opacity);
-  for (let i = 0; i < d.length; i += 4) {
-    const src = [s[i], s[i + 1], s[i + 2], s[i + 3]];
-    if (src[3] === 0) continue;
-    const dst = [d[i], d[i + 1], d[i + 2], d[i + 3]];
-    applyBcuBlendPixel(dst, src, glow, op);
-    d[i] = dst[0];
-    d[i + 1] = dst[1];
-    d[i + 2] = dst[2];
-    d[i + 3] = Math.max(d[i + 3], Math.min(255, Math.round(s[i + 3] * op)));
-  }
+  blendBcuPixelBuffers(dstImage.data, srcImage.data, glow, clampAlpha(opacity));
   ctx.putImageData(dstImage, bounds.x, bounds.y);
   return true;
 }

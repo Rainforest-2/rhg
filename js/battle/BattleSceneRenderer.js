@@ -176,8 +176,8 @@ export class BattleSceneRenderer {
 
   rgb(color){return `rgb(${color.r},${color.g},${color.b})`;}
   drawVerticalGradient(c,x,y,w,h,top,bottom){const g=c.createLinearGradient(0,y,0,y+h);g.addColorStop(0,this.rgb(top));g.addColorStop(1,this.rgb(bottom));c.fillStyle=g;c.fillRect(x,y,w,h);}
-  drawCropTiledX(c,image,crop,dx,dy,scale,targetW){const dw=crop.w*scale;const dh=crop.h*scale;if(dw<=0||dh<=0)return;let x=dx;while(x>0)x-=dw;while(x<targetW){c.drawImage(image,crop.x,crop.y,crop.w,crop.h,x,dy,dw,dh);x+=dw;}}
-  drawCropTiledXWithTopFade(c,image,crop,dx,dy,scale,targetW,fadeHeight=0,step=4){const dw=crop.w*scale;const dh=crop.h*scale;if(dw<=0||dh<=0)return;let x0=dx;while(x0>0)x0-=dw;const fadePx=Math.max(0,Math.min(crop.h,fadeHeight||0));const strip=Math.max(1,step||4);for(let x=x0;x<targetW;x+=dw){if(fadePx>0){for(let sy=0;sy<fadePx;sy+=strip){const sh=Math.min(strip,fadePx-sy);const alpha=Math.max(0,Math.min(1,(sy+sh)/fadePx));c.save();c.globalAlpha=alpha;c.drawImage(image,crop.x,crop.y+sy,crop.w,sh,x,dy+sy*scale,dw,sh*scale);c.restore();}const restH=crop.h-fadePx;if(restH>0)c.drawImage(image,crop.x,crop.y+fadePx,crop.w,restH,x,dy+fadePx*scale,dw,restH*scale);}else{c.drawImage(image,crop.x,crop.y,crop.w,crop.h,x,dy,dw,dh);}}}
+  drawCropTiledX(c,image,crop,dx,dy,scale,targetW){const dw=crop.w*scale;const dh=crop.h*scale;if(dw<=0||dh<=0)return;let x=dx;while(x>0)x-=dw;while(x<targetW){const drawX=Math.floor(x);const drawW=Math.ceil(dw)+1;c.drawImage(image,crop.x,crop.y,crop.w,crop.h,drawX,dy,drawW,dh);x+=dw;}}
+  drawCropTiledXWithTopFade(c,image,crop,dx,dy,scale,targetW,fadeHeight=0,step=4){const dw=crop.w*scale;const dh=crop.h*scale;if(dw<=0||dh<=0)return;let x0=dx;while(x0>0)x0-=dw;const fadePx=Math.max(0,Math.min(crop.h,fadeHeight||0));const strip=Math.max(1,step||4);for(let x=x0;x<targetW;x+=dw){const drawX=Math.floor(x);const drawW=Math.ceil(dw)+1;if(fadePx>0){for(let sy=0;sy<fadePx;sy+=strip){const sh=Math.min(strip,fadePx-sy);const alpha=Math.max(0,Math.min(1,(sy+sh)/fadePx));c.save();c.globalAlpha=alpha;c.drawImage(image,crop.x,crop.y+sy,crop.w,sh,drawX,dy+sy*scale,drawW,sh*scale);c.restore();}const restH=crop.h-fadePx;if(restH>0)c.drawImage(image,crop.x,crop.y+fadePx,crop.w,restH,drawX,dy+fadePx*scale,drawW,restH*scale);}else{c.drawImage(image,crop.x,crop.y,crop.w,crop.h,drawX,dy,drawW,dh);}}}
   drawBackgroundBcuStage0(c,bg,w,h,scene){const colors=bg.colors;const crop=bg.crop;const image=bg.image;const layout=BATTLE_CONFIG.stage.backgroundLayout||{};if(!image||!crop||!colors){this.drawBackgroundCropCover(c,bg,w,h);return;}const bcu=this.getBcuBackgroundLayout(scene,bg,w,h);const fadeHeight=Number.isFinite(layout.cropTopFadeHeight)?layout.cropTopFadeHeight:0;const fadeStep=Number.isFinite(layout.cropTopFadeStep)?layout.cropTopFadeStep:4;const groundY=bcu.groundY;if(groundY<h)this.drawVerticalGradient(c,0,groundY,w,h-groundY,colors.groundTop,colors.groundBottom);if(groundY>bcu.cropH){let topY=groundY-bcu.cropH*2;if(bg.upperCrop){const top=bg.upperCrop;const topW=top.w*bcu.scale;const topH=top.h*bcu.scale;topY+=bcu.cropH-topH;let tx=bcu.dx;while(tx>0)tx-=topW;for(;tx<w;tx+=topW)if(tx+topW>0)c.drawImage(image,top.x,top.y,top.w,top.h,tx,topY,topW,topH);if(topY>0)this.drawVerticalGradient(c,0,0,w,topY,colors.skyTop,colors.skyBottom);}else{this.drawVerticalGradient(c,0,0,w,Math.max(0,bcu.cropH+topY),colors.skyTop,colors.skyBottom);}}if(layout.tileX!==false)this.drawCropTiledXWithTopFade(c,image,crop,bcu.dx,groundY-bcu.cropH,bcu.scale,w,fadeHeight,fadeStep);else this.drawCropTiledXWithTopFade(c,image,crop,bcu.dx,groundY-bcu.cropH,bcu.scale,bcu.dx+bcu.cropW,fadeHeight,fadeStep);bg.lastRenderDebug={source:bcu.source,drawSource:'BCU Background.draw ground-gradient-first',dx:bcu.dx,dy:groundY-bcu.cropH,scale:bcu.scale,cropW:bcu.cropW,cropH:bcu.cropH,groundY,posWorld:bcu.posWorld,offPx:bcu.offPx,upperCrop:!!bg.upperCrop};}
   drawBackgroundCropCover(c,bg,w,h){const{image,crop}=bg;const scale=Math.max(w/crop.w,h/crop.h);const dw=crop.w*scale,dh=crop.h*scale;const dx=(w-dw)*0.5;const alignY=Number.isFinite(BATTLE_CONFIG.visualLayout?.backgroundVerticalAlign)?BATTLE_CONFIG.visualLayout.backgroundVerticalAlign:0.5;const dy=(h-dh)*alignY;c.drawImage(image,crop.x,crop.y,crop.w,crop.h,dx,dy,dw,dh)}
   drawFallbackBackground(c,w,h,groundY){const sky=c.createLinearGradient(0,0,0,groundY);sky.addColorStop(0,'#7dc7ff');sky.addColorStop(1,'#d9f0ff');c.fillStyle=sky;c.fillRect(0,0,w,groundY);const ground=c.createLinearGradient(0,groundY,0,h);ground.addColorStop(0,'#d8c59a');ground.addColorStop(1,'#80633d');c.fillStyle=ground;c.fillRect(0,groundY,w,h-groundY)}
@@ -224,7 +224,7 @@ export class BattleSceneRenderer {
   drawBases(c,bases,groundY,showParts){for(const base of bases) this.drawBase(c,base,groundY,showParts)}
   drawBase(c,base,groundY,showParts){const renderY=this.getEntityRenderY(this._scene,base,groundY); if(base.visualKind==='bcu-enemy-castle'&&base.castleAsset?.image){this.drawBcuEnemyCastle(c,base);} else if(base.visualKind==='bcu-player-castle-composite'&&base.layers?.length){this.drawBcuPlayerCastleComposite(c,base,renderY);} else if(base.visualKind==='castle-composite'&&base.layers?.length){ const visualYOffset = this.getBaseVisualYOffset(base); for(const layer of base.layers){const s=(base.scale||1)*this.getCameraScale(this._scene);const baseScreenX=this.projectBcuX(this._scene,base.x);const offsetX=Number.isFinite(layer.offsetX)?layer.offsetX*base.scale:0;const anchorX=base.side==='dog-player'?this.addScreenOffsetX(baseScreenX,offsetX,this._scene):this.addScreenOffsetX(baseScreenX,offsetX,this._scene)-layer.image.width*0.5*s;const x=anchorX;const y=renderY+visualYOffset+(layer.offsetY||0)*s-layer.image.height*s;c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);} } else { const pw=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.width??100; const ph=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.height??80; const ly=BATTLE_CONFIG.visualLayout?.catBasePlaceholder?.labelYOffset??8; c.fillStyle='#374151'; const sx=this.projectBcuX(this._scene,base.x); c.fillRect(sx-pw*0.5, renderY-ph, pw, ph); c.fillStyle='#e5e7ebcc'; c.fillText('CAT BASE TEMP', sx-pw*0.44, renderY-ph-ly);} if(showParts) this.drawBaseDebug(c,base); }
 
-  drawBcuPlayerCastleComposite(c,base,renderY){const s=(Number.isFinite(base.scale)?base.scale:1)*this.getCameraScale(this._scene);const sx=this.projectBcuX(this._scene,base.x);for(const layer of base.layers||[]){if(!layer?.image)continue;const x=sx+(Number.isFinite(layer.offsetX)?layer.offsetX*s:0);const y=renderY+(Number.isFinite(layer.offsetY)?layer.offsetY*s:0);c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);}base.renderDebug={...(base.renderDebug||{}),rendererMode:'bcu-player-castle-composite',anchor:'left-bottom',source:'BCU-java-PC BattleBox.BBPainter.drawNyCast',posBcu:base.posBcu,x:base.x,drawX:sx,scale:s};}
+  drawBcuPlayerCastleComposite(c,base,renderY){const s=(Number.isFinite(base.scale)?base.scale:1)*this.getCameraScale(this._scene);const sx=this.projectBcuX(this._scene,base.x);for(const layer of base.layers||[]){if(!layer?.image)continue;const x=sx+(Number.isFinite(layer.offsetX)?layer.offsetX*s:0);const y=renderY+(Number.isFinite(layer.offsetY)?layer.offsetY*s:0);c.drawImage(layer.image,x,y,layer.image.width*s,layer.image.height*s);}const rd=base.renderDebug||(base.renderDebug={});rd.rendererMode='bcu-player-castle-composite';rd.anchor='left-bottom';rd.source='BCU-java-PC BattleBox.BBPainter.drawNyCast';rd.posBcu=base.posBcu;rd.x=base.x;rd.drawX=sx;rd.scale=s;}
 
   drawBcuEnemyCastle(c,base){const a=base.castleAsset;const crop=a?.crop;if(!a?.image||!crop)return;const s=(Number.isFinite(base.scale)?base.scale:1)*this.getCameraScale(this._scene);const sx=this.projectBcuX(this._scene,base.x);const renderY=this.getEntityRenderY(this._scene,base,base.y);const drawW=crop.w*s,drawH=crop.h*s;const drawX=sx-drawW;const drawY=renderY-drawH+(Number.isFinite(base.visualYOffsetPx)?base.visualYOffsetPx:0);// BCU enemy castle uses right-edge anchor: drawX = getX(ebase.pos) - width.
 c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
@@ -304,11 +304,33 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
   }
   getBattleDrawListLocalBounds(actor, drawList) {
     if (!actor?.sprite || !Array.isArray(drawList)) return null;
+    // Hot path: same math and skip conditions as getBattlePartLocalBounds, inlined so the
+    // per-part bounds objects are not allocated on every actor every frame. Keep the two
+    // in sync if the part-bounds rules ever change.
     let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
     for (const p of drawList) {
-      const b = this.getBattlePartLocalBounds(actor, p);
-      if (!b) continue;
-      minX = Math.min(minX, b.left); minY = Math.min(minY, b.top); maxX = Math.max(maxX, b.right); maxY = Math.max(maxY, b.bottom);
+      const partIndex = p.partIndex ?? p.current?.partIndex ?? p.rawPart?.partIndex;
+      const imgcutIndex = p.imgcutIndex ?? p.current?.imgcutIndex ?? p.rawPart?.imgcutIndex;
+      if (!Number.isInteger(partIndex) || partIndex < 0) continue;
+      if ((imgcutIndex ?? 0) < 0) continue;
+      const opacity = Number.isFinite(p.opacity) ? p.opacity : (p.world?.o ?? 1);
+      if (opacity <= 0) continue;
+      const part = actor.sprite?.imgcut?.parts?.[partIndex];
+      if (!part || part.w <= 0 || part.h <= 0) continue;
+      const m = Array.isArray(p.matrix) && p.matrix.length === 6 ? p.matrix : null;
+      if (!m) continue;
+      const pivotX = Number.isFinite(p.pivotX) ? p.pivotX : part.w * 0.5;
+      const pivotY = Number.isFinite(p.pivotY) ? p.pivotY : part.h * 0.5;
+      const x0 = -pivotX; const y0 = -pivotY; const x1 = part.w - pivotX; const y1 = part.h - pivotY;
+      let pMinX = Infinity; let pMinY = Infinity; let pMaxX = -Infinity; let pMaxY = -Infinity;
+      let rx = m[0] * x0 + m[2] * y0 + m[4]; let ry = m[1] * x0 + m[3] * y0 + m[5]; pMinX = Math.min(pMinX, rx); pMinY = Math.min(pMinY, ry); pMaxX = Math.max(pMaxX, rx); pMaxY = Math.max(pMaxY, ry);
+      rx = m[0] * x1 + m[2] * y0 + m[4]; ry = m[1] * x1 + m[3] * y0 + m[5]; pMinX = Math.min(pMinX, rx); pMinY = Math.min(pMinY, ry); pMaxX = Math.max(pMaxX, rx); pMaxY = Math.max(pMaxY, ry);
+      rx = m[0] * x0 + m[2] * y1 + m[4]; ry = m[1] * x0 + m[3] * y1 + m[5]; pMinX = Math.min(pMinX, rx); pMinY = Math.min(pMinY, ry); pMaxX = Math.max(pMaxX, rx); pMaxY = Math.max(pMaxY, ry);
+      rx = m[0] * x1 + m[2] * y1 + m[4]; ry = m[1] * x1 + m[3] * y1 + m[5]; pMinX = Math.min(pMinX, rx); pMinY = Math.min(pMinY, ry); pMaxX = Math.max(pMaxX, rx); pMaxY = Math.max(pMaxY, ry);
+      // Same as getBattlePartLocalBounds: a part whose corners are non-finite is skipped
+      // without poisoning the aggregate.
+      if (!Number.isFinite(pMinX) || !Number.isFinite(pMinY) || !Number.isFinite(pMaxX) || !Number.isFinite(pMaxY)) continue;
+      minX = Math.min(minX, pMinX); minY = Math.min(minY, pMinY); maxX = Math.max(maxX, pMaxX); maxY = Math.max(maxY, pMaxY);
     }
     if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
     return { left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };

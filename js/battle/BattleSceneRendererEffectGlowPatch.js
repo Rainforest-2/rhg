@@ -26,6 +26,20 @@ function finiteNumber(...values) {
   return null;
 }
 
+function effectRenderDebugEnabled(renderer) {
+  return globalThis.__BCU_RENDER_DEBUG__ === true
+    || globalThis.__BCU_DEBUG_ALLOCATIONS__ === true
+    || renderer?._scene?.debugBattleEnabled === true;
+}
+
+// In-place update of effect.effectRuntimeDebug. The previous `{ ...old, ...next }`
+// spread allocated a fresh ~25-field object per effect per frame; mutating the same
+// object keeps every reader (all patches read through effect.effectRuntimeDebug at
+// access time) seeing identical values without the per-frame allocation.
+function getEffectRuntimeDebugTarget(effect) {
+  return effect.effectRuntimeDebug || (effect.effectRuntimeDebug = {});
+}
+
 function getEffectSource(effect) {
   return String(effect?.source || effect?.effectRuntimeDebug?.source || '');
 }
@@ -155,13 +169,16 @@ function drawBcuCannonBaseAnim(renderer, ctx, effect, scene, cameraScale, sprite
     : (effect.worldY ?? effect.y ?? 0);
   const draw = computeBcuCannonBaseAnimDraw({ baseX, baseY0, cameraScale, spriteScale, offsetX, offsetY });
   const drawn = drawBcuModelEffectWithGlow(renderer, ctx, effect, draw.x, draw.y, draw.scale);
-  effect.lastRenderDebug = {
-    source: 'BattleSceneRendererEffectGlowPatch.drawBcuCannonBaseAnim',
-    bcuReference: draw.bcuReference,
-    x: draw.x, baseX, y: draw.y, baseY0, offsetX, offsetY, scale: draw.scale,
-    yFormula: 'BCU canon.drawBase: getBcuLayerScreenY(0) + cany*siz'
-  };
-  effect.effectRuntimeDebug = { ...(effect.effectRuntimeDebug || {}), rendererReached: true, rendererDrawn: drawn, rendererX: draw.x, rendererY: draw.y, rendererScale: draw.scale, bcuCannonBaseAnim: true };
+  if (effectRenderDebugEnabled(renderer)) {
+    effect.lastRenderDebug = {
+      source: 'BattleSceneRendererEffectGlowPatch.drawBcuCannonBaseAnim',
+      bcuReference: draw.bcuReference,
+      x: draw.x, baseX, y: draw.y, baseY0, offsetX, offsetY, scale: draw.scale,
+      yFormula: 'BCU canon.drawBase: getBcuLayerScreenY(0) + cany*siz'
+    };
+  }
+  const d = getEffectRuntimeDebugTarget(effect);
+  d.rendererReached = true; d.rendererDrawn = drawn; d.rendererX = draw.x; d.rendererY = draw.y; d.rendererScale = draw.scale; d.bcuCannonBaseAnim = true;
   return drawn;
 }
 
@@ -176,8 +193,11 @@ function drawBcuCannonWaveAnim(renderer, ctx, effect, scene, cameraScale, sprite
     : (effect.worldY ?? effect.y ?? 0);
   const draw = computeBcuCannonWaveAnimDraw({ baseX, baseY9, cameraScale, spriteScale, offsetX, offsetY, scaleMul: finiteNumber(effect.bcuCannonWaveScale, 2.5) ?? 2.5 });
   const drawn = drawBcuModelEffectWithGlow(renderer, ctx, effect, draw.x, draw.y, draw.scale);
-  effect.lastRenderDebug = { source: 'BattleSceneRendererEffectGlowPatch.drawBcuCannonWaveAnim', bcuReference: draw.bcuReference, x: draw.x, baseX, y: draw.y, baseY9, offsetX, offsetY, scale: draw.scale };
-  effect.effectRuntimeDebug = { ...(effect.effectRuntimeDebug || {}), rendererReached: true, rendererDrawn: drawn, rendererX: draw.x, rendererY: draw.y, rendererScale: draw.scale, bcuCannonWaveAnim: true };
+  if (effectRenderDebugEnabled(renderer)) {
+    effect.lastRenderDebug = { source: 'BattleSceneRendererEffectGlowPatch.drawBcuCannonWaveAnim', bcuReference: draw.bcuReference, x: draw.x, baseX, y: draw.y, baseY9, offsetX, offsetY, scale: draw.scale };
+  }
+  const d = getEffectRuntimeDebugTarget(effect);
+  d.rendererReached = true; d.rendererDrawn = drawn; d.rendererX = draw.x; d.rendererY = draw.y; d.rendererScale = draw.scale; d.bcuCannonWaveAnim = true;
   return drawn;
 }
 
@@ -226,51 +246,53 @@ function drawOneBcuEffectWithGlow(renderer, ctx, effect) {
     }
   }
 
-  effect.lastBcuStageLayerRenderDebug = {
-    ...buildBcuEffectTrace({
-      effectKey: effect.effectRuntimeDebug?.effectKey || effect.effectRuntimeDebug?.key || null,
-      phase: effect.effectRuntimeDebug?.phase || null,
-      worldX: effect.worldX ?? effect.x ?? 0,
-      worldY: effect.worldY ?? effect.y ?? 0,
-      screenOffsetX,
-      bcuSmokeYOffset: yOffset,
-      layer,
-      bcuScaleMode: scaleTrace.bcuScaleMode,
-      bcuEffectClass: scaleTrace.bcuEffectClass,
-      effectScale: scaleTrace.effectScale,
-      renderFlipX: effect.renderFlipX === true,
-      source: 'BattleSceneRendererEffectGlowPatch.drawOneBcuEffectWithGlow',
-      bcuReference: scaleTrace.bcuReference,
+  // The stage-layer trace object is inspect-only (devtools); building it per effect per
+  // frame (buildBcuEffectTrace + wrapper object) is gated behind the debug switches.
+  if (effectRenderDebugEnabled(renderer)) {
+    effect.lastBcuStageLayerRenderDebug = {
+      ...buildBcuEffectTrace({
+        effectKey: effect.effectRuntimeDebug?.effectKey || effect.effectRuntimeDebug?.key || null,
+        phase: effect.effectRuntimeDebug?.phase || null,
+        worldX: effect.worldX ?? effect.x ?? 0,
+        worldY: effect.worldY ?? effect.y ?? 0,
+        screenOffsetX,
+        bcuSmokeYOffset: yOffset,
+        layer,
+        bcuScaleMode: scaleTrace.bcuScaleMode,
+        bcuEffectClass: scaleTrace.bcuEffectClass,
+        effectScale: scaleTrace.effectScale,
+        renderFlipX: effect.renderFlipX === true,
+        source: 'BattleSceneRendererEffectGlowPatch.drawOneBcuEffectWithGlow',
+        bcuReference: scaleTrace.bcuReference,
+        yFormula,
+        cameraScale: scaleTrace.cameraScale,
+        spriteScaleUsed: scaleTrace.spriteScaleUsed,
+        finalScale: scaleTrace.finalScale,
+        extra: { leaEAnimCont: scaleTrace.leaEAnimCont, entityStatusActorPass: isBcuEntityStatusEffect(effect) }
+      }),
+      x,
+      y,
+      baseY,
+      yOffset,
       yFormula,
-      cameraScale: scaleTrace.cameraScale,
-      spriteScaleUsed: scaleTrace.spriteScaleUsed,
-      finalScale: scaleTrace.finalScale,
-      extra: { leaEAnimCont: scaleTrace.leaEAnimCont, entityStatusActorPass: isBcuEntityStatusEffect(effect) }
-    }),
-    x,
-    y,
-    baseY,
-    yOffset,
-    yFormula,
-    scale,
-    rendererReference: scaleTrace.bcuReference
-  };
-  effect.effectRuntimeDebug = {
-    ...(effect.effectRuntimeDebug || {}),
-    rendererReached: true,
-    rendererDrawn: drawn,
-    rendererX: x,
-    rendererY: y,
-    rendererScale: scale,
-    rendererLayer: layer,
-    rendererLeaEAnimCont: scaleTrace.leaEAnimCont,
-    bcuEffectClass: scaleTrace.bcuEffectClass,
-    effectScale: scaleTrace.effectScale,
-    layer,
-    yFormula,
-    rendererYFormula: yFormula,
-    rendererReference: scaleTrace.bcuReference
-  };
+      scale,
+      rendererReference: scaleTrace.bcuReference
+    };
+  }
+  const d = getEffectRuntimeDebugTarget(effect);
+  d.rendererReached = true;
+  d.rendererDrawn = drawn;
+  d.rendererX = x;
+  d.rendererY = y;
+  d.rendererScale = scale;
+  d.rendererLayer = layer;
+  d.rendererLeaEAnimCont = scaleTrace.leaEAnimCont;
+  d.bcuEffectClass = scaleTrace.bcuEffectClass;
+  d.effectScale = scaleTrace.effectScale;
+  d.layer = layer;
+  d.yFormula = yFormula;
+  d.rendererYFormula = yFormula;
+  d.rendererReference = scaleTrace.bcuReference;
   return drawn;
 }
 
@@ -297,7 +319,9 @@ function drawEntityStatusEffectsForActor(renderer, ctx, actor) {
     if (targetId && actorId && targetId !== actorId) continue;
     if (!targetId && getEffectLayer(effect) !== actorLayer) continue;
     effect.bcuSmokeYOffset = 0;
-    effect.effectRuntimeDebug = { ...(effect.effectRuntimeDebug || {}), actorPassDraw: true, targetActorId: targetId || actorId || null };
+    const d = getEffectRuntimeDebugTarget(effect);
+    d.actorPassDraw = true;
+    d.targetActorId = targetId || actorId || null;
     drawOneBcuEffectWithGlow(renderer, ctx, effect);
     state.drawn.add(effect);
   }

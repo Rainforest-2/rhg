@@ -426,7 +426,12 @@ export class BattleActor {
 
   applyCurrentAnimationFrame() {
     const applied = AnimationRuntime.applyActorModel(this);
-    const draw = AnimationRuntime.buildActorDrawList(this);
+    // getBattleDrawList() is memoized per (revision, parentMatrix) and every consumer
+    // (renderer, glow patch, combat-front init, status positioner) calls it on demand,
+    // so eagerly building the draw list here every tick only pre-warms a cache the
+    // renderer rebuilds with identical inputs. Build it eagerly only for the debug
+    // summary below; normal play defers to the first real consumer.
+    const draw = globalThis.__BCU_DEBUG_ALLOCATIONS__ === true ? AnimationRuntime.buildActorDrawList(this) : null;
     if (globalThis.__BCU_DEBUG_ALLOCATIONS__ === true) {
       this.lastAnimationRuntimeDebug = {
         currentAnimId: this.currentAnimId,

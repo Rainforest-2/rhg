@@ -37,8 +37,6 @@ function getActorHpPercent(actor) {
 function syncEnemyEntityBasePlaceholder(scene, actor = getEnemyEntityBaseActor(scene)) {
   const base = getCatBase(scene);
   if (!base || !scene?.stage?.runtime?.hasEnemyBaseEntity) return;
-  base.isBcuEnemyEntityBasePlaceholder = true;
-  base.visualSuppressed = true;
   base.attackable = false;
   base.debug = {
     ...(base.debug || {}),
@@ -46,10 +44,20 @@ function syncEnemyEntityBasePlaceholder(scene, actor = getEnemyEntityBaseActor(s
     source: 'BCU EStage.base() / StageBasis ebase=EEnemy'
   };
   if (actor) {
+    base.isBcuEnemyEntityBasePlaceholder = true;
+    base.visualSuppressed = true;
     base.hp = Number.isFinite(actor.hp) ? Math.max(0, actor.hp) : base.hp;
     base.maxHp = Number.isFinite(actor.maxHp) && actor.maxHp > 0 ? actor.maxHp : base.maxHp;
     base.destroyed = !(actor.isAlive?.() === true || actor.isRenderable?.() === true);
     base.bcuEnemyEntityBaseActorId = actor.instanceId || actor.label || null;
+  } else {
+    base.isBcuEnemyEntityBasePlaceholder = false;
+    base.visualSuppressed = false;
+    base.bcuEnemyEntityBaseActorId = null;
+    base.debug = {
+      ...(base.debug || {}),
+      bcuEnemyEntityBaseVisualFallback: 'normal-castle-visible-until-eenemy-base-actor-renders'
+    };
   }
 }
 

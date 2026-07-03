@@ -833,7 +833,12 @@ export class PlayerProductionBar {
     this.drawMoney(scene);
     const iconDebug = productionIconDebug();
     const stats = { requested: 0, loaded: 0, failed: 0, cacheHits: 0, retryableFailures: 0 };
-    const cardDebug = [];
+    // The per-card devtools payload below allocates ~2 rich objects per card per frame.
+    // update() runs every rendered battle frame, so build it only when a debug switch is on.
+    const collectCardDebug = globalThis.__BCU_RENDER_DEBUG__ === true
+      || globalThis.__BCU_DEBUG_ALLOCATIONS__ === true
+      || scene?.debugBattleEnabled === true;
+    const cardDebug = collectCardDebug ? [] : null;
     const renderContext = getLineupRenderContext(scene);
     for (const stack of this.cardStacks) {
       const m = getCardStackRenderModel(scene, stack.col, renderContext);
@@ -843,7 +848,7 @@ export class PlayerProductionBar {
       const frontEntry = { ...m.front, icon: frontAsset?.icon || null, iconLoadFailed: frontAsset?.failed === true, affordable: m.front?.affordable !== false, cooldownReady: m.front?.cooldownReady !== false, cooldownProgressRatio: m.front?.cooldownProgressRatio ?? 1 };
       const backRender = this.drawCardIfNeeded(stack, 'back', backEntry, backAsset, true);
       const frontRender = this.drawCardIfNeeded(stack, 'front', frontEntry, frontAsset, false);
-      for (const [slot, modelEntry, asset] of [['back', m.back, backAsset], ['front', m.front, frontAsset]]) {
+      if (collectCardDebug) for (const [slot, modelEntry, asset] of [['back', m.back, backAsset], ['front', m.front, frontAsset]]) {
         if (!modelEntry?.unitDef) continue;
         const render = slot === 'back' ? backRender : frontRender;
         cardDebug.push({
@@ -876,6 +881,6 @@ export class PlayerProductionBar {
       stack.frontCanvas.classList.toggle('is-disabled', !frontEntry.interactive);
     }
     iconDebug.lastUpdate = stats;
-    iconDebug.cards = cardDebug;
+    if (collectCardDebug) iconDebug.cards = cardDebug;
   }
 }

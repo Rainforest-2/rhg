@@ -84,6 +84,29 @@ assert.doesNotMatch(audioEngine, /SE_SAME_ID_MIN_INTERVAL_MS|SE_MAX_STARTS_PER_B
 const battleConfig = read('js/battle/BattleConfig.js');
 assert.match(battleConfig, /battleDebug: \{ enabled: false, maxEvents: 40, captureDiagnostics: false, captureEmptyEvents: false, hitQueueEvents: false, damageEvents: false/, 'BattleConfig must keep high-volume battle debug event capture off by default');
 
+const glowQueuePatch = read('js/battle/BattleSceneRendererBcuGlowPatch.js');
+assert.match(glowQueuePatch, /if \(!hasSupportedGlow\) return null;/, 'glow queue must not be allocated for draw lists without supported glow parts');
+assert.match(glowQueuePatch, /return drawList\.slice\(\);/, 'glow queue must reuse memoized draw-list entries via one slice instead of per-entry clones');
+assert.match(glowQueuePatch, /const parentMatrix = actor\.kbeffEnabled \? actor\.kbeffParentMatrix : \(warpPara\?\.matrix \|\| null\);/, 'glow queue must request the same parentMatrix as drawActor so the draw-list memo is shared');
+
+const canvasComposite = read('js/bcu/BcuCanvasComposite.js');
+assert.match(canvasComposite, /export function blendBcuPixelBuffers/, 'pixel glow blend kernel must be exported for the pixel-parity check');
+assert.doesNotMatch(canvasComposite, /const src = \[s\[i\]/, 'pixel glow loop must not allocate per-pixel arrays');
+assert.match(canvasComposite, /pixelGlowScratchCanvas/, 'pixel glow fallback must reuse one scratch canvas instead of creating one per draw');
+
+assert.match(sceneRenderer, /same math and skip conditions as getBattlePartLocalBounds, inlined/, 'aggregate draw-list bounds must stay allocation-free (see check-battle-renderer-bounds-equivalence.mjs)');
+
+const effectGlowPatch = read('js/battle/BattleSceneRendererEffectGlowPatch.js');
+assert.match(effectGlowPatch, /function getEffectRuntimeDebugTarget/, 'renderer must update effectRuntimeDebug in place instead of spreading a new object per effect per frame');
+assert.doesNotMatch(effectGlowPatch, /effect\.effectRuntimeDebug = \{ \.\.\./, 'no per-frame effectRuntimeDebug spread clones in the effect renderer');
+assert.match(effectGlowPatch, /function effectRenderDebugEnabled/, 'per-frame stage-layer trace construction must be debug-gated');
+
+const battleActor = read('js/battle/BattleActor.js');
+assert.match(battleActor, /globalThis\.__BCU_DEBUG_ALLOCATIONS__ === true \? AnimationRuntime\.buildActorDrawList\(this\) : null/, 'BattleActor tick must defer draw-list building to the first real consumer outside debug');
+
+const originPatch = read('js/battle/BattleSceneRendererBcuOriginPatch.js');
+assert.match(originPatch, /__BCU_RENDER_DEBUG__ === true \|\| globalThis\.__BCU_DEBUG_ALLOCATIONS__ === true\) \{\n\s*actor\.lastGroundAnchorDebug =/, 'ground-anchor debug object must be gated');
+
 const previewApp = read('js/preview/PreviewApp.js');
 assert.match(previewApp, /return 1000 \/ 30;/, 'PreviewApp must cap battle rendering to the BCU 30fps logic timer instead of redrawing unchanged frames every rAF');
 
@@ -96,5 +119,6 @@ assert.match(productionBar, /function getLineupRenderContext/, 'production bar m
 assert.match(productionBar, /const renderContext = getLineupRenderContext\(scene\)/, 'production bar update must avoid rebuilding lineup rows for every card');
 assert.match(productionBar, /drawCardIfNeeded/, 'production card canvases must use a render-key cache');
 assert.match(productionBar, /flashTime = ready \? time : 0/, 'cannon charging state must not redraw for full-ready flash timing');
+assert.match(productionBar, /const cardDebug = collectCardDebug \? \[\] : null;/, 'per-card devtools payload must be debug-gated instead of rebuilt every frame');
 
 console.log('check-battle-runtime-lightweight-guards: OK');

@@ -168,11 +168,13 @@ html body.nyanko-ui-polish .formation-tuning-overlay .formation-tuning-readout.i
 @keyframes formationTuningTick{0%{transform:scale(1.06);filter:brightness(1.4)}100%{transform:scale(1);filter:brightness(1)}}
 @property --formation-slot-charge{syntax:'<percentage>';inherits:false;initial-value:0%}
 html body.nyanko-ui-polish .formation-slot-charge{position:absolute;inset:-8px;z-index:9;border-radius:17px;padding:6px;pointer-events:none;opacity:0;background:conic-gradient(from -90deg,#ffd531 0%,#ff7a12 calc(var(--formation-slot-charge,0%) - 1%),rgba(255,122,18,0) var(--formation-slot-charge,0%)),conic-gradient(rgba(21,8,2,.55) 0 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;filter:drop-shadow(0 1px 0 rgba(0,0,0,.65)) drop-shadow(0 0 7px rgba(255,150,40,.8))}
+html body.nyanko-ui-polish .formation-slot-charge::after{content:"";position:absolute;inset:0;border:3px solid rgba(255,213,49,.92);border-top-color:#ff7a12;border-right-color:#ffe45c;border-radius:inherit;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 0 9px rgba(255,150,40,.72);opacity:.92;animation:formationSlotChargeFallbackSpin .44s linear infinite}
 html body.nyanko-ui-polish .formation-slot.is-charging{animation:formationSlotChargeSqueeze var(--formation-slot-charge-ms,520ms) cubic-bezier(.3,0,.6,1) forwards}
-html body.nyanko-ui-polish .formation-slot.is-charging .formation-slot-charge{animation:formationSlotChargeFade var(--formation-slot-charge-delay,120ms) ease-out forwards,formationSlotChargeSweep calc(var(--formation-slot-charge-ms,520ms) - var(--formation-slot-charge-delay,120ms)) linear var(--formation-slot-charge-delay,120ms) forwards}
+html body.nyanko-ui-polish .formation-slot.is-charging .formation-slot-charge{opacity:1;animation:formationSlotChargeSweep var(--formation-slot-charge-ms,520ms) linear forwards}
 @keyframes formationSlotChargeSqueeze{0%{transform:scale(1)}18%{transform:scale(.985)}100%{transform:scale(.955)}}
 @keyframes formationSlotChargeFade{from{opacity:0}to{opacity:1}}
 @keyframes formationSlotChargeSweep{from{--formation-slot-charge:0%}to{--formation-slot-charge:100%}}
+@keyframes formationSlotChargeFallbackSpin{from{transform:rotate(0)}to{transform:rotate(1turn)}}
 html body.nyanko-ui-polish .formation-slot.is-charge-fired{animation:formationSlotChargeBurst .32s cubic-bezier(.2,1.3,.3,1) both}
 @keyframes formationSlotChargeBurst{0%{transform:scale(.955);filter:brightness(1.45) saturate(1.2)}55%{transform:scale(1.04);filter:brightness(1.2)}100%{transform:scale(1);filter:brightness(1)}}
 html body.nyanko-ui-polish .formation-slot.is-charge-fired .formation-slot-charge{opacity:1;--formation-slot-charge:100%;animation:formationSlotChargeFlash .3s ease-out forwards}
@@ -190,6 +192,8 @@ html body.nyanko-ui-polish .formation-slot.is-charge-fired .formation-slot-charg
   html body.nyanko-ui-polish .formation-slot.is-charging,
   html body.nyanko-ui-polish .formation-slot.is-charge-fired,
   html body.nyanko-ui-polish .formation-slot-charge{animation:none!important}
+  html body.nyanko-ui-polish .formation-slot.is-charging .formation-slot-charge{opacity:1!important;--formation-slot-charge:100%}
+  html body.nyanko-ui-polish .formation-slot-charge::after{animation:none!important}
 }
 html body.nyanko-ui-polish .formation-tuning-header{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px 9px;border-bottom:5px solid #000;background:linear-gradient(180deg,#ff6a19 0%,#f15212 48%,#e14008 100%)}
 html body.nyanko-ui-polish .formation-tuning-title{min-width:0;display:grid;gap:2px;color:#fff;-webkit-text-fill-color:#fff;font-family:HakusyuTuningLocal,"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:900;text-shadow:3px 0 #000,-3px 0 #000,0 3px #000,0 -3px #000,2px 2px #000,-2px 2px #000,2px -2px #000,-2px -2px #000}
@@ -813,7 +817,7 @@ function decorateSlotBadges(editor) {
 }
 
 function startChargeVisual(slot) {
-  if (!slot || reduceMotion()) return;
+  if (!slot) return;
   if (!slot.querySelector('.formation-slot-charge')) {
     const ring = document.createElement('i');
     ring.className = 'formation-slot-charge';

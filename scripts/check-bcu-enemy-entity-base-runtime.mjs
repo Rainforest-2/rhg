@@ -57,4 +57,39 @@ scene.updateBattleState();
 assert.equal(scene.battleState, 'dog-win', 'dead EEnemy base is the enemy base win condition');
 assert.equal(scene.bases[1].destroyed, true, 'placeholder base destruction mirrors the EEnemy base for UI state');
 
+const pendingBaseScene = Object.assign(Object.create(BattleScene.prototype), {
+  actors: [],
+  bases: [
+    { side: 'dog-player', destroyed: false },
+    { side: 'cat-enemy', destroyed: false, hp: 1000, maxHp: 1000, attackable: true, visualSuppressed: true, isBcuEnemyEntityBasePlaceholder: true }
+  ],
+  stage: { runtime: { hasEnemyBaseEntity: true, enemyBaseRow: runtime.enemyBaseRow } },
+  battleState: 'running'
+});
+pendingBaseScene.updateBattleState();
+assert.equal(pendingBaseScene.bases[1].visualSuppressed, false, 'normal castle remains visible until the EEnemy base actor actually renders');
+assert.equal(pendingBaseScene.bases[1].isBcuEnemyEntityBasePlaceholder, false, 'missing EEnemy base actor must not leave a hidden placeholder');
+
+const normalScene = Object.assign(Object.create(BattleScene.prototype), {
+  stage: { runtime: { hasEnemyBaseEntity: false, castleId: 0, animBaseId: 0, cannonId: null, getBasePosBcu: () => 800 } },
+  castleLoader: {
+    async load() {
+      return {
+        ok: true,
+        image: { width: 128, height: 256 },
+        crop: { x: 0, y: 0, w: 128, h: 256 },
+        visualBounds: { width: 128, height: 256, parser: 'test' },
+        resolvedCastleId: 0,
+        resolvedAnimBaseId: 0,
+        source: 'test-castle-loader'
+      };
+    }
+  },
+  pushEvent(event) { this.lastEvent = event; }
+});
+const normalBase = await normalScene.loadBase({ side: 'cat-enemy', id: 'cat-base', label: 'normal', x: 800, y: 560, posBcu: 800, scale: 1 }, normalScene.stage.runtime);
+assert.equal(normalBase.visualKind, 'bcu-enemy-castle', 'normal stages still draw the BCU enemy castle');
+assert.equal(normalBase.visualSuppressed, false, 'normal stages must not inherit the EEnemy-base placeholder suppression');
+assert.equal(normalBase.isBcuEnemyEntityBasePlaceholder, false, 'normal stages must not mark the castle as an EEnemy-base placeholder');
+
 console.log('check-bcu-enemy-entity-base-runtime: OK');

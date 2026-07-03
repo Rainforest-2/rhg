@@ -89,8 +89,14 @@ async function readCsvIfPresent(file) {
 
 async function loadUnitLevelMetadata(manifest) {
   const files = new Set(manifest.files || []);
-  const unitbuyPath = files.has(BASE_UNITBUY_CSV) ? BASE_UNITBUY_CSV : [...files].find((p) => /\/org\/data\/unitbuy\.csv$/i.test(p)) || BASE_UNITBUY_CSV;
-  const unitlevelPath = files.has(BASE_UNITLEVEL_CSV) ? BASE_UNITLEVEL_CSV : [...files].find((p) => /\/org\/data\/unitlevel\.csv$/i.test(p)) || BASE_UNITLEVEL_CSV;
+  const newestDataCsv = (filename, fallback) => {
+    const matches = [...files].filter((p) => new RegExp(`/org/data/${filename}$`, 'i').test(p));
+    if (!matches.includes(fallback)) matches.push(fallback);
+    return [...new Set(matches)]
+      .sort((a, b) => comparePackId(packIdFromBcuPath(b), packIdFromBcuPath(a)) || b.localeCompare(a))[0] || fallback;
+  };
+  const unitbuyPath = newestDataCsv('unitbuy\\.csv', BASE_UNITBUY_CSV);
+  const unitlevelPath = newestDataCsv('unitlevel\\.csv', BASE_UNITLEVEL_CSV);
   const unitbuyRows = await readCsvIfPresent(unitbuyPath);
   const unitlevelRows = await readCsvIfPresent(unitlevelPath);
   const byUnitId = {};

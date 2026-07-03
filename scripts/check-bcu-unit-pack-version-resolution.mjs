@@ -35,7 +35,9 @@ const usableRows = async (file) => {
 const coreDbDir = '/tmp/check-coredb-pack-res';
 const unzip = spawnSync('unzip', ['-o', '-q', `${ROOT}/public/assets/bundles/core/core-db.zip`, 'units.json', '-d', coreDbDir]);
 if (unzip.status !== 0) { fail('could not extract units.json from core-db.zip'); process.exit(1); }
-const coreUnits = JSON.parse(await readFile(`${coreDbDir}/units.json`, 'utf8')).forms;
+const coreUnitDb = JSON.parse(await readFile(`${coreDbDir}/units.json`, 'utf8'));
+const coreUnits = coreUnitDb.forms;
+const coreLevelMetadata = coreUnitDb.levelMetadata || {};
 
 let checked = 0;
 let mismatches = 0;
@@ -67,6 +69,30 @@ for (const idRaw of unitIds) {
 const goro = coreUnits['unit:581:f']?.stats;
 if (!goro) fail('unit 581 (ごろにゃん) missing from core-db');
 else if (goro.speed !== 84 || goro.hp !== 20000) fail(`unit 581 (ごろにゃん) speed=${goro.speed} hp=${goro.hp}, expected speed=84 hp=20000`);
+
+// 3) Unit level metadata must use the newest global unitbuy/unitlevel data, not
+//    the base 000001 table. 569+ units do not exist in 000001 unitbuy.csv; using
+//    it fabricated maxLevel 50 / maxPlusLevel 0 and disabled +Lv for units that
+//    BCU's current data caps at 60+70.
+const expectedLevelCaps = new Map([
+  [569, { maxLevel: 60, maxPlusLevel: 70, sourcePack: '150300' }],
+  [570, { maxLevel: 60, maxPlusLevel: 70, sourcePack: '150300' }],
+  [600, { maxLevel: 60, maxPlusLevel: 70, sourcePack: '150300' }]
+]);
+for (const [unitId, expected] of expectedLevelCaps) {
+  const meta = coreLevelMetadata[String(unitId)];
+  if (!meta) {
+    fail(`unit ${unitId}: missing level metadata`);
+    continue;
+  }
+  const source = String(meta.source?.unitbuyPath || '');
+  if (meta.maxLevel !== expected.maxLevel || meta.maxPlusLevel !== expected.maxPlusLevel) {
+    fail(`unit ${unitId}: level caps max=${meta.maxLevel} maxp=${meta.maxPlusLevel}, expected max=${expected.maxLevel} maxp=${expected.maxPlusLevel}`);
+  }
+  if (!source.includes(`/bcu/${expected.sourcePack}/`)) {
+    fail(`unit ${unitId}: level metadata source ${source || '(none)'}, expected pack ${expected.sourcePack}`);
+  }
+}
 
 if (process.exitCode === 1) {
   console.error(`unit pack-version resolution: ${mismatches} mismatch(es) across ${checked} multi-pack units`);

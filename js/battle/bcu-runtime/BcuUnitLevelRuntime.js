@@ -14,6 +14,11 @@ function truncInt(value, fallback = 0) {
   return Math.trunc(n);
 }
 
+function positiveInt(value, fallback = 1) {
+  const n = truncInt(value, fallback);
+  return n > 0 ? n : truncInt(fallback, 1);
+}
+
 function clampInt(value, min, max) {
   const n = truncInt(value, min);
   const lo = truncInt(min, 0);
@@ -81,7 +86,7 @@ export function getBcuPreferredPlusLevel({ prefLevel = BCU_DEFAULT_PREF_LEVEL, r
 }
 
 export function resolveBcuUnitLevelConfig({ requested = {}, metadata = {}, source = 'runtime' } = {}) {
-  const maxLevel = Math.max(1, truncInt(metadata.maxLevel ?? metadata.max, BCU_DEFAULT_UNIT_MAX_LEVEL));
+  const maxLevel = Math.max(1, positiveInt(metadata.maxLevel ?? metadata.max, BCU_DEFAULT_UNIT_MAX_LEVEL));
   const maxPlusLevel = Math.max(0, truncInt(metadata.maxPlusLevel ?? metadata.maxp, 0));
   const rarity = truncInt(metadata.rarity, 0);
   const prefLevel = Math.max(1, truncInt(requested.prefLevel ?? requested.level ?? BCU_DEFAULT_PREF_LEVEL, BCU_DEFAULT_PREF_LEVEL));

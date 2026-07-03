@@ -38,6 +38,7 @@ const STAGE_WINDOW_MIN_ITEMS = 72;
 const STAGE_WINDOW_ROW_HEIGHT = 92;
 const STAGE_WINDOW_MOBILE_ROW_HEIGHT = 74;
 const STAGE_WINDOW_OVERSCAN_ROWS = 8;
+const STAGE_SCROLL_CLICK_CANCEL_PX = 8;
 
 function normalizeFilterValue(value) {
   return String(value ?? '').normalize('NFKC').toLowerCase().trim();
@@ -297,6 +298,39 @@ function updateStageHeader(editor) {
   }
 }
 
+function ensureStageScrollGestureGuard(editor, list) {
+  if (!editor || !list || list.__stageScrollGestureGuardInstalled) return;
+  list.__stageScrollGestureGuardInstalled = true;
+  list.addEventListener('pointerdown', (event) => {
+    if (!event.isPrimary) return;
+    editor.__stageScrollGesture = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false
+    };
+  }, { passive: true });
+  list.addEventListener('pointermove', (event) => {
+    const gesture = editor.__stageScrollGesture;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const dx = Math.abs(event.clientX - gesture.startX);
+    const dy = Math.abs(event.clientY - gesture.startY);
+    if (dy > STAGE_SCROLL_CLICK_CANCEL_PX && dy > dx) gesture.moved = true;
+  }, { passive: true });
+  list.addEventListener('pointerup', () => {
+    const gesture = editor.__stageScrollGesture;
+    if (!gesture) return;
+    editor.__stageSuppressStageClick = gesture.moved;
+    setTimeout(() => {
+      if (editor.__stageSuppressStageClick) editor.__stageSuppressStageClick = false;
+    }, 80);
+  }, { passive: true });
+  list.addEventListener('pointercancel', () => {
+    editor.__stageScrollGesture = null;
+    editor.__stageSuppressStageClick = false;
+  }, { passive: true });
+}
+
 if (!FormationEditor.prototype.__nyankoPerformancePatched) {
   FormationEditor.prototype.__nyankoPerformancePatched = true;
 
@@ -321,6 +355,12 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
 
   const originalOnClick = FormationEditor.prototype.onClick;
   FormationEditor.prototype.onClick = function patchedOnClick(event) {
+    if (this.__stageSuppressStageClick && event?.target?.closest?.('.formation-stage-list')) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.__stageSuppressStageClick = false;
+      return;
+    }
     const rootButton = event?.target?.closest?.('[data-stage-root]');
     const categoryButton = event?.target?.closest?.('[data-stage-category]');
     const mapButton = event?.target?.closest?.('[data-stage-map]');
@@ -401,6 +441,7 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
     if (current) current.textContent = selectedStageLabel(this, catalog);
     const list = this.root.querySelector('.formation-stage-list');
     if (!list) return;
+    ensureStageScrollGestureGuard(this, list);
     updateStageHeader(this);
     const bodyKey = stageSelectorBodyKey(this);
     const bodyHtml = this.stageOptions?.length

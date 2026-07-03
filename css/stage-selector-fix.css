@@ -99,6 +99,12 @@
   padding:4px 4px 8px!important;
 }
 
+.formation-stage-list button,
+.formation-stage-list .formation-stage-card,
+.formation-stage-list .formation-stage-backbar button{
+  touch-action:pan-y!important;
+}
+
 .formation-stage-card{
   display:grid!important;
   gap:4px!important;

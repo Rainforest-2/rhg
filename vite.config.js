@@ -23,7 +23,10 @@ const ROOT_RUNTIME_FILES = ['error-enemy.json', 'error-ally.json'];
 const BASE = './';
 const BASE_PATH_PREFIX = BASE.startsWith('/') ? BASE.replace(/\/$/, '') : '';
 const DIST_ASSET_SIZE_LIMIT = 25_000_000;
-const DIST_ICON_SHARD_TARGET_BYTES = 24_000_000;
+// Small shards keep the first formation-screen enemy icons (enemy/000...) on a
+// download comparable to the ~4.4MB unit icon zips; a single 24MB shard left
+// dog icons blank for seconds after boot while cat icons were already visible.
+const DIST_ICON_SHARD_TARGET_BYTES = 4_000_000;
 const ENEMY_ICON_BUNDLE_PATH = 'public/assets/bundles/icon/enemy.zip';
 const ENEMY_ICON_ASSET_PATH = 'bundles/icon/enemy.zip';
 const DIST_GENERATED_SKIP_ASSETS = new Set([
@@ -144,7 +147,18 @@ async function ensureEnemyIconShards(state) {
   const sourceZip = path.join(PUBLIC_ASSETS_DIR, ENEMY_ICON_ASSET_PATH);
   const targetDir = path.join(DIST_ASSETS_DIR, 'bundles', 'icon');
   await mkdir(targetDir, { recursive: true });
-  const entries = (await readZipEntries(sourceZip)).sort((a, b) => a.name.localeCompare(b.name));
+  const allEntries = (await readZipEntries(sourceZip)).sort((a, b) => a.name.localeCompare(b.name));
+  // enemy.zip ships duplicate unpadded names (enemy/7.png == enemy/007.png) for
+  // ids < 100. The runtime only requests the padded form (icon index entries and
+  // SemanticAssetProvider's inferred canonical entry both use pad3), so shipping
+  // the duplicates would only bloat the first shard.
+  const byName = new Map(allEntries.map((entry) => [entry.name, entry]));
+  const entries = allEntries.filter((entry) => {
+    const short = entry.name.match(/^enemy\/(\d{1,2})\.png$/);
+    if (!short) return true;
+    const padded = byName.get(`enemy/${short[1].padStart(3, '0')}.png`);
+    return !(padded && Buffer.compare(padded.data, entry.data) === 0);
+  });
   const shards = [];
   let current = [];
   for (const entry of entries) {
@@ -183,6 +197,28 @@ async function writeDistIconIndex(sourcePath, targetPath, state) {
     if (!shardPath) return entry;
     return { ...entry, bundleRef: { ...entry.bundleRef, bundlePath: shardPath } };
   });
+  // Enemies whose icon exists only as a generated composed PNG (no audited raw
+  // enemy_icon source, e.g. enemy:388) have no icon-index entry. In dev the
+  // runtime falls back to the aggregate enemy.zip, but dist ships only shards,
+  // so without an explicit entry those icons 404 and render transparent.
+  const indexedKeys = new Set(entries.map((entry) => entry?.key).filter(Boolean));
+  for (const [internalPath, shardPath] of shardMap) {
+    const match = internalPath.match(/^enemy\/(\d{3})\.png$/);
+    if (!match) continue;
+    const id = Number(match[1]);
+    const key = `enemy:${id}`;
+    if (indexedKeys.has(key)) continue;
+    indexedKeys.add(key);
+    entries.push({
+      key,
+      kind: 'enemy',
+      id,
+      id3: match[1],
+      bundleRef: { bundleKey: 'icon:enemy', bundlePath: shardPath },
+      internalPath,
+      sourceStatus: 'generated-composed-icon-entry'
+    });
+  }
   index.entries = entries;
   index.byKey = Object.fromEntries(entries.map((entry) => [entry.key, entry]));
   index.aggregateBundles = [

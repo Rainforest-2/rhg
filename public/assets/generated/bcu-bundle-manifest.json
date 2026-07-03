@@ -33897,17 +33897,22 @@
       "key": "core:db",
       "bundlePath": "public/assets/bundles/core/core-db.zip",
       "status": "full",
-      "sizeBytes": 3200535,
-      "hash": "3177d79817c7697a24f6e4aca14b3ffdf573ab51c1bc146684f311f4101012a0"
+      "sizeBytes": 3240208,
+      "hash": "ab86eb891dd8cf44cfeedf46135b134059406a1b089125b93bb8e9914b865bbd"
     },
     "icon:enemy": {
       "kind": "icon",
       "key": "icon:enemy",
       "bundlePath": "public/assets/bundles/icon/enemy.zip",
       "status": "full",
-      "iconCount": 762,
-      "sizeBytes": 28722552,
-      "hash": "3fc50e874f672a562c2cf2f20fb7370c1acf36d32f61a06fb434b4feeeb8d69f"
+      "iconCount": 878,
+      "sizeBytes": 32497252,
+      "hash": "55b72f7d61ec96a04f0b4bbb7411310981dcd0eb620a0a8637cdc0752eb755a9",
+      "width": 512,
+      "height": 512,
+      "frame": 0,
+      "animationRole": "idle",
+      "generationSource": "actor-assets-initial-pose"
     },
     "icon:unit:c": {
       "kind": "icon",

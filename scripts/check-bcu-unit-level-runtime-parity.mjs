@@ -35,6 +35,14 @@ assert.equal(resolved.plusLevel, 20, 'plus level clamps to maxPlusLevel');
 assert.equal(resolved.effectiveLevel, 50, 'effective level is normal + plus');
 assert.equal(resolved.multiplier, getBcuUnitLevelMultiplier(50, curve20), 'effective level drives UnitLevel.getMult');
 
+const zeroMaxResolved = resolveBcuUnitLevelConfig({
+  requested: { prefLevel: 50 },
+  metadata: { maxLevel: 0, maxPlusLevel: 0, rarity: 0 },
+  source: 'zero-max-regression'
+});
+assert.equal(zeroMaxResolved.maxLevel, 20, 'invalid/missing maxLevel=0 falls back to BCU default Unit.max');
+assert.equal(zeroMaxResolved.level, 20, 'invalid/missing maxLevel=0 must not clamp UI/runtime level to 0 or 1');
+
 const baseStats = {
   hp: 100,
   damage: 33,

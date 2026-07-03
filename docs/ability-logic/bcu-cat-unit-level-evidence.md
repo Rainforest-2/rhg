@@ -113,10 +113,10 @@ u.lv = new UnitLevel(data);
 
 ### Core DB bundle
 
-`scripts/build-bcu-core-db-bundle.mjs` now reads:
+`scripts/build-bcu-core-db-bundle.mjs` now reads the newest available pack for:
 
-- `public/assets/bcu/000001/org/data/unitbuy.csv`
-- `public/assets/bcu/000001/org/data/unitlevel.csv`
+- `public/assets/bcu/**/org/data/unitbuy.csv`
+- `public/assets/bcu/**/org/data/unitlevel.csv`
 
 and stores per-unit metadata under `units.json`:
 

@@ -384,7 +384,14 @@ function alphaOver(dst, di, r, g, b, a) {
   dst[di + 3] = Math.round(outA * 255);
 }
 
-function drawTransformedPart(dst, outW, outH, image, part, matrix, pivotX, pivotY, opacity, iconTransform) {
+// BCU BLEND glow modes 1 (additive) and 3 (screen) brighten whatever is behind the
+// part, so pure-black texels contribute nothing in battle. The icon canvas is
+// transparent, so the closest deterministic equivalent is scaling the source alpha
+// by per-texel luminance (max RGB): black stays invisible, bright aura stays visible.
+// Other glow values keep the plain alpha-over path byte-identical to before.
+const LUMINANCE_ALPHA_GLOW_MODES = new Set([1, 3]);
+
+function drawTransformedPart(dst, outW, outH, image, part, matrix, pivotX, pivotY, opacity, iconTransform, glow = 0) {
   const a = iconTransform.scale * matrix[0], b = iconTransform.scale * matrix[1], c = iconTransform.scale * matrix[2], d = iconTransform.scale * matrix[3];
   const e = iconTransform.x + iconTransform.scale * matrix[4], f = iconTransform.y + iconTransform.scale * matrix[5];
   const det = a * d - b * c;
@@ -394,6 +401,7 @@ function drawTransformedPart(dst, outW, outH, image, part, matrix, pivotX, pivot
   const maxX = Math.min(outW - 1, Math.ceil(Math.max(...pts.map((p) => p.x)) + 1));
   const minY = Math.max(0, Math.floor(Math.min(...pts.map((p) => p.y)) - 1));
   const maxY = Math.min(outH - 1, Math.ceil(Math.max(...pts.map((p) => p.y)) + 1));
+  const luminanceAlpha = LUMINANCE_ALPHA_GLOW_MODES.has(Number(glow));
   let drawn = 0;
   for (let y = minY; y <= maxY; y += 1) {
     for (let x = minX; x <= maxX; x += 1) {
@@ -405,7 +413,11 @@ function drawTransformedPart(dst, outW, outH, image, part, matrix, pivotX, pivot
       const sy = Math.floor(ly + pivotY);
       if (sx < 0 || sy < 0 || sx >= part.w || sy >= part.h) continue;
       const si = ((part.y + sy) * image.width + part.x + sx) * 4;
-      const a0 = Math.round(image.rgba[si + 3] * opacity);
+      let a0 = Math.round(image.rgba[si + 3] * opacity);
+      if (luminanceAlpha && a0 > 0) {
+        const lum = Math.max(image.rgba[si], image.rgba[si + 1], image.rgba[si + 2]);
+        a0 = Math.round((a0 * lum) / 255);
+      }
       if (a0 <= 0) continue;
       alphaOver(dst, (y * outW + x) * 4, image.rgba[si], image.rgba[si + 1], image.rgba[si + 2], a0);
       drawn += 1;
@@ -446,7 +458,7 @@ export function renderComposedInitialPose({ image, imgcut, model, anim }) {
       partsSkipped.push({ index: p.index ?? null, reason: 'not-visible-or-invalid-cut', partIndex: p.partIndex ?? null });
       continue;
     }
-    const pixels = drawTransformedPart(out, ENEMY_ICON_SIZE, ENEMY_ICON_SIZE, image, b.part, p.matrix, b.pivotX, b.pivotY, b.opacity, iconTransform);
+    const pixels = drawTransformedPart(out, ENEMY_ICON_SIZE, ENEMY_ICON_SIZE, image, b.part, p.matrix, b.pivotX, b.pivotY, b.opacity, iconTransform, Number(p.glow ?? 0));
     if (pixels > 0) partsRendered += 1;
     else partsSkipped.push({ index: p.index ?? null, reason: 'outside-output-or-transparent', partIndex: p.partIndex ?? null });
   }

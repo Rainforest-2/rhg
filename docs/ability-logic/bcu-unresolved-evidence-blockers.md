@@ -1,19 +1,18 @@
 # BCU の未解決根拠・互換性ブロッカー
 
-更新日: 2026-07-02
+更新日: 2026-07-03
 
 この文書では、`RHgrive/rhg` で広範な整合性主張を出す際のブロッカーを列挙します。ここに載っていても、実行時が実装済みである場合があります。ブロッカーの内容は、実データソースの不足、ブラウザ受け入れのギャップ、互換性の境界のいずれかです。
 
 ## 現在のブロッカー
 
-残っているブロッカーの多くは、手動のブラウザ受け入れ、描画側のソース不足、対象外機能です。ローダー / データのギャップは解消済みです（解決済み項目を参照）。同フレーム攻撃解決の順序はレビュー項目としてのみ残しており、古いブロッカーノートのままランタイムを変更しないでください。BCU の振る舞いでは相互キルが起こりうるためです。
+残っているブロッカーの多くは、手動のブラウザ受け入れ、描画側のソース不足、対象外機能です。ローダー / データのギャップは解消済みです（解決済み項目を参照）。
 
 | 重要度 | 領域 | 現在のブロッカー | 次に必要なこと |
 |---|---|---|---|
-| 高 | 同フレーム攻撃解決順 | 以前のノートでは BCU が同フレームの相互キルを抑制するとされていたが、これは安全な整合性事実ではありません。相互キルは BCU でも起こりうるため、ソースラインだけでランタイムを抑制しない方がよいです。rhg は現状、同フレームの due-hit capture / damage 挙動を維持しています。 | 固定 BCU キャプチャと決定的な rhg フィクスチャで再監査し、変更前に確認する。キャプチャで相互キルが見えた場合は、ランタイム変更ではなくブロッカーから外す。 |
 | 低 | アセット読み込み状態と戦闘ロジック | rhg はユニット / キャノンのアセットをストリーミング読み込みしており（staged critical-path + background warmup、`BattleScene.js:1` メモ参照）、まだ読み込み前のテンプレートが生成遅延や wall cannon（Form 339）の失敗を引き起こす可能性があります。BCU はすべてメモリ上にあるので、これは静かに失敗しない観測可能な差分です。`spawnStageEnemy` / `spawnEnemy` が `enemySpawnRejected` を送信し、`startActorAttack` が `attackDeferredAnimationLoading` を送信し、wall cannon は `wall-template-loading` を記録して充電状態を維持します。最初に攻撃するアセット（最初の敵の攻撃アニメ、wall cannon）は critical path で事前に温められています。 | 長尾のストリーミング遅延は、意図的なブラウザ境界として扱う。完全な blocking preflight を入れると、意図した staged-load UX を壊すため、固定 BCU キャプチャで開幕フレームのスポーン / 攻撃 / キャノンの差分が見えた場合だけエスカレートする。 |
 | 中 | extend / waved キャノンタイミング | キャノンごとの ATK/EXT ビットマップ別名が接続され、各キャノンが自身の `NyCastle.aux.atks[id]` BASE/ATK eanim を読み込み、`spawnCatCannonNonBasicEffect` で実アニメを生成するようになりました。残るのは、フレームごとの sweep / travel 座標の正確さで、手動受け入れはまだありません。 | 固定の BCU 参照を取って、ブラウザで extend/waved フレームを比較する。 （見た目） |
-| 中 | 召喚エントリの見た目 | `Entity.setSummon(anim_type)` の開始時の見た目、配置、レイヤー、後始末は、ローダーは確認済みでも手動受け入れされていません。 | ローダー付き summon フィクスチャでブラウザ確認する。 （見た目） |
+| 中 | 召喚エントリの見た目 | `Entity.setSummon(anim_type)` の開始時の見た目、配置、レイヤー、後始末は、ローダーと実データ fixture が確認済みでも手動受け入れされていません。 | ローダー付き summon フィクスチャでブラウザ確認する。 （見た目） |
 | 中 | BCU の PC 描画側ソース | PC 専用の描画ヘルパーに依存する主張をするには、このチェックアウトに PC 描画側ソース ZIP がありません。 | PC 専用見た目主張をする前に、関連する PC ソースを追加する。 |
 | 低 | お金 / bounty の戦闘見た目 | 経済ロジックはソースで裏付けられているが、BCU 側に専用の戦闘エフェクト所有者や安定した見た目別名がない。 | ロジック / 経済のままにしておく。BCU ソースで見た目オーナーが示されるまで、受け入れ対象にしない。 |
 | — | BCU セーブ / 陣形 import-export | rhg には BCU セーブ import/export 機能がなく、このチェックアウトに BCU シリアライズオーナーも存在しない。これは対象外で、欠陥ではない。 | もしこの機能を追加するなら、まず BCU 側のオーナーを見つけ、round-trip フィクスチャを先に追加する。ローカル永続化は自己往復の主張に留める。 |
@@ -24,12 +23,13 @@
 実行時と決定的な根拠はあるが、まだ見た目として受け入れられていないものです。
 
 - P_DELAY
-- バリア / 悪魔シールド / シールドブレイカー
 - burrow の DOWN / underground / UP での見た目
 - spirit actor と A_IMUATK の見た目
-- 城 / 基地ガードの hold / break
-- ゾンビ corpse の DOWN / REVIVE と full/mini death-surge の demon-soul 見た目
-- 基本キャノンの発射 / 波動、非基本キャノンの sweep、BASE_WALL の入場 / 待機
+- SUMMON entry の入場 / 配置 / レイヤー / 後始末
+- full / mini death-surge の demon-soul 見た目
+- 非基本キャノンの sweep / travel と BASE_WALL の入場 / 待機
+- 攻撃エフェクト / wave / surge / knockback / status icon のレイヤーと終了処理
+- モバイル操作と BGM / SE の実機受け入れ
 
 結果は [bcu-visual-review-checklist.md](./bcu-visual-review-checklist.md) にだけ記録してください。headless テストが通っても、手動ブラウザ受け入れとはみなしません。
 
@@ -39,6 +39,7 @@
 
 | 領域 | 現在の結論 |
 |---|---|
+| 同フレーム攻撃解決順 | 現行の due-hit capture / damage 挙動を維持する。BCUとの差異を示す新証拠はなく、2026-07-03 のユーザー明示判断により追加の固定キャプチャ監査は行わない。ランタイム変更なし。 |
 | 実カスタムパック SUMMON の読み込み | 解決済み: `check-bcu-summon-procobject-loader-parity` が実在の `CustomEntity.atks[].proc.SUMMON` をディスクから読み込み、loader → `BattleAttackProfile` → immediate/on_hit spawn まで通す。 |
 | `Trait.targetForms` の実データカバレッジ | 解決済み: `check-bcu-trait-targetforms-loader-parity` が実在の `Trait` ファイル（targetType/targetForms）を読み込み、`bcuTraitCompatible` を通した proc と Target-Only 経路を実行する。 |
 | Combo/orb/treasure/talent/PCoin の実データ sweep | 解決済み（非見た目）: `check-bcu-modifier-realdata-sweep-parity` が実データ 150300 combo + talent/PCoin と treasure/orb 定数を BCU 順に組み合わせる。戦闘中の見た目は別項目。 |

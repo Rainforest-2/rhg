@@ -1,6 +1,6 @@
 # Current Status
 
-更新日: 2026-07-02（完成監査ラウンド）
+更新日: 2026-07-03（非runtime台帳同期）
 
 ## Discovered Issues
 - 修正済み: `js/battle/DamageAbilityResolverMetalAbiPatch.js` が boot group 未接続で本番未適用だった（AB_METALIC の dog-player 攻撃側金属キャップが効かない実バグ）。`js/boot/groups/battleCorePatches.js` へ接続し、`check-bcu-metal-abi-double-apply` に配線アサーションを追加。
@@ -10,7 +10,7 @@
 - stale チェック 3 件を現実装へ同期: `check-battle-scene-stage-runtime-wiring`（PreviewApp import が withBootCreep ラップ済み）、`check-bcu-effect-classification-parity`（De Morgan 書き換え済みの skip 条件）、`check-bcu-castle-runtime-geometry`（削除した BattleCastleResolver への依存を BattleBase 直接アサーションに置換）。
 
 ## Current Task
-- 完成監査ラウンド完了。残タスクは「Remaining」参照。
+- 非runtime台帳同期済み。残タスクは「Remaining」参照。
 
 ## Audited Areas
 - import graph 全域（`js/**`、entry: `js/main.js` + scripts/tests）を機械監査し、孤立ゼロを確認。削除 36 ファイル:
@@ -22,6 +22,7 @@
 - BCU 根拠での分類確定: 財布 income/max combo 式の非対称は BCU 自体の仕様（`StageBasis.java:806-809` 整数除算 vs `Treasure.java:497-501` 加算）で rhg は一致。MSD 行 index はライブ全 9,606 組で位置ベースと一致。maanim lenient skip は 14,012 ファイルで未発動（既知破損 30 ファイルは両エンジンで失敗）。★1 デフォルトフィルタは BCU の star index 0 デフォルトと一致（`LineUpScreen.kt:125`）。`resolveUnitAsset` の固定 base は `assertRawAllowed` で暗黙フォールバック不能。lineup スワイプ定数は `BattleView.kt:440-481` と一致。
 - 新設チェック（safe suite 登録済み）: `check-bcu-msd-row-alignment-parity`、`check-bcu-maanim-keyframe-integrity`、`check-bcu-lineup-slide-gesture-parity`。
 - `BcuStatusEffectManager` の死んだ表面（`finished` フラグ / `isDone()`、true になり得ない）を削除。`removeEffect` はライブ呼び出しあり（`BattleActorProcStatusPatch.js:525`）。
+- 非runtime台帳同期: 実カスタム proc-object SUMMON は loader / `BattleAttackProfile` / immediate-on_hit spawn まで解決済みと明確化。same-frame attack は現行 due-hit capture / damage 挙動を維持し、ユーザー判断により追加の固定キャプチャ監査は不要と記録。
 
 ## Unaudited Major Areas
 - なし（import graph 全域 + 全チェック実行済み。個別ファイルの行単位 read-through はチェック / テスト / graph で代替）。
@@ -36,5 +37,5 @@
 - ドキュメント同期: README / bcu-migration-status / current-ability-parity-status / bcu-unresolved-evidence-blockers / bcu-visual-review-checklist / bcu-stage-difficulty-evidence / このファイル。
 
 ## Remaining
-- 見た目のブラウザ受け入れ（BCU 参照比較が必要、台帳 `bcu-visual-review-checklist.md` の not-reviewed / blocked 行）: P_DELAY、burrow、spirit / A_IMUATK、SUMMON entry（blocked: 実カスタムパック自動発見未完）、mini death-surge、非基本キャノン sweep / travel、BASE_WALL、攻撃エフェクト / wave / surge / knockback / status icon のレイヤーと終了処理、モバイル操作、音の実機受け入れ。
+- 見た目のブラウザ受け入れ（BCU 参照比較が必要、台帳 `bcu-visual-review-checklist.md` の not-reviewed 行）: P_DELAY、burrow、spirit / A_IMUATK、SUMMON entry（loader / spawn は確認済み、残るのは入場見た目）、full / mini death-surge、非基本キャノン sweep / travel、BASE_WALL、攻撃エフェクト / wave / surge / knockback / status icon のレイヤーと終了処理、モバイル操作、音の実機受け入れ。
 - 戦闘中フレームまでの headless バトルスモーク（legend/main/event）は実行環境のメモリ逼迫（available ≈1.3GB、Chromium renderer クラッシュ）で完走せず。メモリに余裕のある環境で再実行すること。アプリ欠陥の証跡なし。

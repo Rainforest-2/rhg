@@ -1,6 +1,6 @@
 # BCU 能力整合性の現状
 
-更新日: 2026-07-02
+更新日: 2026-07-03
 
 この文書は、`RHgrive/rhg` における BCU の能力・proc・効果の、見た目以外の現状をまとめたものです。古いノートや単一フィクスチャだけで広い整合性を主張しないよう、保守的な記述にしています。
 
@@ -52,13 +52,13 @@
 
 ## 未完了の項目
 
-（2026-07-02 監査後に残る項目。ガード / シールド / 標準 zombie revive / 財布ボタン / 基本キャノンの見た目はユーザー確認で accepted 済み。）
+（2026-07-03 時点。ガード / シールド / 標準 zombie revive / 財布ボタン / 基本キャノンの見た目はユーザー確認で accepted 済み。）
 
-- P_DELAY / burrow / spirit・A_IMUATK / summon entry / mini death-surge の見た目
+- P_DELAY / burrow / spirit・A_IMUATK / summon entry / full・mini death-surge の見た目
 - 非基本キャノンの sweep / travel と BASE_WALL の見た目
 - 攻撃エフェクト・wave・surge・knockback・status icon のレイヤー / 終了処理の見た目
 - モバイル操作（production card / drag / slide / pause / camera）と音（BGM 切替 / SE 多重 / boss 切替）の実機受け入れ
-- SUMMON entry は実カスタムパックの自動発見が未完のため `blocked`（台帳参照）
+- SUMMON entry は実カスタム proc-object の loader / spawn 経路が確認済みで、残るのは上記の手動見た目受け入れのみ
 - BCU セーブや陣形の import/export 互換性は対象外
 
 ## 受け入れ前に必要なチェック

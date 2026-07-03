@@ -2,7 +2,7 @@
 
 ## 最終更新
 
-- 日付: 2026-07-02 (UTC)
+- 日付: 2026-07-03 (UTC)
 - リポジトリ: `Rainforest-2/rhg`
 - 対象: BCU ZIP / 実行時 / 能力の整合性、描画・UI の受け入れ、データ読み込み、永続化互換性
 - 監査基盤: 現行の rhg コードと `references/bcu/` 配下に含まれる BCU 参照 ZIP
@@ -44,6 +44,7 @@
 - **チェック増強**: `check-bcu-msd-row-alignment-parity`、`check-bcu-maanim-keyframe-integrity`、`check-bcu-lineup-slide-gesture-parity` を新設し safe suite 登録。stale だった 3 チェックを現実装に同期、生成物依存の 4 チェックは再生成手順で成功確認。
 - **ブラウザ実走**: 全ビューポートで formation → ステージ選択 → バトルロード完了を headless Chromium で確認（`tmp/ui-polish-screens/`）。戦闘中フレームの追加スモークは実行環境のメモリ逼迫で完走せず（アプリ欠陥の証跡なし）。
 - **見た目台帳**: ユーザー確認済み 6 項目（バリア / 悪魔シールド / 城ガード / 標準 zombie revive / 財布ボタン / 基本キャノン）を accepted 記録。残りの見た目項目は human-visual-review-needed のまま（完成宣言はしない）。
+- **2026-07-03 非runtime台帳同期**: 実カスタム proc-object SUMMON の loader / `BattleAttackProfile` / immediate-on_hit spawn は解決済みと確定し、残るのは entry 見た目だけに統一。同フレーム攻撃は現行 due-hit capture / damage 挙動を維持し、追加監査は行わない。
 
 ## 2026-06-23 監査サマリ
 
@@ -69,16 +70,16 @@
 | 追加 / カスタム ゾンビ蘇生 | `code-complete-candidate` | 実在の `REVIVE` proc-object が BCU の `ZombX.updateRevive` の source/range/zombie/warp フィルタを駆動する。死体の見た目は引き続き視覚項目。 |
 | 参加可能な犬ロスターの actor 可視性 | `code-complete-candidate` | `buildDogSpecs` は、古い外部エネミー除外一覧に表示 id が入っていても、ローカル semantic actor バンドルを見えるように保つ。`check-dog-playable-roster-readiness` が enemy 562 と 661–669 をカバーする。 |
 | 非基本キャットキャノンの見た目 | 実行時は `code-complete-candidate` | キャノンごとの ATK/EXT ビットマップ別名が接続され、各キャノンが独自の `NyCastle.aux.atks[id]` BASE/ATK eanim を読み込み、`spawnCatCannonNonBasicEffect` で表示する。正確な extend/waved の移動・掃討タイミングはブラウザ未受け入れ。 |
-| 見えるエフェクト / UI の受け入れ | `human-visual-review-needed` または `partial` | P_DELAY、シールド系、霊魂、城のガード、召喚、ゾンビ蘇生、cat cannon、BASE_WALL は、固定フィクスチャ付きのブラウザレビューが必要。 |
+| 見えるエフェクト / UI の受け入れ | `human-visual-review-needed` または `partial` | P_DELAY、burrow、霊魂、SUMMON entry、full / mini death-surge、非基本キャノン、BASE_WALL、攻撃 effect / wave / surge / knockback / status icon、モバイル操作、音は固定フィクスチャ付きのブラウザレビューが必要。バリア / 悪魔シールド / 城ガード / 標準 zombie revive / 財布ボタン / 基本キャノンはユーザー確認で accepted。 |
 
 ## 修正した過去の主張
 
 現行コードの比較なしにこれを現状の欠陥として再開しないこと。
 
 - 過去の StageDefinitionLoader の指摘（`rowIndex`、castle `noContinue`、`-1` の enemy-castle 解決、`bossGuard` ソース行）は、現行コードでは修正済みであり、現在の主なリスクではない。
-- 城 / 基地ガードの JS 所有権は実装済み。残る差分はブラウザ見た目であり、ランタイム担当の欠落ではない。
-- 標準的なゾンビの死体 / soulstrike / revive ランタイムは決定的にカバーされており、追加 / カスタム revive の source/range フィルタも loader で確認済み。見た目はまだ開放されている。
-- 基本 / 非基本キャットキャノンはともにランタイムが存在する。見た目のアセット別名とブラウザ受け入れは別作業。
+- 城 / 基地ガードの JS 所有権は実装済みであり、見た目もユーザー確認で accepted。ランタイム担当の欠落ではない。
+- 標準的なゾンビの死体 / soulstrike / revive ランタイムは決定的にカバーされ、標準 revive の見た目はユーザー確認で accepted。追加 / カスタム revive の source/range フィルタも loader で確認済み。
+- 基本 / 非基本キャットキャノンはともにランタイムが存在する。基本キャノンの見た目はユーザー確認で accepted。非基本キャノンのアセット別名とブラウザ受け入れは別作業。
 - 通常の城が汎用攻撃ランタイムを持つことはなく、ボス基地の攻撃は通常の `EEnemy` オーナーを使う。HP 閾値・撃破数による出現はステージ側の責務。 
 
 ## 永続化の境界
@@ -112,13 +113,14 @@ node scripts/check-ability-partial-blockers.mjs
 
 視覚チェックリストを使い、固定ステージ・ユニット・敵・キャノンのフィクスチャに対して `accepted` / `mismatch` / `blocked` を記録してください。
 
-- P_DELAY とシールド系エフェクト
+- P_DELAY
 - burrow の down / underground / up 遷移
 - 霊魂 actor と A_IMUATK
-- 城のガード hold / break
 - summon の `anim_type` 入場と配置
-- ゾンビの corpse DOWN / REVIVE
-- 基本 / 非基本キャノンの発射、移動 sweep、BASE_WALL の入場・待機
+- full / mini death-surge の demon soul
+- 非基本キャノンの移動 sweep / travel と BASE_WALL の入場・待機
+- 攻撃 effect / wave / surge / knockback / status icon のレイヤーと終了処理
+- モバイル操作と BGM / SE の実機受け入れ
 
 ## ドキュメント更新ルール
 

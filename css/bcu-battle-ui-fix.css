@@ -265,14 +265,14 @@
 @media (max-width: 760px){
   .prod-ui .cards,
   .prod-ui:not(.is-hidden) .cards{
-    bottom:calc(4px + env(safe-area-inset-bottom,0px))!important;
+    bottom:env(safe-area-inset-bottom,0px)!important;
     padding:0!important;
   }
 
   .prod-ui .wallet-upgrade{
     width:84px;
     left:env(safe-area-inset-left,0px);
-    bottom:calc(4px + env(safe-area-inset-bottom,0px));
+    bottom:env(safe-area-inset-bottom,0px)!important;
   }
 
   .prod-ui .wallet-upgrade:not(.has-bcu-icon){
@@ -282,7 +282,7 @@
   .prod-ui .cat-cannon-fire{
     width:84px;
     right:env(safe-area-inset-right,0px);
-    bottom:calc(4px + env(safe-area-inset-bottom,0px));
+    bottom:env(safe-area-inset-bottom,0px)!important;
   }
 
   .prod-ui .cat-cannon-fire:not(.has-bcu-icon){
@@ -301,7 +301,8 @@
 
   .prod-ui .cards,
   .prod-ui:not(.is-hidden) .cards{
-    bottom:calc(3px + env(safe-area-inset-bottom,0px))!important;
+    bottom:env(safe-area-inset-bottom,0px)!important;
+    padding:0!important;
     gap:var(--prod-card-gap)!important;
   }
 
@@ -322,7 +323,7 @@
   .prod-ui .wallet-upgrade,
   .prod-ui .cat-cannon-fire{
     width:clamp(69px,9.1vw,85px)!important;
-    bottom:calc(3px + env(safe-area-inset-bottom,0px))!important;
+    bottom:env(safe-area-inset-bottom,0px)!important;
   }
 
   .prod-ui .wallet-upgrade:not(.has-bcu-icon),
@@ -342,13 +343,13 @@
 
   .prod-ui .cards,
   .prod-ui:not(.is-hidden) .cards{
-    bottom:calc(2px + env(safe-area-inset-bottom,0px))!important;
+    bottom:env(safe-area-inset-bottom,0px)!important;
   }
 
   .prod-ui .wallet-upgrade,
   .prod-ui .cat-cannon-fire{
     width:clamp(66px,9.1vw,77px)!important;
-    bottom:calc(2px + env(safe-area-inset-bottom,0px))!important;
+    bottom:env(safe-area-inset-bottom,0px)!important;
   }
 
   .prod-ui .battle-money{

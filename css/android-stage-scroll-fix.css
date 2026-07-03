@@ -1,0 +1,23 @@
+/* Do not constrain every descendant through body's touch-action:manipulation.
+ * Battle-only surfaces keep their existing touch-action:none rule in touch-fix.css. */
+html,
+body{
+  touch-action:auto;
+}
+
+.formation-ui,
+.formation-stage-overlay,
+.formation-stage-dialog,
+.formation-stage-list,
+.formation-stage-card,
+.stage-selector,
+.stage-selector-panel,
+[data-scrollable]{
+  touch-action:pan-y!important;
+}
+
+.formation-stage-list{
+  overflow-y:auto!important;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}

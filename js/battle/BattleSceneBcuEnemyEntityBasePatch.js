@@ -37,13 +37,13 @@ function getActorHpPercent(actor) {
 function syncEnemyEntityBasePlaceholder(scene, actor = getEnemyEntityBaseActor(scene)) {
   const base = getCatBase(scene);
   if (!base || !scene?.stage?.runtime?.hasEnemyBaseEntity) return;
-  base.attackable = false;
   base.debug = {
     ...(base.debug || {}),
     bcuEnemyEntityBasePlaceholder: true,
     source: 'BCU EStage.base() / StageBasis ebase=EEnemy'
   };
   if (actor) {
+    base.attackable = false;
     base.isBcuEnemyEntityBasePlaceholder = true;
     base.visualSuppressed = true;
     base.hp = Number.isFinite(actor.hp) ? Math.max(0, actor.hp) : base.hp;
@@ -51,6 +51,7 @@ function syncEnemyEntityBasePlaceholder(scene, actor = getEnemyEntityBaseActor(s
     base.destroyed = !(actor.isAlive?.() === true || actor.isRenderable?.() === true);
     base.bcuEnemyEntityBaseActorId = actor.instanceId || actor.label || null;
   } else {
+    base.attackable = true;
     base.isBcuEnemyEntityBasePlaceholder = false;
     base.visualSuppressed = false;
     base.bcuEnemyEntityBaseActorId = null;

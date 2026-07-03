@@ -69,6 +69,7 @@ const pendingBaseScene = Object.assign(Object.create(BattleScene.prototype), {
 pendingBaseScene.updateBattleState();
 assert.equal(pendingBaseScene.bases[1].visualSuppressed, false, 'normal castle remains visible until the EEnemy base actor actually renders');
 assert.equal(pendingBaseScene.bases[1].isBcuEnemyEntityBasePlaceholder, false, 'missing EEnemy base actor must not leave a hidden placeholder');
+assert.equal(pendingBaseScene.bases[1].attackable, true, 'visible fallback normal castle keeps its hit detection until the EEnemy base actor renders');
 
 const normalScene = Object.assign(Object.create(BattleScene.prototype), {
   stage: { runtime: { hasEnemyBaseEntity: false, castleId: 0, animBaseId: 0, cannonId: null, getBasePosBcu: () => 800 } },
@@ -91,5 +92,6 @@ const normalBase = await normalScene.loadBase({ side: 'cat-enemy', id: 'cat-base
 assert.equal(normalBase.visualKind, 'bcu-enemy-castle', 'normal stages still draw the BCU enemy castle');
 assert.equal(normalBase.visualSuppressed, false, 'normal stages must not inherit the EEnemy-base placeholder suppression');
 assert.equal(normalBase.isBcuEnemyEntityBasePlaceholder, false, 'normal stages must not mark the castle as an EEnemy-base placeholder');
+assert.equal(normalBase.attackable, true, 'normal enemy castle keeps base hit detection');
 
 console.log('check-bcu-enemy-entity-base-runtime: OK');

@@ -20,6 +20,13 @@ body.nyanko-ui-polish .formation-tuning-overlay button{
   touch-action:manipulation;
 }
 
+body.nyanko-ui-polish .formation-stage-overlay .formation-stage-list button,
+body.nyanko-ui-polish .formation-stage-overlay .formation-stage-list button *,
+body.nyanko-ui-polish .formation-stage-overlay .formation-stage-list .formation-stage-card,
+body.nyanko-ui-polish .formation-stage-overlay .formation-stage-list .formation-stage-card * {
+  touch-action:pan-y!important;
+}
+
 body.nyanko-ui-polish .formation-ui button:focus-visible,
 body.nyanko-ui-polish .formation-tuning-overlay button:focus-visible{
   outline:3px solid #fff;

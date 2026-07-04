@@ -18,7 +18,7 @@
 - 参加可能な犬のロスター表示は、ローカル semantic actor の準備状態で制御される。古い外部 `error-enemy` 除外リストでは、enemy 562 や 661–669 などの完全なバンドル済み actor を隠せない
 - 陣形や生産アイコンは、actor-image フォールバックではなく semantic UI アセットで解決する
 - キャットユニットの生産値は BCU の `ELineUp` 経路を使う。`StageMap.price=1` で `DataUnit.price` が 1.5 倍の配置コストになり、PCoin の `PC2_COST` / `PC2_CD` が先に価格・再配置時間に反映され、C_DISCOUNT が配置コストに適用され、`Treasure.getFinRes(respawn, C_RESP)` が戦闘中クールダウンの下限を決める
-- 霊魂召喚の実行時は、BCU の生産・ステージ状態、クールダウン、1 召喚者あたり 1 霊魂、ワープ前の召喚元、サイド容量制限までカバーする。actor / A_IMUATK の見た目は手動レビュー対象
+- 霊魂召喚の実行時は、BCU の生産・ステージ状態、クールダウン、召喚者が生存中の一回制限、ワープ前の召喚元、サイド容量制限、召喚 ready カード切替までカバーする。actor / A_IMUATK とカード flash の見た目は手動レビュー対象
 - BCU sound id `0..190` は、ステージマップ BGM 参照、遅延 sound-cache warming、再生中 SE の奪い合いを抑えて全リクエストを維持する HTMLAudio SE voice pool で解決する
 
 ## 現在の重点ドキュメント

@@ -22,6 +22,7 @@ const UNIT_KEY_RE = /^unit:\d+:(f|c|s|u)$/;
 export const BCU_UNI_IMGCUT_PATH = './public/assets/bcu/000001/org/data/uni.imgcut';
 export const BCU_SLOT_FRAME_PATH = './public/assets/bcu/000001/org/page/uni.png';
 export const BCU_UNI_CARD_PART = Object.freeze({ x: 9, y: 21, w: 110, h: 85, label: 'ユニットアイコン', index: 0 });
+const BCU_SPIRIT_SUMMON_PART_INDEX = 53;
 
 export const PRODUCTION_CARD_CANVAS = Object.freeze({ w: BCU_UNI_CARD_PART.w, h: BCU_UNI_CARD_PART.h });
 export const PRODUCTION_CARD_VIEW = Object.freeze({ w: 116, h: 116 * BCU_UNI_CARD_PART.h / BCU_UNI_CARD_PART.w });
@@ -168,6 +169,8 @@ export class ProductionCardSkin {
     this.warnedFallbackKeys = new Set();
     this.source = null;
     this.loadError = null;
+    this.spiritSummonSheet = null;
+    this.spiritSummonPart = null;
   }
 
   async preload() {
@@ -176,11 +179,16 @@ export class ProductionCardSkin {
       if (provider) {
         this.slotFrame = await loadBundleImage(provider, 'uni.png');
         this.imgcut = BcuImgCut.parse(await provider.readTextByBundleRef(BCU_BATTLE_UI_BUNDLE_REF, 'uni.imgcut'));
+        this.spiritSummonSheet = await loadBundleImage(provider, 'spiritSummon.png');
+        const spiritSummonImgcut = BcuImgCut.parse(await provider.readTextByBundleRef(BCU_BATTLE_UI_BUNDLE_REF, 'spiritSummon.imgcut'));
+        this.spiritSummonPart = spiritSummonImgcut.getByIndex(BCU_SPIRIT_SUMMON_PART_INDEX);
         this.source = 'semantic-bundle:ui:battle';
       } else {
         if (globalThis.__BCU_DB__?.semanticMode === 'semantic-strict') throw new Error('semantic provider missing for ui:battle');
         this.imgcut = await BcuImgCut.load(BCU_UNI_IMGCUT_PATH);
         this.slotFrame = await loadImage(BCU_SLOT_FRAME_PATH);
+        this.spiritSummonSheet = null;
+        this.spiritSummonPart = null;
         this.source = 'raw-diagnostics:public/assets/bcu/page';
       }
       const part = this.imgcut.getByIndex(0);
@@ -199,7 +207,10 @@ export class ProductionCardSkin {
         highDpiCanvasAware: true,
         costRightX: PRODUCTION_CARD_SKIN.costRightX,
         costY: PRODUCTION_CARD_SKIN.costY,
-        costScale: 1
+        costScale: 1,
+        spiritSummonReady: !!(this.spiritSummonSheet && this.spiritSummonPart),
+        spiritSummonPart: this.spiritSummonPart || null,
+        spiritSummonPartIndex: BCU_SPIRIT_SUMMON_PART_INDEX
       };
     } catch (error) {
       this.loadError = error;
@@ -216,7 +227,7 @@ export class ProductionCardSkin {
     return ratio;
   }
 
-  drawCard(ctx, { unitDef, icon, cost, cooldownProgressRatio = 1, affordable = true, cooldownReady = true, interactive = true, isBack = false, isEmpty = false, iconLoadFailed = false }) {
+  drawCard(ctx, { unitDef, icon, cost, cooldownProgressRatio = 1, affordable = true, cooldownReady = true, interactive = true, isBack = false, isEmpty = false, iconLoadFailed = false, bcuSpirit = null }) {
     const state = { unitDef, affordable, cooldownReady, interactive, isBack, isEmpty, iconLoadFailed };
     this.prepareCardContext(ctx);
     ctx.clearRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
@@ -230,6 +241,13 @@ export class ProductionCardSkin {
       ? this.drawCatCard(ctx, icon, state)
       : this.drawDogCard(ctx, icon, state);
 
+    if (bcuSpirit?.summonerSummoned) {
+      const spiritRender = this.drawBcuSpiritConjureCard(ctx, bcuSpirit, state);
+      if (!cooldownReady) this.drawCooldown(ctx, cooldownProgressRatio, state);
+      if (isBack) this.drawBackOverlay(ctx);
+      return { ...renderResult, ...spiritRender, priceDrawn: false, cooldownDrawn: !cooldownReady };
+    }
+
     if (!cooldownReady) {
       // BCU BattleBox: b = pri > sb.money || cool > 0 -> dark overlay, then cooldown gauge on top.
       this.drawAvailabilityOverlay(ctx, state);
@@ -241,6 +259,55 @@ export class ProductionCardSkin {
     this.drawAvailabilityOverlay(ctx, state);
     this.drawCost(ctx, cost, state);
     return { ...renderResult, priceDrawn: true, cooldownDrawn: false };
+  }
+
+  drawBcuSpiritConjureCard(ctx, bcuSpirit, state = {}) {
+    const part = this.spiritSummonPart;
+    const ready = bcuSpirit?.spiritReady === true || Math.trunc(Number(bcuSpirit?.cooldownFrames || 0)) === 0;
+    const unavailable = bcuSpirit?.spiritSummoned === true;
+    ctx.save();
+    if (unavailable) {
+      ctx.fillStyle = `rgba(64,0,0,${160 / 255})`;
+    } else if (Math.trunc(Number(bcuSpirit?.spiritEmphasizeCount || 0)) % 2 === 0) {
+      ctx.fillStyle = `rgba(30,92,123,${100 / 255})`;
+    } else {
+      ctx.fillStyle = `rgba(50,153,205,${100 / 255})`;
+    }
+    ctx.fillRect(0, 0, PRODUCTION_CARD_CANVAS.w, PRODUCTION_CARD_CANVAS.h);
+    ctx.restore();
+
+    let summonTextDrawn = false;
+    if (!state?.isBack && ready && !unavailable && this.spiritSummonSheet && part) {
+      const scale = Math.min(PRODUCTION_CARD_CANVAS.w / part.w, PRODUCTION_CARD_CANVAS.h / part.h);
+      const dw = Math.round(part.w * scale);
+      const dh = Math.round(part.h * scale);
+      const dx = Math.round((PRODUCTION_CARD_CANVAS.w - dw) / 2);
+      const dy = Math.round((PRODUCTION_CARD_CANVAS.h - dh) / 2);
+      ctx.drawImage(this.spiritSummonSheet, part.x, part.y, part.w, part.h, dx, dy, dw, dh);
+      summonTextDrawn = true;
+
+      const startFrame = Number(bcuSpirit?.spiritEmphasizeStartFrame || 0);
+      const nowFrame = Number(bcuSpirit?.logicFrame || 0);
+      const alpha = Math.max(0, Math.min(64, 64 * (-0.5 * Math.cos(Math.PI / 15 * (startFrame - nowFrame)) + 0.5))) / 255;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(this.spiritSummonSheet, part.x, part.y, part.w, part.h, dx, dy, dw, dh);
+      ctx.restore();
+    }
+
+    const detail = {
+      bcuSpiritRenderMode: 'bcu-spirit-conjure-card',
+      bcuReference: 'BattleBox.drawLineup: summonerSummoned overlay; spiritCooldown==0 draws aux.spiritSummon[locale] from Res.readBattle img002 part[53]',
+      spiritReady: ready,
+      spiritSummoned: unavailable,
+      summonTextDrawn,
+      summonTextSource: summonTextDrawn ? 'semantic-bundle:ui:battle/spiritSummon.imgcut[53]' : null
+    };
+    globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ = {
+      ...(globalThis.__BCU_PRODUCTION_CARD_SKIN_DEBUG__ || {}),
+      lastSpiritCard: detail
+    };
+    return detail;
   }
 
   drawBcuCardPart(ctx, image) {

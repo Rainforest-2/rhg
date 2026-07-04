@@ -630,6 +630,7 @@ export class PlayerProductionBar {
       affordable: entry.affordable !== false,
       cooldownReady: entry.cooldownReady !== false,
       interactive: entry.interactive !== false,
+      bcuSpirit: entry.bcuSpirit || null,
       isBack,
       isEmpty: !entry.unitDef
     });
@@ -667,8 +668,16 @@ export class PlayerProductionBar {
       entry?.interactive !== false,
       !unit,
       asset?.failed === true || entry?.iconLoadFailed === true,
+      entry?.bcuSpirit?.summonerSummoned === true,
+      entry?.bcuSpirit?.spiritSummoned === true,
+      entry?.bcuSpirit?.spiritReady === true,
+      entry?.bcuSpirit?.cooldownFrames ?? '',
+      entry?.bcuSpirit?.spiritEmphasizeCount ?? '',
+      entry?.bcuSpirit?.spiritEmphasizeStartFrame ?? '',
+      entry?.bcuSpirit?.logicFrame ?? '',
       this.spriteText?.ready === true,
       this.cardSkin.source || '',
+      this.cardSkin.spiritSummonPart?.label || '',
       this.cardSkin.loadError?.message || ''
     ].join('|');
   }

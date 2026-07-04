@@ -329,6 +329,25 @@ function ensureStageScrollGestureGuard(editor, list) {
     editor.__stageScrollGesture = null;
     editor.__stageSuppressStageClick = false;
   }, { passive: true });
+  // Android aborts a native scroll when the element the touch started on (a stage-card
+  // button) is removed mid-gesture; iOS keeps scrolling. Hold the virtual-window
+  // innerHTML re-render while a finger is down and flush it on release.
+  const releaseStageTouchHold = () => {
+    editor.__stageListTouchActive = false;
+    if (editor.__stageSelectorRenderPending) {
+      editor.__stageSelectorRenderPending = false;
+      editor.renderStageSelector();
+    }
+  };
+  list.addEventListener('touchstart', () => {
+    editor.__stageListTouchActive = true;
+  }, { passive: true });
+  list.addEventListener('touchend', (event) => {
+    if (!event.touches.length) releaseStageTouchHold();
+  }, { passive: true });
+  list.addEventListener('touchcancel', (event) => {
+    if (!event.touches.length) releaseStageTouchHold();
+  }, { passive: true });
 }
 
 if (!FormationEditor.prototype.__nyankoPerformancePatched) {
@@ -407,6 +426,10 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
       const level = this.stageSelectorState?.level;
       if ((level === 'map' || level === 'stage') && this.__stageSelectorVirtualKey) {
         (this.__stageSelectorScrollByKey || (this.__stageSelectorScrollByKey = {}))[this.__stageSelectorVirtualKey] = stageList.scrollTop;
+      }
+      if (this.__stageListTouchActive) {
+        this.__stageSelectorRenderPending = true;
+        return;
       }
       if (this.__stageSelectorScrollFrame) return;
       this.__stageSelectorScrollFrame = requestAnimationFrame(() => {

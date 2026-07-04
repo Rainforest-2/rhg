@@ -54,8 +54,8 @@ for (const phrase of [
   // Genuinely-open items: visual review or disproven/out-of-scope owner.
   // (2026-07-02 doc reorganization merged the per-item bullets; the same open
   // claims must stay listed.)
-  '- P_DELAY / burrow / spirit・A_IMUATK / summon entry / mini death-surge の見た目',
-  '- SUMMON entry は実カスタムパックの自動発見が未完のため `blocked`',
+  '- P_DELAY / burrow / spirit・A_IMUATK / summon entry / full・mini death-surge の見た目',
+  '- SUMMON entry は実カスタム proc-object の loader / spawn 経路が確認済みで、残るのは上記の手動見た目受け入れのみ',
   '- BCU セーブや陣形の import/export 互換性は対象外'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);

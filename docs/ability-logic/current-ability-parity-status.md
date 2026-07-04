@@ -28,7 +28,7 @@
 | 死魂 / デス烈波 / AB_GLASS | `code-complete-candidate` | 死亡・蘇生・デス烈波の系統は実装済み。 |
 | ゾンビ corpse / soulstrike / revive | `code-complete-candidate` | 実行時あり。標準 revive の見た目はユーザー確認で accepted（台帳参照）。 |
 | 地中移動 | `code-complete-candidate` | 移動・ターゲット可否・後始末までカバー済み。 |
-| 霊魂ライフサイクル | `human-visual-review-needed` | 生成・クールダウン・容量制限・ready 状態までは実装済み。 |
+| 霊魂ライフサイクル | `human-visual-review-needed` | 生成・クールダウン・容量制限・召喚者が生存中の一回制限・ready カード切替までは実装済み。 |
 | 城 / 基地ガード | `code-complete-candidate` | 実行時あり。見た目はユーザー確認で accepted（台帳参照）。 |
 | 特殊敵城 / EEnemy base | `code-complete-candidate` | ステージヘッダの base enemy id と一致する敵行を通常 spawn schedule から外し、BCU の `EStage.base()` / `StageBasis ebase=EEnemy` と同じく敵アクターとして初期配置する。例: `N/StageRN/stageRN036_05.csv`（ハリーウッド帝国 / ウニバーサンスタジオ）の raw enemy 317。通常の castle-owned attack runtime は作らない。 |
 | 財布 / 配置コスト / リスポーン | `code-complete-candidate` | BCU の式と生産ロジックが接続済み。 |

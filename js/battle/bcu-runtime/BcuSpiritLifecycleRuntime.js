@@ -76,6 +76,8 @@ export function getBcuSpiritProductionState(scene, slotId) {
     cooldownFrames: Math.max(0, Math.trunc(st.cooldownFrames || 0)),
     spiritReady: st.spiritReady === true && st.spiritSummoned !== true,
     spiritEmphasizeCount: Math.max(0, Math.trunc(st.spiritEmphasizeCount || 0)),
+    spiritEmphasizeStartFrame: Math.max(0, Math.trunc(st.spiritEmphasizeStartFrame || 0)),
+    logicFrame: Math.max(0, Math.trunc(scene?.logicFrame || 0)),
     source: 'BCU StageBasis spiritCooldown/spiritEmphasizeCount/spiritSummoned'
   };
 }
@@ -88,6 +90,9 @@ export function markBcuSummonerSpawned(scene, actor, { slotId = null } = {}) {
   actor.bcuSummonerSlotId = key;
   actor.bcuSpiritSpec = spec;
   st.summonerSummoned = true;
+  st.spiritSummoned = false;
+  st.spiritReady = false;
+  st.spiritEmphasizeCount = 0;
   st.cooldownFrames = SPIRIT_SUMMON_DELAY;
   st.spiritId = spec.id;
   st.lastSummoner = actor;
@@ -336,7 +341,7 @@ export function tickBcuSpiritState(scene) {
       st.spiritReady = false;
       st.spiritEmphasizeCount = 0;
     } else {
-      st.spiritSummoned = spirits.length > 0;
+      if (spirits.length > 0) st.spiritSummoned = true;
     }
   }
   for (const actor of scene.actors || []) {

@@ -175,7 +175,28 @@ function makeScene(summoner) {
   assert.equal(prod.spiritSummoned, true, 'production state reports the spirit is out');
 }
 
-// --- 7. BCU StageBasis unitRespawnTime: a successful conjure locks ALL production for
+// --- 7. BCU spiritSummoned is one-shot for a living summoner. It does not clear just
+//        because the spirit actor finished its attack and disappeared. ---
+{
+  const summoner = makeSummoner('one-shot-summoner');
+  const scene = makeScene(summoner);
+  markBcuSummonerSpawned(scene, summoner, { slotId: 'one-shot-summoner' });
+  for (let frame = 1; frame <= SPIRIT_SUMMON_DELAY; frame += 1) { scene.logicFrame = frame; tickBcuSpiritState(scene); }
+  const first = requestBcuSpiritSpawn(scene, 'one-shot-summoner');
+  assert.equal(first.ok, true, 'first spirit conjure succeeds');
+  const spirit = first.spawned[0];
+  spirit.state = 'dead';
+  spirit.hp = 0;
+  scene.actors = scene.actors.filter((actor) => actor !== spirit);
+  scene.logicFrame += 1;
+  tickBcuSpiritState(scene);
+  assert.equal(scene.bcuSpiritState.get('one-shot-summoner').spiritSummoned, true, 'spiritSummoned stays true while summoner remains alive');
+  const second = requestBcuSpiritSpawn(scene, 'one-shot-summoner');
+  assert.equal(second.ok, false, 'second spirit conjure is rejected for the same living summoner');
+  assert.equal(second.reason, 'spirit-already-summoned', 'one-shot rejection reason is explicit');
+}
+
+// --- 8. BCU StageBasis unitRespawnTime: a successful conjure locks ALL production for
 //        the rest of the frame, then clears on the next frame. ---
 {
   const summoner = makeSummoner('lock-summoner');

@@ -24,7 +24,7 @@
 
 - P_DELAY
 - burrow の DOWN / underground / UP での見た目
-- spirit actor と A_IMUATK の見た目
+- spirit actor、A_IMUATK、conjure-card flash の見た目
 - SUMMON entry の入場 / 配置 / レイヤー / 後始末
 - full / mini death-surge の demon-soul 見た目
 - 非基本キャノンの sweep / travel と BASE_WALL の入場 / 待機

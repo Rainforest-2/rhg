@@ -1,3 +1,12 @@
+// Zoom-in clamp headroom above BCU's own maximum. BCU BattleBox.calculateSiz
+// caps siz at h/minH (minH=510), which fills the screen vertically with a
+// 510-tall slice. That ceiling felt too shallow (only ~1.41x from the default
+// siz=1), so we allow zooming further IN than stock BCU by this factor. Only the
+// user-zoom clamp is boosted; the BCU-faithful maxSiz is still used for midh /
+// groundHeight so the vertical framing across the normal range stays identical
+// to BCU.
+const ZOOM_IN_BOOST = 2.0;
+
 export class BattleCamera {
   // Camera contract:
   // - stageLen is immutable during pan/zoom/input. Only setStageLen() may change it when a new stage/runtime is applied.
@@ -16,8 +25,11 @@ export class BattleCamera {
     this.bcuMinH = Number.isFinite(bcuLayout.minH) ? bcuLayout.minH : 510;
     this.bcuMaxH = Number.isFinite(bcuLayout.maxH) ? bcuLayout.maxH : 510 * 3;
     this.bcuTwoRow = bcuLayout.twoRow === true;
+    this.zoomInBoost = Number.isFinite(bcuLayout.zoomInBoost) && bcuLayout.zoomInBoost >= 1 ? bcuLayout.zoomInBoost : ZOOM_IN_BOOST;
     const limits = this.computeBcuSizeLimits();
     this.minSiz = Number.isFinite(minSiz) ? minSiz : limits.minSiz;
+    // bcuMaxSiz is the stock BCU ceiling (h/minH); maxSiz is the boosted user-zoom clamp.
+    this.bcuMaxSiz = limits.bcuMaxSiz;
     this.maxSiz = Number.isFinite(maxSiz) ? maxSiz : limits.maxSiz;
     this.groundHeight = limits.groundHeight;
     this.midh = this.computeBcuMidhForSiz(initialSiz);
@@ -39,19 +51,23 @@ export class BattleCamera {
   }
   computeBcuSizeLimits() {
     const minSiz = this.getRegulatedSiz(0);
-    const maxSiz = this.getRegulatedSiz(Number.MAX_VALUE);
-    const groundHeight = (this.logicalH * 2 / 10) * (1 - minSiz / Math.max(0.0001, maxSiz));
-    return { minSiz, maxSiz, groundHeight, source: 'BCU BattleBox.calculateSiz' };
+    // BCU BattleBox.calculateSiz ceiling. groundHeight/midh must use this stock
+    // value so vertical framing stays BCU-identical; only the clamp is boosted.
+    const bcuMaxSiz = this.getRegulatedSiz(Number.MAX_VALUE);
+    const maxSiz = bcuMaxSiz * this.zoomInBoost;
+    const groundHeight = (this.logicalH * 2 / 10) * (1 - minSiz / Math.max(0.0001, bcuMaxSiz));
+    return { minSiz, bcuMaxSiz, maxSiz, groundHeight, source: 'BCU BattleBox.calculateSiz + zoom-in boost' };
   }
   computeBcuMidhForSiz(siz = this.siz) {
-    const span = Math.max(0.0001, this.maxSiz - this.minSiz);
-    let midh = this.logicalH + this.groundHeight * ((Number(siz) || this.minSiz) - this.maxSiz) / span;
+    const span = Math.max(0.0001, this.bcuMaxSiz - this.minSiz);
+    let midh = this.logicalH + this.groundHeight * ((Number(siz) || this.minSiz) - this.bcuMaxSiz) / span;
     if (this.bcuTwoRow) midh -= this.logicalH * 0.75 / 10;
     return midh;
   }
   updateBcuLayout() {
     const limits = this.computeBcuSizeLimits();
     this.minSiz = limits.minSiz;
+    this.bcuMaxSiz = limits.bcuMaxSiz;
     this.maxSiz = limits.maxSiz;
     this.groundHeight = limits.groundHeight;
     this.siz = this._clampSiz(this.siz);
@@ -114,6 +130,7 @@ export class BattleCamera {
       siz: this.siz,
       minSiz: this.minSiz,
       maxSiz: this.maxSiz,
+      bcuMaxSiz: this.bcuMaxSiz,
       midh: this.midh,
       groundHeight: this.groundHeight,
       bcuTwoRow: this.bcuTwoRow,

@@ -132,6 +132,13 @@ else
   echo "missing scripts/check-nonbattle-ui-polish.mjs"
 fi
 
+log "non-battle portrait UI playwright check"
+if [ -f scripts/check-mobile-portrait-ui.mjs ]; then
+  UI_POLISH_URL="$BASE_URL" node scripts/check-mobile-portrait-ui.mjs
+else
+  echo "missing scripts/check-mobile-portrait-ui.mjs"
+fi
+
 log "battle parity"
 if [ -f tests/bcu-combat-parity.test.mjs ]; then
   node --test tests/bcu-combat-parity.test.mjs

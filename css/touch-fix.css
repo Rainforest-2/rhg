@@ -18,6 +18,14 @@
   -webkit-overflow-scrolling:touch;
 }
 
+/* Kill Android Chrome pull-to-refresh: a downward pan that starts at the top of
+   a menu (or on the canvas) must never reload the game mid-session. The page
+   root never scrolls (html,body are overflow:hidden), so none of the in-app
+   scrollers lose their own overscroll chaining from this. */
+html,body{
+  overscroll-behavior:none;
+}
+
 /* overscroll-behavior must not land on arbitrary overlay descendants: an overflow:hidden
    descendant (e.g. the .formation-stage-card buttons) is itself a scroll container, and
    `contain` there blocks scroll chaining on Android Chrome, so a pan that starts on a

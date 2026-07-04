@@ -15,6 +15,7 @@ import '../../ui/FormationStageDifficultyPatch.js';
 import '../../ui/FormationStageDifficultyFilterControlPatch.js';
 import '../../ui/FormationUiRegressionFixPatch.js';
 import '../../ui/FormationPhoneLandscapeLayoutPatch.js';
+import '../../ui/FormationPhonePortraitLayoutPatch.js';
 import '../../ui/FormationCustomStageBattleHpPatch.js';
 import '../../ui/FormationCustomStageBattleApplyHpConfigPatch.js';
 import '../../ui/FormationStageNameBcuPatch.js';

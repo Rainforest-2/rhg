@@ -164,7 +164,7 @@ function insertControls(ed, scope, matched, shown) {
     const star = index + 1;
     return `<option value='${star}' ${normalizeCrownStar(draft.star) === star ? 'selected' : ''}>★${star}</option>`;
   }).join('');
-  box.innerHTML = `<label class='formation-stage-search-field'><span>${itemLabel}検索</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(draft.q)}'></label><div class='formation-stage-difficulty-range' aria-label='星の段階'><span class='formation-stage-filter-label'>星</span><label><span>段階</span><select data-stage-crown-star='1'>${starOptions}</select></label></div><button type='button' class='formation-stage-filter-apply' data-stage-filter-apply='1'>検索</button><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>条件リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
+  box.innerHTML = `<label class='formation-stage-search-field'><span>${itemLabel}検索</span><input data-stage-search-input='1' placeholder='${placeholder}' value='${esc(draft.q)}' enterkeyhint='search' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false'></label><div class='formation-stage-difficulty-range' aria-label='星の段階'><span class='formation-stage-filter-label'>星</span><label><span>段階</span><select data-stage-crown-star='1'>${starOptions}</select></label></div><button type='button' class='formation-stage-filter-apply' data-stage-filter-apply='1'>検索</button><button type='button' class='formation-stage-filter-reset' data-stage-filter-reset='1'>条件リセット</button><div class='formation-stage-difficulty-summary'>${esc(summary)}</div>`;
   if (anchor?.nextSibling) list.insertBefore(box, anchor.nextSibling);
   else list.prepend(box);
 }

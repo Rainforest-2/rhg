@@ -89,6 +89,7 @@ export class FormationEditor {
     this.root.addEventListener('pointerup', (e) => this.onPointerUpCapture(e), true);
     this.root.addEventListener('click', (e) => this.onClick(e));
     this.root.addEventListener('input', (e) => this.onInput(e));
+    this.root.addEventListener('keydown', (e) => this.onKeyDown(e));
     this.root.addEventListener('scroll', (e) => this.onScroll(e), true);
     ensureSoundToggleStyles();
     this.audioSettingsUnsubscribe = AudioSettings.subscribe(() => this.updateAudioSettingControls?.());
@@ -153,6 +154,21 @@ export class FormationEditor {
     this.searchDraft = String(input.value || '');
   }
 
+  // Enter (the mobile keyboard's 検索/Go key) commits the catalog search the
+  // same way the 検索 button does; blur dismisses the software keyboard.
+  onKeyDown(e) {
+    if (e.key !== 'Enter') return;
+    const input = e.target.closest?.('[data-search-input]');
+    if (!input || !this.root.contains(input)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.searchDraft = String(input.value || '');
+    this.searchText = this.searchDraft;
+    this.setHint(this.searchText ? `検索: ${this.searchText}` : '検索条件をクリア');
+    input.blur?.();
+    this.renderDynamic({ resetCatalogScroll: true });
+  }
+
   onScroll(e) {
     if (!e.target.closest?.('.formation-catalog-scroll')) return;
     if (this.renderFrame) return;
@@ -192,6 +208,18 @@ export class FormationEditor {
       e.stopPropagation();
       this.settingsOverlayOpen = false;
       this.renderSettingsOverlay();
+      return;
+    }
+
+    // Tap on the dimmed area around the stage dialog closes it, matching the
+    // settings overlay. Only fires when the backdrop itself is the target, so
+    // taps inside the dialog (cards, toolbar, custom stage) are unaffected.
+    const stageBackdrop = e.target.closest('.formation-stage-overlay');
+    if (stageBackdrop && e.target === stageBackdrop && this.stageOverlayOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.stageOverlayOpen = false;
+      this.renderStageSelector();
       return;
     }
 
@@ -756,7 +784,7 @@ export class FormationEditor {
   }
 
   refresh() {
-    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${[CHARACTER_FACTIONS.dog, CHARACTER_FACTIONS.cat].map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${esc(this.searchDraft ?? this.searchText)}' /><button type='button' class='formation-search-button' data-action='catalog-search'>検索</button><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-form-tabs' hidden></div><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><button type='button' data-action='settings-open' class='secondary-action settings-open-button'><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section><section class='formation-settings-overlay' aria-label='Game settings'><div class='formation-settings-dialog' role='dialog' aria-modal='true'><header><div><strong><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</strong><span>ゲーム設定</span></div><button type='button' data-action='settings-close'>閉じる</button></header><div class='formation-settings-list'></div><footer class='formation-settings-footer'></footer></div></section></div>`;
+    this.root.innerHTML = `<div class='formation-panel'><section class='formation-main'><header class='formation-header'><div><h3>編成</h3><p>5枠ずつページを切り替えて、合計10枠のデッキを作成</p></div><div class='formation-active-page-label'></div></header><section class='formation-slots-wrap'><div class='formation-page-tabs'></div><div class='formation-slots'></div></section><section class='formation-catalog-section'><div class='formation-catalog-tabs'>${[CHARACTER_FACTIONS.dog, CHARACTER_FACTIONS.cat].map((f) => `<button type='button' data-filter='${f}'>${f}</button>`).join('')}</div><div class='formation-catalog-toolbar'><input class='formation-search-input' data-search-input='1' placeholder='ID / 名前で検索' value='${esc(this.searchDraft ?? this.searchText)}' enterkeyhint='search' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' /><button type='button' class='formation-search-button' data-action='catalog-search'>検索</button><div class='formation-catalog-summary'></div></div><div class='formation-catalog-scroll'><div class='formation-catalog-form-tabs' hidden></div><div class='formation-catalog-grid'></div></div></section></section><aside class='formation-action-rail' aria-label='Formation actions'><button type='button' data-action='apply' class='apply-battle-button'>Apply Battle</button><button type='button' data-action='stage-open' class='secondary-action stage-select-button'>Stage Select</button><div class='formation-current-stage'></div><button type='button' data-action='clear' class='secondary-action'>Clear Slot</button><button type='button' data-action='reset' class='secondary-action'>Reset Default</button><button type='button' data-action='settings-open' class='secondary-action settings-open-button'><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</button><p class='formation-action-hint'>PAGE 1/2を切り替えて10枠編成できます</p></aside><section class='formation-stage-overlay' aria-label='Stage selection'><div class='formation-stage-dialog'><header><div><strong>ステージ選択</strong><span>BCU MultiLangCont 準拠名</span></div><button type='button' data-action='stage-close'>Close</button></header><div class='formation-stage-list'></div></div></section><section class='formation-settings-overlay' aria-label='Game settings'><div class='formation-settings-dialog' role='dialog' aria-modal='true'><header><div><strong><i class='bi bi-gear-wide-connected' aria-hidden='true'></i> 設定</strong><span>ゲーム設定</span></div><button type='button' data-action='settings-close'>閉じる</button></header><div class='formation-settings-list'></div><footer class='formation-settings-footer'></footer></div></section></div>`;
     this.renderDynamic({ resetCatalogScroll: true });
     this.renderStageSelector();
     this.renderSettingsOverlay();

@@ -122,6 +122,24 @@ function savedStageScroll(editor, viewKey) {
   return Number.isFinite(value) ? value : 0;
 }
 
+// The row-height constants are only estimates; the painted height depends on
+// which stylesheet pass won (desktop / mobile-landscape-fit / mobile-portrait-fit),
+// so long virtualized lists drifted: spacer rows were budgeted at the estimate
+// while real rows painted shorter/taller, making the list jump as the window
+// slid. Measure a real card + row gap from the previous render of the same view
+// and cache it per card kind; the first render of a view keeps the estimate and
+// the next scroll re-render corrects it.
+function measuredStageRowHeight(editor, list, kind, keyChanged, fallback) {
+  const cache = editor.__stageMeasuredRowHeight || (editor.__stageMeasuredRowHeight = {});
+  if (keyChanged) return cache[kind] ?? fallback;
+  const card = list.querySelector('.formation-stage-card:not([hidden])');
+  const height = card?.getBoundingClientRect?.().height;
+  if (!Number.isFinite(height) || height <= 0) return cache[kind] ?? fallback;
+  const gap = Number.parseFloat(getComputedStyle(list).rowGap);
+  cache[kind] = Math.max(24, Math.round(height + (Number.isFinite(gap) ? gap : 0)));
+  return cache[kind];
+}
+
 function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
   const list = editor.root?.querySelector?.('.formation-stage-list');
   const all = items || [];
@@ -148,7 +166,8 @@ function renderStageItemWindow(editor, kind, viewKey, items, renderItem) {
   }
 
   const columns = Math.max(1, countStageColumns(list));
-  const rowHeight = (list.clientWidth || 0) <= 760 ? STAGE_WINDOW_MOBILE_ROW_HEIGHT : STAGE_WINDOW_ROW_HEIGHT;
+  const rowHeightEstimate = (list.clientWidth || 0) <= 760 ? STAGE_WINDOW_MOBILE_ROW_HEIGHT : STAGE_WINDOW_ROW_HEIGHT;
+  const rowHeight = measuredStageRowHeight(editor, list, kind, keyChanged, rowHeightEstimate);
   const totalRows = Math.ceil(all.length / columns);
   const visibleRows = Math.max(1, Math.ceil((list.clientHeight || 520) / rowHeight));
   const firstVisibleRow = Math.max(0, Math.floor(baseScroll / rowHeight));

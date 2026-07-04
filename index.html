@@ -2,7 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <!-- interactive-widget=resizes-visual: when the software keyboard opens for a
+       search field, Android Chrome must not squash the 100dvh game layout —
+       the browser pans the visual viewport to the focused input instead. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual" />
   <meta name="copyright" content="© 2026 RHgrive. All Rights Reserved." />
   <meta name="author" content="RHgrive" />
   <meta name="robots" content="noarchive, noimageindex" />
@@ -40,6 +43,10 @@
        Loaded after the stage-selector sheets so its !important rules win, and
        before premium-polish so premium stays the last stylesheet. -->
   <link rel="stylesheet" href="./css/mobile-landscape-fit.css" />
+  <!-- Portrait-phone layout for the non-battle screens (formation / stage
+       selector / settings). Same cascade slot rationale as the landscape
+       sheet: after the stage-selector sheets, before premium polish. -->
+  <link rel="stylesheet" href="./css/mobile-portrait-fit.css" />
   <!-- Premium polish stays the last local stylesheet so its equal-specificity
        motion rules win (see scripts/check-formation-premium-motion.mjs). -->
   <link rel="stylesheet" href="./css/nyanko-premium-polish.css" />

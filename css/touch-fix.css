@@ -15,8 +15,25 @@
 .modal,
 [data-scrollable]{
   touch-action:pan-y!important;
-  overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
+}
+
+/* overscroll-behavior must not land on arbitrary overlay descendants: an overflow:hidden
+   descendant (e.g. the .formation-stage-card buttons) is itself a scroll container, and
+   `contain` there blocks scroll chaining on Android Chrome, so a pan that starts on a
+   map/stage card button never reaches .formation-stage-list. Contain only the real
+   scroll surfaces; the stage list keeps its own contain in stage-selector-fix.css. */
+.formation-ui,
+.formation-panel,
+.formation-catalog-section,
+.formation-catalog-scroll,
+.formation-stage-overlay,
+.app-loading-overlay,
+.app-loading-card,
+.stage-selector,
+.modal,
+[data-scrollable]{
+  overscroll-behavior:contain;
 }
 
 .formation-ui,

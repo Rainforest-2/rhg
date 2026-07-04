@@ -433,6 +433,22 @@ body.nyanko-ui-polish .formation-custom-stage-controls button{
   box-shadow:0 4px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important;
 }
 
+body.nyanko-ui-polish .formation-custom-stage-alert{
+  margin:0!important;
+  padding:9px 12px!important;
+  border:4px solid #050505!important;
+  border-radius:14px!important;
+  background:linear-gradient(180deg,#fff36b 0%,#ffbd26 48%,#f15b24 100%)!important;
+  color:#1b1207!important;
+  -webkit-text-fill-color:#1b1207!important;
+  font-weight:1000!important;
+  font-size:.88rem!important;
+  line-height:1.25!important;
+  text-align:center!important;
+  box-shadow:0 5px 0 rgba(0,0,0,.58),inset 0 2px 0 rgba(255,255,255,.78)!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.55)!important;
+}
+
 body.nyanko-ui-polish .formation-custom-stage-columns{
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
@@ -450,6 +466,15 @@ body.nyanko-ui-polish .formation-custom-stage-columns > section{
   background:
     linear-gradient(180deg,#fffdf0 0 44px,#f4dda0 44px 100%)!important;
   box-shadow:0 5px 0 rgba(0,0,0,.52),inset 0 2px 0 rgba(255,255,255,.88)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-columns > section.is-missing{
+  background:linear-gradient(180deg,#fff0c4 0 44px,#ffd9a3 44px 100%)!important;
+  box-shadow:0 5px 0 rgba(0,0,0,.52),inset 0 0 0 4px rgba(235,73,31,.58),inset 0 2px 0 rgba(255,255,255,.88)!important;
+}
+
+body.nyanko-ui-polish .formation-custom-stage-columns > section.is-missing h4{
+  background:linear-gradient(180deg,#ffef72,#ff8a2d)!important;
 }
 
 body.nyanko-ui-polish .formation-custom-stage-columns h4{

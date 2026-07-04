@@ -64,6 +64,13 @@ function persistExtendedConfig(editor, config) {
   globalThis[GLOBAL_CONFIG_KEY] = config;
 }
 
+function invalidCustomStageMessage(config = {}) {
+  const missing = [];
+  if (!uniqueList(config.enemyStageIds).length) missing.push('敵側');
+  if (!uniqueList(config.playerStageIds).length) missing.push('味方側');
+  return `カスタムステージON: ${missing.join('と') || '敵側と味方側'}にステージを登録してください`;
+}
+
 export function installFormationCustomStageBattleApplyHpConfigPatch() {
   const proto = FormationEditor?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
@@ -81,9 +88,13 @@ export function installFormationCustomStageBattleApplyHpConfigPatch() {
       if (config.requestedEnabled && !config.valid) {
         e.preventDefault();
         e.stopPropagation();
-        this.setHint?.('Custom stage battle requires at least one enemy-side stage and one player-side stage.');
+        const message = invalidCustomStageMessage(config);
+        this.__customStageBattleApplyWarning = message;
+        this.setHint?.(message);
+        this.stageOverlayOpen = true;
         this.stageSelectorState = { level: 'custom-stage-battle', categoryId: null, mapKey: null };
         this.renderStageSelector?.();
+        this.root?.querySelector?.('.formation-custom-stage-alert')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
         return;
       }
       if (config.enabled && config.baseStageId) {

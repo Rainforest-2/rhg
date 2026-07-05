@@ -108,8 +108,12 @@ const originPatch = read('js/battle/BattleSceneRendererBcuOriginPatch.js');
 assert.match(originPatch, /__BCU_RENDER_DEBUG__ === true \|\| globalThis\.__BCU_DEBUG_ALLOCATIONS__ === true\) \{\n\s*actor\.lastGroundAnchorDebug =/, 'ground-anchor debug object must be gated');
 
 const previewApp = read('js/preview/PreviewApp.js');
-assert.match(previewApp, /if \(speed >= 2\) return 1000 \/ 30;/, 'PreviewApp must keep the 30fps render cap at 2x+ fast-forward (extra paints only redraw the unchanged BCU logic frame)');
-assert.match(previewApp, /return 1000 \/ 60;/, 'PreviewApp must render at 60fps at 1x so camera pan/zoom stay smooth');
+assert.match(previewApp, /return 1000 \/ 60;/, 'PreviewApp must paint at 60fps (all speeds) so camera pan/zoom stay smooth regardless of fast-forward');
+assert.match(previewApp, /snapshotEntityRenderPositions\(\)/, 'PreviewApp must snapshot entity pre-step X once per logic tick for render interpolation');
+assert.match(previewApp, /this\.battleSpeedMultiplier <= 1/, 'render interpolation (smooth in-game motion) must be gated to 1x speed');
+const sceneRendererInterp = read('js/battle/BattleSceneRenderer.js');
+assert.match(sceneRendererInterp, /getRenderBaseX\(entity\)/, 'BattleSceneRenderer must expose getRenderBaseX for logic-frame position interpolation');
+assert.match(sceneRendererInterp, /RENDER_INTERP_TELEPORT_PX/, 'render interpolation must snap on teleport-sized jumps instead of sliding across them');
 
 const productionBar = read('js/ui/PlayerProductionBar.js');
 assert.match(productionBar, /lastMoneyDrawKey/, 'production bar money canvas must skip unchanged redraws');

@@ -12,6 +12,12 @@ const BCU_RENDER_CONSTANTS = Object.freeze({
   source: 'BCU-java-PC BattleBox.BBPainter'
 });
 
+// If an entity's world X jumped more than this in a single logic step, treat it
+// as a teleport (warp ability, respawn, lineup swap) and snap instead of sliding
+// the interpolated render position across the gap. Normal per-step movement and
+// knockback stay well under this, so smoothing is unaffected.
+const RENDER_INTERP_TELEPORT_PX = 400;
+
 export class BattleSceneRenderer {
   // Renderer X projection contract:
   // - World X values must be converted with projectX(scene, worldX).
@@ -21,6 +27,21 @@ export class BattleSceneRenderer {
   // - UI/HUD coordinates are screen-space and must not be passed through projectX().
   projectX(scene, worldX) {
     return scene?.camera ? scene.camera.worldToScreenX(worldX) : worldX;
+  }
+  // Interpolated visual base world X for a moving entity (actor/effect). When the
+  // scene publishes renderInterp.enabled (1x speed), returns the position lerped
+  // between the previous and current logic-frame X by alpha, so 60fps painting
+  // shows smooth motion over the 30fps logic timer. Disabled (2x+, or no snapshot
+  // yet) returns the raw logical X unchanged, preserving exact prior behavior.
+  getRenderBaseX(entity) {
+    const x = Number.isFinite(entity?.x) ? entity.x : 0;
+    const interp = this._scene?.renderInterp;
+    if (!interp?.enabled) return x;
+    const prev = Number.isFinite(entity?.renderPrevX) ? entity.renderPrevX : x;
+    const dx = x - prev;
+    if (Math.abs(dx) > RENDER_INTERP_TELEPORT_PX) return x;
+    const a = Number.isFinite(interp.alpha) ? interp.alpha : 0;
+    return prev + dx * a;
   }
   projectBcuX(scene, worldX) {
     const camera = scene?.camera;
@@ -262,7 +283,7 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     c.restore();
   }
   drawHud(c, scene, debug) { const dog = scene?.actors?.find((a) => a.side === 'dog-player'); const cat = scene?.actors?.find((a) => a.side === 'cat-enemy'); const dogBase=scene?.bases?.find((b)=>b.side==='dog-player'); const catBase=scene?.bases?.find((b)=>b.side==='cat-enemy'); const aliveDogs=(scene?.actors||[]).filter(a=>a.isAlive()&&a.side==='dog-player').length; const aliveCats=(scene?.actors||[]).filter(a=>a.isAlive()&&a.side==='cat-enemy').length; c.fillStyle = '#0008'; c.fillRect(14, 14, 1080, 236); c.fillStyle = '#f8fafc'; c.font = '20px ui-sans-serif'; const version = BATTLE_CONFIG.version || '0.0.0'; c.fillText(`Wanko Battle v${version}`, 24, 40); c.font = '14px ui-monospace, monospace'; c.fillText(`dogBase HP:${dogBase?.hp ?? '-'} catBase HP:${catBase?.hp ?? '-'}`,24,62); c.fillText(`dog HP/state: ${dog?.hp ?? '-'} / ${dog?.state ?? '-'}`, 24, 84); c.fillText(`cat HP/state: ${cat?.hp ?? '-'} / ${cat?.state ?? '-'}`, 24, 104); const kbActors=(scene?.actors||[]).filter(a=>a.state==='knockback').length; c.fillText(`money:${Math.floor(scene?.economy?.money||0)}/${scene?.economy?.maxMoney||0} dogs:${aliveDogs} cats:${aliveCats} kb:${kbActors}`,24,124); c.fillText(`battleState:${scene?.battleState || '-'} debug:${debug?.showBounds?'ON':'OFF'} effects:${(scene?.effects||[]).length}`,24,144); const sd=scene?.stage?.definition?.summary; c.fillText(`stageDefinition len:${sd?.stageLen ?? '-'} bg:${sd?.bgId ?? '-'} baseHp:${sd?.enemyBaseHp ?? '-'} maxEnemy:${sd?.maxEnemyCount ?? '-'}`,24,164); const rt=scene?.stage?.runtime; c.fillText(`stageRuntime maxEnemy:${rt?.effectiveMaxEnemyCount ?? '-'} src:${rt?.effectiveMaxEnemyCountSource ?? '-'} bg:${rt?.bgId ?? '-'} len:${rt?.stageLen ?? '-'}`,24,184); const sp=scene?.stage?.spawnPreview?.summary; const firstMs=Number.isFinite(sp?.firstSpawnMs)?sp.firstSpawnMs:'-'; c.font='13px ui-monospace, monospace'; const cam=scene?.camera; c.fillText(`cam pos:${Math.round(cam?.pos??cam?.offsetX??0)} siz:${(cam?.siz??cam?.zoom??1).toFixed(2)} ratio:${(cam?.bcuRatio??0.32).toFixed(2)} visW:${Math.round(cam?.visibleWorldWidth??0)} stagePx:${Math.round(cam?.stagePixelWidth??0)}`,24,204); c.fillText(`stageSpawn rows:${sp?.totalRows ?? '-'} boss:${sp?.bossRows ?? '-'} unresolved:${sp?.unresolvedRows ?? '-'} first:${firstMs}ms`,24,224); }
-  drawHpBar(c, actor) { const yOffset = BATTLE_CONFIG.visualLayout?.actorHpBarYOffset ?? 194; const visualX=actor.x+(actor.visualRenderOffsetWorldPx||0)+(actor.visualCrowdFanoutPx||0)+(actor.kbVisualOffsetX||0); const visualY=this.getEntityRenderY(this._scene,actor,actor.y)+(actor.visualCrowdYOffsetPx||0)+(actor.kbVisualOffsetY||0); const x = this.projectBattleX(this._scene,visualX) - 40, y = visualY - yOffset, w = 80, h = 8; const ratio = Math.max(0, Math.min(1, actor.hp / Math.max(1, actor.maxHp))); c.fillStyle = '#111827'; c.fillRect(x, y, w, h); c.fillStyle = '#22c55e'; c.fillRect(x, y, w * ratio, h); c.strokeStyle = '#e5e7eb'; c.strokeRect(x, y, w, h); }
+  drawHpBar(c, actor) { const yOffset = BATTLE_CONFIG.visualLayout?.actorHpBarYOffset ?? 194; const visualX=this.getRenderBaseX(actor)+(actor.visualRenderOffsetWorldPx||0)+(actor.visualCrowdFanoutPx||0)+(actor.kbVisualOffsetX||0); const visualY=this.getEntityRenderY(this._scene,actor,actor.y)+(actor.visualCrowdYOffsetPx||0)+(actor.kbVisualOffsetY||0); const x = this.projectBattleX(this._scene,visualX) - 40, y = visualY - yOffset, w = 80, h = 8; const ratio = Math.max(0, Math.min(1, actor.hp / Math.max(1, actor.maxHp))); c.fillStyle = '#111827'; c.fillRect(x, y, w, h); c.fillStyle = '#22c55e'; c.fillRect(x, y, w * ratio, h); c.strokeStyle = '#e5e7eb'; c.strokeRect(x, y, w, h); }
   drawActorDebug(c, actor, battleState) { const d = actor.debugDistance || {}; const lifeState = actor.isAlive?.() ? 'alive' : (actor.isFinalKnockback?.() ? 'finalKB' : actor.state); const frontScreenOffset = Number.isFinite(actor.visualRenderOffsetDebug?.frontScreenOffset) ? Math.round(actor.visualRenderOffsetDebug.frontScreenOffset) : '-'; const mode = actor.combatPositionMode || BATTLE_CONFIG.tuning?.combatPositionMode || 'screen-combat-point'; const combatX = Math.round(BattleBodyResolver.getActorCombatPositionX(actor)); const cap=actor.lastCaptureDebug?.capturedCount; const q=actor.lastHitQueueDebug?.damage; const crowdX=Math.round(actor.visualCrowdFanoutPx||0); const crowdY=Math.round(actor.visualCrowdYOffsetPx||0); const kb=actor.lastKnockbackDebug;const frame=actor.lastKnockbackFrameDebug;const touchState=actor.getTouchState?.()||actor.kbTouchState||'normal';const kbText=actor.state==='knockback'&&kb?`kb:${actor.knockbackType} ${actor.kbBcuType} f:${actor.kbFrameIndex}/${actor.kbFramesTotal} rem:${Math.round(actor.kbRemainingDistancePx||0)} y:${Math.round(actor.kbVisualOffsetY||0)} tch:${touchState}`:`cap:${cap===undefined?'-':cap} mode:${actor.lastCaptureDebug?.mode||mode} q:${q===undefined?'-':q} tch:${touchState}`; const lines = [`${actor.instanceId||'-'} ${actor.state} hp:${Math.round(actor.hp||0)}`,`combatX:${combatX} range:${Math.round(actor.detectionRangePx||0)} dist:${Math.round(d.combatBodyDistance??0)} can:${d.canAttack===undefined?'-':d.canAttack}`,`${kbText} ro:${Math.round(actor.visualRenderOffsetWorldPx||0)} crowd:${crowdX}/${crowdY}`]; c.fillStyle = '#0008'; const sx=this.projectBattleX(this._scene,actor.x);const sy=this.getEntityRenderY(this._scene,actor,actor.y);c.fillRect(sx - 170, sy - 190, 560, 48); c.fillStyle = '#f8fafc'; c.font = '12px ui-monospace, monospace'; lines.forEach((line, i) => c.fillText(line, sx - 164, sy - 176 + i * 14)); }
 
   drawStageSpawnPreview(c, scene){const rows=scene?.stage?.spawnPreview?.visibleRows||[];if(!rows.length)return;const maxRows=Math.min(rows.length,Number.isFinite(scene?.stage?.spawnPreview?.summary?.visibleRows)?scene.stage.spawnPreview.summary.visibleRows:rows.length);const lines=['CSV spawn preview:'];for(let i=0;i<maxRows;i+=1){const r=rows[i]||{};const firstMs=Number.isFinite(r.firstMs)?r.firstMs:'-';const repMin=Number.isFinite(r.respawnMinMs)?r.respawnMinMs:'-';const repMax=Number.isFinite(r.respawnMaxMs)?r.respawnMaxMs:'-';lines.push(`#${r.index ?? i} id:${r.enemyId ?? '-'} first:${firstMs}ms rep:${repMin}-${repMax} count:${r.countLabel || '-'} trigger:${r.triggerLabel || '-'} boss:${r.bossLabel || '-'} map:${r.mapping?.status || '-'}`);}c.fillStyle='#0008';c.fillRect(14,344,1240,Math.max(40,lines.length*14+14));c.fillStyle='#f8fafc';c.font='12px ui-monospace';lines.forEach((line,idx)=>c.fillText(line,24,362+idx*14));}
@@ -276,7 +297,7 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
       const dw = p.w * s;
       const dh = p.h * s;
       const yOffset = Number.isFinite(effect.bcuSmokeYOffset) ? effect.bcuSmokeYOffset * this.getCameraScale(this._scene) : 0;
-      c.drawImage(effect.image, p.x, p.y, p.w, p.h, this.projectBattleX(this._scene,effect.x) - dw * 0.5, this.getEntityRenderY(this._scene,effect,effect.y) - yOffset - dh * 0.5, dw, dh);
+      c.drawImage(effect.image, p.x, p.y, p.w, p.h, this.projectBattleX(this._scene,this.getRenderBaseX(effect)) - dw * 0.5, this.getEntityRenderY(this._scene,effect,effect.y) - yOffset - dh * 0.5, dw, dh);
     }
   }
 
@@ -448,7 +469,7 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
   drawActorLegacy(c, actor, drawList) {
     const baseAngle = actor.model.baseAngle || 3600;
     const paraOpacity = actor.bcuWarpParaTransform && Number.isFinite(actor.bcuWarpParaTransform.opacity) ? Math.max(0, Math.min(1, actor.bcuWarpParaTransform.opacity)) : 1;
-    c.save(); c.translate(this.projectBattleX(this._scene,actor.x), this.getEntityRenderY(this._scene,actor,actor.y)); if (actor.renderFlipX) c.scale(-1, 1);
+    c.save(); c.translate(this.projectBattleX(this._scene,this.getRenderBaseX(actor)), this.getEntityRenderY(this._scene,actor,actor.y)); if (actor.renderFlipX) c.scale(-1, 1);
     for (const p of drawList) { const w = p.world; const partIndex = p.current?.partIndex ?? p.partIndex; const imgcutIndex = p.current?.imgcutIndex ?? p.imgcutIndex; if (!Number.isInteger(partIndex) || partIndex < 0) continue; if ((imgcutIndex ?? 0) < 0) continue; if (!w || (w.o ?? 1) * paraOpacity <= 0) continue; const part = actor.sprite?.imgcut?.parts?.[partIndex]; if (!part || part.w <= 0 || part.h <= 0) continue; c.save(); c.translate(w.x * actor.scale, w.y * actor.scale); c.rotate((w.a / baseAngle) * Math.PI * 2); c.globalAlpha = (w.o ?? 1) * paraOpacity; const sx = w.sx * actor.scale; const sy = w.sy * actor.scale; actor.sprite.drawPart(c, partIndex, -part.w * 0.5 * sx, -part.h * 0.5 * sy, { scaleX: sx, scaleY: sy }); c.restore(); }
     c.restore();
   }
@@ -501,7 +522,7 @@ c.drawImage(a.image,crop.x,crop.y,crop.w,crop.h,drawX,drawY,drawW,drawH);}
     const crowdScale = Number.isFinite(actor.visualCrowdScaleMultiplier) ? actor.visualCrowdScaleMultiplier : 1;
     const kbScale = Number.isFinite(actor.kbVisualScale) ? actor.kbVisualScale : 1;
     const renderY=this.getEntityRenderY(this._scene,actor,actor.y);
-    c.translate(this.projectBattleX(this._scene,actor.x + modelAlignOffsetX + crowdOffsetX + kbOffsetX), renderY + crowdOffsetY + kbOffsetY);
+    c.translate(this.projectBattleX(this._scene,this.getRenderBaseX(actor) + modelAlignOffsetX + crowdOffsetX + kbOffsetX), renderY + crowdOffsetY + kbOffsetY);
     if (actor.renderFlipX) c.scale(-1, 1);
     const s = Number.isFinite(actor.scale) ? actor.scale : 1;
     const renderScale=this.getEntityRenderScale(this._scene,actor,s);c.scale(renderScale * crowdScale * kbScale, renderScale * crowdScale * kbScale);

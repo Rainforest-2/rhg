@@ -48,7 +48,8 @@ check('8x > 4x', s8 > s4, { s4, s8 });
 {
   const previewSrc = fs.readFileSync('js/preview/PreviewApp.js', 'utf8');
   check('PreviewApp has high-speed render cadence guard', previewSrc.includes('getHighSpeedBattleRenderIntervalMs') && previewSrc.includes('shouldRenderBattleFrame'), null);
-  check('PreviewApp renders 60fps at 1x, caps 30fps at 2x+', /if \(speed >= 2\) return 1000 \/ 30;/.test(previewSrc) && /return 1000 \/ 60;/.test(previewSrc), null);
+  check('PreviewApp paints 60fps at all speeds (smooth camera)', /return 1000 \/ 60;/.test(previewSrc), null);
+  check('PreviewApp gates in-game interpolation to 1x', previewSrc.includes('this.battleSpeedMultiplier <= 1') && previewSrc.includes('snapshotEntityRenderPositions'), null);
 }
 
 // ---- BattleSpeedControl feature flag + cycle/colors ----

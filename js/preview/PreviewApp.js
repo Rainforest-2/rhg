@@ -22,14 +22,14 @@ function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
-function getHighSpeedBattleRenderIntervalMs(speedMultiplier = 1) {
-  // The battle simulation advances on BCU's fixed 30fps logic timer, but the
-  // camera (pan / pinch / wheel zoom) is a purely visual transform recomputed
-  // every rendered frame. At 1x we render at 60fps so scroll and zoom stay
-  // smooth; at 2x+ fast-forward we keep the 30fps cap because the extra paints
-  // only redraw the same unchanged logic frame and are pure overhead on mobile.
-  const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
-  if (speed >= 2) return 1000 / 30;
+function getHighSpeedBattleRenderIntervalMs(_speedMultiplier = 1) {
+  // Always paint at 60fps, at every battle speed. The camera (pan / pinch /
+  // wheel zoom) is a purely visual transform recomputed every rendered frame,
+  // so a 60fps paint keeps scroll and zoom smooth regardless of fast-forward.
+  // The simulation still advances on BCU's fixed 30fps logic timer; at 1x the
+  // renderer interpolates actor/effect positions between logic frames (see
+  // BattleSceneRenderer.getRenderBaseX) so in-game motion is smooth too, while
+  // at 2x+ interpolation is disabled (units already move a full step per frame).
   return 1000 / 60;
 }
 
@@ -77,6 +77,33 @@ async function loadImage(url) {
 
 export class PreviewApp {
   constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.selectedStageId=options.selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.lastBattleRenderAt=0; this.productionBar=null; this.speedControl=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; }
+
+  // Snapshot each entity's pre-step world X right before a logic tick mutates it,
+  // so the renderer can interpolate between the previous and current logic frame.
+  // Runs once per fixed logic step (inside the simulation clock's tick callback),
+  // which keeps it independent of the BattleScene.tick patch/wrapper chain.
+  snapshotEntityRenderPositions() {
+    const scene = this.battleScene;
+    if (!scene) return;
+    const actors = scene.actors;
+    if (Array.isArray(actors)) { for (const a of actors) { if (a && Number.isFinite(a.x)) a.renderPrevX = a.x; } }
+    const effects = scene.effects;
+    if (Array.isArray(effects)) { for (const e of effects) { if (e && Number.isFinite(e.x)) e.renderPrevX = e.x; } }
+  }
+
+  // Publish the render interpolation state consumed by BattleSceneRenderer.
+  // alpha = how far the render clock is into the next fixed step (0..1). Only 1x
+  // interpolates in-game motion; at 2x+ a full logic step already advances per
+  // painted frame, so interpolation is disabled to avoid extra visual latency.
+  publishRenderInterpolation() {
+    const scene = this.battleScene;
+    if (!scene) return;
+    const enabled = this.battleSpeedMultiplier <= 1;
+    const step = this.simulationClock?.fixedStepMs || 33;
+    const accumulator = this.simulationClock?.accumulatorMs || 0;
+    const alpha = enabled ? Math.max(0, Math.min(1, accumulator / Math.max(1, step))) : 0;
+    scene.renderInterp = { enabled, alpha };
+  }
 
   shouldRenderBattleFrame(now) {
     const intervalMs = getHighSpeedBattleRenderIntervalMs(this.battleSpeedMultiplier);
@@ -132,8 +159,9 @@ export class PreviewApp {
           if (cam && Math.abs((cam.logicalW || 0) - this.renderer.logicalW) > 0.5) {
             cam.setViewport(this.renderer.logicalW, this.renderer.logicalH);
           }
-          const r=this.simulationClock.step(t,this.battleSpeedMultiplier,(stepDt)=>this.battleScene.tick(stepDt));
+          const r=this.simulationClock.step(t,this.battleSpeedMultiplier,(stepDt)=>{this.snapshotEntityRenderPositions();this.battleScene.tick(stepDt);});
           if(r.dropped){this.battleScene?.pushEvent?.({type:'simulationDtDropped',rawDt:r.rawDt,clampedDt:r.clampedDt});}
+          this.publishRenderInterpolation();
           if (this.shouldRenderBattleFrame(t)) {
             this.productionBar?.update(this.battleScene);
             this.battleSceneRenderer.render(this.renderer, this.battleScene, { showParts: this.state.showParts, showBounds: this.state.showBounds, showPivots: this.state.showPivots, rawMode: this.state.rawMode });

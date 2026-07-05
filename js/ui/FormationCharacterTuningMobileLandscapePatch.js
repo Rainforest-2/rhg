@@ -9,7 +9,7 @@ function injectMobileLandscapeStyle() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-@font-face{font-family:HakusyuTuningLocal;src:url('${ASSET_BASE}/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block}
+@font-face{font-family:HakusyuTuningLocal;src:url('${ASSET_BASE}/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block;unicode-range:U+3000-30FF,U+3400-9FFF,U+F900-FAFF}
 @media (orientation:landscape) and (max-height:520px) and (max-width:980px){
   html body.nyanko-ui-polish .formation-tuning-overlay{padding:5px calc(7px + env(safe-area-inset-right,0px)) 5px calc(7px + env(safe-area-inset-left,0px))!important;place-items:center!important;background:rgba(0,0,0,.40)!important;backdrop-filter:blur(1px)!important}
   html body.nyanko-ui-polish .formation-tuning-panel{width:min(956px,calc(100vw - 14px))!important;height:min(438px,calc(100dvh - 10px))!important;max-height:calc(100dvh - 10px)!important;display:grid!important;grid-template-columns:92px minmax(0,1fr) 154px!important;grid-template-rows:36px minmax(0,1fr) 42px!important;border-width:4px!important;border-radius:15px!important;box-shadow:0 4px 0 #120603,0 0 0 2px rgba(255,255,255,.14)!important;overflow:hidden!important}
@@ -41,7 +41,7 @@ function injectMobileLandscapeStyle() {
   html body.nyanko-ui-polish .formation-tuning-presets{grid-column:2!important;grid-row:2!important;align-self:start!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;min-width:0!important}
   html body.nyanko-ui-polish .formation-tuning-presets .formation-tuning-btn{min-width:0!important;min-height:29px!important;border-width:2px!important;font-size:.62rem!important;padding:0 4px!important;box-shadow:0 1px 0 #000!important;text-shadow:none!important;font-family:HakusyuTuningLocal,'Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,sans-serif!important;font-weight:1000!important}
   html body.nyanko-ui-polish .formation-tuning-footer{grid-column:2/4!important;grid-row:3!important;display:grid!important;grid-template-columns:minmax(112px,.52fr) minmax(132px,1fr)!important;gap:6px!important;align-items:center!important;padding:5px 7px!important;border-top-width:4px!important;background:#f6c240!important}
-  html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-reset{font-family:HakusyuTuningLocal,'Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,sans-serif!important;font-size:.66rem!important;font-weight:1000!important;text-shadow:none!important;color:#160800!important;-webkit-text-fill-color:#160800!important}
+  html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-reset{font-family:HakusyuTuningLocal,'Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,sans-serif!important;font-size:.8rem!important;font-weight:1000!important;text-shadow:none!important;color:#160800!important;-webkit-text-fill-color:#160800!important;background:#fff2a6!important}
   html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-save{font-size:.94rem!important;min-height:34px!important}
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-summary{grid-row:1!important}
   html body.nyanko-ui-polish .formation-tuning-panel-dog .formation-tuning-presets{grid-row:2!important;align-self:start!important;align-content:start!important}

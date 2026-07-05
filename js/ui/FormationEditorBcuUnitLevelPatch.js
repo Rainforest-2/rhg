@@ -132,7 +132,7 @@ function injectStyle() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-@font-face{font-family:HakusyuTuningLocal;src:url('${ASSET_BASE}/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block}
+@font-face{font-family:HakusyuTuningLocal;src:url('${ASSET_BASE}/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block;unicode-range:U+3000-30FF,U+3400-9FFF,U+F900-FAFF}
 html body.nyanko-ui-polish .formation-slot{position:relative!important;overflow:visible!important}
 /* Long-press-to-open-overlay reliability on Android. A formation slot is a <button> that
    contains the unit <img>; on Android Chrome a touch-hold over the image fires the native

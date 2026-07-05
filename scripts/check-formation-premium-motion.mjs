@@ -103,6 +103,20 @@ assert.ok(customStageHpPatch.includes("if (!this.refreshCustomStageBattleView?.(
 const phonePatch = read('js/ui/FormationPhoneLandscapeLayoutPatch.js');
 assert.ok(/formation-action-rail\{[^}]*grid-template-columns:1fr!important;grid-template-rows:/.test(phonePatch), 'phone landscape rail pins a single column');
 assert.ok((indexHtml.match(/rel="preload" as="font"/g) || []).length >= 2, 'tuning brush fonts are preloaded');
+// The generic rail-button rule (html body... .formation-action-rail button) outranks a bare
+// html body... .apply-battle-button selector, which used to shrink the attack CTA to .62rem.
+// The attack-button font override must keep the button.apply-battle-button form to win.
+assert.ok((phonePatch.match(/button\.apply-battle-button\{[^}]*font-size:/g) || []).length >= 2, 'phone landscape attack button font override outranks the generic rail-button rule');
+// 白舟行書教漢.ttf has empty glyphs for ASCII digits/percent (kana+kanji only). Without a CJK
+// unicode-range the digit-only tuning preset pills (50%..1000%) render blank on phones.
+for (const path of ['js/ui/FormationCharacterTuningMobileLandscapePatch.js', 'js/ui/FormationEditorBcuUnitLevelPatch.js']) {
+  const src = read(path);
+  assert.ok(src.includes('unicode-range:U+3000-30FF,U+3400-9FFF,U+F900-FAFF'), `${path}: Hakusyu font-face limits itself to CJK so digits fall back to a full font`);
+}
+// Photo-ui map labels are overflow:visible + clip; the short-landscape tier packs ~212px
+// cards, so it must re-enable ellipsis (and shrink) or 10-char names hard-clip mid-glyph.
+const landscapeFitCss = read('css/mobile-landscape-fit.css');
+assert.ok(/data-stage-map\] strong \{[^}]*text-overflow: ellipsis !important;/s.test(landscapeFitCss), 'short-landscape map labels keep an ellipsis fallback');
 
 // 9. Reduced-motion users get instant states everywhere.
 assert.ok(premiumCss.includes('@media (prefers-reduced-motion: reduce)'), 'premium css guards reduced motion');

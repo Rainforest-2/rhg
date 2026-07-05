@@ -119,6 +119,17 @@
     height: auto !important;
     padding: 8px 12px !important;
   }
+  /* The photo-ui sheet keeps map labels overflow:visible + text-overflow:clip,
+     which hard-clips 10-char names mid-glyph inside the ~212px cards this tier
+     creates (e.g. 見つめてキャッツアイ at 932x430). Shrink the brush font just
+     enough for those names to fit and keep an ellipsis as the fallback. */
+  html body.nyanko-ui-polish .formation-stage-card[data-stage-map] strong {
+    max-width: 100% !important;
+    padding: 4px 4px 3px !important;
+    font-size: clamp(.94rem, 1.7vw, 1.88rem) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
 
   /* ---- 本能 / tuning overlay: trim chrome so the scrollable body keeps room ---- */
   html body.nyanko-ui-polish .formation-tuning-panel {

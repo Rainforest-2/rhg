@@ -253,9 +253,9 @@ html body.nyanko-ui-polish .formation-custom-thumb.formation-custom-spawn-icon.i
 html body.nyanko-ui-polish .formation-custom-field-preview{position:relative;border:3px solid #000;border-radius:10px;overflow:hidden;box-shadow:0 3px 0 #000;background:#0d1620;aspect-ratio:16/6;min-height:120px}
 html body.nyanko-ui-polish .formation-custom-field-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 html body.nyanko-ui-polish .formation-custom-field-bg.is-missing{background:repeating-linear-gradient(45deg,#1c2a36,#1c2a36 10px,#132029 10px,#132029 20px)}
-html body.nyanko-ui-polish .formation-custom-field-castle{position:absolute;bottom:2px;height:84%;max-height:144px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
-html body.nyanko-ui-polish .formation-custom-field-castle.pcastle{right:12px}
-html body.nyanko-ui-polish .formation-custom-field-castle.ecastle{left:12px}
+html body.nyanko-ui-polish .formation-custom-field-castle{position:absolute;bottom:20px;height:100%;max-height:144px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+html body.nyanko-ui-polish .formation-custom-field-castle.pcastle{right:22px}
+html body.nyanko-ui-polish .formation-custom-field-castle.ecastle{left:22px}
 html body.nyanko-ui-polish .formation-custom-field-castle.is-missing{display:none}
 html body.nyanko-ui-polish .formation-custom-field-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9fb4c4;-webkit-text-fill-color:#9fb4c4;font-weight:1000;font-size:.8rem;text-align:center;padding:8px}
 html body.nyanko-ui-polish .formation-custom-music-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:7px}

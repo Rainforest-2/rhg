@@ -287,11 +287,11 @@ html body.nyanko-ui-polish .formation-custom-edit{display:grid;grid-template-col
 html body.nyanko-ui-polish .formation-custom-edit-section{display:grid;gap:10px;padding:12px;border:2px solid #000;border-radius:13px;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.13)}
 html body.nyanko-ui-polish .formation-custom-edit-section>h4{margin:0;display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:1000;color:#0b5598;-webkit-text-fill-color:#0b5598}
 html body.nyanko-ui-polish .formation-custom-edit-section>h4::before{content:'';flex:0 0 auto;width:7px;height:16px;border-radius:3px;background:linear-gradient(180deg,#2bb0e6,#0b5598)}
-html body.nyanko-ui-polish .formation-custom-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:9px}
+html body.nyanko-ui-polish .formation-custom-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px}
 html body.nyanko-ui-polish .formation-custom-stat{display:grid;gap:6px;padding:9px;border:2px solid #000;border-radius:11px;background:linear-gradient(180deg,#fffef8,#fff1c4);box-shadow:inset 0 2px 0 rgba(255,255,255,.75)}
 html body.nyanko-ui-polish .formation-custom-stat>.lbl{display:flex;align-items:baseline;gap:4px;font-size:.72rem;font-weight:1000;color:#54310f;-webkit-text-fill-color:#54310f}
 html body.nyanko-ui-polish .formation-custom-stat>.lbl em{font-style:normal;font-size:.64rem;opacity:.72}
-html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{font-size:1.05rem}
+html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{font-size:1rem;line-height:1;min-width:4.5ch;font-variant-numeric:tabular-nums}
 html body.nyanko-ui-polish .formation-custom-switch{position:relative;display:flex;align-items:center;gap:11px;min-height:46px;padding:6px 12px;border:2px solid #000;border-radius:11px;background:linear-gradient(180deg,#fbfdff,#eef6fb);font-weight:1000;color:#120700;-webkit-text-fill-color:#120700;cursor:pointer}
 html body.nyanko-ui-polish .formation-custom-switch input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 html body.nyanko-ui-polish .formation-custom-switch .track{box-sizing:border-box;position:relative;flex:0 0 auto;width:48px;height:27px;border:2px solid #000;border-radius:999px;background:#c4ced6;transition:background .16s}
@@ -311,8 +311,14 @@ html body.nyanko-ui-polish .formation-custom-stage-tile .tile-main:active{transf
 html body.nyanko-ui-polish .formation-custom-stage-tile .tile-main strong{padding-right:52px}
 html body.nyanko-ui-polish .formation-custom-stage-tile .tile-edit-hint{position:absolute;top:4px;right:4px;padding:1px 8px;border:2px solid #0b5598;border-radius:999px;background:#e6f3ff;font-size:.66rem;font-weight:1000;color:#0b5598;-webkit-text-fill-color:#0b5598}
 html body.nyanko-ui-polish .formation-custom-stage-tile .row.is-deploy{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-html body.nyanko-ui-polish .formation-custom-stage-tile .row.is-deploy button{width:100%}
-html body.nyanko-ui-polish .formation-custom-stage-tile .row button.is-added{background:#e4f6ea;color:#1c6b3f;-webkit-text-fill-color:#1c6b3f;box-shadow:0 2px 0 #0a5a2f}
+html body.nyanko-ui-polish .formation-custom-stage-tile .row.is-deploy button,
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions [data-custom-builder-add-enemy-current],
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions [data-custom-builder-add-player-current]{width:100%;border-radius:10px!important;border-width:2px!important;min-height:38px!important;font-size:.78rem!important;line-height:1.05!important;box-shadow:0 2px 0 #092b46,inset 0 1px 0 rgba(255,255,255,.55)!important}
+html body.nyanko-ui-polish .formation-custom-stage-tile .row.is-deploy [data-custom-builder-add-enemy],
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions [data-custom-builder-add-enemy-current]{background:linear-gradient(180deg,#2fc4f3,#127cc6 62%,#0b5598)!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+html body.nyanko-ui-polish .formation-custom-stage-tile .row.is-deploy [data-custom-builder-add-player],
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions [data-custom-builder-add-player-current]{background:linear-gradient(180deg,#41d990,#19a974 62%,#0f704c)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 2px 0 #063620,inset 0 1px 0 rgba(255,255,255,.55)!important}
+html body.nyanko-ui-polish .formation-custom-stage-tile .row button.is-added{background:#e4f6ea!important;color:#1c6b3f!important;-webkit-text-fill-color:#1c6b3f!important;box-shadow:0 2px 0 #0a5a2f!important}
 @media(max-width:680px) and (orientation:portrait){
 html body.nyanko-ui-polish .formation-custom-spawn-modal{padding:0;align-items:stretch}
 html body.nyanko-ui-polish .formation-custom-spawn-modal-card{width:100%;height:100dvh;max-height:100dvh;border-radius:0;border-left:0;border-right:0}
@@ -332,7 +338,7 @@ html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:min
 html body.nyanko-ui-polish .formation-custom-stat{gap:5px;padding:7px;border-radius:9px}
 html body.nyanko-ui-polish .formation-custom-stepper{display:grid;grid-template-columns:38px minmax(0,1fr) 38px auto;gap:4px;align-items:stretch}
 html body.nyanko-ui-polish .formation-custom-stepper button{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;font-size:1rem!important}
-html body.nyanko-ui-polish .formation-custom-stepper input{min-height:38px;border-width:2px;border-radius:8px;font-size:.92rem}
+html body.nyanko-ui-polish .formation-custom-stepper input{min-height:38px;border-width:2px;border-radius:8px;font-size:.88rem}
 html body.nyanko-ui-polish .formation-custom-stepper .hint{font-size:.62rem;line-height:1}
 html body.nyanko-ui-polish .formation-custom-switch{min-height:40px;padding:5px 8px;gap:8px;border-radius:9px}
 html body.nyanko-ui-polish .formation-custom-switch-sub{font-size:.58rem;line-height:1.1}
@@ -376,7 +382,7 @@ html body.nyanko-ui-polish .formation-custom-edit-section>h4 button{min-height:2
 html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:repeat(auto-fit,minmax(98px,1fr));gap:6px}
 html body.nyanko-ui-polish .formation-custom-stepper{gap:4px}
 html body.nyanko-ui-polish .formation-custom-stepper button{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;font-size:.9rem!important}
-html body.nyanko-ui-polish .formation-custom-stepper input{min-height:32px;border-width:2px;font-size:.78rem}
+html body.nyanko-ui-polish .formation-custom-stepper input{min-height:32px;border-width:2px;font-size:.72rem}
 html body.nyanko-ui-polish .formation-custom-stepper .hint{font-size:.56rem}
 }
 @media(orientation:landscape) and (max-height:390px) and (max-width:900px){
@@ -389,7 +395,7 @@ html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-bu
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions button{min-height:22px!important;font-size:.46rem!important}
 html body.nyanko-ui-polish .formation-custom-picker-scroll{max-height:104px}
 }
-@media(max-width:680px) and (orientation:portrait){html body.nyanko-ui-polish .formation-custom-builder-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-builder-actions button{flex:1 1 46%}html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-timeline-row{grid-template-columns:54px minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-condition-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-condition-card .formation-custom-stat-grid{grid-template-columns:1fr}}`;
+@media(max-width:680px) and (orientation:portrait){html body.nyanko-ui-polish .formation-custom-builder-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-builder-actions button{flex:1 1 46%}html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-timeline-row{grid-template-columns:54px minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-condition-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-condition-card .formation-custom-stat-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{font-size:.86rem}}`;
   document.head.appendChild(style);
 }
 
@@ -507,8 +513,8 @@ function renderCustomStageSection(editor) {
         <span class='meta'>敵 ${s.spawns.length} 種 / ${safeHtml(formatDate(s.updatedAt))}</span>
       </div>
       <div class='row is-deploy'>
-        <button type='button' class='${onEnemy ? 'is-added' : 'is-primary'}' data-custom-builder-add-enemy='${safeHtml(s.id)}'>${onEnemy ? '✓ 敵側 追加済' : '敵側に追加'}</button>
-        <button type='button' class='${onPlayer ? 'is-added' : 'is-primary'}' data-custom-builder-add-player='${safeHtml(s.id)}'>${onPlayer ? '✓ 味方側 追加済' : '味方側に追加'}</button>
+        <button type='button' class='${onEnemy ? 'is-added' : 'is-primary'}' data-custom-builder-add-enemy='${safeHtml(s.id)}'>${onEnemy ? '✓ 敵側に追加済み' : '敵側へ追加'}</button>
+        <button type='button' class='${onPlayer ? 'is-added' : 'is-primary'}' data-custom-builder-add-player='${safeHtml(s.id)}'>${onPlayer ? '✓ 味方側に追加済み' : '味方側へ追加'}</button>
       </div>
       <div class='row'>
         <button type='button' class='is-ghost' data-custom-builder-duplicate='${safeHtml(s.id)}'>複製</button>
@@ -1208,8 +1214,8 @@ function renderBuilderScreen(editor) {
       </div>
       <div class='formation-custom-builder-body'>${body}</div>
       <div class='formation-custom-builder-actions'>
-        <button type='button' class='is-primary' data-custom-builder-add-enemy-current='1'>敵側に追加</button>
-        <button type='button' class='is-primary' data-custom-builder-add-player-current='1'>味方側に追加</button>
+        <button type='button' class='is-primary' data-custom-builder-add-enemy-current='1'>敵側へ追加</button>
+        <button type='button' class='is-primary' data-custom-builder-add-player-current='1'>味方側へ追加</button>
         <button type='button' class='is-ghost' data-custom-builder-duplicate-current='1'>複製</button>
         <button type='button' class='is-ghost' data-custom-builder-export-current='1'>書き出し</button>
       </div>
@@ -1236,6 +1242,15 @@ function setField(stage, field, rawValue) {
     else if (spawnFrame[2] === 'firstMax') s.firstSpawn.maxFrames = frames;
     else if (spawnFrame[2] === 'respawnMin') s.respawn.minFrames = frames;
     else if (spawnFrame[2] === 'respawnMax') s.respawn.maxFrames = frames;
+    if (spawnFrame[2] === 'firstMin' && s.firstSpawn.maxFrames < s.firstSpawn.minFrames) {
+      s.firstSpawn.maxFrames = s.firstSpawn.minFrames;
+    } else if (spawnFrame[2] === 'firstMax' && s.firstSpawn.minFrames > s.firstSpawn.maxFrames) {
+      s.firstSpawn.minFrames = s.firstSpawn.maxFrames;
+    } else if (spawnFrame[2] === 'respawnMin' && s.respawn.maxFrames < s.respawn.minFrames) {
+      s.respawn.maxFrames = s.respawn.minFrames;
+    } else if (spawnFrame[2] === 'respawnMax' && s.respawn.minFrames > s.respawn.maxFrames) {
+      s.respawn.minFrames = s.respawn.maxFrames;
+    }
     return;
   }
   const path = field.split('.');
@@ -1254,6 +1269,25 @@ function setField(stage, field, rawValue) {
     const nullable = leaf === 'musicId' || leaf === 'bossMusicId';
     target[leaf] = rawValue === '' ? (nullable ? null : target[leaf]) : Number(rawValue);
   } else target[leaf] = rawValue;
+}
+
+function syncSpawnFrameInputs(editor, field) {
+  const match = String(field || '').match(/^spawns\.(\d+)\.(firstMin|firstMax|respawnMin|respawnMax)$/);
+  if (!match) return;
+  const index = Number(match[1]);
+  const spawn = getBuilderState(editor).stage?.spawns?.[index];
+  if (!spawn) return;
+  const values = {
+    [`spawns.${index}.firstMin`]: framesToSeconds(spawn.firstSpawn.minFrames),
+    [`spawns.${index}.firstMax`]: framesToSeconds(spawn.firstSpawn.maxFrames),
+    [`spawns.${index}.respawnMin`]: framesToSeconds(spawn.respawn.minFrames),
+    [`spawns.${index}.respawnMax`]: framesToSeconds(spawn.respawn.maxFrames)
+  };
+  for (const input of editor.root?.querySelectorAll?.('.formation-custom-num[data-custom-field]') || []) {
+    if (Object.prototype.hasOwnProperty.call(values, input.dataset.customField)) {
+      input.value = String(values[input.dataset.customField]);
+    }
+  }
 }
 
 function toggleCheck(stage, field) {
@@ -1345,6 +1379,7 @@ export function installFormationCustomStageBuilderPatch() {
       const field = e.target?.dataset?.customField;
       if (field && this.root?.contains(e.target)) {
         setField(getBuilderState(this).stage, field, e.target.value);
+        syncSpawnFrameInputs(this, field);
         markDirty(this);
         updateChangedFieldDom(this, field);
         return;
@@ -1378,6 +1413,7 @@ export function installFormationCustomStageBuilderPatch() {
       const next = Math.max(min, current + (step.dataset.customStep === 'inc' ? amt : -amt));
       setField(getBuilderState(this).stage, field, next);
       if (input) input.value = String(next);
+      syncSpawnFrameInputs(this, field);
       markDirty(this);
       updateChangedFieldDom(this, field);
       return;

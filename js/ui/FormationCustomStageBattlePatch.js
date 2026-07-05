@@ -31,11 +31,30 @@ html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added{position:
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added::after{content:'追加済み';position:absolute;right:8px;bottom:7px;z-index:4;padding:3px 8px;border:2px solid #000;border-radius:999px;background:#ffdf36;color:#120700;font-size:.72rem;font-weight:1000;box-shadow:0 2px 0 #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-just-added{filter:brightness(1.12) saturate(1.12)}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-duplicate{filter:brightness(1.08) saturate(.9)}
+html body.nyanko-ui-polish .formation-stage-list:has(.formation-custom-stage-battle){padding:6px!important}
+html body.nyanko-ui-polish .formation-custom-stage-battle{gap:8px!important;padding:8px!important;border-width:3px!important;border-radius:14px!important;box-shadow:0 4px 0 rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.86)!important}
+html body.nyanko-ui-polish .formation-custom-stage-header{min-height:0!important;padding:6px 8px!important;border-width:3px!important;border-radius:12px!important;gap:8px!important}
+html body.nyanko-ui-polish .formation-custom-stage-header strong{font-size:clamp(.86rem,1.1vw,1.05rem)!important;line-height:1!important}
+html body.nyanko-ui-polish .formation-custom-stage-header span{display:none!important}
+html body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]{min-width:96px!important;max-width:112px!important;min-height:32px!important;border-width:2px!important}
+html body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]::after{font-size:.72rem!important}
+html body.nyanko-ui-polish .formation-custom-stage-controls button{min-height:30px!important;padding:4px 9px!important;border-width:2px!important;font-size:.68rem!important}
+html body.nyanko-ui-polish .formation-custom-stage-columns{gap:8px!important}
+html body.nyanko-ui-polish .formation-custom-stage-columns>section{gap:6px!important;padding:8px!important;border-width:3px!important;border-radius:12px!important}
+html body.nyanko-ui-polish .formation-custom-stage-columns h4{height:30px!important;padding:4px 9px!important;border-width:2px!important;font-size:.74rem!important}
+html body.nyanko-ui-polish .formation-custom-stage-list{gap:6px!important}
+html body.nyanko-ui-polish .formation-custom-stage-list li{min-height:44px!important;padding:7px 7px 7px 10px!important;border-width:2px!important;border-radius:10px!important;grid-template-columns:minmax(0,1fr) auto!important}
+html body.nyanko-ui-polish .formation-custom-stage-list li strong{font-size:.8rem!important}
+html body.nyanko-ui-polish .formation-custom-stage-list li button{min-height:28px!important;padding:4px 9px!important;border-width:2px!important;font-size:.66rem!important}
+html body.nyanko-ui-polish .formation-custom-stage-columns [data-custom-stage-pick-side]{min-height:34px!important;border-width:2px!important;border-radius:10px!important;font-size:.74rem!important;background:linear-gradient(180deg,#28b8f0,#1177c2 62%,#0b4e91)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 0 #052743!important}
+html body.nyanko-ui-polish .formation-custom-stage-columns [data-custom-stage-side="player"] [data-custom-stage-pick-side]{background:linear-gradient(180deg,#39d98a,#18a464 62%,#0e7048)!important;text-shadow:0 1px 0 #073a26!important}
+html body.nyanko-ui-polish .formation-custom-stage-empty{min-height:44px!important;padding:7px!important;border-width:2px!important;border-radius:10px!important}
+html body.nyanko-ui-polish .formation-custom-stage-note{min-height:32px!important;padding:6px 9px!important;border-width:2px!important;border-radius:10px!important;font-size:.72rem!important}
 html body.nyanko-ui-polish .formation-custom-stage-columns>section{min-height:0}
 html body.nyanko-ui-polish .formation-custom-stage-battle:has(.formation-custom-stage-alert){grid-template-rows:auto auto auto minmax(0,1fr) auto!important}
 html body.nyanko-ui-polish .formation-custom-stage-list{max-height:min(42dvh,360px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:3px!important}
 html body.nyanko-ui-polish .formation-stage-list button,html body.nyanko-ui-polish .formation-custom-stage-list button{touch-action:pan-y!important}
-@media (max-width:680px){html body.nyanko-ui-polish .formation-custom-stage-pickbar{align-items:stretch;flex-direction:column}.formation-custom-stage-pickbar button{width:100%}}`;
+@media (max-width:680px){html body.nyanko-ui-polish .formation-custom-stage-pickbar{align-items:stretch;flex-direction:column}.formation-custom-stage-pickbar button{width:100%}html body.nyanko-ui-polish .formation-custom-stage-battle{gap:6px!important;padding:6px!important}html body.nyanko-ui-polish .formation-custom-stage-header{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;padding:5px 6px!important}html body.nyanko-ui-polish .formation-custom-stage-header [data-action="custom-stage-toggle"]{min-width:84px!important;max-width:90px!important;min-height:28px!important}html body.nyanko-ui-polish .formation-custom-stage-controls button{min-height:27px!important;font-size:.62rem!important}html body.nyanko-ui-polish .formation-custom-stage-columns{grid-template-columns:1fr!important;gap:6px!important}html body.nyanko-ui-polish .formation-custom-stage-columns>section{padding:6px!important;gap:5px!important}html body.nyanko-ui-polish .formation-custom-stage-list{max-height:min(22dvh,180px)!important}}`;
   document.head.appendChild(style);
 }
 
@@ -169,10 +188,7 @@ function addCustomCategoryCard(editor) {
 function renderList(editor, side, ids) {
   if (!ids.length) return `<p class='formation-custom-stage-empty'>未登録</p>`;
   return `<ol class='formation-custom-stage-list'>${ids.map((id, index) => {
-    const ref = decodeStageRef(id);
-    const kind = ref?.kind === 'custom' ? 'custom' : 'bcu';
-    const badge = kind === 'custom' ? '自作' : 'BCU';
-    return `<li><span><b class='formation-custom-side-badge ${kind}'>${badge}</b><strong>${safeHtml(stageName(editor, id))}</strong></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>はずす</button></li>`;
+    return `<li><span><strong>${safeHtml(stageName(editor, id))}</strong></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>はずす</button></li>`;
   }).join('')}</ol>`;
 }
 
@@ -220,12 +236,12 @@ function renderCustomStageBattleView(editor) {
         <section data-custom-stage-side='enemy' class='${state.enabled && !state.enemyStageIds.length ? 'is-missing' : ''}'>
           <h4>敵側ステージ</h4>
           <div class='formation-custom-stage-list-host' data-custom-stage-list-side='enemy'>${renderList(editor, 'enemy', state.enemyStageIds)}</div>
-          <button type='button' data-custom-stage-pick-side='enemy'>敵側にステージを追加</button>
+          <button type='button' data-custom-stage-pick-side='enemy'>＋ 敵側へ追加</button>
         </section>
         <section data-custom-stage-side='player' class='${state.enabled && !state.playerStageIds.length ? 'is-missing' : ''}'>
           <h4>味方側ステージ</h4>
           <div class='formation-custom-stage-list-host' data-custom-stage-list-side='player'>${renderList(editor, 'player', state.playerStageIds)}</div>
-          <button type='button' data-custom-stage-pick-side='player'>味方側にステージを追加</button>
+          <button type='button' data-custom-stage-pick-side='player'>＋ 味方側へ追加</button>
         </section>
       </div>
       <p class='formation-custom-stage-note'>${safeHtml(customStageNote(editor, state, config, baseStageId))}</p>
@@ -262,7 +278,28 @@ function refreshCustomStageBattleView(editor, { sides = ['enemy', 'player'] } = 
   const note = panel.querySelector('.formation-custom-stage-note');
   if (note) note.textContent = customStageNote(editor, state, config, baseStageId);
   updateCurrentStageLabel(editor, baseStageId || editor.selectedStageId);
+  refreshCustomStageDeployButtons(editor);
   return true;
+}
+
+function refreshCustomStageDeployButtons(editor) {
+  const root = editor?.root;
+  if (!root) return;
+  const state = ensureState(editor);
+  const enemyCustom = new Set(state.enemyStageIds.map(decodeStageRef).filter((r) => r?.kind === 'custom').map((r) => r.id));
+  const playerCustom = new Set(state.playerStageIds.map(decodeStageRef).filter((r) => r?.kind === 'custom').map((r) => r.id));
+  for (const button of root.querySelectorAll('[data-custom-builder-add-enemy]')) {
+    const added = enemyCustom.has(button.dataset.customBuilderAddEnemy);
+    button.classList.toggle('is-added', added);
+    button.classList.toggle('is-primary', !added);
+    button.textContent = added ? '✓ 敵側に追加済み' : '敵側へ追加';
+  }
+  for (const button of root.querySelectorAll('[data-custom-builder-add-player]')) {
+    const added = playerCustom.has(button.dataset.customBuilderAddPlayer);
+    button.classList.toggle('is-added', added);
+    button.classList.toggle('is-primary', !added);
+    button.textContent = added ? '✓ 味方側に追加済み' : '味方側へ追加';
+  }
 }
 
 function addStage(editor, side, id) {

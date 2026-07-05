@@ -9,11 +9,18 @@
   <meta name="copyright" content="© 2026 RHgrive. All Rights Reserved." />
   <meta name="author" content="RHgrive" />
   <meta name="robots" content="noarchive, noimageindex" />
+  <meta name="theme-color" content="#0b111a" />
+  <meta name="application-name" content="Wan Battle" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Wan Battle" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <!-- © 2026 RHgrive. All Rights Reserved. Unauthorized copying, rehosting, or
        reuse of this site or its source is prohibited. 無断複製・再配布・流用を禁じます。 -->
   <title>Wan Battle - BCU Preview</title>
+  <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
   <link rel="icon" type="image/png" href="./assets/ui/game-icon.png" />
-  <link rel="apple-touch-icon" href="./assets/ui/game-icon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/ui/apple-touch-icon.png" />
   <!-- Tuning-overlay brush fonts use font-display:block; preload so the first
        long-press open never shows invisible text while they stream in. -->
   <link rel="preload" as="font" type="font/otf" crossorigin="anonymous" href="./assets/FOT-%E5%A4%A7%E6%B1%9F%E6%88%B8%E5%8B%98%E4%BA%AD%E6%B5%81%20Std%20E.otf" />
@@ -65,5 +72,6 @@
     </section>
   </div>
   <script type="module" src="./js/main.js"></script>
+  <script type="module" src="./js/pwa.js"></script>
 </body>
 </html>

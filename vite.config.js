@@ -16,7 +16,7 @@ const DIST_ASSETS_DIR = path.join(ROOT, 'dist', 'assets');
 // them into dist/ or production 404s and the formation roster keeps every
 // error/missing enemy and ally visible. Node tests read the same files from cwd,
 // so the source location and path string stay unchanged.
-const ROOT_RUNTIME_FILES = ['error-enemy.json', 'error-ally.json'];
+const ROOT_RUNTIME_FILES = ['error-enemy.json', 'error-ally.json', 'manifest.webmanifest', 'sw.js'];
 
 // Keep emitted URLs relative so the same dist works both at Cloudflare Pages'
 // domain root and under GitHub Pages' /rhg/ project path.
@@ -334,6 +334,17 @@ function selectedPublicAssetsPlugin() {
         } catch (error) {
           this.warn?.(`failed to copy root runtime file ${name}: ${error?.message || error}`);
         }
+      }
+      try {
+        const indexPath = path.join(DIST_DIR, 'index.html');
+        const html = await readFile(indexPath, 'utf8');
+        const next = html.replace(
+          /(<link\s+rel="manifest"\s+href=")(?:\.\/)?assets\/manifest-[^"]+\.webmanifest(")/,
+          '$1./manifest.webmanifest$2'
+        );
+        if (next !== html) await writeFile(indexPath, next);
+      } catch (error) {
+        this.warn?.(`failed to normalize manifest link in dist/index.html: ${error?.message || error}`);
       }
     }
   };

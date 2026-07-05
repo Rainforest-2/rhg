@@ -49,7 +49,12 @@ export function validateCustomStage(rawStage, { resolvers = {} } = {}) {
   if (isBlank(rawBattle.enemyCastleId)) err('enemyCastleId', '敵城を選択してください');
   else if (!resolveCastle(rawBattle.enemyCastleId)) err('enemyCastleId', '選択した敵城を読み込めません');
 
-  if (isBlank(rawBattle.musicId)) warn('musicId', 'BGMが未設定です（基準ステージまたは既定BGMを使用）');
+  if (isBlank(rawBattle.musicId)) {
+    const hasBossMusic = !isBlank(rawBattle.bossMusicId);
+    warn('musicId', hasBossMusic
+      ? '通常BGMが未設定です（現在の再生処理では戦闘中は無音になり、ボスBGMも再生されません）'
+      : '通常BGMが未設定です（戦闘中は無音になります）');
+  }
   else if (!resolveMusic(rawBattle.musicId)) err('musicId', '選択したBGMを読み込めません');
 
   if (!isPositive(rawBattle.stageLength)) err('stageLength', '戦場の長さは1以上にしてください');

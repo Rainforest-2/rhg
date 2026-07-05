@@ -254,8 +254,8 @@ html body.nyanko-ui-polish .formation-custom-field-preview{position:relative;bor
 html body.nyanko-ui-polish .formation-custom-field-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 html body.nyanko-ui-polish .formation-custom-field-bg.is-missing{background:repeating-linear-gradient(45deg,#1c2a36,#1c2a36 10px,#132029 10px,#132029 20px)}
 html body.nyanko-ui-polish .formation-custom-field-castle{position:absolute;bottom:6px;height:70%;max-height:120px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
-html body.nyanko-ui-polish .formation-custom-field-castle.pcastle{left:8px;transform:scaleX(-1)}
-html body.nyanko-ui-polish .formation-custom-field-castle.ecastle{right:8px}
+html body.nyanko-ui-polish .formation-custom-field-castle.pcastle{right:8px}
+html body.nyanko-ui-polish .formation-custom-field-castle.ecastle{left:8px}
 html body.nyanko-ui-polish .formation-custom-field-castle.is-missing{display:none}
 html body.nyanko-ui-polish .formation-custom-field-chips{position:absolute;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;gap:5px;padding:6px;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0))}
 html body.nyanko-ui-polish .formation-custom-field-chips span{display:inline-flex;align-items:center;min-height:22px;padding:1px 8px;border:2px solid #000;border-radius:999px;background:#ffe25a;color:#160800;-webkit-text-fill-color:#160800;font-size:.7rem;font-weight:1000}
@@ -291,7 +291,9 @@ html body.nyanko-ui-polish .formation-custom-stat-grid{display:grid;grid-templat
 html body.nyanko-ui-polish .formation-custom-stat{display:grid;gap:6px;padding:9px;border:2px solid #000;border-radius:11px;background:linear-gradient(180deg,#fffef8,#fff1c4);box-shadow:inset 0 2px 0 rgba(255,255,255,.75)}
 html body.nyanko-ui-polish .formation-custom-stat>.lbl{display:flex;align-items:baseline;gap:4px;font-size:.72rem;font-weight:1000;color:#54310f;-webkit-text-fill-color:#54310f}
 html body.nyanko-ui-polish .formation-custom-stat>.lbl em{font-style:normal;font-size:.64rem;opacity:.72}
-html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{font-size:1rem;line-height:1;min-width:4.5ch;font-variant-numeric:tabular-nums}
+html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper{display:grid;grid-template-columns:38px minmax(5.2ch,1fr) 38px auto;gap:5px;align-items:stretch}
+html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper button{width:38px!important;min-width:38px!important;height:40px;min-height:40px!important;font-size:1.02rem}
+html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{font-size:1rem;line-height:1;min-width:0;font-variant-numeric:tabular-nums}
 html body.nyanko-ui-polish .formation-custom-switch{position:relative;display:flex;align-items:center;gap:11px;min-height:46px;padding:6px 12px;border:2px solid #000;border-radius:11px;background:linear-gradient(180deg,#fbfdff,#eef6fb);font-weight:1000;color:#120700;-webkit-text-fill-color:#120700;cursor:pointer}
 html body.nyanko-ui-polish .formation-custom-switch input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 html body.nyanko-ui-polish .formation-custom-switch .track{box-sizing:border-box;position:relative;flex:0 0 auto;width:48px;height:27px;border:2px solid #000;border-radius:999px;background:#c4ced6;transition:background .16s}
@@ -374,15 +376,16 @@ html body.nyanko-ui-polish .formation-custom-spawn-modal-title small{font-size:.
 html body.nyanko-ui-polish .formation-custom-spawn-modal-x{min-width:30px!important;width:30px;min-height:30px!important;font-size:.9rem!important}
 html body.nyanko-ui-polish .formation-custom-spawn-modal-body{padding:6px}
 html body.nyanko-ui-polish .formation-custom-spawn-modal-foot{padding:5px 7px;border-top-width:2px}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-card button{min-height:28px!important;padding:0 8px!important;border-width:2px!important;border-radius:8px!important;font-size:.58rem!important;line-height:1!important;box-shadow:0 1px 0 #000!important}
 html body.nyanko-ui-polish .formation-custom-spawn-modal-foot button{min-height:28px!important}
 html body.nyanko-ui-polish .formation-custom-edit{gap:6px}
 html body.nyanko-ui-polish .formation-custom-edit-section{gap:6px;padding:7px;border-radius:9px}
 html body.nyanko-ui-polish .formation-custom-edit-section>h4{font-size:.68rem;min-height:24px}
 html body.nyanko-ui-polish .formation-custom-edit-section>h4 button{min-height:24px!important;padding:0 8px!important;font-size:.58rem!important}
-html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:repeat(auto-fit,minmax(98px,1fr));gap:6px}
-html body.nyanko-ui-polish .formation-custom-stepper{gap:4px}
-html body.nyanko-ui-polish .formation-custom-stepper button{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;font-size:.9rem!important}
-html body.nyanko-ui-polish .formation-custom-stepper input{min-height:32px;border-width:2px;font-size:.72rem}
+html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:6px}
+html body.nyanko-ui-polish .formation-custom-stepper{display:grid;grid-template-columns:30px minmax(5ch,1fr) 30px auto;gap:3px;align-items:stretch}
+html body.nyanko-ui-polish .formation-custom-stepper button{width:30px!important;min-width:30px!important;height:30px!important;min-height:30px!important;font-size:.82rem!important}
+html body.nyanko-ui-polish .formation-custom-stepper input{min-height:30px;border-width:2px;font-size:.7rem;padding:0 2px}
 html body.nyanko-ui-polish .formation-custom-stepper .hint{font-size:.56rem}
 }
 @media(orientation:landscape) and (max-height:390px) and (max-width:900px){
@@ -394,6 +397,10 @@ html body.nyanko-ui-polish .formation-custom-builder-tabs button{min-height:23px
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{padding:3px;gap:3px}
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions button{min-height:22px!important;font-size:.46rem!important}
 html body.nyanko-ui-polish .formation-custom-picker-scroll{max-height:104px}
+html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:5px}
+html body.nyanko-ui-polish .formation-custom-stepper{grid-template-columns:27px minmax(4.8ch,1fr) 27px auto}
+html body.nyanko-ui-polish .formation-custom-stepper button{width:27px!important;min-width:27px!important;height:27px!important;min-height:27px!important;font-size:.72rem!important}
+html body.nyanko-ui-polish .formation-custom-stepper input{min-height:27px;font-size:.64rem}
 }
 @media(max-width:680px) and (orientation:portrait){html body.nyanko-ui-polish .formation-custom-builder-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-builder-actions button{flex:1 1 46%}html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-timeline-row{grid-template-columns:54px minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-condition-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-condition-card .formation-custom-stat-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{font-size:.86rem}}`;
   document.head.appendChild(style);
@@ -754,7 +761,7 @@ function renderBasicTab(stage, state = {}) {
   const b = stage.battle;
   return `
     <div class='formation-custom-field'><label>戦場プレビュー</label>${renderFieldPreview(stage)}
-      <span class='hint'>選択中の背景・自軍城・敵城・戦場長・BGMを実アセットで確認できます</span></div>
+      <span class='hint'>選択中の背景・敵城・戦場長・BGMを実アセットで確認できます（自軍城は固定表示）</span></div>
     <section class='formation-custom-edit-section'>
       <h4>アイデンティティ</h4>
       ${labeledLine('ステージ名', `<input class='formation-custom-input' data-custom-field='name' value='${safeHtml(stage.name)}' maxlength='40'>`)}
@@ -764,8 +771,8 @@ function renderBasicTab(stage, state = {}) {
       <h4>見た目・サウンド</h4>
       ${labeledLine('背景', renderAssetPicker('battle.backgroundId', b.backgroundId, backgroundOptions(), '背景を選ぶ', state, { searchKey: 'background', kind: 'background' }), '実際に戦闘で使う背景から選択します')}
       ${labeledLine('敵城', renderAssetPicker('battle.enemyCastleId', b.enemyCastleId, castleOptions(), '敵城を選ぶ', state, { searchKey: 'castle', kind: 'castle' }))}
-      ${labeledLine('通常BGM', renderAssetPicker('battle.musicId', b.musicId, musicOptions(), 'BGMなし', state, { searchKey: 'music', allowEmpty: true, kind: 'music' }))}
-      ${labeledLine('ボスBGM', renderAssetPicker('battle.bossMusicId', b.bossMusicId, musicOptions(), 'ボスBGMなし', state, { searchKey: 'bossMusic', allowEmpty: true, kind: 'music' }))}
+      ${labeledLine('通常BGM', renderAssetPicker('battle.musicId', b.musicId, musicOptions(), 'BGMなし', state, { searchKey: 'music', allowEmpty: true, kind: 'music' }), '未設定なら戦闘中は無音になります')}
+      ${labeledLine('ボスBGM', renderAssetPicker('battle.bossMusicId', b.bossMusicId, musicOptions(), 'ボスBGMなし', state, { searchKey: 'bossMusic', allowEmpty: true, kind: 'music' }), '通常BGMありの場合、敵側ボス出現時に切り替わります')}
     </section>
     <section class='formation-custom-edit-section'>
       <h4>戦場パラメータ</h4>
@@ -777,7 +784,7 @@ function renderBasicTab(stage, state = {}) {
     </section>
     <section class='formation-custom-edit-section'>
       <h4>オプション</h4>
-      ${switchToggle('ボスガード', 'battle.bossGuard', b.bossGuard, { sub: 'ボス出現までノックバックを制限' })}
+      ${switchToggle('ボスガード', 'battle.bossGuard', b.bossGuard, { sub: 'ボス生存中、敵城ダメージを防ぐ' })}
     </section>`;
 }
 
@@ -837,7 +844,7 @@ function renderConditionPanel(spawn, index) {
           </div>
         </section>
       </div>
-      <span class='hint'>score / group 条件は現ランタイム未対応のため表示しません</span>
+      <span class='hint'>score / group 条件はこの編集画面では設定しません</span>
     </div>`;
 }
 
@@ -877,7 +884,7 @@ function renderSpawnEditor(s, i, state) {
     </section>
     <section class='formation-custom-edit-section'>
       <h4>ボス設定</h4>
-      ${switchToggle('ボスとして出現', `spawns.${i}.boss`, s.boss, { boss: true, sub: '出現でボスBGM／城裏へのノックバックを制限' })}
+      ${switchToggle('ボスとして出現', `spawns.${i}.boss`, s.boss, { boss: true, sub: '敵側ではボスBGM切替とボスガード判定に使います' })}
     </section>
     <section class='formation-custom-edit-section'>
       <h4>詳細条件<button type='button' class='is-ghost' data-custom-spawn-cond='${i}' style='margin-left:auto;min-height:32px;padding:0 14px;font-size:.74rem'>${conditionOpen ? '閉じる' : '開く'}</button></h4>
@@ -937,7 +944,7 @@ function renderConfirmTab(stage) {
       <div class='formation-custom-preview-hero'>
         <div>
           <strong>${safeHtml(stage.name)}</strong>
-          <span>背景 ${b.backgroundId ?? '未設定'} / 敵城 ${b.enemyCastleId ?? '未設定'} / BGM ${b.musicId ?? '未設定'}</span>
+          <span>背景 ${b.backgroundId ?? '未設定'} / 敵城 ${b.enemyCastleId ?? '未設定'} / BGM ${b.musicId ?? 'なし'}</span>
         </div>
         <span class='formation-custom-preview-pill'>${errors ? '修正が必要' : '保存可能'}</span>
       </div>
@@ -1213,12 +1220,6 @@ function renderBuilderScreen(editor) {
         ${tabs.map(([id, label]) => `<button type='button' data-custom-builder-tab='${id}' class='${state.tab === id ? 'is-active' : ''}'>${safeHtml(label)}</button>`).join('')}
       </div>
       <div class='formation-custom-builder-body'>${body}</div>
-      <div class='formation-custom-builder-actions'>
-        <button type='button' class='is-primary' data-custom-builder-add-enemy-current='1'>敵側へ追加</button>
-        <button type='button' class='is-primary' data-custom-builder-add-player-current='1'>味方側へ追加</button>
-        <button type='button' class='is-ghost' data-custom-builder-duplicate-current='1'>複製</button>
-        <button type='button' class='is-ghost' data-custom-builder-export-current='1'>書き出し</button>
-      </div>
     </section>`;
   popIn(list.querySelector('.formation-custom-builder-screen'), { duration: 130 });
   ensureMusicPreviewSub(editor);
@@ -1464,10 +1465,6 @@ export function installFormationCustomStageBuilderPatch() {
     // ---- builder-current actions ----
     const builderActions = {
       'data-custom-builder-save': () => saveFromBuilder(this),
-      'data-custom-builder-add-enemy-current': () => addCurrentToSide(this, 'enemy'),
-      'data-custom-builder-add-player-current': () => addCurrentToSide(this, 'player'),
-      'data-custom-builder-duplicate-current': () => { const st = getBuilderState(this); if (st.savedId) { duplicateCustomStage(st.savedId); toast(this, '複製しました'); } },
-      'data-custom-builder-export-current': () => exportStage(getBuilderState(this).stage),
       'data-custom-spawn-add': () => { const st = getBuilderState(this); st.stage.spawns.push(createSpawn({ enemyId: enemyOptions()[0]?.id ?? 0 })); st.conditionOpen = null; markDirty(this); refreshBuilderBody(this); openSpawnModal(this, st.stage.spawns.length - 1); },
     };
     for (const [attr, handler] of Object.entries(builderActions)) {
@@ -1546,17 +1543,6 @@ function saveFromBuilder(editor) {
   const status = editor.root?.querySelector?.('.formation-custom-status');
   if (status) { status.textContent = '保存済み'; status.className = 'formation-custom-status saved'; }
   toast(editor, '保存しました');
-}
-
-function addCurrentToSide(editor, side) {
-  const state = getBuilderState(editor);
-  const result = validateCustomStage(state.stage, { resolvers: assetResolvers() });
-  if (!result.ok) { state.tab = 'confirm'; editor.renderStageSelector(); toast(editor, '追加前に保存が必要です（エラーあり）'); return; }
-  const saved = saveCustomStage(state.stage);
-  state.stage = saved; state.savedId = saved.id; state.dirty = false;
-  const r = addCustomStageToSide(saved.id, side);
-  syncEditorSide(editor);
-  toast(editor, r.added ? `${side === 'player' ? '味方' : '敵'}側に追加しました` : '既に追加済みです');
 }
 
 // Sync the existing panel's in-memory state with storage so its list reflects added custom stages.

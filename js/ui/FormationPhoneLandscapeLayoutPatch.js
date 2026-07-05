@@ -111,8 +111,10 @@ function injectStyle() {
   html body.nyanko-ui-polish .formation-custom-stage-controls button{min-height:25px!important;padding:2px 4px!important;border-width:2px!important;border-radius:8px!important;font-size:.5rem!important;line-height:1.05!important;box-shadow:0 2px 0 #321407,inset 0 1px 0 rgba(255,255,255,.72)!important}
   html body.nyanko-ui-polish .formation-custom-stage-columns{min-height:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;overflow:hidden!important}
   html body.nyanko-ui-polish .formation-custom-stage-columns>section{min-height:0!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) 27px!important;gap:4px!important;padding:5px!important;border-width:2px!important;border-radius:9px!important;background:linear-gradient(180deg,#fffdf0 0 28px,#f4dda0 28px 100%)!important;box-shadow:0 2px 0 rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.88)!important;overflow:hidden!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns>section:has(.formation-custom-stage-empty){grid-template-rows:auto min-content 27px!important;align-content:start!important}
   html body.nyanko-ui-polish .formation-custom-stage-columns h4{height:24px!important;padding:3px 7px!important;border-width:2px!important;font-size:.55rem!important;box-shadow:0 2px 0 rgba(0,0,0,.52)!important}
   html body.nyanko-ui-polish .formation-custom-stage-list-host{min-height:0!important;overflow:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important}
+  html body.nyanko-ui-polish .formation-custom-stage-list-host:has(.formation-custom-stage-empty){overflow:visible!important}
   html body.nyanko-ui-polish .formation-custom-stage-list{max-height:none!important;display:grid!important;gap:4px!important}
   html body.nyanko-ui-polish .formation-custom-stage-list li{min-height:34px!important;grid-template-columns:minmax(0,1fr) 42px!important;gap:4px!important;padding:4px 4px 4px 6px!important;border-width:2px!important;border-radius:8px!important;box-shadow:0 2px 0 rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.82)!important}
   html body.nyanko-ui-polish .formation-custom-stage-list li strong{font-size:.55rem!important;line-height:1.05!important}
@@ -167,6 +169,7 @@ function injectStyle() {
   html body.nyanko-ui-polish .formation-custom-stage-controls button{min-height:22px!important;font-size:.45rem!important;padding:1px 3px!important}
   html body.nyanko-ui-polish .formation-custom-stage-columns{gap:4px!important}
   html body.nyanko-ui-polish .formation-custom-stage-columns>section{grid-template-rows:auto minmax(0,1fr) 23px!important;gap:3px!important;padding:4px!important;border-radius:8px!important}
+  html body.nyanko-ui-polish .formation-custom-stage-columns>section:has(.formation-custom-stage-empty){grid-template-rows:auto min-content 23px!important;align-content:start!important}
   html body.nyanko-ui-polish .formation-custom-stage-columns h4{height:21px!important;padding:2px 6px!important;font-size:.48rem!important}
   html body.nyanko-ui-polish .formation-custom-stage-list{gap:3px!important}
   html body.nyanko-ui-polish .formation-custom-stage-list li{min-height:29px!important;grid-template-columns:minmax(0,1fr) 36px!important;padding:3px 3px 3px 5px!important}

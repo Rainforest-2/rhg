@@ -68,7 +68,7 @@ export function validateCustomStage(rawStage, { resolvers = {} } = {}) {
     const s = spawn || {};
     if (isBlank(s.enemyId)) err(`${at}.enemyId`, `${index + 1}番目の敵が未選択です`);
     else if (!resolveEnemy(s.enemyId)) err(`${at}.enemyId`, `${index + 1}番目の敵を読み込めません`);
-    if (!isPositive(s.count)) err(`${at}.count`, `${index + 1}番目の敵の出現数は1以上にしてください`);
+    if (!isPositive(s.count)) err(`${at}.count`, `${index + 1}番目の敵の合計出撃数上限は1以上にしてください`);
     if (!isPositive(s.hpMultiplier)) err(`${at}.hpMultiplier`, `${index + 1}番目の敵のHP倍率は0より大きくしてください`);
     if (!isPositive(s.attackMultiplier)) err(`${at}.attackMultiplier`, `${index + 1}番目の敵の攻撃倍率は0より大きくしてください`);
     const first = s.firstSpawn || {};

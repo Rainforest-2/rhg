@@ -53,7 +53,6 @@ function buildEnemyRow(spawn, rowIndex) {
   const castle0 = hpCond.enabled ? Math.max(0, Math.min(100, toNum(hpCond.minPercent, 0))) : 100;
   const castle1 = hpCond.enabled ? Math.max(0, Math.min(100, toNum(hpCond.maxPercent, 100))) : 0;
 
-  const killCount = cond.killCount?.enabled ? Math.max(0, Math.floor(toNum(cond.killCount.value, 0))) : 0;
   const group = Math.max(0, Math.floor(toNum(cond.groupId, 0)));
   const layerEnabled = !!cond.layer?.enabled;
   const layerMin = layerEnabled ? Math.max(0, Math.floor(toNum(cond.layer.min, 0))) : 0;
@@ -82,8 +81,10 @@ function buildEnemyRow(spawn, rowIndex) {
     multiple: hpMag,
     attackMagnification: atkMag,
     mult_atk: atkMag,
-    killCountTrigger: killCount,
-    kill_count: killCount,
+    // Custom stages do not expose BCU's kill-count spawn gate; keep it neutral so every row is
+    // scheduled purely by count + respawn interval + first-frame/base-HP window.
+    killCountTrigger: 0,
+    kill_count: 0,
     score: cond.score?.enabled ? Math.max(0, Math.floor(toNum(cond.score.value, 0))) : 0,
     negativeSpawnFlag: 0
   };
@@ -130,8 +131,8 @@ function buildEnemyRow(spawn, rowIndex) {
     hpMagnification: hpMag,
     attackMagnification: atkMag,
     score: scdef.score,
-    killCountTrigger: killCount,
-    killCount,
+    killCountTrigger: 0,
+    killCount: 0,
     group,
     unsupportedSpawnControl: null,
     spawnWorldX: null,

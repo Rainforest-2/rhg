@@ -791,7 +791,6 @@ function renderBasicTab(stage, state = {}) {
 function renderSpawnChips(spawn) {
   const chips = [];
   if (spawn.conditions.enemyBaseHp.enabled) chips.push(`城HP ${spawn.conditions.enemyBaseHp.minPercent}〜${spawn.conditions.enemyBaseHp.maxPercent}%`);
-  if (spawn.conditions.killCount.enabled) chips.push(`${spawn.conditions.killCount.value}体撃破後`);
   if (spawn.conditions.layer.enabled) chips.push(`Layer ${spawn.conditions.layer.min}〜${spawn.conditions.layer.max}`);
   return chips.length
     ? `<div class='formation-custom-chip-row'>${chips.map((chip) => `<span class='formation-custom-chip'>${safeHtml(chip)}</span>`).join('')}</div>`
@@ -833,10 +832,6 @@ function renderConditionPanel(spawn, index) {
           </div>
         </section>
         <section class='formation-custom-condition-card'>
-          ${switchToggle('撃破数条件', `spawns.${index}.conditions.killCount.enabled`, c.killCount.enabled)}
-          ${statField('必要撃破数', `spawns.${index}.conditions.killCount.value`, c.killCount.value, { min: 0, step: 1, unit: '体' })}
-        </section>
-        <section class='formation-custom-condition-card'>
           ${switchToggle('レイヤー範囲', `spawns.${index}.conditions.layer.enabled`, c.layer.enabled)}
           <div class='formation-custom-stat-grid'>
             ${statField('最小', `spawns.${index}.conditions.layer.min`, c.layer.min, { min: 0, step: 1 })}
@@ -849,7 +844,7 @@ function renderConditionPanel(spawn, index) {
 }
 
 function spawnSummaryLine(s) {
-  const parts = [`×${s.count}`, `HP ${s.hpMultiplier}%`, `攻 ${s.attackMultiplier}%`, `初回 ${framesToSeconds(s.firstSpawn.minFrames)}s`];
+  const parts = [`合計${s.count}体`, `HP ${s.hpMultiplier}%`, `攻 ${s.attackMultiplier}%`, `初回 ${framesToSeconds(s.firstSpawn.minFrames)}s`];
   if (s.respawn.enabled) parts.push(`再出現 ${framesToSeconds(s.respawn.minFrames)}〜${framesToSeconds(s.respawn.maxFrames)}s`);
   else parts.push('再出現なし');
   return parts.join(' ・ ');
@@ -863,9 +858,8 @@ function renderSpawnEditor(s, i, state) {
       ${renderAssetPicker(`spawns.${i}.enemyId`, s.enemyId, enemyOptions(), '敵を検索して選ぶ', state, { searchKey: `enemy.${i}`, compact: true, kind: 'enemy' })}
     </section>
     <section class='formation-custom-edit-section'>
-      <h4>数と倍率</h4>
+      <h4>倍率</h4>
       <div class='formation-custom-stat-grid'>
-        ${statField('出現数', `spawns.${i}.count`, s.count, { min: 1, step: 1, unit: '体' })}
         ${statField('HP倍率', `spawns.${i}.hpMultiplier`, s.hpMultiplier, { min: 1, step: 10, unit: '%' })}
         ${statField('攻撃倍率', `spawns.${i}.attackMultiplier`, s.attackMultiplier, { min: 1, step: 10, unit: '%' })}
       </div>
@@ -876,11 +870,15 @@ function renderSpawnEditor(s, i, state) {
         ${statField('初回 最小', `spawns.${i}.firstMin`, framesToSeconds(s.firstSpawn.minFrames), { min: 0, step: 1, unit: '秒' })}
         ${statField('初回 最大', `spawns.${i}.firstMax`, framesToSeconds(s.firstSpawn.maxFrames), { min: 0, step: 1, unit: '秒' })}
       </div>
-      ${switchToggle('再出現する', `spawns.${i}.respawn.enabled`, s.respawn.enabled, { sub: '前回出現からの間隔です' })}
+      ${switchToggle('再出現する', `spawns.${i}.respawn.enabled`, s.respawn.enabled, { sub: '合計出撃数上限に達するまで、この間隔で繰り返し出現します' })}
       ${s.respawn.enabled ? `<div class='formation-custom-stat-grid'>
         ${statField('再出現 最小', `spawns.${i}.respawnMin`, framesToSeconds(s.respawn.minFrames), { min: 0, step: 1, unit: '秒' })}
         ${statField('再出現 最大', `spawns.${i}.respawnMax`, framesToSeconds(s.respawn.maxFrames), { min: 0, step: 1, unit: '秒' })}
       </div>` : ''}
+      <div class='formation-custom-stat-grid'>
+        ${statField('合計出撃数上限', `spawns.${i}.count`, s.count, { min: 1, step: 1, unit: '体' })}
+      </div>
+      <span class='hint'>${s.respawn.enabled ? `${framesToSeconds(s.respawn.minFrames)}秒ごとに1体ずつ、合計${s.count}体まで出現します` : '再出現OFFのため初回にまとめて出現します（合計出撃数上限までが同時出現します）'}</span>
     </section>
     <section class='formation-custom-edit-section'>
       <h4>ボス設定</h4>
@@ -888,7 +886,7 @@ function renderSpawnEditor(s, i, state) {
     </section>
     <section class='formation-custom-edit-section'>
       <h4>詳細条件<button type='button' class='is-ghost' data-custom-spawn-cond='${i}' style='margin-left:auto;min-height:32px;padding:0 14px;font-size:.74rem'>${conditionOpen ? '閉じる' : '開く'}</button></h4>
-      ${conditionOpen ? renderConditionPanel(s, i) : `<span class='hint'>城HP・撃破数・レイヤーで出現タイミングを絞り込めます</span>`}
+      ${conditionOpen ? renderConditionPanel(s, i) : `<span class='hint'>城HP・レイヤーで出現タイミングを絞り込めます</span>`}
     </section>
   </div>`;
 }

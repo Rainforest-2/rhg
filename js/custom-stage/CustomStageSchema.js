@@ -139,7 +139,6 @@ export function createSpawn(partial = {}) {
   const respawn = p.respawn || {};
   const conditions = p.conditions || {};
   const enemyBaseHp = conditions.enemyBaseHp || {};
-  const killCount = conditions.killCount || {};
   const layer = conditions.layer || {};
   const score = conditions.score || {};
   return {
@@ -163,10 +162,6 @@ export function createSpawn(partial = {}) {
         enabled: bool(enemyBaseHp.enabled),
         minPercent: clampPercent(enemyBaseHp.minPercent, 0),
         maxPercent: clampPercent(enemyBaseHp.maxPercent, 100)
-      },
-      killCount: {
-        enabled: bool(killCount.enabled),
-        value: nonNegInt(killCount.value, 0)
       },
       layer: {
         enabled: bool(layer.enabled),

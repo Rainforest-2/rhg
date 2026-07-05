@@ -2,6 +2,7 @@ import { BattleActor } from './BattleActor.js';
 import { BattleScene } from './BattleScene.js';
 import { BattleAttackTimeline } from './BattleAttackTimeline.js';
 import { BCU_KNOCKBACK_SPECS, convertBcuDistanceToWorld, getDefaultSpecTypeForKind } from './BcuKnockbackSpec.js';
+import { BCU_DEFAULT_BOSS_SPAWN } from './bcu-runtime/BcuEnemyCastleBossSpawn.js';
 
 const ACTOR_FLAG = Symbol.for('wanko-battle.bcu-entity-kb-actor.v1');
 const SCENE_FLAG = Symbol.for('wanko-battle.bcu-entity-kb-scene.v1');
@@ -445,7 +446,12 @@ if (BattleScene?.prototype && !BattleScene.prototype[SCENE_FLAG]) {
     if (actor) {
       actor.scene = this;
       actor.isBase = false;
-      actor.bcuBossSpawnOffset = options?.row?.bossFlag ? (this.stage?.runtime?.bossSpawnWorldX || this.stage?.runtime?.boss_spawn || 0) : 0;
+      // Boss knockback floor = getActorLimit = pos - (limit + bcuBossSpawnOffset), so bcuBossSpawnOffset
+      // is the boss's world-X floor near its own castle (BCU EEnemy.getLim). When the stage's per-castle
+      // boss_spawn is unresolved (e.g. a custom stage whose boss-spawn enrichment was skipped/failed),
+      // fall back to BCU's own CastleImg.onInjected default (828.5) instead of 0 — offset 0 would collapse
+      // the floor to the field edge and let the boss be knocked back far behind its castle.
+      actor.bcuBossSpawnOffset = options?.row?.bossFlag ? (this.stage?.runtime?.bossSpawnWorldX || this.stage?.runtime?.boss_spawn || BCU_DEFAULT_BOSS_SPAWN) : 0;
       if (Number.isFinite(actor.rawStats?.limit) === false) actor.rawStats = { ...(actor.rawStats || {}), limit: 0 };
     }
     return actor;

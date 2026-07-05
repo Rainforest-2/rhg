@@ -147,6 +147,11 @@ function showBootError(error) {
 }
 
 async function boot() {
+  // Mobile install gate (js/install-gate.js) runs first and, for iOS/Android
+  // users who opened the site in a browser tab (not launched from the home
+  // screen), puts up a blocking "add to home screen" overlay. Skip the entire
+  // game boot in that case; desktop and installed/standalone users boot normally.
+  if (globalThis.__INSTALL_GATE_ACTIVE__) return;
   try {
     // The boot is a fixed sequence of steps; each completed step advances the bar
     // by a fixed weight. Game data (loadGame) is the longest step, so it reports

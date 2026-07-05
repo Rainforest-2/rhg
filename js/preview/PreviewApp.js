@@ -23,9 +23,14 @@ function nextFrame() {
 }
 
 function getHighSpeedBattleRenderIntervalMs(speedMultiplier = 1) {
-  // Battle simulation advances on BCU's 30fps timer. Rendering between logic
-  // ticks redraws the same actor/effect frame and is pure overhead on mobile.
-  return 1000 / 30;
+  // The battle simulation advances on BCU's fixed 30fps logic timer, but the
+  // camera (pan / pinch / wheel zoom) is a purely visual transform recomputed
+  // every rendered frame. At 1x we render at 60fps so scroll and zoom stay
+  // smooth; at 2x+ fast-forward we keep the 30fps cap because the extra paints
+  // only redraw the same unchanged logic frame and are pure overhead on mobile.
+  const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
+  if (speed >= 2) return 1000 / 30;
+  return 1000 / 60;
 }
 
 function formatFormationForLog(f) {
@@ -79,7 +84,12 @@ export class PreviewApp {
       this.lastBattleRenderAt = now;
       return true;
     }
-    if (!Number.isFinite(this.lastBattleRenderAt) || this.lastBattleRenderAt <= 0 || now - this.lastBattleRenderAt >= intervalMs) {
+    // Small slack so a 60fps target (interval 16.67ms) is not silently halved to
+    // 30fps when a 60Hz rAF frame is delivered a fraction of a millisecond early.
+    // Kept well under a 120Hz frame (8.33ms) so high-refresh displays still cap
+    // cleanly to the 60fps / 30fps targets instead of over-rendering.
+    const jitterToleranceMs = 2;
+    if (!Number.isFinite(this.lastBattleRenderAt) || this.lastBattleRenderAt <= 0 || now - this.lastBattleRenderAt >= intervalMs - jitterToleranceMs) {
       this.lastBattleRenderAt = now;
       return true;
     }

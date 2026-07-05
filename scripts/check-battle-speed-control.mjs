@@ -48,7 +48,7 @@ check('8x > 4x', s8 > s4, { s4, s8 });
 {
   const previewSrc = fs.readFileSync('js/preview/PreviewApp.js', 'utf8');
   check('PreviewApp has high-speed render cadence guard', previewSrc.includes('getHighSpeedBattleRenderIntervalMs') && previewSrc.includes('shouldRenderBattleFrame'), null);
-  check('PreviewApp throttles only the 8x render path', /speed >= 8 \? 1000 \/ 30 : 0/.test(previewSrc), null);
+  check('PreviewApp renders 60fps at 1x, caps 30fps at 2x+', /if \(speed >= 2\) return 1000 \/ 30;/.test(previewSrc) && /return 1000 \/ 60;/.test(previewSrc), null);
 }
 
 // ---- BattleSpeedControl feature flag + cycle/colors ----

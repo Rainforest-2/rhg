@@ -108,7 +108,8 @@ const originPatch = read('js/battle/BattleSceneRendererBcuOriginPatch.js');
 assert.match(originPatch, /__BCU_RENDER_DEBUG__ === true \|\| globalThis\.__BCU_DEBUG_ALLOCATIONS__ === true\) \{\n\s*actor\.lastGroundAnchorDebug =/, 'ground-anchor debug object must be gated');
 
 const previewApp = read('js/preview/PreviewApp.js');
-assert.match(previewApp, /return 1000 \/ 30;/, 'PreviewApp must cap battle rendering to the BCU 30fps logic timer instead of redrawing unchanged frames every rAF');
+assert.match(previewApp, /if \(speed >= 2\) return 1000 \/ 30;/, 'PreviewApp must keep the 30fps render cap at 2x+ fast-forward (extra paints only redraw the unchanged BCU logic frame)');
+assert.match(previewApp, /return 1000 \/ 60;/, 'PreviewApp must render at 60fps at 1x so camera pan/zoom stay smooth');
 
 const productionBar = read('js/ui/PlayerProductionBar.js');
 assert.match(productionBar, /lastMoneyDrawKey/, 'production bar money canvas must skip unchanged redraws');

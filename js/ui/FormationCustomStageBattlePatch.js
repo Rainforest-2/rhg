@@ -213,8 +213,6 @@ function renderCustomStageBattleView(editor) {
         <button type='button' data-action='custom-stage-toggle'>${state.enabled ? 'Custom ON' : 'Custom OFF'}</button>
       </header>
       <div class='formation-custom-stage-controls'>
-        <button type='button' class='${state.baseSource !== 'player' ? 'is-active' : ''}' data-action='custom-stage-base-enemy'>背景/長さ: 敵1番目</button>
-        <button type='button' class='${state.baseSource === 'player' ? 'is-active' : ''}' data-action='custom-stage-base-player'>背景/長さ: 味方1番目</button>
         <button type='button' data-action='custom-stage-clear'>登録クリア</button>
       </div>
       ${customStageWarning(editor, state, config) ? `<p class='formation-custom-stage-alert' role='alert'>${safeHtml(customStageWarning(editor, state, config))}</p>` : ''}

@@ -82,6 +82,37 @@ test('spawn runtime schedules first spawn at authored frame and respects count/r
   assert.strictEqual(row5.exhausted, true);
 });
 
+test('custom-stage respawn interval is measured from the previous spawn, not enemy death', () => {
+  const def = buildCustomStageDefinition(createCustomStage({
+    name: '再出現間隔検証',
+    battle: { stageLength: 4000, enemyBaseHp: 100000, maxEnemyCount: 10, backgroundId: 0, enemyCastleId: 0 },
+    spawns: [
+      {
+        enemyId: 5,
+        count: 2,
+        firstSpawn: { minFrames: 60, maxFrames: 60 },
+        respawn: { enabled: true, minFrames: 30, maxFrames: 30 }
+      }
+    ]
+  }));
+  const scene = { groundY: 330, stage: { applyStageDefinition: {}, maxEnemyCount: 10 }, getEffectiveEnemyMaxCount: () => 10 };
+  const runtime = StageRuntimeSceneAdapter.build(scene, def, { applyStageDefinition: {}, groundY: 330, fallbackMaxEnemyCount: 10 });
+  const unitDefs = buildStageEnemyUnitDefs(runtime);
+  const spawnRuntime = new BcuStageSpawnRuntime(runtime, unitDefs, { random: () => 0 });
+  const spawnedFrames = [];
+
+  for (let frame = 0; frame <= 100; frame++) {
+    const aliveEnemyCount = spawnedFrames.length;
+    const out = spawnRuntime.tick(frame, { logicFrame: frame, aliveEnemyCount, maxEnemyCount: 10, enemyBaseHpPercent: 100, random: () => 0 });
+    for (const ev of out) {
+      spawnedFrames.push(frame);
+      spawnRuntime.commitSpawn(ev, { random: () => 0 });
+    }
+  }
+
+  assert.deepStrictEqual(spawnedFrames, [60, 91], 'second spawn occurs while the first enemy is still alive when the row interval elapses');
+});
+
 test('castle-HP condition gates the boss row', () => {
   const def = buildCustomStageDefinition(makeStage());
   const scene = { groundY: 330, stage: { applyStageDefinition: {}, maxEnemyCount: 10 }, getEffectiveEnemyMaxCount: () => 10 };

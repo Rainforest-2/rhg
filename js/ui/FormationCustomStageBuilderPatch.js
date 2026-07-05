@@ -42,6 +42,15 @@ function safeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
 }
 
+// 候補が数百件（敵は 778 体）あるピッカーを一度に全部 DOM 化すると、読み込み後もノード数だけで
+// 恒常的に重くなる。初回はこの枚数だけ描画し、スクロールで下端に近づくたびに追加ロードする
+// （全件はスクロール・検索で到達可能）。
+const PICKER_WINDOW = 60;
+function renderCardsSlice(reg, items) {
+  if (reg.music) return items.map((o) => renderMusicCard(reg.field, reg.value, o)).join('');
+  return items.map((o) => renderPickerCard(reg.field, reg.value, o, { kind: reg.kind })).join('');
+}
+
 function restoreScrollTop(scroller, scrollTop, frames = RESTORE_SCROLL_FRAMES) {
   if (!scroller || !Number.isFinite(scrollTop)) return;
   const run = (remaining) => {
@@ -213,6 +222,9 @@ html body.nyanko-ui-polish .formation-custom-picker-scroll{max-height:236px;over
 html body.nyanko-ui-polish .formation-custom-picker-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:7px}
 html body.nyanko-ui-polish .formation-custom-picker-grid.is-compact{grid-template-columns:repeat(auto-fit,minmax(116px,1fr))}
 html body.nyanko-ui-polish .formation-custom-picker-card{min-height:58px!important;height:auto;padding:7px 8px!important;border-radius:8px!important;background:linear-gradient(180deg,#fff,#e9f7ff)!important;color:#120700!important;-webkit-text-fill-color:#120700!important;text-align:left;display:grid!important;align-content:center;gap:2px;box-shadow:0 2px 0 #000!important}
+/* 画面外カードのレイアウト/描画をスキップ（長い候補リストの初回描画・スクロールを軽くする） */
+html body.nyanko-ui-polish .formation-custom-picker-card{content-visibility:auto;contain-intrinsic-size:auto 58px}
+html body.nyanko-ui-polish .formation-custom-music-card{content-visibility:auto;contain-intrinsic-size:auto 52px}
 html body.nyanko-ui-polish .formation-custom-picker-card.is-selected{background:linear-gradient(180deg,#28c785,#158a5a)!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
 html body.nyanko-ui-polish .formation-custom-picker-card.is-empty{background:#fff7df!important}
 html body.nyanko-ui-polish .formation-custom-picker-card strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem;line-height:1.05}
@@ -550,7 +562,7 @@ function filterPickerOptions(options, value, query) {
 // swaps in the real BCU asset once it scrolls into view. No dummy image is ever shown.
 function thumbImg(kind, id, extraClass = '') {
   if (kind == null || id == null || id === '') return '';
-  return `<img class='formation-custom-thumb kind-${safeHtml(kind)} is-missing ${extraClass}' alt=''
+  return `<img class='formation-custom-thumb kind-${safeHtml(kind)} is-missing ${extraClass}' alt='' decoding='async'
     data-custom-thumb='1' data-thumb-kind='${safeHtml(kind)}' data-thumb-id='${safeHtml(id)}'>`;
 }
 
@@ -567,16 +579,18 @@ function renderPickerCard(field, value, option, { empty = false, kind = null } =
 
 function renderAssetPicker(field, value, options, placeholder, state, { searchKey = field, compact = false, allowEmpty = false, kind = null } = {}) {
   if (kind === 'music') return renderMusicPicker(field, value, options, placeholder, state, { searchKey, allowEmpty });
+  if (state) (state.__pickerReg ||= {})[searchKey] = { field, value, options, kind, allowEmpty, placeholder, music: false };
   const query = state?.pickerSearch?.[searchKey] || '';
   const { items, total } = filterPickerOptions(options, value, query);
-  const cards = items.map((option) => renderPickerCard(field, value, option, { kind })).join('');
+  const shown = items.slice(0, PICKER_WINDOW);
+  const cards = shown.map((option) => renderPickerCard(field, value, option, { kind })).join('');
   const emptyCard = allowEmpty ? renderPickerCard(field, value, { id: '', label: placeholder || '未設定', meta: '空欄にする' }, { empty: true }) : '';
   return `<div class='formation-custom-picker'>
     <div class='formation-custom-picker-head'>
       <input class='formation-custom-picker-search' data-custom-picker-search='${safeHtml(searchKey)}' value='${safeHtml(query)}' placeholder='検索 / ID'>
       <span class='formation-custom-picker-count'>${safeHtml(total)}件</span>
     </div>
-    <div class='formation-custom-picker-scroll'><div class='formation-custom-picker-grid ${compact ? 'is-compact' : ''}'>${emptyCard}${cards || `<span class='hint'>候補がありません</span>`}</div></div>
+    <div class='formation-custom-picker-scroll'><div class='formation-custom-picker-grid ${compact ? 'is-compact' : ''}' data-picker-key='${safeHtml(searchKey)}' data-shown='${shown.length}'>${emptyCard}${cards || `<span class='hint'>候補がありません</span>`}</div></div>
   </div>`;
 }
 
@@ -597,18 +611,107 @@ function renderMusicCard(field, value, option, { empty = false } = {}) {
 }
 
 function renderMusicPicker(field, value, options, placeholder, state, { searchKey = field, allowEmpty = false } = {}) {
+  if (state) (state.__pickerReg ||= {})[searchKey] = { field, value, options, allowEmpty, placeholder, music: true };
   const query = state?.pickerSearch?.[searchKey] || '';
   const { items, total } = filterPickerOptions(options, value, query);
   const emptyCard = allowEmpty ? renderMusicCard(field, value, { id: '', label: placeholder || '未設定' }, { empty: true }) : '';
-  const cards = items.map((option) => renderMusicCard(field, value, option)).join('');
+  const shown = items.slice(0, PICKER_WINDOW);
+  const cards = shown.map((option) => renderMusicCard(field, value, option)).join('');
   return `<div class='formation-custom-picker'>
     <div class='formation-custom-picker-head'>
       <input class='formation-custom-picker-search' data-custom-picker-search='${safeHtml(searchKey)}' value='${safeHtml(query)}' placeholder='検索 / ID'>
       <span class='formation-custom-picker-count'>${safeHtml(total)}件</span>
     </div>
-    <div class='formation-custom-picker-scroll'><div class='formation-custom-music-grid'>${emptyCard}${cards || `<span class='hint'>候補がありません</span>`}</div></div>
+    <div class='formation-custom-picker-scroll'><div class='formation-custom-music-grid' data-picker-key='${safeHtml(searchKey)}' data-shown='${shown.length}'>${emptyCard}${cards || `<span class='hint'>候補がありません</span>`}</div></div>
     <span class='hint'>▶で試聴（音量設定を尊重・画面を離れると停止）</span>
   </div>`;
+}
+
+// Search typing only narrows one picker: re-render just that picker's card grid + count in place,
+// leaving the search input (and thus its focus/caret) and every other picker untouched. This avoids
+// the full-body innerHTML rebuild +全サムネ再ハイドレートが毎キーストローク走る重さ. Returns false so the
+// caller can fall back to a full refresh if the picker metadata is unavailable.
+function refreshPickerCards(editor, searchKey) {
+  const state = getBuilderState(editor);
+  const reg = state.__pickerReg?.[searchKey];
+  if (!reg) return false;
+  const input = editor.root?.querySelector?.(`[data-custom-picker-search='${CSS.escape(searchKey)}']`);
+  const picker = input?.closest?.('.formation-custom-picker');
+  const grid = picker?.querySelector?.('.formation-custom-picker-grid, .formation-custom-music-grid');
+  if (!grid) return false;
+  const query = state.pickerSearch?.[searchKey] || '';
+  const { items, total } = filterPickerOptions(reg.options, reg.value, query);
+  const shown = items.slice(0, PICKER_WINDOW);
+  const noHit = `<span class='hint'>候補がありません</span>`;
+  const empty = reg.music
+    ? (reg.allowEmpty ? renderMusicCard(reg.field, reg.value, { id: '', label: reg.placeholder || '未設定' }, { empty: true }) : '')
+    : (reg.allowEmpty ? renderPickerCard(reg.field, reg.value, { id: '', label: reg.placeholder || '未設定', meta: '空欄にする' }, { empty: true }) : '');
+  grid.innerHTML = empty + (renderCardsSlice(reg, shown) || noHit);
+  grid.dataset.shown = String(shown.length);
+  grid.scrollTop = 0;
+  const scroll = grid.closest('.formation-custom-picker-scroll');
+  if (scroll) scroll.scrollTop = 0;
+  const count = picker.querySelector('.formation-custom-picker-count');
+  if (count) count.textContent = `${total}件`;
+  const overlay = picker.closest('.formation-custom-spawn-modal');
+  if (overlay) hydrateModalThumbs(editor, overlay);
+  else hydrateThumbs(editor);
+  refreshMusicButtons(editor);
+  return true;
+}
+
+// Append the next window of cards when a picker's scroll container nears its bottom, keeping the live
+// DOM small even for 数百件のリスト. Options/query are re-derived from the picker registry + state.
+function growPicker(editor, grid) {
+  const key = grid?.dataset?.pickerKey;
+  if (!key) return;
+  const state = getBuilderState(editor);
+  const reg = state.__pickerReg?.[key];
+  if (!reg) return;
+  const already = Number(grid.dataset.shown) || 0;
+  const query = state.pickerSearch?.[key] || '';
+  const { items } = filterPickerOptions(reg.options, reg.value, query);
+  if (already >= items.length) return;
+  const next = items.slice(already, already + PICKER_WINDOW);
+  grid.insertAdjacentHTML('beforeend', renderCardsSlice(reg, next));
+  grid.dataset.shown = String(already + next.length);
+  const overlay = grid.closest('.formation-custom-spawn-modal');
+  if (overlay) hydrateModalThumbs(editor, overlay);
+  else hydrateThumbs(editor);
+  if (reg.music) refreshMusicButtons(editor);
+}
+function maybeGrowPicker(editor, scroll) {
+  if (!scroll || scroll.scrollTop + scroll.clientHeight < scroll.scrollHeight - 160) return;
+  const grid = scroll.querySelector('.formation-custom-picker-grid, .formation-custom-music-grid');
+  if (grid) growPicker(editor, grid);
+}
+
+// カード選択時はグリッドを作り直さず、is-selected をその場で付け替える。グリッドを再構築すると
+// （特にウィンドウ描画で件数が変わると）スクロール座標の復元がズレるため、選択でスクロールを一切
+// 動かさない。選択に依存する表示（プレビュー帯・スポーンモーダルのヘッダ）はスクロールの外なので、
+// それだけ個別に更新する。復元不能な形なら false を返し、呼び出し側が従来の全再描画にフォールバック。
+function selectPickerInPlace(editor, pickEl, field, value) {
+  const grid = pickEl.closest?.('.formation-custom-picker-grid, .formation-custom-music-grid');
+  if (!grid) return false;
+  for (const sel of grid.querySelectorAll('.is-selected')) sel.classList.remove('is-selected');
+  const card = pickEl.closest('.formation-custom-picker-card, .formation-custom-music-card') || pickEl;
+  card.classList.add('is-selected');
+  const reg = getBuilderState(editor).__pickerReg?.[grid.dataset.pickerKey];
+  if (reg) reg.value = value === '' ? null : value; // 以降の追加ロード／検索で選択状態を正しく反映
+  const state = getBuilderState(editor);
+  if (/^battle\.(backgroundId|enemyCastleId|musicId|bossMusicId)$/.test(field)) {
+    const preview = editor.root?.querySelector?.('.formation-custom-field-preview');
+    if (preview) { preview.outerHTML = renderFieldPreview(state.stage); hydrateThumbs(editor); }
+  } else if (/^spawns\.\d+\.enemyId$/.test(field)) {
+    const head = editor.root?.querySelector?.('.formation-custom-spawn-modal-head');
+    if (head) {
+      head.outerHTML = spawnModalHead(state);
+      const overlay = editor.root?.querySelector?.('.formation-custom-spawn-modal');
+      if (overlay) hydrateModalThumbs(editor, overlay);
+    }
+  }
+  refreshMusicButtons(editor);
+  return true;
 }
 
 // Field preview: real background + player/enemy castle assets composited into one band, with the
@@ -619,8 +722,7 @@ function renderFieldPreview(stage) {
   const hasCastle = b.enemyCastleId != null && b.enemyCastleId !== '';
   const chips = [
     `戦場長 ${b.stageLength}`,
-    `敵城HP ${Number(b.enemyBaseHp).toLocaleString('ja-JP')}`,
-    b.timeLimitFrames ? `制限 ${framesToSeconds(b.timeLimitFrames)}秒` : '制限なし'
+    `敵城HP ${Number(b.enemyBaseHp).toLocaleString('ja-JP')}`
   ];
   const bgmName = musicLabel(b.musicId);
   const bossName = musicLabel(b.bossMusicId);
@@ -665,17 +767,11 @@ function renderBasicTab(stage, state = {}) {
         ${statField('敵城HP', 'battle.enemyBaseHp', b.enemyBaseHp, { min: 1, step: 1000 })}
         ${statField('戦場の長さ', 'battle.stageLength', b.stageLength, { min: 1, step: 100 })}
         ${statField('最大敵数', 'battle.maxEnemyCount', b.maxEnemyCount, { min: 1, step: 1, unit: '体' })}
-        ${statField('時間制限', 'battle.timeLimitSeconds', framesToSeconds(b.timeLimitFrames), { min: 0, step: 5, unit: '秒・0で無制限' })}
       </div>
     </section>
     <section class='formation-custom-edit-section'>
       <h4>オプション</h4>
       ${switchToggle('ボスガード', 'battle.bossGuard', b.bossGuard, { sub: 'ボス出現までノックバックを制限' })}
-      ${switchToggle('コンティニュー不可', 'battle.nonContinue', b.nonContinue, { sub: '敗北時のコンティニューを禁止' })}
-    </section>
-    <section class='formation-custom-edit-section'>
-      <h4>詳細ルール（上級・任意）</h4>
-      ${renderRulesFields(stage)}
     </section>`;
 }
 
@@ -684,7 +780,6 @@ function renderSpawnChips(spawn) {
   if (spawn.conditions.enemyBaseHp.enabled) chips.push(`城HP ${spawn.conditions.enemyBaseHp.minPercent}〜${spawn.conditions.enemyBaseHp.maxPercent}%`);
   if (spawn.conditions.killCount.enabled) chips.push(`${spawn.conditions.killCount.value}体撃破後`);
   if (spawn.conditions.layer.enabled) chips.push(`Layer ${spawn.conditions.layer.min}〜${spawn.conditions.layer.max}`);
-  if (spawn.conditions.groupId) chips.push(`Group ${spawn.conditions.groupId}`);
   return chips.length
     ? `<div class='formation-custom-chip-row'>${chips.map((chip) => `<span class='formation-custom-chip'>${safeHtml(chip)}</span>`).join('')}</div>`
     : `<div class='formation-custom-chip-row'><span class='formation-custom-chip'>常時候補</span></div>`;
@@ -735,11 +830,8 @@ function renderConditionPanel(spawn, index) {
             ${statField('最大', `spawns.${index}.conditions.layer.max`, c.layer.max, { min: 0, step: 1 })}
           </div>
         </section>
-        <section class='formation-custom-condition-card'>
-          ${statField('Group ID', `spawns.${index}.conditions.groupId`, c.groupId, { min: 0, step: 1 })}
-        </section>
       </div>
-      <span class='hint'>score 条件は現ランタイム未対応のため表示しません</span>
+      <span class='hint'>score / group 条件は現ランタイム未対応のため表示しません</span>
     </div>`;
 }
 
@@ -771,7 +863,7 @@ function renderSpawnEditor(s, i, state) {
         ${statField('初回 最小', `spawns.${i}.firstMin`, framesToSeconds(s.firstSpawn.minFrames), { min: 0, step: 1, unit: '秒' })}
         ${statField('初回 最大', `spawns.${i}.firstMax`, framesToSeconds(s.firstSpawn.maxFrames), { min: 0, step: 1, unit: '秒' })}
       </div>
-      ${switchToggle('再出現する', `spawns.${i}.respawn.enabled`, s.respawn.enabled, { sub: '倒すたびに再登場します' })}
+      ${switchToggle('再出現する', `spawns.${i}.respawn.enabled`, s.respawn.enabled, { sub: '前回出現からの間隔です' })}
       ${s.respawn.enabled ? `<div class='formation-custom-stat-grid'>
         ${statField('再出現 最小', `spawns.${i}.respawnMin`, framesToSeconds(s.respawn.minFrames), { min: 0, step: 1, unit: '秒' })}
         ${statField('再出現 最大', `spawns.${i}.respawnMax`, framesToSeconds(s.respawn.maxFrames), { min: 0, step: 1, unit: '秒' })}
@@ -783,7 +875,7 @@ function renderSpawnEditor(s, i, state) {
     </section>
     <section class='formation-custom-edit-section'>
       <h4>詳細条件<button type='button' class='is-ghost' data-custom-spawn-cond='${i}' style='margin-left:auto;min-height:32px;padding:0 14px;font-size:.74rem'>${conditionOpen ? '閉じる' : '開く'}</button></h4>
-      ${conditionOpen ? renderConditionPanel(s, i) : `<span class='hint'>城HP・撃破数・レイヤー・グループで出現タイミングを絞り込めます</span>`}
+      ${conditionOpen ? renderConditionPanel(s, i) : `<span class='hint'>城HP・撃破数・レイヤーで出現タイミングを絞り込めます</span>`}
     </section>
   </div>`;
 }
@@ -811,25 +903,6 @@ function renderEnemyTab(stage, state = {}) {
       <button type='button' class='is-primary' data-custom-spawn-add='1'>＋ 敵を追加</button>
     </div>
     ${rows || `<p class='formation-custom-stage-empty'>敵が未登録です</p>`}`;
-}
-
-// Rule limits, rendered as a lightweight section inside the 基本 tab (they were previously a top-level
-// tab, but only apply when the base stage is custom — an advanced/optional concern, not a core one).
-function renderRulesFields(stage) {
-  const l = stage.limits;
-  const field = (label, key, value, hint) => labeledLine(
-    label,
-    `<input class='formation-custom-input' type='number' inputmode='numeric' data-custom-field='limits.${key}' value='${value == null ? '' : safeHtml(value)}' placeholder='未設定'>`,
-    hint
-  );
-  return `
-    <div class='formation-custom-stat-grid'>
-      ${field('財布上限', 'maxMoney', l.maxMoney, '未設定: 通常ルール')}
-      ${field('最大出撃数', 'maxUnitSpawn', l.maxUnitSpawn, '未設定: 通常ルール')}
-      ${field('全体コスト補正(%)', 'globalCostMultiplier', l.globalCostMultiplier, '未設定: 100%')}
-      ${field('全体再生産補正(%)', 'globalCooldownMultiplier', l.globalCooldownMultiplier, '未設定: 100%')}
-    </div>
-    <p class='formation-custom-warn' style='margin:0'>基準ステージが自作の場合に適用されます。空欄は基準ステージ/通常ルールを使用します。</p>`;
 }
 
 function renderConfirmTab(stage) {
@@ -868,7 +941,6 @@ function renderConfirmTab(stage) {
         <div class='formation-custom-preview-stat'><b>${b.maxEnemyCount}</b><small>最大敵数</small></div>
         <div class='formation-custom-preview-stat'><b>${b.enemyBaseHp}</b><small>敵城HP</small></div>
         <div class='formation-custom-preview-stat'><b>${b.stageLength}</b><small>戦場長</small></div>
-        <div class='formation-custom-preview-stat'><b>${b.timeLimitFrames ? framesToSeconds(b.timeLimitFrames) + 's' : 'なし'}</b><small>時間制限</small></div>
       </div>
       ${timelineRows ? `<div class='formation-custom-timeline'>${timelineRows}</div>` : `<p class='formation-custom-warn'>敵出現が未登録です</p>`}
     </div>
@@ -911,7 +983,7 @@ function hydrateThumbs(editor) {
     editor.__customThumbObserverRoot = root;
     obs = editor.__customThumbObserver = new IntersectionObserver((items, o) => {
       for (const item of items) { if (item.isIntersecting) { o.unobserve(item.target); resolveThumbImg(item.target); } }
-    }, { root, rootMargin: '400px 0px 600px 0px' });
+    }, { root, rootMargin: '150px 0px 250px 0px' });
   }
   for (const img of scope.querySelectorAll('img[data-custom-thumb]')) {
     if (img.dataset.thumbDone === '1' || img.dataset.thumbPending === '1') continue;
@@ -1005,7 +1077,7 @@ function hydrateModalThumbs(editor, overlay) {
   if (typeof IntersectionObserver !== 'undefined') {
     obs = editor.__customModalThumbObserver = new IntersectionObserver((items, o) => {
       for (const item of items) if (item.isIntersecting) { o.unobserve(item.target); resolveThumbImg(item.target); }
-    }, { root: scrollRoot, rootMargin: '400px 0px 600px 0px' });
+    }, { root: scrollRoot, rootMargin: '150px 0px 250px 0px' });
   }
   for (const img of overlay.querySelectorAll('img[data-custom-thumb]')) {
     if (img.dataset.thumbDone === '1' || img.dataset.thumbPending === '1') continue;
@@ -1154,7 +1226,6 @@ function renderBuilderScreen(editor) {
 // ---- field mutation ---------------------------------------------------------
 function setField(stage, field, rawValue) {
   // Frame fields are entered in seconds; convert on write.
-  if (field === 'battle.timeLimitSeconds') { stage.battle.timeLimitFrames = secondsToFrames(rawValue); return; }
   const spawnFrame = field.match(/^spawns\.(\d+)\.(firstMin|firstMax|respawnMin|respawnMax)$/);
   if (spawnFrame) {
     const idx = Number(spawnFrame[1]);
@@ -1176,12 +1247,11 @@ function setField(stage, field, rawValue) {
   }
   const leaf = path[path.length - 1];
   const numericLeaves = new Set(['stageLength', 'enemyBaseHp', 'maxEnemyCount', 'count', 'hpMultiplier', 'attackMultiplier',
-    'enemyId', 'backgroundId', 'enemyCastleId', 'musicId', 'bossMusicId', 'maxMoney', 'maxUnitSpawn', 'globalCostMultiplier', 'globalCooldownMultiplier',
-    'minPercent', 'maxPercent', 'value', 'min', 'max', 'groupId']);
+    'enemyId', 'backgroundId', 'enemyCastleId', 'musicId', 'bossMusicId',
+    'minPercent', 'maxPercent', 'value', 'min', 'max']);
   if (leaf === 'name' || leaf === 'description') target[leaf] = String(rawValue);
   else if (numericLeaves.has(leaf)) {
-    const isLimit = field.startsWith('limits.');
-    const nullable = isLimit || leaf === 'musicId' || leaf === 'bossMusicId';
+    const nullable = leaf === 'musicId' || leaf === 'bossMusicId';
     target[leaf] = rawValue === '' ? (nullable ? null : target[leaf]) : Number(rawValue);
   } else target[leaf] = rawValue;
 }
@@ -1239,6 +1309,11 @@ export function installFormationCustomStageBuilderPatch() {
     if (!this.__customBuilderChangeBound && this.root) {
       this.__customBuilderChangeBound = true;
       this.root.addEventListener('change', (e) => rootChangeHandler(this, e));
+      // scroll doesn't bubble → listen in the capture phase; grow the windowed picker near its bottom.
+      this.root.addEventListener('scroll', (e) => {
+        const scroll = e.target?.closest?.('.formation-custom-picker-scroll');
+        if (scroll) maybeGrowPicker(this, scroll);
+      }, true);
     }
     // Any render that is not the builder screen means we navigated away — never let a preview BGM
     // leak into another screen or into battle.
@@ -1263,7 +1338,8 @@ export function installFormationCustomStageBuilderPatch() {
       if (searchKey != null && this.root?.contains(e.target)) {
         const state = getBuilderState(this);
         state.pickerSearch[searchKey] = e.target.value;
-        refreshActiveEditor(this, searchKey);
+        // Fast path: re-render only this picker's grid; fall back to a full refresh if unavailable.
+        if (!refreshPickerCards(this, searchKey)) refreshActiveEditor(this, searchKey);
         return;
       }
       const field = e.target?.dataset?.customField;
@@ -1323,10 +1399,12 @@ export function installFormationCustomStageBuilderPatch() {
       e.preventDefault();
       e.stopPropagation();
       const field = pick.dataset.customField;
-      setField(getBuilderState(this).stage, field, pick.dataset.customValue ?? '');
+      const value = pick.dataset.customValue ?? '';
+      setField(getBuilderState(this).stage, field, value);
       markDirty(this);
       updateChangedFieldDom(this, field);
-      refreshActiveEditor(this);
+      // Update the highlight in place so the scroll position stays exact; full re-render only as fallback.
+      if (!selectPickerInPlace(this, pick, field, value)) refreshActiveEditor(this);
       return;
     }
 

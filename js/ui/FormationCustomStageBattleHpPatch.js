@@ -74,40 +74,140 @@ function persistExtendedState(editor) {
   globalThis[GLOBAL_CONFIG_KEY] = buildExtendedConfig(baseConfig, state);
 }
 
-function updateButton(button, active, label) {
-  if (!button) return;
-  button.classList.toggle('is-active', !!active);
-  button.textContent = label;
+function safeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+
+const STYLE_ID = 'wanko-custom-stage-hp-settings-style';
+function ensureOverlayStyle() {
+  if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+html body.nyanko-ui-polish .formation-custom-stage-controls [data-action="custom-stage-hp-settings-open"]{position:relative}
+html body.nyanko-ui-polish .formation-custom-stage-controls [data-action="custom-stage-hp-settings-open"] .hpset-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;margin-left:6px;padding:0 5px;border:2px solid #000;border-radius:999px;background:#ff6a19;color:#fff;-webkit-text-fill-color:#fff;font-size:.66rem;font-weight:1000}
+html body.nyanko-ui-polish .hpset-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px}
+html body.nyanko-ui-polish .hpset-backdrop{position:absolute;inset:0;background:rgba(8,12,20,.55)}
+html body.nyanko-ui-polish .hpset-card{position:relative;width:min(460px,100%);max-height:86dvh;display:flex;flex-direction:column;border:3px solid #000;border-radius:14px;background:#fff7dd;box-shadow:0 10px 0 rgba(0,0,0,.35),0 4px 0 #000;overflow:hidden}
+html body.nyanko-ui-polish .hpset-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:3px solid #000;background:linear-gradient(180deg,#fff9d8,#f7d96b)}
+html body.nyanko-ui-polish .hpset-head strong{flex:1 1 auto;font-weight:1000;color:#120700;-webkit-text-fill-color:#120700;font-size:1.02rem}
+html body.nyanko-ui-polish .hpset-x{flex:0 0 auto;min-width:36px;height:36px;border:3px solid #000;border-radius:999px;background:#fff;color:#120700;-webkit-text-fill-color:#120700;font-weight:1000;font-size:1.1rem;cursor:pointer}
+html body.nyanko-ui-polish .hpset-body{padding:12px;overflow:auto;display:grid;gap:14px}
+html body.nyanko-ui-polish .hpset-group{display:grid;gap:8px}
+html body.nyanko-ui-polish .hpset-group>h4{margin:0;font-weight:1000;color:#7a4a12;-webkit-text-fill-color:#7a4a12;font-size:.82rem;letter-spacing:.02em}
+html body.nyanko-ui-polish .hpset-row{width:100%;display:flex;align-items:center;gap:10px;text-align:left;min-height:56px;padding:9px 12px;border:3px solid #000;border-radius:10px;background:#fff;box-shadow:0 3px 0 #000;cursor:pointer}
+html body.nyanko-ui-polish .hpset-row.is-on{background:linear-gradient(180deg,#28c785,#158a5a);color:#fff;-webkit-text-fill-color:#fff}
+html body.nyanko-ui-polish .hpset-row[disabled]{opacity:.45;cursor:not-allowed;box-shadow:0 2px 0 #000}
+html body.nyanko-ui-polish .hpset-row-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+html body.nyanko-ui-polish .hpset-row-title{font-weight:1000;font-size:.9rem}
+html body.nyanko-ui-polish .hpset-row-desc{font-weight:800;font-size:.7rem;opacity:.82}
+html body.nyanko-ui-polish .hpset-row.is-on .hpset-row-desc{color:#eafff5;-webkit-text-fill-color:#eafff5}
+html body.nyanko-ui-polish .hpset-row-state{flex:0 0 auto;min-width:44px;text-align:center;padding:4px 8px;border:2px solid #000;border-radius:999px;background:#ffe25a;color:#160800;-webkit-text-fill-color:#160800;font-weight:1000;font-size:.74rem}
+html body.nyanko-ui-polish .hpset-row.is-on .hpset-row-state{background:#0a4d31;color:#fff;-webkit-text-fill-color:#fff}
+html body.nyanko-ui-polish .hpset-children{display:grid;gap:8px;margin-left:14px;padding-left:12px;border-left:3px dashed rgba(0,0,0,.35)}
+html body.nyanko-ui-polish .hpset-children.is-locked{opacity:.5}
+html body.nyanko-ui-polish .hpset-seg-row{display:grid;gap:8px;padding:10px 12px;border:3px solid #000;border-radius:10px;background:#fff;box-shadow:0 3px 0 #000}
+html body.nyanko-ui-polish .hpset-seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+html body.nyanko-ui-polish .hpset-seg-btn{min-height:44px;padding:0 12px;border:3px solid #000;border-radius:999px;background:#fff;color:#120700;-webkit-text-fill-color:#120700;font-weight:1000;font-size:.82rem;cursor:pointer}
+html body.nyanko-ui-polish .hpset-seg-btn.is-on{background:linear-gradient(180deg,#ff6a19,#f15212 52%,#e14008);color:#fff;-webkit-text-fill-color:#fff}`;
+  document.head.appendChild(style);
+}
+
+function activeSettingCount(state) {
+  return (state.fixedBaseHpEnabled ? 1 : 0) + (state.baseHpDrainEnabled ? 1 : 0) + (state.autoBarrierBreakEnabled ? 1 : 0);
+}
+
+function hpRow(action, active, title, desc, { disabled = false } = {}) {
+  return `<button type="button" data-action="${action}" class="hpset-row ${active ? 'is-on' : ''}" ${disabled ? 'disabled' : ''}>
+    <span class="hpset-row-main"><span class="hpset-row-title">${safeHtml(title)}</span>${desc ? `<span class="hpset-row-desc">${safeHtml(desc)}</span>` : ''}</span>
+    <span class="hpset-row-state">${active ? 'ON' : 'OFF'}</span>
+  </button>`;
+}
+
+// The settings are grouped by what they act on, and the per-frame drain is nested UNDER the fixed-HP
+// row because the runtime only drains when HP is fixed (baseHpDrainEnabled は fixedBaseHpEnabled 依存)。
+function hpSettingsBody(state) {
+  const basePlayer = state.baseSource === 'player';
+  return `
+    <section class="hpset-group">
+      <h4>全体</h4>
+      <div class="hpset-seg-row">
+        <span class="hpset-row-main"><span class="hpset-row-title">背景 / 戦場の長さ</span><span class="hpset-row-desc">どちらの1番目ステージから背景・戦場長を取るか</span></span>
+        <div class="hpset-seg">
+          <button type="button" data-action="custom-stage-base-enemy" class="hpset-seg-btn ${basePlayer ? '' : 'is-on'}">敵側 1番目</button>
+          <button type="button" data-action="custom-stage-base-player" class="hpset-seg-btn ${basePlayer ? 'is-on' : ''}">味方側 1番目</button>
+        </div>
+      </div>
+    </section>
+    <section class="hpset-group">
+      <h4>城HP</h4>
+      ${hpRow('custom-stage-fixed-base-hp', state.fixedBaseHpEnabled, '城HPを1000万に固定', '敵味方とも城の体力を10,000,000に固定します')}
+      <div class="hpset-children ${state.fixedBaseHpEnabled ? '' : 'is-locked'}">
+        ${hpRow('custom-stage-base-hp-drain', state.baseHpDrainEnabled, '毎フレーム 両城HP -100', '固定HPが少しずつ減り、時間切れ決着を作れます', { disabled: !state.fixedBaseHpEnabled })}
+      </div>
+    </section>
+    <section class="hpset-group">
+      <h4>バリア</h4>
+      ${hpRow('custom-stage-auto-barrier-break', state.autoBarrierBreakEnabled, 'オートバリアブレイク', `吸収ダメージが耐久${AUTO_BARRIER_BREAK_MULTIPLIER}倍に達すると自動でバリアを破壊`)}
+    </section>`;
+}
+
+function findPanel(editor) {
+  return editor?.root?.querySelector?.('.formation-custom-stage-battle') || null;
+}
+
+function renderHpSettingsOverlay(editor) {
+  ensureOverlayStyle();
+  const state = ensureHpState(editor);
+  const panel = findPanel(editor);
+  if (!state || !panel) return;
+  let overlay = panel.querySelector(':scope > .hpset-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'hpset-overlay';
+    overlay.dataset.hpsetOverlay = '1';
+    panel.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div class="hpset-backdrop" data-action="custom-stage-hp-settings-close"></div>
+    <div class="hpset-card">
+      <header class="hpset-head">
+        <strong>詳細バトル設定</strong>
+        <button type="button" class="hpset-x" data-action="custom-stage-hp-settings-close" aria-label="閉じる">×</button>
+      </header>
+      <div class="hpset-body">${hpSettingsBody(state)}</div>
+    </div>`;
+}
+
+function refreshHpSettingsOverlay(editor) {
+  const overlay = findPanel(editor)?.querySelector(':scope > .hpset-overlay');
+  if (!overlay) return false;
+  const state = ensureHpState(editor);
+  const body = overlay.querySelector('.hpset-body');
+  if (body) body.innerHTML = hpSettingsBody(state);
+  return true;
+}
+
+function closeHpSettingsOverlay(editor) {
+  findPanel(editor)?.querySelector(':scope > .hpset-overlay')?.remove();
 }
 
 function injectHpControls(editor) {
+  ensureOverlayStyle();
   const state = ensureHpState(editor);
   const root = editor?.root;
   if (!state || !root || editor.stageSelectorState?.level !== 'custom-stage-battle') return;
   const controls = root.querySelector?.('.formation-custom-stage-controls');
   if (!controls) return;
-  if (!controls.querySelector('[data-action="custom-stage-fixed-base-hp"]')) {
-    controls.insertAdjacentHTML('beforeend', `
-      <button type="button" data-action="custom-stage-fixed-base-hp"></button>
-      <button type="button" data-action="custom-stage-base-hp-drain"></button>
-      <button type="button" data-action="custom-stage-auto-barrier-break"></button>
-    `);
+  if (!controls.querySelector('[data-action="custom-stage-hp-settings-open"]')) {
+    controls.insertAdjacentHTML('beforeend', `<button type="button" data-action="custom-stage-hp-settings-open"></button>`);
   }
-  updateButton(
-    controls.querySelector('[data-action="custom-stage-fixed-base-hp"]'),
-    state.fixedBaseHpEnabled,
-    state.fixedBaseHpEnabled ? '城HP: 1000万固定 ON' : '城HP: 1000万固定 OFF'
-  );
-  updateButton(
-    controls.querySelector('[data-action="custom-stage-base-hp-drain"]'),
-    state.baseHpDrainEnabled,
-    state.baseHpDrainEnabled ? '毎FPS: 両城HP -100 ON' : '毎FPS: 両城HP -100 OFF'
-  );
-  updateButton(
-    controls.querySelector('[data-action="custom-stage-auto-barrier-break"]'),
-    state.autoBarrierBreakEnabled,
-    state.autoBarrierBreakEnabled ? `オートバリアブレイク: 耐久${AUTO_BARRIER_BREAK_MULTIPLIER}倍で破壊 ON` : 'オートバリアブレイク OFF'
-  );
+  const trigger = controls.querySelector('[data-action="custom-stage-hp-settings-open"]');
+  if (trigger) {
+    const count = activeSettingCount(state);
+    trigger.classList.toggle('is-active', count > 0);
+    trigger.innerHTML = `⚙ 詳細設定${count ? `<span class="hpset-badge">${count}</span>` : ''}`;
+  }
   const note = root.querySelector?.('.formation-custom-stage-note');
   if (note && state.fixedBaseHpEnabled) {
     const drain = state.baseHpDrainEnabled ? ' / 毎FPS両城HPを100減少' : '';
@@ -137,6 +237,18 @@ export function installFormationCustomStageBattleHpPatch() {
   proto.onClick = async function onClickWithCustomHpPolicy(e) {
     const action = e.target.closest?.('[data-action]');
     const type = action?.dataset?.action;
+    if (type === 'custom-stage-hp-settings-open' && this.root?.contains(action)) {
+      e.preventDefault();
+      e.stopPropagation();
+      renderHpSettingsOverlay(this);
+      return;
+    }
+    if (type === 'custom-stage-hp-settings-close' && this.root?.contains(action)) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeHpSettingsOverlay(this);
+      return;
+    }
     if ((type === 'custom-stage-fixed-base-hp' || type === 'custom-stage-base-hp-drain' || type === 'custom-stage-auto-barrier-break') && this.root?.contains(action)) {
       e.preventDefault();
       e.stopPropagation();
@@ -154,12 +266,15 @@ export function installFormationCustomStageBattleHpPatch() {
       this.stageSelectorState = { level: 'custom-stage-battle', categoryId: null, mapKey: null };
       if (!this.refreshCustomStageBattleView?.({ sides: [] })) this.renderStageSelector();
       injectHpControls(this);
+      refreshHpSettingsOverlay(this);
       return;
     }
     const result = await originalOnClick.call(this, e);
     ensureHpState(this);
     persistExtendedState(this);
     injectHpControls(this);
+    // Base-source (背景/長さの基準) lives in the overlay too; keep it in sync after its handler runs.
+    refreshHpSettingsOverlay(this);
     return result;
   };
 }

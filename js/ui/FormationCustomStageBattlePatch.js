@@ -1,5 +1,8 @@
 import { FormationEditor } from './FormationEditor.js';
 import { popIn, press, pulseAdded } from './UiMotion.mjs';
+import { decodeStageRef } from '../custom-stage/CustomStageSchema.js';
+import { readBattleConfig, writeBattleConfig } from '../custom-stage/CustomStageBattleStore.js';
+import { getCustomStage } from '../custom-stage/CustomStageStore.js';
 
 const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-patch.v4-hide-internal-ids');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
@@ -38,9 +41,7 @@ html body.nyanko-ui-polish .formation-stage-list button,html body.nyanko-ui-poli
 
 function stateFromStorage() {
   try {
-    const raw = globalThis.localStorage?.getItem?.(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
+    const parsed = readBattleConfig();
     if (!parsed || parsed.mode !== 'stage-vs-stage-multi') return null;
     return {
       enabled: !!parsed.enabled,
@@ -97,8 +98,8 @@ function persistState(editor) {
     baseSource: state.baseSource === 'player' ? 'player' : 'enemy',
     updatedAt: Date.now()
   };
-  try { globalThis.localStorage?.setItem?.(STORAGE_KEY, JSON.stringify(payload)); } catch {}
-  globalThis[GLOBAL_CONFIG_KEY] = configFromState(payload);
+  const stored = writeBattleConfig(payload);
+  globalThis[GLOBAL_CONFIG_KEY] = configFromState(stored);
 }
 
 function ensureState(editor) {
@@ -123,6 +124,11 @@ function ensureState(editor) {
 }
 
 function stageName(editor, stageId) {
+  const ref = decodeStageRef(stageId);
+  if (ref?.kind === 'custom') {
+    const custom = getCustomStage(ref.id);
+    return custom?.name || '削除済み自作ステージ';
+  }
   const stage = (editor.stageOptions || []).find((s) => (s.stageKey || s.stageId) === stageId || s.stageId === stageId);
   if (!stage) return stageId;
   const meta = editor.stageMeta?.get?.(stage.stageKey || stage.stageId) || {};
@@ -162,7 +168,12 @@ function addCustomCategoryCard(editor) {
 
 function renderList(editor, side, ids) {
   if (!ids.length) return `<p class='formation-custom-stage-empty'>未登録</p>`;
-  return `<ol class='formation-custom-stage-list'>${ids.map((id, index) => `<li><span><strong>${safeHtml(stageName(editor, id))}</strong></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>はずす</button></li>`).join('')}</ol>`;
+  return `<ol class='formation-custom-stage-list'>${ids.map((id, index) => {
+    const ref = decodeStageRef(id);
+    const kind = ref?.kind === 'custom' ? 'custom' : 'bcu';
+    const badge = kind === 'custom' ? '自作' : 'BCU';
+    return `<li><span><b class='formation-custom-side-badge ${kind}'>${badge}</b><strong>${safeHtml(stageName(editor, id))}</strong></span><button type='button' data-custom-stage-remove-side='${side}' data-custom-stage-remove-index='${index}'>はずす</button></li>`;
+  }).join('')}</ol>`;
 }
 
 function customStageNote(editor, state, config, baseStageId) {
@@ -172,8 +183,9 @@ function customStageNote(editor, state, config, baseStageId) {
 }
 
 function customStageWarning(editor, state, config) {
-  if (!state.enabled || config.valid) return '';
+  if (!state.enabled) return '';
   if (editor.__customStageBattleApplyWarning) return String(editor.__customStageBattleApplyWarning);
+  if (config.valid) return '';
   const missing = [];
   if (!state.enemyStageIds.length) missing.push('敵側');
   if (!state.playerStageIds.length) missing.push('味方側');

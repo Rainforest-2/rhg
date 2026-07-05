@@ -4,7 +4,11 @@ import { StageRuntimeSceneAdapter } from './StageRuntimeSceneAdapter.js';
 import { BcuStageSpawnRuntime } from './BcuStageSpawnRuntime.js';
 import { buildStageEnemyUnitDefs } from './BcuStageEnemyResolver.js';
 import { resolveStageSelection } from './StageRegistry.js';
+import { getBcuAssetDatabase } from '../bcu/BcuAssetDatabase.js';
 import { TEMPLATE_LOAD_LEVEL } from './BattleActorFactory.js';
+import { decodeStageRef } from '../custom-stage/CustomStageSchema.js';
+import { getCustomStage } from '../custom-stage/CustomStageStore.js';
+import { buildCustomStageDefinition, overrideDefinitionCastle } from '../custom-stage/CustomStageAdapter.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.custom-stage-battle-patch.v2-scene-rng');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
@@ -51,6 +55,61 @@ function normalizeConfig(raw = {}) {
 
 function getCustomConfig(scene) {
   return normalizeConfig(scene?.options?.customStageBattle || globalThis[GLOBAL_CONFIG_KEY] || {});
+}
+
+// When the base stage (baseSource's first stage) is a custom stage, the shared battlefield's
+// background / enemy castle / castle HP / stage length / BGM / time limit must all come from that
+// custom stage. The base scene init resolves + loads exactly one stage via this.stageDefinitionLoader;
+// returning a custom StageDefinition for that single load makes the whole base scene adopt the custom
+// stage without any separate battle path. Returns null when the base is a BCU stage (default path).
+// Populate a custom StageDefinition's boss-spawn X the SAME way BCU stages get it
+// (StageDefinitionLoader.enrichBossSpawn → boss-spawns.json keyed by the enemy castle id). Without
+// this a custom-stage boss spawns at the normal enemy front (700) instead of the castle's authored
+// boss-spawn X, and its knockback limit (getActorLimit reads bossSpawnWorldX via bcuBossSpawnOffset)
+// lets it be pushed behind the castle. Best-effort: if the provider/record is missing the boss just
+// falls back to the enemy spawn X, exactly as before.
+async function enrichCustomBossSpawn(definition, loader) {
+  if (!definition || typeof loader?.enrichBossSpawn !== 'function') return definition;
+  try {
+    const provider = getBcuAssetDatabase()?.semanticProvider || null;
+    if (provider) await loader.enrichBossSpawn(definition, provider);
+  } catch { /* boss-spawn enrichment is best-effort */ }
+  return definition;
+}
+
+function resolveCustomBaseDefinition(config) {
+  if (!config?.enabled || !config.baseStageId) return null;
+  const ref = decodeStageRef(config.baseStageId);
+  if (ref?.kind !== 'custom') return null;
+  const stage = getCustomStage(ref.id);
+  if (!stage) {
+    const error = new Error(`custom-stage-battle base custom stage deleted: ${ref.id}`);
+    error.customStageBattleReason = 'base-custom-stage-deleted';
+    throw error;
+  }
+  return buildCustomStageDefinition(stage);
+}
+
+// Resolve the enemy-side first stage's castle fields (the castle the player attacks, on the right).
+// Custom enemy stages read directly; BCU enemy stages load their StageDefinition to read castleId.
+// Returns null when nothing resolvable so the base castle is left untouched.
+async function resolveEnemySideCastleFields(config, log) {
+  const ref = decodeStageRef(config?.enemyStageIds?.[0]);
+  if (!ref) return null;
+  if (ref.kind === 'custom') {
+    const stage = getCustomStage(ref.id);
+    const b = stage?.battle;
+    if (b == null || b.enemyCastleId == null) return null;
+    return { castleId: b.enemyCastleId, animBaseId: b.enemyCastleAnimBaseId ?? b.enemyCastleId, cannonId: b.enemyCastleCannonId ?? null };
+  }
+  try {
+    const stageConfig = resolveStageSelection({ preferredStageId: ref.id });
+    if (!stageConfig) return null;
+    const def = await new StageDefinitionLoader(log).load(stageConfig);
+    const castleId = def?.castleId ?? def?.runtime?.castleId ?? def?.castle?.castleId ?? null;
+    if (castleId == null) return null;
+    return { castleId, animBaseId: def?.animBaseId ?? def?.runtime?.animBaseId ?? castleId, cannonId: def?.cannonId ?? def?.runtime?.cannonId ?? null };
+  } catch { return null; }
 }
 
 function sideOpponent(side) {
@@ -105,9 +164,28 @@ function cloneUnitDefForSide(unitDef, { side, stageKey, stageIndex }) {
 }
 
 async function loadStageState(scene, loader, stageId, side, stageIndex) {
-  const stageConfig = resolveStageSelection({ preferredStageId: stageId });
-  if (!stageConfig) throw new Error(`custom-stage-battle stage not found: ${stageId}`);
-  const definition = await loader.load(stageConfig);
+  // stageId is an ENCODED stage ref: a bare BCU id, or `custom:<id>` for a user-authored stage.
+  // BCU refs keep the original StageDefinitionLoader path; custom refs are turned into the same
+  // normalized StageDefinition by CustomStageAdapter so they flow through the identical runtime.
+  const ref = decodeStageRef(stageId);
+  let definition;
+  let resolvedStageKey;
+  let resolvedStageId;
+  let stageConfig = null;
+  if (ref?.kind === 'custom') {
+    const customStage = getCustomStage(ref.id);
+    if (!customStage) throw new Error(`custom-stage-battle custom stage deleted: ${ref.id}`);
+    definition = buildCustomStageDefinition(customStage);
+    await enrichCustomBossSpawn(definition, loader);
+    resolvedStageKey = `custom:${ref.id}`;
+    resolvedStageId = resolvedStageKey;
+  } else {
+    stageConfig = resolveStageSelection({ preferredStageId: ref?.id ?? stageId });
+    if (!stageConfig) throw new Error(`custom-stage-battle stage not found: ${stageId}`);
+    definition = await loader.load(stageConfig);
+    resolvedStageKey = stageConfig.stageKey || stageConfig.stageId || ref?.id || stageId;
+    resolvedStageId = ref?.id ?? stageId;
+  }
   const runtime = StageRuntimeSceneAdapter.build(scene, definition, {
     applyStageDefinition: scene.stage?.applyStageDefinition || {},
     groundY: scene.groundY,
@@ -115,7 +193,7 @@ async function loadStageState(scene, loader, stageId, side, stageIndex) {
   });
   const unitDefs = buildStageEnemyUnitDefs(runtime).map((unitDef) => cloneUnitDefForSide(unitDef, {
     side,
-    stageKey: stageConfig.stageKey || stageConfig.stageId || stageId,
+    stageKey: resolvedStageKey,
     stageIndex
   }));
   // Preload this stage's enemy templates concurrently instead of one-by-one. Each unitDef
@@ -140,8 +218,9 @@ async function loadStageState(scene, loader, stageId, side, stageIndex) {
   return {
     side,
     sideKey: sideKey(side),
-    stageId,
-    stageKey: stageConfig.stageKey || stageConfig.stageId || stageId,
+    stageId: resolvedStageId,
+    stageKey: resolvedStageKey,
+    stageRefKind: ref?.kind || 'bcu',
     stageConfig,
     definition,
     runtime,
@@ -188,13 +267,19 @@ function spawnCustomStageUnit(scene, stageState, event) {
     spawnWorldX: null,
     stageRuntime: scene.stage?.runtime || null
   });
+  const isBoss = !!(row.bossFlag || event.bossFlag);
   const actor = scene.spawnActor(unitDef, stageState.side, false, {
     x: spawnX,
-    row: event,
+    // Carry bossFlag so BcuKnockbackRuntimePatch.spawnActor sets bcuBossSpawnOffset from
+    // bossSpawnWorldX — this is what caps a boss's knockback so it cannot be pushed behind the
+    // castle (by HP knockback, wave, or shockwave), matching BCU EEnemy.getLim().
+    row: { ...event, bossFlag: isBoss ? 1 : 0 },
     currentLayer: Number.isFinite(event.layerMin) ? event.layerMin : Number.isFinite(row.layerMin) ? row.layerMin : 0,
     bcuRenderLayerSource: 'custom-stage-battle-stage-row'
   });
   if (!actor) return false;
+  // Boss-appearance arms the custom stage's boss BGM (Battle Cats boss-appearance trigger).
+  if (isBoss && stageState.side === 'cat-enemy') scene.customStageBossAppeared = true;
   actor.customStageBattle = true;
   actor.customStageBattleSide = stageState.side;
   actor.customStageBattleStageId = stageState.stageId;
@@ -460,11 +545,44 @@ export function installBattleSceneCustomStageBattlePatch() {
       // BcuStageSpawnRuntime it builds does NOT draw from the scene CopRand (its draws would shift
       // the seeded stream that this patch's own per-side spawn runtimes consume).
       this.__customStageBattleWillOverride = config.enabled === true;
+      // If the base stage is a custom stage, serve its StageDefinition for the base scene's single
+      // stage load so background/castle/HP/length/BGM come from the custom stage. Only the FIRST
+      // load call (the base stage) is intercepted; every per-side stage in initializeCustomStageBattle
+      // uses a separate StageDefinitionLoader instance and is unaffected.
+      // Reset per-battle music flags. customStageBaseIsCustom tells the BGM patch to arm the boss
+      // track by boss-appearance (custom stages have no BCU HP "mush" threshold); customStageBossAppeared
+      // is set once a boss enemy spawns.
+      const customBaseDefinition = resolveCustomBaseDefinition(config);
+      this.customStageBaseIsCustom = !!customBaseDefinition;
+      this.customStageBossAppeared = false;
+      // Enrich the custom base stage's boss-spawn X so its boss spawns at the castle boss-spawn
+      // point and its knockback is capped (see enrichCustomBossSpawn). Uses the base loader.
+      if (customBaseDefinition) await enrichCustomBossSpawn(customBaseDefinition, this.stageDefinitionLoader);
+      // When the visual base is the PLAYER side, the enemy castle (right side) must still come from the
+      // ENEMY side — otherwise a player-side base stage would wrongly paint its castle as the enemy's.
+      const enemyCastleOverride = (config.enabled && config.baseSource === 'player')
+        ? await resolveEnemySideCastleFields(config, this.log)
+        : null;
+      const originalLoad = this.stageDefinitionLoader?.load;
+      const interceptFirstLoad = (customBaseDefinition || enemyCastleOverride) && typeof originalLoad === 'function';
+      if (interceptFirstLoad) {
+        let served = false;
+        this.stageDefinitionLoader.load = async (...loadArgs) => {
+          if (served) return originalLoad.apply(this.stageDefinitionLoader, loadArgs);
+          served = true;
+          let def = customBaseDefinition || await originalLoad.apply(this.stageDefinitionLoader, loadArgs);
+          if (enemyCastleOverride) def = overrideDefinitionCastle(def, enemyCastleOverride);
+          return def;
+        };
+      }
       try {
         const result = await originalInit.call(this, initOptions, ...rest);
         await initializeCustomStageBattle(this);
         return result;
       } finally {
+        if (interceptFirstLoad) {
+          this.stageDefinitionLoader.load = originalLoad;
+        }
         this.__customStageBattleWillOverride = false;
         this.__customStageProgress = null;
       }

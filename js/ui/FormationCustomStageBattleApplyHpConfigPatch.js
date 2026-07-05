@@ -1,4 +1,6 @@
 import { FormationEditor } from './FormationEditor.js';
+import { migrateBattleConfig, writeBattleConfig } from '../custom-stage/CustomStageBattleStore.js';
+import { validateBattleLaunch } from '../custom-stage/CustomStageReferenceResolver.js';
 
 const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-battle-apply-hp-config.v1');
 const GLOBAL_CONFIG_KEY = '__CUSTOM_STAGE_BATTLE_CONFIG__';
@@ -8,6 +10,14 @@ const DRAIN_PER_FRAME = 100;
 
 function uniqueList(values) {
   return [...new Set((values || []).filter(Boolean).map(String))];
+}
+
+function resolveBcuFromEditor(editor, id) {
+  const needle = String(id);
+  return (editor?.stageOptions || []).find((stage) => {
+    const key = stage?.stageKey || stage?.stageId;
+    return String(key) === needle || String(stage?.stageId) === needle;
+  }) || null;
 }
 
 function storedHpOptions() {
@@ -60,15 +70,32 @@ function persistExtendedConfig(editor, config) {
     autoBarrierBreakMultiplier: Number(config.autoBarrierBreakMultiplier) || undefined,
     updatedAt: Date.now()
   };
-  try { globalThis.localStorage?.setItem?.(STORAGE_KEY, JSON.stringify(payload)); } catch {}
-  globalThis[GLOBAL_CONFIG_KEY] = config;
+  const stored = writeBattleConfig(payload);
+  globalThis[GLOBAL_CONFIG_KEY] = {
+    ...stored,
+    ...config,
+    enemyStages: stored.enemyStages,
+    playerStages: stored.playerStages,
+    enemyStageIds: stored.enemyStageIds,
+    playerStageIds: stored.playerStageIds
+  };
 }
 
-function invalidCustomStageMessage(config = {}) {
+function invalidCustomStageMessage(config = {}, launch = null) {
+  if (launch?.errors?.length) return launch.errors.map((e) => e.message).join(' / ');
   const missing = [];
   if (!uniqueList(config.enemyStageIds).length) missing.push('敵側');
   if (!uniqueList(config.playerStageIds).length) missing.push('味方側');
   return `カスタムステージON: ${missing.join('と') || '敵側と味方側'}にステージを登録してください`;
+}
+
+function showCustomStageApplyWarning(editor, message) {
+  editor.__customStageBattleApplyWarning = message;
+  editor.setHint?.(message);
+  editor.stageOverlayOpen = true;
+  editor.stageSelectorState = { level: 'custom-stage-battle', categoryId: null, mapKey: null };
+  editor.renderStageSelector?.();
+  editor.root?.querySelector?.('.formation-custom-stage-alert')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
 }
 
 export function installFormationCustomStageBattleApplyHpConfigPatch() {
@@ -85,16 +112,12 @@ export function installFormationCustomStageBattleApplyHpConfigPatch() {
         ? this.getCustomStageBattleConfig()
         : globalThis[GLOBAL_CONFIG_KEY];
       const config = extendConfig(this, baseConfig || {});
-      if (config.requestedEnabled && !config.valid) {
+      const migrated = migrateBattleConfig(config);
+      const launch = validateBattleLaunch(migrated, { resolveBcu: (id) => resolveBcuFromEditor(this, id) });
+      if (config.requestedEnabled && (!config.valid || !launch.ok)) {
         e.preventDefault();
         e.stopPropagation();
-        const message = invalidCustomStageMessage(config);
-        this.__customStageBattleApplyWarning = message;
-        this.setHint?.(message);
-        this.stageOverlayOpen = true;
-        this.stageSelectorState = { level: 'custom-stage-battle', categoryId: null, mapKey: null };
-        this.renderStageSelector?.();
-        this.root?.querySelector?.('.formation-custom-stage-alert')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+        showCustomStageApplyWarning(this, invalidCustomStageMessage(config, launch));
         return;
       }
       if (config.enabled && config.baseStageId) {

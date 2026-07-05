@@ -353,6 +353,10 @@ function ensureStageScrollGestureGuard(editor, list) {
   // innerHTML re-render while a finger is down and flush it on release.
   const releaseStageTouchHold = () => {
     editor.__stageListTouchActive = false;
+    if (editor.stageSelectorState?.level === 'custom-stage-builder') {
+      editor.__stageSelectorRenderPending = false;
+      return;
+    }
     if (editor.__stageSelectorRenderPending) {
       editor.__stageSelectorRenderPending = false;
       editor.renderStageSelector();
@@ -438,7 +442,7 @@ if (!FormationEditor.prototype.__nyankoPerformancePatched) {
   FormationEditor.prototype.onScroll = function patchedOnScroll(event) {
     const stageList = event?.target?.closest?.('.formation-stage-list');
     if (stageList && this.root?.contains(stageList)) {
-      if (this.stageSelectorState?.level === 'custom-stage-battle') return;
+      if (this.stageSelectorState?.level === 'custom-stage-battle' || this.stageSelectorState?.level === 'custom-stage-builder') return;
       // Remember where the current map/stage view is scrolled so returning to it restores
       // the position. Gate on level so scrolling the (stale-keyed) category list cannot
       // overwrite a saved map/stage position.

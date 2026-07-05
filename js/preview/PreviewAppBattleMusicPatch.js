@@ -32,14 +32,21 @@ function stageMusicSpec(app) {
   const rt = app.battleScene?.stage?.runtime || null;
   if (!rt) return null;
   const startId = Number.isFinite(rt.musicId) ? rt.musicId : null;
-  if (startId == null) return null;
   const bossId = Number.isFinite(rt.bossMusicId) ? rt.bossMusicId : null;
   const threshold = Number.isFinite(rt.bossMusicHpThresholdPercent) ? rt.bossMusicHpThresholdPercent : 100;
+  // A custom stage authors ONLY a normal BGM + a boss BGM and marks boss enemies; it has no
+  // BCU castle-HP "mush" threshold. There the boss track arms when a boss enemy appears (the
+  // Battle Cats boss-appearance trigger), so bypass the HP-threshold gate below.
+  const bossByAppearance = app.battleScene?.customStageBaseIsCustom === true;
   // BCU never arms a boss track for threshold 0/100 (DefStageInfo only stores
   // mush/mus1 when data[3] != 0 && data[3] != 100; BattleView.aboveBoss repeats
   // the same exclusion) or when both ids match (SoundHandler.twoMusic).
-  const bossEnabled = bossId != null && bossId !== startId && threshold !== 0 && threshold !== 100;
-  return { startId, bossId: bossEnabled ? bossId : null, threshold };
+  const bossEnabled = bossId != null && bossId !== startId
+    && (bossByAppearance || (threshold !== 0 && threshold !== 100));
+  // startId == null means "silent battle" (custom stage with no BGM authored). We still return a
+  // spec (with startId null) so the battle registers and the formation BGM is stopped, instead of
+  // leaking into the fight.
+  return { startId, bossId: bossEnabled ? bossId : null, threshold, bossByAppearance, silent: startId == null };
 }
 
 function enemyBaseHpPercent(app) {
@@ -53,21 +60,29 @@ function battleInstanceKey(app) {
   return app.battleScene || null;
 }
 
+// Should the boss track be playing now? Custom stages arm it on boss-enemy appearance; BCU
+// stages arm it on int-truncated enemy-base HP% strictly below mush (BCU BattleView.aboveBoss).
+function bossArmed(app, spec) {
+  if (spec.bossId == null) return false;
+  if (spec.bossByAppearance) return app.battleScene?.customStageBossAppeared === true;
+  return Math.trunc(enemyBaseHpPercent(app)) < spec.threshold;
+}
+
 function startBattleMusic(app) {
   const spec = stageMusicSpec(app);
   if (!spec) return;
-  const pct = enemyBaseHpPercent(app);
-  // BCU BattleView switches on int-truncated HP% strictly below mush.
-  const onBoss = spec.bossId != null && Math.trunc(pct) < spec.threshold;
-  const initialId = onBoss ? spec.bossId : spec.startId;
-  app.__battleMusic = { ...spec, onBoss, instance: battleInstanceKey(app) };
-  audioEngine.playBgm(initialId).catch(() => {});
+  app.__battleMusic = { ...spec, onBoss: false, instance: battleInstanceKey(app) };
+  // A silent stage (no authored BGM) must not let the formation BGM bleed into the battle.
+  if (spec.silent) { audioEngine.stopBgm(); return; }
+  const onBoss = bossArmed(app, spec);
+  app.__battleMusic.onBoss = onBoss;
+  audioEngine.playBgm(onBoss ? spec.bossId : spec.startId).catch(() => {});
 }
 
 function updateBattleMusic(app) {
   const m = app.__battleMusic;
-  if (!m || m.onBoss || m.bossId == null) return;
-  if (Math.trunc(enemyBaseHpPercent(app)) < m.threshold) {
+  if (!m || m.onBoss || m.bossId == null || m.silent) return;
+  if (bossArmed(app, m)) {
     m.onBoss = true;
     audioEngine.playBgm(m.bossId).catch(() => {});
   }

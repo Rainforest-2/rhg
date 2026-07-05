@@ -169,11 +169,14 @@ html body.nyanko-ui-polish .formation-custom-status{font-weight:1000}
 html body.nyanko-ui-polish .formation-custom-status.dirty{color:#b06a00}
 html body.nyanko-ui-polish .formation-custom-status.saved{color:#2f8a00}
 html body.nyanko-ui-polish .formation-custom-builder-screen{height:100%;min-height:0;overflow:hidden}
-html body.nyanko-ui-polish .formation-custom-builder-screen>header{position:sticky;top:0;z-index:2;padding:9px;border:3px solid #000;border-radius:10px;background:linear-gradient(180deg,#fff9d8,#f7d96b);box-shadow:0 3px 0 #000}
+html body.nyanko-ui-polish .formation-custom-builder-screen>header{position:sticky;top:0;z-index:2;padding:9px;border:3px solid #000;border-radius:10px;background:linear-gradient(180deg,#fff9d8,#f7d96b);box-shadow:0 3px 0 #000;display:flex;align-items:center;gap:8px}
+html body.nyanko-ui-polish .formation-custom-builder-screen>header>button{flex:0 0 auto}
+html body.nyanko-ui-polish .formation-custom-builder-heading{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
+html body.nyanko-ui-polish .formation-custom-builder-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:1000;color:#120700;-webkit-text-fill-color:#120700;font-size:.95rem;line-height:1.1}
 html body.nyanko-ui-polish .formation-custom-builder-body{flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 4px 4px 0}
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{flex:0 0 auto;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px;border:3px solid #000;border-radius:10px;background:#fff8d6;box-shadow:0 3px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions button{min-width:0;min-height:34px!important;padding:0 8px!important;font-size:.76rem!important;white-space:normal;line-height:1.05}
-html body.nyanko-ui-polish .formation-custom-builder-tabs{position:sticky;top:62px;z-index:2;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));padding:7px;border:3px solid #000;border-radius:10px;background:#17100b;box-shadow:0 3px 0 #000}
+html body.nyanko-ui-polish .formation-custom-builder-tabs{position:sticky;top:62px;z-index:2;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));padding:7px;border:3px solid #000;border-radius:10px;background:#17100b;box-shadow:0 3px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-tabs button{min-height:36px;border-color:#000;background:#fff8d6;color:#1b1005;-webkit-text-fill-color:#1b1005;box-shadow:0 2px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-tabs button.is-active{background:linear-gradient(180deg,#27a9e1,#127cc6 60%,#0b5598);color:#fff;-webkit-text-fill-color:#fff}
 html body.nyanko-ui-polish .formation-custom-field{border-radius:8px;background:linear-gradient(180deg,#fffdf4,#fff1bd);box-shadow:0 3px 0 #000,inset 0 1px 0 rgba(255,255,255,.8)}
@@ -286,7 +289,95 @@ html body.nyanko-ui-polish .formation-custom-switch input:checked+.track::after{
 html body.nyanko-ui-polish .formation-custom-switch.is-boss input:checked+.track{background:linear-gradient(180deg,#ff7a24,#e14008)}
 html body.nyanko-ui-polish .formation-custom-switch-label{flex:1 1 auto;min-width:0;display:grid;gap:1px}
 html body.nyanko-ui-polish .formation-custom-switch-sub{font-size:.66rem;font-weight:900;color:#7a4a12;-webkit-text-fill-color:#7a4a12}
-@media(max-width:680px){html body.nyanko-ui-polish .formation-custom-spawn-modal{padding:0;align-items:flex-end}html body.nyanko-ui-polish .formation-custom-spawn-modal-card{width:100%;max-height:92vh;border-radius:18px 18px 0 0}html body.nyanko-ui-polish .formation-custom-builder-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-builder-actions button{flex:1 1 46%}html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-timeline-row{grid-template-columns:54px minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-condition-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-condition-card .formation-custom-stat-grid{grid-template-columns:1fr}}`;
+html body.nyanko-ui-polish .formation-custom-line{display:grid;gap:5px;min-width:0}
+html body.nyanko-ui-polish .formation-custom-line>.lbl{font-size:.78rem;font-weight:1000;color:#54310f;-webkit-text-fill-color:#54310f}
+html body.nyanko-ui-polish .formation-custom-builder button.is-danger{background:linear-gradient(180deg,#ff7264,#e5372a 60%,#c31d12);color:#fff;-webkit-text-fill-color:#fff}
+html body.nyanko-ui-polish .formation-custom-stage-tile{gap:8px}
+html body.nyanko-ui-polish .formation-custom-stage-tile .tile-main{display:grid;gap:5px;padding:6px;margin:-4px -4px 0;border-radius:10px;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
+html body.nyanko-ui-polish .formation-custom-stage-tile .tile-main:hover{background:#fff4c9}
+html body.nyanko-ui-polish .formation-custom-stage-tile .tile-main:active{transform:translateY(1px)}
+html body.nyanko-ui-polish .formation-custom-stage-tile .tile-main strong{padding-right:52px}
+html body.nyanko-ui-polish .formation-custom-stage-tile .tile-edit-hint{position:absolute;top:4px;right:4px;padding:1px 8px;border:2px solid #0b5598;border-radius:999px;background:#e6f3ff;font-size:.66rem;font-weight:1000;color:#0b5598;-webkit-text-fill-color:#0b5598}
+html body.nyanko-ui-polish .formation-custom-stage-tile .row.is-deploy{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+html body.nyanko-ui-polish .formation-custom-stage-tile .row.is-deploy button{width:100%}
+html body.nyanko-ui-polish .formation-custom-stage-tile .row button.is-added{background:#e4f6ea;color:#1c6b3f;-webkit-text-fill-color:#1c6b3f;box-shadow:0 2px 0 #0a5a2f}
+@media(max-width:680px) and (orientation:portrait){
+html body.nyanko-ui-polish .formation-custom-spawn-modal{padding:0;align-items:stretch}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-card{width:100%;height:100dvh;max-height:100dvh;border-radius:0;border-left:0;border-right:0}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-head{gap:7px;padding:7px 8px;border-bottom-width:2px}
+html body.nyanko-ui-polish .formation-custom-modal-icon{width:36px!important;height:36px!important;border-radius:8px!important}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-title strong{font-size:.88rem}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-title small{font-size:.62rem}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-x{min-width:36px!important;width:36px;min-height:36px!important;font-size:1rem!important}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-body{padding:8px}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-foot{gap:6px;padding:7px 8px;border-top-width:2px}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-foot button{min-height:38px!important}
+html body.nyanko-ui-polish .formation-custom-edit{gap:8px}
+html body.nyanko-ui-polish .formation-custom-edit-section{gap:7px;padding:8px;border-radius:10px}
+html body.nyanko-ui-polish .formation-custom-edit-section>h4{min-height:28px;font-size:.74rem;line-height:1.1}
+html body.nyanko-ui-polish .formation-custom-edit-section>h4 button{min-width:64px!important;min-height:28px!important;padding:0 9px!important;font-size:.66rem!important}
+html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:minmax(0,1fr);gap:7px}
+html body.nyanko-ui-polish .formation-custom-stat{gap:5px;padding:7px;border-radius:9px}
+html body.nyanko-ui-polish .formation-custom-stepper{display:grid;grid-template-columns:38px minmax(0,1fr) 38px auto;gap:4px;align-items:stretch}
+html body.nyanko-ui-polish .formation-custom-stepper button{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;font-size:1rem!important}
+html body.nyanko-ui-polish .formation-custom-stepper input{min-height:38px;border-width:2px;border-radius:8px;font-size:.92rem}
+html body.nyanko-ui-polish .formation-custom-stepper .hint{font-size:.62rem;line-height:1}
+html body.nyanko-ui-polish .formation-custom-switch{min-height:40px;padding:5px 8px;gap:8px;border-radius:9px}
+html body.nyanko-ui-polish .formation-custom-switch-sub{font-size:.58rem;line-height:1.1}
+html body.nyanko-ui-polish .formation-custom-picker-head{grid-template-columns:minmax(0,1fr) auto;gap:6px}
+html body.nyanko-ui-polish .formation-custom-picker-search{min-height:32px;border-width:2px}
+html body.nyanko-ui-polish .formation-custom-picker-scroll{max-height:38dvh;padding:5px}
+html body.nyanko-ui-polish .formation-custom-picker-grid,html body.nyanko-ui-polish .formation-custom-picker-grid.is-compact{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:5px}
+html body.nyanko-ui-polish .formation-custom-picker-card{min-height:50px!important;padding:5px!important;border-width:2px!important}
+html body.nyanko-ui-polish .formation-custom-picker-card strong{font-size:.68rem}
+html body.nyanko-ui-polish .formation-custom-picker-card small{font-size:.56rem}
+}
+@media(orientation:landscape) and (max-height:520px) and (max-width:980px){
+html body.nyanko-ui-polish .formation-custom-builder-screen{gap:5px}
+html body.nyanko-ui-polish .formation-custom-builder-screen>header{position:static;display:grid!important;grid-template-columns:minmax(88px,1fr) auto minmax(58px,.7fr);gap:5px!important;align-items:center!important;padding:4px 5px!important;border-width:2px;border-radius:9px;box-shadow:0 2px 0 #000}
+html body.nyanko-ui-polish .formation-custom-builder-screen>header button{min-width:0!important;min-height:26px!important;padding:0 8px!important;border-width:2px!important;font-size:.58rem!important;line-height:1!important;box-shadow:0 2px 0 #000!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html body.nyanko-ui-polish .formation-custom-status{font-size:.58rem;line-height:1;text-align:center;white-space:nowrap}
+html body.nyanko-ui-polish .formation-custom-builder-tabs{position:static;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-width:2px;border-radius:9px;box-shadow:0 2px 0 #000}
+html body.nyanko-ui-polish .formation-custom-builder-tabs button{min-height:26px!important;padding:0 4px!important;border-width:2px!important;font-size:.56rem!important;line-height:1!important;box-shadow:0 1px 0 #000!important}
+html body.nyanko-ui-polish .formation-custom-builder-body{gap:6px;padding:0 2px 2px 0}
+html body.nyanko-ui-polish .formation-custom-field{gap:5px;padding:6px;border-width:2px;box-shadow:0 2px 0 #000}
+html body.nyanko-ui-polish .formation-custom-field>label{font-size:.64rem;line-height:1.05}
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;border-width:2px;border-radius:9px;box-shadow:0 2px 0 #000}
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions button{min-height:25px!important;padding:0 4px!important;border-width:2px!important;font-size:.52rem!important;line-height:1!important;box-shadow:0 1px 0 #000!important}
+html body.nyanko-ui-polish .formation-custom-picker-scroll{max-height:128px;padding:4px}
+html body.nyanko-ui-polish .formation-custom-picker-grid,html body.nyanko-ui-polish .formation-custom-picker-grid.is-compact{grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:4px}
+html body.nyanko-ui-polish .formation-custom-picker-card{min-height:48px!important;padding:5px!important}
+html body.nyanko-ui-polish .formation-custom-spawn-modal{padding:4px}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-card{max-height:calc(100dvh - 8px);width:min(620px,100%);border-radius:10px;box-shadow:0 4px 0 #000,0 12px 28px rgba(0,0,0,.38)}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-head{gap:6px;padding:5px 7px;border-bottom-width:2px}
+html body.nyanko-ui-polish .formation-custom-modal-icon{width:32px!important;height:32px!important;border-radius:8px!important}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-title strong{font-size:.74rem}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-title small{font-size:.54rem}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-x{min-width:30px!important;width:30px;min-height:30px!important;font-size:.9rem!important}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-body{padding:6px}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-foot{padding:5px 7px;border-top-width:2px}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-foot button{min-height:28px!important}
+html body.nyanko-ui-polish .formation-custom-edit{gap:6px}
+html body.nyanko-ui-polish .formation-custom-edit-section{gap:6px;padding:7px;border-radius:9px}
+html body.nyanko-ui-polish .formation-custom-edit-section>h4{font-size:.68rem;min-height:24px}
+html body.nyanko-ui-polish .formation-custom-edit-section>h4 button{min-height:24px!important;padding:0 8px!important;font-size:.58rem!important}
+html body.nyanko-ui-polish .formation-custom-stat-grid{grid-template-columns:repeat(auto-fit,minmax(98px,1fr));gap:6px}
+html body.nyanko-ui-polish .formation-custom-stepper{gap:4px}
+html body.nyanko-ui-polish .formation-custom-stepper button{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;font-size:.9rem!important}
+html body.nyanko-ui-polish .formation-custom-stepper input{min-height:32px;border-width:2px;font-size:.78rem}
+html body.nyanko-ui-polish .formation-custom-stepper .hint{font-size:.56rem}
+}
+@media(orientation:landscape) and (max-height:390px) and (max-width:900px){
+html body.nyanko-ui-polish .formation-custom-builder-screen{gap:4px}
+html body.nyanko-ui-polish .formation-custom-builder-screen>header{padding:3px 4px!important}
+html body.nyanko-ui-polish .formation-custom-builder-screen>header button{min-height:23px!important;font-size:.52rem!important;padding:0 6px!important}
+html body.nyanko-ui-polish .formation-custom-builder-tabs{padding:3px;gap:3px}
+html body.nyanko-ui-polish .formation-custom-builder-tabs button{min-height:23px!important;font-size:.5rem!important}
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{padding:3px;gap:3px}
+html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions button{min-height:22px!important;font-size:.46rem!important}
+html body.nyanko-ui-polish .formation-custom-picker-scroll{max-height:104px}
+}
+@media(max-width:680px) and (orientation:portrait){html body.nyanko-ui-polish .formation-custom-builder-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-builder-actions button{flex:1 1 46%}html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-timeline-row{grid-template-columns:54px minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-condition-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-condition-card .formation-custom-stat-grid{grid-template-columns:1fr}}`;
   document.head.appendChild(style);
 }
 
@@ -392,22 +483,28 @@ function renderCustomStageSection(editor) {
   const enemyCustom = new Set(enemy.filter((r) => r.kind === 'custom').map((r) => r.id));
   const playerCustom = new Set(player.filter((r) => r.kind === 'custom').map((r) => r.id));
 
-  const cards = stages.length ? stages.map((s) => `
+  const cards = stages.length ? stages.map((s) => {
+    const onEnemy = enemyCustom.has(s.id);
+    const onPlayer = playerCustom.has(s.id);
+    return `
     <div class='formation-custom-stage-tile' data-custom-stage-id='${safeHtml(s.id)}'>
-      <strong>${safeHtml(s.name)}</strong>
-      <span class='meta'>${safeHtml(stageThumbSummary(s))}</span>
-      <span class='meta'>敵 ${s.spawns.length} 種 / ${safeHtml(formatDate(s.updatedAt))}</span>
-      <div class='row'>
-        <button type='button' class='is-primary' data-custom-builder-add-enemy='${safeHtml(s.id)}'>${enemyCustom.has(s.id) ? '敵側 追加済' : '敵側に追加'}</button>
-        <button type='button' class='is-primary' data-custom-builder-add-player='${safeHtml(s.id)}'>${playerCustom.has(s.id) ? '味方側 追加済' : '味方側に追加'}</button>
+      <div class='tile-main' data-custom-builder-edit='${safeHtml(s.id)}' role='button' tabindex='0'>
+        <span class='tile-edit-hint'>✎ 編集</span>
+        <strong>${safeHtml(s.name)}</strong>
+        <span class='meta'>${safeHtml(stageThumbSummary(s))}</span>
+        <span class='meta'>敵 ${s.spawns.length} 種 / ${safeHtml(formatDate(s.updatedAt))}</span>
+      </div>
+      <div class='row is-deploy'>
+        <button type='button' class='${onEnemy ? 'is-added' : 'is-primary'}' data-custom-builder-add-enemy='${safeHtml(s.id)}'>${onEnemy ? '✓ 敵側 追加済' : '敵側に追加'}</button>
+        <button type='button' class='${onPlayer ? 'is-added' : 'is-primary'}' data-custom-builder-add-player='${safeHtml(s.id)}'>${onPlayer ? '✓ 味方側 追加済' : '味方側に追加'}</button>
       </div>
       <div class='row'>
-        <button type='button' class='is-ghost' data-custom-builder-edit='${safeHtml(s.id)}'>編集</button>
         <button type='button' class='is-ghost' data-custom-builder-duplicate='${safeHtml(s.id)}'>複製</button>
         <button type='button' class='is-ghost' data-custom-builder-export='${safeHtml(s.id)}'>書き出し</button>
-        <button type='button' class='is-ghost' data-custom-builder-delete='${safeHtml(s.id)}'>削除</button>
+        <button type='button' class='is-ghost is-danger' data-custom-builder-delete='${safeHtml(s.id)}'>削除</button>
       </div>
-    </div>`).join('') : `<p class='formation-custom-stage-empty'>まだ自作ステージがありません</p>`;
+    </div>`;
+  }).join('') : `<p class='formation-custom-stage-empty'>まだ自作ステージがありません</p>`;
 
   const section = document.createElement('div');
   section.className = 'formation-custom-builder-section formation-custom-builder';
@@ -540,29 +637,46 @@ function renderFieldPreview(stage) {
   </div>`;
 }
 
+// A light label + control row used inside sectioned cards (no nested field-card border).
+function labeledLine(label, inner, hint) {
+  return `<div class='formation-custom-line'><span class='lbl'>${safeHtml(label)}</span>${inner}${hint ? `<span class='hint'>${safeHtml(hint)}</span>` : ''}</div>`;
+}
+
 function renderBasicTab(stage, state = {}) {
   const b = stage.battle;
   return `
     <div class='formation-custom-field'><label>戦場プレビュー</label>${renderFieldPreview(stage)}
       <span class='hint'>選択中の背景・自軍城・敵城・戦場長・BGMを実アセットで確認できます</span></div>
-    <div class='formation-custom-field'><label>ステージ名</label>
-      <input class='formation-custom-input' data-custom-field='name' value='${safeHtml(stage.name)}' maxlength='40'></div>
-    <div class='formation-custom-field'><label>説明</label>
-      <input class='formation-custom-input' data-custom-field='description' value='${safeHtml(stage.description)}' maxlength='120'></div>
-    <div class='formation-custom-field'><label>背景</label>
-      ${renderAssetPicker('battle.backgroundId', b.backgroundId, backgroundOptions(), '背景を選ぶ', state, { searchKey: 'background', limit: 16, kind: 'background' })}
-      <span class='hint'>実際に戦闘で使う背景から選択します</span></div>
-    <div class='formation-custom-field'><label>敵城</label>
-      ${renderAssetPicker('battle.enemyCastleId', b.enemyCastleId, castleOptions(), '敵城を選ぶ', state, { searchKey: 'castle', limit: 16, kind: 'castle' })}</div>
-    <div class='formation-custom-field'><label>敵城HP</label>${stepper('battle.enemyBaseHp', b.enemyBaseHp, { min: 1, step: 1000 })}</div>
-    <div class='formation-custom-field'><label>戦場の長さ</label>${stepper('battle.stageLength', b.stageLength, { min: 1, step: 100 })}</div>
-    <div class='formation-custom-field'><label>最大敵数</label>${stepper('battle.maxEnemyCount', b.maxEnemyCount, { min: 1, step: 1 })}</div>
-    <div class='formation-custom-field'><label>通常BGM</label>${renderAssetPicker('battle.musicId', b.musicId, musicOptions(), 'BGMなし', state, { searchKey: 'music', limit: 16, allowEmpty: true, kind: 'music' })}</div>
-    <div class='formation-custom-field'><label>ボスBGM</label>${renderAssetPicker('battle.bossMusicId', b.bossMusicId, musicOptions(), 'ボスBGMなし', state, { searchKey: 'bossMusic', limit: 16, allowEmpty: true, kind: 'music' })}</div>
-    <div class='formation-custom-field'><label>時間制限（秒 / 0で無制限）</label>${stepper('battle.timeLimitSeconds', framesToSeconds(b.timeLimitFrames), { min: 0, step: 5, unit: '秒' })}</div>
-    <div class='formation-custom-field'><label>オプション</label>
+    <section class='formation-custom-edit-section'>
+      <h4>アイデンティティ</h4>
+      ${labeledLine('ステージ名', `<input class='formation-custom-input' data-custom-field='name' value='${safeHtml(stage.name)}' maxlength='40'>`)}
+      ${labeledLine('説明', `<input class='formation-custom-input' data-custom-field='description' value='${safeHtml(stage.description)}' maxlength='120'>`)}
+    </section>
+    <section class='formation-custom-edit-section'>
+      <h4>見た目・サウンド</h4>
+      ${labeledLine('背景', renderAssetPicker('battle.backgroundId', b.backgroundId, backgroundOptions(), '背景を選ぶ', state, { searchKey: 'background', kind: 'background' }), '実際に戦闘で使う背景から選択します')}
+      ${labeledLine('敵城', renderAssetPicker('battle.enemyCastleId', b.enemyCastleId, castleOptions(), '敵城を選ぶ', state, { searchKey: 'castle', kind: 'castle' }))}
+      ${labeledLine('通常BGM', renderAssetPicker('battle.musicId', b.musicId, musicOptions(), 'BGMなし', state, { searchKey: 'music', allowEmpty: true, kind: 'music' }))}
+      ${labeledLine('ボスBGM', renderAssetPicker('battle.bossMusicId', b.bossMusicId, musicOptions(), 'ボスBGMなし', state, { searchKey: 'bossMusic', allowEmpty: true, kind: 'music' }))}
+    </section>
+    <section class='formation-custom-edit-section'>
+      <h4>戦場パラメータ</h4>
+      <div class='formation-custom-stat-grid'>
+        ${statField('敵城HP', 'battle.enemyBaseHp', b.enemyBaseHp, { min: 1, step: 1000 })}
+        ${statField('戦場の長さ', 'battle.stageLength', b.stageLength, { min: 1, step: 100 })}
+        ${statField('最大敵数', 'battle.maxEnemyCount', b.maxEnemyCount, { min: 1, step: 1, unit: '体' })}
+        ${statField('時間制限', 'battle.timeLimitSeconds', framesToSeconds(b.timeLimitFrames), { min: 0, step: 5, unit: '秒・0で無制限' })}
+      </div>
+    </section>
+    <section class='formation-custom-edit-section'>
+      <h4>オプション</h4>
       ${switchToggle('ボスガード', 'battle.bossGuard', b.bossGuard, { sub: 'ボス出現までノックバックを制限' })}
-      ${switchToggle('コンティニュー不可', 'battle.nonContinue', b.nonContinue, { sub: '敗北時のコンティニューを禁止' })}</div>`;
+      ${switchToggle('コンティニュー不可', 'battle.nonContinue', b.nonContinue, { sub: '敗北時のコンティニューを禁止' })}
+    </section>
+    <section class='formation-custom-edit-section'>
+      <h4>詳細ルール（上級・任意）</h4>
+      ${renderRulesFields(stage)}
+    </section>`;
 }
 
 function renderSpawnChips(spawn) {
@@ -687,9 +801,9 @@ function renderEnemyTab(stage, state = {}) {
         <div class='formation-custom-spawn-ctrl'>
           <button type='button' class='is-ghost' data-custom-spawn-up='${i}'>▲</button>
           <button type='button' class='is-ghost' data-custom-spawn-down='${i}'>▼</button>
-          <button type='button' class='is-primary' data-custom-spawn-toggle='${i}'>編集</button>
+          <button type='button' class='is-primary' data-custom-spawn-toggle='${i}'>✎ 編集</button>
           <button type='button' class='is-ghost' data-custom-spawn-duplicate='${i}'>複製</button>
-          <button type='button' class='is-ghost' data-custom-spawn-remove='${i}'>削除</button>
+          <button type='button' class='is-ghost is-danger' data-custom-spawn-remove='${i}'>削除</button>
         </div>
       </div>`).join('');
   return `
@@ -699,18 +813,23 @@ function renderEnemyTab(stage, state = {}) {
     ${rows || `<p class='formation-custom-stage-empty'>敵が未登録です</p>`}`;
 }
 
-function renderRulesTab(stage) {
+// Rule limits, rendered as a lightweight section inside the 基本 tab (they were previously a top-level
+// tab, but only apply when the base stage is custom — an advanced/optional concern, not a core one).
+function renderRulesFields(stage) {
   const l = stage.limits;
-  const field = (label, key, value, hint) => `
-    <div class='formation-custom-field'><label>${safeHtml(label)}</label>
-      <input class='formation-custom-input' type='number' inputmode='numeric' data-custom-field='limits.${key}' value='${value == null ? '' : safeHtml(value)}' placeholder='未設定'>
-      <span class='hint'>${safeHtml(hint)}</span></div>`;
+  const field = (label, key, value, hint) => labeledLine(
+    label,
+    `<input class='formation-custom-input' type='number' inputmode='numeric' data-custom-field='limits.${key}' value='${value == null ? '' : safeHtml(value)}' placeholder='未設定'>`,
+    hint
+  );
   return `
-    ${field('財布上限', 'maxMoney', l.maxMoney, '未設定: 通常ルール')}
-    ${field('最大出撃数', 'maxUnitSpawn', l.maxUnitSpawn, '未設定: 通常ルール')}
-    ${field('全体コスト補正(%)', 'globalCostMultiplier', l.globalCostMultiplier, '未設定: 100%')}
-    ${field('全体再生産補正(%)', 'globalCooldownMultiplier', l.globalCooldownMultiplier, '未設定: 100%')}
-    <p class='formation-custom-warn'>ルール項目は基準ステージが自作の場合に適用されます。空欄は基準ステージ/通常ルールを使用します。</p>`;
+    <div class='formation-custom-stat-grid'>
+      ${field('財布上限', 'maxMoney', l.maxMoney, '未設定: 通常ルール')}
+      ${field('最大出撃数', 'maxUnitSpawn', l.maxUnitSpawn, '未設定: 通常ルール')}
+      ${field('全体コスト補正(%)', 'globalCostMultiplier', l.globalCostMultiplier, '未設定: 100%')}
+      ${field('全体再生産補正(%)', 'globalCooldownMultiplier', l.globalCooldownMultiplier, '未設定: 100%')}
+    </div>
+    <p class='formation-custom-warn' style='margin:0'>基準ステージが自作の場合に適用されます。空欄は基準ステージ/通常ルールを使用します。</p>`;
 }
 
 function renderConfirmTab(stage) {
@@ -760,7 +879,6 @@ function renderConfirmTab(stage) {
 function renderBuilderTabBody(state) {
   const stage = state.stage;
   return state.tab === 'enemy' ? renderEnemyTab(stage, state)
-    : state.tab === 'rules' ? renderRulesTab(stage)
     : state.tab === 'confirm' ? renderConfirmTab(stage)
     : renderBasicTab(stage, state);
 }
@@ -999,15 +1117,18 @@ function renderBuilderScreen(editor) {
   if (!list) return;
   const title = editor.root.querySelector('.formation-stage-dialog header strong');
   if (title) title.textContent = '自作ステージ編集';
-  const tabs = [['basic', '基本・戦場'], ['enemy', '敵出現'], ['rules', 'ルール'], ['confirm', '確認']];
+  const tabs = [['basic', '基本'], ['enemy', '敵出現'], ['confirm', '確認']];
   const body = renderBuilderTabBody(state);
   const statusText = state.dirty ? '未保存' : (state.savedId ? '保存済み' : '下書き');
   const statusClass = state.dirty ? 'dirty' : (state.savedId ? 'saved' : '');
   list.innerHTML = `
     <section class='formation-custom-builder-screen formation-custom-builder'>
-      <header style='display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap'>
-        <button type='button' class='is-ghost' data-custom-builder-back='1'>＜ カスタムステージ</button>
-        <span class='formation-custom-status ${statusClass}'>${safeHtml(statusText)}</span>
+      <header>
+        <button type='button' class='is-ghost' data-custom-builder-back='1'>＜ 戻る</button>
+        <div class='formation-custom-builder-heading'>
+          <strong class='formation-custom-builder-name'>${safeHtml(stage.name?.trim() || '無題のステージ')}</strong>
+          <span class='formation-custom-status ${statusClass}'>${safeHtml(statusText)}</span>
+        </div>
         <button type='button' class='is-primary' data-custom-builder-save='1'>保存</button>
       </header>
       <div class='formation-custom-builder-tabs'>
@@ -1078,6 +1199,11 @@ function toggleCheck(stage, field) {
 }
 
 function updateChangedFieldDom(editor, field) {
+  if (field === 'name') {
+    const nameEl = editor.root?.querySelector?.('.formation-custom-builder-name');
+    if (nameEl) nameEl.textContent = getBuilderState(editor).stage?.name?.trim() || '無題のステージ';
+    return;
+  }
   const match = String(field || '').match(/^spawns\.(\d+)\.enemyId$/);
   if (!match) return;
   const index = Number(match[1]);

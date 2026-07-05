@@ -253,13 +253,10 @@ html body.nyanko-ui-polish .formation-custom-thumb.formation-custom-spawn-icon.i
 html body.nyanko-ui-polish .formation-custom-field-preview{position:relative;border:3px solid #000;border-radius:10px;overflow:hidden;box-shadow:0 3px 0 #000;background:#0d1620;aspect-ratio:16/6;min-height:120px}
 html body.nyanko-ui-polish .formation-custom-field-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 html body.nyanko-ui-polish .formation-custom-field-bg.is-missing{background:repeating-linear-gradient(45deg,#1c2a36,#1c2a36 10px,#132029 10px,#132029 20px)}
-html body.nyanko-ui-polish .formation-custom-field-castle{position:absolute;bottom:6px;height:70%;max-height:120px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
-html body.nyanko-ui-polish .formation-custom-field-castle.pcastle{right:8px}
-html body.nyanko-ui-polish .formation-custom-field-castle.ecastle{left:8px}
+html body.nyanko-ui-polish .formation-custom-field-castle{position:absolute;bottom:2px;height:84%;max-height:144px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+html body.nyanko-ui-polish .formation-custom-field-castle.pcastle{right:12px}
+html body.nyanko-ui-polish .formation-custom-field-castle.ecastle{left:12px}
 html body.nyanko-ui-polish .formation-custom-field-castle.is-missing{display:none}
-html body.nyanko-ui-polish .formation-custom-field-chips{position:absolute;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;gap:5px;padding:6px;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0))}
-html body.nyanko-ui-polish .formation-custom-field-chips span{display:inline-flex;align-items:center;min-height:22px;padding:1px 8px;border:2px solid #000;border-radius:999px;background:#ffe25a;color:#160800;-webkit-text-fill-color:#160800;font-size:.7rem;font-weight:1000}
-html body.nyanko-ui-polish .formation-custom-field-chips span.bgm{background:#bfe3ff}
 html body.nyanko-ui-polish .formation-custom-field-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9fb4c4;-webkit-text-fill-color:#9fb4c4;font-weight:1000;font-size:.8rem;text-align:center;padding:8px}
 html body.nyanko-ui-polish .formation-custom-music-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:7px}
 html body.nyanko-ui-polish .formation-custom-music-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px;align-items:stretch;padding:5px;border:2px solid #000;border-radius:8px;background:#fffef6;box-shadow:0 2px 0 #000}
@@ -733,22 +730,11 @@ function renderFieldPreview(stage) {
   const b = stage.battle;
   const hasBg = b.backgroundId != null && b.backgroundId !== '';
   const hasCastle = b.enemyCastleId != null && b.enemyCastleId !== '';
-  const chips = [
-    `戦場長 ${b.stageLength}`,
-    `敵城HP ${Number(b.enemyBaseHp).toLocaleString('ja-JP')}`
-  ];
-  const bgmName = musicLabel(b.musicId);
-  const bossName = musicLabel(b.bossMusicId);
-  const bgmChips = [
-    `<span class='bgm'>BGM ${bgmName ? safeHtml(bgmName.replace('BGM ', '')) : 'なし'}</span>`,
-    bossName ? `<span class='bgm'>ボス ${safeHtml(bossName.replace('BGM ', ''))}</span>` : ''
-  ].join('');
   return `<div class='formation-custom-field-preview'>
     <img class='formation-custom-field-bg is-missing' alt='' ${hasBg ? `data-custom-thumb='1' data-thumb-eager='1' data-thumb-kind='background' data-thumb-id='${safeHtml(b.backgroundId)}'` : ''}>
     ${!hasBg ? `<div class='formation-custom-field-empty'>背景が未設定です</div>` : ''}
     <img class='formation-custom-field-castle pcastle is-missing' alt='' data-custom-thumb='1' data-thumb-eager='1' data-thumb-kind='player-castle' data-thumb-id='pc'>
     ${hasCastle ? `<img class='formation-custom-field-castle ecastle is-missing' alt='' data-custom-thumb='1' data-thumb-eager='1' data-thumb-kind='castle' data-thumb-id='${safeHtml(b.enemyCastleId)}'>` : ''}
-    <div class='formation-custom-field-chips'>${chips.map((c) => `<span>${safeHtml(c)}</span>`).join('')}${bgmChips}</div>
   </div>`;
 }
 
@@ -761,7 +747,7 @@ function renderBasicTab(stage, state = {}) {
   const b = stage.battle;
   return `
     <div class='formation-custom-field'><label>戦場プレビュー</label>${renderFieldPreview(stage)}
-      <span class='hint'>選択中の背景・敵城・戦場長・BGMを実アセットで確認できます（自軍城は固定表示）</span></div>
+      <span class='hint'>選択中の背景と城を実アセットで確認できます（自軍城は固定表示）</span></div>
     <section class='formation-custom-edit-section'>
       <h4>アイデンティティ</h4>
       ${labeledLine('ステージ名', `<input class='formation-custom-input' data-custom-field='name' value='${safeHtml(stage.name)}' maxlength='40'>`)}
@@ -942,16 +928,8 @@ function renderConfirmTab(stage) {
       <div class='formation-custom-preview-hero'>
         <div>
           <strong>${safeHtml(stage.name)}</strong>
-          <span>背景 ${b.backgroundId ?? '未設定'} / 敵城 ${b.enemyCastleId ?? '未設定'} / BGM ${b.musicId ?? 'なし'}</span>
         </div>
         <span class='formation-custom-preview-pill'>${errors ? '修正が必要' : '保存可能'}</span>
-      </div>
-      <div class='formation-custom-preview-stats'>
-        <div class='formation-custom-preview-stat'><b>${stage.spawns.length}</b><small>敵の種類</small></div>
-        <div class='formation-custom-preview-stat'><b>${Number.isFinite(firstSpawn) ? framesToSeconds(firstSpawn) + 's' : '-'}</b><small>最初の出現</small></div>
-        <div class='formation-custom-preview-stat'><b>${b.maxEnemyCount}</b><small>最大敵数</small></div>
-        <div class='formation-custom-preview-stat'><b>${b.enemyBaseHp}</b><small>敵城HP</small></div>
-        <div class='formation-custom-preview-stat'><b>${b.stageLength}</b><small>戦場長</small></div>
       </div>
       ${timelineRows ? `<div class='formation-custom-timeline'>${timelineRows}</div>` : `<p class='formation-custom-warn'>敵出現が未登録です</p>`}
     </div>

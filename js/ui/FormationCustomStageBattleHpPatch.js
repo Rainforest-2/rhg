@@ -206,7 +206,7 @@ function injectHpControls(editor) {
   if (trigger) {
     const count = activeSettingCount(state);
     trigger.classList.toggle('is-active', count > 0);
-    trigger.innerHTML = `⚙ 詳細設定${count ? `<span class="hpset-badge">${count}</span>` : ''}`;
+    trigger.innerHTML = `<i class="bi bi-gear-wide-connected" aria-hidden="true"></i> 詳細設定${count ? `<span class="hpset-badge">${count}</span>` : ''}`;
   }
   const note = root.querySelector?.('.formation-custom-stage-note');
   if (note && state.fixedBaseHpEnabled) {

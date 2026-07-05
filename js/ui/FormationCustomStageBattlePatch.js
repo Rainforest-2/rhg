@@ -28,6 +28,7 @@ html body.nyanko-ui-polish .formation-custom-stage-pickbar strong{font-weight:10
 html body.nyanko-ui-polish .formation-custom-stage-pickbar span{font-size:.82rem;font-weight:900;color:#5b320c}
 html body.nyanko-ui-polish .formation-custom-stage-pickbar button{min-height:36px;padding:0 16px;border:3px solid #000;border-radius:999px;background:linear-gradient(180deg,#ff6a19,#f15212 52%,#e14008);color:#fff;-webkit-text-fill-color:#fff;font-weight:1000;box-shadow:0 3px 0 #000}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added{position:relative;outline:4px solid #ffdf36;outline-offset:-6px;filter:saturate(1.05) brightness(1.03)}
+html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-enabled{position:relative;outline:4px solid rgba(255,213,49,.72);outline-offset:-6px;box-shadow:0 7px 0 rgba(0,0,0,.68),0 0 0 3px rgba(255,213,49,.18),inset 0 2px 0 rgba(255,255,255,.82)!important}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-added::after{content:'追加済み';position:absolute;right:8px;bottom:7px;z-index:4;padding:3px 8px;border:2px solid #000;border-radius:999px;background:#ffdf36;color:#120700;font-size:.72rem;font-weight:1000;box-shadow:0 2px 0 #000;pointer-events:none}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-just-added{filter:brightness(1.12) saturate(1.12)}
 html body.nyanko-ui-polish .formation-stage-card.is-custom-stage-duplicate{filter:brightness(1.08) saturate(.9)}
@@ -181,7 +182,7 @@ function addCustomCategoryCard(editor) {
   if (!list || list.querySelector('[data-custom-stage-category]')) return;
   const custom = ensureState(editor);
   const config = normalizedConfig(editor);
-  list.insertAdjacentHTML('beforeend', `<button type='button' class='formation-stage-card formation-stage-card-category formation-stage-card-custom ${custom.enabled ? 'is-active' : ''}' data-custom-stage-category='1'>
+  list.insertAdjacentHTML('beforeend', `<button type='button' class='formation-stage-card formation-stage-card-category formation-stage-card-custom ${custom.enabled ? 'is-custom-stage-enabled' : ''}' data-custom-stage-category='1'>
     <strong>カスタムステージ</strong>
     <span class='formation-stage-card-meta'><b>${config.enabled ? 'ON' : 'OFF'}</b></span>
   </button>`);

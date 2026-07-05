@@ -153,9 +153,12 @@ html body.nyanko-ui-polish .formation-custom-builder-tabs button.is-active{backg
 html body.nyanko-ui-polish .formation-custom-field{display:flex;flex-direction:column;gap:6px;border:3px solid #000;border-radius:10px;background:#fff;box-shadow:0 3px 0 #000;padding:10px}
 html body.nyanko-ui-polish .formation-custom-field>label{font-weight:1000;color:#120700}
 html body.nyanko-ui-polish .formation-custom-field .hint{font-size:.74rem;font-weight:800;color:#7a4a12}
-html body.nyanko-ui-polish .formation-custom-stepper{display:inline-flex;align-items:center;gap:6px}
-html body.nyanko-ui-polish .formation-custom-stepper button{min-width:40px;min-height:40px;padding:0}
-html body.nyanko-ui-polish .formation-custom-stepper input{min-height:40px;width:110px;text-align:center;border:3px solid #000;border-radius:8px;font-weight:1000}
+html body.nyanko-ui-polish .formation-custom-stepper{display:flex;align-items:stretch;gap:6px;width:100%;min-width:0;max-width:100%}
+html body.nyanko-ui-polish .formation-custom-stepper button{flex:0 0 44px!important;width:44px!important;min-width:44px!important;height:44px;min-height:44px!important;padding:0!important;display:inline-flex;align-items:center;justify-content:center;font-size:1.25rem;line-height:1}
+html body.nyanko-ui-polish .formation-custom-stepper input{flex:1 1 auto;width:auto!important;min-width:0;min-height:44px;text-align:center;border:3px solid #000;border-radius:10px;font-weight:1000;font-size:1.05rem;background:#fffef8}
+html body.nyanko-ui-polish .formation-custom-stepper .hint{flex:0 0 auto;align-self:center;white-space:nowrap}
+html body.nyanko-ui-polish .formation-custom-stepper input{-moz-appearance:textfield;appearance:textfield}
+html body.nyanko-ui-polish .formation-custom-stepper input::-webkit-outer-spin-button,html body.nyanko-ui-polish .formation-custom-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 html body.nyanko-ui-polish .formation-custom-input{min-height:40px;border:3px solid #000;border-radius:8px;padding:0 10px;font-weight:900}
 html body.nyanko-ui-polish .formation-custom-side-badge{display:inline-block;min-width:38px;text-align:center;padding:2px 6px;border:2px solid #000;border-radius:6px;font-size:.7rem;font-weight:1000;margin-right:6px}
 html body.nyanko-ui-polish .formation-custom-side-badge.bcu{background:#bfe3ff}
@@ -167,7 +170,7 @@ html body.nyanko-ui-polish .formation-custom-status.dirty{color:#b06a00}
 html body.nyanko-ui-polish .formation-custom-status.saved{color:#2f8a00}
 html body.nyanko-ui-polish .formation-custom-builder-screen{height:100%;min-height:0;overflow:hidden}
 html body.nyanko-ui-polish .formation-custom-builder-screen>header{position:sticky;top:0;z-index:2;padding:9px;border:3px solid #000;border-radius:10px;background:linear-gradient(180deg,#fff9d8,#f7d96b);box-shadow:0 3px 0 #000}
-html body.nyanko-ui-polish .formation-custom-builder-body{flex:1 1 auto;display:grid;gap:10px;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 4px 4px 0}
+html body.nyanko-ui-polish .formation-custom-builder-body{flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 4px 4px 0}
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{flex:0 0 auto;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px;border:3px solid #000;border-radius:10px;background:#fff8d6;box-shadow:0 3px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions button{min-width:0;min-height:34px!important;padding:0 8px!important;font-size:.76rem!important;white-space:normal;line-height:1.05}
 html body.nyanko-ui-polish .formation-custom-builder-tabs{position:sticky;top:62px;z-index:2;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));padding:7px;border:3px solid #000;border-radius:10px;background:#17100b;box-shadow:0 3px 0 #000}
@@ -194,8 +197,7 @@ html body.nyanko-ui-polish .formation-custom-chip{display:inline-flex;align-item
 html body.nyanko-ui-polish .formation-custom-row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:end}
 html body.nyanko-ui-polish .formation-custom-mini-control{display:grid;gap:4px;min-width:0}
 html body.nyanko-ui-polish .formation-custom-mini-control>span:first-child{font-size:.72rem;font-weight:1000;color:#54310f;-webkit-text-fill-color:#54310f}
-html body.nyanko-ui-polish .formation-custom-stepper{min-width:0}
-html body.nyanko-ui-polish .formation-custom-stepper input{width:min(100%,92px);background:#fffef8}
+html body.nyanko-ui-polish .formation-custom-row-grid .formation-custom-stepper input{background:#fffef8}
 html body.nyanko-ui-polish .formation-custom-condition-panel{display:grid;gap:8px;padding:9px;border:3px solid #000;border-radius:8px;background:#fff;box-shadow:inset 0 2px 0 rgba(0,0,0,.08)}
 html body.nyanko-ui-polish .formation-custom-condition-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 html body.nyanko-ui-polish .formation-custom-condition-card{display:grid;gap:6px;padding:8px;border:2px solid #000;border-radius:8px;background:#f6fbff}
@@ -264,9 +266,9 @@ html body.nyanko-ui-polish .formation-custom-spawn-modal-title{flex:1 1 auto;min
 html body.nyanko-ui-polish .formation-custom-spawn-modal-title strong{font-size:1rem;color:#fff;-webkit-text-fill-color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html body.nyanko-ui-polish .formation-custom-spawn-modal-title small{font-size:.72rem;font-weight:1000;color:#d7f1ff;-webkit-text-fill-color:#d7f1ff}
 html body.nyanko-ui-polish .formation-custom-spawn-modal-x{min-width:42px!important;width:42px;min-height:42px!important;padding:0!important;flex:0 0 auto;border-radius:50%!important;font-size:1.15rem!important;background:#fff!important;color:#0b5598!important;-webkit-text-fill-color:#0b5598!important}
-html body.nyanko-ui-polish .formation-custom-spawn-modal-body{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:12px}
+html body.nyanko-ui-polish .formation-custom-spawn-modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:12px}
 html body.nyanko-ui-polish .formation-custom-spawn-modal-foot{flex:0 0 auto;display:grid;grid-template-columns:1fr;gap:8px;padding:10px 12px;border-top:3px solid #000;background:#fff7d0}
-html body.nyanko-ui-polish .formation-custom-edit{display:grid;gap:12px}
+html body.nyanko-ui-polish .formation-custom-edit{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 html body.nyanko-ui-polish .formation-custom-edit-section{display:grid;gap:10px;padding:12px;border:2px solid #000;border-radius:13px;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.13)}
 html body.nyanko-ui-polish .formation-custom-edit-section>h4{margin:0;display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:1000;color:#0b5598;-webkit-text-fill-color:#0b5598}
 html body.nyanko-ui-polish .formation-custom-edit-section>h4::before{content:'';flex:0 0 auto;width:7px;height:16px;border-radius:3px;background:linear-gradient(180deg,#2bb0e6,#0b5598)}
@@ -274,19 +276,17 @@ html body.nyanko-ui-polish .formation-custom-stat-grid{display:grid;grid-templat
 html body.nyanko-ui-polish .formation-custom-stat{display:grid;gap:6px;padding:9px;border:2px solid #000;border-radius:11px;background:linear-gradient(180deg,#fffef8,#fff1c4);box-shadow:inset 0 2px 0 rgba(255,255,255,.75)}
 html body.nyanko-ui-polish .formation-custom-stat>.lbl{display:flex;align-items:baseline;gap:4px;font-size:.72rem;font-weight:1000;color:#54310f;-webkit-text-fill-color:#54310f}
 html body.nyanko-ui-polish .formation-custom-stat>.lbl em{font-style:normal;font-size:.64rem;opacity:.72}
-html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper{display:flex;align-items:stretch;gap:5px;min-width:0}
-html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{flex:1 1 auto;width:auto!important;min-width:0;font-size:1rem}
-html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper button{flex:0 0 auto}
+html body.nyanko-ui-polish .formation-custom-stat .formation-custom-stepper input{font-size:1.05rem}
 html body.nyanko-ui-polish .formation-custom-switch{position:relative;display:flex;align-items:center;gap:11px;min-height:46px;padding:6px 12px;border:2px solid #000;border-radius:11px;background:linear-gradient(180deg,#fbfdff,#eef6fb);font-weight:1000;color:#120700;-webkit-text-fill-color:#120700;cursor:pointer}
 html body.nyanko-ui-polish .formation-custom-switch input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-html body.nyanko-ui-polish .formation-custom-switch .track{position:relative;flex:0 0 auto;width:48px;height:27px;border:2px solid #000;border-radius:999px;background:#c4ced6;transition:background .16s}
-html body.nyanko-ui-polish .formation-custom-switch .track::after{content:'';position:absolute;top:1px;left:1px;width:21px;height:21px;border:2px solid #000;border-radius:50%;background:#fff;transition:transform .16s}
+html body.nyanko-ui-polish .formation-custom-switch .track{box-sizing:border-box;position:relative;flex:0 0 auto;width:48px;height:27px;border:2px solid #000;border-radius:999px;background:#c4ced6;transition:background .16s}
+html body.nyanko-ui-polish .formation-custom-switch .track::after{box-sizing:border-box;content:'';position:absolute;top:50%;left:3px;width:21px;height:21px;border:2px solid #000;border-radius:50%;background:#fff;transform:translateY(-50%);transition:transform .16s}
 html body.nyanko-ui-polish .formation-custom-switch input:checked+.track{background:linear-gradient(180deg,#2fce8a,#158a5a)}
-html body.nyanko-ui-polish .formation-custom-switch input:checked+.track::after{transform:translateX(21px)}
+html body.nyanko-ui-polish .formation-custom-switch input:checked+.track::after{transform:translate(21px,-50%)}
 html body.nyanko-ui-polish .formation-custom-switch.is-boss input:checked+.track{background:linear-gradient(180deg,#ff7a24,#e14008)}
 html body.nyanko-ui-polish .formation-custom-switch-label{flex:1 1 auto;min-width:0;display:grid;gap:1px}
 html body.nyanko-ui-polish .formation-custom-switch-sub{font-size:.66rem;font-weight:900;color:#7a4a12;-webkit-text-fill-color:#7a4a12}
-@media(max-width:680px){html body.nyanko-ui-polish .formation-custom-spawn-modal{padding:0;align-items:flex-end}html body.nyanko-ui-polish .formation-custom-spawn-modal-card{width:100%;max-height:92vh;border-radius:18px 18px 0 0}html body.nyanko-ui-polish .formation-custom-builder-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-builder-actions button{flex:1 1 46%}html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-timeline-row{grid-template-columns:54px minmax(0,1fr)}}`;
+@media(max-width:680px){html body.nyanko-ui-polish .formation-custom-spawn-modal{padding:0;align-items:flex-end}html body.nyanko-ui-polish .formation-custom-spawn-modal-card{width:100%;max-height:92vh;border-radius:18px 18px 0 0}html body.nyanko-ui-polish .formation-custom-builder-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-builder-actions button{flex:1 1 46%}html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{grid-template-columns:repeat(2,minmax(0,1fr))}html body.nyanko-ui-polish .formation-custom-timeline-row{grid-template-columns:54px minmax(0,1fr)}html body.nyanko-ui-polish .formation-custom-condition-grid{grid-template-columns:1fr}html body.nyanko-ui-polish .formation-custom-condition-card .formation-custom-stat-grid{grid-template-columns:1fr}}`;
   document.head.appendChild(style);
 }
 
@@ -561,8 +561,8 @@ function renderBasicTab(stage, state = {}) {
     <div class='formation-custom-field'><label>ボスBGM</label>${renderAssetPicker('battle.bossMusicId', b.bossMusicId, musicOptions(), 'ボスBGMなし', state, { searchKey: 'bossMusic', limit: 16, allowEmpty: true, kind: 'music' })}</div>
     <div class='formation-custom-field'><label>時間制限（秒 / 0で無制限）</label>${stepper('battle.timeLimitSeconds', framesToSeconds(b.timeLimitFrames), { min: 0, step: 5, unit: '秒' })}</div>
     <div class='formation-custom-field'><label>オプション</label>
-      <label><input type='checkbox' data-custom-check='battle.bossGuard' ${b.bossGuard ? 'checked' : ''}> ボスガード</label>
-      <label><input type='checkbox' data-custom-check='battle.nonContinue' ${b.nonContinue ? 'checked' : ''}> コンティニュー不可</label></div>`;
+      ${switchToggle('ボスガード', 'battle.bossGuard', b.bossGuard, { sub: 'ボス出現までノックバックを制限' })}
+      ${switchToggle('コンティニュー不可', 'battle.nonContinue', b.nonContinue, { sub: '敗北時のコンティニューを禁止' })}</div>`;
 }
 
 function renderSpawnChips(spawn) {

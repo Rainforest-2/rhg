@@ -383,10 +383,15 @@ for (const piece of ['playBgm', 'setPaused', 'bossMusicHpThresholdPercent', 'get
 // BattleView.aboveBoss: int-truncated HP% strictly below mush).
 check(musicPatch.includes('threshold !== 0 && threshold !== 100'),
   'BattleMusicPatch must disarm boss music for thresholds 0/100 (BCU DefStageInfo)');
-check(musicPatch.includes('Math.trunc(pct) < spec.threshold'),
-  'BattleMusicPatch initial boss pick must use int-truncated strict < (BCU BattleView.aboveBoss)');
-check(musicPatch.includes('Math.trunc(enemyBaseHpPercent(app)) < m.threshold'),
-  'BattleMusicPatch runtime switch must use int-truncated strict < (BCU BattleView.aboveBoss)');
+// Boss-arming is deduplicated into a single bossArmed() helper: it must still gate on
+// int-truncated enemy-base HP% strictly below the threshold (BCU BattleView.aboveBoss), and
+// both the initial pick and the runtime switch must route through that helper.
+check(musicPatch.includes('Math.trunc(enemyBaseHpPercent(app)) < spec.threshold'),
+  'BattleMusicPatch bossArmed must use int-truncated strict < (BCU BattleView.aboveBoss)');
+check(musicPatch.includes('bossArmed(app, spec)'),
+  'BattleMusicPatch initial boss pick must route through bossArmed (int-truncated strict <)');
+check(musicPatch.includes('bossArmed(app, m)'),
+  'BattleMusicPatch runtime switch must route through bossArmed (int-truncated strict <)');
 
 const touched = [
   'js/audio/MusicCatalog.js',

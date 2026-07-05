@@ -33,9 +33,9 @@
 .formation-volume-control{min-width:180px;display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:10px}
 .formation-volume-control input[type='range']{width:100%;accent-color:var(--nyanko-gold,#ffd531);cursor:pointer}
 
-.formation-setting-toggle{--toggle-w:56px;--toggle-h:31px;--toggle-knob:23px;--toggle-pad:3px;position:relative;width:var(--toggle-w);height:var(--toggle-h);flex:none;padding:0;border:3px solid var(--nyanko-black,#050505);border-radius:999px;background:#caa86b;cursor:pointer;transition:background .15s ease}
+.formation-setting-toggle{--toggle-w:56px;--toggle-h:31px;--toggle-knob:23px;--toggle-pad:4px;box-sizing:border-box;position:relative;width:var(--toggle-w);height:var(--toggle-h);flex:none;padding:0;border:3px solid var(--nyanko-black,#050505);border-radius:999px;background:#caa86b;cursor:pointer;transition:background .15s ease}
 .formation-setting-toggle[aria-checked='true']{background:#2fb24a}
-.formation-setting-toggle::after{content:'';position:absolute;top:50%;left:var(--toggle-pad);width:var(--toggle-knob);height:var(--toggle-knob);border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.45);transform:translateY(-50%);transition:transform .15s ease}
+.formation-setting-toggle::after{box-sizing:border-box;content:'';position:absolute;top:50%;left:var(--toggle-pad);width:var(--toggle-knob);height:var(--toggle-knob);border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.45);transform:translateY(-50%);transition:transform .15s ease}
 .formation-setting-toggle[aria-checked='true']::after{transform:translate(calc(var(--toggle-w) - var(--toggle-knob) - var(--toggle-pad) * 2),-50%)}
 
 .formation-settings-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:12px;border-top:2px dashed rgba(74,33,13,.4)}
@@ -82,7 +82,7 @@
   .formation-settings-row .label span{font-size:.62rem;line-height:1.15}
   .formation-setting-control{gap:6px}
   .formation-setting-state{min-width:34px;padding:3px 6px;font-size:.62rem;border-width:2px}
-  .formation-setting-toggle{--toggle-w:46px;--toggle-h:25px;--toggle-knob:19px;--toggle-pad:2px;border-width:2px}
+  .formation-setting-toggle{--toggle-w:46px;--toggle-h:25px;--toggle-knob:19px;--toggle-pad:3px;border-width:2px}
   .formation-settings-dialog .bcu-pause-sound-grid{gap:6px!important}
   .formation-settings-dialog .bcu-pause-sound{grid-template-columns:auto minmax(0,1fr)!important;gap:6px!important;padding:6px!important;border-width:2px!important;border-radius:10px!important;box-shadow:0 2px 0 #4a210d,inset 0 1px 0 rgba(255,255,255,.65)!important}
   .formation-settings-dialog .bcu-pause-sound-icon{width:30px!important;height:30px!important;border-width:2px!important;font-size:18px!important}

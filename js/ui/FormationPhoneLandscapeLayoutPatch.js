@@ -2,8 +2,16 @@ import { FormationEditor } from './FormationEditor.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-phone-landscape-layout.v1');
 const STYLE_ID = 'formation-phone-landscape-layout-style';
-const PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 520px) and (max-width: 980px)';
-const TINY_PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 390px) and (max-width: 900px)';
+// Phone-landscape is keyed on the SHORT landscape height only. Height <=520px in
+// landscape is a phone (no tablet lands that short: iPad landscape height is
+// 768px+), so height alone cleanly separates phones from iPad/desktop. Do NOT
+// re-add a `max-width` clause: wide landscape phones (e.g. Pixel 6a ~1000x430)
+// exceed 980px and would fall back to the desktop/"iPad" skin — the exact bug
+// this guard is written to avoid. Mirrors mobile-landscape-fit.css's height-only
+// principle. The other landscape patches (pause/tuning/custom-stage/battle-ui/
+// game-settings) use the same height-only queries and must stay in sync.
+const PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 520px)';
+const TINY_PHONE_LANDSCAPE_QUERY = '(orientation: landscape) and (max-height: 390px)';
 
 function isPhoneLandscape() {
   return globalThis.matchMedia?.(PHONE_LANDSCAPE_QUERY)?.matches === true;

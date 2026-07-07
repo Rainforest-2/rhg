@@ -10,7 +10,7 @@ function injectMobileLandscapeStyle() {
   style.id = STYLE_ID;
   style.textContent = `
 @font-face{font-family:HakusyuTuningLocal;src:url('${ASSET_BASE}/%E7%99%BD%E8%88%9F%E8%A1%8C%E6%9B%B8%E6%95%99%E6%BC%A2.ttf') format('truetype');font-weight:900;font-style:normal;font-display:block;unicode-range:U+3000-30FF,U+3400-9FFF,U+F900-FAFF}
-@media (orientation:landscape) and (max-height:520px) and (max-width:980px){
+@media (orientation:landscape) and (max-height:520px){
   html body.nyanko-ui-polish .formation-tuning-overlay{padding:5px calc(7px + env(safe-area-inset-right,0px)) 5px calc(7px + env(safe-area-inset-left,0px))!important;place-items:center!important;background:rgba(0,0,0,.40)!important;backdrop-filter:blur(1px)!important}
   html body.nyanko-ui-polish .formation-tuning-panel{width:min(956px,calc(100vw - 14px))!important;height:min(438px,calc(100dvh - 10px))!important;max-height:calc(100dvh - 10px)!important;display:grid!important;grid-template-columns:92px minmax(0,1fr) 154px!important;grid-template-rows:36px minmax(0,1fr) 42px!important;border-width:4px!important;border-radius:15px!important;box-shadow:0 4px 0 #120603,0 0 0 2px rgba(255,255,255,.14)!important;overflow:hidden!important}
   html body.nyanko-ui-polish .formation-tuning-header{grid-column:1/-1!important;min-height:0!important;padding:4px 7px!important;gap:6px!important;border-bottom-width:4px!important}
@@ -75,7 +75,7 @@ function injectMobileLandscapeStyle() {
   html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-reset,
   html body.nyanko-ui-polish .formation-tuning-footer .formation-tuning-save{min-height:30px!important}
 }
-@media (orientation:landscape) and (max-height:390px) and (max-width:900px){
+@media (orientation:landscape) and (max-height:390px){
   html body.nyanko-ui-polish .formation-tuning-panel{grid-template-columns:68px minmax(0,1fr)!important;grid-template-rows:30px minmax(0,1fr) 34px!important;border-width:3px!important;border-radius:13px!important}
   html body.nyanko-ui-polish .formation-tuning-header{padding:3px 6px!important;border-bottom-width:3px!important}
   html body.nyanko-ui-polish .formation-tuning-title strong{font-size:.94rem!important}

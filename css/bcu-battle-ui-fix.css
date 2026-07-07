@@ -290,7 +290,7 @@
   }
 }
 
-@media (orientation: landscape) and (max-height: 520px) and (max-width: 980px){
+@media (orientation: landscape) and (max-height: 520px){
   :root{
     --prod-card-w:clamp(52px,7.05vw,64px);
     --prod-card-h:clamp(40px,5.45vw,49.5px);
@@ -332,7 +332,7 @@
   }
 }
 
-@media (orientation: landscape) and (max-height: 390px) and (max-width: 900px){
+@media (orientation: landscape) and (max-height: 390px){
   :root{
     --prod-card-w:clamp(50px,6.85vw,58px);
     --prod-card-h:clamp(38.6px,5.3vw,44.8px);

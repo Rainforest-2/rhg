@@ -63,7 +63,7 @@
   .formation-volume-control{min-width:0;grid-template-columns:minmax(0,1fr) 54px}
 }
 
-@media (orientation: landscape) and (max-height:520px) and (max-width:980px){
+@media (orientation: landscape) and (max-height:520px){
   .formation-settings-overlay{padding:5px calc(7px + env(safe-area-inset-right,0px)) 5px calc(7px + env(safe-area-inset-left,0px))}
   .formation-settings-dialog{box-sizing:border-box;width:min(560px,calc(100% - 14px));height:calc(100% - 10px);max-height:calc(100% - 10px);gap:7px;padding:8px;border-width:3px;border-radius:14px;box-shadow:0 4px 0 rgba(43,22,8,.9),0 12px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.7)}
   .formation-settings-dialog header{gap:8px;min-height:0}
@@ -96,7 +96,7 @@
   .formation-settings-discord .bi{font-size:.98rem}
 }
 
-@media (orientation: landscape) and (max-height:390px) and (max-width:900px){
+@media (orientation: landscape) and (max-height:390px){
   .formation-settings-dialog{width:min(520px,calc(100% - 12px));height:calc(100% - 8px);max-height:calc(100% - 8px);gap:5px;padding:6px;border-width:3px;border-radius:12px}
   .formation-settings-dialog header strong{font-size:.86rem}
   .formation-settings-dialog header button{min-height:26px;min-width:64px;padding:0 11px;border-width:2px;font-size:.68rem}

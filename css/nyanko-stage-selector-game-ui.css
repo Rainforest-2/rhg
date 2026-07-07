@@ -387,7 +387,7 @@ html body.nyanko-ui-polish .formation-stage-filter-apply{
    (the bottom 特殊/カスタム row was clipped). On phone landscape only, collapse to
    a compact 3x2 grid centered in the available height so all six are visible at
    once. iPad and portrait are unaffected (guarded by max-height/orientation). */
-@media (orientation: landscape) and (max-height: 520px) and (max-width: 980px){
+@media (orientation: landscape) and (max-height: 520px){
   html body.nyanko-ui-polish .formation-stage-dialog{
     padding:10px!important;
     gap:8px!important;

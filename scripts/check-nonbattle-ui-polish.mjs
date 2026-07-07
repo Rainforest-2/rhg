@@ -10,11 +10,23 @@ const VIEWPORTS = [
   [667, 375],
   [844, 390],
   [932, 430],
+  // Pixel 6a-class wide landscape phone: ~1000px wide but only ~430px tall.
+  // It exceeds the old max-width:980 phone gate, so before the height-only
+  // guard it fell back to the desktop/"iPad" skin. Keep this here so a
+  // re-added width clause is caught (assertPhoneLandscapeSkin below).
+  [1000, 430],
   [1024, 768],
   [1180, 820],
   [1366, 1024],
   [1440, 900],
 ];
+
+// A short landscape viewport (<=520px tall) is a phone regardless of width;
+// the phone-landscape patch forces the action rail into a single-column grid,
+// whereas the desktop skin leaves it as a flex column. Use that as the skin probe.
+function isPhoneLandscapeViewport(width, height) {
+  return width > height && height <= 520;
+}
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -26,6 +38,17 @@ async function visibleCount(page, selector) {
     const box = node.getBoundingClientRect();
     return style.display !== 'none' && style.visibility !== 'hidden' && box.width > 0 && box.height > 0;
   }).length);
+}
+
+async function assertPhoneLandscapeSkin(page, label) {
+  // Confirms the phone-landscape skin (not the desktop/"iPad" skin) is applied.
+  // The phone-landscape patch sets .formation-action-rail{display:grid;
+  // grid-template-columns:1fr}. The desktop skin leaves it display:flex, and the
+  // max-width:980 fallback grid does not fire on wide (>980px) phones — so on a
+  // wide short-landscape viewport, grid display is a faithful "phone skin active".
+  const railDisplay = await page.locator('.formation-action-rail').first()
+    .evaluate((node) => getComputedStyle(node).display);
+  assert(railDisplay === 'grid', `${label}: phone-landscape skin not applied (action rail display=${railDisplay}, expected grid — likely fell back to the desktop/iPad layout)`);
 }
 
 async function assertNoFatalHorizontalOverflow(page, label) {
@@ -123,7 +146,10 @@ async function checkViewport(browser, width, height) {
   await waitForFormation(page);
   await assertCatalogCardsVisible(page, label);
   await assertInitialFormationIconsVisible(page, label);
-  if (width <= 932 && height <= 430) await assertTuningOverlayStable(page, label);
+  if (isPhoneLandscapeViewport(width, height)) {
+    await assertPhoneLandscapeSkin(page, label);
+    if (height <= 430) await assertTuningOverlayStable(page, label);
+  }
   await page.screenshot({ path: `${OUT_DIR}/formation-${label}.png`, fullPage: false });
   await assertNoFatalHorizontalOverflow(page, `${label} formation`);
 

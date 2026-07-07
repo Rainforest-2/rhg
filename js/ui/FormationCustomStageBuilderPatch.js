@@ -349,7 +349,7 @@ html body.nyanko-ui-polish .formation-custom-picker-card{min-height:50px!importa
 html body.nyanko-ui-polish .formation-custom-picker-card strong{font-size:.68rem}
 html body.nyanko-ui-polish .formation-custom-picker-card small{font-size:.56rem}
 }
-@media(orientation:landscape) and (max-height:520px) and (max-width:980px){
+@media(orientation:landscape) and (max-height:520px){
 html body.nyanko-ui-polish .formation-custom-builder-screen{gap:5px}
 html body.nyanko-ui-polish .formation-custom-builder-screen>header{position:static;display:grid!important;grid-template-columns:minmax(88px,1fr) auto minmax(58px,.7fr);gap:5px!important;align-items:center!important;padding:4px 5px!important;border-width:2px;border-radius:9px;box-shadow:0 2px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-screen>header button{min-width:0!important;min-height:26px!important;padding:0 8px!important;border-width:2px!important;font-size:.58rem!important;line-height:1!important;box-shadow:0 2px 0 #000!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
@@ -385,7 +385,7 @@ html body.nyanko-ui-polish .formation-custom-stepper button{width:30px!important
 html body.nyanko-ui-polish .formation-custom-stepper input{min-height:30px;border-width:2px;font-size:.7rem;padding:0 2px}
 html body.nyanko-ui-polish .formation-custom-stepper .hint{font-size:.56rem}
 }
-@media(orientation:landscape) and (max-height:390px) and (max-width:900px){
+@media(orientation:landscape) and (max-height:390px){
 html body.nyanko-ui-polish .formation-custom-builder-screen{gap:4px}
 html body.nyanko-ui-polish .formation-custom-builder-screen>header{padding:3px 4px!important}
 html body.nyanko-ui-polish .formation-custom-builder-screen>header button{min-height:23px!important;font-size:.52rem!important;padding:0 6px!important}

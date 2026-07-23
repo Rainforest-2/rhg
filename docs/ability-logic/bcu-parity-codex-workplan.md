@@ -1,136 +1,96 @@
 # BCU パリティ作業計画
 
-更新日: 2026-06-24
+更新日: 2026-07-24  
+基準 `main`: `d43f53ea25cc589c16d3b39a5be08913d1ea32f0`
 
-これは `RHgrive/rhg` の現行実装順です。最新の監査では、中心的なランタイム実装は既に空っぽの問題ではなく、ソースの網羅性・互換性境界・見た目受け入れが優先事項です。2026-06-24 の再監査では、1 つの非見た目差分（W7: 同フレーム攻撃解決順）を確認し、modifier-registry の fail-open 可視化ギャップは解消しました。
+この文書は active open Issue の実行順と完了条件だけを管理します。status は `../bcu-migration-status.md`、source/evidence blocker は `bcu-unresolved-evidence-blockers.md`、visual result は `bcu-visual-review-checklist.md` を参照してください。
 
-## 状態ルール
+## 共通完了条件
 
-- `code-complete-candidate`: ソース根拠・現在の JS オーナー・決定的テストが存在する。
-- `human-visual-review-needed`: 実行時根拠はあるが、ブラウザ上の見た目は未受け入れ。
-- `partial`: ソース読み込み、実データフィクスチャ、実行時カバレッジ、テストのどれかが不足。
-- `unconfirmed`: ソースオーナーやスキーマが未確定。
-- `negative-evidence`: BCU がそのオーナーを否定している。
+各 Issue で次を満たします。
 
-歴史的な README の指摘を、現行コード比較なしにそのまま欠陥として扱わないでください。
+1. BCU file/class/method/field/state transition を Issue または test に固定する。
+2. 現行 JS owner と boot reachability を確認する。
+3. 不具合を再現する regression check を先に追加または同時追加する。
+4. 変更を最小 owner に限定し、wrapper/import order を壊さない。
+5. focused check、adjacent check、`npm test`、`npm run build` を実行する。
+6. Issue を閉じる変更と同じバッチで current docs を更新する。
 
-## すべての変更で守る順序
+## P0 — Runtime integrity
 
-```text
-BCU の事実 -> 現在の JS オーナー監査 -> 最小変更 -> 決定的なチェック -> 集中したドキュメント更新
-```
+### #9 Required patch groups must fail closed
 
-`public/assets/bcu/**` への実行時フォールバックは行わず、wrapper chain とランダム挙動は保持してください。CSV フィールドや汎用の見た目別名も作らないでください。
+- required/optional group を明示する。
+- required import/installer failure は boot を中断し、部分 semantics の battle を開始しない。
+- error diagnostics は保持するが、success path と混同しない。
+- boot failure と optional degradation の回帰 check を追加する。
 
-## 優先度
+### #10 Restore stage-runtime wiring verification
 
-- W1: 実カスタムパック SUMMON のローダー網羅
-- W2: 永続化のスコープと失敗可視化
-- W3: 実データの modifier / trait フィクスチャ
-- W4: 見た目受け入れの台帳
-- W5: 非基本キャノンのアセット整合性
-- W6: パフォーマンス関連のクリーンアップ
-- W7: 同フレーム攻撃解決順（部分的 / ブラウザ確認待ち）
+- stale source-string assertion を現在の logical-X interpolation / projection contract に置換する。
+- behavior-oriented assertion を優先し、formatting や exact source text へ過度に依存しない。
+- check を safe suite へ戻し、#6/#7/#17 の修正を継続的に gate できるようにする。
 
-### W0 — 証明ハーネスと docs の真実性を保つ
+## P1 — Damage and trait semantics
 
-変更前に次を行います。
+### #12 Metal target vs `AB_METALIC`
 
-- `current-ability-parity-status.md`、`bcu-unresolved-evidence-blockers.md`、ソース根拠一覧を読む
-- 挙動に関わるオーナー変更前に、決定的なチェックを追加・強化する
-- 同バッチで focused status / blocker docs を更新する
-- 実際のブラウザレビュー後だけ、視覚チェックリストを更新する
+- target trait と defender ability を別 field/semantic にする。
+- ordinary Metal-targeting cat への incoming damage cap / Metal Killer 適用を禁止する。
+- enemy Metal trait、unit `AB_METALIC`、target Metal の全組合せを test matrix にする。
 
-### W1 — 実カスタムパック SUMMON の読み込み
+### #13 Critical draw count
 
-目的: SUMMON 実行時はあるが、実データが届いていない可能性があるためです。
+- critical probability は一度だけ抽選する。
+- `AB_METALIC` fallback は既存の抽選結果を再利用し、追加 RNG draw を消す。
+- success/failure 両経路で deterministic RNG draw count を固定する。
 
-必要作業:
+### #14 Fully target-traited definition
 
-1. 実カスタムパックの proc-object `CustomEntity.atks[].proc.SUMMON` を読み込む
-2. 既存の `attachBcuProcObjectSummonsToAttackHits()` の境界は維持する
-3. immediate / on-hit / on-kill、side、inheritance、layer、allow/group、same_health、bond_hp、ignore_limit を実データで検証する
-4. ソース根拠がない限り、通常のユニット / 敵 CSV SUMMON パーサを追加しない
+- BCU と同じ trait set: red/floating/black/angel/alien/zombie/demon/relic。Metal は除外する。
+- `targetType/targetForms` の positive/negative cases を実データ fixture で固定する。
 
-### W2 — 永続化の範囲と失敗可視化
+## P1 — Stage and semantic asset pipeline
 
-目的: ブラウザ側の状態が BCU 互換と誤解されやすいためです。
+### #6 Spawn layer ownership
 
-必要作業:
+- `BcuStageSpawnRuntime.commitSpawn()` の CopRand-derived `currentLayer` を生成 actor へ一度だけ適用する。
+- `Math.random()` の再抽選を削除する。
+- row respawn / layer / global respawn の RNG draw order を固定する。
 
-1. 現在のリポジトリ内マイグレーションを維持する
-2. `FormationStore` / `StageRegistry` の読み書き失敗を可視化する
-3. 自己永続化と BCU import/export 互換を明確に分ける
-4. BCU セーブ / 陣形互換機能を作る前に、BCU のシリアライズオーナーと round-trip フィクスチャを確定する
+### #7 KC unit-death semantics
 
-### W3 — 実データの modifier と trait フィクスチャ
+- actor 自身の row index ではなく、BCU の global death notification として全対象 counter を評価する。
+- castle HP window と対象条件を death 時に確認する。
+- one death が複数 row counter に影響する fixture を追加する。
 
-目的: 主要な modifier hook はあるが、広い互換性主張に実データが不足しているためです。
+### #17 Ranking / trail stage
 
-必要作業:
+- stage header の time-limit/trail semantics を parser と runtime に伝播する。
+- trail stage の accumulated-damage threshold を normal HP percentage rewrite へ通さない。
+- 極ランキングの間など実データ fixture で magnification、spawn trigger、score/timer boundary を固定する。
 
-- 実カスタムの `Trait.targetForms` / `targetType` ローダーフィクスチャを追加する
-- capture / proc / targetOnly / damage-family 経路をまとめて確認する
-- 実 combo / orb / treasure / talent / PCoin の組み合わせを sweep する
-- ソース確認済みの耐性保持者だけを使い、敵側の toxic immunity を追加しない
+### #18 Background index header selection
 
-### W4 — 見た目受け入れ台帳
+- castle row の有無を runtime parser と同じ shape rule で判定する。
+- main-story `type != 0` は `rows[0]`、castle row ありは正しい header row を読む。
+- generated background index/bundle と runtime load を実 stage fixture で確認する。
 
-目的: トレースだけで見た目を完了扱いしないためです。
+## P2 — Renderer layer order
 
-レビュー順:
+### #8 `currentLayer` paint order
 
-1. P_DELAY と barrier / demon shield / shield breaker
-2. spirit と castle guard
-3. zombie revive と mini-death-surge
-4. basic cannon の発射 / wave
-5. non-basic cannon の sweep と BASE_WALL
-6. W1 の実フィクスチャが出たら SUMMON entry
+- actor vertical placement と paint sort の layer source を一致させる。
+- same-layer tie-break は deterministic に保つ。
+- visual crowd offset を BCU layer order の代替にしない。
+- overlapping actors の deterministic draw-order check と browser fixture を追加する。
 
-各レビューには、フィクスチャ・BCU 参照・ブラウザ / 端末・結果・差分を残します。
+## Correctness 後の queue
 
-### W5 — 非基本キャノンのアセット整合性
+- visual acceptance: P_DELAY、burrow、spirit、SUMMON、death-surge、non-basic cannon、BASE_WALL、effect layers
+- physical-device acceptance: mobile keyboard/safe-area/orientation/touch/audio
+- performance cleanup: debug allocation、重複 wrapper、renderer hot path。correctness owner/check を先に固定する
 
-キャノンごとの ATK/EXT ビットマップ別名を追加し、extend / waved の挙動をフレーム単位で比較します。欠けたアセットを汎用トレースで置き換えないでください。
+## Historical work items
 
-### W6 — パフォーマンスクリーンアップ
-
-挙動に関わる経路がテストで保護された後にのみ行います。
-
-- ロジックに影響しない診断用割り当てを消す / gate する
-- wrapper call、effect creation、座標メタデータ、renderer ordering を保持する
-- クリーンアップごとに関連する安全な suite を回す
-
-### W7 — 同フレーム攻撃解決順（状態: partial / ブラウザ確認待ち）
-
-BCU の事実として、player-side の strike が先に決着し、enemy-side の strike はそのフレームでは発火しないような順序が存在します。
-
-必要な作業:
-
-1. 同フレーム相互キルの決定的フィクスチャとチェックを追加する
-2. player excuse + death が先に解決するよう、既存フェーズモデルを最小変更で並び替える
-3. パリティ完了を宣言する前に、固定 BCU キャプチャでブラウザ確認する
-
-## 明示的にやらないこと
-
-- 汎用の castle-owned attack runtime を作らない
-- パーサのフィールドだけを見て、実行時の有無を決めない
-- `localStorage` 永続化から BCU セーブ互換を主張しない
-- headless trace を見た目受け入れに昇格させない
-
-## 共通チェック
-
-```bash
-node scripts/check-bcu-parser-indexes.mjs
-node scripts/check-projectile-damage-parity.mjs
-node scripts/check-proc-immunity-resistance-parity.mjs
-node scripts/check-bcu-delay-runtime.mjs
-node scripts/check-bcu-summon-runtime-parity.mjs
-node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
-node scripts/check-bcu-castle-guard-parity.mjs
-node scripts/check-bcu-wallet-runtime-parity.mjs
-node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
-node scripts/check-ability-partial-blockers.mjs
-```
-
-変更したファイルに関係するチェックだけを実行し、必要なチェックを見逃さないでください。変更した JS / MJS には `node --check` も必ず実行してください。
+旧 W1–W3（SUMMON loader、storage failure visibility、modifier/trait fixture）は source-loading task としては完了済みです。旧 W7 の同フレーム攻撃監査は active work から外れています。解決済み項目を active roadmap に残しません。

@@ -7,24 +7,32 @@ const b = { packId: '000200', mapId: 20, name: '同名マップ', crownCount: 3,
 const c = { packId: '000300', mapId: 30, name: '同倍率別名', crownCount: 2, stars: [100, 150] };
 const d = { packId: '000400', mapId: 40, name: '同倍率別名', crownCount: 2, stars: [100, 150] };
 const oldSnapshot = { packId: '000050', mapId: 10, name: '旧pack同一map', crownCount: 2, stars: [100, 125] };
+const localZero = { packId: '000010', mapId: 0, name: 'ローカル0', crownCount: 2, stars: [100, 125] };
+const trueLegend = { packId: '000013', mapId: 13000, name: '真・伝説のはじまり', crownCount: 4, stars: [100, 150, 200, 300] };
 const index = {
   schemaVersion: 2,
-  entries: [oldSnapshot, a, b, c, d],
+  entries: [oldSnapshot, localZero, a, b, c, d, trueLegend],
   byKey: {
     '000050:10': oldSnapshot,
+    '000010:0': localZero,
     '000100:10': a,
     '000200:20': b,
     '000300:30': c,
-    '000400:40': d
+    '000400:40': d,
+    '000013:13000': trueLegend
   },
   byMapId: {
+    '0': { entries: [localZero] },
     '10': { entries: [oldSnapshot, a] },
     '20': { entries: [b] },
     '30': { entries: [c] },
-    '40': { entries: [d] }
+    '40': { entries: [d] },
+    '13000': { entries: [trueLegend] }
   },
   byName: {
     '旧pack同一map': { entries: [oldSnapshot], ambiguous: false, signatures: ['2:100,125'] },
+    'ローカル0': { entries: [localZero], ambiguous: false, signatures: ['2:100,125'] },
+    '真・伝説のはじまり': { entries: [trueLegend], ambiguous: false, signatures: ['4:100,150,200,300'] },
     '同名マップ': { entries: [a, b], ambiguous: true, signatures: ['2:100,150', '3:100,200,300'] },
     '同倍率別名': { entries: [c, d], ambiguous: false, signatures: ['2:100,150'] }
   }
@@ -47,6 +55,16 @@ assert.equal(exactB.source, 'crown-index-byKey');
 const numeric = resolveMapCrownData(index, { mapId: 20, name: '同名マップ' });
 assert.deepEqual(numeric.stars, [100, 200, 300]);
 assert.equal(numeric.source, 'crown-index-byMapId');
+
+const composite = resolveMapCrownData(index, {
+  name: '真・伝説のはじまり',
+  mapId: 0,
+  mapColcId: 13
+});
+assert.deepEqual(composite.stars, [100, 150, 200, 300]);
+assert.equal(composite.source, 'crown-index-byMapId');
+assert.equal(composite.resolvedMapId, 13000);
+assert.equal(composite.diagnostics.resolvedNumericId, 13000);
 
 const ambiguousMapId = resolveMapCrownData(index, { mapId: 10 });
 assert.deepEqual(ambiguousMapId.stars, [100]);
@@ -78,6 +96,10 @@ assert.ok(!generator.includes('const logicalKey = `${row.mapId}|${signature(row)
 assert.ok(!generator.includes('String(row.packId) > String(previous.packId)'),
   'generator must not discard older exact pack identities in favor of the newest snapshot');
 assert.ok(!generator.includes('e.crownCount > cur.crownCount'), 'generator must not select the largest same-name map');
+
+const runtime = readFileSync('js/battle/bcu-runtime/BcuStageCrownRuntime.js', 'utf8');
+assert.ok(runtime.includes('for (const id of ids)'), 'composite and local ids are resolved in priority order');
+assert.ok(!runtime.includes('entriesForMapIds(crownIndex, ids)'), 'distinct numeric identities must not be merged');
 
 const ui = readFileSync('js/ui/FormationStageDifficultyPatch.js', 'utf8');
 assert.ok(ui.includes('packId: uniqueMapPackId(map)'));

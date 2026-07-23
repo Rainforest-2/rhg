@@ -2,7 +2,7 @@
 
 `Rainforest-2/rhg` を変更するエージェント向けの入口です。
 
-## 読む順序
+## Read first
 
 1. `README.md`
 2. `docs/README.md`
@@ -35,12 +35,7 @@ Issue を修正したら、Issue 本文の再現条件と BCU 根拠に対応す
 ## 変更フロー
 
 ```text
-BCU source fact
--> current JS owner and boot reachability
--> minimal implementation
--> deterministic regression check
--> adjacent checks / build
--> focused documentation update
+BCU fact -> current JS owner audit -> minimal change -> deterministic check -> focused docs update
 ```
 
 変更前に確認すること:

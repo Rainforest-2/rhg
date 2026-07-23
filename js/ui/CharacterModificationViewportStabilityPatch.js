@@ -1,6 +1,16 @@
 import { CharacterModificationRenderer } from './character-modification/CharacterModificationRenderer.js';
 
-const PATCH_FLAG = Symbol.for('rhg.character-modification-viewport-stability.v2');
+const PATCH_FLAG = Symbol.for('rhg.character-modification-viewport-stability.v3');
+
+function findScrollTopDescriptor(element) {
+  let prototype = Object.getPrototypeOf(element);
+  while (prototype) {
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, 'scrollTop');
+    if (descriptor?.get && descriptor?.set) return descriptor;
+    prototype = Object.getPrototypeOf(prototype);
+  }
+  return null;
+}
 
 function installCharacterModificationViewportStabilityPatch() {
   const proto = CharacterModificationRenderer?.prototype;
@@ -19,6 +29,25 @@ function installCharacterModificationViewportStabilityPatch() {
     viewport.removeEventListener('scroll', immediateHandler);
 
     this.cmDesiredScrollTop = fieldList.scrollTop;
+    this.cmScrollTopDescriptor = findScrollTopDescriptor(fieldList);
+    if (this.cmScrollTopDescriptor && !Object.hasOwn(fieldList, 'scrollTop')) {
+      const descriptor = this.cmScrollTopDescriptor;
+      Object.defineProperty(fieldList, 'scrollTop', {
+        configurable: true,
+        enumerable: descriptor.enumerable,
+        get() {
+          return descriptor.get.call(fieldList);
+        },
+        set: (value) => {
+          descriptor.set.call(fieldList, value);
+          if (!this.cmRestoringViewportScroll) {
+            this.cmDesiredScrollTop = descriptor.get.call(fieldList);
+          }
+        }
+      });
+      this.cmOwnScrollTopInstalled = true;
+    }
+
     this.cmScrollMemoryHandler = () => {
       if (!this.cmRestoringViewportScroll) this.cmDesiredScrollTop = fieldList.scrollTop;
     };
@@ -62,6 +91,10 @@ function installCharacterModificationViewportStabilityPatch() {
       this.cmViewportStableFrame = null;
     }
     this.fieldList?.removeEventListener('scroll', this.cmScrollMemoryHandler);
+    if (this.cmOwnScrollTopInstalled && this.fieldList && Object.hasOwn(this.fieldList, 'scrollTop')) {
+      delete this.fieldList.scrollTop;
+    }
+    this.cmOwnScrollTopInstalled = false;
     this.cmRestoringViewportScroll = false;
     return originalDestroy.call(this);
   };

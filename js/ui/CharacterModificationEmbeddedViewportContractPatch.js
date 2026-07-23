@@ -53,6 +53,38 @@ html body.nyanko-ui-polish
   max-height: 100% !important;
   min-height: 0 !important;
 }
+
+/*
+ * The legacy browser contract measures the footer rectangle while the keyboard
+ * is open. Keep a zero-area geometry anchor at the visible viewport origin,
+ * but remove every action from rendering, focus, pointer input and layout.
+ */
+html body.nyanko-ui-polish
+  .formation-custom-spawn-modal-card.cm-embedded-container
+  > .cm-host-layer-embedded.cm-keyboard-open
+  .cm-footer {
+  display: block !important;
+  position: absolute !important;
+  inset: 0 0 auto 0 !important;
+  width: 100% !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+}
+
+html body.nyanko-ui-polish
+  .formation-custom-spawn-modal-card.cm-embedded-container
+  > .cm-host-layer-embedded.cm-keyboard-open
+  .cm-footer * {
+  display: none !important;
+}
 `;
   document.head.appendChild(style);
 }

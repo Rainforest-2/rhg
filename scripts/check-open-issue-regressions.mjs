@@ -16,6 +16,8 @@ const commands = [
   ['node', ['--check', 'js/battle/BattleSceneActorLayerOrderPatch.js']],
   ['node', ['--check', 'js/battle/ActorStatsModel.js']],
   ['node', ['--check', 'js/battle/bcu-runtime/BcuStageCrownRuntime.js']],
+  ['node', ['--check', 'js/battle/bcu-runtime/BcuCastleGuardRuntime.js']],
+  ['node', ['--check', 'js/battle/BattleSceneBcuCastleGuardPatch.js']],
   ['node', ['--check', 'js/ui/FormationStageDifficultyPatch.js']],
   ['node', ['--check', 'js/boot/installBattlePatches.js']],
   ['node', ['--check', 'scripts/build-bcu-background-index.mjs']],
@@ -32,7 +34,8 @@ const commands = [
   ['node', ['scripts/check-bcu-trait-targetforms-loader-parity.mjs']],
   ['node', ['scripts/check-bcu-actor-layer-order-parity.mjs']],
   ['node', ['scripts/check-battle-patch-install-atomicity.mjs']],
-  ['node', ['scripts/check-battle-scene-stage-runtime-wiring.mjs']]
+  ['node', ['scripts/check-battle-scene-stage-runtime-wiring.mjs']],
+  ['node', ['scripts/check-bcu-enemy-entity-castle-guard.mjs']]
 ];
 
 for (const [command, args] of commands) {

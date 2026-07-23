@@ -1,6 +1,6 @@
 import { BattleBase } from './BattleBase.js';
 import { BattleScene } from './BattleScene.js';
-import { holdCastleGuardDamage, initializeBcuCastleGuard, tickBcuCastleGuard } from './bcu-runtime/BcuCastleGuardRuntime.js';
+import { holdCastleGuardDamage, initializeBcuCastleGuard, isEnemyCastleGuardTarget, tickBcuCastleGuard } from './bcu-runtime/BcuCastleGuardRuntime.js';
 
 const BASE_PATCH_FLAG = Symbol.for('wanko-battle.base-castle-guard.v1');
 const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.scene-castle-guard.v1');
@@ -50,7 +50,7 @@ export function installBattleSceneBcuCastleGuardPatch() {
 
     const originalQueueAttackDamage = sceneProto.queueAttackDamage;
     sceneProto.queueAttackDamage = function queueAttackDamageWithCastleGuard(attacker, target, targetType, event, meta = {}) {
-      if (targetType === 'base') {
+      if (targetType === 'base' || isEnemyCastleGuardTarget(target)) {
         initializeBcuCastleGuard(this);
         const damage = Number(event?.damage ?? 0);
         const held = holdCastleGuardDamage(this, target, damage, { ...meta, timeMs: this.timeMs });

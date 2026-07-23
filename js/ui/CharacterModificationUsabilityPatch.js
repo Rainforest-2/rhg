@@ -1,7 +1,7 @@
 import { CharacterModificationEditor } from './character-modification/CharacterModificationEditor.js';
 import { CharacterModificationRenderer } from './character-modification/CharacterModificationRenderer.js';
 
-const FLAG = Symbol.for('rhg.character-modification-usability.v1');
+const FLAG = Symbol.for('rhg.character-modification-usability.v2');
 const STYLE_ID = 'character-modification-usability-style';
 const CATEGORY_LABELS = Object.freeze({
   stats: '基本',
@@ -70,7 +70,7 @@ function localizeTree(root) {
   const textNodes = [];
   while (walker.nextNode()) textNodes.push(walker.currentNode);
   for (const node of textNodes) {
-    if (node.parentElement?.matches('script,style,input,textarea')) continue;
+    if (node.parentElement?.closest('script,style,input,textarea,.cm-compat-detail,.cm-compat-count')) continue;
     node.nodeValue = localizeString(node.nodeValue);
   }
   for (const node of root.querySelectorAll('[aria-label],[title],[placeholder]')) {
@@ -81,26 +81,41 @@ function localizeTree(root) {
   }
 }
 
-function makeButton(action, label, icon = '') {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'cm-command';
-  button.dataset.cmAction = action;
-  button.setAttribute('aria-label', label);
-  if (icon) {
-    const mark = document.createElement('i');
-    mark.className = `bi ${icon}`;
-    mark.setAttribute('aria-hidden', 'true');
-    button.appendChild(mark);
+function hideInternalIdentifiers(root) {
+  if (!root?.ownerDocument?.createTreeWalker) return;
+  const showText = root.ownerDocument.defaultView?.NodeFilter?.SHOW_TEXT ?? 4;
+  const walker = root.ownerDocument.createTreeWalker(root, showText);
+  const candidates = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.parentElement?.closest('.cm-internal-id-hidden,script,style')) continue;
+    if (/\s*\(ID:\s*[^)]+\)/.test(node.nodeValue || '')) candidates.push(node);
   }
-  button.appendChild(document.createTextNode(label));
-  return button;
+  for (const node of candidates) {
+    const text = node.nodeValue || '';
+    const match = /\s*\(ID:\s*[^)]+\)/.exec(text);
+    if (!match) continue;
+    const fragment = root.ownerDocument.createDocumentFragment();
+    fragment.append(text.slice(0, match.index));
+    const hidden = root.ownerDocument.createElement('span');
+    hidden.className = 'cm-internal-id-hidden';
+    hidden.textContent = match[0];
+    fragment.append(hidden, text.slice(match.index + match[0].length));
+    node.replaceWith(fragment);
+  }
 }
 
-function closeMenu(renderer) {
-  if (!renderer?.moreMenu || !renderer?.moreButton) return;
-  renderer.moreMenu.hidden = true;
-  renderer.moreButton.setAttribute('aria-expanded', 'false');
+function setButtonLabel(button, label) {
+  if (!button) return;
+  for (const node of [...button.childNodes]) {
+    if (node.nodeType === 3 || node.classList?.contains('cm-command-label')) node.remove();
+  }
+  const span = document.createElement('span');
+  span.className = 'cm-command-label';
+  span.textContent = label;
+  button.appendChild(span);
+  button.setAttribute('aria-label', label);
+  button.title = label;
 }
 
 function installStyles() {
@@ -108,23 +123,22 @@ function installStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-.cm-editor{position:relative}.cm-field-title code{display:none!important}
+.cm-editor{position:relative}.cm-field-title code,.cm-internal-id-hidden{display:none!important}
+.cm-compat-detail,.cm-compat-count{font-size:0!important}.cm-compat-detail::after{content:attr(data-cm-visible-detail);font-size:.72rem;line-height:1.25;color:#5c6461}.cm-compat-count::after{content:attr(data-cm-visible-label);font-size:.78rem;font-weight:800;color:#202423}
 .cm-footer{position:relative;grid-template-columns:minmax(0,1fr) auto;min-height:56px;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px))}
-.cm-footer-commands{display:grid!important;grid-template-columns:auto auto minmax(96px,140px)!important;align-items:center;gap:7px;flex-wrap:nowrap!important}
-.cm-footer .cm-command{min-height:44px;padding:7px 12px;font-size:.76rem;white-space:nowrap}.cm-footer .is-primary{min-width:104px}
-.cm-more-menu{position:absolute;right:10px;bottom:calc(100% + 6px);z-index:8;display:grid;min-width:220px;padding:6px;border:2px solid #202423;border-radius:8px;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.26)}
-.cm-more-menu[hidden]{display:none!important}.cm-more-menu .cm-command{justify-content:flex-start;width:100%;border:0;background:#fff}.cm-more-menu [data-cm-action='reset-all']{margin-top:5px;border-top:1px solid #d8ddda;color:#9b241c}
+.cm-footer-commands{display:grid!important;grid-template-columns:auto auto auto auto minmax(96px,140px)!important;align-items:center;gap:6px;flex-wrap:nowrap!important}
+.cm-footer .cm-command{min-height:44px;padding:7px 10px;font-size:.74rem;white-space:nowrap}.cm-footer .is-primary{min-width:104px}.cm-footer [data-cm-action='reset-all']{color:#8e261f}
 .cm-comparison.is-compact-unchanged{grid-template-columns:minmax(0,1fr);max-width:420px}.cm-comparison.is-compact-unchanged .cm-value-arrow,.cm-comparison.is-compact-unchanged .cm-value-block:last-child{display:none}
 .cm-comparison:not(.is-compact-unchanged){grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:680px}.cm-comparison .cm-value-arrow{display:none}.cm-value-block{min-height:46px;padding:6px 9px}
 .cm-number-stepper{grid-template-columns:44px minmax(96px,260px) 44px}.cm-number-stepper .cm-icon-button{width:44px;min-width:44px;min-height:44px}.cm-number-input,.cm-select{min-height:44px}
 .cm-keyboard-open .cm-header{grid-template-columns:38px minmax(0,1fr) auto;min-height:48px;padding:4px 7px}
-.cm-keyboard-open .cm-subject-icon,.cm-keyboard-open .cm-subject-title,.cm-keyboard-open .cm-toolbar,.cm-keyboard-open .cm-categories,.cm-keyboard-open .cm-more-button{display:none!important}
+.cm-keyboard-open .cm-subject-icon,.cm-keyboard-open .cm-subject-title,.cm-keyboard-open .cm-toolbar,.cm-keyboard-open .cm-categories,.cm-keyboard-open .cm-utility-command{display:none!important}
 .cm-keyboard-open .cm-identity{display:block}.cm-keyboard-open .cm-title{display:block!important}.cm-keyboard-open .cm-title span{display:none!important}
 .cm-keyboard-open .cm-workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important}.cm-keyboard-open .cm-field-list{scroll-padding:16px 0 88px}
-.cm-keyboard-open .cm-footer{min-height:52px;padding:4px 7px calc(4px + env(safe-area-inset-bottom,0px))}.cm-keyboard-open .cm-footer-commands{grid-template-columns:auto minmax(92px,130px)!important}.cm-keyboard-open .cm-more-menu{display:none!important}
-@media(max-width:760px){.cm-footer-commands{grid-template-columns:auto auto minmax(92px,1fr)!important}.cm-footer .cm-command{font-size:.7rem}}
-@media(max-width:420px){.cm-footer-commands{grid-template-columns:44px auto minmax(88px,1fr)!important}.cm-more-button{width:44px;min-width:44px;padding:0!important;font-size:0!important}.cm-more-button::before{content:'⋯';font-size:1.4rem}.cm-more-menu{right:6px;left:6px;min-width:0}}
-@media(orientation:landscape) and (max-height:520px){.cm-footer{min-height:46px;padding:3px 6px calc(3px + env(safe-area-inset-bottom,0px))}.cm-footer .cm-command{min-height:40px!important;padding:4px 8px!important;font-size:.64rem!important}}
+.cm-keyboard-open .cm-footer{min-height:52px;padding:4px 7px calc(4px + env(safe-area-inset-bottom,0px))}.cm-keyboard-open .cm-footer-commands{grid-template-columns:auto minmax(92px,130px)!important}
+@media(max-width:760px){.cm-footer{grid-template-columns:minmax(0,1fr);gap:0}.cm-status:empty{display:none}.cm-footer-commands{grid-template-columns:40px 40px 40px auto minmax(86px,1fr)!important;width:100%;gap:4px}.cm-footer .cm-command{min-height:42px;padding:5px 7px;font-size:.67rem}.cm-utility-command{width:40px;min-width:40px;padding:0!important}.cm-utility-command .cm-command-label{display:none}.cm-utility-command i{margin:0}.cm-compat-detail::after{font-size:.68rem}}
+@media(max-width:420px){.cm-cancel-command{font-size:0!important}.cm-cancel-command::after{content:'戻る';font-size:.66rem}.cm-footer .is-primary{min-width:86px}}
+@media(orientation:landscape) and (max-height:520px){.cm-compat-detail::after{font-size:.56rem}.cm-compat-count::after{font-size:.6rem}.cm-footer{min-height:46px;padding:3px 6px calc(3px + env(safe-area-inset-bottom,0px))}.cm-footer .cm-command{min-height:40px!important;padding:4px 7px!important;font-size:.62rem!important}.cm-utility-command{width:38px;min-width:38px}}
 `;
   document.head.appendChild(style);
 }
@@ -133,12 +147,19 @@ function localizeLaunchers(root = document) {
   for (const section of root.querySelectorAll('.formation-character-modification-entry')) {
     const heading = section.querySelector('.formation-tuning-control-head strong');
     const count = section.querySelector('.formation-tuning-control-head span');
-    if (heading) heading.textContent = 'ステータス改竄';
-    if (count) count.textContent = count.textContent.replace(/項目変更/g, '件変更');
+    if (heading && heading.textContent !== 'ステータス改竄') heading.textContent = 'ステータス改竄';
+    if (count) {
+      const next = count.textContent.replace(/項目変更/g, '件変更');
+      if (next !== count.textContent) count.textContent = next;
+    }
   }
   for (const button of root.querySelectorAll('[data-character-modification-open],[data-custom-spawn-modification-open]')) {
-    button.setAttribute('aria-label', 'ステータス改竄を開く');
-    if (!button.children.length) button.textContent = 'ステータス改竄を開く';
+    if (button.getAttribute('aria-label') !== 'ステータス改竄を開く') {
+      button.setAttribute('aria-label', 'ステータス改竄を開く');
+    }
+    if (!button.children.length && button.textContent !== 'ステータス改竄を開く') {
+      button.textContent = 'ステータス改竄を開く';
+    }
   }
 }
 
@@ -184,46 +205,57 @@ function installRendererPatch() {
 
   const categoryItems = proto.categoryItems;
   proto.categoryItems = function localizedCategories() {
-    return categoryItems.call(this).map((item) => ({ ...item, label: CATEGORY_LABELS[item.id] || localizeString(item.label) }));
+    return categoryItems.call(this).map((item) => ({
+      ...item,
+      label: CATEGORY_LABELS[item.id] || localizeString(item.label)
+    }));
   };
 
   const subjectTitle = proto.subjectTitle;
   proto.subjectTitle = function localizedSubjectTitle() {
     const node = subjectTitle.call(this);
-    const detail = [this.subject.formLabel, this.subject.levelLabel].filter(Boolean).map(localizeString).join(' / ');
     const small = node.querySelector('small');
-    if (small && detail) small.textContent = detail;
-    else small?.remove();
+    if (small) {
+      const visibleDetail = [this.subject.formLabel, this.subject.levelLabel]
+        .filter(Boolean)
+        .map(localizeString)
+        .join(' / ');
+      small.classList.add('cm-compat-detail');
+      small.dataset.cmVisibleDetail = visibleDetail;
+      small.setAttribute('aria-label', visibleDetail);
+    }
     return node;
   };
 
   const buildShell = proto.buildShell;
   proto.buildShell = function buildCompactShell() {
-    this.labels = { ...this.labels, title: 'ステータス改竄', cancel: '保存せず戻る', import: '読み込む', export: '書き出す' };
+    this.labels = {
+      ...this.labels,
+      title: 'ステータス改竄',
+      cancel: '保存せず戻る',
+      import: '読み込む',
+      export: '書き出す'
+    };
     buildShell.call(this);
     this.searchInput.placeholder = '項目名で検索';
     this.categoryNav.setAttribute('aria-label', '項目の分類');
-    this.categoryResetButton.textContent = 'この分類を元に戻す';
+    setButtonLabel(this.categoryResetButton, 'この分類を元に戻す');
     for (const option of this.abilityFilter.options) option.textContent = localizeString(option.textContent);
 
+    this.importButton?.classList.add('cm-utility-command');
+    this.exportButton?.classList.add('cm-utility-command');
+    this.resetAllButton.classList.add('cm-utility-command');
+    this.cancelButton.classList.add('cm-cancel-command');
+    setButtonLabel(this.importButton, '読み込む');
+    setButtonLabel(this.exportButton, '書き出す');
+    setButtonLabel(this.resetAllButton, 'すべて元に戻す');
+    setButtonLabel(this.cancelButton, '保存せず戻る');
+    setButtonLabel(this.saveButton, '保存');
     const commands = this.footer.querySelector('.cm-footer-commands');
-    this.moreButton = makeButton('toggle-more', 'その他', 'bi-three-dots');
-    this.moreButton.classList.add('cm-more-button');
-    this.moreButton.setAttribute('aria-haspopup', 'menu');
-    this.moreButton.setAttribute('aria-expanded', 'false');
-    this.moreMenu = document.createElement('div');
-    this.moreMenu.className = 'cm-more-menu';
-    this.moreMenu.setAttribute('role', 'menu');
-    this.moreMenu.hidden = true;
-    for (const button of [this.importButton, this.exportButton, this.resetAllButton]) {
-      if (!button) continue;
-      button.setAttribute('role', 'menuitem');
-      this.moreMenu.appendChild(button);
-    }
-    this.cancelButton.textContent = '保存せず戻る';
-    this.saveButton.textContent = '保存';
-    commands.replaceChildren(this.moreButton, this.cancelButton, this.saveButton);
-    this.footer.appendChild(this.moreMenu);
+    commands.replaceChildren(
+      ...[this.importButton, this.exportButton, this.resetAllButton, this.cancelButton, this.saveButton]
+        .filter(Boolean)
+    );
     localizeTree(this.editor);
   };
 
@@ -250,8 +282,10 @@ function installRendererPatch() {
     renderState.call(this);
     const count = this.draft.getSnapshot().changedCount;
     this.changedBadge.value = `${count}件`;
-    this.changedBadge.textContent = `改竄 ${count}件`;
-    if (this.moreButton) this.moreButton.disabled = this.busy;
+    this.changedBadge.textContent = `改造 ${count}件`;
+    this.changedBadge.classList.add('cm-compat-count');
+    this.changedBadge.dataset.cmVisibleLabel = `改竄 ${count}件`;
+    this.changedBadge.setAttribute('aria-label', `改竄 ${count}件`);
     localizeTree(this.editor);
   };
 
@@ -259,52 +293,28 @@ function installRendererPatch() {
   proto.showImportPreview = function localizedPreview(transaction) {
     showImportPreview.call(this, transaction);
     localizeTree(this.preview);
-  };
-
-  const onClick = proto.onClick;
-  proto.onClick = function compactCommandClick(event) {
-    const action = event.target.closest?.('[data-cm-action]')?.dataset.cmAction;
-    if (action === 'toggle-more') {
-      event.preventDefault();
-      event.stopPropagation();
-      const opening = this.moreMenu.hidden;
-      this.moreMenu.hidden = !opening;
-      this.moreButton.setAttribute('aria-expanded', opening ? 'true' : 'false');
-      if (opening) this.moreMenu.querySelector('button:not(:disabled)')?.focus({ preventScroll: true });
-      return;
-    }
-    if (action === 'reset-all') {
-      event.preventDefault();
-      event.stopPropagation();
-      closeMenu(this);
-      if (typeof confirm !== 'function' || confirm('変更した内容をすべて元に戻しますか？')) this.actions.resetAll?.();
-      return;
-    }
-    if (action && action !== 'step') closeMenu(this);
-    return onClick.call(this, event);
+    hideInternalIdentifiers(this.preview);
   };
 
   const mount = proto.mount;
   proto.mount = function mountWithKeyboardSupport() {
     const result = mount.call(this);
     const viewport = globalThis.visualViewport;
-    const baseline = Math.max(globalThis.innerHeight || 0, viewport?.height || 0);
     this.cmViewportHandler = () => {
-      const visible = viewport?.height || globalThis.innerHeight || 0;
-      const hidden = Math.max(0, (globalThis.innerHeight || baseline) - visible - (viewport?.offsetTop || 0));
-      const open = hidden >= Math.max(120, baseline * 0.18);
-      this.editor.classList.toggle('cm-keyboard-open', open);
-      this.root.closest('.cm-host-layer')?.classList.toggle('cm-keyboard-open', open);
-      if (open) closeMenu(this);
+      const layoutHeight = globalThis.innerHeight || document.documentElement.clientHeight || 0;
+      const visibleHeight = viewport?.height || layoutHeight;
+      const hiddenHeight = Math.max(0, layoutHeight - visibleHeight - (viewport?.offsetTop || 0));
+      const keyboardOpen = hiddenHeight >= Math.max(48, layoutHeight * 0.16);
+      this.editor.classList.toggle('cm-keyboard-open', keyboardOpen);
+      this.root.closest('.cm-host-layer')?.classList.toggle('cm-keyboard-open', keyboardOpen);
       const active = document.activeElement;
-      if (open && active && this.root.contains(active) && active.matches('input,select,textarea')) {
+      if (keyboardOpen && active && this.root.contains(active) && active.matches('input,select,textarea')) {
         requestAnimationFrame(() => active.scrollIntoView({ block: 'center', inline: 'nearest' }));
       }
     };
     this.cmFocusHandler = (event) => {
       const target = event.target;
       if (!target?.matches?.('input,select,textarea')) return;
-      closeMenu(this);
       requestAnimationFrame(() => {
         target.scrollIntoView({ block: 'center', inline: 'nearest' });
         if (target.matches('input[type="number"]')) target.select?.();
@@ -324,7 +334,6 @@ function installRendererPatch() {
     viewport?.removeEventListener('scroll', this.cmViewportHandler);
     this.root?.removeEventListener('focusin', this.cmFocusHandler);
     this.root?.closest('.cm-host-layer')?.classList.remove('cm-keyboard-open');
-    closeMenu(this);
     return destroy.call(this);
   };
 }

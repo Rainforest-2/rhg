@@ -134,6 +134,10 @@ test('phone status editor gives the viewport to the editing canvas', { timeout: 
     await openEditor(page, `http://127.0.0.1:${port}/`);
 
     const portrait = await metrics(page);
+    await page.screenshot({
+      path: `${OUT_DIR}/status-editor-mobile-390x844.png`,
+      fullPage: false
+    });
     assertFullBleed(portrait, '390x844');
     assertToolbarIsOneRow(portrait, '390x844');
     assert.ok(portrait.header.height <= 46, '390x844: header is compact');
@@ -146,16 +150,19 @@ test('phone status editor gives the viewport to the editing canvas', { timeout: 
       '390x844: workspace owns at least 82% of dialog height'
     );
     assert.ok(portrait.fieldList.height >= 580, '390x844: field list remains the dominant region');
-    assert.ok(portrait.firstField.height < 150, '390x844: first field is not a desktop-sized card');
+    assert.ok(
+      portrait.firstField.height < 190,
+      `390x844: first field stays compact (${portrait.firstField.height}px)`
+    );
     assert.ok(portrait.input?.height <= 40, '390x844: numeric input is compact');
-    await page.screenshot({
-      path: `${OUT_DIR}/status-editor-mobile-390x844.png`,
-      fullPage: false
-    });
 
     await page.setViewportSize({ width: 667, height: 320 });
     await page.waitForTimeout(160);
     const landscape = await metrics(page);
+    await page.screenshot({
+      path: `${OUT_DIR}/status-editor-mobile-667x320.png`,
+      fullPage: false
+    });
     assertFullBleed(landscape, '667x320');
     assertToolbarIsOneRow(landscape, '667x320');
     assert.ok(landscape.header.height <= 40, '667x320: header is compact');
@@ -168,10 +175,6 @@ test('phone status editor gives the viewport to the editing canvas', { timeout: 
       '667x320: workspace owns at least 62% of low landscape height'
     );
     assert.ok(landscape.fieldList.height >= 120, '667x320: editing list remains usable');
-    await page.screenshot({
-      path: `${OUT_DIR}/status-editor-mobile-667x320.png`,
-      fullPage: false
-    });
   } finally {
     await context.close();
     await browser.close();

@@ -1,6 +1,6 @@
 # BCU 能力のソース根拠
 
-更新日: 2026-06-25
+更新日: 2026-07-23
 
 これは `RHgrive/rhg` の現行パリティ作業における、BCU ソースの事実一覧です。実際に確認できた根拠を記録するものであり、完了宣言ではありません。各行について、現在の JS オーナー監査・決定的チェック・必要に応じたブラウザレビューが継続して必要です。
 
@@ -27,11 +27,12 @@
 | 特殊敵城 / EEnemy base | `EStage.base()`, `StageBasis`, stage header base enemy id | ステージヘッダの base enemy id に一致する敵行は通常 spawn ではなく、敵拠点そのものとして `EEnemy` owner になる。HP%、勝敗、攻撃、波動 / 烈波はその敵アクター側で処理される。 | `StageDefinitionLoader` が base enemy 行を明示し、`StageRuntime` が通常 spawn から除外、`BattleSceneBcuEnemyEntityBasePatch` が初期配置する。`check-bcu-enemy-entity-base-runtime` が `stageRN036_05` raw enemy 317 を固定。 |
 | 基本 / 非基本キャノン | `Cannon`, `StageBasis`, `Treasure`, `CannonLevelCurve`, `Data` | キャノンは独自の owner を持ち、id ごとの timing / geometry / targeting / level curve を持つ。`BASE_WALL` は entity lifecycle である。 | 実行時オーナーとチェックはある。キャノンごとの bitmap alias と見た目の厳密性は未完。 |
 | combo / orb / treasure / talent / PCoin | `BasisLU`, `LineUp`, `Treasure`, `EUnit/EEnemy`, `PCoin`, attack construction, `ELineUp` | modifier は basis / lineup / entity construction の根本から発生し、stats / damage / proc payload / resistance / traits / price / cooldown に影響する。`EUnit.getAbi()` は active combo increment が正のとき `C_VKILL` から `AB_VKILL` を付与する。BCU の deploy cost は `DataUnit.price` から始まり、`Form/EForm.getPrice(sta)` で `price * (1 + sta * 0.5)` が適用される。通常の `StageMap.price=1` により、通常の deploy cost は内部 `ELineUp.price = 100 * ...` の前に 1.5 倍になる。`PCoin.improve` は `PC2_COST` を `price -= value`、`PC2_CD` を `respawn -= value` として適用し、`ELineUp` が `C_DISCOUNT` と `Treasure.getFinRes(respawn, C_RESP)` を使って production cooldown を調整する。最大 `LV_RES=30/T_RES=300` により、Tank Cat のような short-respawn unit は 60F の下限になる。 | コア hook はある。実データ sweep で combo / orb / treasure / talent / PCoin の経路、`C_VKILL` を damage resolver まで届かせる経路、production cost / cooldown の ELineUp ルートが確認されている。見た目受け入れは別途。 |
+| RHG キャラクター改造の適用境界 | `DataUnit.getPrice/getRespawn/getLimit`、`DefaultData.getAtks/getItv/getPost/getProc/getTBA`、`AtkModelEntity.getAbi/getAttack/inRange/setProc/invokeLater`、`EUnit` construction、`EEnemy` magnification construction | BCU の level/modifier/magnification と attack/proc construction が通常の最終設定を作る。hit ごとの proc は `AtkModelEntity.setProc` の attack model に属し、対象依存 damage/proc はその後の既存順序で解決される。 | `CharacterModificationResolver` はこれらの通常結果を入力に、指定 field だけを absolute override する RHG 拡張。derived model を再構築するが raw BCU data は変更しない。BCU に `CharacterModification` holder があるという主張ではない。詳細は `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md`。 |
 | `Trait.targetForms` | `Entity.traitCompatible`, `EEnemy.getDamage` | 互換性は通常の shared trait に加え、target type / form metadata に依存する。 | 実行時フィクスチャはある。実カスタム trait / form と capture / proc の網羅は未完。 |
 | 毒撃耐性 | `DataUnit`, `DataEnemy`, `Entity.damaged` | ユニット側の直接 `IMUPOIATK` holder は存在する。確認した通常敵データには toxic attack はあるが、敵側の toxic-immunity holder はない。 | 敵側 CSV の toxic-immunity パースは追加しない。 |
 | bounty / money visual | `Entity.damaged`, `EEnemy.kill`, `EUnit.postUpdate`, effect inventory | bounty は kill / economy state である。専用の battle visual owner や安定した alias は未確認。 | 将来のソース根拠が出るまで、logic-only とする。 |
 | 特殊 castle boss spawn | `CastleImg`, `CommonStatic.bossSpawnPoint`, `StageBasis` | 特殊 castle データが boss / base の spawn coordinate を決める。 | formula / bundle / runtime bridge は実装済みでテスト済み。 |
-| セーブ / 陣形互換 | この監査範囲では BCU のシリアライズ owner が未確認 | BCU の schema / import / export / round-trip 主張はまだできない。 | rhg はリポジトリ内のブラウザ永続化を使う。BCU 互換は unconfirmed と扱う。 |
+| セーブ / 陣形互換 | この監査範囲では BCU のシリアライズ owner が未確認 | BCU の schema / import / export / round-trip 主張はまだできない。 | rhg は formation v5、custom stage v2、character modification pack v1 の自己管理 schema と `rhg-*` JSON envelope を持つ。これは RHG 内部の round-trip であり、BCU セーブ / 陣形 / 公式ステージ互換は unconfirmed のまま。 |
 
 ## 監査修正メモ
 

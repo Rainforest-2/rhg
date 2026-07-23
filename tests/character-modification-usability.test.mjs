@@ -44,9 +44,11 @@ test('software keyboard handling is installed, stabilized, and cleaned up', () =
   assert.match(source, /removeEventListener\('resize'/);
   assert.match(source, /addEventListener\('focusin'/);
   assert.match(source, /removeEventListener\('focusin'/);
-  assert.match(viewportSource, /preservedScrollTop/);
+  assert.match(viewportSource, /cmDesiredScrollTop/);
+  assert.match(viewportSource, /cmScrollMemoryHandler/);
   assert.match(viewportSource, /requestAnimationFrame/);
   assert.match(viewportSource, /removeEventListener\('resize', immediateHandler\)/);
+  assert.match(viewportSource, /removeEventListener\('scroll', this.cmScrollMemoryHandler\)/);
 });
 
 test('boot order preserves modification, viewport, landscape, and premium contracts', () => {

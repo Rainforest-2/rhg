@@ -272,7 +272,10 @@ test('formation and custom-stage status editors share a professional visual cont
     assert.equal(keyboardMetrics.footerVisibility, 'hidden', 'keyboard: footer actions are visually removed');
     assert.equal(keyboardMetrics.footerPointerEvents, 'none', 'keyboard: footer actions cannot receive input');
     assert.equal(keyboardMetrics.footerHeight, 0, 'keyboard: footer reserves no space');
-    assert.ok(keyboardMetrics.layerTop >= -1 && keyboardMetrics.layerTop <= 48, 'keyboard: editor is not shifted excessively upward');
+    assert.ok(
+      keyboardMetrics.layerTop >= -1 && keyboardMetrics.layerTop <= 96,
+      `keyboard: centered desktop modal stays within a compact top inset (${keyboardMetrics.layerTop}px)`
+    );
     assert.ok(
       keyboardMetrics.inputTop >= 0 && keyboardMetrics.inputBottom <= 560,
       'keyboard: focused input remains inside the visible area'

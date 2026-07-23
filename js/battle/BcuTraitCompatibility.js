@@ -6,7 +6,9 @@ const BCU_TARGET_TRAITED = Object.freeze([
   BCU_TRAITS.black,
   BCU_TRAITS.angel,
   BCU_TRAITS.alien,
-  BCU_TRAITS.zombie
+  BCU_TRAITS.zombie,
+  BCU_TRAITS.demon,
+  BCU_TRAITS.relic
 ]);
 
 function flagsFromList(list = []) {

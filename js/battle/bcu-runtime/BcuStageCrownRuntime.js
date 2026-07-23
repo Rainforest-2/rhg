@@ -7,10 +7,6 @@
 //     float mulatk = (data.multiple == 0 ? 100 : data.mult_atk) * mul * 0.01f;  // ATK magnification
 // i.e. every enemy row's HP and ATK magnification is scaled by stars[star]/100. ★1 (star 0) is always
 // 100 -> mul = 1.0 -> no change, so single-crown stages and the default selection are unaffected.
-//
-// Crown magnification data per map comes from public/assets/generated/bcu-stage-crown-index.json
-// (built from Map_option.csv 星解放 / 星N倍率). The UI resolves the map's stars[] + selected crown and
-// passes the resolved percentage here; this module owns only the BCU multiplier application.
 
 export const BCU_DEFAULT_CROWN_STARS = Object.freeze([100, 150, 200, 300]);
 export const BCU_MIN_CROWN_STAR = 1;
@@ -41,8 +37,6 @@ export function crownDataHasStar(crownData = {}, star = BCU_MIN_CROWN_STAR) {
   return crownStarsForData(crownData).includes(normalizeCrownStar(star));
 }
 
-// Clamp a requested crown index into a map's available crowns. starIndex is 0-based (0 = ★1).
-// A single-crown map (or missing stars) always resolves to ★1 (index 0).
 export function clampCrownIndex(starIndex, stars = BCU_DEFAULT_CROWN_STARS) {
   const count = Array.isArray(stars) && stars.length > 0 ? stars.length : 1;
   const idx = Math.trunc(toFinite(starIndex, 0));
@@ -51,26 +45,19 @@ export function clampCrownIndex(starIndex, stars = BCU_DEFAULT_CROWN_STARS) {
   return idx;
 }
 
-// Resolve the BCU stars[star] magnification percentage for a crown selection. Returns 100 for ★1,
-// missing data, or any out-of-range request (clamped). Mirrors EStage `st.getCont().stars[star]`.
 export function resolveCrownMagnificationPercent(starIndex, stars = BCU_DEFAULT_CROWN_STARS) {
   const list = Array.isArray(stars) && stars.length > 0 ? stars : [100];
   const idx = clampCrownIndex(starIndex, list);
   const pct = toFinite(list[idx], 100);
-  // EStage: star 0 (★1) is always the 100% baseline.
   return idx === 0 ? 100 : Math.max(0, pct);
 }
 
-// BCU EStage preserves this product as a float until enemy construction. Do not round or truncate the
-// intermediate percentage: HP performs a final Java int cast and attack performs Math.round separately.
 export function applyCrownToMagnification(rowMagnificationPercent, crownPercent) {
   const base = toFinite(rowMagnificationPercent, 100);
   const mul = toFinite(crownPercent, 100) / 100;
   return base * mul;
 }
 
-// Returns a shallow-cloned enemy row with exact combined HP/ATK percentages. Raw row percentages and
-// explicit factors are retained so downstream construction can mirror BCU's per-field conversion order.
 export function applyCrownToEnemyRow(row, crownPercent) {
   if (!row || toFinite(crownPercent, 100) === 100) return row;
   const out = { ...row };
@@ -92,14 +79,12 @@ export function applyCrownToEnemyRow(row, crownPercent) {
   return out;
 }
 
-// Apply a crown magnification to every enemy row in a list. Returns the same array reference when the
-// crown is ★1/100% (no allocation), else a new array of scaled rows.
 export function applyCrownToEnemyRows(rows, crownPercent) {
   if (!Array.isArray(rows) || toFinite(crownPercent, 100) === 100) return rows;
   return rows.map((row) => applyCrownToEnemyRow(row, crownPercent));
 }
 
-function normalizeCrownLookupName(value) {
+export function normalizeCrownLookupName(value) {
   return String(value || '')
     .normalize('NFKC')
     .replace(/^(?:レジェンドステージ|真レジェンドステージ|レジェンドストーリー0|日本編|未来編|宇宙編)\s*[：:]\s*/u, '')
@@ -107,48 +92,111 @@ function normalizeCrownLookupName(value) {
     .trim();
 }
 
-function pickBestCrownEntry(entries = []) {
-  let best = null;
-  for (const entry of entries) {
-    if (!entry) continue;
-    if (!best || (entry.crownCount || 0) > (best.crownCount || 0) || ((entry.crownCount || 0) === (best.crownCount || 0) && String(entry.packId || '') > String(best.packId || ''))) {
-      best = entry;
-    }
-  }
-  return best;
+function crownSignature(entry) {
+  const stars = Array.isArray(entry?.stars) && entry.stars.length ? entry.stars : [100];
+  const count = Math.max(1, Math.trunc(toFinite(entry?.crownCount ?? stars.length, stars.length)));
+  return `${count}:${stars.slice(0, count).join(',')}`;
 }
 
-// Resolve a map's crown data from the generated crown index. byName is keyed by map display name
-// (the label the difficulty/selection UI already shows); byKey is keyed by `<packId>:<mapId>`.
-// Returns { crownCount, stars } with a single-crown default when the map is absent.
-export function resolveMapCrownData(crownIndex, { name = null, packId = null, mapId = null, mapColcId = null } = {}) {
-  if (crownIndex) {
-    if (packId != null && mapId != null) {
-      const hit = crownIndex.byKey?.[`${packId}:${mapId}`];
-      if (hit) return { crownCount: hit.crownCount, stars: hit.stars, source: 'crown-index-byKey' };
+function resultFromEntry(entry, source, diagnostics = {}) {
+  return {
+    crownCount: Math.max(1, Math.trunc(toFinite(entry?.crownCount ?? entry?.stars?.length, 1))),
+    stars: Array.isArray(entry?.stars) && entry.stars.length ? [...entry.stars] : [100],
+    source,
+    resolvedPackId: entry?.packId ?? null,
+    resolvedMapId: entry?.mapId ?? null,
+    unresolvedReason: null,
+    diagnostics
+  };
+}
+
+function ambiguousResult(reason, candidates = [], diagnostics = {}) {
+  return {
+    crownCount: 1,
+    stars: [100],
+    source: 'crown-index-ambiguous',
+    unresolvedReason: reason,
+    diagnostics: {
+      ...diagnostics,
+      candidateCount: candidates.length,
+      candidateKeys: candidates.map((entry) => `${entry?.packId ?? '?'}:${entry?.mapId ?? '?'}`),
+      signatures: [...new Set(candidates.map(crownSignature))]
     }
-    if (name && crownIndex.byName?.[name]) {
-      const hit = crownIndex.byName[name];
-      return { crownCount: hit.crownCount, stars: hit.stars, source: 'crown-index-byName' };
-    }
-    const numericMapId = mapId == null ? NaN : toFinite(mapId, NaN);
-    const numericMapColcId = mapColcId == null ? NaN : toFinite(mapColcId, NaN);
-    if (Number.isFinite(numericMapId) && Array.isArray(crownIndex.entries)) {
-      const ids = Number.isFinite(numericMapColcId)
-        ? [(numericMapColcId * 1000) + numericMapId, numericMapId]
-        : [numericMapId];
-      let hit = null;
-      for (const id of ids) {
-        hit = pickBestCrownEntry(crownIndex.entries.filter((entry) => Number(entry?.mapId) === id));
-        if (hit) break;
-      }
-      if (hit) return { crownCount: hit.crownCount, stars: hit.stars, source: 'crown-index-byMapId' };
-    }
-    const normalizedName = normalizeCrownLookupName(name);
-    if (normalizedName && Array.isArray(crownIndex.entries)) {
-      const hit = pickBestCrownEntry(crownIndex.entries.filter((entry) => normalizeCrownLookupName(entry?.name) === normalizedName));
-      if (hit) return { crownCount: hit.crownCount, stars: hit.stars, source: 'crown-index-byNormalizedName' };
-    }
+  };
+}
+
+function resolveCandidateSet(candidates, source, diagnostics = {}) {
+  const list = [...new Map((candidates || []).filter(Boolean).map((entry) => [`${entry.packId}:${entry.mapId}:${crownSignature(entry)}`, entry])).values()];
+  if (!list.length) return null;
+  const signatures = [...new Set(list.map(crownSignature))];
+  if (signatures.length > 1) {
+    return ambiguousResult(`${source}-conflicting-crown-signatures`, list, diagnostics);
   }
-  return { crownCount: 1, stars: [100], source: 'single-crown-default' };
+  const representative = [...list].sort((a, b) => String(b?.packId || '').localeCompare(String(a?.packId || '')))[0];
+  return resultFromEntry(representative, source, { ...diagnostics, candidateCount: list.length, signature: signatures[0] });
+}
+
+function entriesForName(crownIndex, name) {
+  if (!name) return [];
+  const direct = crownIndex?.byName?.[name];
+  if (Array.isArray(direct)) return direct;
+  if (Array.isArray(direct?.entries)) return direct.entries;
+  if (direct && direct.crownCount != null) return [direct]; // schema v1 compatibility
+  const normalized = normalizeCrownLookupName(name);
+  if (!normalized) return [];
+  const normalizedGroup = crownIndex?.byNormalizedName?.[normalized];
+  if (Array.isArray(normalizedGroup)) return normalizedGroup;
+  if (Array.isArray(normalizedGroup?.entries)) return normalizedGroup.entries;
+  return (crownIndex?.entries || []).filter((entry) => normalizeCrownLookupName(entry?.name) === normalized);
+}
+
+function entriesForMapIds(crownIndex, ids) {
+  const out = [];
+  for (const id of ids) {
+    const indexed = crownIndex?.byMapId?.[String(id)];
+    if (Array.isArray(indexed)) out.push(...indexed);
+    else if (Array.isArray(indexed?.entries)) out.push(...indexed.entries);
+    else out.push(...(crownIndex?.entries || []).filter((entry) => Number(entry?.mapId) === Number(id)));
+  }
+  return out;
+}
+
+// Identity precedence is strict: exact pack+map, then numeric map identity, then
+// display name only when every matching candidate has the same crown signature.
+// Ambiguous identity fails closed to ★1; it never chooses the largest/newest map.
+export function resolveMapCrownData(crownIndex, { name = null, packId = null, mapId = null, mapColcId = null } = {}) {
+  const requested = { name, packId, mapId, mapColcId };
+  if (!crownIndex) return { crownCount: 1, stars: [100], source: 'single-crown-default', unresolvedReason: null, diagnostics: { requested } };
+
+  if (packId != null && mapId != null) {
+    const exact = crownIndex.byKey?.[`${packId}:${mapId}`];
+    if (exact) return resultFromEntry(exact, 'crown-index-byKey', { requested });
+  }
+
+  const numericMapId = mapId == null ? NaN : toFinite(mapId, NaN);
+  const numericMapColcId = mapColcId == null ? NaN : toFinite(mapColcId, NaN);
+  if (Number.isFinite(numericMapId)) {
+    const ids = Number.isFinite(numericMapColcId)
+      ? [(numericMapColcId * 1000) + numericMapId, numericMapId]
+      : [numericMapId];
+    let candidates = entriesForMapIds(crownIndex, ids);
+    if (packId != null) {
+      const packCandidates = candidates.filter((entry) => String(entry?.packId) === String(packId));
+      if (packCandidates.length) candidates = packCandidates;
+    }
+    const numeric = resolveCandidateSet(candidates, 'crown-index-byMapId', { requested, ids });
+    if (numeric) return numeric;
+  }
+
+  const nameCandidates = entriesForName(crownIndex, name);
+  if (nameCandidates.length) {
+    let candidates = nameCandidates;
+    if (packId != null) {
+      const packCandidates = candidates.filter((entry) => String(entry?.packId) === String(packId));
+      if (packCandidates.length) candidates = packCandidates;
+    }
+    return resolveCandidateSet(candidates, 'crown-index-byName', { requested, normalizedName: normalizeCrownLookupName(name) });
+  }
+
+  return { crownCount: 1, stars: [100], source: 'single-crown-default', unresolvedReason: null, diagnostics: { requested } };
 }

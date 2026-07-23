@@ -5,7 +5,6 @@ function toFiniteNumber(value, fallback = null) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-
 function defaultIsGroupAllowed() {
   return true;
 }
@@ -62,18 +61,38 @@ export class StageRuntimeSceneAdapter {
     runtime.castleIdSource = stageDefinition?.runtime?.castleIdSource || 'stage-definition-castleId';
     runtime.castleRawRow = stageDefinition?.runtime?.castleRawRow || stageDefinition?.castle?.raw || [];
     runtime.summary = stageDefinition?.summary || {};
+    runtime.trail = stageDefinition?.trail === true || stageDefinition?.runtime?.trail === true;
+    runtime.drop = !runtime.trail;
+    runtime.timeLimit = toFiniteNumber(stageDefinition?.timeLimit ?? stageDefinition?.runtime?.timeLimit, 0);
+    runtime.rawEnemyBaseHp = toFiniteNumber(stageDefinition?.rawEnemyBaseHp ?? stageDefinition?.runtime?.rawEnemyBaseHp, null);
+    runtime.triggerDomain = runtime.trail ? 'accumulated-enemy-base-damage' : 'enemy-base-hp-percent';
     return runtime;
   }
 
   static getEnemyBaseHpPercent(scene) {
     const runtime = scene?.stage?.runtime || {};
     const base = Array.isArray(scene?.bases)
-      ? scene.bases.find((b) => b?.side === 'cat-enemy')
+      ? scene.bases.find((candidate) => candidate?.side === 'cat-enemy')
       : null;
     const hp = toFiniteNumber(base?.hp, toFiniteNumber(runtime?.enemyBase?.hp, toFiniteNumber(runtime?.enemyBaseHp, null)));
     const maxHp = toFiniteNumber(base?.maxHp, toFiniteNumber(runtime?.enemyBase?.maxHp, toFiniteNumber(runtime?.enemyBaseHp, null)));
-    if (!Number.isFinite(hp) || !Number.isFinite(maxHp) || maxHp <= 0) { runtime.warnings = Array.isArray(runtime.warnings)?runtime.warnings:[]; if (!runtime.warnings.includes("enemy-base-hp-percent-fallback-100")) runtime.warnings.push("enemy-base-hp-percent-fallback-100"); return 100; }
+    if (!Number.isFinite(hp) || !Number.isFinite(maxHp) || maxHp <= 0) {
+      runtime.warnings = Array.isArray(runtime.warnings) ? runtime.warnings : [];
+      if (!runtime.warnings.includes('enemy-base-hp-percent-fallback-100')) runtime.warnings.push('enemy-base-hp-percent-fallback-100');
+      return 100;
+    }
     return Math.max(0, Math.min(100, (hp / maxHp) * 100));
+  }
+
+  static getEnemyBaseDamage(scene) {
+    const runtime = scene?.stage?.runtime || {};
+    const base = Array.isArray(scene?.bases)
+      ? scene.bases.find((candidate) => candidate?.side === 'cat-enemy')
+      : null;
+    const hp = toFiniteNumber(base?.hp, toFiniteNumber(runtime?.enemyBase?.hp, toFiniteNumber(runtime?.enemyBaseHp, null)));
+    const maxHp = toFiniteNumber(base?.maxHp, toFiniteNumber(runtime?.enemyBase?.maxHp, toFiniteNumber(runtime?.enemyBaseHp, null)));
+    if (!Number.isFinite(hp) || !Number.isFinite(maxHp)) return 0;
+    return Math.max(0, maxHp - hp);
   }
 
   static buildSpawnTickContext(scene, overrides = {}) {
@@ -91,7 +110,10 @@ export class StageRuntimeSceneAdapter {
       maxEnemyCount: typeof scene?.getEffectiveEnemyMaxCount === 'function'
         ? scene.getEffectiveEnemyMaxCount()
         : runtime.effectiveMaxEnemyCount,
+      trail: runtime.trail === true,
+      triggerDomain: runtime.trail === true ? 'accumulated-enemy-base-damage' : 'enemy-base-hp-percent',
       enemyBaseHpPercent: StageRuntimeSceneAdapter.getEnemyBaseHpPercent(scene),
+      enemyBaseDamage: StageRuntimeSceneAdapter.getEnemyBaseDamage(scene),
       stageLen: runtime.stageLen,
       bases: Array.isArray(scene?.bases) ? scene.bases : [],
       enemySpawnWorldX: runtime.enemySpawnWorldX,
@@ -127,6 +149,10 @@ export function buildSceneStageRuntime(scene, stageDefinition, options = {}) {
 
 export function getSceneEnemyBaseHpPercent(scene) {
   return StageRuntimeSceneAdapter.getEnemyBaseHpPercent(scene);
+}
+
+export function getSceneEnemyBaseDamage(scene) {
+  return StageRuntimeSceneAdapter.getEnemyBaseDamage(scene);
 }
 
 export function buildStageSpawnTickContext(scene, overrides = {}) {

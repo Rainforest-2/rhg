@@ -1,153 +1,85 @@
 # rhg
 
-BCU の戦闘プレビューと実行時挙動をブラウザ上で再現するプロジェクトです。
+BCU の戦闘データとロジックを、ブラウザ上の戦闘プレビューとして再構成する Vite/ESM プロジェクトです。
 
-このリポジトリでは、パーサのフィールド・古いノート・見た目だけの近似を、整合性の証明として扱いません。ローカルにある BCU 参照ソースをもとに、挙動の再現性を確認することを重視しています。
+## 現在の基準
 
-## 現在の状況 — 2026-07-23
+- 対象リポジトリ: `Rainforest-2/rhg`
+- 状態確認日: 2026-07-24
+- 確認した `main`: `d43f53ea25cc589c16d3b39a5be08913d1ea32f0`
+- 実行時モード: `semantic-strict`
+- 実行時アセットの正規経路: 生成済み semantic ZIP
+- BCU 根拠: `references/bcu/` の Common / PC / Android 参照コード
 
-現状の基準モードは `semantic-strict` です。
+`public/assets/bcu/**` はソース素材であり、暗黙の実行時フォールバックではありません。BCU の挙動主張には、参照ソース、現在の JS オーナー、実行時接続、決定的チェックが必要です。見た目に関する主張には、さらにブラウザまたは実機での比較記録が必要です。
 
-- 生成済みの semantic ZIP バンドルを実行時アセットの正規経路として扱う
-- `public/assets/bcu/**` 配下のファイルは、暗黙の実行時フォールバックではなくソース素材として扱う
-- BCU の挙動主張は、ソース証拠・JS の担当箇所・実行時接続・決定的なチェック、さらに見た目に関わる場合はブラウザでの手動確認を前提とする
+## 現在の状況
 
-従来の長大な ZIP 分析系 README は、現行コードと異なる箇所があるため、現時点の不具合一覧としては使いません。
+主要な runtime、semantic asset loader、キャラクター改造、ローカル自己永続化は実装されています。ただし、2026-07-24 時点で BCU 整合性・信頼性に関する open Issue が残っているため、「残作業は見た目だけ」「Critical 欠陥なし」とは扱いません。
 
-## 現在の監査結果
-
-2026-07-02 の完成監査で、`RHgrive/rhg` と BCU 参照ソースの比較を全域で更新しました。監査で見つかった実バグ（AB_METALIC パッチの boot 未接続、boss music 閾値、被弾 SE の排他、undeployable な roster ユニット）は修正済みで、確認済みの `Critical` 欠陥はありません。孤立コードは import graph 監査で 36 ファイル削除し、孤立ゼロです。詳細は `docs/bcu-migration-status.md` の 2026-07-02 サマリを参照。残る主なリスクは、既に修正済みの過去の Stage/Spawn パーサ問題ではなく、証拠の網羅性と受け入れ確認の範囲です。
-
-### ローダで確認済み（見た目以外は完了）
-
-| 領域 | 現在の結論 | 根拠 |
+| 分野 | open Issue | 概要 |
 |---|---|---|
-| SUMMON の読み込み | 実在する `CustomEntity.atks[].proc.SUMMON` をディスクから読み込み、末端まで駆動できる。通常の CSV 置き場を勝手に作っていない。 | `check-bcu-summon-procobject-loader-parity` |
-| 特殊敵城 / `EEnemy` base | ステージヘッダの base enemy id と一致する敵行を通常 spawn から除外し、敵アクター拠点として初期配置する。通常の castle-owned attack runtime は作らない。 | `check-bcu-enemy-entity-base-runtime` |
-| `Trait.targetForms` | 実在の `Trait` ファイルの `targetType/targetForms` が、proc 経路と Target-Only 経路の単一ゲート `bcuTraitCompatible` を通す。 | `check-bcu-trait-targetforms-loader-parity` |
-| Combo / orb / treasure / talent / PCoin | 実データの 150300 combo と talent/PCoin、treasure/orb 定数が BCU の順序で組み合わさり、装備オーブも解決経路に乗る。PCoin のコスト・CD と combo 割引・研究報酬も反映される。戦闘中の見た目は別レビュー項目。 | `check-bcu-modifier-realdata-sweep-parity`、`check-battle-scene-stage-runtime-wiring`、`check-bcu-talent-info-loader` |
-| 追加 / カスタム ゾンビ蘇生 | 実在の `REVIVE` proc-object が `ZombX.updateRevive` の source/range/zombie/warp フィルタを駆動する。 | `check-bcu-zombie-extra-revive-source-range-parity` |
-| リポジトリ内永続化 | `FormationStore` / `StageRegistry` が自身の状態を往復し、読み書き失敗を黙って握りつぶさずに通知する。これは BCU セーブ互換ではなく、ローカル自己永続化の範囲。 | `check-formation-storage-failure-visibility` |
+| Boot / 検証 | #9, #10 | 必須 patch group の fail-open、stage-runtime check の stale / safe-suite 未接続 |
+| Stage / spawn | #6, #7, #17, #18 | CopRand layer の破棄、KC death semantics、trail stage、castle-less stage の background header |
+| Damage / trait | #12, #13, #14 | Metal target と AB_METALIC の混同、critical 二重抽選、Demon / Relic の target-traited 判定欠落 |
+| Renderer | #8 | `currentLayer` を無視した actor paint order |
 
-### キャラクター改造
+詳細と優先順位は [docs/bcu-migration-status.md](docs/bcu-migration-status.md) を参照してください。
 
-formation の形態単位と custom stage の敵 spawn row 単位で、通常計算後の最終値へ sparse な絶対値上書きを適用できます。
+## 実装済みの主要領域
 
-```text
-BCU 元データ
--> レベル / 本能 / 本能玉 / お宝 / コンボ / 敵倍率 / ステージ補正
--> 通常の最終 stats
--> CharacterModificationResolver
--> 派生モデル再構築
--> BattleActorFactory
+- semantic ZIP による unit / enemy / stage / background / castle / effect 読み込み
+- BattleScene の固定 30fps logic と 60fps paint
+- 通常攻撃、multi-hit、proc、wave / surge / blast、KB、death、zombie、warp、burrow、summon、spirit、castle guard、cat cannon
+- combo / orb / treasure / talent / PCoin と production / economy
+- formation / custom stage / mobile UI
+- キャラクター改造: 通常計算後の sparse absolute override と派生モデル再構築
+
+キャラクター改造は RHG 独自形式です。RHG JSON や `localStorage` を BCU セーブ、BCU 陣形、BCU 公式ステージ互換とは呼びません。
+
+## ドキュメント
+
+現在読むべき文書と各文書の責務は [docs/README.md](docs/README.md) に集約しています。新しい status 文書を増やす前に、既存の一次情報源を更新してください。
+
+主要入口:
+
+- [docs/README.md](docs/README.md): 文書の索引と責務
+- [docs/bcu-migration-status.md](docs/bcu-migration-status.md): 現在の高水準 status と open Issue
+- [docs/RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md](docs/RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md): 中核アーキテクチャ参照
+- [AGENTS.md](AGENTS.md): エージェント作業規則
+
+## 開発
+
+```bash
+npm run dev
+npm run build
+npm test
 ```
 
-改造した HP や nominal damage は後のレベル・敵倍率変更でも固定され、未改造フィールドだけが通常計算へ追従します。formation v5 は `options.characterModifications`、custom stage v2 は spawn row の `modificationRef` と dedupe table を所有します。共通 editor は draft の保存/キャンセル、reset、undo/redo、検索、import preview を提供します。
+調査・変更時は、広い一括チェックではなく影響範囲に対応する焦点チェックを使います。
 
-標準 JSON は custom stage export v2 と character modification pack v1 の canonical minified RHG 形式です。sparse normalization、canonical hash/dedupe、migration、5 MiB などの import limit、prototype key 拒否、全体 validation 後の atomic commit を行います。これは **BCU セーブ / BCU 陣形 / BCU 公式ステージ互換形式ではありません**。適用順、registry、cache identity、readOnly 項目、検証境界は [キャラクター改造アーキテクチャ追補](docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md) を参照してください。
+```bash
+npm run agent:context -- --topic "<area>"
+npm run agent:find -- --topic "<area>"
+npm run agent:checks -- --topic "<area>" --file js/path/File.js
+npm run agent:checks -- --changed --run
+npm run agent:probe -- --expr "..."
+```
 
-### 残っているもの（見た目 / 対象外）
+基本フロー:
 
-| 領域 | 現在の結論 | 次に必要なこと |
-|---|---|---|
-| BCU セーブ / 陣形の import/export | ここにはその機能も BCU シリアライズ担当も存在しない。対象外であり欠陥ではない。 | 追加する場合のみ、BCU 側の担当箇所を特定し、まず round-trip フィクスチャを用意する。 |
-| 非基本キャットキャノン | 実行時とキャノンごとの ATK/EXT ビットマップ別名は接続済み。extend/waved の正確な見た目タイミングは未受け入れ。 | フレーム単位のブラウザ比較を行う。 |
-| 見えるエフェクトと UI | バリア / 悪魔シールド / 城ガード / 標準ゾンビ蘇生 / 財布ボタン / 基本キャノンは accepted（台帳参照）。霊魂召喚のカード切替と一回制限は実装済み。P_DELAY、burrow、霊魂 actor / A_IMUATK / カード flash、召喚 entry、mini death-surge、非基本キャノン sweep、BASE_WALL などのブラウザ確認が残っている。 | 視覚チェックリストを使い、`accepted` / `mismatch` / `blocked` を固定フィクスチャ付きで記録する。 |
+```text
+BCU source fact
+-> current JS owner / boot reachability
+-> minimal change
+-> deterministic regression check
+-> adjacent integration checks
+-> focused documentation update
+```
 
 ## 重要な非主張
 
-- BCU の通常の城が汎用攻撃ランタイムを持つわけではありません。ボス側の砦は通常の敵オーナー経由で攻撃し、HP 閾値や撃破数による出現はステージの出現ロジックに属します。
-- 実行時が存在しても、実際のカスタムパックがその経路をすべて満たすとは限りません。
-- 決定的なチェックが通っても、手動の見た目受け入れに置き換わるものではありません。
-- リポジトリ内の永続化が BCU セーブ互換を意味するわけではありません。
-
-## ドキュメント地図
-
-| 用途 | 現在の文書 |
-|---|---|
-| 高水準の移行状況と監査サマリ | [docs/bcu-migration-status.md](docs/bcu-migration-status.md) |
-| 能力・proc・効果の状態 | [docs/ability-logic/current-ability-parity-status.md](docs/ability-logic/current-ability-parity-status.md) |
-| 未解決の根拠・互換性ブロッカー | [docs/ability-logic/bcu-unresolved-evidence-blockers.md](docs/ability-logic/bcu-unresolved-evidence-blockers.md) |
-| 手動ブラウザレビュー台帳 | [docs/ability-logic/bcu-visual-review-checklist.md](docs/ability-logic/bcu-visual-review-checklist.md) |
-| 死亡・ワープのライフサイクル状態 | [docs/ability-logic/death-warp-current-status.md](docs/ability-logic/death-warp-current-status.md) |
-| BCU ソース根拠の一覧 | [docs/ability-logic/bcu-ability-source-evidence.md](docs/ability-logic/bcu-ability-source-evidence.md) |
-| キャラクター改造の実装アーキテクチャ | [docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md](docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md) |
-| 実装順序 | [docs/ability-logic/bcu-parity-codex-workplan.md](docs/ability-logic/bcu-parity-codex-workplan.md) |
-| エージェント入口 | [AGENTS.md](AGENTS.md) |
-
-## 開発とビルド
-
-- `npm run agent:context -- --topic "<area>"` で、現在の BCU parity ドキュメントからエージェント向けの短い案内ビューを生成します。
-- `npm run agent:changed` で、`git status` までは行わずに変更ファイルの要約を取得できます。
-- `npm run agent:find -- --topic "<area>"` で、候補のオーナー・チェック・ドキュメントを短いスニペット付きで並べます。
-- `npm run agent:checks -- --topic "<area>" --file js/path/File.js` で、重点的な検証コマンドを提案します。`--run` を付けると実行して要約します。
-- `npm run agent:checks -- --changed --run` で、現在の差分から焦点検証を自動で導きます。
-- `npm run agent:probe -- --expr "..."` で、一時的なアサーションをテストファイルを作らずに実行できます。
-- `npm run agent:run -- "node scripts/check-name.mjs"` で、任意のコマンドを短い成功/失敗サマリ付きで実行できます。
-- `npm run dev` で Vite の開発サーバーを起動します。
-- `npm run build` でアプリを `dist/` にバンドルします。
-- Vite は選択された `public/assets/**` を `/assets/**` として配信・コピーします。`public/assets/bcu/**` と `public/assets/bcu-manifest.json` は意図的に `dist/` には含めず、開発サーバーでも配信しません。BCU の実行時アセットは、生成された semantic ZIP バンドル経由で読み込む前提です。
-
-## ソースと検証のルール
-
-挙動変更を行うたびに次の流れで進めます。
-
-```text
-BCU のソース事実 -> 現在の JS オーナー確認 -> 最小変更 -> 決定的なチェック -> 重点的なドキュメント更新
-```
-
-`references/bcu/` 配下の参照が主要な挙動ソースです。過去の README の主張を、現行ソースや実行時の証拠で置き換えてはいけません。
-
-## チェック
-
-影響範囲に関連するチェックだけを実行します。よく使うコマンドは次のとおりです。
-
-```bash
-node scripts/check-bcu-parser-indexes.mjs
-node scripts/check-projectile-damage-parity.mjs
-node scripts/check-proc-immunity-resistance-parity.mjs
-node scripts/check-bcu-summon-runtime-parity.mjs
-node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
-node scripts/check-bcu-castle-guard-parity.mjs
-node scripts/check-bcu-wallet-runtime-parity.mjs
-node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
-node scripts/check-ability-partial-blockers.mjs
-npm run check:character-modification
-npm run check:character-modification:ui
-```
-
-見た目に関する主張は、スクリプトが通っても十分ではありません。[docs/ability-logic/bcu-visual-review-checklist.md](docs/ability-logic/bcu-visual-review-checklist.md) にブラウザ比較の結果を残してください。
-
-## AI 開発ループ
-
-このリポジトリでは、Claude と Codex が協調して開発を進めるためのループ環境を [.ai](.ai) 配下に用意しています。これは Claude と Codex を直接つなぐものではなく、[.ai/orchestrator.sh](.ai/orchestrator.sh) が両方の CLI を交互に呼び出す仕組みです。
-
-### 起動方法
-- Codespaces または Claude Code CLI と Codex CLI がインストール・認証済みの開発環境で、`bash .ai/orchestrator.sh` を実行します。
-- 最低 5 周は Claude レビュー → Codex 実装 → 検証を継続し、既定では最大 20 周まで試行します。
-- 自動 commit / push は行いません。
-- 各ラウンドのログは [.ai/logs](.ai/logs) に毎周保存され、失敗時の調査に利用できます。
-- 非対話モードが使えない場合の手動運用は [.ai/RUN_MANUALLY.md](.ai/RUN_MANUALLY.md) を参照してください。
-- GitHub Actions の「AI Development Loop」ワークフローは手動起動できますが、GitHub-hosted runner では `claude` / `codex` の導入と認証がない限り失敗します。主運用は Codespaces 上での実行です。
-
-### AI の役割
-- Claude: 全体解析、設計レビュー、バグ発見、レビュー記録の担当。
-- Codex: 実装、バグ修正、リファクタリング、テスト追加の担当。
-
-### 主要ファイル
-- [.ai/mission.md](.ai/mission.md): プロジェクトの目的、役割分担、開発ルール、完了条件。
-- [.ai/state.md](.ai/state.md): 現在の課題・作業内容・完了状況の共有。
-- [.ai/tasks.md](.ai/tasks.md): タスクの優先度と管理。
-- [.ai/review.md](.ai/review.md): Claude のレビュー記録。
-- [.ai/changelog.md](.ai/changelog.md): Codex の変更履歴。
-- [.ai/prompts/claude-review.md](.ai/prompts/claude-review.md): Claude レビュー用の固定プロンプト。
-- [.ai/prompts/codex-fix.md](.ai/prompts/codex-fix.md): Codex 修正用の固定プロンプト。
-- [.ai/orchestrator.sh](.ai/orchestrator.sh): Claude レビュー → Codex 実装 → 検証を、最低周回数と監査完了条件に従って実行するローカル向けオーケストレーター。
-- [.github/workflows/ai-development.yml](.github/workflows/ai-development.yml): 手動起動でオーケストレーターを試行するワークフロー。
-
-### 開発フロー
-1. `.ai/orchestrator.sh` が `git status --short` と `git diff --stat` を記録します。
-2. Claude が前回の Codex 出力、検証結果、現在の diff を読み、[.ai/review.md](.ai/review.md) に次の最小タスクを書きます。
-3. Codex が `.ai/review.md` の `Next Codex Task` だけを実装し、[.ai/changelog.md](.ai/changelog.md) に結果を追記します。
-4. `npm run check`、`npm test`、`npm run lint --if-present`、`npm run build --if-present` を実行します。
-5. 検証が成功しても即停止せず、最低 5 周、重大・高優先度タスクなし、未監査の主要領域なし、検証成功のすべてを満たすまで次の周回に進みます。
+- 通常の `ECastle` に汎用 attack owner はありません。攻撃する特殊拠点は `EEnemy`、出現条件は stage runtime が所有します。
+- 決定的チェックは assertion した範囲だけを証明します。
+- headless UI check は物理端末の safe-area、software keyboard、orientation change や BCU 見た目比較を代替しません。
+- 古いレポートの未実装一覧は、現行コード・open Issue・チェックで再確認するまで現在の欠陥一覧として使いません。

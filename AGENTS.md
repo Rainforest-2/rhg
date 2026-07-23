@@ -1,164 +1,103 @@
 # AGENTS.md
 
-`RHgrive/rhg` の作業を行うエージェント向けの、リポジトリ全体の入口です。
+`Rainforest-2/rhg` を変更するエージェント向けの入口です。
 
-## 使命
-
-ローカルの BCU 参照ソースをもとに、既存のランタイム挙動・semantic ZIP アセット規則・決定的チェック・記録された不確実性を壊さずに、バトル挙動の整合性を改善します。
-
-## まず読むもの
-
-古いノートより先に、現行の以下の文書を参照してください。
+## Read first
 
 1. `README.md`
-2. `docs/bcu-migration-status.md`
-3. `docs/ability-logic/current-ability-parity-status.md`
-4. `docs/ability-logic/bcu-unresolved-evidence-blockers.md`
-5. `docs/ability-logic/bcu-visual-review-checklist.md`
-6. `docs/ability-logic/bcu-ability-source-evidence.md`
-7. `docs/ability-logic/bcu-parity-codex-workplan.md`
-8. `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md`
-9. `docs/ability-logic/bcu-fact-first-update-procedure.md`
-10. `docs/agent/README.md`
+2. `docs/README.md`
+3. `docs/bcu-migration-status.md`
+4. `docs/RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md`
+5. 変更対象に対応する focused document
 
-現行コードとこれらの文書が同じ主張を確認していない限り、古いレポートは歴史的情報として扱います。
-
-短い導線ビューが必要なら、次を実行してください。
+短い導線が必要な場合:
 
 ```bash
 npm run agent:context -- --topic "<area>"
-```
-
-このショートカットは、上記の文書から未解決項目・ブロッカー・見た目レビュー項目・候補チェックを要約するためのものです。挙動変更のための事実優先ワークフローの代替ではありません。
-
-一時ファイルを作る前に、低トークンな補助コマンドを使ってください。
-
-```bash
 npm run agent:find -- --topic "<area>"
-npm run agent:changed
-npm run agent:checks -- --topic "<area>" --file js/path/File.js
-npm run agent:checks -- --changed --run
-npm run agent:probe -- --expr "const m = await importProject('js/path/File.js'); assert.ok(m)"
-npm run agent:run -- "node scripts/check-name.mjs"
 ```
 
-`agent:probe` は、一時的なアサーションをテストファイルを作らずに走らせるためのものです。永続的なチェックが必要な場合だけ、正式なチェックを追加してください。
+`docs/README.md` が文書の責務と current / reference / ledger / historical の区分を定義します。古いレポートや実装計画を current status として使わないでください。
 
-## 変更前に守るフロー
+## 現在の優先順位
+
+open Issue と `docs/bcu-migration-status.md` を基準にします。
+
+1. Boot を部分 semantics のまま続行させない: #9
+2. stale な stage-runtime check を修復し safe suite に戻す: #10
+3. Damage / trait の source-backed defect を解消する: #12, #13, #14
+4. Stage / spawn / semantic index の defect を解消する: #6, #7, #17, #18
+5. `currentLayer` に基づく paint order を修正する: #8
+6. 上記の correctness 回帰を閉じた後に visual acceptance と performance cleanup を進める
+
+Issue を修正したら、Issue 本文の再現条件と BCU 根拠に対応する regression check を追加し、関連する status 行を同じ変更で更新します。
+
+## 変更フロー
 
 ```text
-BCU の事実 -> 現在の JS オーナー監査 -> 最小変更 -> 決定的なチェック -> 集中したドキュメント更新
+BCU fact -> current JS owner audit -> minimal change -> deterministic check -> focused docs update
 ```
 
-ランタイム挙動を変える前に、次を確認してください。
+変更前に確認すること:
 
-- BCU の対象ファイル / クラス / メソッド / フィールド / 状態遷移
-- 現在の rhg でその挙動を持つファイル / 関数
-- 回帰を検出できるテストやフィクスチャ
-- 残っている問題がランタイム・ソース読み込み・見た目受け入れ・スキーマ互換のどれか
+- BCU の file / class / method / field / state transition
+- raw holder が実在すること
+- 現行 JS owner と boot import order
+- 同じ method を wrap する patch の数と順序
+- raw CSV / BCU frame-world / RHG ms-pixel の単位
+- target capture と damage execution の時点
+- side / trait / targetable / touchable / base 条件
+- barrier / shield / nullify / immunity / proc / KB / death の順序
+- logic container と visual effect の lifetime
+- 追加する check が何を証明し、何を証明しないか
 
-## 現在の監査優先度
+## 禁止事項
 
-loader / data の優先度 1–3 は、実データの BCU フィクスチャを既存ランタイムに接続して閉じています（SUMMON proc-object、`Trait.targetForms`、combo/orb/treasure/talent/PCoin、追加 / カスタム revive、読み書き失敗の可視化）。残りの優先度は見た目です。
+- BCU 根拠なしに CSV index、proc holder、save schema、effect alias を作る
+- `public/assets/bcu/**` を暗黙 fallback にする
+- wrapper chain の元呼び出しや import 順を確認せず置換する
+- 必須 patch の失敗を warning だけで握りつぶす
+- `Math.random()` を battle deterministic RNG の代替にする
+- 通常の castle-owned attack runtime を作る
+- RHG の `localStorage` / JSON を BCU 互換と呼ぶ
+- headless trace や DOM check だけで見た目を accepted にする
+- raw source object を mutation して character modification を実装する
+- Markdown だけでコード・asset・bundle が変わったと主張する
 
-1. 見えるエフェクト・UI の手動ブラウザ受け入れ（P_DELAY、シールド、spirit、guard、ゾンビ corpse/revive、summon entry、cannon）
-2. 非基本キャノンの ATK/EXT 別名と extend/waved タイミング（見た目）
-3. 守るべきガードレール: 通常の CSV SUMMON holder を作らないこと。リポジトリ内の `localStorage` 状態は、自己永続化の範囲であり、**BCU セーブ / 陣形互換性の主張ではない**こと。
+## キャラクター改造
 
-キャラクター改造を扱う場合は、実装仕様 `docs/RHG_CHARACTER_MODIFICATION_IMPLEMENTATION_PLAN_2026-07-23.md` と、実装後の責務境界 `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md` も先に読みます。通常補正後の最終値へ sparse な絶対値上書きを適用し、派生モデルを再構築する順序が契約です。
+現行責務は `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md` を参照します。実装計画書は設計履歴であり、現行 status の一次情報源ではありません。
+
+契約:
 
 ```text
 normal final stats
 -> CharacterModificationResolver
 -> CharacterModificationDerivedModel
--> BattleActorFactory
+-> BattleActorFactory / ProductionRuntime
 ```
 
-field 定義は `CharacterModificationFieldRegistry.js` だけが所有します。formation v5 は形態別、custom stage v2 は spawn row 別に所有し、custom-stage production 項目は拒否します。modification v1 と pack v1 の export/import は RHG 内部形式であり、BCU セーブ形式ではありません。
+`CharacterModificationFieldRegistry.js` が editable field metadata の単一定義元です。SUMMON 先へ召喚元の改造を暗黙継承しません。
 
-## してはいけないこと
+## 検証
 
-- コメント・古いドキュメント・1 つのフィクスチャだけで行を完了扱いしない
-- BCU の CSV インデックス・proc holder・セーブスキーマ・エフェクト別名を勝手に作らない
-- semantic ZIP アセットを `public/assets/bcu/**` への暗黙フォールバックに置き換えない
-- wrapper chain を、import 順序・元の呼び出し・呼び出し元を確認せずに置き換えない
-- 不確実性を大きな `try/catch` や静かなフォールバックで隠さない
-- ソース根拠なくランダム挙動・ターゲット選択・side 所有権を変えない
-- 汎用の castle-owned attack runtime を作らない。BCU の根拠は通常の城にその所有権を与えていない
-- `localStorage` 永続化を「BCU 互換」と呼ばない。BCU のシリアライズオーナーと round-trip フィクスチャが必要
-- 決定的トレースだけで、見た目の整合性を受け入れたと扱わない
-- Markdown の変更だけでコード・アセット・ZIP・マニフェストを変えない
-- raw CSV / BCU source object / 通常 stats を mutation して改造を実装しない
-- registry と別の editable field 一覧を UI、validator、resolver、codec に作らない
-- modification hash を含まない stats / attack-profile template cache を作らない
-- SUMMON 先へ召喚元の改造を暗黙継承しない
-- RHG の character modification export/import を BCU セーブ互換と呼ばない
-
-## チェック
-
-`scripts/check-*.mjs` 配下の焦点チェックを使います。よく使うものは次のとおりです。
+変更した JS / MJS には `node --check` を実行し、Issue または変更領域に対応する focused check を実行します。
 
 ```bash
-node scripts/check-bcu-parser-indexes.mjs
-node scripts/check-projectile-damage-parity.mjs
-node scripts/check-proc-immunity-resistance-parity.mjs
-node scripts/check-bcu-delay-runtime.mjs
-node scripts/check-bcu-summon-runtime-parity.mjs
-node scripts/check-bcu-summon-procobject-loader-parity.mjs
-node scripts/check-bcu-trait-targetforms-loader-parity.mjs
-node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
-node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
-node scripts/check-formation-storage-failure-visibility.mjs
-node scripts/check-bcu-battle-sound-effects-parity.mjs
-node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
-node scripts/check-bcu-spirit-cooldown-emphasize-parity.mjs
-node scripts/check-bcu-castle-guard-parity.mjs
-node scripts/check-bcu-wallet-runtime-parity.mjs
-node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
-node scripts/check-ability-partial-blockers.mjs
+npm run agent:checks -- --changed --run
 npm run check:character-modification
 npm run check:character-modification:ui
 ```
 
-関係するチェックだけを実行し、必要なものを見逃さないでください。変更した JS / MJS には `node --check` も必ず実行してください。
+コマンド出力を確認していない状態で、完了・整合性・CI 成功を報告しないでください。
 
-## ドキュメント保守
+## ドキュメント更新
 
-整合性主張が変わったら、並列の status ファイルを増やすのではなく、既存の文書を更新してください。
+- 高水準 status / open issue summary: `docs/bcu-migration-status.md`
+- 能力/proc matrix: `docs/ability-logic/current-ability-parity-status.md`
+- 証拠不足・互換性境界: `docs/ability-logic/bcu-unresolved-evidence-blockers.md`
+- 実ブラウザ結果: `docs/ability-logic/bcu-visual-review-checklist.md`
+- 実行順: `docs/ability-logic/bcu-parity-codex-workplan.md`
+- architecture: 中核参照書または subsystem document
 
-1. `current-ability-parity-status.md`
-2. `bcu-unresolved-evidence-blockers.md`
-3. `bcu-visual-review-checklist.md`（実際のブラウザレビュー後のみ）
-4. `bcu-migration-status.md`
-5. `README.md` / このファイル（公開サマリやエージェント向け要約が変わる場合）
-6. `RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md`（改造の schema / ownership / cache / import 境界が変わる場合）
-
-## 最終実装レポート
-
-実装バッチの最後では、次の形式でまとめます。
-
-```md
-## Summary
-- Rows moved to code-complete-candidate:
-- Rows moved to human-visual-review-needed:
-- Rows still partial / unconfirmed:
-
-## BCU references inspected
-- files/classes/methods:
-
-## Changed files
-- code:
-- tests:
-- docs:
-- generated assets:
-
-## Verification
-- command: result
-
-## Remaining risks
-- risk:
-- reason:
-- next action:
-```
-
-コマンド出力や確認できた内容がない限り、整合性完了を報告しないでください。
+並列の `*-current-status.md` を新設しないでください。既存の一次情報源を更新します。

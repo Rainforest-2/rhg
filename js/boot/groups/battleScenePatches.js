@@ -20,5 +20,7 @@ import '../../battle/BattleBountyRuntimePatch.js';
 import '../../battle/BattleSceneBcuStatusIconPatch.js';
 import '../../battle/BattleSceneBcuStatusEffectRenderPatch.js';
 import '../../battle/BattleSceneBcuStageBasisTickPatch.js';
+// Ranking wraps the final phased tick and must observe resolved deaths before cleanup.
+import '../../battle/BattleSceneBcuRankingRuntimePatch.js';
 import '../../battle/BattleSceneCustomStageBaseHpPatch.js';
 import '../../battle/BattleSceneBcuEnemyEntityBasePatch.js';

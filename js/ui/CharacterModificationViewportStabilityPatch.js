@@ -1,6 +1,6 @@
 import { CharacterModificationRenderer } from './character-modification/CharacterModificationRenderer.js';
 
-const PATCH_FLAG = Symbol.for('rhg.character-modification-viewport-stability.v1');
+const PATCH_FLAG = Symbol.for('rhg.character-modification-viewport-stability.v2');
 
 function installCharacterModificationViewportStabilityPatch() {
   const proto = CharacterModificationRenderer?.prototype;
@@ -12,22 +12,38 @@ function installCharacterModificationViewportStabilityPatch() {
     const result = originalMount.call(this);
     const viewport = globalThis.visualViewport;
     const immediateHandler = this.cmViewportHandler;
-    if (!viewport || typeof immediateHandler !== 'function') return result;
+    const fieldList = this.fieldList;
+    if (!viewport || typeof immediateHandler !== 'function' || !fieldList) return result;
 
     viewport.removeEventListener('resize', immediateHandler);
     viewport.removeEventListener('scroll', immediateHandler);
 
+    this.cmDesiredScrollTop = fieldList.scrollTop;
+    this.cmScrollMemoryHandler = () => {
+      if (!this.cmRestoringViewportScroll) this.cmDesiredScrollTop = fieldList.scrollTop;
+    };
+    fieldList.addEventListener('scroll', this.cmScrollMemoryHandler, { passive: true });
+
+    const restoreScroll = () => {
+      if (!fieldList.isConnected) return;
+      fieldList.scrollTop = this.cmDesiredScrollTop;
+    };
+
     this.cmViewportStableHandler = () => {
-      const fieldList = this.fieldList;
-      const preservedScrollTop = fieldList?.scrollTop ?? 0;
+      this.cmRestoringViewportScroll = true;
       if (this.cmViewportStableFrame != null) {
         globalThis.cancelAnimationFrame?.(this.cmViewportStableFrame);
       }
       this.cmViewportStableFrame = globalThis.requestAnimationFrame?.(() => {
         this.cmViewportStableFrame = null;
         immediateHandler();
+        restoreScroll();
         globalThis.requestAnimationFrame?.(() => {
-          if (fieldList?.isConnected) fieldList.scrollTop = preservedScrollTop;
+          restoreScroll();
+          globalThis.requestAnimationFrame?.(() => {
+            restoreScroll();
+            this.cmRestoringViewportScroll = false;
+          });
         });
       });
     };
@@ -45,6 +61,8 @@ function installCharacterModificationViewportStabilityPatch() {
       globalThis.cancelAnimationFrame?.(this.cmViewportStableFrame);
       this.cmViewportStableFrame = null;
     }
+    this.fieldList?.removeEventListener('scroll', this.cmScrollMemoryHandler);
+    this.cmRestoringViewportScroll = false;
     return originalDestroy.call(this);
   };
 }

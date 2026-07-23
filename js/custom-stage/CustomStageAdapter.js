@@ -8,9 +8,12 @@
 // battle engine, spawner, or attack path.
 //
 // Field mapping notes:
-//   * Spawn timing (firstFrameMin/Max, respawnMinFrame/Max, timeLimit) is already in the internal
-//     frame unit (see CustomStageSchema: 1s = 60 frames = csvFrames(30fps) * FRAME_MUL(2)), matching
-//     what StageDefinitionLoader stores, so a custom row scheduled for 8s fires when a BCU row would.
+//   * Spawn timing (firstFrameMin/Max, respawnMinFrame/Max) is already in the internal frame unit
+//     (see CustomStageSchema: 1s = 60 frames = csvFrames(30fps) * FRAME_MUL(2)), matching what
+//     StageDefinitionLoader stores, so a custom row scheduled for 8s fires when a BCU row would.
+//   * battle.timeLimitFrames is authored at 60fps, while the BCU ranking clock advances at 30fps.
+//     It is normalized once to timeLimitFramesExact at this adapter boundary; timeLimit remains the
+//     BCU minute field and is never populated with an authored frame count.
 //   * Castle-HP condition [minPercent, maxPercent] maps to BCU castle_0 / castle_1 so the runtime's
 //     isInBcuHealthWindow yields (min < hp <= max). Disabled → castle_0=100, castle_1=0 → always.
 //   * enemyId must be the numeric BCU enemy id (buildStageEnemyUnitDefs filters enemyId >= 0).
@@ -163,7 +166,12 @@ export function buildCustomStageDefinition(rawStage) {
   const animBaseId = toNum(b.enemyCastleAnimBaseId, castleId);
   const cannonId = toNum(b.enemyCastleCannonId, null);
   const maxEnemyCount = Math.max(1, Math.floor(toNum(b.maxEnemyCount, 20)));
-  const timeLimit = toNum(b.timeLimitFrames, 0) > 0 ? Math.floor(toNum(b.timeLimitFrames, 0)) : null;
+  const authoredTimeLimitFrames = Math.max(0, Math.floor(toNum(b.timeLimitFrames, 0)));
+  const trail = authoredTimeLimitFrames > 0;
+  // RHG custom-stage authored frames run at 60fps while the BCU StageBasis/ranking clock runs at
+  // 30fps. Round upward so an odd authored frame can never make overtime start earlier than authored.
+  const timeLimitFramesExact = trail ? Math.ceil(authoredTimeLimitFrames / FRAME_MUL) : 0;
+  const timeLimitSource = trail ? 'custom-stage-timeLimitFrames-60fps-to-bcu-30fps' : 'none';
 
   const out = {
     ok: true,
@@ -182,7 +190,13 @@ export function buildCustomStageDefinition(rawStage) {
     maxEnemyCount,
     minSpawnFrame: null,
     maxSpawnFrame: null,
-    timeLimit,
+    // Reserved for raw BCU integer minutes. Custom exact-frame deadlines use the explicit field below.
+    timeLimit: null,
+    timeLimitFramesExact,
+    timeLimitFramesAuthored: authoredTimeLimitFrames,
+    timeLimitSource,
+    trail,
+    drop: !trail,
     noContinue: b.nonContinue ? 1 : 0,
     bossGuard: b.bossGuard ? 1 : 0,
     musicId: b.musicId ?? null,
@@ -214,6 +228,12 @@ export function buildCustomStageDefinition(rawStage) {
     animBaseId: out.animBaseId,
     noContinue: out.noContinue,
     bossGuard: out.bossGuard,
+    trail,
+    drop: !trail,
+    timeLimit: out.timeLimit,
+    timeLimitFramesExact,
+    timeLimitFramesAuthored: authoredTimeLimitFrames,
+    timeLimitSource,
     castleRowSource: 'custom-stage-adapter',
     castleIdSource: 'custom-stage-adapter',
     fps: FPS,
@@ -239,7 +259,11 @@ export function buildCustomStageDefinition(rawStage) {
     castleId: out.castleId,
     cannonId: out.cannonId,
     animBaseId: out.animBaseId,
-    timeLimit: out.timeLimit
+    timeLimit: out.timeLimit,
+    timeLimitFramesExact,
+    timeLimitFramesAuthored: authoredTimeLimitFrames,
+    timeLimitSource,
+    trail
   };
 
   out.castle = {
@@ -256,7 +280,11 @@ export function buildCustomStageDefinition(rawStage) {
   out.debug = {
     source: 'CustomStageAdapter.buildCustomStageDefinition',
     customStageId: stage.id,
-    enemyRowCount: enemyRows.length
+    enemyRowCount: enemyRows.length,
+    trail,
+    timeLimitFramesExact,
+    timeLimitFramesAuthored: authoredTimeLimitFrames,
+    timeLimitSource
   };
 
   return out;

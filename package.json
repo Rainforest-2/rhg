@@ -24,6 +24,8 @@
     "agent:checks": "node scripts/agent-checks.mjs",
     "agent:probe": "node scripts/agent-probe.mjs",
     "agent:run": "node scripts/agent-run.mjs",
+    "generate:bcu-stage-crowns": "node scripts/build-bcu-stage-crown-index.mjs",
+    "precheck": "npm run generate:bcu-stage-crowns",
     "check": "node scripts/check-bcu-ability-parity-safe-suite.mjs && node scripts/check-open-issue-regressions.mjs",
     "check:character-modification": "node scripts/check-character-modification-schema.mjs && node scripts/check-character-modification-codec.mjs && node scripts/check-character-modification-resolver.mjs && node scripts/check-character-modification-derived-model.mjs && node scripts/check-character-modification-cache.mjs && node scripts/check-character-modification-production.mjs && node scripts/check-custom-stage-character-modification.mjs && node scripts/check-formation-character-modification.mjs && node scripts/check-character-modification-import-security.mjs && node scripts/check-character-modification-runtime-integration.mjs",
     "check:character-modification:ui": "node scripts/check-character-modification-ui.mjs",
@@ -31,7 +33,9 @@
     "verify": "npm run check && npm test",
     "verify:dev": "bash scripts/dev-verify-env.sh",
     "preview:stop": "bash scripts/stop-preview.sh",
+    "predev": "npm run generate:bcu-stage-crowns",
     "dev": "vite",
+    "prebuild": "npm run generate:bcu-stage-crowns",
     "build": "vite build",
     "preview": "vite preview"
   }

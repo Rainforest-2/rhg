@@ -11,6 +11,21 @@ function raw(length, entries) {
   return out;
 }
 
+function parseStatusTable(markdown) {
+  const rows = new Map();
+  for (const line of String(markdown || '').split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) continue;
+    const cells = trimmed.slice(1, -1).split('|').map((cell) => cell.trim());
+    if (cells.length < 2) continue;
+    const [area, rawStatus] = cells;
+    if (!area || area === '領域' || /^-+$/.test(area)) continue;
+    const status = rawStatus.replace(/^`([^`]+)`$/, '$1');
+    rows.set(area, status);
+  }
+  return rows;
+}
+
 const enemy = BcuCombatModel.parseStats({ kind: 'enemy', rawValues: raw(116, [
   [43, 2], [44, 400],
   [111, 45], [112, 8]
@@ -40,20 +55,23 @@ assert.ok(omitted.includes('combo proc-duration/runtime sources'), 'damage resol
 assert.ok(omitted.includes('remaining Trait targetForms capture edge cases'), 'damage resolver still reports remaining targetForms capture edges');
 assert.ok(omitted.includes('sage status resistance'), 'damage resolver still reports missing sage status-resistance scope');
 
-// The current status document is the SSOT. Assert stable table rows rather than
-// historical prose or obsolete PARTIAL labels from superseded documents.
+// Parse the Markdown SSOT as a table. Substring assertions are fragile because
+// harmless spacing or line-ending changes can turn a valid status row into a CI failure.
 const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 'utf8');
-for (const phrase of [
-  '| P_DELAY | `human-visual-review-needed`',
-  '| Burrow | `human-visual-review-needed`',
-  '| SUMMON | `human-visual-review-needed`',
-  '| `Trait.targetType/targetForms` compatibility | `verified-owner`',
-  '| Crown selection propagation | `verified-owner`',
-  '| Crown multiplier precision | `verified-owner`',
-  '| Ranking/trail overtime and score | `verified-owner`',
-  '| BCU save / lineup import-export | `out-of-scope`'
-]) {
-  assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
+const statuses = parseStatusTable(doc);
+const expectedStatuses = new Map([
+  ['P_DELAY', 'human-visual-review-needed'],
+  ['Burrow', 'human-visual-review-needed'],
+  ['SUMMON', 'human-visual-review-needed'],
+  ['`Trait.targetType/targetForms` compatibility', 'verified-owner'],
+  ['Crown selection propagation', 'verified-owner'],
+  ['Crown multiplier precision', 'verified-owner'],
+  ['Ranking/trail overtime and score', 'verified-owner'],
+  ['BCU save / lineup import-export', 'out-of-scope']
+]);
+for (const [area, expectedStatus] of expectedStatuses) {
+  assert.ok(statuses.has(area), `status doc contains row ${area}; available=${[...statuses.keys()].join(', ')}`);
+  assert.equal(statuses.get(area), expectedStatus, `status doc row ${area}`);
 }
 
 // Loader-backed evidence files must exist for the graduated rows.
@@ -71,3 +89,5 @@ for (const evidence of [
 }
 
 console.log('check-ability-partial-blockers: OK');
+
+export { parseStatusTable };

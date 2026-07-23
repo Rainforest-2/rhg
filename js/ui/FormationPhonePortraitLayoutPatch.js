@@ -83,6 +83,7 @@ export function installFormationPhonePortraitLayoutPatch() {
   // with the orientation-guarded stylesheets (mirrors the landscape patch).
   globalThis.matchMedia?.(PHONE_PORTRAIT_QUERY)?.addEventListener?.('change', () => {
     for (const root of document.querySelectorAll('.formation-ui')) {
+      if (root.querySelector('.cm-host-layer.is-open')) continue;
       root.__formationEditor?.renderDynamic?.({ resetCatalogScroll: false });
     }
   });

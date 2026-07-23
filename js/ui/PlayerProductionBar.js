@@ -411,7 +411,7 @@ export class PlayerProductionBar {
         money: this.scene?.economy?.money ?? 0,
         canAfford: model.front.affordable !== false,
         canSpawn: false,
-        factoryTemplateLevel: this.scene?.actorFactory?.templates?.get(unit?.slotId)?.loadingLevel || null,
+        factoryTemplateLevel: this.scene?.actorFactory?.getTemplate?.(unit)?.loadingLevel || null,
         preloadError: null,
         spawnError: null,
         actorCountBefore: this.scene?.actors?.length ?? 0,

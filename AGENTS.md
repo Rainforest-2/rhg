@@ -17,8 +17,9 @@
 5. `docs/ability-logic/bcu-visual-review-checklist.md`
 6. `docs/ability-logic/bcu-ability-source-evidence.md`
 7. `docs/ability-logic/bcu-parity-codex-workplan.md`
-8. `docs/ability-logic/bcu-fact-first-update-procedure.md`
-9. `docs/agent/README.md`
+8. `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md`
+9. `docs/ability-logic/bcu-fact-first-update-procedure.md`
+10. `docs/agent/README.md`
 
 現行コードとこれらの文書が同じ主張を確認していない限り、古いレポートは歴史的情報として扱います。
 
@@ -64,6 +65,17 @@ loader / data の優先度 1–3 は、実データの BCU フィクスチャを
 2. 非基本キャノンの ATK/EXT 別名と extend/waved タイミング（見た目）
 3. 守るべきガードレール: 通常の CSV SUMMON holder を作らないこと。リポジトリ内の `localStorage` 状態は、自己永続化の範囲であり、**BCU セーブ / 陣形互換性の主張ではない**こと。
 
+キャラクター改造を扱う場合は、実装仕様 `docs/RHG_CHARACTER_MODIFICATION_IMPLEMENTATION_PLAN_2026-07-23.md` と、実装後の責務境界 `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md` も先に読みます。通常補正後の最終値へ sparse な絶対値上書きを適用し、派生モデルを再構築する順序が契約です。
+
+```text
+normal final stats
+-> CharacterModificationResolver
+-> CharacterModificationDerivedModel
+-> BattleActorFactory
+```
+
+field 定義は `CharacterModificationFieldRegistry.js` だけが所有します。formation v5 は形態別、custom stage v2 は spawn row 別に所有し、custom-stage production 項目は拒否します。modification v1 と pack v1 の export/import は RHG 内部形式であり、BCU セーブ形式ではありません。
+
 ## してはいけないこと
 
 - コメント・古いドキュメント・1 つのフィクスチャだけで行を完了扱いしない
@@ -76,6 +88,11 @@ loader / data の優先度 1–3 は、実データの BCU フィクスチャを
 - `localStorage` 永続化を「BCU 互換」と呼ばない。BCU のシリアライズオーナーと round-trip フィクスチャが必要
 - 決定的トレースだけで、見た目の整合性を受け入れたと扱わない
 - Markdown の変更だけでコード・アセット・ZIP・マニフェストを変えない
+- raw CSV / BCU source object / 通常 stats を mutation して改造を実装しない
+- registry と別の editable field 一覧を UI、validator、resolver、codec に作らない
+- modification hash を含まない stats / attack-profile template cache を作らない
+- SUMMON 先へ召喚元の改造を暗黙継承しない
+- RHG の character modification export/import を BCU セーブ互換と呼ばない
 
 ## チェック
 
@@ -99,6 +116,8 @@ node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-bcu-wallet-runtime-parity.mjs
 node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
+npm run check:character-modification
+npm run check:character-modification:ui
 ```
 
 関係するチェックだけを実行し、必要なものを見逃さないでください。変更した JS / MJS には `node --check` も必ず実行してください。
@@ -112,6 +131,7 @@ node scripts/check-ability-partial-blockers.mjs
 3. `bcu-visual-review-checklist.md`（実際のブラウザレビュー後のみ）
 4. `bcu-migration-status.md`
 5. `README.md` / このファイル（公開サマリやエージェント向け要約が変わる場合）
+6. `RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md`（改造の schema / ownership / cache / import 境界が変わる場合）
 
 ## 最終実装レポート
 

@@ -13,6 +13,7 @@ import { PC_CORRES, getTalentAbilityName, getTalentInfoForUnit, isTalentAbilityN
 import { PC_CATEGORY, PC_SUBTYPE } from '../battle/bcu-runtime/BcuTalentModifier.js';
 import { loadBcuTalentAbilityNames, loadBcuTalentRegistry } from '../battle/bcu-runtime/BcuTalentRegistryLoader.js';
 import { ASSET_BASE } from '../assetBase.js';
+import { countCharacterModificationFields } from '../character-modification/CharacterModificationValidator.js';
 
 const PATCH_FLAG = Symbol.for('wanko-ui.formation-bcu-unit-level.v4-premium-motion');
 const STYLE_ID = 'formation-character-tuning-overlay-style';
@@ -449,6 +450,7 @@ function renderCatPanel(editor, draft) {
   const plusControl = maxPlusLevel > 0
     ? stepper({ key: 'plusLevel', value: preview.plusLevel, min: 0, max: maxPlusLevel, label: '+Lv', maxLabel: `MAX +${maxPlusLevel}`, deltas: [-10, -1, 1, 10] })
     : `<section class='formation-tuning-control'><div class='formation-tuning-control-head'><strong>+Lv</strong><span>このキャラは+Lvなし</span></div><div class='formation-tuning-chip'>+Lv 0</div></section>`;
+  const modificationCount = countCharacterModificationFields(FormationStore.getCharacterModification(draft.characterId));
   return `<div class='formation-tuning-panel' role='dialog' aria-modal='true'>
     <header class='formation-tuning-header'><div class='formation-tuning-title'><strong>${esc(character.label || character.characterId)}</strong><span>キャラレベル調整</span></div><button type='button' class='formation-tuning-close' data-tuning-close='1'>閉じる</button></header>
     ${renderHero(editor, character, 'にゃんこ')}
@@ -466,6 +468,10 @@ function renderCatPanel(editor, draft) {
       </div>
       ${renderTalentSection(draft)}
       ${renderOrbSection(draft)}
+      <section class='formation-tuning-control formation-character-modification-entry'>
+        <div class='formation-tuning-control-head'><strong>キャラクター改造</strong><span>${modificationCount}項目変更</span></div>
+        <button type='button' class='formation-tuning-btn' data-character-modification-open='1'>改造エディタを開く</button>
+      </section>
     </main>
     <footer class='formation-tuning-footer'><button type='button' class='formation-tuning-reset' data-tuning-reset='1'>リセット</button><button type='button' class='formation-tuning-save' data-tuning-save='1'>決定</button></footer>
   </div>`;
@@ -476,6 +482,7 @@ function renderDogPanel(editor, draft) {
   if (!character) return '';
   draft.percent = percent;
   const meter = Math.min(100, Math.round(percent / 10));
+  const modificationCount = countCharacterModificationFields(FormationStore.getCharacterModification(draft.characterId));
   return `<div class='formation-tuning-panel formation-tuning-panel-dog' role='dialog' aria-modal='true'>
     <header class='formation-tuning-header'><div class='formation-tuning-title'><strong>${esc(character.label || character.characterId)}</strong><span>ワンコ軍 倍率調整</span></div><button type='button' class='formation-tuning-close' data-tuning-close='1'>閉じる</button></header>
     ${renderHero(editor, character, 'ワンコ軍')}
@@ -496,6 +503,10 @@ function renderDogPanel(editor, draft) {
         <div class='formation-tuning-stat'><b>${percent}%</b><small>倍率</small></div>
         <div class='formation-tuning-stat'><b>x${(percent / 100).toFixed(2)}</b><small>HP/攻撃</small></div>
         <div class='formation-tuning-stat'><b>100%</b><small>初期値</small></div>
+      </section>
+      <section class='formation-tuning-control formation-character-modification-entry'>
+        <div class='formation-tuning-control-head'><strong>キャラクター改造</strong><span>${modificationCount}項目変更</span></div>
+        <button type='button' class='formation-tuning-btn' data-character-modification-open='1'>改造エディタを開く</button>
       </section>
     </main>
     <footer class='formation-tuning-footer'><button type='button' class='formation-tuning-reset' data-tuning-reset='1' aria-label='100%に戻す'>リセット</button><button type='button' class='formation-tuning-save' data-tuning-save='1'>決定</button></footer>
@@ -811,6 +822,8 @@ function decorateSlotBadges(editor) {
       const percent = saved?.percent ?? DOG_DEFAULT_MAGNIFICATION_PERCENT;
       if (percent !== DOG_DEFAULT_MAGNIFICATION_PERCENT) label = `${percent}%`;
     }
+    const modificationCount = countCharacterModificationFields(FormationStore.getCharacterModification(characterId));
+    if (modificationCount) label = label ? `${label}/改${modificationCount}` : `改${modificationCount}`;
     if (!label) continue;
     slot.insertAdjacentHTML('beforeend', `<b class='formation-tuning-badge'>${esc(label)}</b>`);
   }
@@ -940,19 +953,32 @@ export function installFormationEditorBcuUnitLevelPatch() {
 
   proto.getCharacterBattleTuning = function getCharacterBattleTuning(characterId) {
     const character = getCharacterById(characterId);
-    const catState = character?.faction === 'cat' ? resolveCatState(characterId) : null;
-    const dogState = character?.faction === 'dog' ? resolveDogState(characterId) : null;
+    const activeDraft = this.characterTuningDraft?.characterId === characterId
+      ? this.characterTuningDraft
+      : null;
+    const catState = character?.faction === 'cat' ? resolveCatState(characterId, activeDraft) : null;
+    const dogState = character?.faction === 'dog' ? resolveDogState(characterId, activeDraft) : null;
+    if (character?.faction === 'cat' && activeDraft) ensureDraftTalents(activeDraft);
+    const catTalentLevels = character?.faction === 'cat'
+      ? (activeDraft ? [...(activeDraft.talents || [])] : FormationStore.getTalentLevels(characterId))
+      : null;
+    const catOrbEquipment = character?.faction === 'cat'
+      ? (activeDraft
+        ? ensureDraftOrbs(activeDraft).map(draftOrbToTriple).filter(Boolean)
+        : FormationStore.getOrbEquipment(characterId))
+      : null;
     return {
       characterId,
       character,
       faction: character?.faction || null,
       globalCatPrefLevel: FormationStore.load().options?.bcuCatUnitLevel || null,
       catUnitLevel: FormationStore.getCatUnitLevel(characterId),
-      catTalentLevels: character?.faction === 'cat' ? FormationStore.getTalentLevels(characterId) : null,
-      catOrbEquipment: character?.faction === 'cat' ? FormationStore.getOrbEquipment(characterId) : null,
+      catTalentLevels,
+      catOrbEquipment,
       dogUnitMagnification: FormationStore.getDogUnitMagnification(characterId),
       catResolved: catState?.resolved || null,
       dogResolved: dogState ? { percent: dogState.percent } : null,
+      draftActive: !!activeDraft,
       source: 'FormationEditorBcuUnitLevelPatch.getCharacterBattleTuning'
     };
   };

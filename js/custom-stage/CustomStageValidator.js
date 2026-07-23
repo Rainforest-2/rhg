@@ -7,6 +7,11 @@
 // stage. The schema factory deliberately repairs invalid values (0 → default) for runtime safety, so
 // validating the normalized object would silently accept a user who cleared a field to 0/blank.
 import { normalizeCustomStage, framesToSeconds } from './CustomStageSchema.js';
+import {
+  CHARACTER_MODIFICATION_FORBIDDEN_KEYS,
+  CHARACTER_MODIFICATION_IMPORT_LIMITS
+} from '../character-modification/CharacterModificationSchema.js';
+import { validateCharacterModification } from '../character-modification/CharacterModificationValidator.js';
 
 function isBlank(value) {
   return value === undefined || value === null || String(value).trim() === '';
@@ -62,10 +67,45 @@ export function validateCustomStage(rawStage, { resolvers = {} } = {}) {
   if (!isPositive(rawBattle.maxEnemyCount)) err('maxEnemyCount', '最大敵数は1以上にしてください');
 
   if (!rawSpawns.length) warn('spawns', '敵が1体も登録されていません');
+  if (rawSpawns.length > CHARACTER_MODIFICATION_IMPORT_LIMITS.maxSpawns) {
+    err('spawns', `敵spawnは${CHARACTER_MODIFICATION_IMPORT_LIMITS.maxSpawns}件以下にしてください`);
+  }
+
+  const rawModifications = raw.modifications && typeof raw.modifications === 'object' && !Array.isArray(raw.modifications)
+    ? raw.modifications
+    : {};
+  const modificationEntries = Object.entries(rawModifications);
+  if (modificationEntries.length > CHARACTER_MODIFICATION_IMPORT_LIMITS.maxModifications) {
+    err('modifications', `キャラクター改造は${CHARACTER_MODIFICATION_IMPORT_LIMITS.maxModifications}件以下にしてください`);
+  }
+  for (const forbidden of CHARACTER_MODIFICATION_FORBIDDEN_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(rawModifications, forbidden)) {
+      err(`modifications.${forbidden}`, `禁止されたキー ${forbidden} は使用できません`);
+    }
+  }
+  for (const [ref, modification] of modificationEntries) {
+    const result = validateCharacterModification(modification, {
+      kind: 'enemy',
+      owner: 'custom-stage',
+      rejectUnsupportedFields: true,
+      resolvers,
+      requireResolvedReferences: true
+    });
+    for (const item of result.errors) {
+      err(`modifications.${ref}.${item.path || ''}`.replace(/\.$/, ''), item.message);
+    }
+    for (const item of result.warnings) {
+      warn(`modifications.${ref}.${item.path || ''}`.replace(/\.$/, ''), item.message);
+    }
+  }
 
   rawSpawns.forEach((spawn, index) => {
     const at = `spawns[${index}]`;
     const s = spawn || {};
+    if (s.modificationRef != null
+        && !Object.prototype.hasOwnProperty.call(rawModifications, String(s.modificationRef))) {
+      err(`${at}.modificationRef`, `${index + 1}番目の敵が存在しないキャラクター改造を参照しています`);
+    }
     if (isBlank(s.enemyId)) err(`${at}.enemyId`, `${index + 1}番目の敵が未選択です`);
     else if (!resolveEnemy(s.enemyId)) err(`${at}.enemyId`, `${index + 1}番目の敵を読み込めません`);
     if (!isPositive(s.count)) err(`${at}.count`, `${index + 1}番目の敵の合計出撃数上限は1以上にしてください`);
@@ -88,6 +128,22 @@ export function validateCustomStage(rawStage, { resolvers = {} } = {}) {
       warn(`${at}.conditions.enemyBaseHp`, `${index + 1}番目の城HP条件が到達不能の可能性があります`);
     }
   });
+
+  const rawLimits = raw.limits || {};
+  const maxUnitSpawn = rawLimits.maxUnitSpawn;
+  if (!isBlank(maxUnitSpawn)) {
+    const value = rawNum(maxUnitSpawn);
+    if (!Number.isInteger(value) || value < 0) {
+      err('limits.maxUnitSpawn', '味方の最大出撃数は0以上の整数にしてください');
+    }
+  }
+  for (const field of ['globalCostMultiplier', 'globalCooldownMultiplier']) {
+    if (isBlank(rawLimits[field])) continue;
+    if (!isPositive(rawLimits[field])) {
+      const label = field === 'globalCostMultiplier' ? 'コスト倍率' : '再生産倍率';
+      err(`limits.${field}`, `${label}は0より大きい有限値にしてください`);
+    }
+  }
 
   const maxEnemy = rawNum(rawBattle.maxEnemyCount);
   if (Number.isFinite(maxEnemy) && maxEnemy > 0 && stage.spawns.length > maxEnemy * 3) {

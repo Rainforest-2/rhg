@@ -7,7 +7,7 @@ const ACTOR_PATCH_FLAG = Symbol.for('wanko-battle.actor-bcu-burrow.v4');
 const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.scene-bcu-burrow.v4');
 
 function templateHasBurrow(template) { return !!template?.stats?.bcuCombatModel?.proc?.burrow?.count; }
-function actorTemplate(scene, actor) { return scene?.actorFactory?.templates?.get?.(actor?.slotId || actor?.templateId) || null; }
+function actorTemplate(scene, actor) { return scene?.actorFactory?.getTemplate?.(actor?.templateId || actor?.slotId) || scene?.actorFactory?.templates?.get?.(actor?.templateId || actor?.slotId) || null; }
 function animationDefinitionsFor(unitDef, template = null) { const defs = template?.assetDef?.animations || unitDef?.assetDef?.animations || []; return Array.isArray(defs) ? defs : []; }
 function definedBurrowAnimationIds(unitDef, template = null) { const wanted = new Set(getRequiredBcuBurrowAnimationIds()); return animationDefinitionsFor(unitDef, template).map((d) => d?.id).filter((id) => wanted.has(id)); }
 function hasBurrowAnimationDefinitions(unitDef, template = null) { return definedBurrowAnimationIds(unitDef, template).length === getRequiredBcuBurrowAnimationIds().length; }
@@ -46,7 +46,7 @@ export function installBattleActorBcuBurrowPatch() {
     const originalSpawnStageEnemy = sceneProto.spawnStageEnemy;
     if (typeof originalSpawnStageEnemy === 'function') {
       sceneProto.spawnStageEnemy = function spawnStageEnemyWithBurrowAnimations(unitDef, row) {
-        const tpl = this.actorFactory?.templates?.get?.(unitDef?.slotId);
+        const tpl = this.actorFactory?.getTemplate?.(unitDef) || this.actorFactory?.templates?.get?.(unitDef?.slotId);
         if (templateHasBurrow(tpl) && !hasBcuBurrowTemplateAnimations(tpl)) {
           if (!hasBurrowAnimationDefinitions(unitDef, tpl)) reportBurrowAnimationUnavailable(this, unitDef, tpl);
           else { preloadBurrowAnimations(this, unitDef, tpl, 'stage-enemy-burrow-required'); this.pushEvent?.({ type: 'stageEnemySpawnDeferred', rowIndex: row?.rowIndex, slotId: unitDef?.slotId, reason: 'bcu-burrow-animation-loading' }); return false; }

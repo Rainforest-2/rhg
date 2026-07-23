@@ -1,9 +1,10 @@
 import { BCU_ABI, BCU_TRAITS } from './BcuCombatModel.js';
-import { isBcuHitProcDisabled } from './ProcResolver.js';
+import { getBcuEventProcModel, isBcuHitProcDisabled } from './ProcResolver.js';
 import { getOrbAttackBonus, getOrbResist, getOrbGoodFactor, getOrbMassiveFactor, getOrbGoodDefFactor, getOrbResistantDefFactor } from './bcu-runtime/BcuOrbModifier.js';
 import { getAttackTraitEntries, getTraitEntries, isBcuTargetTraited, traitId } from './BcuTraitCompatibility.js';
 
 const DEFAULT_MAX_FRUIT = 3;
+const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value || {}, key);
 
 function bcuInt(value) {
   const n = Number(value);
@@ -136,6 +137,11 @@ function hasAbiValue(abi, bit) { return (Number(abi) & bit) !== 0; }
 function hasAttackerAbi(attacker, bit) { return hasAbiValue(getAttackerAbi(attacker), bit); }
 function hasTargetAbi(target, bit) { return hasAbiValue(getTargetAbi(target), bit); }
 
+function hasEventAttackerAbility(result, key, bit) {
+  if (hasOwn(result?.__eventAbilityOverrides, key)) return result.__eventAbilityOverrides[key] === true;
+  return hasAttackerAbi(result?.__attacker, bit);
+}
+
 function isTargetMetalForDamage(attacker, target, targetType = 'actor') {
   if (targetType !== 'actor') return false;
   const targetTraitFlags = getTraitFlags(target);
@@ -154,6 +160,14 @@ function performProbability(prob, rng = Math.random) {
   if (p <= 0) return false;
   if (p >= 100) return true;
   return rng() * 100 < p;
+}
+
+export function getBcuCriticalMultiplier(proc = {}) {
+  const raw = proc?.critical?.mult;
+  const multiplier = Number(raw);
+  return raw !== undefined && raw !== null && Number.isFinite(multiplier)
+    ? multiplier
+    : 200;
 }
 
 function getFruit(sharedTraits = []) {
@@ -254,7 +268,7 @@ export function resolveBcuProcFruit(attacker, target) {
 
 function applyFixedKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference, allowAttack = true, allowDefense = true }) {
   let ans = currentDamage;
-  if (allowAttack && hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {
+  if (allowAttack && hasEventAttackerAbility(result, key, abilityBit) && hasTrait(result.__target, trait)) {
     const before = ans;
     ans = bcuInt(ans * attackMult);
     result.modifiers[key] *= before === 0 ? 1 : ans / before;
@@ -276,7 +290,7 @@ function getEvaKillerDef(combo = 0) { return 0.2 / (100 + combo); }
 
 function applyComboScaledKillerMultiplier(result, currentDamage, { key, abilityBit, trait, attackMult, defenseMult, reference, allowAttack = true, allowDefense = true }) {
   let ans = currentDamage;
-  if (allowAttack && hasAttackerAbi(result.__attacker, abilityBit) && hasTrait(result.__target, trait)) {
+  if (allowAttack && hasEventAttackerAbility(result, key, abilityBit) && hasTrait(result.__target, trait)) {
     const before = ans;
     ans = bcuInt(ans * attackMult);
     result.modifiers[key] *= before === 0 ? 1 : ans / before;
@@ -297,7 +311,7 @@ function hasBeastHunterProc(proc = {}) {
 
 function applyBeastHunterMultiplier(result, currentDamage) {
   let ans = currentDamage;
-  const attackerProc = getAttackerProc(result.__attacker);
+  const attackerProc = result.__attackerProc || getAttackerProc(result.__attacker);
   const targetProc = getTargetProc(result.__target);
   if (hasBeastHunterProc(attackerProc) && hasTrait(result.__target, BCU_TRAITS.beast)) {
     const before = ans;
@@ -331,7 +345,7 @@ export class DamageAbilityResolver {
   static resolve({ attacker = null, target = null, targetType = 'actor', event = null, baseDamage = 0, context = {} } = {}) {
     const config = this.getConfig(context);
     const semantic = this.getEventSemanticAbilities(event);
-    const proc = getAttackerProc(attacker);
+    const proc = getBcuEventProcModel(attacker, event);
     const rng = typeof context?.random === 'function' ? context.random : Math.random;
     const sharedInfo = targetType === 'actor' ? makeSharedInfoForAttack(attacker, target) : { mode: 'base', attackTraits: [], targetTraits: [], shared: [], compatible: false };
     const attackerAbilitySuppressed = isBcuDamageAbilitySuppressed(attacker);
@@ -386,7 +400,10 @@ export class DamageAbilityResolver {
     // Internal, non-enumeration contract for helper calls in this function only.
     Object.defineProperties(result, {
       __attacker: { value: attacker, enumerable: false },
-      __target: { value: target, enumerable: false }
+      __target: { value: target, enumerable: false },
+      __attackerProc: { value: proc, enumerable: false },
+      __eventSemantic: { value: semantic, enumerable: false },
+      __eventAbilityOverrides: { value: event?.characterModificationAbilityFlags || {}, enumerable: false }
     });
 
     // Attack-orb (ORB_ATK) additive bonus is part of the unit's attack value, so
@@ -406,21 +423,21 @@ export class DamageAbilityResolver {
     }
 
     if (targetType === 'actor' && isUnitAttackAgainstEnemy(attacker, target) && sharedInfo.compatible && !attackerAbilitySuppressed) {
-      if (hasAttackerAbi(attacker, BCU_ABI.AB_GOOD)) {
+      if (hasEventAttackerAbility(result, 'strong', BCU_ABI.AB_GOOD)) {
         // getOrbGoodFactor reduces to getGoodAtk when no ORB_STRONG orbs are equipped.
         const factor = getOrbGoodFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboGoodInc: comboInc(attacker, 'good') });
         const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.strong *= before === 0 ? 1 : ans / before;
         pushStep(result, 'strong', before, ans, 'BCU EEnemy.getDamage AB_GOOD getOrbGood (getGOODATK + ORB_STRONG)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
-      if (hasAttackerAbi(attacker, BCU_ABI.AB_MASSIVE)) {
+      if (hasEventAttackerAbility(result, 'massiveDamage', BCU_ABI.AB_MASSIVE)) {
         // getOrbMassiveFactor reduces to getMassiveAtk when no ORB_MASSIVE orbs are equipped.
         const factor = getOrbMassiveFactor({ orbs: getEquippedOrbs(attacker), orbMatchTraits: sharedInfo.attackTraits, sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), comboMassiveInc: comboInc(attacker, 'massive') });
         const before = ans; ans = bcuInt(ans * factor);
         result.modifiers.massiveDamage *= before === 0 ? 1 : ans / before;
         pushStep(result, 'massiveDamage', before, ans, 'BCU EEnemy.getDamage AB_MASSIVE getOrbMassive (getMASSIVEATK + ORB_MASSIVE)', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared), factor });
       }
-      if (hasAttackerAbi(attacker, BCU_ABI.AB_MASSIVES)) {
+      if (hasEventAttackerAbility(result, 'insaneDamage', BCU_ABI.AB_MASSIVES)) {
         const before = ans; ans = bcuInt(ans * getMassivesAtk(sharedInfo.shared));
         result.modifiers.insaneDamage *= before === 0 ? 1 : ans / before;
         pushStep(result, 'insaneDamage', before, ans, 'BCU EEnemy.getDamage AB_MASSIVES getMASSIVESATK', { sharedTraits: sharedInfo.shared, fruit: getFruit(sharedInfo.shared) });
@@ -510,18 +527,26 @@ export class DamageAbilityResolver {
     if (hitAbiProcDisabled && !attackerSealProcSuppressed && Number(proc?.critical?.prob || 0) > 0) result.notes.push('bcu-hit-abi-disabled-critical-proc');
     if (targetIsMetal) {
       if (criticalApplied) {
-        const before = ans; ans = bcuInt(ans * 0.01 * 200);
+        const criticalMultiplier = getBcuCriticalMultiplier(proc);
+        const before = ans; ans = bcuInt(ans * 0.01 * criticalMultiplier);
         result.modifiers.critical *= before === 0 ? 1 : ans / before;
-        pushStep(result, 'critical', before, ans, 'BCU critCalc metal/AB_METALIC critical CRIT.mult=200', { prob: criticalProb });
+        pushStep(result, 'critical', before, ans, 'BCU critCalc metal/AB_METALIC critical CRIT.mult (default 200)', {
+          prob: criticalProb,
+          mult: criticalMultiplier
+        });
       } else {
         const before = ans; ans = ans > 0 ? 1 : 0;
         result.modifiers.metal = before === 0 ? 1 : ans / before;
         pushStep(result, 'metal', before, ans, 'BCU critCalc metal/AB_METALIC non-critical damage to 1');
       }
     } else if (criticalApplied) {
-      const before = ans; ans = bcuInt(ans * 0.01 * 200);
+      const criticalMultiplier = getBcuCriticalMultiplier(proc);
+      const before = ans; ans = bcuInt(ans * 0.01 * criticalMultiplier);
       result.modifiers.critical *= before === 0 ? 1 : ans / before;
-      pushStep(result, 'critical', before, ans, 'BCU critCalc non-metal critical CRIT.mult=200', { prob: criticalProb });
+      pushStep(result, 'critical', before, ans, 'BCU critCalc non-metal critical CRIT.mult (default 200)', {
+        prob: criticalProb,
+        mult: criticalMultiplier
+      });
     }
 
     const metalKillerMult = (attackerSealProcSuppressed || hitAbiProcDisabled) ? 0 : Number(proc?.metalKiller?.mult || 0);

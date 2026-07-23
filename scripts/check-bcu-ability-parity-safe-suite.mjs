@@ -153,7 +153,29 @@ const commands = [
   ['node', ['scripts/check-bcu-special-castle-resolution-parity.mjs']],
   ['node', ['--check', 'scripts/build-bcu-slim-indexes.mjs']],
   ['node', ['--check', 'scripts/check-bcu-slim-indexes-sync.mjs']],
-  ['node', ['scripts/check-bcu-slim-indexes-sync.mjs']]
+  ['node', ['scripts/check-bcu-slim-indexes-sync.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-schema.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-codec.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-resolver.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-derived-model.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-cache.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-production.mjs']],
+  ['node', ['--check', 'scripts/check-custom-stage-character-modification.mjs']],
+  ['node', ['--check', 'scripts/check-formation-character-modification.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-import-security.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-runtime-integration.mjs']],
+  ['node', ['--check', 'scripts/check-character-modification-ui.mjs']],
+  ['node', ['scripts/check-character-modification-schema.mjs']],
+  ['node', ['scripts/check-character-modification-codec.mjs']],
+  ['node', ['scripts/check-character-modification-resolver.mjs']],
+  ['node', ['scripts/check-character-modification-derived-model.mjs']],
+  ['node', ['scripts/check-character-modification-cache.mjs']],
+  ['node', ['scripts/check-character-modification-production.mjs']],
+  ['node', ['scripts/check-custom-stage-character-modification.mjs']],
+  ['node', ['scripts/check-formation-character-modification.mjs']],
+  ['node', ['scripts/check-character-modification-import-security.mjs']],
+  ['node', ['scripts/check-character-modification-runtime-integration.mjs']],
+  ['node', ['scripts/check-character-modification-ui.mjs']]
 ];
 
 const results = [];

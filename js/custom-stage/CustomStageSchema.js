@@ -2,8 +2,9 @@
 //
 // This module is intentionally free of DOM / localStorage / battle-runtime imports so it can be
 // unit tested under plain node. It owns two shapes:
-//   1. A single user-authored custom stage (schemaVersion 1) that stores ONLY references to
+//   1. A single user-authored custom stage (schemaVersion 2) that stores references to
 //      existing BCU assets (background/castle/BGM/enemy ids) plus battle + spawn + limit config.
+//      Character modifications live in a deduped table and spawn rows own references into it.
 //   2. Typed stage references { kind: 'bcu' | 'custom', id } used by the stage-vs-stage battle
 //      config so BCU stages and custom stages can be mixed on either side.
 //
@@ -11,7 +12,14 @@
 // logicFrame, and StageDefinitionLoader stores spawn timing as csvFrames(30fps) * FRAME_MUL(2).
 // A custom stage therefore stores timing in that SAME internal unit so an authored "8s" spawn
 // fires at the exact same moment a BCU row authored for 8s would. 1s = 30 * 2 = 60 internal frames.
-export const CUSTOM_STAGE_SCHEMA_VERSION = 1;
+import { normalizeCharacterModification } from '../character-modification/CharacterModificationNormalizer.js';
+import { isEmptyCharacterModification } from '../character-modification/CharacterModificationSchema.js';
+import {
+  canonicalStringify,
+  hashCharacterModification
+} from '../character-modification/CharacterModificationHash.js';
+
+export const CUSTOM_STAGE_SCHEMA_VERSION = 2;
 export const CUSTOM_STAGE_BATTLE_SCHEMA_VERSION = 2;
 export const CUSTOM_STAGE_FRAMES_PER_SECOND = 60;
 
@@ -48,6 +56,13 @@ function bool(value) {
 function idOrNull(value) {
   if (value === undefined || value === null || value === '') return null;
   return typeof value === 'number' ? value : String(value);
+}
+
+function modificationRefOrNull(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const ref = String(value).trim();
+  if (!ref || ref.length > 160 || ['__proto__', 'prototype', 'constructor'].includes(ref)) return null;
+  return ref;
 }
 
 export function secondsToFrames(seconds) {
@@ -141,6 +156,7 @@ export function createSpawn(partial = {}) {
   const enemyBaseHp = conditions.enemyBaseHp || {};
   const layer = conditions.layer || {};
   const score = conditions.score || {};
+  const modificationRef = modificationRefOrNull(p.modificationRef);
   return {
     id: str(p.id) || generateSpawnId(),
     enemyId: idOrNull(p.enemyId),
@@ -173,7 +189,8 @@ export function createSpawn(partial = {}) {
         enabled: bool(score.enabled),
         value: nonNegInt(score.value, 0)
       }
-    }
+    },
+    ...(modificationRef ? { modificationRef } : {})
   };
 }
 
@@ -187,11 +204,88 @@ function clampPercent(value, fallback) {
 // Custom stage
 // ---------------------------------------------------------------------------
 
+export function migrateCustomStage(raw = {}) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const hasVersion = source.schemaVersion !== undefined
+    && source.schemaVersion !== null
+    && source.schemaVersion !== '';
+  const version = hasVersion ? Number(source.schemaVersion) : 1;
+  if (!Number.isInteger(version) || version < 1 || version > CUSTOM_STAGE_SCHEMA_VERSION) {
+    const error = new RangeError(
+      `Unsupported custom stage schemaVersion: ${String(source.schemaVersion)}`
+    );
+    error.code = 'unsupported-custom-stage-schema-version';
+    error.schemaVersion = source.schemaVersion;
+    error.supportedSchemaVersion = CUSTOM_STAGE_SCHEMA_VERSION;
+    throw error;
+  }
+  if (version === CUSTOM_STAGE_SCHEMA_VERSION) return { ...source };
+  return {
+    ...source,
+    schemaVersion: CUSTOM_STAGE_SCHEMA_VERSION,
+    modifications: {},
+    spawns: Array.isArray(source.spawns)
+      ? source.spawns.map((spawn) => {
+        const next = { ...(spawn || {}) };
+        delete next.modificationRef;
+        return next;
+      })
+      : []
+  };
+}
+
+function allocateModificationId(modification, table) {
+  const canonical = canonicalStringify(modification);
+  const base = `m-${hashCharacterModification(modification).replace(/^cm-/, '')}`;
+  let id = base;
+  let suffix = 1;
+  while (table[id] && canonicalStringify(table[id]) !== canonical) {
+    suffix += 1;
+    id = `${base}-${suffix}`;
+  }
+  return id;
+}
+
+// Normalizes only referenced entries, dedupes by canonical content, and rewrites
+// spawn references to content-derived ids. Broken refs are intentionally omitted
+// here for runtime safety; import validation rejects them before normalization.
+export function canonicalizeCustomStageModifications(spawns = [], rawModifications = {}) {
+  const modifications = {};
+  const canonicalToId = new Map();
+  const nextSpawns = (Array.isArray(spawns) ? spawns : []).map((spawn) => {
+    const ref = modificationRefOrNull(spawn?.modificationRef);
+    const raw = ref && rawModifications && typeof rawModifications === 'object'
+      ? rawModifications[ref]
+      : null;
+    const normalized = normalizeCharacterModification(raw, {
+      kind: 'enemy',
+      owner: 'custom-stage',
+      source: 'custom-stage-schema'
+    });
+    if (!ref || isEmptyCharacterModification(normalized)) {
+      const next = { ...(spawn || {}) };
+      delete next.modificationRef;
+      return next;
+    }
+    const canonical = canonicalStringify(normalized);
+    let id = canonicalToId.get(canonical);
+    if (!id) {
+      id = allocateModificationId(normalized, modifications);
+      canonicalToId.set(canonical, id);
+      modifications[id] = normalized;
+    }
+    return { ...(spawn || {}), modificationRef: id };
+  });
+  return { spawns: nextSpawns, modifications };
+}
+
 export function createCustomStage(partial = {}) {
-  const p = partial || {};
+  const p = migrateCustomStage(partial || {});
   const battle = p.battle || {};
   const limits = p.limits || {};
   const now = Date.now();
+  const spawns = Array.isArray(p.spawns) ? p.spawns.map((s) => createSpawn(s)) : [];
+  const normalizedModifications = canonicalizeCustomStageModifications(spawns, p.modifications);
   return {
     schemaVersion: CUSTOM_STAGE_SCHEMA_VERSION,
     id: str(p.id) || generateCustomStageId(),
@@ -213,7 +307,8 @@ export function createCustomStage(partial = {}) {
       nonContinue: bool(battle.nonContinue),
       bossGuard: bool(battle.bossGuard)
     },
-    spawns: Array.isArray(p.spawns) ? p.spawns.map((s) => createSpawn(s)) : [],
+    spawns: normalizedModifications.spawns,
+    modifications: normalizedModifications.modifications,
     limits: {
       maxMoney: nullableNum(limits.maxMoney),
       maxUnitSpawn: nullableNum(limits.maxUnitSpawn),
@@ -235,7 +330,7 @@ function nullableNum(value) {
 // Full re-normalization used on load / import so partially-shaped or older objects are coerced
 // into the current schema without throwing.
 export function normalizeCustomStage(raw) {
-  return createCustomStage(raw || {});
+  return createCustomStage(migrateCustomStage(raw || {}));
 }
 
 export function touchCustomStage(stage) {

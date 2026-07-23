@@ -25,6 +25,8 @@
     "agent:probe": "node scripts/agent-probe.mjs",
     "agent:run": "node scripts/agent-run.mjs",
     "check": "node scripts/check-bcu-ability-parity-safe-suite.mjs",
+    "check:character-modification": "node scripts/check-character-modification-schema.mjs && node scripts/check-character-modification-codec.mjs && node scripts/check-character-modification-resolver.mjs && node scripts/check-character-modification-derived-model.mjs && node scripts/check-character-modification-cache.mjs && node scripts/check-character-modification-production.mjs && node scripts/check-custom-stage-character-modification.mjs && node scripts/check-formation-character-modification.mjs && node scripts/check-character-modification-import-security.mjs && node scripts/check-character-modification-runtime-integration.mjs",
+    "check:character-modification:ui": "node scripts/check-character-modification-ui.mjs",
     "test": "node --test tests/*.test.mjs",
     "verify": "npm run check && npm test",
     "verify:dev": "bash scripts/dev-verify-env.sh",

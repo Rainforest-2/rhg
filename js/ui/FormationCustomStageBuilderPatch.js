@@ -20,8 +20,8 @@ import {
   secondsToFrames, framesToSeconds, encodeStageRef
 } from '../custom-stage/CustomStageSchema.js';
 import {
-  readCustomStages, getCustomStage, saveCustomStage, deleteCustomStage,
-  duplicateCustomStage, createAndSaveCustomStage
+  readCustomStages, getCustomStage, deleteCustomStage,
+  duplicateCustomStage, saveCustomStageAtomic, saveValidatedCustomStageAtomic
 } from '../custom-stage/CustomStageStore.js';
 import { validateCustomStage } from '../custom-stage/CustomStageValidator.js';
 import {
@@ -30,6 +30,21 @@ import {
 import { musicCatalog } from '../audio/MusicCatalog.js';
 import { resolveThumb, thumbCacheKey, evictAsset, musicPlayable } from '../custom-stage/CustomStageAssetCatalog.js';
 import { togglePreview, stopPreview, isPreviewing, onPreviewChange, previewingId } from '../custom-stage/CustomStagePreviewAudio.js';
+import { countCharacterModificationFields } from '../character-modification/CharacterModificationValidator.js';
+import {
+  resolveCustomStageSpawnModification,
+  setCustomStageSpawnCharacterModification
+} from '../custom-stage/CustomStageCharacterModificationAdapter.js';
+import {
+  commitPreparedCharacterModificationImport,
+  createCustomStageCharacterModificationExport,
+  prepareCharacterModificationImport
+} from '../character-modification/CharacterModificationCodec.js';
+import { CHARACTER_MODIFICATION_IMPORT_LIMITS } from '../character-modification/CharacterModificationSchema.js';
+import {
+  clearStorageFailure,
+  reportStorageFailure
+} from '../battle/BcuStorageDiagnostics.js';
 
 const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-builder.v1');
 const BATTLE_LEVEL = 'custom-stage-battle';
@@ -37,9 +52,17 @@ const BUILDER_LEVEL = 'custom-stage-builder';
 const STYLE_ID = 'formation-custom-stage-builder-style';
 const DRAFT_KEY = 'wanko.customStageDraft.v1';
 const RESTORE_SCROLL_FRAMES = 2;
+const CUSTOM_STAGE_IMPORT_TRANSACTIONS = new WeakMap();
 
 function safeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+
+function deepFreezeCustomStageImport(value, seen = new Set()) {
+  if (!value || typeof value !== 'object' || seen.has(value)) return value;
+  seen.add(value);
+  for (const child of Object.values(value)) deepFreezeCustomStageImport(child, seen);
+  return Object.freeze(value);
 }
 
 // 候補が数百件（敵は 778 体）あるピッカーを一度に全部 DOM 化すると、読み込み後もノード数だけで
@@ -129,11 +152,36 @@ function assetResolvers() {
   const bgSet = new Set(backgroundOptions().map((o) => String(o.id)));
   const castleSet = new Set(castleOptions().map((o) => String(o.id)));
   const enemySet = new Set(enemyOptions().map((o) => String(o.id)));
+  const db = bcuDb();
+  const summon = (id, { kind, form = 1 } = {}) => {
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || numericId < 0) return false;
+    if (kind === 'unit') {
+      const formCode = ['f', 'c', 's', 'u'][
+        Math.max(0, Math.min(3, Number(form) - 1))
+      ] || 'f';
+      return !!(
+        db?.assets?.resolveUnitAsset?.(numericId, formCode)
+        || db?.semanticProvider?.getActorEntry?.(`unit:${numericId}:${formCode}`)
+        || db?.semanticIndexes?.actors?.byKey?.[`unit:${numericId}:${formCode}`]
+      );
+    }
+    if (kind === 'enemy') {
+      return !!(
+        db?.assets?.resolveEnemyAsset?.(numericId)
+        || db?.semanticProvider?.getActorEntry?.(`enemy:${numericId}`)
+        || db?.semanticIndexes?.actors?.byKey?.[`enemy:${numericId}`]
+      );
+    }
+    return false;
+  };
   return {
     // When a catalog is empty (DB not loaded), fail open so validation is not falsely blocked.
     background: (id) => bgSet.size === 0 || bgSet.has(String(id)),
     castle: (id) => castleSet.size === 0 || castleSet.has(String(id)),
     enemy: (id) => enemySet.size === 0 || enemySet.has(String(id)),
+    unit: (id, context) => summon(id, { ...context, kind: 'unit' }),
+    summon,
     music: () => true
   };
 }
@@ -185,6 +233,7 @@ html body.nyanko-ui-polish .formation-custom-builder-name{max-width:100%;overflo
 html body.nyanko-ui-polish .formation-custom-builder-body{flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 4px 4px 0}
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions{flex:0 0 auto;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px;border:3px solid #000;border-radius:10px;background:#fff8d6;box-shadow:0 3px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-screen>.formation-custom-builder-actions button{min-width:0;min-height:34px!important;padding:0 8px!important;font-size:.76rem!important;white-space:normal;line-height:1.05}
+html body.nyanko-ui-polish .formation-custom-import-preview{display:grid;gap:8px;padding:10px;border:3px solid #000;border-radius:8px;background:#eef8ff;color:#120700;overflow-wrap:anywhere}.formation-custom-import-preview>span{font-weight:800}.formation-custom-import-preview dl{display:grid;grid-template-columns:minmax(120px,auto) minmax(0,1fr);margin:0;border:2px solid #000;border-radius:6px;overflow:hidden}.formation-custom-import-preview dt,.formation-custom-import-preview dd{margin:0;padding:6px 8px;border-bottom:1px solid #8ca6b5}.formation-custom-import-preview dt{font-weight:1000;background:#d9effb}.formation-custom-import-preview dd{font-weight:800}.formation-custom-import-preview dt:last-of-type,.formation-custom-import-preview dd:last-of-type{border-bottom:0}.formation-custom-import-preview section{display:grid;gap:4px}.formation-custom-import-preview ul{margin:0;padding-left:22px;max-height:120px;overflow:auto}.formation-custom-import-preview .is-error{color:#8a120a}.formation-custom-import-preview .formation-custom-builder-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 html body.nyanko-ui-polish .formation-custom-builder-tabs{position:sticky;top:62px;z-index:2;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));padding:7px;border:3px solid #000;border-radius:10px;background:#17100b;box-shadow:0 3px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-tabs button{min-height:36px;border-color:#000;background:#fff8d6;color:#1b1005;-webkit-text-fill-color:#1b1005;box-shadow:0 2px 0 #000}
 html body.nyanko-ui-polish .formation-custom-builder-tabs button.is-active{background:linear-gradient(180deg,#27a9e1,#127cc6 60%,#0b5598);color:#fff;-webkit-text-fill-color:#fff}
@@ -425,15 +474,43 @@ function addCustomStageToSide(customStageId, side) {
 // ---- draft handling ---------------------------------------------------------
 function readDraft() {
   try {
-    const raw = globalThis.localStorage?.getItem?.(DRAFT_KEY);
+    const storage = globalThis.localStorage;
+    if (!storage) throw new Error('localStorage-unavailable');
+    const raw = storage.getItem(DRAFT_KEY);
+    clearStorageFailure('custom-stage-draft', 'read');
     return raw ? normalizeCustomStage(JSON.parse(raw)) : null;
-  } catch { return null; }
+  } catch (error) {
+    reportStorageFailure('custom-stage-draft', 'read', error);
+    return null;
+  }
 }
 function writeDraft(stage) {
-  try { globalThis.localStorage?.setItem?.(DRAFT_KEY, JSON.stringify(stage)); } catch {}
+  try {
+    const storage = globalThis.localStorage;
+    if (!storage) throw new Error('localStorage-unavailable');
+    storage.setItem(DRAFT_KEY, JSON.stringify(stage));
+    clearStorageFailure('custom-stage-draft', 'write');
+    return { ok: true, error: null };
+  } catch (error) {
+    return {
+      ok: false,
+      error: reportStorageFailure('custom-stage-draft', 'write', error)
+    };
+  }
 }
 function clearDraft() {
-  try { globalThis.localStorage?.removeItem?.(DRAFT_KEY); } catch {}
+  try {
+    const storage = globalThis.localStorage;
+    if (!storage) throw new Error('localStorage-unavailable');
+    storage.removeItem(DRAFT_KEY);
+    clearStorageFailure('custom-stage-draft', 'clear');
+    return { ok: true, error: null };
+  } catch (error) {
+    return {
+      ok: false,
+      error: reportStorageFailure('custom-stage-draft', 'clear', error)
+    };
+  }
 }
 
 function getBuilderState(editor) {
@@ -464,20 +541,44 @@ function openBuilder(editor, stageId) {
 }
 
 function closeBuilder(editor) {
-  stopPreview();
   const state = getBuilderState(editor);
+  if (state.dirty && globalThis.confirm?.('未保存の変更を破棄しますか？') === false) {
+    return false;
+  }
+  stopPreview();
+  const cleared = clearDraft();
+  if (!cleared.ok) {
+    const status = editor.root?.querySelector?.('.formation-custom-status');
+    if (status) {
+      status.textContent = '未保存 / 一時保存の削除失敗';
+      status.className = 'formation-custom-status dirty';
+    }
+    toast(editor, '一時保存を削除できないため画面を閉じられません');
+    return false;
+  }
+  state.stage = null;
+  state.savedId = null;
+  state.dirty = false;
   state.spawnModal = null;
   editor.root?.querySelector?.('.formation-custom-spawn-modal')?.remove();
   editor.stageSelectorState = { level: BATTLE_LEVEL, categoryId: null, mapKey: null };
   editor.renderStageSelector();
+  return true;
 }
 
 function markDirty(editor) {
   const state = getBuilderState(editor);
   state.dirty = true;
-  writeDraft(state.stage);
+  const draftWrite = writeDraft(state.stage);
   const status = editor.root?.querySelector?.('.formation-custom-status');
-  if (status) { status.textContent = '未保存'; status.className = 'formation-custom-status dirty'; }
+  if (status) {
+    status.textContent = draftWrite.ok ? '未保存' : '未保存 / 一時保存失敗';
+    status.className = 'formation-custom-status dirty';
+  }
+  if (!draftWrite.ok) {
+    toast(editor, '一時保存に失敗しました。変更は画面内に保持しています');
+  }
+  return draftWrite;
 }
 
 // ---- section (list) render --------------------------------------------------
@@ -493,6 +594,16 @@ function stageThumbSummary(stage) {
 function formatDate(ts) {
   try { return new Date(ts).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
   catch { return ''; }
+}
+
+function renderCustomStageImportMessages(label, values, className = '') {
+  const items = Array.isArray(values) ? values : values ? [values] : [];
+  return `<section>
+    <strong>${safeHtml(label)}</strong>
+    ${items.length
+      ? `<ul class='${safeHtml(className)}'>${items.slice(0, 100).map((item) => `<li>${safeHtml(item?.message || item?.code || item)}</li>`).join('')}</ul>`
+      : '<span>なし</span>'}
+  </section>`;
 }
 
 function renderCustomStageSection(editor) {
@@ -527,6 +638,40 @@ function renderCustomStageSection(editor) {
       </div>
     </div>`;
   }).join('') : `<p class='formation-custom-stage-empty'>まだ自作ステージがありません</p>`;
+  const pendingImport = editor.__customStageImportPreview || null;
+  const importStage = pendingImport?.stage || null;
+  const importPrepared = pendingImport?.prepared || null;
+  const importErrors = pendingImport?.errors ?? importPrepared?.errors ?? [];
+  const importWarnings = pendingImport?.warnings ?? importPrepared?.warnings ?? [];
+  const importMigrations = pendingImport?.migrations ?? importPrepared?.migrations ?? [];
+  const canCommitImport = !!(
+    importStage
+    && importPrepared?.ok
+    && (!Array.isArray(importErrors) || importErrors.length === 0)
+  );
+  const importPreview = pendingImport ? `
+    <section class='formation-custom-import-preview' aria-labelledby='formation-custom-import-preview-title'>
+      <strong id='formation-custom-import-preview-title'>読み込み内容を確認</strong>
+      <div role='status' aria-live='polite'>
+        ${importStage
+          ? `${safeHtml(importStage.name)} (ID: ${safeHtml(importStage.id)})`
+          : '読み込み可能なstageはありません'}
+      </div>
+      <dl>
+        <dt>追加されるstage</dt><dd>${importStage ? `1件: ${safeHtml(importStage.name)} (ID: ${safeHtml(importStage.id)})` : '0件'}</dd>
+        <dt>上書きされるstage</dt><dd>0件 (常に新しいIDとして追加)</dd>
+        <dt>敵spawn row</dt><dd>${importStage?.spawns?.length ?? 0}件</dd>
+        <dt>改造データ</dt><dd>${Object.keys(importStage?.modifications || {}).length}件</dd>
+        <dt>変更フィールド</dt><dd>${importPrepared?.preview?.changedFieldCount ?? 0}件</dd>
+      </dl>
+      ${renderCustomStageImportMessages('マイグレーション', importMigrations)}
+      ${renderCustomStageImportMessages('警告', importWarnings)}
+      ${renderCustomStageImportMessages('エラー', importErrors, 'is-error')}
+      <div class='formation-custom-builder-actions'>
+        <button type='button' class='is-ghost' data-custom-builder-import-cancel='1'>キャンセル</button>
+        <button type='button' class='is-primary' data-custom-builder-import-commit='1' ${canCommitImport ? '' : 'disabled'}>この内容を読み込む</button>
+      </div>
+    </section>` : '';
 
   const section = document.createElement('div');
   section.className = 'formation-custom-builder-section formation-custom-builder';
@@ -536,6 +681,7 @@ function renderCustomStageSection(editor) {
       <button type='button' class='is-primary' data-custom-builder-new='1'>＋ 新しいステージを作る</button>
       <button type='button' class='is-ghost' data-custom-builder-import='1'>JSONを読み込む</button>
     </div>
+    ${importPreview}
     <div class='formation-custom-stage-grid'>${cards}</div>
     <input type='file' accept='application/json,.json' data-custom-builder-import-file='1' hidden>`;
   list.appendChild(section);
@@ -774,10 +920,13 @@ function renderBasicTab(stage, state = {}) {
     </section>`;
 }
 
-function renderSpawnChips(spawn) {
+function renderSpawnChips(spawn, stage = null) {
   const chips = [];
   if (spawn.conditions.enemyBaseHp.enabled) chips.push(`城HP ${spawn.conditions.enemyBaseHp.minPercent}〜${spawn.conditions.enemyBaseHp.maxPercent}%`);
   if (spawn.conditions.layer.enabled) chips.push(`Layer ${spawn.conditions.layer.min}〜${spawn.conditions.layer.max}`);
+  const modification = stage ? resolveCustomStageSpawnModification(stage, spawn) : null;
+  const modificationCount = countCharacterModificationFields(modification?.characterModification);
+  if (modificationCount) chips.push(`改造 ${modificationCount}項目`);
   return chips.length
     ? `<div class='formation-custom-chip-row'>${chips.map((chip) => `<span class='formation-custom-chip'>${safeHtml(chip)}</span>`).join('')}</div>`
     : `<div class='formation-custom-chip-row'><span class='formation-custom-chip'>常時候補</span></div>`;
@@ -838,6 +987,8 @@ function spawnSummaryLine(s) {
 
 function renderSpawnEditor(s, i, state) {
   const conditionOpen = state.conditionOpen === i;
+  const modification = resolveCustomStageSpawnModification(state.stage, s);
+  const modificationCount = countCharacterModificationFields(modification?.characterModification);
   return `<div class='formation-custom-edit'>
     <section class='formation-custom-edit-section'>
       <h4>出現する敵</h4>
@@ -849,6 +1000,11 @@ function renderSpawnEditor(s, i, state) {
         ${statField('HP倍率', `spawns.${i}.hpMultiplier`, s.hpMultiplier, { min: 1, step: 10, unit: '%' })}
         ${statField('攻撃倍率', `spawns.${i}.attackMultiplier`, s.attackMultiplier, { min: 1, step: 10, unit: '%' })}
       </div>
+    </section>
+    <section class='formation-custom-edit-section formation-custom-character-modification-entry'>
+      <h4>キャラクター改造</h4>
+      <span class='hint'>通常の敵倍率を計算した後の最終値を、この出現rowだけ上書きします</span>
+      <button type='button' class='is-primary' data-custom-spawn-modification-open='${i}'>改造エディタを開く (${modificationCount}項目)</button>
     </section>
     <section class='formation-custom-edit-section'>
       <h4>出現タイミング</h4>
@@ -885,7 +1041,7 @@ function renderEnemyTab(stage, state = {}) {
           <span class='formation-custom-spawn-name' data-custom-spawn-title='${i}'>${safeHtml(enemyName(s.enemyId))}${s.boss ? ' <em>ボス</em>' : ''}</span>
           <span class='formation-custom-spawn-caret edit'>✎</span>
         </div>
-        ${renderSpawnChips(s)}
+        ${renderSpawnChips(s, stage)}
         <div class='formation-custom-spawn-summary'>${safeHtml(spawnSummaryLine(s))}</div>
         <div class='formation-custom-spawn-ctrl'>
           <button type='button' class='is-ghost' data-custom-spawn-up='${i}'>▲</button>
@@ -1293,10 +1449,15 @@ function updateChangedFieldDom(editor, field) {
   if (title && spawn) title.textContent = `${enemyName(spawn.enemyId)}${spawn.boss ? ' / ボス' : ''}`;
 }
 
-function exportStage(stage) {
-  const json = JSON.stringify({ ...normalizeCustomStage(stage) }, null, 2);
+function exportStage(editor, stage) {
+  const encoded = createCustomStageCharacterModificationExport(stage);
+  if (!encoded.ok) {
+    const message = encoded.errors?.[0]?.message || 'JSONの書き出しに失敗しました';
+    toast(editor, `書き出せません: ${message}`);
+    return false;
+  }
   try {
-    const blob = new Blob([json], { type: 'application/json' });
+    const blob = new Blob([encoded.json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1305,7 +1466,12 @@ function exportStage(stage) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  } catch {}
+    return true;
+  } catch (error) {
+    editor.log?.('warn', `custom stage export failed: ${error?.message || error}`);
+    toast(editor, 'JSONの書き出しに失敗しました');
+    return false;
+  }
 }
 
 // ---- install ----------------------------------------------------------------
@@ -1313,6 +1479,37 @@ export function installFormationCustomStageBuilderPatch() {
   const proto = FormationEditor?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;
+
+  proto.getCustomStageBuilderState = function getCustomStageBuilderState() {
+    return getBuilderState(this);
+  };
+
+  proto.setCustomStageSpawnCharacterModification = function setCustomStageSpawnCharacterModificationDraft(
+    spawnIdOrIndex,
+    modification
+  ) {
+    const state = getBuilderState(this);
+    if (!state.stage) return { ok: false, message: 'カスタムステージのdraftがありません' };
+    try {
+      state.stage = setCustomStageSpawnCharacterModification(
+        state.stage,
+        spawnIdOrIndex,
+        modification
+      );
+    } catch (error) {
+      return {
+        ok: false,
+        code: error?.code || 'custom-stage-character-modification-failed',
+        message: error?.message || 'spawn rowへ改造を反映できません'
+      };
+    }
+    markDirty(this);
+    return { ok: true, stage: state.stage };
+  };
+
+  proto.refreshCustomStageSpawnModal = function refreshCustomStageSpawnModal() {
+    refreshSpawnModal(this);
+  };
 
   const originalRender = proto.renderStageSelector;
   proto.renderStageSelector = function renderStageSelectorWithBuilder(...args) {
@@ -1369,6 +1566,13 @@ export function installFormationCustomStageBuilderPatch() {
   proto.onClick = async function onClickWithBuilder(e) {
     const t = e.target;
     if (!this.root?.contains(t)) return originalOnClick.call(this, e);
+    const stageClose = t.closest?.('[data-action="stage-close"]');
+    if (stageClose && this.stageSelectorState?.level === BUILDER_LEVEL) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeBuilder(this);
+      return;
+    }
 
     // ---- checkbox toggles (builder) ----
     const check = t.closest?.('[data-custom-check]');
@@ -1422,16 +1626,29 @@ export function installFormationCustomStageBuilderPatch() {
     }
 
     const clickActions = [
-      ['data-custom-builder-new', () => { clearDraft(); openBuilder(this, null); }],
+      ['data-custom-builder-new', () => {
+        const cleared = clearDraft();
+        if (!cleared.ok) {
+          toast(this, '以前の一時保存を削除できないため新規stageを開始できません');
+          return;
+        }
+        openBuilder(this, null);
+      }],
       ['data-custom-builder-back', () => closeBuilder(this)],
       ['data-custom-builder-tab', (el) => setBuilderTab(this, el.dataset.customBuilderTab)],
       ['data-custom-builder-edit', (el) => openBuilder(this, el.dataset.customBuilderEdit)],
       ['data-custom-builder-duplicate', (el) => { duplicateCustomStage(el.dataset.customBuilderDuplicate); this.renderStageSelector(); }],
       ['data-custom-builder-delete', (el) => { if (globalThis.confirm?.('この自作ステージを削除しますか？')) { deleteCustomStage(el.dataset.customBuilderDelete); this.renderStageSelector(); } }],
-      ['data-custom-builder-export', (el) => { const s = getCustomStage(el.dataset.customBuilderExport); if (s) exportStage(s); }],
+      ['data-custom-builder-export', (el) => { const s = getCustomStage(el.dataset.customBuilderExport); if (s) exportStage(this, s); }],
       ['data-custom-builder-add-enemy', (el) => { const r = addCustomStageToSide(el.dataset.customBuilderAddEnemy, 'enemy'); syncEditorSide(this); this.renderStageSelector(); if (!r.added) toast(this, '既に敵側に追加されています'); }],
       ['data-custom-builder-add-player', (el) => { const r = addCustomStageToSide(el.dataset.customBuilderAddPlayer, 'player'); syncEditorSide(this); this.renderStageSelector(); if (!r.added) toast(this, '既に味方側に追加されています'); }],
       ['data-custom-builder-import', () => this.root.querySelector('[data-custom-builder-import-file]')?.click()],
+      ['data-custom-builder-import-cancel', () => {
+        CUSTOM_STAGE_IMPORT_TRANSACTIONS.delete(this);
+        this.__customStageImportPreview = null;
+        this.renderStageSelector();
+      }],
+      ['data-custom-builder-import-commit', () => commitCustomStageImport(this)],
     ];
     for (const [attr, handler] of clickActions) {
       const el = t.closest?.(`[${attr}]`);
@@ -1450,7 +1667,14 @@ export function installFormationCustomStageBuilderPatch() {
 
     // ---- spawn editor overlay ----
     const modalClose = t.closest?.('[data-custom-spawn-modal-close]');
-    if (modalClose && this.root.contains(modalClose)) { e.preventDefault(); e.stopPropagation(); press(modalClose); closeSpawnModal(this); return; }
+    if (modalClose && this.root.contains(modalClose)) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.root.querySelector('.formation-custom-spawn-modal .cm-host-layer-embedded.is-open')) return;
+      press(modalClose);
+      closeSpawnModal(this);
+      return;
+    }
     // ---- spawn row ops ----
     const spawnToggle = t.closest?.('[data-custom-spawn-toggle]');
     if (spawnToggle && this.stageSelectorState?.level === BUILDER_LEVEL) { e.preventDefault(); e.stopPropagation(); press(spawnToggle); openSpawnModal(this, Number(spawnToggle.dataset.customSpawnToggle)); return; }
@@ -1487,17 +1711,127 @@ function rootChangeHandler(editor, e) {
   if (!input?.dataset || input.dataset.customBuilderImportFile === undefined) return;
   const file = input.files?.[0];
   if (!file) return;
+  if (file.size > CHARACTER_MODIFICATION_IMPORT_LIMITS.maxBytes) {
+    CUSTOM_STAGE_IMPORT_TRANSACTIONS.delete(editor);
+    const message = `JSONは${Math.trunc(CHARACTER_MODIFICATION_IMPORT_LIMITS.maxBytes / 1024 / 1024)} MiB以下にしてください`;
+    editor.__customStageImportPreview = {
+      prepared: null,
+      stage: null,
+      errors: [{ message }],
+      warnings: [],
+      migrations: []
+    };
+    editor.renderStageSelector();
+    toast(editor, message);
+    input.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const parsed = JSON.parse(String(reader.result));
-      const stage = createAndSaveCustomStage({ ...normalizeCustomStage(parsed), id: undefined });
-      toast(editor, `「${stage.name}」を読み込みました`);
+      const prepared = prepareCharacterModificationImport(String(reader.result), {
+        resolvers: assetResolvers()
+      });
+      if (!prepared.ok) {
+        CUSTOM_STAGE_IMPORT_TRANSACTIONS.delete(editor);
+        editor.__customStageImportPreview = {
+          prepared,
+          stage: null,
+          errors: prepared.errors || [{ message: 'JSONが不正です' }],
+          warnings: prepared.warnings || [],
+          migrations: prepared.migrations || []
+        };
+        editor.renderStageSelector();
+        toast(editor, `読み込めません: ${prepared.errors?.[0]?.message || 'JSONが不正です'}`);
+        return;
+      }
+      if (prepared.candidate.type !== 'rhg-custom-stage') {
+        CUSTOM_STAGE_IMPORT_TRANSACTIONS.delete(editor);
+        editor.__customStageImportPreview = {
+          prepared,
+          stage: null,
+          errors: [{ message: 'この画面ではカスタムステージJSONだけを読み込めます' }],
+          warnings: prepared.warnings || [],
+          migrations: prepared.migrations || []
+        };
+        editor.renderStageSelector();
+        toast(editor, 'この画面ではカスタムステージJSONだけを読み込めます');
+        return;
+      }
+      const imported = prepared.candidate.stage;
+      const stage = deepFreezeCustomStageImport(createCustomStage({
+        ...imported,
+        modifications: prepared.candidate.modifications,
+        id: undefined,
+        createdAt: undefined,
+        updatedAt: undefined
+      }));
+      const transaction = Object.freeze({
+        prepared,
+        stage,
+        errors: prepared.errors || [],
+        warnings: prepared.warnings || [],
+        migrations: prepared.migrations || []
+      });
+      CUSTOM_STAGE_IMPORT_TRANSACTIONS.set(editor, transaction);
+      editor.__customStageImportPreview = transaction;
       editor.renderStageSelector();
-    } catch { toast(editor, 'JSONの読み込みに失敗しました'); }
+    } catch (error) {
+      CUSTOM_STAGE_IMPORT_TRANSACTIONS.delete(editor);
+      editor.log?.('warn', `custom stage import failed: ${error?.message || error}`);
+      editor.__customStageImportPreview = {
+        prepared: null,
+        stage: null,
+        errors: [{ message: error?.message || 'JSONの読み込みに失敗しました' }],
+        warnings: [],
+        migrations: []
+      };
+      editor.renderStageSelector();
+      toast(editor, 'JSONの読み込みに失敗しました');
+    }
+  };
+  reader.onerror = () => {
+    CUSTOM_STAGE_IMPORT_TRANSACTIONS.delete(editor);
+    editor.__customStageImportPreview = {
+      prepared: null,
+      stage: null,
+      errors: [{ message: 'JSONファイルを読み込めませんでした' }],
+      warnings: [],
+      migrations: []
+    };
+    editor.renderStageSelector();
+    toast(editor, 'JSONファイルを読み込めませんでした');
   };
   reader.readAsText(file);
   input.value = '';
+}
+
+function commitCustomStageImport(editor) {
+  const preview = CUSTOM_STAGE_IMPORT_TRANSACTIONS.get(editor);
+  if (!preview) return;
+  if (!preview.prepared?.ok || !preview.stage || preview.errors?.length) {
+    editor.renderStageSelector();
+    toast(editor, 'エラーがあるため読み込みを確定できません');
+    return;
+  }
+  try {
+    const result = commitPreparedCharacterModificationImport(preview.prepared, () => (
+      saveValidatedCustomStageAtomic(preview.stage, { resolvers: assetResolvers() })
+    ));
+    if (!result?.ok) {
+      editor.renderStageSelector();
+      toast(editor, '保存領域へ書き込めなかったため、読み込みを確定できませんでした');
+      return;
+    }
+    CUSTOM_STAGE_IMPORT_TRANSACTIONS.delete(editor);
+    editor.__customStageImportPreview = null;
+    toast(editor, `「${result.stage.name}」を読み込みました`);
+    editor.renderStageSelector();
+  } catch (error) {
+    editor.log?.('warn', `custom stage import commit failed: ${error?.message || error}`);
+    editor.renderStageSelector();
+    toast(editor, '読み込みの確定に失敗しました');
+  }
 }
 
 function moveSpawn(stage, index, dir) {
@@ -1511,14 +1845,33 @@ function saveFromBuilder(editor) {
   const state = getBuilderState(editor);
   const result = validateCustomStage(state.stage, { resolvers: assetResolvers() });
   if (!result.ok) { state.tab = 'confirm'; editor.renderStageSelector(); toast(editor, '保存できません: 確認タブを見てください'); return; }
-  const saved = saveCustomStage(state.stage);
-  state.stage = saved;
-  state.savedId = saved.id;
+  const write = saveCustomStageAtomic(state.stage);
+  if (!write.ok) {
+    const status = editor.root?.querySelector?.('.formation-custom-status');
+    if (status) {
+      status.textContent = '保存失敗';
+      status.className = 'formation-custom-status';
+    }
+    toast(editor, '保存領域へ書き込めませんでした。変更は画面内に保持しています');
+    return;
+  }
+  state.stage = write.stage;
+  state.savedId = write.stage.id;
   state.dirty = false;
-  clearDraft();
+  const cleared = clearDraft();
   const status = editor.root?.querySelector?.('.formation-custom-status');
-  if (status) { status.textContent = '保存済み'; status.className = 'formation-custom-status saved'; }
-  toast(editor, '保存しました');
+  if (status) {
+    status.textContent = cleared.ok ? '保存済み' : '保存済み / 一時保存の削除失敗';
+    status.className = cleared.ok
+      ? 'formation-custom-status saved'
+      : 'formation-custom-status';
+  }
+  toast(
+    editor,
+    cleared.ok
+      ? '保存しました'
+      : 'stageは保存しましたが、一時保存を削除できませんでした'
+  );
 }
 
 // Sync the existing panel's in-memory state with storage so its list reflects added custom stages.
@@ -1542,7 +1895,7 @@ function toast(editor, message) {
     if (!el) {
       el = document.createElement('div');
       el.className = 'formation-custom-toast';
-      el.style.cssText = 'position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:50;background:#120700;color:#fff;font-weight:1000;padding:10px 16px;border:3px solid #000;border-radius:999px;box-shadow:0 4px 0 #000;pointer-events:none;max-width:90%';
+      el.style.cssText = 'position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:90;background:#120700;color:#fff;font-weight:1000;padding:10px 16px;border:3px solid #000;border-radius:999px;box-shadow:0 4px 0 #000;pointer-events:none;max-width:90%';
       host.appendChild(el);
     }
     el.textContent = message;

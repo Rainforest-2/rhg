@@ -1,4 +1,7 @@
-import { DamageAbilityResolver } from './DamageAbilityResolver.js';
+import {
+  DamageAbilityResolver,
+  getBcuCriticalMultiplier
+} from './DamageAbilityResolver.js';
 import { BCU_ABI } from './BcuCombatModel.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.damage-metal-abi-patch.v1');
@@ -51,6 +54,7 @@ function patchMetalAbiResult(result, { attacker, target, targetType, context }) 
   const proc = attackerProc(attacker);
   const rng = typeof context?.random === 'function' ? context.random : Math.random;
   const criticalProb = Number(proc?.critical?.prob || 0);
+  const criticalMultiplier = getBcuCriticalMultiplier(proc);
   const metalKillerMult = Number(proc?.metalKiller?.mult || 0);
   const before = Number.isFinite(result.finalDamage) ? result.finalDamage : result.baseDamage || 0;
   let ans = before;
@@ -61,10 +65,17 @@ function patchMetalAbiResult(result, { attacker, target, targetType, context }) 
   } else {
     const crit = roll(criticalProb, rng);
     if (crit) {
-      ans = bcuInt(before * 0.01 * 200);
+      ans = bcuInt(before * 0.01 * criticalMultiplier);
       result.applied.critical = true;
       result.modifiers.critical = before === 0 ? 1 : ans / before;
-      details.push({ key: 'critical', before, after: ans, note: 'BCU critCalc AB_METALIC target critical CRIT.mult=200', prob: criticalProb });
+      details.push({
+        key: 'critical',
+        before,
+        after: ans,
+        note: 'BCU critCalc AB_METALIC target critical CRIT.mult (default 200)',
+        prob: criticalProb,
+        mult: criticalMultiplier
+      });
     } else {
       ans = before > 0 ? 1 : 0;
       result.applied.metal = true;

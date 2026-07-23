@@ -9,11 +9,24 @@
 // (empty files / binary-corrupt headers in pack 100204) so new corruption is
 // noticed instead of silently skipped.
 import fs from 'node:fs/promises';
-import { globSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { parseAnim } from '../js/bcu/BcuAnimParser.js';
 
-const files = globSync('public/assets/bcu/**/*.maanim');
+async function collectMaanimFiles(directory) {
+  const files = [];
+  for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await collectMaanimFiles(file));
+    } else if (entry.name.endsWith('.maanim')) {
+      files.push(file);
+    }
+  }
+  return files;
+}
+
+const files = await collectMaanimFiles('public/assets/bcu');
 assert.ok(files.length > 10000, `expected the full vendored maanim set, got ${files.length}`);
 
 let junk = 0;

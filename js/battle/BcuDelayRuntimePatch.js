@@ -1,6 +1,6 @@
 import { BattleActor } from './BattleActor.js';
 import { BattleScene } from './BattleScene.js';
-import { ProcResolver, isBcuHitProcDisabled } from './ProcResolver.js';
+import { ProcResolver, getBcuEventProcModel, isBcuHitProcDisabled } from './ProcResolver.js';
 import { bcuTraitCompatible, describeBcuTraitCompatibility } from './BcuTraitCompatibility.js';
 import { flushBcuDelayProcQueues, queueBcuDelayProc } from './bcu-runtime/BcuDelayRuntime.js';
 import { applyBcuProcPercent, resolveBcuProcResistance } from './bcu-runtime/BcuResistRuntime.js';
@@ -144,7 +144,7 @@ export function installBcuDelayRuntimePatch() {
       const result = originalResolve.call(this, args) || { applied: [], pending: [], skipped: [], notes: [], debug: {} };
       const { attacker = null, target = null, targetType = 'actor', event = null, context = {} } = args;
       const semantic = event?.abilities || event?.ability?.semantic || {};
-      const proc = getProcModel(attacker);
+      const proc = getBcuEventProcModel(attacker, event);
       if (!hasDelayCandidate(proc, semantic) || alreadyHasDelay(result)) return result;
 
       const payload = delayPayloadFromProc(proc);

@@ -1,6 +1,6 @@
 # BCU 能力整合性の現状
 
-更新日: 2026-07-03
+更新日: 2026-07-23
 
 この文書は、`RHgrive/rhg` における BCU の能力・proc・効果の、見た目以外の現状をまとめたものです。古いノートや単一フィクスチャだけで広い整合性を主張しないよう、保守的な記述にしています。
 
@@ -50,6 +50,24 @@
 - 追加 / カスタム zombie revive: 実データの proc-object から source/range フィルタが動く。
 - リポジトリ内永続化: 読み書き失敗の可視化ができている。
 
+## RHG キャラクター改造の境界
+
+キャラクター改造は BCU の能力 holder やセーブ形式ではなく、通常の BCU/RHG 計算後に適用する RHG 拡張です。BCU パリティ表の行を置き換えず、次の順序を守ります。
+
+```text
+normal final stats
+-> field 単位の absolute override
+-> attack/combat/proc/ability/lifecycle/world/production の派生再構築
+-> BattleActorFactory
+-> 既存の damage / proc / immunity 解決
+```
+
+`CharacterModificationFieldRegistry` が editable/readOnly、unit/enemy、formation/custom-stage、apply/rebuild metadata の単一定義元です。formation v5 は形態別、custom stage v2 は敵 spawn row 別に modification v1 を所有し、pack v1 と stage envelope v2 で canonical sparse RHG JSON を往復します。異なる canonical modification hash は stats/attack-profile template を分離し、animation asset は共有できます。
+
+runtime owner と再構築契約が確立していない spirit、damage cut/cap、HP regeneration、ARMOR、raw ABI、animation/semantic asset は readOnly です。SUMMON は target を同期解決できる場合だけ editable で、召喚先へ親の改造を継承しません。詳細は [RHG キャラクター改造アーキテクチャ追補](../RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md) を参照してください。
+
+この拡張の決定的な coverage は `npm run check:character-modification`、headless UI/responsive coverage は `npm run check:character-modification:ui` が入口です。この文書は最終一括実行結果を記録せず、実装バッチの Verification / CI を参照します。headless check は物理端末または BCU capture の見た目受け入れではありません。
+
 ## 未完了の項目
 
 （2026-07-03 時点。ガード / シールド / 標準 zombie revive / 財布ボタン / 基本キャノンの見た目はユーザー確認で accepted 済み。）
@@ -60,6 +78,7 @@
 - モバイル操作（production card / drag / slide / pause / camera）と音（BGM 切替 / SE 多重 / boss 切替）の実機受け入れ
 - SUMMON entry は実カスタム proc-object の loader / spawn 経路が確認済みで、残るのは上記の手動見た目受け入れのみ
 - BCU セーブや陣形の import/export 互換性は対象外
+- character modification editor の物理 iPhone / iPad / Android における safe-area、software keyboard、orientation change は、headless viewport check と別の実機受け入れ
 
 ## 受け入れ前に必要なチェック
 
@@ -85,6 +104,8 @@ node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-bcu-wallet-runtime-parity.mjs
 node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
+npm run check:character-modification
+npm run check:character-modification:ui
 ```
 
 決定的なチェックはその主張に対応する範囲だけを証明するため、見た目受け入れは別途台帳で管理します。

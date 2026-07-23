@@ -253,7 +253,7 @@ function isGroupAllowed(scene, stageState, { group } = {}) {
 function spawnCustomStageUnit(scene, stageState, event) {
   const unitDef = event.unitDef;
   if (!unitDef || unitDef.unavailable) return false;
-  const tpl = scene.actorFactory.templates.get(unitDef.slotId);
+  const tpl = scene.actorFactory.getTemplate?.(unitDef) || scene.actorFactory.templates?.get?.(unitDef.slotId);
   if (!tpl || (tpl.loadingLevel !== TEMPLATE_LOAD_LEVEL.SPAWN_READY && tpl.loadingLevel !== TEMPLATE_LOAD_LEVEL.FULL_VISUAL)) {
     scene.actorFactory.preloadTemplate(unitDef, { level: TEMPLATE_LOAD_LEVEL.SPAWN_READY }).catch(() => {});
     return false;

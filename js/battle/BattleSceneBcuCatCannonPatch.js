@@ -131,7 +131,7 @@ function buildBcuCannonWallUnitDef(scene) {
 }
 
 function wallTemplateReady(scene, slotId) {
-  const tpl = scene?.actorFactory?.templates?.get?.(slotId);
+  const tpl = scene?.actorFactory?.getTemplate?.(slotId) || scene?.actorFactory?.templates?.get?.(slotId);
   return !!tpl && (tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.SPAWN_READY || tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.FULL_VISUAL);
 }
 

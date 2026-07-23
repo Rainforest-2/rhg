@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "custom-baseline-v1",
+  "name": "Baseline custom stage",
+  "description": "Pre-character-modification fixture",
+  "createdAt": 1753257600000,
+  "updatedAt": 1753257600000,
+  "battle": {
+    "stageLength": 4000,
+    "enemyBaseHp": 100000,
+    "maxEnemyCount": 20,
+    "backgroundId": 0,
+    "enemyCastleId": 0,
+    "enemyCastleAnimBaseId": null,
+    "enemyCastleCannonId": null,
+    "musicId": null,
+    "bossMusicId": null,
+    "timeLimitFrames": 0,
+    "nonContinue": false,
+    "bossGuard": false
+  },
+  "spawns": [
+    {
+      "id": "spawn-baseline-v1",
+      "enemyId": 0,
+      "count": 1,
+      "hpMultiplier": 100,
+      "attackMultiplier": 100,
+      "boss": false,
+      "firstSpawn": {
+        "minFrames": 0,
+        "maxFrames": 0
+      },
+      "respawn": {
+        "enabled": false,
+        "minFrames": 0,
+        "maxFrames": 0
+      },
+      "conditions": {
+        "enemyBaseHp": {
+          "enabled": false,
+          "minPercent": 0,
+          "maxPercent": 100
+        },
+        "layer": {
+          "enabled": false,
+          "min": 0,
+          "max": 0
+        },
+        "groupId": 0,
+        "score": {
+          "enabled": false,
+          "value": 0
+        }
+      }
+    }
+  ],
+  "limits": {
+    "maxMoney": null,
+    "maxUnitSpawn": null,
+    "globalCostMultiplier": null,
+    "globalCooldownMultiplier": null
+  }
+}

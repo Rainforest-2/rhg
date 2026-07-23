@@ -1,6 +1,6 @@
 # BCU の見た目レビュー台帳
 
-更新日: 2026-07-02
+更新日: 2026-07-23
 
 この台帳は、実行時と決定的なチェックは既にあるが、手動ブラウザ受け入れが必要な領域を記録するものです。パーサやチェックリストの代用品ではありません。
 
@@ -63,3 +63,17 @@ headless Chromium（Playwright, dist ビルドを `vite preview` 経由で配信
   かかわらず本セッション後半の実行環境のメモリ逼迫（available ≈1.3GB）で Chromium renderer が
   クラッシュし完走できなかった。アプリ欠陥の証跡は無し（前半の同一ビルドでのバトルロード成功と矛盾しない）。
   メモリに余裕のある実機ブラウザでの再実行を推奨。
+
+## 2026-07-23 キャラクター改造の headless 機能確認記録（受け入れ判定ではない）
+
+`scripts/check-character-modification-ui.mjs` を、共通 character modification editor の Playwright/headless Chromium 機能確認として追加した。対象 viewport は 320x568、390x844（iPhone 縦相当）、667x320（iPhone 横相当）、800x360（Android 低 height 横相当）、1024x768（iPad mini 横相当）、768x1024（iPad 縦相当）、1280x900（desktop）である。
+
+確認対象は formation/custom-stage からの open/close、draft discard/save、field/category/all reset、undo/redo、検索、変更済み filter、import/export preview、focus trap/return、Escape、背景 scroll 分離、横 overflow、footer 到達性、resize 後の draft/scroll、文字拡大、`prefers-reduced-motion`、software-keyboard 相当の viewport height です。診断 screenshot の出力先は `tmp/character-modification-ui/` で、CI では失敗時 artifact の対象です。
+
+この記録は自動 check の範囲を固定するもので、最終一括実行の成否は実装バッチの Verification / CI を一次記録とします。次の内容は確認していません。
+
+- 物理 iPhone / iPad / Android の safe-area、実 software keyboard、browser chrome、orientation change
+- BCU capture と比較した actor、攻撃、proc、lifecycle effect の timing / position / layer
+- character modification を使ったことで既存の見た目が BCU と一致するという総合的な視覚受け入れ
+
+したがって、この追加だけで既存チェックリストの `not-reviewed` を `accepted` に変更していません。

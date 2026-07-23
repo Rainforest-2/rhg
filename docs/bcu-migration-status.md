@@ -2,7 +2,7 @@
 
 ## 最終更新
 
-- 日付: 2026-07-03 (UTC)
+- 日付: 2026-07-23 (UTC)
 - リポジトリ: `Rainforest-2/rhg`
 - 対象: BCU ZIP / 実行時 / 能力の整合性、描画・UI の受け入れ、データ読み込み、永続化互換性
 - 監査基盤: 現行の rhg コードと `references/bcu/` 配下に含まれる BCU 参照 ZIP
@@ -18,6 +18,7 @@
 - 参加可能な犬のロスター表示は、ローカル semantic actor の準備状態で制御される。古い外部 `error-enemy` 除外リストでは、enemy 562 や 661–669 などの完全なバンドル済み actor を隠せない
 - 陣形や生産アイコンは、actor-image フォールバックではなく semantic UI アセットで解決する
 - キャットユニットの生産値は BCU の `ELineUp` 経路を使う。`StageMap.price=1` で `DataUnit.price` が 1.5 倍の配置コストになり、PCoin の `PC2_COST` / `PC2_CD` が先に価格・再配置時間に反映され、C_DISCOUNT が配置コストに適用され、`Treasure.getFinRes(respawn, C_RESP)` が戦闘中クールダウンの下限を決める
+- キャラクター改造は、これらの通常補正と敵倍率 / ステージ補正を解決した後に、指定フィールドだけを絶対値で上書きして派生モデルを再構築する RHG 拡張である。raw CSV、BCU source object、通常 stats を mutation しない
 - 霊魂召喚の実行時は、BCU の生産・ステージ状態、クールダウン、召喚者が生存中の一回制限、ワープ前の召喚元、サイド容量制限、召喚 ready カード切替までカバーする。actor / A_IMUATK とカード flash の見た目は手動レビュー対象
 - BCU sound id `0..190` は、ステージマップ BGM 参照、遅延 sound-cache warming、再生中 SE の奪い合いを抑えて全リクエストを維持する HTMLAudio SE voice pool で解決する
 
@@ -30,7 +31,23 @@
 | ブラウザ上の見た目レビュー | `docs/ability-logic/bcu-visual-review-checklist.md` |
 | 死亡・ワープのライフサイクル | `docs/ability-logic/death-warp-current-status.md` |
 | BCU ソース根拠 | `docs/ability-logic/bcu-ability-source-evidence.md` |
+| キャラクター改造の schema / ownership / cache / import | `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md` |
 | 実装順序 | `docs/ability-logic/bcu-parity-codex-workplan.md` |
+
+## 2026-07-23 キャラクター改造実装サマリ
+
+キャラクター改造は BCU パリティそのものではなく、BCU の通常計算結果を入力にする RHG の明示的な派生設定です。
+
+- **適用順**: level/＋値/talent/orb/treasure/combo、敵倍率、stage/production 補正の後に `CharacterModificationResolver` が absolute override を適用し、`CharacterModificationDerivedModel` が attack hits、combat/proc/ability、lifecycle、world/production を再構築してから `BattleActorFactory` へ渡す。
+- **単一定義元**: `CharacterModificationFieldRegistry` が UI、normalizer、validator、resolver、codec 共通の field/status/kind/owner/apply/rebuild metadata を所有する。
+- **所有権**: formation v5 は `options.characterModifications[characterId]` で形態別に保存する。custom stage v2 は敵 spawn row が `modificationRef` を持ち、stage-level table に sparse modification v1 を dedupe 保存する。
+- **runtime/cache**: formation と custom-stage adapter は `{ characterModification, characterModificationHash, characterModificationSource }` を unit definition に注入する。template identity は character/stats/load context、canonical modification hash、animation identity を含み、異なる改造の stats/profile を分離しつつ semantic animation asset は共有する。
+- **export/import**: custom-stage envelope v2 と character-modification pack v1 は canonical minified RHG JSON。size/depth/count、prototype key、non-finite number、broken/cyclic reference を検証し、migration と全体 validation 後の prepared candidate だけを atomic commit する。
+- **UI 境界**: formation の既存調整 overlay と custom-stage modal 内の spawn-row 設定から共通 editor を使う。draft save/cancel、reset、undo/redo、search、changed-only、preview、focus/keyboard/responsive を同じ実装で扱う。
+- **readOnly**: spirit、damage cut/cap、HP regeneration、ARMOR、raw ABI、animation/semantic asset は、安定した runtime owner または再構築契約がないため編集不可。
+- **非主張**: RHG JSON と `localStorage` は BCU セーブ、BCU 陣形、BCU 公式ステージ互換ではない。headless responsive/a11y check は物理端末と BCU capture の見た目受け入れを代替しない。
+
+検証入口は `npm run check:character-modification` と `npm run check:character-modification:ui` です。正確な実行成否は当該実装バッチの Verification / CI を一次記録とし、この status 文書だけで一括成功を主張しません。
 
 ## 2026-07-02 完成監査サマリ
 
@@ -59,7 +76,7 @@
 | 領域 | 現在の状態 | リスク / 次のアクション |
 |---|---|---|
 | SUMMON の読み込み | `code-complete-candidate` | 実在の `CustomEntity.atks[].proc.SUMMON` をディスクから読み込み、loader → `BattleAttackProfile` → immediate/on_hit スポーンまで動かす。通常の CSV 保持者は追加しない。召喚エントリの見た目だけが残る。 |
-| セーブ / 陣形互換性 | `code-complete-candidate`（自己永続化）; BCU import/export は `out-of-scope` | `FormationStore` / `StageRegistry` が自身の状態を往復し、`BcuStorageDiagnostics` で読み書き失敗を通知する。BCU セーブ / 陣形 import-export は対象外の機能であり欠陥ではない。 |
+| セーブ / 陣形互換性 | `code-complete-candidate`（RHG 自己永続化 / RHG JSON）; BCU import/export は `out-of-scope` | `FormationStore` / `StageRegistry` が自身の状態を往復し、`BcuStorageDiagnostics` で読み書き失敗を通知する。character modification pack と custom-stage export は `rhg-*` envelope であり、BCU セーブ / 陣形 import-export ではない。 |
 
 ### 中優先度
 
@@ -88,6 +105,7 @@
 
 - BCU セーブや陣形の import
 - BCU でそのまま使える export
+- RHG character modification pack / custom-stage JSON を BCU serializer で読み書きできるという互換性
 - ブラウザストレージがブロック・満杯・利用不可のときの完全な永続化
 
 今後 BCU import/export を行う場合は、まず BCU セーブのオーナー、シリアライズ形式、バージョン規則、round-trip フィクスチャを明示する必要があります。
@@ -105,6 +123,8 @@ node scripts/check-bcu-castle-guard-parity.mjs
 node scripts/check-bcu-wallet-runtime-parity.mjs
 node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
 node scripts/check-ability-partial-blockers.mjs
+npm run check:character-modification
+npm run check:character-modification:ui
 ```
 
 対象サブシステムに関係するチェックだけを使ってください。通ったチェックが示すのは、その主張に対応する部分だけです。
@@ -121,6 +141,7 @@ node scripts/check-ability-partial-blockers.mjs
 - 非基本キャノンの移動 sweep / travel と BASE_WALL の入場・待機
 - 攻撃 effect / wave / surge / knockback / status icon のレイヤーと終了処理
 - モバイル操作と BGM / SE の実機受け入れ
+- character modification editor の物理 iPhone / iPad / Android での safe-area、software keyboard、orientation change。headless viewport check だけでは accepted にしない
 
 ## ドキュメント更新ルール
 

@@ -9,6 +9,9 @@ import '../../battle/BattleSceneBcuSpiritPatch.js';
 // After spirit so the button-delay requestPlayerSpawn gate is the outermost wrapper.
 import '../../battle/BattleSceneBcuButtonDelayPatch.js';
 import '../../battle/BattleSceneCustomStageBattlePatch.js';
+// Replace the custom battle's private percent-only C0/KC input with the canonical
+// normal-vs-trail health-domain resolver without duplicating its multi-CSV scheduler.
+import '../../battle/BattleSceneCustomStageTrailParityPatch.js';
 import '../../battle/BattleSceneStageSpawnHeaderPatch.js';
 import '../../battle/BattleSceneBcuAttackPhasePatch.js';
 import '../../battle/BattleSceneProcApplyPatch.js';

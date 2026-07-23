@@ -136,69 +136,128 @@ function resolveCandidateSet(candidates, source, diagnostics = {}) {
   return resultFromEntry(representative, source, { ...diagnostics, candidateCount: list.length, signature: signatures[0] });
 }
 
-function entriesForName(crownIndex, name) {
-  if (!name) return [];
+function entryFromIndexRef(crownIndex, ref) {
+  if (Number.isInteger(ref)) return crownIndex?.entries?.[ref] || null;
+  if (ref && typeof ref === 'object' && Number.isInteger(ref.entryIndex)) {
+    return crownIndex?.entries?.[ref.entryIndex] || null;
+  }
+  return ref && typeof ref === 'object' ? ref : null;
+}
+
+function entriesFromIndexGroup(crownIndex, group) {
+  if (Array.isArray(group)) return group.map((entry) => entryFromIndexRef(crownIndex, entry)).filter(Boolean);
+  if (Array.isArray(group?.entryIndexes)) {
+    return group.entryIndexes.map((entryIndex) => entryFromIndexRef(crownIndex, entryIndex)).filter(Boolean);
+  }
+  if (Array.isArray(group?.entries)) return group.entries.map((entry) => entryFromIndexRef(crownIndex, entry)).filter(Boolean);
+  if (group && group.crownCount != null) return [group]; // schema v1 compatibility
+  return [];
+}
+
+function resolveIndexGroup(crownIndex, group, source, diagnostics = {}, packId = null, filterPack = true) {
+  if (!group) return null;
+  if (Array.isArray(group?.entryIndexes)) {
+    if (filterPack && packId != null) {
+      const packCandidates = [];
+      for (const entryIndex of group.entryIndexes) {
+        const entry = entryFromIndexRef(crownIndex, entryIndex);
+        if (entry && String(entry.packId) === String(packId)) packCandidates.push(entry);
+      }
+      if (packCandidates.length) return resolveCandidateSet(packCandidates, source, diagnostics);
+    }
+
+    const signatures = Array.isArray(group.signatures) ? group.signatures : [];
+    if (group.ambiguous || signatures.length > 1) {
+      return {
+        crownCount: 1,
+        stars: [100],
+        source: 'crown-index-ambiguous',
+        unresolvedReason: `${source}-conflicting-crown-signatures`,
+        diagnostics: {
+          ...diagnostics,
+          candidateCount: Number.isFinite(group.candidateCount) ? group.candidateCount : group.entryIndexes.length,
+          candidateKeys: [],
+          signatures
+        }
+      };
+    }
+
+    const representativeRef = Number.isInteger(group.representativeIndex)
+      ? group.representativeIndex
+      : group.entryIndexes[group.entryIndexes.length - 1];
+    const representative = entryFromIndexRef(crownIndex, representativeRef);
+    if (!representative) return null;
+    return resultFromEntry(representative, source, {
+      ...diagnostics,
+      candidateCount: Number.isFinite(group.candidateCount) ? group.candidateCount : group.entryIndexes.length,
+      signature: signatures[0] || crownSignature(representative)
+    });
+  }
+
+  let candidates = entriesFromIndexGroup(crownIndex, group);
+  if (packId != null) {
+    const packCandidates = candidates.filter((entry) => String(entry?.packId) === String(packId));
+    if (packCandidates.length) candidates = packCandidates;
+  }
+  return resolveCandidateSet(candidates, source, diagnostics);
+}
+
+function groupForName(crownIndex, name) {
+  if (!name) return null;
   const direct = crownIndex?.byName?.[name];
-  if (Array.isArray(direct)) return direct;
-  if (Array.isArray(direct?.entries)) return direct.entries;
-  if (direct && direct.crownCount != null) return [direct]; // schema v1 compatibility
+  if (direct) return direct;
   const normalized = normalizeCrownLookupName(name);
-  if (!normalized) return [];
+  if (!normalized) return null;
   const normalizedGroup = crownIndex?.byNormalizedName?.[normalized];
-  if (Array.isArray(normalizedGroup)) return normalizedGroup;
-  if (Array.isArray(normalizedGroup?.entries)) return normalizedGroup.entries;
+  if (normalizedGroup) return normalizedGroup;
   return (crownIndex?.entries || []).filter((entry) => normalizeCrownLookupName(entry?.name) === normalized);
 }
 
-function entriesForMapId(crownIndex, id) {
+function groupForMapId(crownIndex, id) {
   const indexed = crownIndex?.byMapId?.[String(id)];
-  if (Array.isArray(indexed)) return indexed;
-  if (Array.isArray(indexed?.entries)) return indexed.entries;
+  if (indexed) return indexed;
   return (crownIndex?.entries || []).filter((entry) => Number(entry?.mapId) === Number(id));
 }
 
-// Identity precedence is strict: exact pack+map, composite numeric map identity,
-// local numeric map identity, then display name. A lower-priority id is examined
-// only when the higher-priority id has no candidates; candidate sets from distinct
-// identities are never merged into a synthetic ambiguity.
+// Identity precedence is strict: exact pack+map, then composite numeric map identity,
+// local numeric map identity, then display name. A lower-priority id is examined only
+// when the higher-priority id has no candidates; candidate sets from distinct identities
+// are never merged into a synthetic ambiguity.
 export function resolveMapCrownData(crownIndex, { name = null, packId = null, mapId = null, mapColcId = null } = {}) {
   const requested = { name, packId, mapId, mapColcId };
   if (!crownIndex) return { crownCount: 1, stars: [100], source: 'single-crown-default', unresolvedReason: null, diagnostics: { requested } };
 
-  if (packId != null && mapId != null) {
-    const exact = crownIndex.byKey?.[`${packId}:${mapId}`];
-    if (exact) return resultFromEntry(exact, 'crown-index-byKey', { requested });
-  }
-
   const numericMapId = mapId == null ? NaN : toFinite(mapId, NaN);
   const numericMapColcId = mapColcId == null ? NaN : toFinite(mapColcId, NaN);
-  if (Number.isFinite(numericMapId)) {
-    const ids = Number.isFinite(numericMapColcId)
-      ? [(numericMapColcId * 1000) + numericMapId, numericMapId]
-      : [numericMapId];
+  const ids = Number.isFinite(numericMapId)
+    ? (Number.isFinite(numericMapColcId) ? [(numericMapColcId * 1000) + numericMapId, numericMapId] : [numericMapId])
+    : [];
+
+  if (packId != null) {
     for (const id of ids) {
-      let candidates = entriesForMapId(crownIndex, id);
-      if (packId != null) {
-        const packCandidates = candidates.filter((entry) => String(entry?.packId) === String(packId));
-        if (packCandidates.length) candidates = packCandidates;
-      }
-      const numeric = resolveCandidateSet(candidates, 'crown-index-byMapId', {
-        requested,
-        attemptedIds: ids,
-        resolvedNumericId: id
-      });
-      if (numeric) return numeric;
+      const exactRef = crownIndex.byKey?.[`${packId}:${id}`];
+      if (exactRef == null) continue;
+      const exact = entryFromIndexRef(crownIndex, exactRef);
+      if (exact) return resultFromEntry(exact, 'crown-index-byKey', { requested, resolvedNumericId: id });
     }
   }
 
-  const nameCandidates = entriesForName(crownIndex, name);
-  if (nameCandidates.length) {
-    let candidates = nameCandidates;
-    if (packId != null) {
-      const packCandidates = candidates.filter((entry) => String(entry?.packId) === String(packId));
-      if (packCandidates.length) candidates = packCandidates;
-    }
-    return resolveCandidateSet(candidates, 'crown-index-byName', { requested, normalizedName: normalizeCrownLookupName(name) });
+  for (const id of ids) {
+    const numeric = resolveIndexGroup(crownIndex, groupForMapId(crownIndex, id), 'crown-index-byMapId', {
+      requested,
+      attemptedIds: ids,
+      resolvedNumericId: id
+    }, packId, false);
+    if (numeric) return numeric;
+  }
+
+  const nameCandidates = groupForName(crownIndex, name);
+  if (nameCandidates) {
+    const named = resolveIndexGroup(crownIndex, nameCandidates, 'crown-index-byName', {
+      requested,
+      normalizedName: normalizeCrownLookupName(name)
+    }, packId);
+    if (named) return named;
   }
 
   return { crownCount: 1, stars: [100], source: 'single-crown-default', unresolvedReason: null, diagnostics: { requested } };

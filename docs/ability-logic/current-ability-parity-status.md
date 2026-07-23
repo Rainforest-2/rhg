@@ -1,7 +1,7 @@
 # BCU 能力・ライフサイクル整合性の現状
 
 更新日: 2026-07-24  
-確認した `main`: `aa6ed5eb82324be4a745a8d85237d4d68775424d`
+確認基準: `main` `16f0c113c29d87aa8954fef18d0910a3ff154759` + 本修正ブランチ
 
 この文書は ability / proc / damage / lifecycle の状態行だけを所有します。project 全体の active correctness 項目と優先順位は `../bcu-migration-status.md` を参照してください。
 
@@ -35,9 +35,9 @@
 | `Trait.targetType/targetForms` compatibility | `verified-owner` | PR #21でfully target-traitedへDemon/Relicを追加し、loader checkを更新。 |
 | Battle deterministic layer RNG / KC | `verified-owner` | CopRand committed layerとplayer-unit death KC semanticsをPR #21で接続。 |
 | Actor layer rendering | `verified-owner` | `currentLayer`優先、scene insertion順tie-breakのstable paint orderをPR #21で導入。 |
-| Crown selection propagation | `known-defect (partial)` | #22によりadapter runtimeが選択crown/starを100%/★1で上書きする。 |
-| Crown multiplier precision | `known-defect (partial)` | #20によりrow×crownを途中の整数percentへ丸める。 |
-| Ranking/trail overtime and score | `known-defect (partial)` | #23によりtimeLimit/row scoreはparsed metadataのままで、overtime・spawn停止・score ownerがない。 |
+| Crown selection propagation | `verified-owner` | PR #29でselected crown/starをlegacy builderからadapterへ一度だけ伝播し、不一致をfail closedにした。 |
+| Crown multiplier precision | `verified-owner` | PR #29でrow×crownのfloat倍率をstat構築まで保持し、HP=int cast、ATK=Math.round、HP由来procを同じ係数で確定する。 |
+| Ranking/trail overtime and score | `verified-owner` | `BcuRankingRuntime`が30fpsのtimeLimit、strict overtime、spawn停止、NORMAL kill score式、任意score-limit outcomeを所有する。 |
 | Wallet / cost / respawn / modifier | `verified-owner` | BCU 式・registry owner はある。Issue が見つかった場合は個別行へ降格する。 |
 | Sound / boss music / SE voice pool | `human-visual-review-needed` | resolver/runtime owner はある。実機多重再生と切替は未受け入れ。 |
 | BCU save / lineup import-export | `out-of-scope` | RHG 自己永続化と RHG JSON だけを所有する。 |

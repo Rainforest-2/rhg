@@ -40,29 +40,23 @@ assert.ok(omitted.includes('combo proc-duration/runtime sources'), 'damage resol
 assert.ok(omitted.includes('remaining Trait targetForms capture edge cases'), 'damage resolver still reports remaining targetForms capture edges');
 assert.ok(omitted.includes('sage status resistance'), 'damage resolver still reports missing sage status-resistance scope');
 
+// The current status document is the SSOT. Assert stable table rows rather than
+// historical prose or obsolete PARTIAL labels from superseded documents.
 const doc = readFileSync('docs/ability-logic/current-ability-parity-status.md', 'utf8');
 for (const phrase of [
   '| P_DELAY | `human-visual-review-needed`',
-  '| 地中移動 | `code-complete-candidate`',
-  // Loader-backed graduations: each is proven by a real BCU-format fixture file
-  // threaded through the existing runtime (see the per-row checks below).
-  '- SUMMON: proc-object での実データ読込が確認済み。',
-  '- `Trait.targetForms`: 実データの `Trait` が読み込まれ、判定経路に接続されている。',
-  '- combo / orb / treasure / talent / PCoin: 既存の実行時と実データの組み合わせが確認済み。',
-  '- 追加 / カスタム zombie revive: 実データの proc-object から source/range フィルタが動く。',
-  '- リポジトリ内永続化: 読み書き失敗の可視化ができている。',
-  // Genuinely-open items: visual review or disproven/out-of-scope owner.
-  // (2026-07-02 doc reorganization merged the per-item bullets; the same open
-  // claims must stay listed.)
-  '- P_DELAY / burrow / spirit・A_IMUATK / summon entry / full・mini death-surge の見た目',
-  '- SUMMON entry は実カスタム proc-object の loader / spawn 経路が確認済みで、残るのは上記の手動見た目受け入れのみ',
-  '- BCU セーブや陣形の import/export 互換性は対象外'
+  '| Burrow | `human-visual-review-needed`',
+  '| SUMMON | `human-visual-review-needed`',
+  '| `Trait.targetType/targetForms` compatibility | `verified-owner`',
+  '| Crown selection propagation | `verified-owner`',
+  '| Crown multiplier precision | `verified-owner`',
+  '| Ranking/trail overtime and score | `verified-owner`',
+  '| BCU save / lineup import-export | `out-of-scope`'
 ]) {
   assert.ok(doc.includes(phrase), `status doc includes ${phrase}`);
 }
 
-// Loader-backed evidence files must exist for the graduated rows (no row may be
-// upgraded without its real-data fixture + deterministic check on disk).
+// Loader-backed evidence files must exist for the graduated rows.
 for (const evidence of [
   'scripts/fixtures/bcu-custom-pack/summon-proc-object.json',
   'scripts/fixtures/bcu-custom-pack/special-traits.json',

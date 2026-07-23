@@ -8,7 +8,7 @@ import {
   resolveMapCrownData
 } from '../battle/bcu-runtime/BcuStageCrownRuntime.js';
 
-const FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v2-scoped');
+const FLAG = Symbol.for('wanko-ui.formation-stage-difficulty.v3-identity-safe');
 const STYLE_ID = 'formation-stage-difficulty-style';
 const CUSTOM_LEVEL = 'custom-stage-battle';
 const CROWN_INDEX_URLS = Object.freeze([
@@ -54,6 +54,7 @@ function stageOptionOf(item) {
   if (!item?.stage) return item || {};
   return {
     ...item.stage,
+    packId: item.packId ?? item.stage.packId,
     mapColcId: item.mapColcId ?? item.stage.mapColcId,
     mapId: item.mapNo ?? item.mapId ?? item.stage.mapId,
     mapNo: item.mapNo ?? item.stage.mapNo,
@@ -67,12 +68,34 @@ function stageOptionOf(item) {
     }
   };
 }
+function packIdOf(item) {
+  const option = stageOptionOf(item);
+  return option?.packId ?? item?.packId ?? item?.stage?.packId ?? null;
+}
+function uniqueMapPackId(map) {
+  const ids = new Set([
+    map?.packId,
+    ...(map?.stages || []).map(packIdOf)
+  ].filter((value) => value != null).map(String));
+  return ids.size === 1 ? [...ids][0] : null;
+}
 function crownIndex(ed) { return ed.__bcuStageCrownIndex || null; }
 function mapCrownData(ed, map) {
-  return resolveMapCrownData(crownIndex(ed), { name: map?.label, mapId: map?.mapNo, mapColcId: map?.mapColcId });
+  return resolveMapCrownData(crownIndex(ed), {
+    name: map?.label,
+    packId: uniqueMapPackId(map),
+    mapId: map?.mapNo ?? map?.mapId,
+    mapColcId: map?.mapColcId
+  });
 }
 function stageCrownData(ed, item) {
-  return resolveMapCrownData(crownIndex(ed), { name: item?.mapLabel, mapId: item?.mapNo, mapColcId: item?.mapColcId });
+  const option = stageOptionOf(item);
+  return resolveMapCrownData(crownIndex(ed), {
+    name: item?.mapLabel,
+    packId: packIdOf(item),
+    mapId: item?.mapNo ?? option?.mapId,
+    mapColcId: item?.mapColcId ?? option?.mapColcId
+  });
 }
 function stageText(item, crownData) {
   const starText = crownStarsForData(crownData).map((star) => `★${star}`).join(' ');
@@ -88,12 +111,13 @@ function mapCrownStats(ed, map) {
     max,
     stars,
     label: min === max ? `★${min}` : `★${min}-${max}`,
-    candidateCount: map?.stages?.length || 0,
+    candidateCount: crownData?.diagnostics?.candidateCount ?? map?.stages?.length ?? 0,
     matchedCount: stars.length,
-    unresolvedReason: crownData?.source === 'single-crown-default' ? null : null,
+    unresolvedReason: crownData?.unresolvedReason || null,
     source: crownData?.source || 'single-crown-default',
     crownCount: stars.length,
-    crownMagnifications: crownData?.stars || [100]
+    crownMagnifications: crownData?.stars || [100],
+    diagnostics: crownData?.diagnostics || null
   };
 }
 function mapText(map, stats) { return norm([map?.key, map?.label, map?.collectionLabel, ...(map?.collectionLabels || []), map?.mapNoRaw, stats.label].filter(Boolean).join(' ')); }
@@ -121,7 +145,14 @@ async function ensureCrownIndex(ed) {
   })()
     .then((index) => {
       ed.__bcuStageCrownIndex = index.index;
-      ed.__bcuStageCrownIndexDiagnostics = { source: index.source, loadMode: 'generated-crown-index', count: index.index?.count || 0 };
+      ed.__bcuStageCrownIndexDiagnostics = {
+        source: index.source,
+        loadMode: 'generated-crown-index',
+        schemaVersion: index.index?.schemaVersion || 1,
+        count: index.index?.count || 0,
+        ambiguousNameCount: index.index?.ambiguousNameCount || 0,
+        ambiguousMapIdCount: index.index?.ambiguousMapIdCount || 0
+      };
       globalThis.__BCU_STAGE_CROWN_FILTER_DEBUG__ = ed.__bcuStageCrownIndexDiagnostics;
       ed.renderStageSelector?.();
       return index.index;
@@ -193,35 +224,41 @@ function removeHiddenDifficultyBadge(card) {
 function decorateMapLevel(ed, scope) {
   const f = filterState(ed);
   const matched = new Set(scope.items.filter((m) => mapMatches(ed, m, f)).map((m) => m.key));
+  let unresolvedReason = null;
   for (const card of ed.root.querySelectorAll('.formation-stage-card-map[data-stage-map]')) {
     const map = scope.items.find((m) => m.key === card.dataset.stageMap);
     const stats = mapCrownStats(ed, map);
+    if (stats.unresolvedReason) unresolvedReason = stats.unresolvedReason;
     card.dataset.stageCrownStars = stats.stars.join(',');
     card.dataset.stageCrownCount = String(stats.crownCount);
     card.dataset.stageDifficultyMin = String(stats.min);
     card.dataset.stageDifficultyMax = String(stats.max);
+    card.dataset.stageCrownSource = stats.source;
+    if (stats.unresolvedReason) card.dataset.stageCrownUnresolved = stats.unresolvedReason;
+    else delete card.dataset.stageCrownUnresolved;
     removeHiddenDifficultyBadge(card);
     card.classList.toggle('is-difficulty-filtered', isFiltering(f) && !matched.has(card.dataset.stageMap));
   }
   const shown = scope.items.filter((m) => !isFiltering(f) || matched.has(m.key)).length;
   insertControls(ed, scope, matched.size, shown);
-  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown });
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: matched.size, shownCount: shown, unresolvedReason });
 }
 function decorateStageLevel(ed, scope) {
-  // Stage-level search/filter UI is removed (keep map search only). The selected crown applies to
-  // the whole opened map, so every stage in that map remains visible.
+  let unresolvedReason = null;
   for (const card of ed.root.querySelectorAll('.formation-stage-card-stage[data-stage-id]')) {
     const st = scope.items.find((s) => s.key === card.dataset.stageId || s.id === card.dataset.stageId);
     const crownData = stageCrownData(ed, st || { key: card.dataset.stageId });
     const stars = crownStarsForData(crownData);
+    if (crownData?.unresolvedReason) unresolvedReason = crownData.unresolvedReason;
     removeHiddenDifficultyBadge(card);
     card.dataset.stageCrownStars = stars.join(',');
     card.dataset.stageDifficulty = stars.join(',');
     card.dataset.stageDifficultyMin = String(stars[0] || 1);
     card.dataset.stageDifficultyMax = String(stars[stars.length - 1] || 1);
+    card.dataset.stageCrownSource = crownData?.source || 'single-crown-default';
     card.classList.remove('is-difficulty-filtered');
   }
-  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: scope.items.length, shownCount: scope.items.length });
+  setScopeDebug(ed, scope, { candidateCount: scope.items.length, matchedCount: scope.items.length, shownCount: scope.items.length, unresolvedReason });
 }
 function decorate(ed) {
   const scope = currentScope(ed);
@@ -262,7 +299,10 @@ export function installFormationStageDifficultyPatch() {
       crownMagnificationPercent: percent,
       crownCount: crownStarsForData(crownData).length,
       mapLabel: map?.label || stage?.mapLabel || null,
-      source: crownData?.source || 'single-crown-default'
+      packId: map ? uniqueMapPackId(map) : packIdOf(stage),
+      source: crownData?.source || 'single-crown-default',
+      unresolvedReason: crownData?.unresolvedReason || null,
+      diagnostics: crownData?.diagnostics || null
     };
     globalThis.__BCU_SELECTED_STAGE_CROWN_DEBUG__ = this.__bcuSelectedStageCrown;
     return select.call(this, stageId, ...args);
@@ -271,3 +311,5 @@ export function installFormationStageDifficultyPatch() {
   p.onClick = function onClickWithScopedStageDifficulty(e) { const apply = e.target.closest?.('[data-stage-filter-apply]'); if (apply && this.root?.contains(apply)) { e.preventDefault(); e.stopPropagation(); commitDraftFilter(this); this.renderStageSelector(); return; } const reset = e.target.closest?.('[data-stage-filter-reset]'); if (reset && this.root?.contains(reset)) { e.preventDefault(); e.stopPropagation(); this.__bcuStageDifficultyFilter = { q: '', star: 1 }; this.__bcuStageDifficultyDraftFilter = { q: '', star: 1 }; this.renderStageSelector(); return; } return click.call(this, e); };
 }
 installFormationStageDifficultyPatch();
+
+export { mapCrownData, stageCrownData, stageOptionOf, uniqueMapPackId };

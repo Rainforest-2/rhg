@@ -1,156 +1,105 @@
 # BCU 移行状況
 
-## 最終更新
+更新日: 2026-07-24  
+対象: `Rainforest-2/rhg`  
+確認した `main`: `aa6ed5eb82324be4a745a8d85237d4d68775424d`
 
-- 日付: 2026-07-23 (UTC)
-- リポジトリ: `Rainforest-2/rhg`
-- 対象: BCU ZIP / 実行時 / 能力の整合性、描画・UI の受け入れ、データ読み込み、永続化互換性
-- 監査基盤: 現行の rhg コードと `references/bcu/` 配下に含まれる BCU 参照 ZIP
+## 結論
 
-これは高水準の一次情報源です。現行コードと重点ドキュメントが食い違う場合、従来の README や ZIP 分析の主張より優先します。
+semantic ZIP、主要 battle runtime、character modification、RHG 内部永続化は広く実装されています。PR #21（merge commit `105411944e64cecc06ec89a53a3ad6e038846902`）により、旧 #6–#18 の boot、verification、Metal/critical、trait、stage spawn/KC、trail parsing、background index、actor layer order の実装差分は修正され、回帰チェックが追加されました。
 
-## 現在の実行時基準
+2026-07-24 時点で現在確認されている未解決の correctness 項目は #20、#22、#23 です。したがって「見た目確認だけが残る」とは表現しません。
 
-- 既定の実行時モード: `semantic-strict`
-- 生成済み semantic ZIP バンドルを、バンドル済みファミリの正式な実行時アセットソースとする
-- `public/assets/bcu/**` のファイルは、静かにフォールバックされるものではなく、引き続きソース素材として扱う
-- コア起動は `BcuBootLoader` / `SemanticAssetProvider` 経由で `public/assets/bundles/core/core-db.zip` を使う
-- 参加可能な犬のロスター表示は、ローカル semantic actor の準備状態で制御される。古い外部 `error-enemy` 除外リストでは、enemy 562 や 661–669 などの完全なバンドル済み actor を隠せない
-- 陣形や生産アイコンは、actor-image フォールバックではなく semantic UI アセットで解決する
-- キャットユニットの生産値は BCU の `ELineUp` 経路を使う。`StageMap.price=1` で `DataUnit.price` が 1.5 倍の配置コストになり、PCoin の `PC2_COST` / `PC2_CD` が先に価格・再配置時間に反映され、C_DISCOUNT が配置コストに適用され、`Treasure.getFinRes(respawn, C_RESP)` が戦闘中クールダウンの下限を決める
-- キャラクター改造は、これらの通常補正と敵倍率 / ステージ補正を解決した後に、指定フィールドだけを絶対値で上書きして派生モデルを再構築する RHG 拡張である。raw CSV、BCU source object、通常 stats を mutation しない
-- 霊魂召喚の実行時は、BCU の生産・ステージ状態、クールダウン、召喚者が生存中の一回制限、ワープ前の召喚元、サイド容量制限、召喚 ready カード切替までカバーする。actor / A_IMUATK とカード flash の見た目は手動レビュー対象
-- BCU sound id `0..190` は、ステージマップ BGM 参照、遅延 sound-cache warming、再生中 SE の奪い合いを抑えて全リクエストを維持する HTMLAudio SE voice pool で解決する
+この文書が project 全体の current status と active correctness 分類の一次情報源です。個別能力は `ability-logic/current-ability-parity-status.md`、証拠不足は `ability-logic/bcu-unresolved-evidence-blockers.md`、見た目結果は `ability-logic/bcu-visual-review-checklist.md` が所有します。
 
-## 現在の重点ドキュメント
+## Active correctness items
 
-| 分野 | 対象文書 |
-|---|---|
-| 能力・proc・効果の整合性 | `docs/ability-logic/current-ability-parity-status.md` |
-| 根拠・互換性ブロッカー | `docs/ability-logic/bcu-unresolved-evidence-blockers.md` |
-| ブラウザ上の見た目レビュー | `docs/ability-logic/bcu-visual-review-checklist.md` |
-| 死亡・ワープのライフサイクル | `docs/ability-logic/death-warp-current-status.md` |
-| BCU ソース根拠 | `docs/ability-logic/bcu-ability-source-evidence.md` |
-| キャラクター改造の schema / ownership / cache / import | `docs/RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md` |
-| 実装順序 | `docs/ability-logic/bcu-parity-codex-workplan.md` |
+| 優先 | Issue | 分野 | 現在の欠陥 |
+|---:|---:|---|---|
+| P0 | #22 | Stage crown wiring | UIから渡された crown/star 選択が adapter runtime の100%/★1既定値で上書きされ、production battleへ届かない |
+| P1 | #20 | Crown precision | row倍率 × crown倍率を途中で整数percentへ丸め、BCUが保持するfloat multiplierと最終HP/ATKがずれる |
+| P1 | #23 | Ranking lifecycle / score | trail認識後の overtime、stage activity/spawn停止、dojo score、score-limit outcome にruntime ownerがない |
 
-## 2026-07-23 キャラクター改造実装サマリ
+Issue の詳細、BCU source、再現条件、期待動作は各 Issue 本文を一次情報源とします。この表は本文を複製せず、修正順を示す要約です。
 
-キャラクター改造は BCU パリティそのものではなく、BCU の通常計算結果を入力にする RHG の明示的な派生設定です。
+## 2026-07-24 resolved batch
 
-- **適用順**: level/＋値/talent/orb/treasure/combo、敵倍率、stage/production 補正の後に `CharacterModificationResolver` が absolute override を適用し、`CharacterModificationDerivedModel` が attack hits、combat/proc/ability、lifecycle、world/production を再構築してから `BattleActorFactory` へ渡す。
-- **単一定義元**: `CharacterModificationFieldRegistry` が UI、normalizer、validator、resolver、codec 共通の field/status/kind/owner/apply/rebuild metadata を所有する。
-- **所有権**: formation v5 は `options.characterModifications[characterId]` で形態別に保存する。custom stage v2 は敵 spawn row が `modificationRef` を持ち、stage-level table に sparse modification v1 を dedupe 保存する。
-- **runtime/cache**: formation と custom-stage adapter は `{ characterModification, characterModificationHash, characterModificationSource }` を unit definition に注入する。template identity は character/stats/load context、canonical modification hash、animation identity を含み、異なる改造の stats/profile を分離しつつ semantic animation asset は共有する。
-- **export/import**: custom-stage envelope v2 と character-modification pack v1 は canonical minified RHG JSON。size/depth/count、prototype key、non-finite number、broken/cyclic reference を検証し、migration と全体 validation 後の prepared candidate だけを atomic commit する。
-- **UI 境界**: formation の既存調整 overlay と custom-stage modal 内の spawn-row 設定から共通 editor を使う。draft save/cancel、reset、undo/redo、search、changed-only、preview、focus/keyboard/responsive を同じ実装で扱う。
-- **readOnly**: spirit、damage cut/cap、HP regeneration、ARMOR、raw ABI、animation/semantic asset は、安定した runtime owner または再構築契約がないため編集不可。
-- **非主張**: RHG JSON と `localStorage` は BCU セーブ、BCU 陣形、BCU 公式ステージ互換ではない。headless responsive/a11y check は物理端末と BCU capture の見た目受け入れを代替しない。
+PR #21で次を修正済みです。
 
-検証入口は `npm run check:character-modification` と `npm run check:character-modification:ui` です。正確な実行成否は当該実装バッチの Verification / CI を一次記録とし、この status 文書だけで一括成功を主張しません。
+- #9: required battle patch group を fail closed に変更
+- #10: stale source-string check を behavior-level stage-runtime check に置換し、main checkへ接続
+- #12 / #13: enemy Metalとunit `AB_METALIC`を正しく分類し、critical RNGを一回だけ抽選
+- #14: fully target-traited 判定へ Demon / Relic を追加
+- #6: CopRandのcommitted spawn layerをactorへ適用し、`Math.random()`再抽選を除去
+- #7: player-unit deathから全KC rowをBCU health window付きで通知
+- #17: trail/ranking stageのtrigger domainとbase damage windowを復元
+- #18: castle row有無を共有CSV layout resolverで判定
+- #8: actor paint orderを`currentLayer`優先のstable orderへ変更
 
-## 2026-07-02 完成監査サマリ
+Issueページがopen表示のままでも、これらを現在の欠陥として再掲する前に、mainの修正と `scripts/check-open-issue-regressions.mjs` を確認します。
 
-到達性・BCU 根拠・配線の全面監査を実施しました。
+## 実行順
 
-- **実バグ修正**: `DamageAbilityResolverMetalAbiPatch`（AB_METALIC の dog-player 攻撃側金属キャップ）が boot group 未接続で本番未適用だったのを `battleCorePatches.js` へ接続し、チェックに配線アサーションを追加。
-- **BCU 根拠で 3 件のランタイム挙動を修正**: boss music 切替（閾値 0/100 無効 + int 切り捨て strict `<`、`DefStageInfo`/`BattleView.aboveBoss`）、被弾 SE（CRIT/SATK/HIT の独立再生 + フレーム毎 dedupe、`Entity.java:1722-1762`）、編成 roster から undeployable ユニット 43 件を除外（`error-ally.json`）。
-- **特殊敵城 / EEnemy base 接続を修正**: ステージヘッダの base enemy id と一致する敵行を通常 spawn schedule から除外し、敵アクター拠点として初期配置する。`N/StageRN/stageRN036_05.csv`（ハリーウッド帝国 / ウニバーサンスタジオ）の raw enemy 317 を `check-bcu-enemy-entity-base-runtime` で固定。通常の castle-owned attack runtime は追加していない。
-- **BCU 根拠で 6 件を accepted 分類**: 財布 combo 式の非対称、MSD 行 index、maanim keyframe leniency、★1 デフォルトフィルタ、`resolveUnitAsset` fallback、lineup スワイプ定数。
-- **孤立コード 36 ファイルを削除**: `js/bcu-render/**`、旧 bcu-runtime スキャフォールド、node:fs 系 Verifier 群、重複ゲスチャランタイム等。import graph で孤立ゼロを機械確認。
-- **チェック増強**: `check-bcu-msd-row-alignment-parity`、`check-bcu-maanim-keyframe-integrity`、`check-bcu-lineup-slide-gesture-parity` を新設し safe suite 登録。stale だった 3 チェックを現実装に同期、生成物依存の 4 チェックは再生成手順で成功確認。
-- **ブラウザ実走**: 全ビューポートで formation → ステージ選択 → バトルロード完了を headless Chromium で確認（`tmp/ui-polish-screens/`）。戦闘中フレームの追加スモークは実行環境のメモリ逼迫で完走せず（アプリ欠陥の証跡なし）。
-- **見た目台帳**: ユーザー確認済み 6 項目（バリア / 悪魔シールド / 城ガード / 標準 zombie revive / 財布ボタン / 基本キャノン）を accepted 記録。残りの見た目項目は human-visual-review-needed のまま（完成宣言はしない）。
-- **2026-07-03 非runtime台帳同期**: 実カスタム proc-object SUMMON の loader / `BattleAttackProfile` / immediate-on_hit spawn は解決済みと確定し、残るのは entry 見た目だけに統一。同フレーム攻撃は現行 due-hit capture / damage 挙動を維持し、追加監査は行わない。
+1. #22 を修正し、production `PreviewApp -> BattleScene -> StageRuntimeSceneAdapter` で選択 crown/star を一度だけ保持する。
+2. #20 を修正し、row/crown multiplierを最終stat構築境界までfloat精度で維持する。
+3. #23 を修正し、BCU logic frame基準のovertime、spawn停止、kill score、score-limit outcomeを実装する。
+4. correctness項目を閉じた後に、未受け入れvisual項目とperformance cleanupを進める。
 
-## 2026-06-23 監査サマリ
+詳細な完了条件は `ability-logic/bcu-parity-codex-workplan.md` を参照してください。
 
-確認済みの `Critical` 整合性欠陥は見つかっていません。見た目以外のソース読み込みギャップ（SUMMON の proc-object、`Trait.targetForms`、combo/orb/treasure/talent/PCoin、追加 / カスタム revive、保存失敗の可視化）は、実際の BCU 形式のフィクスチャで確認済みです。残る主なリスクは、手動での見た目受け入れです。BCU セーブ / 陣形 import-export は対象外です。
+## 現在維持する実装済み領域
 
-## 2026-06-25 参照 Markdown 監査サマリ
+以下は「今後不具合が見つからない」という意味ではなく、現行 owner と focused check が存在する領域です。
 
-チェックイン済みのキャラ能力参照 Markdown を、現在の JS オーナーに対して 1 対 1 で監査しました。監査範囲では `精霊` 小見出しを除外しています。2 つの非見た目ランタイム差分は解消され、`C_VKILL` の combo 増加で `AB_VKILL` を合成し、`AB_IMUSW` がボス出現 `INT_SW` の衝撃波中断から対象を除外するようになりました。残る主要リスクは見た目のブラウザ受け入れであり、決定的なランタイム責務の欠如ではありません。
+- `semantic-strict` boot と semantic ZIP provider/repository
+- 通常 attack / multi-hit / capture / damage / proc の基盤
+- wave / mini-wave / surge / mini-surge / blast runtime
+- status、KB、death、standard zombie revive、warp、burrow、summon、spirit
+- castle guard、特殊 `EEnemy` base、basic/non-basic cat cannon runtime
+- deterministic stage spawn layer、unit-death KC、trail trigger domain
+- combo / orb / treasure / talent / PCoin、wallet / cost / respawn
+- formation / custom stage / mobile UI
+- RHG character modification v1、formation v5、custom stage v2、pack v1
+- RHG 内部 storage migration と失敗可視化
+- BCU sound id / stage music / SE voice pool
 
-### 高優先度
+#20/#22/#23 は上記のstage/crown/ranking領域に具体的なdefectがあることを示すため、広い完了ラベルを個別Issueより優先しません。
 
-| 領域 | 現在の状態 | リスク / 次のアクション |
-|---|---|---|
-| SUMMON の読み込み | `code-complete-candidate` | 実在の `CustomEntity.atks[].proc.SUMMON` をディスクから読み込み、loader → `BattleAttackProfile` → immediate/on_hit スポーンまで動かす。通常の CSV 保持者は追加しない。召喚エントリの見た目だけが残る。 |
-| セーブ / 陣形互換性 | `code-complete-candidate`（RHG 自己永続化 / RHG JSON）; BCU import/export は `out-of-scope` | `FormationStore` / `StageRegistry` が自身の状態を往復し、`BcuStorageDiagnostics` で読み書き失敗を通知する。character modification pack と custom-stage export は `rhg-*` envelope であり、BCU セーブ / 陣形 import-export ではない。 |
+## Character modification
 
-### 中優先度
+Character modification は BCU parity 機能ではなく、通常計算後の RHG 拡張です。
 
-| 領域 | 現在の状態 | リスク / 次のアクション |
-|---|---|---|
-| `Trait.targetForms` / 特殊 trait | `code-complete-candidate` | 実在の `Trait` ファイルが `bcuTraitCompatible` の単一ゲートを proc と Target-Only 経路の両方で動かす。 |
-| Combo / orb / treasure / talent / PCoin | `code-complete-candidate`（非見た目） | 実データ 150300 combo と talent/PCoin、treasure/orb 定数が BCU 順で構成され、orb も解決経路に乗る。PCoin の cost/CD と ELineUp の生産コスト/クールダウンもカバーされる。戦闘中の見た目受け入れは別項目。 |
-| 追加 / カスタム ゾンビ蘇生 | `code-complete-candidate` | 実在の `REVIVE` proc-object が BCU の `ZombX.updateRevive` の source/range/zombie/warp フィルタを駆動する。死体の見た目は引き続き視覚項目。 |
-| 参加可能な犬ロスターの actor 可視性 | `code-complete-candidate` | `buildDogSpecs` は、古い外部エネミー除外一覧に表示 id が入っていても、ローカル semantic actor バンドルを見えるように保つ。`check-dog-playable-roster-readiness` が enemy 562 と 661–669 をカバーする。 |
-| 非基本キャットキャノンの見た目 | 実行時は `code-complete-candidate` | キャノンごとの ATK/EXT ビットマップ別名が接続され、各キャノンが独自の `NyCastle.aux.atks[id]` BASE/ATK eanim を読み込み、`spawnCatCannonNonBasicEffect` で表示する。正確な extend/waved の移動・掃討タイミングはブラウザ未受け入れ。 |
-| 見えるエフェクト / UI の受け入れ | `human-visual-review-needed` または `partial` | P_DELAY、burrow、霊魂、SUMMON entry、full / mini death-surge、非基本キャノン、BASE_WALL、攻撃 effect / wave / surge / knockback / status icon、モバイル操作、音は固定フィクスチャ付きのブラウザレビューが必要。バリア / 悪魔シールド / 城ガード / 標準 zombie revive / 財布ボタン / 基本キャノンはユーザー確認で accepted。 |
-
-## 修正した過去の主張
-
-現行コードの比較なしにこれを現状の欠陥として再開しないこと。
-
-- 過去の StageDefinitionLoader の指摘（`rowIndex`、castle `noContinue`、`-1` の enemy-castle 解決、`bossGuard` ソース行）は、現行コードでは修正済みであり、現在の主なリスクではない。
-- 城 / 基地ガードの JS 所有権は実装済みであり、見た目もユーザー確認で accepted。ランタイム担当の欠落ではない。
-- 標準的なゾンビの死体 / soulstrike / revive ランタイムは決定的にカバーされ、標準 revive の見た目はユーザー確認で accepted。追加 / カスタム revive の source/range フィルタも loader で確認済み。
-- 基本 / 非基本キャットキャノンはともにランタイムが存在する。基本キャノンの見た目はユーザー確認で accepted。非基本キャノンのアセット別名とブラウザ受け入れは別作業。
-- 通常の城が汎用攻撃ランタイムを持つことはなく、ボス基地の攻撃は通常の `EEnemy` オーナーを使う。HP 閾値・撃破数による出現はステージ側の責務。 
-
-## 永続化の境界
-
-このプロジェクトは、自己管理するマイグレーションを支える範囲で、リポジトリ内の永続化スキーマ連続性のみを保証します。以下は主張しません。
-
-- BCU セーブや陣形の import
-- BCU でそのまま使える export
-- RHG character modification pack / custom-stage JSON を BCU serializer で読み書きできるという互換性
-- ブラウザストレージがブロック・満杯・利用不可のときの完全な永続化
-
-今後 BCU import/export を行う場合は、まず BCU セーブのオーナー、シリアライズ形式、バージョン規則、round-trip フィクスチャを明示する必要があります。
-
-## 状態を上げる前に必要なチェック
-
-```bash
-node scripts/check-bcu-parser-indexes.mjs
-node scripts/check-projectile-damage-parity.mjs
-node scripts/check-proc-immunity-resistance-parity.mjs
-node scripts/check-bcu-delay-runtime.mjs
-node scripts/check-bcu-summon-runtime-parity.mjs
-node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
-node scripts/check-bcu-castle-guard-parity.mjs
-node scripts/check-bcu-wallet-runtime-parity.mjs
-node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
-node scripts/check-ability-partial-blockers.mjs
-npm run check:character-modification
-npm run check:character-modification:ui
+```text
+BCU/RHG normal final stats
+-> sparse absolute override
+-> derived model rebuild
+-> BattleActorFactory / ProductionRuntime
 ```
 
-対象サブシステムに関係するチェックだけを使ってください。通ったチェックが示すのは、その主張に対応する部分だけです。
+現行の schema / owner / cache / import 境界は `RHG_CHARACTER_MODIFICATION_ARCHITECTURE_ADDENDUM_2026-07-23.md` を参照します。実装計画書は historical design です。
 
-## 手動ブラウザ確認の焦点
+## Evidence / visual / compatibility boundaries
 
-視覚チェックリストを使い、固定ステージ・ユニット・敵・キャノンのフィクスチャに対して `accepted` / `mismatch` / `blocked` を記録してください。
+コード defect とは別に、次の境界が残ります。
 
-- P_DELAY
-- burrow の down / underground / up 遷移
-- 霊魂 actor と A_IMUATK
-- summon の `anim_type` 入場と配置
-- full / mini death-surge の demon soul
-- 非基本キャノンの移動 sweep / travel と BASE_WALL の入場・待機
-- 攻撃 effect / wave / surge / knockback / status icon のレイヤーと終了処理
-- モバイル操作と BGM / SE の実機受け入れ
-- character modification editor の物理 iPhone / iPad / Android での safe-area、software keyboard、orientation change。headless viewport check だけでは accepted にしない
+- P_DELAY、burrow、spirit / A_IMUATK、SUMMON entry、death-surge、non-basic cannon、BASE_WALL 等の visual acceptance
+- mobile input、safe-area、software keyboard、orientation change、BGM/SE の実機確認
+- streaming asset load に伴う browser-specific timing
+- BCU save / lineup import-export は対象外
+- RHG JSON / `localStorage` は BCU serializer 互換ではない
 
-## ドキュメント更新ルール
+詳細は blocker document と visual ledger を参照してください。
 
-整合性変更後は、重点ドキュメントを次の順で更新します。
+## 修正時の最低条件
 
-1. `current-ability-parity-status.md`
-2. `bcu-unresolved-evidence-blockers.md`
-3. `bcu-visual-review-checklist.md`（実際のブラウザレビュー後のみ）
-4. このファイル
-5. `README.md` と `AGENTS.md`（公開サマリやエージェント手順が変わる場合）
+- Issue の BCU source fact と current JS owner を明示する
+- 回帰を再現する focused check を追加する
+- multiplier修正では中間precisionと最終cast/round orderを分けて検証する
+- stage runtime修正ではlegacy/adapterの二重構築とmerge precedenceを確認する
+- ranking修正ではlogic-frame boundary、spawn RNG非消費、kill mode、score formulaを固定する
+- 必要な adjacent check、`npm test`、`npm run build` を実行する
+- Issue を閉じる変更と同じバッチで、この文書と該当 focused status を更新する
 
-現行コードとチェックで解決済みなのに、過去の実装ギャップを現状のブロッカーとして残してはなりません。
+## 文書責務
+
+文書の全体構成は `docs/README.md` を参照してください。新しい `*-current-status.md` を増やさず、既存 SSOT を更新します。

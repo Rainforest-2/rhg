@@ -12,6 +12,7 @@ import '../../ui/ProductionCardDogIconFitPatch.js';
 import '../../ui/FormationEditorBcuUnitLevelPatch.js';
 import '../../ui/FormationCharacterModificationPatch.js';
 import '../../ui/CharacterModificationUsabilityPatch.js';
+import '../../ui/CharacterModificationKeyboardCompactPatch.js';
 import '../../ui/CharacterModificationViewportStabilityPatch.js';
 import '../../ui/FormationCharacterTuningMobileLandscapePatch.js';
 import '../../ui/FormationCustomStageBattlePatch.js';
@@ -24,6 +25,7 @@ import '../../ui/FormationPhonePortraitLayoutPatch.js';
 import '../../ui/FormationCustomStageBattleHpPatch.js';
 import '../../ui/FormationCustomStageBattleApplyHpConfigPatch.js';
 import '../../ui/FormationCustomStageBuilderPatch.js';
+import '../../ui/FormationCustomStageCharacterModificationUiPatch.js';
 import '../../ui/FormationStageNameBcuPatch.js';
 // Must stay last: its motion wrappers need to run outermost around the patched prototype.
 import '../../ui/FormationPremiumMotionPatch.js';

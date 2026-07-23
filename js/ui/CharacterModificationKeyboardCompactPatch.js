@@ -25,6 +25,19 @@ function revealFocusedControl(renderer, target) {
   }
 }
 
+function revealAfterKeyboardReflow(renderer, target) {
+  // visualViewport resize, host height, grid rows and the field scroller do not
+  // settle in the same frame on iOS/WebKit. Re-check across three frames so the
+  // final geometry, rather than the pre-keyboard geometry, drives scrollTop.
+  let remaining = 3;
+  const run = () => {
+    revealFocusedControl(renderer, target);
+    remaining -= 1;
+    if (remaining > 0) scheduleFrame(run);
+  };
+  scheduleFrame(run);
+}
+
 function installStyles() {
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
@@ -32,6 +45,9 @@ function installStyles() {
   style.textContent = `
 .cm-host-layer.cm-keyboard-open .cm-editor{
   grid-template-rows:48px minmax(0,1fr) 0!important;
+}
+.cm-host-layer.cm-keyboard-open .cm-toolbar{
+  display:none!important;
 }
 .cm-host-layer.cm-keyboard-open .cm-footer{
   display:grid!important;
@@ -97,16 +113,14 @@ function installCharacterModificationKeyboardCompactPatch() {
       const keyboardOpen = editableFocused
         && hiddenBottom >= Math.max(48, layoutHeight * 0.16);
       setKeyboardState(keyboardOpen);
-      if (keyboardOpen) scheduleFrame(() => revealFocusedControl(this, active));
+      if (keyboardOpen) revealAfterKeyboardReflow(this, active);
     };
 
     this.cmFocusHandler = (event) => {
       const target = event.target;
       if (!target?.matches?.('input,select,textarea')) return;
-      scheduleFrame(() => {
-        revealFocusedControl(this, target);
-        if (target.matches('input[type="number"]')) target.select?.();
-      });
+      revealAfterKeyboardReflow(this, target);
+      if (target.matches('input[type="number"]')) scheduleFrame(() => target.select?.());
     };
 
     viewport?.addEventListener('resize', this.cmViewportHandler);

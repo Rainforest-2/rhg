@@ -29,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Check and test
         shell: bash
@@ -37,6 +37,17 @@ jobs:
           mkdir -p tmp/character-modification-ui
           set -o pipefail
           npm run verify 2>&1 | tee tmp/character-modification-ui/verify.log
+
+      - name: Run status editor visual contracts
+        if: always()
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test \
+            tests/character-modification-mobile-information-architecture.test.mjs \
+            tests/character-modification-mobile-density-browser.test.mjs \
+            tests/character-modification-design-browser.test.mjs \
+            2>&1 | tee tmp/character-modification-ui/status-editor-visual-contract.log
 
       - name: Build
         run: npm run build
@@ -47,4 +58,4 @@ jobs:
         with:
           name: character-modification-ui
           path: tmp/character-modification-ui
-          if-no-files-found: ignore
+          if-no-files-found: error

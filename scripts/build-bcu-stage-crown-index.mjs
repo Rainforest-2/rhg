@@ -5,8 +5,9 @@
 // enemy stat magnification percentages for crown levels ★1..★4 (★1 is always 100). EStage.java then
 // applies it at battle time: mul = st.getCont().stars[star] * 0.01f.
 //
-// Output preserves every exact packId+mapId identity. Name indexes contain candidate arrays and an
-// ambiguity flag; they never collapse conflicting maps to the largest crown count.
+// Output preserves every exact packId+mapId identity. Lookup tables contain compact entry indexes,
+// not repeated copies of the full entry objects, so cumulative BCU packs do not inflate the browser
+// payload and JSON parse cost several times over.
 import { readdirSync, readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
@@ -69,20 +70,23 @@ function parseMapOption(text, packId) {
   return out;
 }
 
-function groupEntries(entries, keyOf) {
-  const groups = {};
-  for (const entry of entries) {
+function groupEntryIndexes(entries, keyOf) {
+  const groups = new Map();
+  entries.forEach((entry, index) => {
     const key = keyOf(entry);
-    if (key == null || key === '') continue;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(entry);
-  }
-  return Object.fromEntries(Object.entries(groups).map(([key, candidates]) => {
-    const sorted = [...candidates].sort((a, b) => String(a.packId).localeCompare(String(b.packId)) || a.mapId - b.mapId);
-    const signatures = [...new Set(sorted.map(signature))];
+    if (key == null || key === '') return;
+    const indexes = groups.get(key) || [];
+    indexes.push(index);
+    groups.set(key, indexes);
+  });
+  return Object.fromEntries([...groups.entries()].map(([key, entryIndexes]) => {
+    const sortedIndexes = [...entryIndexes].sort((a, b) =>
+      String(entries[a].packId).localeCompare(String(entries[b].packId)) || entries[a].mapId - entries[b].mapId);
+    const signatures = [...new Set(sortedIndexes.map((index) => signature(entries[index])))];
     return [key, {
-      entries: sorted,
-      candidateCount: sorted.length,
+      entryIndexes: sortedIndexes,
+      representativeIndex: sortedIndexes[sortedIndexes.length - 1],
+      candidateCount: sortedIndexes.length,
       signatures,
       ambiguous: signatures.length > 1
     }];
@@ -109,23 +113,25 @@ function main() {
     }
   }
 
-  const entries = [...byExactIdentity.values()].sort((a, b) =>
+  const entriesWithNames = [...byExactIdentity.values()].sort((a, b) =>
     String(a.packId).localeCompare(String(b.packId))
       || a.mapId - b.mapId
       || String(a.name).localeCompare(String(b.name)));
-  const byKey = Object.fromEntries(entries.map((entry) => [`${entry.packId}:${entry.mapId}`, entry]));
-  const byMapId = groupEntries(entries, (entry) => String(entry.mapId));
-  const byName = groupEntries(entries, (entry) => entry.name);
-  const byNormalizedName = groupEntries(entries, (entry) => entry.normalizedName);
+  const entries = entriesWithNames.map(({ normalizedName, ...entry }) => entry);
+  const byKey = Object.fromEntries(entriesWithNames.map((entry, index) => [`${entry.packId}:${entry.mapId}`, index]));
+  const byMapId = groupEntryIndexes(entriesWithNames, (entry) => String(entry.mapId));
+  const byName = groupEntryIndexes(entriesWithNames, (entry) => entry.name);
+  const byNormalizedName = groupEntryIndexes(entriesWithNames, (entry) => entry.normalizedName);
   const ambiguousNameCount = Object.values(byName).filter((group) => group.ambiguous).length;
   const ambiguousMapIdCount = Object.values(byMapId).filter((group) => group.ambiguous).length;
 
   const index = {
-    schemaVersion: 2,
+    schemaVersion: 3,
+    encoding: 'indexed-entry-refs',
     generatedAt: new Date().toISOString(),
     source: 'public/assets/bcu/<pack>/org/data/Map_option.csv (星解放 / 星N倍率, parsed by header)',
     bcuReference: 'MapColc.java Map_option.csv stars; EStage.java mul = stars[star]*0.01',
-    note: 'Every crownCount >= 2 packId:mapId is retained. Exact identity wins; ambiguous fallback resolves to ★1.',
+    note: 'Every crownCount >= 2 packId:mapId is retained once. Lookup tables reference entries by integer index.',
     defaultStars: [100, 150, 200, 300],
     packsScanned,
     count: entries.length,
@@ -138,7 +144,7 @@ function main() {
     byNormalizedName
   };
   mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  writeFileSync(OUT_PATH, `${JSON.stringify(index, null, 1)}\n`);
+  writeFileSync(OUT_PATH, `${JSON.stringify(index)}\n`);
   console.log(`wrote ${OUT_PATH}: packs=${packsScanned} rawRows=${rawMultiCrown} exactIdentities=${entries.length} ambiguousNames=${ambiguousNameCount} ambiguousMapIds=${ambiguousMapIdCount}`);
 }
 

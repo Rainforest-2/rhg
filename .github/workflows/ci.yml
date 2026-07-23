@@ -38,12 +38,15 @@ jobs:
           set -o pipefail
           npm run verify 2>&1 | tee tmp/character-modification-ui/verify.log
 
-      - name: Run status editor visual contract
+      - name: Run status editor visual contracts
         if: always()
         shell: bash
         run: |
           set -o pipefail
-          node --test tests/character-modification-design-browser.test.mjs \
+          node --test \
+            tests/character-modification-mobile-information-architecture.test.mjs \
+            tests/character-modification-mobile-density-browser.test.mjs \
+            tests/character-modification-design-browser.test.mjs \
             2>&1 | tee tmp/character-modification-ui/status-editor-visual-contract.log
 
       - name: Build

@@ -1,0 +1,29 @@
+name: Assemble character modification plan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.rhg-plan-parts/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild uploaded Markdown exactly
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .rhg-plan-parts/part-*.b64 | base64 --decode > docs/RHG_CHARACTER_MODIFICATION_IMPLEMENTATION_PLAN_2026-07-23.md
+          printf '%s  %s\n' '311030e292ddbdbdcc2fb00988949c389800d433b5770abc92ac30e13c3ec358' 'docs/RHG_CHARACTER_MODIFICATION_IMPLEMENTATION_PLAN_2026-07-23.md' | sha256sum -c -
+          rm -rf .rhg-plan-parts
+          rm -f .github/workflows/assemble-character-plan.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/RHG_CHARACTER_MODIFICATION_IMPLEMENTATION_PLAN_2026-07-23.md .rhg-plan-parts .github/workflows/assemble-character-plan.yml
+          git commit -m 'docs: add character modification implementation plan'
+          git push

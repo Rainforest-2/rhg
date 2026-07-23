@@ -5,7 +5,7 @@
 // enemy stat magnification percentages for crown levels ★1..★4 (★1 is always 100). EStage.java then
 // applies it at battle time: mul = st.getCont().stars[star] * 0.01f.
 //
-// Output preserves every logical packId+mapId identity. Name indexes contain candidate arrays and an
+// Output preserves every exact packId+mapId identity. Name indexes contain candidate arrays and an
 // ambiguity flag; they never collapse conflicting maps to the largest crown count.
 import { readdirSync, readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
@@ -94,10 +94,10 @@ function main() {
   let rawMultiCrown = 0;
   if (!existsSync(BCU_ROOT)) throw new Error(`missing ${BCU_ROOT}`);
 
-  // Cumulative asset snapshots repeat identical logical map definitions. Collapse only an exactly
-  // identical identity+signature+name tuple, retaining the newest pack snapshot. Distinct map IDs or
-  // conflicting signatures remain separate candidates for fail-closed resolution.
-  const deduped = new Map();
+  // Preserve every packId:mapId identity. Asset packs may be cumulative snapshots,
+  // but exact lookup must remain possible for any stage option that names an older
+  // pack. Deduplicate only duplicate rows inside the same exact identity.
+  const byExactIdentity = new Map();
   for (const pack of readdirSync(BCU_ROOT).sort()) {
     const optPath = path.join(BCU_ROOT, pack, 'org', 'data', 'Map_option.csv');
     if (!existsSync(optPath)) continue;
@@ -105,13 +105,11 @@ function main() {
     for (const row of parseMapOption(readFileSync(optPath, 'utf8'), pack)) {
       if (row.crownCount < 2) continue;
       rawMultiCrown += 1;
-      const logicalKey = `${row.mapId}|${signature(row)}|${row.name}`;
-      const previous = deduped.get(logicalKey);
-      if (!previous || String(row.packId) > String(previous.packId)) deduped.set(logicalKey, row);
+      byExactIdentity.set(`${row.packId}:${row.mapId}`, row);
     }
   }
 
-  const entries = [...deduped.values()].sort((a, b) =>
+  const entries = [...byExactIdentity.values()].sort((a, b) =>
     String(a.packId).localeCompare(String(b.packId))
       || a.mapId - b.mapId
       || String(a.name).localeCompare(String(b.name)));
@@ -127,7 +125,7 @@ function main() {
     generatedAt: new Date().toISOString(),
     source: 'public/assets/bcu/<pack>/org/data/Map_option.csv (星解放 / 星N倍率, parsed by header)',
     bcuReference: 'MapColc.java Map_option.csv stars; EStage.java mul = stars[star]*0.01',
-    note: 'Only crownCount >= 2 maps are listed. Exact packId+mapId wins; ambiguous fallback identity resolves to ★1.',
+    note: 'Every crownCount >= 2 packId:mapId is retained. Exact identity wins; ambiguous fallback resolves to ★1.',
     defaultStars: [100, 150, 200, 300],
     packsScanned,
     count: entries.length,
@@ -141,7 +139,7 @@ function main() {
   };
   mkdirSync(path.dirname(OUT_PATH), { recursive: true });
   writeFileSync(OUT_PATH, `${JSON.stringify(index, null, 1)}\n`);
-  console.log(`wrote ${OUT_PATH}: packs=${packsScanned} rawRows=${rawMultiCrown} entries=${entries.length} ambiguousNames=${ambiguousNameCount} ambiguousMapIds=${ambiguousMapIdCount}`);
+  console.log(`wrote ${OUT_PATH}: packs=${packsScanned} rawRows=${rawMultiCrown} exactIdentities=${entries.length} ambiguousNames=${ambiguousNameCount} ambiguousMapIds=${ambiguousMapIdCount}`);
 }
 
 main();

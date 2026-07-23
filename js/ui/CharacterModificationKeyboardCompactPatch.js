@@ -46,6 +46,9 @@ function installStyles() {
 .cm-host-layer.cm-keyboard-open .cm-editor{
   grid-template-rows:48px minmax(0,1fr) 0!important;
 }
+.cm-host-layer.cm-keyboard-open .cm-toolbar{
+  display:none!important;
+}
 .cm-host-layer.cm-keyboard-open .cm-footer{
   display:grid!important;
   height:0!important;

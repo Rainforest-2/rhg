@@ -68,6 +68,26 @@ function enemyDropRaw(actor) {
   ));
 }
 
+function exactTimeLimitFrames(stageRuntime) {
+  return finite(
+    stageRuntime?.timeLimitFramesExact
+      ?? stageRuntime?.definition?.timeLimitFramesExact
+      ?? stageRuntime?.stageDefinition?.timeLimitFramesExact
+      ?? stageRuntime?.definition?.runtime?.timeLimitFramesExact
+      ?? stageRuntime?.stageDefinition?.runtime?.timeLimitFramesExact,
+    null
+  );
+}
+
+function exactTimeLimitSource(stageRuntime) {
+  return stageRuntime?.timeLimitSource
+    ?? stageRuntime?.definition?.timeLimitSource
+    ?? stageRuntime?.stageDefinition?.timeLimitSource
+    ?? stageRuntime?.definition?.runtime?.timeLimitSource
+    ?? stageRuntime?.stageDefinition?.runtime?.timeLimitSource
+    ?? 'exact-frame-override';
+}
+
 export function calculateBcuRankingEnemyScore({ actor, row, elapsedFrames, timeLimitFrames } = {}) {
   const time = Math.max(1, Math.trunc(finite(timeLimitFrames, 1)));
   const elapsed = Math.max(0, Math.trunc(finite(elapsedFrames, 0)));
@@ -82,7 +102,14 @@ export class BcuRankingRuntime {
   constructor(stageRuntime = {}) {
     this.trail = stageRuntime?.trail === true;
     this.timeLimitMinutes = Math.max(0, Math.trunc(finite(stageRuntime?.timeLimit, 0)));
-    this.timeLimitFrames = this.timeLimitMinutes * BCU_FRAMES_PER_MINUTE;
+    const exactFrames = exactTimeLimitFrames(stageRuntime);
+    if (Number.isFinite(exactFrames) && exactFrames > 0) {
+      this.timeLimitFrames = Math.max(1, Math.ceil(exactFrames));
+      this.timeLimitSource = exactTimeLimitSource(stageRuntime);
+    } else {
+      this.timeLimitFrames = this.timeLimitMinutes * BCU_FRAMES_PER_MINUTE;
+      this.timeLimitSource = 'bcu-stage-timeLimit-minutes';
+    }
     this.elapsedFrames = 0;
     this.score = Math.max(0, Math.trunc(finite(stageRuntime?.rankingScore ?? stageRuntime?.score, 0)));
     this.scoreLimit = finite(
@@ -138,6 +165,7 @@ export class BcuRankingRuntime {
       score: this.score,
       elapsedFrames: this.elapsedFrames,
       timeLimitFrames: this.timeLimitFrames,
+      timeLimitSource: this.timeLimitSource,
       rowScore: finite(row.score, 0),
       dropRaw: enemyDropRaw(actor),
       source: 'BCU EEnemy.kill trail score formula'
@@ -161,6 +189,7 @@ export class BcuRankingRuntime {
       trail: this.trail,
       timeLimitMinutes: this.timeLimitMinutes,
       timeLimitFrames: this.timeLimitFrames,
+      timeLimitSource: this.timeLimitSource,
       elapsedFrames: this.elapsedFrames,
       remainingFrames: this.timeLimitFrames > 0 ? this.timeLimitFrames - this.elapsedFrames : null,
       overtime: this.overtime,

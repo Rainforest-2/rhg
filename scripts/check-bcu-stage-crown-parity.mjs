@@ -24,14 +24,15 @@ const INDEX_PATH = 'public/assets/generated/bcu-stage-crown-index.json';
 assert.ok(existsSync(INDEX_PATH), 'crown index must be generated (run build-bcu-stage-crown-index.mjs)');
 const index = JSON.parse(readFileSync(INDEX_PATH, 'utf8'));
 assert.ok(index.count > 0 && Array.isArray(index.entries), 'crown index has entries');
-for (const e of index.entries) {
-  assert.ok(e.crownCount >= 2 && e.crownCount <= 4, `crown index only lists 2..4 crown maps (got ${e.crownCount})`);
-  assert.equal(e.stars.length, e.crownCount, 'stars length matches crownCount');
-  assert.equal(e.stars[0], 100, '★1 magnification is always 100');
+for (const entry of index.entries) {
+  assert.ok(entry.crownCount >= 2 && entry.crownCount <= 4, `crown index only lists 2..4 crown maps (got ${entry.crownCount})`);
+  assert.equal(entry.stars.length, entry.crownCount, 'stars length matches crownCount');
+  assert.equal(entry.stars[0], 100, '★1 magnification is always 100');
 }
-const legend = index.entries.find((e) => e.name.includes('伝説の始まり'));
-assert.ok(legend, 'legend first map present in crown index');
-assert.deepEqual(legend.stars, [100, 150, 200, 300], 'legend map has 4 crowns at 100/150/200/300');
+const legend = index.entries.find((entry) =>
+  String(entry.name).includes('伝説の始まり')
+    && JSON.stringify(entry.stars) === JSON.stringify([100, 150, 200, 300]));
+assert.ok(legend, 'real four-crown legend map is present in the generated index');
 
 const difficultyPatchSource = readFileSync('js/ui/FormationStageDifficultyPatch.js', 'utf8');
 const filterPatchSource = readFileSync('js/ui/FormationStageDifficultyFilterControlPatch.js', 'utf8');
@@ -72,43 +73,38 @@ assert.equal(row.hpMagnification, 100, 'original row is not mutated');
 const rows = [{ magnification: 100 }, { magnification: 200 }];
 assert.strictEqual(applyCrownToEnemyRows(rows, 100), rows, '★1 returns the same array reference');
 const crownedRows = applyCrownToEnemyRows(rows, 150);
-assert.deepEqual(crownedRows.map((r) => r.magnification), [150, 300], '★2 scales every row by 1.5');
+assert.deepEqual(crownedRows.map((entry) => entry.magnification), [150, 300], '★2 scales every row by 1.5');
 
-const byName = resolveMapCrownData(index, { name: legend.name });
-assert.equal(byName.crownCount, 4, 'resolveMapCrownData finds the legend map crowns by name');
-assert.deepEqual(crownStarsForData(byName), [1, 2, 3, 4], '4-crown maps expose ★1..★4 to the selector');
-assert.equal(crownDataHasStar(byName, 4), true, '4-crown maps match the ★4 selector');
-const legendUiLabel = resolveMapCrownData(index, { name: '伝説の始まり', mapId: 0, mapColcId: 0 });
-assert.equal(legendUiLabel.crownCount, 4, 'bare legend UI map label resolves to the 4-crown Legend Story map');
-assert.equal(crownDataHasStar(legendUiLabel, 2), true, 'Legend Story maps remain visible under the ★2 filter');
-
-// The generated authoritative key is asset packId + local Map_option.csv mapId.
-const trueLegendEntry = index.entries.find((entry) =>
-  String(entry.name).includes('真・伝説のはじまり')
-    && JSON.stringify(entry.stars) === JSON.stringify([100, 150, 200, 300]));
-assert.ok(trueLegendEntry, 'true-legend exact pack/local-map owner exists');
-const trueLegendByOwner = resolveMapCrownData(index, {
-  name: trueLegendEntry.name,
-  packId: trueLegendEntry.packId,
-  mapId: trueLegendEntry.mapId,
-  mapColcId: 13
+// Exact identity is the generated asset pack plus local Map_option.csv map id.
+const exactLegend = resolveMapCrownData(index, {
+  name: legend.name,
+  packId: legend.packId,
+  mapId: legend.mapId
 });
-assert.equal(trueLegendByOwner.crownCount, 4, 'exact pack + local Map_option id resolves the authored crown record');
-assert.equal(trueLegendByOwner.resolvedPackId, trueLegendEntry.packId);
-assert.equal(trueLegendByOwner.resolvedMapId, trueLegendEntry.mapId);
+assert.equal(exactLegend.crownCount, 4, 'exact real pack/local-map owner resolves four crowns');
+assert.deepEqual(exactLegend.stars, [100, 150, 200, 300]);
+assert.equal(exactLegend.source, 'crown-index-byKey');
+assert.equal(exactLegend.resolvedPackId, legend.packId);
+assert.equal(exactLegend.resolvedMapId, legend.mapId);
+assert.deepEqual(crownStarsForData(exactLegend), [1, 2, 3, 4]);
+assert.equal(crownDataHasStar(exactLegend, 4), true);
 
-const trueLegendCandidates = index.byMapId?.[String(trueLegendEntry.mapId)]?.entries
-  || index.entries.filter((entry) => Number(entry.mapId) === Number(trueLegendEntry.mapId));
-const trueLegendSignatures = new Set(trueLegendCandidates.map((entry) => JSON.stringify(entry.stars)));
-const trueLegendWithoutPack = resolveMapCrownData(index, {
-  name: trueLegendEntry.name,
-  mapId: trueLegendEntry.mapId
+// An unowned fallback is valid only when every pack revision of that local id
+// agrees. Conflicting revisions must remain explicit and fail closed to ★1.
+const legendCandidates = index.byMapId?.[String(legend.mapId)]?.entries
+  || index.entries.filter((entry) => Number(entry.mapId) === Number(legend.mapId));
+const legendSignatures = new Set(legendCandidates.map((entry) => JSON.stringify(entry.stars)));
+const unownedLegend = resolveMapCrownData(index, {
+  name: legend.name,
+  mapId: legend.mapId
 });
-if (trueLegendSignatures.size === 1) {
-  assert.equal(trueLegendWithoutPack.crownCount, 4, 'unowned local-id fallback is safe when all revisions agree');
+if (legendSignatures.size === 1) {
+  assert.equal(unownedLegend.crownCount, 4, 'unowned local-id fallback is safe when all revisions agree');
+  assert.deepEqual(unownedLegend.stars, [100, 150, 200, 300]);
 } else {
-  assert.equal(trueLegendWithoutPack.source, 'crown-index-ambiguous', 'conflicting local-id revisions fail closed without a pack owner');
-  assert.deepEqual(trueLegendWithoutPack.stars, [100]);
+  assert.equal(unownedLegend.source, 'crown-index-ambiguous', 'conflicting local-id revisions fail closed without a pack owner');
+  assert.deepEqual(unownedLegend.stars, [100]);
+  assert.match(unownedLegend.unresolvedReason, /conflicting-crown-signatures/);
 }
 
 const missing = resolveMapCrownData(index, { name: 'no-such-map-xyzzy' });

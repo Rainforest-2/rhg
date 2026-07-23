@@ -38,7 +38,7 @@ assert.equal(trailSpecial.enemyRows[0].scdefRaw.internal.C0, 0);
 
 const ordinary = loader.parse(`
 -1,0
-4000,100000,1,1,0,10,102,0,0
+4000,100000,1,1,0,10,100,0,0
 100,1,0,10,10,50,0,0,0,100
 200,1,0,10,10,100,0,0,0,100
 `, 'ordinary-base.csv');

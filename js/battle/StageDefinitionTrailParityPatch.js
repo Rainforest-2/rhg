@@ -117,7 +117,6 @@ function patchTrailRow(row) {
 
 function patchDefinition(definition) {
   if (!definition?.ok) return definition;
-  patchSpecialBase317(definition);
   const timeLimit = Math.max(0, finite(definition.timeLimit ?? definition.runtime?.headerRawRow?.[7], 0));
   const trail = timeLimit !== 0;
   const rawEnemyBaseHp = finite(
@@ -151,6 +150,8 @@ function patchDefinition(definition) {
       definition.warnings = definition.warnings.filter((warning) => !String(warning).includes('normalized baseHpTrigger>100 into magnification'));
     }
   }
+
+  patchSpecialBase317(definition);
 
   definition.runtime = {
     ...(definition.runtime || {}),

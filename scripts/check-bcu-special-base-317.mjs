@@ -26,6 +26,16 @@ assert.equal(special.runtime.sourceEnemyRows[0].scdefRaw.internal.C0, 0);
 assert.equal(special.debug.specialBase317.rawBaseId, 317);
 assert.ok(special.debug.specialBase317.patchedRepresentations >= 2);
 
+const trailSpecial = loader.parse(`
+-1,0
+4000,100000,1,1,0,10,317,1,0
+100,1,0,10,10,250,0,0,0,100
+`, 'special-317-trail.csv');
+assert.equal(trailSpecial.trail, true);
+assert.equal(trailSpecial.enemyRows[0].baseHpTrigger, 0, 'special 317 correction wins after trail-domain normalization');
+assert.equal(trailSpecial.enemyRows[0].scdef.castle_0, 0);
+assert.equal(trailSpecial.enemyRows[0].scdefRaw.internal.C0, 0);
+
 const ordinary = loader.parse(`
 -1,0
 4000,100000,1,1,0,10,102,0,0

@@ -20,7 +20,6 @@ import {
 } from '../js/battle/bcu-runtime/BcuStageCrownRuntime.js';
 import { StageRuntime } from '../js/battle/StageRuntime.js';
 
-// --- crown index (Map_option.csv) ---------------------------------------------------------------
 const INDEX_PATH = 'public/assets/generated/bcu-stage-crown-index.json';
 assert.ok(existsSync(INDEX_PATH), 'crown index must be generated (run build-bcu-stage-crown-index.mjs)');
 const index = JSON.parse(readFileSync(INDEX_PATH, 'utf8'));
@@ -34,7 +33,6 @@ const legend = index.entries.find((e) => e.name.includes('伝説の始まり'));
 assert.ok(legend, 'legend first map present in crown index');
 assert.deepEqual(legend.stars, [100, 150, 200, 300], 'legend map has 4 crowns at 100/150/200/300');
 
-// --- selector UI guard --------------------------------------------------------------------------
 const difficultyPatchSource = readFileSync('js/ui/FormationStageDifficultyPatch.js', 'utf8');
 const filterPatchSource = readFileSync('js/ui/FormationStageDifficultyFilterControlPatch.js', 'utf8');
 const performancePatchSource = readFileSync('js/ui/FormationEditorPerformancePatch.js', 'utf8');
@@ -43,7 +41,6 @@ assert.ok(!difficultyPatchSource.includes("data-stage-difficulty-min='1'"), 'sta
 assert.ok(filterPatchSource.includes('stageCrownStars'), 'DOM fallback filters by crown stars');
 assert.ok(performancePatchSource.includes('crownDataHasStar'), 'virtual map list filters by crown availability');
 
-// --- magnification resolution -------------------------------------------------------------------
 assert.deepEqual([...BCU_DEFAULT_CROWN_STARS], [100, 150, 200, 300]);
 assert.equal(BCU_MAX_CROWN_STAR, 4, 'stage selector crown UI is four-star, not raw 12-level difficulty');
 assert.equal(normalizeCrownStar(null), 1, 'empty UI crown defaults to ★1');
@@ -60,7 +57,6 @@ assert.equal(resolveCrownMagnificationPercent(2, [100]), 100, 'single-crown map 
 assert.equal(clampCrownIndex(9, stars), 3, 'clampCrownIndex caps at last index');
 assert.equal(clampCrownIndex(-3, stars), 0, 'clampCrownIndex floors at 0');
 
-// --- per-magnification + row application (EStage multi = rowMag * mul) ---------------------------
 assert.equal(applyCrownToMagnification(100, 100), 100, '★1 leaves magnification unchanged');
 assert.equal(applyCrownToMagnification(100, 300), 300, '★4 triples a 100% row');
 assert.equal(applyCrownToMagnification(400, 150), 600, '★2 scales a 400% row to 600%');
@@ -78,7 +74,6 @@ assert.strictEqual(applyCrownToEnemyRows(rows, 100), rows, '★1 returns the sam
 const crownedRows = applyCrownToEnemyRows(rows, 150);
 assert.deepEqual(crownedRows.map((r) => r.magnification), [150, 300], '★2 scales every row by 1.5');
 
-// --- map crown lookup ---------------------------------------------------------------------------
 const byName = resolveMapCrownData(index, { name: legend.name });
 assert.equal(byName.crownCount, 4, 'resolveMapCrownData finds the legend map crowns by name');
 assert.deepEqual(crownStarsForData(byName), [1, 2, 3, 4], '4-crown maps expose ★1..★4 to the selector');
@@ -87,33 +82,32 @@ const legendUiLabel = resolveMapCrownData(index, { name: '伝説の始まり', m
 assert.equal(legendUiLabel.crownCount, 4, 'bare legend UI map label resolves to the 4-crown Legend Story map');
 assert.equal(crownDataHasStar(legendUiLabel, 2), true, 'Legend Story maps remain visible under the ★2 filter');
 
-// Numeric identity belongs to a specific pack revision. Pass the authoritative owner,
-// as FormationStageDifficultyPatch now does, rather than selecting an arbitrary snapshot.
+// The generated authoritative key is asset packId + local Map_option.csv mapId.
 const trueLegendEntry = index.entries.find((entry) =>
-  Number(entry.mapId) === 13000
+  String(entry.name).includes('真・伝説のはじまり')
     && JSON.stringify(entry.stars) === JSON.stringify([100, 150, 200, 300]));
-assert.ok(trueLegendEntry, 'true-legend 13000 exact owner exists');
-const trueLegendByAddress = resolveMapCrownData(index, {
-  name: '真・伝説のはじまり',
+assert.ok(trueLegendEntry, 'true-legend exact pack/local-map owner exists');
+const trueLegendByOwner = resolveMapCrownData(index, {
+  name: trueLegendEntry.name,
   packId: trueLegendEntry.packId,
-  mapId: 0,
+  mapId: trueLegendEntry.mapId,
   mapColcId: 13
 });
-assert.equal(trueLegendByAddress.crownCount, 4, 'pack owner + mapColcId/mapId resolves the authored 13000 record');
-assert.equal(trueLegendByAddress.resolvedPackId, trueLegendEntry.packId);
+assert.equal(trueLegendByOwner.crownCount, 4, 'exact pack + local Map_option id resolves the authored crown record');
+assert.equal(trueLegendByOwner.resolvedPackId, trueLegendEntry.packId);
+assert.equal(trueLegendByOwner.resolvedMapId, trueLegendEntry.mapId);
 
-const trueLegendCandidates = index.byMapId?.['13000']?.entries
-  || index.entries.filter((entry) => Number(entry.mapId) === 13000);
+const trueLegendCandidates = index.byMapId?.[String(trueLegendEntry.mapId)]?.entries
+  || index.entries.filter((entry) => Number(entry.mapId) === Number(trueLegendEntry.mapId));
 const trueLegendSignatures = new Set(trueLegendCandidates.map((entry) => JSON.stringify(entry.stars)));
 const trueLegendWithoutPack = resolveMapCrownData(index, {
-  name: '真・伝説のはじまり',
-  mapId: 0,
-  mapColcId: 13
+  name: trueLegendEntry.name,
+  mapId: trueLegendEntry.mapId
 });
 if (trueLegendSignatures.size === 1) {
-  assert.equal(trueLegendWithoutPack.crownCount, 4, 'unowned numeric fallback is safe when all revisions agree');
+  assert.equal(trueLegendWithoutPack.crownCount, 4, 'unowned local-id fallback is safe when all revisions agree');
 } else {
-  assert.equal(trueLegendWithoutPack.source, 'crown-index-ambiguous', 'conflicting revisions fail closed without a pack owner');
+  assert.equal(trueLegendWithoutPack.source, 'crown-index-ambiguous', 'conflicting local-id revisions fail closed without a pack owner');
   assert.deepEqual(trueLegendWithoutPack.stars, [100]);
 }
 
@@ -123,7 +117,6 @@ assert.deepEqual(crownStarsForData(missing), [1], 'maps without difficulty chang
 assert.equal(crownDataHasStar(missing, 1), true, 'single-crown maps match ★1');
 assert.equal(crownDataHasStar(missing, 2), false, 'single-crown maps do not match ★2');
 
-// --- StageRuntime wiring: a ★4 launch triples enemy magnifications -------------------------------
 const stageDef = {
   stageLen: 4000,
   enemyBaseHp: 10000,

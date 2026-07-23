@@ -6,6 +6,7 @@ const commands = [
   ['node', ['--check', 'js/battle/BcuStageSpawnRuntime.js']],
   ['node', ['--check', 'js/battle/StageRuntimeSceneAdapter.js']],
   ['node', ['--check', 'js/battle/BattleSceneStageRuntimeWiring.js']],
+  ['node', ['--check', 'js/battle/BattleSceneStageUnitDeathKcPatch.js']],
   ['node', ['--check', 'js/battle/DamageAbilityResolverMetalAbiPatch.js']],
   ['node', ['--check', 'js/battle/BcuTraitCompatibility.js']],
   ['node', ['--check', 'js/battle/BattleSceneActorLayerOrderPatch.js']],

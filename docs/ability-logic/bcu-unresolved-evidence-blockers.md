@@ -4,7 +4,7 @@
 
 この文書は、**コード defect ではなく**、source/evidence/fixture/visual/互換性の不足だけを管理します。確認済みの実装バグは GitHub Issue と `../bcu-migration-status.md` で追跡し、ここへ重複記載しません。
 
-## Evidence / platform boundaries
+## Active blockers
 
 | 種別 | 領域 | 現在の境界 | 次の条件 |
 |---|---|---|---|

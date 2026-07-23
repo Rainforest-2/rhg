@@ -96,7 +96,7 @@ async function readDesignMetrics(page) {
     const comparison = field?.querySelector('.cm-comparison');
     const control = field?.querySelector('.cm-field-control');
     const save = editor?.querySelector('[data-cm-action="save"]');
-    const utility = editor?.querySelector('[data-cm-action="export"], [data-cm-action="import"]');
+    const utility = editor?.querySelector('[data-cm-action="reset-all"]');
     const allButtons = [...(editor?.querySelectorAll('button') || [])];
     const rect = (node) => {
       const value = node?.getBoundingClientRect();

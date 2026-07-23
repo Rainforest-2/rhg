@@ -1,6 +1,50 @@
 import { CharacterModificationRenderer } from './character-modification/CharacterModificationRenderer.js';
 
-const PATCH_FLAG = Symbol.for('rhg.character-modification-viewport-stability.v3');
+const PATCH_FLAG = Symbol.for('rhg.character-modification-viewport-stability.v4');
+const STYLE_ID = 'character-modification-viewport-stability-style';
+
+function installViewportStyles() {
+  if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+.cm-keyboard-open .cm-editor{
+  grid-template-rows:48px minmax(0,1fr) 52px!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.cm-keyboard-open .cm-header{
+  height:48px!important;
+  min-height:0!important;
+  max-height:48px!important;
+  overflow:hidden!important;
+}
+.cm-keyboard-open .cm-workspace,
+.cm-keyboard-open .cm-content,
+.cm-keyboard-open .cm-field-list{
+  min-height:0!important;
+}
+.cm-keyboard-open .cm-workspace,
+.cm-keyboard-open .cm-content{
+  overflow:hidden!important;
+}
+.cm-keyboard-open .cm-footer{
+  height:52px!important;
+  min-height:0!important;
+  max-height:52px!important;
+  overflow:hidden!important;
+}
+.cm-host-layer-embedded.cm-keyboard-open .cm-dialog,
+.cm-host-layer-embedded.cm-keyboard-open .cm-editor-root,
+.cm-host-layer-embedded.cm-keyboard-open .cm-editor{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+}
+`;
+  document.head.appendChild(style);
+}
 
 function findScrollTopDescriptor(element) {
   let prototype = Object.getPrototypeOf(element);
@@ -13,6 +57,7 @@ function findScrollTopDescriptor(element) {
 }
 
 function installCharacterModificationViewportStabilityPatch() {
+  installViewportStyles();
   const proto = CharacterModificationRenderer?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
   proto[PATCH_FLAG] = true;

@@ -9,8 +9,8 @@
 // This check sweeps every live stage entry (bcu-stage-index.json) against every
 // on-disk owner of its MSD file and fails on the first divergence.
 import fs from 'node:fs/promises';
-import { globSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { deriveMsdRef, parseMsdRows, parseStageMusicFromRows } from '../js/audio/StageMusicResolver.js';
 
 const idx = JSON.parse(await fs.readFile('public/assets/generated/bcu-stage-index.json', 'utf8'));
@@ -19,8 +19,21 @@ assert.ok(stageEntries.length > 0, 'stage index must contain stage-definition en
 
 const catalog = { normalizeId: (v) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; } };
 
+async function collectMsdFiles(directory) {
+  const files = [];
+  for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await collectMsdFiles(file));
+    } else if (/^(?:MapStageData|stageNormal).*\.csv$/.test(entry.name)) {
+      files.push(file);
+    }
+  }
+  return files;
+}
+
 const byBase = new Map();
-for (const f of globSync('public/assets/bcu/**/{MapStageData,stageNormal}*.csv')) {
+for (const f of await collectMsdFiles('public/assets/bcu')) {
   const base = f.split('/').pop();
   if (!byBase.has(base)) byBase.set(base, []);
   byBase.get(base).push(f);

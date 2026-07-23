@@ -8,15 +8,19 @@ import { dirname, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..');
 const patchPath = resolve(repoRoot, 'js/ui/CharacterModificationUsabilityPatch.js');
+const viewportPatchPath = resolve(repoRoot, 'js/ui/CharacterModificationViewportStabilityPatch.js');
 const bootPath = resolve(repoRoot, 'js/boot/groups/uiPatches.js');
 const source = readFileSync(patchPath, 'utf8');
+const viewportSource = readFileSync(viewportPatchPath, 'utf8');
 const boot = readFileSync(bootPath, 'utf8');
 
 test('status tampering usability patch remains syntax-valid and UI-only', () => {
   execFileSync(process.execPath, ['--check', patchPath], { stdio: 'pipe' });
+  execFileSync(process.execPath, ['--check', viewportPatchPath], { stdio: 'pipe' });
   assert.match(source, /CharacterModificationEditor/);
   assert.match(source, /CharacterModificationRenderer/);
   assert.doesNotMatch(source, /FormationStore|BattleActorFactory|CharacterModificationResolver|CustomStageStore/);
+  assert.doesNotMatch(viewportSource, /FormationStore|BattleActorFactory|CharacterModificationResolver|CustomStageStore/);
 });
 
 test('user-facing language and compact single-row commands are guarded', () => {
@@ -32,7 +36,7 @@ test('user-facing language and compact single-row commands are guarded', () => {
   assert.match(source, /is-compact-unchanged/);
 });
 
-test('software keyboard handling is installed and cleaned up', () => {
+test('software keyboard handling is installed, stabilized, and cleaned up', () => {
   assert.match(source, /visualViewport/);
   assert.match(source, /cm-keyboard-open/);
   assert.match(source, /scrollIntoView\(\{ block: 'center'/);
@@ -40,15 +44,20 @@ test('software keyboard handling is installed and cleaned up', () => {
   assert.match(source, /removeEventListener\('resize'/);
   assert.match(source, /addEventListener\('focusin'/);
   assert.match(source, /removeEventListener\('focusin'/);
+  assert.match(viewportSource, /preservedScrollTop/);
+  assert.match(viewportSource, /requestAnimationFrame/);
+  assert.match(viewportSource, /removeEventListener\('resize', immediateHandler\)/);
 });
 
-test('boot order preserves the existing character modification and landscape contracts', () => {
+test('boot order preserves modification, viewport, landscape, and premium contracts', () => {
   const baseIndex = boot.indexOf('FormationCharacterModificationPatch.js');
   const usabilityIndex = boot.indexOf('CharacterModificationUsabilityPatch.js');
+  const viewportIndex = boot.indexOf('CharacterModificationViewportStabilityPatch.js');
   const landscapeIndex = boot.indexOf('FormationCharacterTuningMobileLandscapePatch.js');
   const premiumIndex = boot.indexOf('FormationPremiumMotionPatch.js');
   assert.ok(baseIndex >= 0 && usabilityIndex > baseIndex);
-  assert.ok(landscapeIndex > usabilityIndex);
+  assert.ok(viewportIndex > usabilityIndex);
+  assert.ok(landscapeIndex > viewportIndex);
   assert.ok(premiumIndex > landscapeIndex);
   assert.equal(boot.trim().split('\n').at(-1), "import '../../ui/FormationPremiumMotionPatch.js';");
 });

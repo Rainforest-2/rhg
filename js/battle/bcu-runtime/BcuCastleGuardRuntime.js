@@ -10,8 +10,17 @@ function hasBossGuard(scene) {
   return Number(v) === 1 || v === true;
 }
 
+export function isEnemyCastleGuardTarget(target) {
+  return !!target && (
+    target.side === 'cat-enemy'
+    && (target.isBcuEnemyEntityBase === true || target.targetType === 'base' || target.kind === 'base' || target.constructor?.name === 'BattleBase')
+  );
+}
+
 function enemyBase(scene) {
-  return (scene?.bases || []).find((b) => b?.side === 'cat-enemy') || null;
+  const entityBase = (scene?.actors || []).find((actor) => actor?.isBcuEnemyEntityBase === true && actor?.side === 'cat-enemy');
+  if (entityBase) return entityBase;
+  return (scene?.bases || []).find((base) => base?.side === 'cat-enemy') || null;
 }
 
 export function initializeBcuCastleGuard(scene) {
@@ -36,8 +45,8 @@ export function isGuardedBossAlive(scene) {
   });
 }
 
-export function spawnCastleGuardEffect(scene, phase = 'none') {
-  const base = enemyBase(scene);
+export function spawnCastleGuardEffect(scene, phase = 'none', target = null) {
+  const base = isEnemyCastleGuardTarget(target) ? target : enemyBase(scene);
   const x = Number.isFinite(base?.getBattlePosBcu?.()) ? base.getBattlePosBcu() : (Number.isFinite(base?.posBcu) ? base.posBcu : base?.x);
   const effect = spawnWaveBundleEffect(scene, {
     key: 'enemyWaveGuard',
@@ -51,8 +60,8 @@ export function spawnCastleGuardEffect(scene, phase = 'none') {
     bcuScaleMode: BCU_SCALE_MODE.ACTOR_PRIORITY_EFFECT,
     debug: {
       bcuReference: phase === 'breaker'
-        ? 'StageBasis.checkGuard -> ECastle.guardBreak -> A_E_GUARD BREAK'
-        : 'ECastle.damaged / Entity.postUpdate activeGuard == 1 -> A_E_GUARD NONE',
+        ? 'StageBasis.checkGuard -> ECastle.guardBreak / EEnemy guard-break effect'
+        : 'Entity.postUpdate activeGuard == 1 -> A_E_GUARD NONE',
       phase
     }
   });
@@ -60,20 +69,21 @@ export function spawnCastleGuardEffect(scene, phase = 'none') {
   return effect;
 }
 
-export function holdCastleGuardDamage(scene, base, amount = 0, meta = {}) {
+export function holdCastleGuardDamage(scene, target, amount = 0, meta = {}) {
   const state = initializeBcuCastleGuard(scene);
-  if (!state || state.activeGuard !== BCU_CASTLE_GUARD_ACTIVE || base?.side !== 'cat-enemy' || !(amount > 0)) {
+  if (!state || state.activeGuard !== BCU_CASTLE_GUARD_ACTIVE || !isEnemyCastleGuardTarget(target) || !(amount > 0)) {
     return { held: false };
   }
-  spawnCastleGuardEffect(scene, 'none');
-  base.lastBcuCastleGuardDebug = {
+  spawnCastleGuardEffect(scene, 'none', target);
+  target.lastBcuCastleGuardDebug = {
     source: 'BcuCastleGuardRuntime.holdCastleGuardDamage',
     damage: amount,
     timeMs: meta?.timeMs ?? scene?.timeMs ?? null,
+    targetKind: target.isBcuEnemyEntityBase === true ? 'enemy-entity-base' : 'battle-base',
     bcuReference: 'Entity.postUpdate: if damage > 0 && isBase && basis.activeGuard == 1 anim.getEff(GUARD_HOLD) else health -= damage'
   };
-  scene?.pushEvent?.({ type: 'bcuCastleGuardHold', target: base.label || base.side || null, damage: amount });
-  return { held: true, accepted: false, blockedBy: 'castleGuard', hpBefore: base.hp, hpAfter: base.hp };
+  scene?.pushEvent?.({ type: 'bcuCastleGuardHold', target: target.label || target.side || null, damage: amount });
+  return { held: true, accepted: false, blockedBy: 'castleGuard', hpBefore: target.hp, hpAfter: target.hp };
 }
 
 export function tickBcuCastleGuard(scene) {

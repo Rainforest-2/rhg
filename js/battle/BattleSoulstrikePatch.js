@@ -9,6 +9,9 @@ const RESOLVER_PATCH_FLAG = Symbol.for('wanko-battle.attack-resolver-soulstrike.
 const SCENE_PATCH_FLAG = Symbol.for('wanko-battle.scene-soulstrike-meta.v1');
 
 function hasSoulstrike(event = null, attacker = null) {
+  if (Object.prototype.hasOwnProperty.call(event?.characterModificationAbilityFlags || {}, 'soulstrike')) {
+    return event.characterModificationAbilityFlags.soulstrike === true;
+  }
   return event?.abilities?.soulstrike === true
     || event?.ability?.semantic?.soulstrike === true
     || attacker?.abilityModel?.bcuAbilityFlags?.soulstrike === true

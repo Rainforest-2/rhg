@@ -24,6 +24,15 @@ function getProcModel(entity) {
   return getCombatModel(entity)?.proc || entity?.bcuProc || entity?.rawStats?.bcuProc || entity?.abilityModel?.bcuProc || {};
 }
 
+export function getBcuEventProcModel(entity, event = null) {
+  const globalProc = getProcModel(entity);
+  const eventProc = event?.bcuProc;
+  if (event?.bcuProcIsComplete === true) {
+    return eventProc && typeof eventProc === 'object' ? eventProc : {};
+  }
+  return globalProc;
+}
+
 function procNumber(proc, key, field, fallback = 0) {
   const n = Number(proc?.[key]?.[field]);
   return Number.isFinite(n) ? n : fallback;
@@ -151,7 +160,7 @@ export class ProcResolver {
 
   static resolve({ attacker = null, target = null, targetType = 'actor', event = null, damageResult = null, context = {} } = {}) {
     const semantic = event?.abilities || event?.ability?.semantic || {};
-    const proc = getProcModel(attacker);
+    const proc = getBcuEventProcModel(attacker, event);
     const candidates = this.collectProcCandidates({ event, proc });
     const candidateKeys = candidates.map((candidate) => candidate.key);
     const notes = [];

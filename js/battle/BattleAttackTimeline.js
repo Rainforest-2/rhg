@@ -23,6 +23,17 @@ function hasGlassAbility(actor) {
   );
 }
 
+function hasExplicitAttackLoopModification(actor) {
+  return [
+    actor?.characterModificationDebug,
+    actor?.rawStats?.characterModificationDebug,
+    actor?.stats?.characterModificationDebug
+  ].some((debug) => (
+    Array.isArray(debug?.appliedFields)
+    && debug.appliedFields.includes('attackCycle.loopCount')
+  ));
+}
+
 export class BattleAttackTimeline {
   static getProfile(actor) {
     return BattleAttackProfile.ensure(actor);
@@ -65,9 +76,11 @@ export class BattleAttackTimeline {
 
   static getBcuAttackLoopInitial(actor) {
     const rawLoop = this.getBcuRawAttackLoop(actor);
+    if (hasExplicitAttackLoopModification(actor)) return rawLoop;
     // BCU AtkManager uses data.getAtkLoop(), but normal battle units are expected to keep attacking.
     // Some bundled CSV rows expose loop=1 for ordinary units; treating that literally makes every
-    // non-glass actor attack once and then stop. Keep finite-loop semantics only for AB_GLASS/self-destruct actors.
+    // non-glass actor attack once and then stop. Keep that compatibility guard unless loopCount was
+    // explicitly modified; explicit 0/-1/positive values follow AtkManager attacksLeft semantics.
     if (hasGlassAbility(actor)) return rawLoop > 0 ? rawLoop : 1;
     return -1;
   }
@@ -75,9 +88,14 @@ export class BattleAttackTimeline {
   static ensureBcuAttackLoopState(actor) {
     if (!actor) return 0;
     if (!Number.isFinite(actor.bcuAttacksLeft)) {
+      const explicitlyModified = hasExplicitAttackLoopModification(actor);
       actor.bcuRawAttackLoop = this.getBcuRawAttackLoop(actor);
       actor.bcuAttacksLeft = this.getBcuAttackLoopInitial(actor);
-      actor.bcuAttackLoopSource = hasGlassAbility(actor) ? 'DataEntity.getAtkLoop-glass-finite' : 'normal-actor-infinite-attack-loop';
+      actor.bcuAttackLoopSource = explicitlyModified
+        ? 'character-modification-absolute-DataEntity.getAtkLoop'
+        : hasGlassAbility(actor)
+          ? 'DataEntity.getAtkLoop-glass-finite'
+          : 'normal-actor-infinite-attack-loop';
     }
     return actor.bcuAttacksLeft;
   }
@@ -328,7 +346,7 @@ export class BattleAttackTimeline {
         initialLoop: this.getBcuAttackLoopInitial(actor),
         attacksLeft: actor.bcuAttacksLeft,
         attackLoopSource: actor.bcuAttackLoopSource,
-        bcuReference: 'Entity.AtkManager.updateAttack: attacksLeft--; waitTime = data.getTBA(); non-glass normal actors keep infinite loop in JS runtime'
+        bcuReference: 'Entity.AtkManager: attacksLeft=getAtkLoop; final hit decrements positive counts; unmodified non-glass actors retain the existing infinite-loop guard'
       };
     }
     actor.lastAttackHitResolvedDebug = { key, resolvedHitCount: resolvedHits, totalHitCount: totalHits, finalHitResolved, cycleId, bcuWaitTimeFrames: actor.bcuWaitTimeFrames, attacksLeft: actor.bcuAttacksLeft };

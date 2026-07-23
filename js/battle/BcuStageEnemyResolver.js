@@ -121,6 +121,11 @@ export function buildStageEnemyUnitDef(row) {
     unavailable,
     assetAvailabilitySource: assetDef.assetAvailabilitySource || null,
     stageSpawn: { ...row },
+    ...(row?.characterModification ? {
+      characterModification: row.characterModification,
+      characterModificationHash: row.characterModificationHash,
+      characterModificationSource: row.characterModificationSource || 'custom-stage'
+    } : {}),
     stageStatModifiers: {
       source: 'bcu-stage-csv-row',
       rowIndex,

@@ -172,6 +172,9 @@ export function hasAbi(entity, bit) {
 }
 
 export function hasTargetOnly(attacker, event = null) {
+  if (Object.prototype.hasOwnProperty.call(event?.characterModificationAbilityFlags || {}, 'targetOnly')) {
+    return event.characterModificationAbilityFlags.targetOnly === true;
+  }
   const semantic = event?.abilities || event?.ability?.semantic || {};
   return semantic?.targetOnly === true || hasAbi(attacker, BCU_ABI.AB_ONLY);
 }

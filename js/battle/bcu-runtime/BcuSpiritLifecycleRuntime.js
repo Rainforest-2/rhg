@@ -9,15 +9,16 @@ export const SPIRIT_SUMMON_RANGE = 150;
 // it. In live play nothing else preloads a conjurer's spirit form, which is why
 // scene.spawnActor returned null and the spirit never appeared. These helpers
 // resolve and warm the spirit template so the manual second-tap summon can fire.
-function spiritTemplateReady(scene, slotId) {
-  const tpl = scene?.actorFactory?.templates?.get?.(slotId);
+function spiritTemplateReady(scene, unitDefOrId) {
+  const tpl = scene?.actorFactory?.getTemplate?.(unitDefOrId)
+    || scene?.actorFactory?.templates?.get?.(typeof unitDefOrId === 'object' ? unitDefOrId?.slotId : unitDefOrId);
   return !!tpl && (tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.SPAWN_READY || tpl.loadingLevel === TEMPLATE_LOAD_LEVEL.FULL_VISUAL);
 }
 
 function warmSpiritTemplate(scene, unitDef) {
   const factory = scene?.actorFactory;
   if (!factory || typeof factory.preloadTemplate !== 'function' || !unitDef?.slotId) return false;
-  if (spiritTemplateReady(scene, unitDef.slotId)) return true;
+  if (spiritTemplateReady(scene, unitDef)) return true;
   factory.preloadTemplate(unitDef, { level: TEMPLATE_LOAD_LEVEL.SPAWN_READY }).catch(() => {});
   return false;
 }

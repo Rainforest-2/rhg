@@ -1,7 +1,15 @@
 import { BattleScene } from './BattleScene.js';
 import { BATTLE_CONFIG } from './BattleConfig.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
-import { ProductionRuntime, resolveBcuProductionValues } from './ProductionRuntime.js';
+import {
+  ProductionRuntime,
+  applyCharacterModificationToProduction,
+  applyCustomStageProductionModifiers,
+  hasCharacterModificationProduction,
+  hasCustomStageProductionModifiers,
+  resolveBcuProductionValues,
+  resolveUnitDefinitionProductionValues
+} from './ProductionRuntime.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.bcu-timer-patch.v2');
 
@@ -71,29 +79,70 @@ export function installBattleSceneBcuTimerPatch() {
   };
 
   proto.applyBcuProductionStatsFromTemplates = function applyBcuProductionStatsFromTemplatesBcuTimer(roster = []) {
+    const stageLimits = this.stage?.runtime?.customStageLimits
+      || this.stage?.definition?.customStageLimits
+      || null;
+    const hasStageModifiers = hasCustomStageProductionModifiers(stageLimits);
     for (const u of roster) {
-      if (!u || u.statsType !== 'unit') continue;
-      const tpl = this.actorFactory.templates.get(u.slotId);
+      if (!u) continue;
+      const hasProductionModification = hasCharacterModificationProduction(u.characterModification);
+      if (u.statsType !== 'unit' && !hasProductionModification && !hasStageModifiers) continue;
+      const tpl = this.actorFactory.getTemplate(u);
       const st = tpl?.stats;
-      const prod = resolveBcuProductionValues(st);
+      let normalProd;
+      if (u.statsType === 'unit') {
+        normalProd = resolveBcuProductionValues(st);
+      } else {
+        normalProd = u.bcuNormalProductionBase || resolveUnitDefinitionProductionValues(u);
+        if (!u.bcuNormalProductionBase) u.bcuNormalProductionBase = { ...normalProd };
+      }
+      const stageProd = applyCustomStageProductionModifiers(normalProd, stageLimits);
+      const prod = applyCharacterModificationToProduction(stageProd, u.characterModification, {
+        source: u.characterModificationSource || 'formation',
+        modificationHash: u.characterModificationHash || null
+      });
+      const modifiedFields = new Set(prod.characterModification?.changedFields || []);
+      const stageCostModified = stageProd.customStageProduction?.applied === true
+        && stageProd.customStageProduction.globalCostMultiplier !== 1;
+      const stageCooldownModified = stageProd.customStageProduction?.applied === true
+        && stageProd.customStageProduction.globalCooldownMultiplier !== 1;
       u.bcuProduction = prod;
+      if (stageProd.customStageProduction?.applied) {
+        u.bcuPreStageDeployCost = stageProd.normalBeforeStageDeployCost ?? null;
+        u.bcuPreStageRespawnFrames = stageProd.normalBeforeStageRespawnFrames ?? null;
+      }
+      if (prod.characterModification?.applied) {
+        u.bcuNormalDeployCost = prod.normalDeployCost ?? prod.deployCost ?? null;
+        u.bcuNormalRespawnFrames = prod.normalRespawnFrames ?? prod.respawnFrames ?? null;
+      }
       if (Number.isFinite(prod.deployCost)) {
         u.cost = prod.deployCost;
         u.defaultCost = prod.deployCost;
-        u.costSource = 'bcu-unit-deploy-cost';
-        u.productionCostSource = u.productionCostSource || u.costSource;
-        u.bcuPrice = prod.rawPrice;
-        u.bcuStagePrice = prod.stagePrice;
+        u.costSource = modifiedFields.has('production.cost')
+          ? 'character-modification-absolute'
+          : (stageCostModified ? 'custom-stage-global-cost-multiplier' : 'bcu-unit-deploy-cost');
+        u.productionCostSource = modifiedFields.has('production.cost') || stageCostModified
+          ? u.costSource
+          : (u.productionCostSource || u.costSource);
+        if (u.statsType === 'unit') {
+          u.bcuPrice = prod.rawPrice;
+          u.bcuStagePrice = prod.stagePrice;
+        }
         u.bcuDeployCost = prod.deployCost;
       }
       if (Number.isFinite(prod.respawnFrames)) {
         u.bcuRespawnFrames = prod.respawnFrames;
-        u.bcuRawRespawnFrames = prod.rawRespawnFrames;
+        if (u.statsType === 'unit') u.bcuRawRespawnFrames = prod.rawRespawnFrames;
         u.bcuRespawnMs = respawnFramesToMs(prod.respawnFrames);
         u.cooldownMs = u.bcuRespawnMs;
-        u.cooldownSource = 'bcu-unit-respawn-final';
-        u.productionCooldownSource = u.productionCooldownSource || u.cooldownSource;
+        u.cooldownSource = modifiedFields.has('production.respawnFrames')
+          ? 'character-modification-absolute'
+          : (stageCooldownModified ? 'custom-stage-global-cooldown-multiplier' : 'bcu-unit-respawn-final');
+        u.productionCooldownSource = modifiedFields.has('production.respawnFrames') || stageCooldownModified
+          ? u.cooldownSource
+          : (u.productionCooldownSource || u.cooldownSource);
       }
+      if (Number.isFinite(prod.deployLimit)) u.deployLimit = prod.deployLimit;
       u.productionSourceDebug = ProductionRuntime.describeProductionSources(u);
     }
   };

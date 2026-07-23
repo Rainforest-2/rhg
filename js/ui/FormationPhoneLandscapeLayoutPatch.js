@@ -241,6 +241,7 @@ export function installFormationPhoneLandscapeLayoutPatch() {
 
   globalThis.matchMedia?.(PHONE_LANDSCAPE_QUERY)?.addEventListener?.('change', () => {
     for (const root of document.querySelectorAll('.formation-ui')) {
+      if (root.querySelector('.cm-host-layer.is-open')) continue;
       const editor = root.__formationEditor;
       editor?.renderDynamic?.({ resetCatalogScroll: false });
     }

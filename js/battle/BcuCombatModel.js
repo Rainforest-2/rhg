@@ -116,7 +116,7 @@ function parseUnitAbilities(rawValues) {
   set(BCU_ABI.AB_CSUR,109,'counterSurge');
   set(BCU_ABI.AB_SKILL,111,'sageSlayer');
   return { abi, flags: {
-    strong:(abi&BCU_ABI.AB_GOOD)!==0, resistant:(abi&BCU_ABI.AB_RESIST)!==0, massiveDamage:(abi&BCU_ABI.AB_MASSIVE)!==0, targetOnly:(abi&BCU_ABI.AB_ONLY)!==0, metallic:(abi&BCU_ABI.AB_METALIC)!==0, zombieKiller:(abi&BCU_ABI.AB_ZKILL)!==0, witchKiller:(abi&BCU_ABI.AB_WKILL)!==0, glass:(abi&BCU_ABI.AB_GLASS)!==0, evaKiller:(abi&BCU_ABI.AB_EKILL)!==0, insanelyTough:(abi&BCU_ABI.AB_RESISTS)!==0, insaneDamage:(abi&BCU_ABI.AB_MASSIVES)!==0, baronKiller:(abi&BCU_ABI.AB_BAKILL)!==0, soulstrike:(abi&BCU_ABI.AB_CKILL)!==0, counterSurge:(abi&BCU_ABI.AB_CSUR)!==0, sageSlayer:(abi&BCU_ABI.AB_SKILL)!==0 }, sources };
+    strong:(abi&BCU_ABI.AB_GOOD)!==0, resistant:(abi&BCU_ABI.AB_RESIST)!==0, massiveDamage:(abi&BCU_ABI.AB_MASSIVE)!==0, targetOnly:(abi&BCU_ABI.AB_ONLY)!==0, metallic:(abi&BCU_ABI.AB_METALIC)!==0, waveBlocker:(abi&BCU_ABI.AB_WAVES)!==0, zombieKiller:(abi&BCU_ABI.AB_ZKILL)!==0, witchKiller:(abi&BCU_ABI.AB_WKILL)!==0, glass:(abi&BCU_ABI.AB_GLASS)!==0, bossShockwaveImmune:(abi&BCU_ABI.AB_IMUSW)!==0, evaKiller:(abi&BCU_ABI.AB_EKILL)!==0, insanelyTough:(abi&BCU_ABI.AB_RESISTS)!==0, insaneDamage:(abi&BCU_ABI.AB_MASSIVES)!==0, baronKiller:(abi&BCU_ABI.AB_BAKILL)!==0, soulstrike:(abi&BCU_ABI.AB_CKILL)!==0, counterSurge:(abi&BCU_ABI.AB_CSUR)!==0, sageSlayer:(abi&BCU_ABI.AB_SKILL)!==0 }, sources };
 }
 
 function parseEnemyAbilities(rawValues) {

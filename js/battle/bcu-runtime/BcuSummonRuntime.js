@@ -354,9 +354,23 @@ function findExistingUnitDef(scene, proc) {
 }
 
 function buildUnitDef(scene, proc, side) {
-  if (proc.unitDef) return proc.unitDef;
+  const withoutInheritedModification = (unitDef) => {
+    if (!unitDef || typeof unitDef !== 'object') return unitDef;
+    const {
+      characterModification: _modification,
+      characterModificationHash: _modificationHash,
+      characterModificationSource: _modificationSource,
+      characterModificationKey: _modificationKey,
+      ...base
+    } = unitDef;
+    return base;
+  };
+  if (proc.unitDef) return withoutInheritedModification(proc.unitDef);
   const existing = findExistingUnitDef(scene, proc);
-  if (existing) return { ...existing, side, direction: directionForSide(side, existing.direction), facing: directionForSide(side, existing.facing), renderFlipX: side === 'dog-player' ? false : (existing.renderFlipX ?? true) };
+  if (existing) {
+    const base = withoutInheritedModification(existing);
+    return { ...base, side, direction: directionForSide(side, existing.direction), facing: directionForSide(side, existing.facing), renderFlipX: side === 'dog-player' ? false : (existing.renderFlipX ?? true) };
+  }
   if (!Number.isFinite(proc.statsId)) return null;
   if (proc.kind === 'unit') {
     const form = formCode(proc.formRow);
@@ -768,7 +782,7 @@ export function processBcuSummonTokens(scene, reason = 'knockback-death') {
 
 export async function ensureBcuSummonTemplate(scene, unitDef) {
   if (!scene?.actorFactory || !unitDef?.slotId) return { ok: false, reason: 'actor-factory-missing' };
-  const template = scene.actorFactory.templates?.get?.(unitDef.slotId);
+  const template = scene.actorFactory.getTemplate?.(unitDef) || scene.actorFactory.templates?.get?.(unitDef.slotId);
   if (template && (template.loadingLevel === TEMPLATE_LOAD_LEVEL.SPAWN_READY || template.loadingLevel === TEMPLATE_LOAD_LEVEL.FULL_VISUAL)) {
     return { ok: true, template, source: 'template-ready' };
   }
@@ -783,7 +797,7 @@ export async function ensureBcuSummonTemplate(scene, unitDef) {
 
 function requestBcuSummonTemplate(scene, unitDef, pending = null) {
   if (!scene?.actorFactory || !unitDef?.slotId) return { requested: false, ready: false, reason: 'actor-factory-missing' };
-  const template = scene.actorFactory.templates?.get?.(unitDef.slotId);
+  const template = scene.actorFactory.getTemplate?.(unitDef) || scene.actorFactory.templates?.get?.(unitDef.slotId);
   if (template && (template.loadingLevel === TEMPLATE_LOAD_LEVEL.SPAWN_READY || template.loadingLevel === TEMPLATE_LOAD_LEVEL.FULL_VISUAL)) {
     return { requested: false, ready: true, template, source: 'template-ready' };
   }

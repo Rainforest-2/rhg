@@ -191,15 +191,26 @@ export class BcuAssetLoader {
       try { provider = getBcuAssetDatabase()?.semanticProvider; } catch {}
       const role = animDef.id === 'anim00' ? 'move' : animDef.id === 'anim01' ? 'idle' : animDef.id === 'anim02' ? 'attack' : animDef.id === 'anim03' ? 'kb' : null;
       if (provider && role) {
+        let semanticCacheKey = null;
         try {
           const entry = provider.getActorEntry(def.semanticKey);
           if (!entry?.bundleRef || !provider.hasBundleForKey(def.semanticKey)) throw new Error(`Missing full actor bundle for semantic key ${def.semanticKey}`);
-          const anim = parseAnim(await provider.readTextByBundleRef(entry.bundleRef, `${role}.maanim`));
-          let model = null;
-          try { model = parseModel(await provider.readTextByBundleRef(entry.bundleRef, 'model.mamodel')); } catch {}
-          if (model) validateActorAnimation({ semanticKey: def.semanticKey, bundlePath: entry.bundleRef.bundlePath, sourcePack: entry.selected?.sourcePack || null, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], role, internalPath: `${role}.maanim`, anim, model });
-          return { loaded: [`${role}.maanim`], missing: [], errors: [], file: `${role}.maanim`, anim, status: 'loaded', semantic: { key: def.semanticKey } };
+          semanticCacheKey = `semantic:${def.semanticKey}:${entry.bundleRef.bundlePath || ''}:${role}`;
+          if (animationCache.has(semanticCacheKey)) {
+            counters.animationCacheHit++;
+            return await animationCache.get(semanticCacheKey);
+          }
+          const promise = (async () => {
+            const anim = parseAnim(await provider.readTextByBundleRef(entry.bundleRef, `${role}.maanim`));
+            let model = null;
+            try { model = parseModel(await provider.readTextByBundleRef(entry.bundleRef, 'model.mamodel')); } catch {}
+            if (model) validateActorAnimation({ semanticKey: def.semanticKey, bundlePath: entry.bundleRef.bundlePath, sourcePack: entry.selected?.sourcePack || null, sourceRawPaths: entry.diagnostics?.sourceRawPaths || [], role, internalPath: `${role}.maanim`, anim, model });
+            return { loaded: [`${role}.maanim`], missing: [], errors: [], file: `${role}.maanim`, anim, status: 'loaded', semantic: { key: def.semanticKey } };
+          })();
+          animationCache.set(semanticCacheKey, promise);
+          return await promise;
         } catch (error) {
+          if (semanticCacheKey) animationCache.delete(semanticCacheKey);
           if (!provider.allowRawFallback) {
             const entry = provider.getActorEntry(def.semanticKey);
             provider.diagnostics.bundleErrors.push(error?.detail || makeActorDiagnostic({ kind: 'actor-animation', semanticKey: def.semanticKey, role, bundlePath: entry?.bundleRef?.bundlePath || null, internalPath: `${role}.maanim`, sourcePack: entry?.selected?.sourcePack || null, sourceRawPaths: entry?.diagnostics?.sourceRawPaths || [], reason: 'actor-animation-load-failed', error }));

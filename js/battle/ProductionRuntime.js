@@ -1,3 +1,5 @@
+import { BCU_BATTLE_TIMER_PERIOD_MS } from './BattleFrameClock.js';
+
 export const BCU_DEFAULT_STAGE_PRICE = 1;
 export const BCU_DEFAULT_RESEARCH_TECH = 30;
 export const BCU_DEFAULT_RESPAWN_TREASURE = 300;
@@ -70,6 +72,124 @@ export function resolveBcuProductionValues(stats = {}, {
   };
 }
 
+function readProductionOverride(production, field) {
+  if (!production || !Object.prototype.hasOwnProperty.call(production, field)) return null;
+  const value = production[field];
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+    throw new RangeError(`character modification production.${field} must be a non-negative integer`);
+  }
+  return value;
+}
+
+export function applyCharacterModificationToProduction(normalProduction, modification, {
+  source = 'character-modification',
+  modificationHash = null
+} = {}) {
+  const production = modification?.production;
+  const cost = readProductionOverride(production, 'cost');
+  const respawnFrames = readProductionOverride(production, 'respawnFrames');
+  const deployLimit = readProductionOverride(production, 'deployLimit');
+  if (cost === null && respawnFrames === null && deployLimit === null) return normalProduction;
+
+  const changedFields = [];
+  const resolved = {
+    ...normalProduction,
+    normalDeployCost: normalProduction?.deployCost ?? null,
+    normalRespawnFrames: normalProduction?.respawnFrames ?? null,
+    normalDeployLimit: normalProduction?.deployLimit ?? null
+  };
+  if (cost !== null) {
+    resolved.deployCost = cost;
+    changedFields.push('production.cost');
+  }
+  if (respawnFrames !== null) {
+    resolved.respawnFrames = respawnFrames;
+    changedFields.push('production.respawnFrames');
+  }
+  if (deployLimit !== null) {
+    resolved.deployLimit = deployLimit;
+    changedFields.push('production.deployLimit');
+  }
+  resolved.characterModification = {
+    applied: true,
+    source,
+    modificationHash,
+    changedFields
+  };
+  resolved.source = `${normalProduction?.source || 'normal-production'} -> CharacterModification production absolute override`;
+  return resolved;
+}
+
+function positiveMultiplier(value, field) {
+  if (value === undefined || value === null || value === '') return 1;
+  const multiplier = Number(value);
+  if (!Number.isFinite(multiplier) || multiplier <= 0) {
+    throw new RangeError(`custom stage ${field} must be a positive finite number`);
+  }
+  return multiplier;
+}
+
+export function hasCustomStageProductionModifiers(limits) {
+  if (!limits || typeof limits !== 'object') return false;
+  const costMultiplier = positiveMultiplier(limits.globalCostMultiplier, 'globalCostMultiplier');
+  const cooldownMultiplier = positiveMultiplier(limits.globalCooldownMultiplier, 'globalCooldownMultiplier');
+  return costMultiplier !== 1 || cooldownMultiplier !== 1;
+}
+
+export function applyCustomStageProductionModifiers(normalProduction, limits = null) {
+  const costMultiplier = positiveMultiplier(limits?.globalCostMultiplier, 'globalCostMultiplier');
+  const cooldownMultiplier = positiveMultiplier(limits?.globalCooldownMultiplier, 'globalCooldownMultiplier');
+  if (costMultiplier === 1 && cooldownMultiplier === 1) return normalProduction;
+
+  const resolved = {
+    ...normalProduction,
+    normalBeforeStageDeployCost: normalProduction?.deployCost ?? null,
+    normalBeforeStageRespawnFrames: normalProduction?.respawnFrames ?? null,
+    customStageProduction: {
+      applied: true,
+      globalCostMultiplier: costMultiplier,
+      globalCooldownMultiplier: cooldownMultiplier
+    }
+  };
+  if (Number.isFinite(normalProduction?.deployCost)) {
+    resolved.deployCost = Math.max(0, Math.floor(normalProduction.deployCost * costMultiplier));
+  }
+  if (Number.isFinite(normalProduction?.respawnFrames)) {
+    resolved.respawnFrames = Math.max(0, Math.floor(normalProduction.respawnFrames * cooldownMultiplier));
+  }
+  resolved.source = `${normalProduction?.source || 'normal-production'} -> custom stage global production multipliers`;
+  return resolved;
+}
+
+export function hasCharacterModificationProduction(modification) {
+  const production = modification?.production;
+  return !!production && ['cost', 'respawnFrames', 'deployLimit']
+    .some((field) => Object.prototype.hasOwnProperty.call(production, field));
+}
+
+export function resolveUnitDefinitionProductionValues(unitDef = {}) {
+  const deployCost = Number.isFinite(unitDef.cost) ? Math.max(0, Math.floor(unitDef.cost)) : null;
+  const respawnFrames = Number.isFinite(unitDef.bcuRespawnFrames)
+    ? Math.max(0, Math.floor(unitDef.bcuRespawnFrames))
+    : Number.isFinite(unitDef.cooldownMs)
+      ? Math.max(0, Math.ceil(unitDef.cooldownMs / BCU_BATTLE_TIMER_PERIOD_MS))
+      : null;
+  return {
+    rawPrice: null,
+    stagePrice: null,
+    baseDeployCost: deployCost,
+    discountPercent: 0,
+    deployCost,
+    rawRespawnFrames: null,
+    researchTech: null,
+    researchTreasure: null,
+    comboRespawnPercent: 0,
+    globalCooldownLimit: false,
+    respawnFrames,
+    source: 'existing production unit definition final values'
+  };
+}
+
 export class ProductionRuntime {
   static getContract() {
     return {
@@ -90,7 +210,32 @@ export class ProductionRuntime {
   }
 
   static describeProductionSources(unitDef) {
-    return { sourceRoster: unitDef?.sourceRoster ?? null, sourceSlotId: unitDef?.sourceSlotId ?? null, sourceKind: unitDef?.isProductionUnit ? 'production-unit' : null, statsType: unitDef?.statsType ?? null, statsId: unitDef?.statsId ?? null, formRow: unitDef?.form ?? null, costSource: unitDef?.costSource ?? null, cooldownSource: unitDef?.cooldownSource ?? null, productionCostSource: unitDef?.productionCostSource ?? null, productionCooldownSource: unitDef?.productionCooldownSource ?? null, defaultCost: unitDef?.defaultCost ?? null, defaultCooldownMs: unitDef?.defaultCooldownMs ?? null, bcuPrice: unitDef?.bcuPrice ?? null, bcuStagePrice: unitDef?.bcuStagePrice ?? null, bcuDeployCost: unitDef?.bcuDeployCost ?? null, bcuRespawnFrames: unitDef?.bcuRespawnFrames ?? null, bcuRespawnMs: unitDef?.bcuRespawnMs ?? null, bcuProduction: unitDef?.bcuProduction ?? null };
+    return {
+      sourceRoster: unitDef?.sourceRoster ?? null,
+      sourceSlotId: unitDef?.sourceSlotId ?? null,
+      sourceKind: unitDef?.isProductionUnit ? 'production-unit' : null,
+      statsType: unitDef?.statsType ?? null,
+      statsId: unitDef?.statsId ?? null,
+      formRow: unitDef?.form ?? null,
+      costSource: unitDef?.costSource ?? null,
+      cooldownSource: unitDef?.cooldownSource ?? null,
+      productionCostSource: unitDef?.productionCostSource ?? null,
+      productionCooldownSource: unitDef?.productionCooldownSource ?? null,
+      defaultCost: unitDef?.defaultCost ?? null,
+      defaultCooldownMs: unitDef?.defaultCooldownMs ?? null,
+      bcuPrice: unitDef?.bcuPrice ?? null,
+      bcuStagePrice: unitDef?.bcuStagePrice ?? null,
+      bcuDeployCost: unitDef?.bcuDeployCost ?? null,
+      bcuRespawnFrames: unitDef?.bcuRespawnFrames ?? null,
+      bcuRespawnMs: unitDef?.bcuRespawnMs ?? null,
+      bcuProduction: unitDef?.bcuProduction ?? null,
+      ...(unitDef?.bcuPreStageDeployCost !== undefined ? { bcuPreStageDeployCost: unitDef.bcuPreStageDeployCost } : {}),
+      ...(unitDef?.bcuPreStageRespawnFrames !== undefined ? { bcuPreStageRespawnFrames: unitDef.bcuPreStageRespawnFrames } : {}),
+      ...(unitDef?.bcuNormalDeployCost !== undefined ? { bcuNormalDeployCost: unitDef.bcuNormalDeployCost } : {}),
+      ...(unitDef?.bcuNormalRespawnFrames !== undefined ? { bcuNormalRespawnFrames: unitDef.bcuNormalRespawnFrames } : {}),
+      ...(unitDef?.deployLimit !== undefined ? { deployLimit: unitDef.deployLimit } : {}),
+      ...(unitDef?.characterModificationHash ? { characterModificationHash: unitDef.characterModificationHash } : {})
+    };
   }
 
   static getUnitStatus(unitDef, economy = null) {
@@ -130,8 +275,49 @@ export class ProductionRuntime {
     if (!unitDef) return { ok: false, reason: 'unknown-production-slot', unitStatus: this.getUnitStatus(null, useEconomy), economyStatus: this.describeEconomy(useEconomy), source: 'ProductionRuntime.validateRequest', slotId: slotId ?? null };
     if (!useEconomy) return { ok: false, reason: 'economy-missing', unitStatus: this.getUnitStatus(unitDef, null), economyStatus: this.describeEconomy(null), source: 'ProductionRuntime.validateRequest' };
     const unitStatus = this.getUnitStatus(unitDef, useEconomy);
-    const reason = !unitStatus.affordable ? 'not-enough-money' : (!unitStatus.cooldownReady ? 'cooldown' : null);
-    return { ok: !reason, reason: reason || 'ok', unitStatus, economyStatus: this.describeEconomy(useEconomy), source: 'ProductionRuntime.validateRequest' };
+    const stageLimits = scene?.stage?.runtime?.customStageLimits
+      || scene?.stage?.definition?.customStageLimits
+      || null;
+    const stageMaxValue = stageLimits?.maxUnitSpawn;
+    let stageMaxUnitSpawn = null;
+    if (stageMaxValue !== undefined && stageMaxValue !== null && stageMaxValue !== '') {
+      const numericStageMax = Number(stageMaxValue);
+      if (!Number.isFinite(numericStageMax) || numericStageMax < 0 || !Number.isInteger(numericStageMax)) {
+        throw new RangeError('custom stage maxUnitSpawn must be a non-negative integer');
+      }
+      stageMaxUnitSpawn = numericStageMax;
+    }
+    const stageDeployedCount = stageMaxUnitSpawn === null ? 0 : (scene?.actors || []).filter((actor) => (
+      actor?.isPlayerProduced === true &&
+      (typeof actor.isAlive !== 'function' || actor.isAlive())
+    )).length;
+    const stageMaxUnitSpawnReached = stageMaxUnitSpawn !== null && stageDeployedCount >= stageMaxUnitSpawn;
+    const deployLimit = Number.isFinite(unitDef?.deployLimit) ? Math.max(0, Math.floor(unitDef.deployLimit)) : null;
+    const deployedCount = deployLimit === null ? 0 : (scene?.actors || []).filter((actor) => (
+      actor?.slotId === unitDef.slotId &&
+      actor?.isPlayerProduced === true &&
+      (typeof actor.isAlive !== 'function' || actor.isAlive())
+    )).length;
+    const deployLimitReached = deployLimit !== null && deployedCount >= deployLimit;
+    const reason = stageMaxUnitSpawnReached
+      ? 'stage-max-unit-spawn'
+      : (deployLimitReached ? 'deploy-limit' : (!unitStatus.affordable ? 'not-enough-money' : (!unitStatus.cooldownReady ? 'cooldown' : null)));
+    return {
+      ok: !reason,
+      reason: reason || 'ok',
+      unitStatus: {
+        ...unitStatus,
+        canProduce: unitStatus.canProduce !== false && !stageMaxUnitSpawnReached && !deployLimitReached,
+        stageMaxUnitSpawn,
+        stageDeployedCount,
+        stageMaxUnitSpawnReached,
+        deployLimit,
+        deployedCount,
+        deployLimitReached
+      },
+      economyStatus: this.describeEconomy(useEconomy),
+      source: 'ProductionRuntime.validateRequest'
+    };
   }
   static produce({ scene = null, unitDef = null, economy = null } = {}) {
     const useEconomy = economy || scene?.economy || null;

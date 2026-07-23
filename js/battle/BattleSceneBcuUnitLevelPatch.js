@@ -4,6 +4,8 @@ import { BCU_DEFAULT_PREF_LEVEL, resolveBcuUnitLevelConfig, selectBcuUnitLevelMe
 import { computeFrontRowForms, resolveComboModifiersForFrontRow } from './bcu-runtime/BcuComboStatModifier.js';
 import { parseOrb } from './bcu-runtime/BcuOrbModifier.js';
 import { getTalentInfoForUnit } from './bcu-runtime/BcuTalentInfoData.js';
+import { hashCharacterModification } from '../character-modification/CharacterModificationHash.js';
+import { isEmptyCharacterModification } from '../character-modification/CharacterModificationSchema.js';
 
 const PATCH_FLAG = Symbol.for('wanko-battle.scene-bcu-unit-level-production.v2-per-character');
 
@@ -18,7 +20,8 @@ function getFormationLevelOptions() {
       source: opt.source || 'formation.options.bcuCatUnitLevel'
     },
     perCat: formation?.options?.bcuCatUnitLevels || {},
-    dogMagnifications: formation?.options?.dogUnitMagnifications || {}
+    dogMagnifications: formation?.options?.dogUnitMagnifications || {},
+    characterModifications: formation?.options?.characterModifications || {}
   };
 }
 
@@ -199,6 +202,27 @@ function withBcuTalents(unitDef, opts = getFormationLevelOptions()) {
   return { ...unitDef, bcuTalentLevels: hit.value, ...(info ? { bcuTalentInfo: info } : {}) };
 }
 
+export function withCharacterModification(unitDef, opts = getFormationLevelOptions()) {
+  if (!unitDef) return unitDef;
+  // Modifications are form-owned. Prefer the exact catalog character id and only
+  // use sourceSlotId/prod slot aliases that identify that same form.
+  const keys = [
+    unitDef.characterId,
+    unitDef.sourceSlotId,
+    unitDef.slotId?.replace(/^prod-/, '')
+  ].filter((value, index, list) => typeof value === 'string' && value && list.indexOf(value) === index);
+  const key = keys.find((candidate) => opts.characterModifications[candidate]);
+  const modification = key ? opts.characterModifications[key] : null;
+  if (isEmptyCharacterModification(modification)) return unitDef;
+  return {
+    ...unitDef,
+    characterModification: modification,
+    characterModificationHash: hashCharacterModification(modification),
+    characterModificationSource: 'formation',
+    characterModificationKey: key
+  };
+}
+
 function withFormationCombatTuning(scene, unitDef) {
   const opts = getFormationLevelOptions();
   let def = withBcuCatUnitLevel(scene, unitDef, opts);
@@ -207,6 +231,7 @@ function withFormationCombatTuning(scene, unitDef) {
   def = withBcuTreasure(def, opts);
   def = withBcuOrbEquipment(def, opts);
   def = withBcuTalents(def, opts);
+  def = withCharacterModification(def, opts);
   return def;
 }
 

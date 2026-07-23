@@ -1,11 +1,20 @@
 import { getCharacterById, getCharacterBaseId } from './CharacterCatalog.js';
 import { BCU_DEFAULT_PREF_LEVEL } from './bcu-runtime/BcuUnitLevelRuntime.js';
 import { reportStorageFailure, clearStorageFailure, getLastStorageFailure, onStorageFailure } from './BcuStorageDiagnostics.js';
+import {
+  isEmptyCharacterModification,
+  normalizeCharacterModification
+} from '../character-modification/CharacterModificationNormalizer.js';
+import {
+  CHARACTER_MODIFICATION_FORBIDDEN_KEYS,
+  isPlainCharacterModificationObject
+} from '../character-modification/CharacterModificationSchema.js';
+import { validateCharacterModification } from '../character-modification/CharacterModificationValidator.js';
 
 export const LINEUP_ROWS = 2;
 export const LINEUP_COLS = 5;
 export const LINEUP_TOTAL = LINEUP_ROWS * LINEUP_COLS;
-export const FORMATION_VERSION = 4;
+export const FORMATION_VERSION = 5;
 export const FORMATION_STORAGE_KEY = 'wanko-battle.formation.v2';
 export const DOG_DEFAULT_MAGNIFICATION_PERCENT = 100;
 
@@ -26,7 +35,8 @@ export const DEFAULT_FORMATION_OPTIONS = Object.freeze({
   // empty so all damage modifiers are no-ops until the player configures them.
   bcuTreasure: Object.freeze({ trea: Object.freeze({ atk: 0, def: 0 }), fruit: Object.freeze({}) }),
   bcuOrbEquipment: Object.freeze({}),
-  bcuTalentLevels: Object.freeze({})
+  bcuTalentLevels: Object.freeze({}),
+  characterModifications: Object.freeze({})
 });
 
 // BCU caps: treasure points 0..300 (Treasure.java), fruit 0..300, orb grades 0..4,
@@ -55,6 +65,7 @@ export const toRowCol = (flatIndex) => ({ row: Math.floor(flatIndex / LINEUP_COL
 
 const clonePages = (pages) => Array.from({ length: LINEUP_ROWS }, (_, row) => Array.from({ length: LINEUP_COLS }, (_, col) => pages?.[row]?.[col] ?? null));
 const cleanCharacterKey = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
+const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 const toInt = (value, fallback = null) => { const n = Number(value); return Number.isFinite(n) ? Math.trunc(n) : fallback; };
 const clampMin = (value, min, fallback) => Math.max(min, toInt(value, fallback));
 
@@ -160,6 +171,90 @@ function normalizeTalentLevelsMap(options = {}) {
   return out;
 }
 
+function getFormationCharacterKind(characterId) {
+  const character = getCharacterById(characterId);
+  if (character?.faction === 'cat') return 'unit';
+  if (character?.faction === 'dog') return 'enemy';
+  if (String(characterId).startsWith('cat-unit-')) return 'unit';
+  if (String(characterId).startsWith('dog-enemy-')) return 'enemy';
+  return null;
+}
+
+function normalizeCharacterModificationMap(options = {}) {
+  const raw = options?.characterModifications || options?.characterModificationByCharacter || {};
+  const out = {};
+  for (const [key, value] of Object.entries(raw || {})) {
+    const characterId = cleanCharacterKey(key);
+    if (!characterId) continue;
+    const normalized = normalizeCharacterModification(value, {
+      kind: getFormationCharacterKind(characterId),
+      owner: 'formation',
+      source: 'formation-store'
+    });
+    if (!isEmptyCharacterModification(normalized)) out[characterId] = normalized;
+  }
+  return out;
+}
+
+function validateStoredCharacterModificationMap(formation = {}) {
+  const options = formation?.options;
+  const hasCurrentMap = options && typeof options === 'object'
+    && hasOwn(options, 'characterModifications');
+  const hasLegacyMap = options && typeof options === 'object'
+    && hasOwn(options, 'characterModificationByCharacter');
+  const raw = hasCurrentMap
+    ? options.characterModifications
+    : hasLegacyMap
+      ? options.characterModificationByCharacter
+      : {};
+  const mapPath = hasCurrentMap
+    ? 'options.characterModifications'
+    : 'options.characterModificationByCharacter';
+  const errors = [];
+  if (!isPlainCharacterModificationObject(raw)) {
+    errors.push({
+      code: 'invalid-character-modification-map',
+      path: mapPath,
+      message: `${mapPath} must be a plain object.`
+    });
+  }
+  if (errors.length) {
+    const error = new Error(errors.map((item) => item.message).join('; '));
+    error.name = 'CharacterModificationValidationError';
+    error.validation = { valid: false, errors };
+    throw error;
+  }
+  for (const [rawKey, modification] of Object.entries(raw || {})) {
+    const characterId = cleanCharacterKey(rawKey);
+    if (!characterId || CHARACTER_MODIFICATION_FORBIDDEN_KEYS.includes(characterId)) {
+      errors.push({
+        code: 'invalid-character-modification-owner',
+        path: `${mapPath}.${rawKey}`,
+        message: `${mapPath} contains an invalid character id.`
+      });
+      continue;
+    }
+    const validation = validateCharacterModification(modification, {
+      kind: getFormationCharacterKind(characterId),
+      owner: 'formation',
+      source: 'formation-store-read',
+      rejectUnsupportedFields: true,
+      requireResolvedReferences: false
+    });
+    for (const item of validation.errors) {
+      errors.push({
+        ...item,
+        path: `${mapPath}.${characterId}.${item.path || ''}`.replace(/\.$/, '')
+      });
+    }
+  }
+  if (!errors.length) return;
+  const error = new Error(errors.map((item) => item.message).join('; '));
+  error.name = 'CharacterModificationValidationError';
+  error.validation = { valid: false, errors };
+  throw error;
+}
+
 function cloneOptions(options = {}) {
   return {
     bcuCatUnitLevel: normalizeCatUnitLevelOptions(options),
@@ -167,8 +262,21 @@ function cloneOptions(options = {}) {
     dogUnitMagnifications: normalizeDogMagnificationMap(options),
     bcuTreasure: normalizeTreasureOptions(options),
     bcuOrbEquipment: normalizeOrbEquipmentMap(options),
-    bcuTalentLevels: normalizeTalentLevelsMap(options)
+    bcuTalentLevels: normalizeTalentLevelsMap(options),
+    characterModifications: normalizeCharacterModificationMap(options)
   };
+}
+
+function assertSupportedFormationVersion(formation) {
+  const rawVersion = formation?.version;
+  if (rawVersion === undefined || rawVersion === null || rawVersion === '') return;
+  const version = Number(rawVersion);
+  if (Number.isInteger(version) && version >= 0 && version <= FORMATION_VERSION) return;
+  const error = new RangeError(`Unsupported formation version: ${String(rawVersion)}`);
+  error.code = 'unsupported-formation-version';
+  error.version = rawVersion;
+  error.supportedVersion = FORMATION_VERSION;
+  throw error;
 }
 
 function cloneFormation(formation) { const pages=clonePages(formation?.pages); return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages, slots: pages[0].slice(), options: cloneOptions(formation?.options) }; }
@@ -198,6 +306,7 @@ export function swapFormationSlots(formation, aRow, aCol, bRow, bCol) {
 }
 
 export function migrateLegacyFiveSlotFormation(rawFormation) {
+  assertSupportedFormationVersion(rawFormation);
   const slots = Array.isArray(rawFormation?.slots) ? rawFormation.slots : [];
   const options = cloneOptions(rawFormation?.options || DEFAULT_FORMATION_OPTIONS);
   if (Array.isArray(rawFormation?.pages)) return { version: FORMATION_VERSION, rows: LINEUP_ROWS, cols: LINEUP_COLS, pages: clonePages(rawFormation.pages), slots: clonePages(rawFormation.pages)[0].slice(), options };
@@ -233,7 +342,14 @@ export function getFormationSummary(formation) {
   return { version: sanitized.version, rows: LINEUP_ROWS, cols: LINEUP_COLS, total, filledCount, emptyCount: total - filledCount, duplicatePolicy: 'removeDuplicateBaseCharacterIds', storageKey: FORMATION_STORAGE_KEY, flatSlots, options: sanitized.options };
 }
 
-function canUseStorage() { return !!globalThis?.localStorage || (typeof window !== 'undefined' && !!window.localStorage); }
+function canUseStorage() {
+  try {
+    return !!globalThis?.localStorage
+      || (typeof window !== 'undefined' && !!window.localStorage);
+  } catch {
+    return false;
+  }
+}
 function saveWithOptions(mutator) { const current = FormationStore.load(); const options = cloneOptions(current.options); mutator(options, current); return FormationStore.save({ ...current, options }); }
 function getCharacterOptionKey(characterId) { return cleanCharacterKey(characterId); }
 function catLevelPayload(levelConfig) { return levelConfig && typeof levelConfig === 'object' ? { ...levelConfig } : { level: levelConfig }; }
@@ -245,7 +361,9 @@ export const FormationStore = {
       const raw = globalThis.localStorage.getItem(FORMATION_STORAGE_KEY) || globalThis.localStorage.getItem('wanko-battle.formation.v1');
       clearStorageFailure('formation', 'read');
       if (!raw) return getDefaultFormation();
-      return sanitizeFormation(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      validateStoredCharacterModificationMap(parsed);
+      return sanitizeFormation(parsed);
     } catch (error) {
       // Read failure (private-mode SecurityError, corrupt JSON): degrade to the
       // default lineup but make the failure observable instead of silent.
@@ -255,7 +373,9 @@ export const FormationStore = {
   },
   save(formation) {
     const sanitized = sanitizeFormation(formation);
-    if (canUseStorage()) {
+    if (!canUseStorage()) {
+      reportStorageFailure('formation', 'write', new Error('localStorage-unavailable'));
+    } else {
       try {
         globalThis.localStorage.setItem(FORMATION_STORAGE_KEY, JSON.stringify(sanitized));
         clearStorageFailure('formation', 'write');
@@ -357,6 +477,72 @@ export const FormationStore = {
     const key = getCharacterOptionKey(characterId);
     if (!key) return this.load();
     return saveWithOptions((options) => { delete options.bcuTalentLevels[key]; });
+  },
+  getCharacterModification(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    return key ? (this.getOptions().characterModifications[key] || null) : null;
+  },
+  setCharacterModification(characterId, modification = {}) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    const validation = validateCharacterModification(modification, {
+      kind: getFormationCharacterKind(key),
+      owner: 'formation',
+      source: 'formation-store',
+      rejectUnsupportedFields: true
+    });
+    if (!validation.valid) {
+      const error = new Error(validation.errors.map((item) => item.message).join('; '));
+      error.name = 'CharacterModificationValidationError';
+      error.validation = validation;
+      throw error;
+    }
+    const normalized = validation.modification;
+    return saveWithOptions((options) => {
+      if (isEmptyCharacterModification(normalized)) delete options.characterModifications[key];
+      else options.characterModifications[key] = normalized;
+    });
+  },
+  clearCharacterModification(characterId) {
+    const key = getCharacterOptionKey(characterId);
+    if (!key) return this.load();
+    return saveWithOptions((options) => { delete options.characterModifications[key]; });
+  },
+  setCharacterModificationsAtomic(entries = {}, { replace = false } = {}) {
+    const current = this.load();
+    const readError = getLastStorageFailure();
+    if (readError?.scope === 'formation' && readError?.op === 'read') {
+      return { ok: false, formation: current, error: readError };
+    }
+    const options = cloneOptions(current.options);
+    const next = replace ? {} : { ...options.characterModifications };
+    const validated = [];
+    for (const [rawKey, value] of Object.entries(entries || {})) {
+      const key = getCharacterOptionKey(rawKey);
+      if (!key) continue;
+      const validation = validateCharacterModification(value, {
+        kind: getFormationCharacterKind(key),
+        owner: 'formation',
+        source: 'formation-store-atomic-import',
+        rejectUnsupportedFields: true
+      });
+      if (!validation.valid) {
+        const error = new Error(validation.errors.map((item) => item.message).join('; '));
+        error.name = 'CharacterModificationValidationError';
+        error.validation = validation;
+        return { ok: false, formation: current, error };
+      }
+      validated.push([key, validation.modification]);
+    }
+    for (const [key, normalized] of validated) {
+      if (isEmptyCharacterModification(normalized)) delete next[key];
+      else next[key] = normalized;
+    }
+    options.characterModifications = next;
+    const formation = this.save({ ...current, options });
+    const error = getLastStorageFailure();
+    const writeError = error?.scope === 'formation' && error?.op === 'write' ? error : null;
+    return { ok: !writeError, formation, error: writeError };
   },
   setSlot(index, characterId) {
     const i = Math.floor(index); if (i < 0 || i >= LINEUP_TOTAL) return this.load();

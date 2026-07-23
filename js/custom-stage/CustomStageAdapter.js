@@ -15,6 +15,7 @@
 //     isInBcuHealthWindow yields (min < hp <= max). Disabled → castle_0=100, castle_1=0 → always.
 //   * enemyId must be the numeric BCU enemy id (buildStageEnemyUnitDefs filters enemyId >= 0).
 import { normalizeCustomStage } from './CustomStageSchema.js';
+import { attachCustomStageCharacterModificationToRow } from './CustomStageCharacterModificationAdapter.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from '../battle/BattleFrameClock.js';
 
 const FPS = 1000 / BCU_BATTLE_TIMER_PERIOD_MS;
@@ -31,7 +32,7 @@ function toMs(frames) {
 
 // Build one enemyRow from a custom spawn, mirroring StageDefinitionLoader.parse row fields that the
 // runtime + enemy resolver read.
-function buildEnemyRow(spawn, rowIndex) {
+function buildEnemyRow(stage, spawn, rowIndex) {
   const enemyId = toNum(spawn.enemyId, null);
   const count = Math.max(0, Math.floor(toNum(spawn.count, 0)));
   // respawn disabled + infinite count would flood every frame; coerce to a single spawn instead.
@@ -89,7 +90,7 @@ function buildEnemyRow(spawn, rowIndex) {
     negativeSpawnFlag: 0
   };
 
-  return {
+  const row = {
     rowIndex,
     runtimeOrderIndex: rowIndex,
     sourceOrder: rowIndex,
@@ -138,6 +139,7 @@ function buildEnemyRow(spawn, rowIndex) {
     spawnWorldX: null,
     warnings: []
   };
+  return attachCustomStageCharacterModificationToRow(stage, spawn, row);
 }
 
 export function buildCustomStageDefinition(rawStage) {
@@ -147,7 +149,7 @@ export function buildCustomStageDefinition(rawStage) {
   const sourcePath = `custom:${stage.id}`;
 
   const enemyRows = stage.spawns
-    .map((spawn, index) => buildEnemyRow(spawn, index))
+    .map((spawn, index) => buildEnemyRow(stage, spawn, index))
     .filter((row) => Number.isFinite(row.enemyId) && row.enemyId >= 0);
   // Reassign contiguous rowIndex after filtering unresolved enemies so unitDef mapping (by rowIndex)
   // and RNG first-frame draw order stay consistent.
@@ -190,7 +192,7 @@ export function buildCustomStageDefinition(rawStage) {
     stageId,
     customStageId: stage.id,
     customStageName: stage.name,
-    customStageLimits: stage.limits,
+    customStageLimits: { ...stage.limits },
     enemyRows,
     activeEnemies: enemyRows,
     enemies: enemyRows
@@ -200,6 +202,7 @@ export function buildCustomStageDefinition(rawStage) {
     coordinateMode: out.coordinateMode,
     sourceType: out.sourceType,
     sourcePath,
+    customStageLimits: { ...stage.limits },
     stageLen: out.stageLen,
     enemyBaseHp: out.enemyBaseHp,
     bgId: out.bgId,

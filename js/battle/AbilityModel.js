@@ -107,11 +107,14 @@ export class AbilityModel {
   }
 
   static buildStatsAbilityModel({ stats = null, rawValues = null, kind = 'unknown', bcuCombatModel = null } = {}) {
-    const attackAbilities = this.buildAttackAbilities(Array.isArray(stats?.attackHits) ? stats.attackHits : []);
+    const attackHits = Array.isArray(stats?.attackHits) ? stats.attackHits : [];
+    const attackAbilities = this.buildAttackAbilities(attackHits);
     const traits = bcuCombatModel?.traits
       ? { ...bcuCombatModel.traits, source: bcuCombatModel.source, mappingStatus: 'bcu-csv-mapped' }
       : this.normalizeTraits(stats?.traits || stats?.traitFlags || null);
-    const procSemantic = buildBcuProcSemantic(bcuCombatModel?.proc || {}, bcuCombatModel?.ability?.flags || {});
+    const globalProc = bcuCombatModel?.proc || {};
+    const globalFlags = bcuCombatModel?.ability?.flags || {};
+    const procSemantic = buildBcuProcSemantic(globalProc, globalFlags);
     const semantic = {
       ...this.createEmptySemantic(),
       ...(bcuCombatModel?.ability?.flags || {}),
@@ -119,9 +122,31 @@ export class AbilityModel {
       metal: !!bcuCombatModel?.traits?.flags?.metal
     };
     for (const ability of attackAbilities) {
-      ability.semantic = { ...ability.semantic, ...semantic };
+      const hit = attackHits.find((item) => item?.hitIndex === ability.hitIndex)
+        || attackHits[ability.hitIndex]
+        || null;
+      const hitFlags = {
+        ...globalFlags,
+        ...(hit?.characterModificationAbilityFlags || {})
+      };
+      const hitProc = hit?.bcuProcIsComplete === true
+        ? (hit?.bcuProc || {})
+        : globalProc;
+      const hitSemantic = {
+        ...semantic,
+        ...hitFlags,
+        ...buildBcuProcSemantic(hitProc, hitFlags)
+      };
+      ability.semantic = { ...ability.semantic, ...hitSemantic };
       ability.mappingStatus = bcuCombatModel ? ABILITY_STATUS.SEMANTIC_MAPPED : ability.mappingStatus;
-      ability.notes = bcuCombatModel ? ['bcu-combat-model-semantic-mapped'] : ability.notes;
+      ability.notes = bcuCombatModel
+        ? [
+          'bcu-combat-model-semantic-mapped',
+          ...(hit?.bcuProcIsComplete === true || hit?.characterModificationAbilityFlags
+            ? ['character-modification-hit-override-applied']
+            : [])
+        ]
+        : ability.notes;
     }
     return {
       version: 'AbilityModel.v4-bcu-proc-semantic',

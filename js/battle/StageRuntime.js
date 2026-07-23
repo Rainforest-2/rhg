@@ -82,6 +82,11 @@ export class StageRuntime {
     this.bossMusicHpThresholdPercent = toFiniteNumber(stageDefinition?.bossMusicHpThresholdPercent, null);
     this.mapId = stageDefinition?.mapId ?? null;
     this.stageId = stageDefinition?.stageId ?? null;
+    this.customStageLimits = stageDefinition?.runtime?.customStageLimits
+      ? { ...stageDefinition.runtime.customStageLimits }
+      : stageDefinition?.customStageLimits
+        ? { ...stageDefinition.customStageLimits }
+        : null;
     // BCU EStage crown magnification: the selected crown (星/冠) scales every enemy row's HP & ATK
     // magnification by stars[star]/100. ★1 (100%) leaves rows untouched. The UI resolves the map's
     // stars[] + selected crown into a percentage and passes it as options.crownMagnificationPercent.

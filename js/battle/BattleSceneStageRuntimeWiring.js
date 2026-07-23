@@ -1,6 +1,10 @@
 import { BattleScene } from './BattleScene.js';
 import { StageRuntimeSceneAdapter } from './StageRuntimeSceneAdapter.js';
 import { resolveBcuStageHealthWindow } from './BcuStageSpawnRuntime.js';
+import {
+  evaluateBcuStageSpawnGroup,
+  hasConfiguredBcuStageGroups
+} from './BcuStageGroupRuntime.js';
 
 function getStageSpawnRows(scene) {
   const runtimeRows = scene?.stageSpawnRuntime?.rows?.map((state) => state?.row).filter(Boolean);
@@ -87,6 +91,21 @@ export function applyCommittedSpawnLayers(scene) {
   return applied;
 }
 
+function assertRuntimeCrownParity(legacyRuntime, adapterRuntime) {
+  if (!legacyRuntime || !adapterRuntime) return;
+  const legacyPercent = Number(legacyRuntime.crownMagnificationPercent);
+  const adapterPercent = Number(adapterRuntime.crownMagnificationPercent);
+  const legacyStar = Number(legacyRuntime.crownStarIndex);
+  const adapterStar = Number(adapterRuntime.crownStarIndex);
+  if ((Number.isFinite(legacyPercent) && Number.isFinite(adapterPercent) && legacyPercent !== adapterPercent)
+      || (Number.isFinite(legacyStar) && Number.isFinite(adapterStar) && legacyStar !== adapterStar)) {
+    const error = new Error(`Stage runtime crown mismatch: legacy=${legacyPercent}/${legacyStar} adapter=${adapterPercent}/${adapterStar}`);
+    error.name = 'StageRuntimeCrownMismatchError';
+    error.detail = { legacyPercent, adapterPercent, legacyStar, adapterStar };
+    throw error;
+  }
+}
+
 function wrapMethod(proto, name, wrapper) {
   const original = proto?.[name];
   if (typeof original !== 'function') return false;
@@ -102,15 +121,26 @@ function wireBattleSceneStageRuntime() {
   if (!proto || proto.__stageRuntimeSceneAdapterWired) return;
 
   wrapMethod(proto, 'buildStageRuntime', (original) => function buildStageRuntimeWithAdapter(stageDefinition, options = {}) {
-    const runtime = StageRuntimeSceneAdapter.build(this, stageDefinition || this?.stage?.definition, options);
+    const definition = stageDefinition || this?.stage?.definition;
     const legacyRuntime = original.apply(this, arguments);
+    const resolvedOptions = {
+      ...options,
+      crownMagnificationPercent: options.crownMagnificationPercent
+        ?? legacyRuntime?.crownMagnificationPercent
+        ?? this?.options?.crownMagnificationPercent,
+      crownStarIndex: options.crownStarIndex
+        ?? legacyRuntime?.crownStarIndex
+        ?? this?.options?.crownStarIndex
+    };
+    const runtime = StageRuntimeSceneAdapter.build(this, definition, resolvedOptions);
+    assertRuntimeCrownParity(legacyRuntime, runtime);
     const mergedRuntime = {
       ...(legacyRuntime || {}),
       ...runtime,
-      warnings: [
+      warnings: [...new Set([
         ...(legacyRuntime?.warnings || []),
         ...(runtime?.warnings || [])
-      ]
+      ])]
     };
     if (this.stage) this.stage.runtime = mergedRuntime;
     initializeStageSpawnKillCounters(this, { force: true });
@@ -124,6 +154,9 @@ function wireBattleSceneStageRuntime() {
       enemyBaseHp: mergedRuntime.enemyBaseHp,
       trail: mergedRuntime.trail === true,
       triggerDomain: mergedRuntime.triggerDomain,
+      crownMagnificationPercent: mergedRuntime.crownMagnificationPercent,
+      crownStarIndex: mergedRuntime.crownStarIndex,
+      crownSelectionSource: mergedRuntime.crownSelectionSource,
       maxEnemyCount: mergedRuntime.maxEnemyCount,
       effectiveMaxEnemyCount: mergedRuntime.effectiveMaxEnemyCount,
       enemySpawnWorldX: mergedRuntime.enemySpawnWorldX,
@@ -143,10 +176,13 @@ function wireBattleSceneStageRuntime() {
   proto.getStageSpawnTickContext = function getStageSpawnTickContext(overrides = {}) {
     return StageRuntimeSceneAdapter.buildSpawnTickContext(this, overrides);
   };
-  proto.isStageSpawnGroupAllowed = proto.isStageSpawnGroupAllowed || function isStageSpawnGroupAllowed(args = {}) {
-    const group = Number(args?.group);
-    if (!Number.isFinite(group) || group === 0) return true;
-    return true;
+  proto.hasStageSpawnGroupPolicy = function hasStageSpawnGroupPolicy() {
+    return hasConfiguredBcuStageGroups(this?.stage?.runtime || {});
+  };
+  proto.isStageSpawnGroupAllowed = function isStageSpawnGroupAllowed(args = {}) {
+    const decision = evaluateBcuStageSpawnGroup(this, args);
+    this.lastStageSpawnGroupDecision = decision;
+    return decision.allowed;
   };
 
   wrapMethod(proto, 'tickStageEnemySpawn', (original) => function tickStageEnemySpawnWithRuntimeContext(...args) {
@@ -188,6 +224,8 @@ function wireBattleSceneStageRuntime() {
         spawned.stageSpawnId = row?.spawnId ?? null;
         spawned.stageSpawnSourceEnemyId = row?.sourceEnemyId ?? row?.row?.sourceEnemyId ?? null;
         spawned.stageSpawnRawEnemyId = row?.rawEnemyId ?? row?.row?.rawEnemyId ?? null;
+        spawned.stageSpawnGroup = Number(row?.group ?? row?.row?.group ?? 0) || 0;
+        spawned.group = spawned.stageSpawnGroup;
         spawned.stageSpawnLayerMin = row?.layerMin ?? row?.row?.layerMin ?? row?.frontLayer ?? row?.row?.frontLayer ?? null;
         spawned.stageSpawnLayerMax = row?.layerMax ?? row?.row?.layerMax ?? row?.backLayer ?? row?.row?.backLayer ?? null;
         const layerMin = Number(spawned.stageSpawnLayerMin);
@@ -214,6 +252,9 @@ function wireBattleSceneStageRuntime() {
         stageLen: debug.stageLen ?? this.stage?.runtime?.stageLen ?? null,
         baseFrontX: debug.baseFrontX ?? null,
         bossFlag: debug.bossFlag ?? row?.bossFlag ?? row?.row?.bossFlag ?? null,
+        group: row?.group ?? row?.row?.group ?? 0,
+        groupPolicySource: context?.groupPolicySource ?? null,
+        groupDecision: this.lastStageSpawnGroupDecision || null,
         fallbackReason: debug.fallbackReason ?? null,
         trail: context?.trail === true,
         triggerDomain: context?.triggerDomain ?? null,
@@ -243,4 +284,8 @@ function wireBattleSceneStageRuntime() {
 
 wireBattleSceneStageRuntime();
 
-export { wireBattleSceneStageRuntime, initializeStageSpawnKillCounters };
+export {
+  wireBattleSceneStageRuntime,
+  initializeStageSpawnKillCounters,
+  assertRuntimeCrownParity
+};

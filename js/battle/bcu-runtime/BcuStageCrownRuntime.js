@@ -61,26 +61,34 @@ export function resolveCrownMagnificationPercent(starIndex, stars = BCU_DEFAULT_
   return idx === 0 ? 100 : Math.max(0, pct);
 }
 
-// BCU EStage: multi = rowMagnification * mul. Apply the crown multiplier (percent/100) to a single
-// magnification percentage, rounding like BCU's float math collapses on read (Math.round to keep
-// integer percents stable for downstream stat scaling).
+// BCU EStage preserves this product as a float until enemy construction. Do not round or truncate the
+// intermediate percentage: HP performs a final Java int cast and attack performs Math.round separately.
 export function applyCrownToMagnification(rowMagnificationPercent, crownPercent) {
   const base = toFinite(rowMagnificationPercent, 100);
   const mul = toFinite(crownPercent, 100) / 100;
-  if (mul === 1) return base;
-  return Math.round(base * mul);
+  return base * mul;
 }
 
-// Returns a shallow-cloned enemy row with HP/ATK magnifications scaled by the crown multiplier.
-// A 100% crown (★1) returns the row unchanged. Boss base rows are scaled too (they carry the same
-// magnification fields), matching EStage.base()'s `multi = data.multiple * mul`.
+// Returns a shallow-cloned enemy row with exact combined HP/ATK percentages. Raw row percentages and
+// explicit factors are retained so downstream construction can mirror BCU's per-field conversion order.
 export function applyCrownToEnemyRow(row, crownPercent) {
   if (!row || toFinite(crownPercent, 100) === 100) return row;
   const out = { ...row };
-  if (row.magnification != null) out.magnification = applyCrownToMagnification(row.magnification, crownPercent);
-  if (row.hpMagnification != null) out.hpMagnification = applyCrownToMagnification(row.hpMagnification, crownPercent);
-  if (row.attackMagnification != null) out.attackMagnification = applyCrownToMagnification(row.attackMagnification, crownPercent);
-  out.crownMagnificationPercent = toFinite(crownPercent, 100);
+  const crownMagnificationPercent = toFinite(crownPercent, 100);
+  const rawMagnification = toFinite(row.magnification, 100);
+  const rawHpMagnification = toFinite(row.hpMagnification ?? row.magnification, 100);
+  const rawAttackMagnification = toFinite(row.attackMagnification ?? row.magnification, 100);
+
+  out.rawRowMagnificationPercent = rawMagnification;
+  out.rawRowHpMagnificationPercent = rawHpMagnification;
+  out.rawRowAttackMagnificationPercent = rawAttackMagnification;
+  out.magnification = applyCrownToMagnification(rawMagnification, crownMagnificationPercent);
+  out.hpMagnification = applyCrownToMagnification(rawHpMagnification, crownMagnificationPercent);
+  out.attackMagnification = applyCrownToMagnification(rawAttackMagnification, crownMagnificationPercent);
+  out.hpMagnificationFactor = out.hpMagnification / 100;
+  out.attackMagnificationFactor = out.attackMagnification / 100;
+  out.crownMagnificationPercent = crownMagnificationPercent;
+  out.crownAppliedExactlyOnce = true;
   return out;
 }
 

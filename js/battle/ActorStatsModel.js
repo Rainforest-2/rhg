@@ -9,6 +9,66 @@ export function scalePositive(value, percent, min = 0) {
   return Math.max(min, Math.round((n * percent) / 100));
 }
 
+// BCU enemy HP and HP-derived proc values use a Java int cast after the full float multiplier.
+export function scaleEnemyHp(value, percent, min = 0) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  return Math.max(min, Math.trunc((n * percent) / 100));
+}
+
+// BCU AtkModelEntity uses Math.round(rawAttack * atkMagnif) for enemy attack values.
+export function scaleEnemyAttack(value, percent, min = 0) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  return Math.max(min, Math.round((n * percent) / 100));
+}
+
+function cloneNested(source, key) {
+  const value = source?.[key];
+  return value && typeof value === 'object' ? { ...value } : value;
+}
+
+function scaleHpDerivedProc(proc, hpPercent) {
+  if (!proc || typeof proc !== 'object') return proc;
+  const out = { ...proc };
+  for (const key of ['barrier', 'BARRIER']) {
+    const item = cloneNested(proc, key);
+    if (item && Number.isFinite(Number(item.health))) item.health = scaleEnemyHp(item.health, hpPercent, 0);
+    out[key] = item;
+  }
+  for (const key of ['demonShield', 'DEMONSHIELD']) {
+    const item = cloneNested(proc, key);
+    if (item && Number.isFinite(Number(item.hp))) item.hp = scaleEnemyHp(item.hp, hpPercent, 0);
+    out[key] = item;
+  }
+  for (const key of ['damageCut', 'DMGCUT', 'damageCap', 'DMGCAP']) {
+    const item = cloneNested(proc, key);
+    if (item && item?.type?.magnif === true && Number.isFinite(Number(item.dmg))) {
+      item.dmg = scaleEnemyHp(item.dmg, hpPercent, 0);
+    }
+    out[key] = item;
+  }
+  for (const key of ['hpRegen', 'HPREGEN']) {
+    const item = cloneNested(proc, key);
+    if (item && item.scaleWithBuff === true && Number.isFinite(Number(item.amount))) {
+      item.amount = scaleEnemyHp(item.amount, hpPercent, 0);
+    }
+    out[key] = item;
+  }
+  return out;
+}
+
+function buildScaledCombatOverrides(baseStats, hpPercent) {
+  const baseCombatModel = baseStats?.bcuCombatModel;
+  const baseProc = baseCombatModel?.proc || baseStats?.bcuProc || baseStats?.abilityModel?.proc || null;
+  const scaledProc = scaleHpDerivedProc(baseProc, hpPercent);
+  if (!scaledProc) return {};
+  const bcuCombatModel = baseCombatModel ? { ...baseCombatModel, proc: scaledProc } : baseCombatModel;
+  const abilityModel = baseStats?.abilityModel ? { ...baseStats.abilityModel, proc: scaledProc } : baseStats?.abilityModel;
+  const abilities = baseStats?.abilities ? { ...baseStats.abilities, proc: scaledProc } : baseStats?.abilities;
+  return { bcuCombatModel, bcuProc: scaledProc, abilityModel, abilities };
+}
+
 export class ActorStatsModel {
   static normalizePercent(value, fallback = 100) {
     return normalizePercent(value, fallback);
@@ -62,13 +122,20 @@ export class ActorStatsModel {
       enemyId: modifiers.enemyId ?? baseStats?.source?.enemyId ?? null,
       magnification,
       hpMagnification: hpMag,
-      attackMagnification: atkMag
+      attackMagnification: atkMag,
+      hpMagnificationFactor: hpMag / 100,
+      attackMagnificationFactor: atkMag / 100,
+      crownMagnificationPercent: modifiers.crownMagnificationPercent ?? null,
+      conversion: {
+        hp: 'Math.trunc(baseHp * hpMagnification / 100)',
+        attack: 'Math.round(baseAttack * attackMagnification / 100)'
+      }
     };
 
     const scaledHits = Array.isArray(baseStats.attackHits)
       ? baseStats.attackHits.map((hit, index) => {
         const baseDamage = Number.isFinite(hit?.baseDamage) ? hit.baseDamage : (Number.isFinite(hit?.damage) ? hit.damage : null);
-        const scaledDamage = scalePositive(hit?.damage, atkMag, 0);
+        const scaledDamage = scaleEnemyAttack(hit?.damage, atkMag, 0);
         return {
           ...hit,
           baseDamage,
@@ -79,8 +146,9 @@ export class ActorStatsModel {
       })
       : baseStats.attackHits;
 
-    const scaledHp = scalePositive(baseStats.hp, hpMag, 1);
-    const scaledDamage = scalePositive(baseStats.damage, atkMag, 0);
+    const scaledHp = scaleEnemyHp(baseStats.hp, hpMag, 1);
+    const scaledDamage = scaleEnemyAttack(baseStats.damage, atkMag, 0);
+    const scaledCombatOverrides = buildScaledCombatOverrides(baseStats, hpMag);
 
     const source = {
       ...(baseStats.source || {}),
@@ -89,7 +157,9 @@ export class ActorStatsModel {
         rowIndex: stageMagnification.rowIndex,
         magnification: stageMagnification.magnification,
         hpMagnification: stageMagnification.hpMagnification,
-        attackMagnification: stageMagnification.attackMagnification
+        attackMagnification: stageMagnification.attackMagnification,
+        hpMagnificationFactor: stageMagnification.hpMagnificationFactor,
+        attackMagnificationFactor: stageMagnification.attackMagnificationFactor
       },
       baseHp: baseStats.hp,
       baseDamage: baseStats.damage
@@ -108,6 +178,8 @@ export class ActorStatsModel {
       magnification: stageMagnification.magnification,
       hpMagnification: stageMagnification.hpMagnification,
       attackMagnification: stageMagnification.attackMagnification,
+      hpConversion: stageMagnification.conversion.hp,
+      attackConversion: stageMagnification.conversion.attack,
       attackHits: Array.isArray(scaledHits)
         ? scaledHits.map((hit, index) => ({
           hitIndex: Number.isFinite(hit?.hitIndex) ? hit.hitIndex : index,
@@ -121,6 +193,7 @@ export class ActorStatsModel {
 
     const finalStats = {
       ...baseStats,
+      ...scaledCombatOverrides,
       baseHp: baseStats.hp,
       baseDamage: baseStats.damage,
       hp: scaledHp,

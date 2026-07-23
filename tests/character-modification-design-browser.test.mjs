@@ -144,7 +144,7 @@ async function readDesignMetrics(page) {
           action: button.dataset.cmAction || button.textContent?.trim().slice(0, 30),
           rect: rect(button)
         }))
-        .filter((entry) => entry.rect && (entry.rect.width < 40 || entry.rect.height < 40)),
+        .filter((entry) => entry.rect && (entry.rect.width < 44 || entry.rect.height < 44)),
       documentOverflow: root.scrollWidth - innerWidth,
       dialogOverflow: dialog ? dialog.scrollWidth - dialog.clientWidth : null
     };
@@ -174,7 +174,7 @@ function assertDesignMetrics(metrics, { context }) {
     metrics.utility.backgroundColor,
     `${context}: primary and utility actions have clear hierarchy`
   );
-  assert.deepEqual(metrics.undersizedButtons, [], `${context}: interactive buttons keep usable targets`);
+  assert.deepEqual(metrics.undersizedButtons, [], `${context}: interactive buttons keep 44px targets`);
   assert.ok(metrics.documentOverflow <= 2, `${context}: no document horizontal overflow`);
   assert.ok(metrics.dialogOverflow <= 2, `${context}: no dialog horizontal overflow`);
 }
@@ -220,7 +220,7 @@ test('formation and custom-stage status editors share a professional visual cont
       fullPage: false
     });
 
-    await page.locator('[data-cm-action="cancel"]').click();
+    await page.locator('.cm-footer [data-cm-action="cancel"]').click();
     await page.waitForSelector('.cm-editor', { state: 'detached', timeout: 10000 });
     await page.locator('.formation-tuning-close').click();
     await page.waitForSelector('.formation-tuning-overlay.is-open', {
@@ -261,14 +261,16 @@ test('formation and custom-stage status editors share a professional visual cont
       const layerRect = layer?.getBoundingClientRect();
       const inputRect = input?.getBoundingClientRect();
       return {
-        footerDisplay: style?.display,
+        footerVisibility: style?.visibility,
+        footerPointerEvents: style?.pointerEvents,
         footerHeight: footer?.getBoundingClientRect().height,
         layerTop: layerRect?.top,
         inputTop: inputRect?.top,
         inputBottom: inputRect?.bottom
       };
     });
-    assert.equal(keyboardMetrics.footerDisplay, 'none', 'keyboard: footer actions are completely hidden');
+    assert.equal(keyboardMetrics.footerVisibility, 'hidden', 'keyboard: footer actions are visually removed');
+    assert.equal(keyboardMetrics.footerPointerEvents, 'none', 'keyboard: footer actions cannot receive input');
     assert.equal(keyboardMetrics.footerHeight, 0, 'keyboard: footer reserves no space');
     assert.ok(keyboardMetrics.layerTop >= -1 && keyboardMetrics.layerTop <= 48, 'keyboard: editor is not shifted excessively upward');
     assert.ok(

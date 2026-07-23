@@ -11,6 +11,7 @@ import '../../ui/NyankoUiBehaviorPatch.js';
 import '../../ui/ProductionCardDogIconFitPatch.js';
 import '../../ui/FormationEditorBcuUnitLevelPatch.js';
 import '../../ui/FormationCharacterModificationPatch.js';
+import '../../ui/CharacterModificationUsabilityPatch.js';
 import '../../ui/FormationCharacterTuningMobileLandscapePatch.js';
 import '../../ui/FormationCustomStageBattlePatch.js';
 import '../../ui/FormationStageDifficultyPatch.js';

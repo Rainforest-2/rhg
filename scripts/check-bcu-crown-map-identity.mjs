@@ -6,26 +6,34 @@ const a = { packId: '000100', mapId: 10, name: '同名マップ', crownCount: 2,
 const b = { packId: '000200', mapId: 20, name: '同名マップ', crownCount: 3, stars: [100, 200, 300] };
 const c = { packId: '000300', mapId: 30, name: '同倍率別名', crownCount: 2, stars: [100, 150] };
 const d = { packId: '000400', mapId: 40, name: '同倍率別名', crownCount: 2, stars: [100, 150] };
+const oldSnapshot = { packId: '000050', mapId: 10, name: '旧pack同一map', crownCount: 2, stars: [100, 125] };
 const index = {
   schemaVersion: 2,
-  entries: [a, b, c, d],
+  entries: [oldSnapshot, a, b, c, d],
   byKey: {
+    '000050:10': oldSnapshot,
     '000100:10': a,
     '000200:20': b,
     '000300:30': c,
     '000400:40': d
   },
   byMapId: {
-    '10': { entries: [a] },
+    '10': { entries: [oldSnapshot, a] },
     '20': { entries: [b] },
     '30': { entries: [c] },
     '40': { entries: [d] }
   },
   byName: {
+    '旧pack同一map': { entries: [oldSnapshot], ambiguous: false, signatures: ['2:100,125'] },
     '同名マップ': { entries: [a, b], ambiguous: true, signatures: ['2:100,150', '3:100,200,300'] },
     '同倍率別名': { entries: [c, d], ambiguous: false, signatures: ['2:100,150'] }
   }
 };
+
+const exactOld = resolveMapCrownData(index, { packId: '000050', mapId: 10, name: '旧pack同一map' });
+assert.deepEqual(exactOld.stars, [100, 125]);
+assert.equal(exactOld.source, 'crown-index-byKey');
+assert.equal(exactOld.resolvedPackId, '000050');
 
 const exactA = resolveMapCrownData(index, { packId: '000100', mapId: 10, name: '同名マップ' });
 assert.deepEqual(exactA.stars, [100, 150]);
@@ -39,6 +47,11 @@ assert.equal(exactB.source, 'crown-index-byKey');
 const numeric = resolveMapCrownData(index, { mapId: 20, name: '同名マップ' });
 assert.deepEqual(numeric.stars, [100, 200, 300]);
 assert.equal(numeric.source, 'crown-index-byMapId');
+
+const ambiguousMapId = resolveMapCrownData(index, { mapId: 10 });
+assert.deepEqual(ambiguousMapId.stars, [100]);
+assert.equal(ambiguousMapId.source, 'crown-index-ambiguous');
+assert.match(ambiguousMapId.unresolvedReason, /conflicting-crown-signatures/);
 
 const ambiguous = resolveMapCrownData(index, { name: '同名マップ' });
 assert.deepEqual(ambiguous.stars, [100]);
@@ -59,6 +72,11 @@ assert.equal(missing.source, 'single-crown-default');
 const generator = readFileSync('scripts/build-bcu-stage-crown-index.mjs', 'utf8');
 assert.ok(generator.includes('schemaVersion: 2'));
 assert.ok(generator.includes('ambiguous: signatures.length > 1'));
+assert.ok(generator.includes('const byExactIdentity = new Map()'));
+assert.ok(generator.includes('byExactIdentity.set(`${row.packId}:${row.mapId}`, row)'));
+assert.ok(!generator.includes('const logicalKey = `${row.mapId}|${signature(row)}|${row.name}`'));
+assert.ok(!generator.includes('String(row.packId) > String(previous.packId)'),
+  'generator must not discard older exact pack identities in favor of the newest snapshot');
 assert.ok(!generator.includes('e.crownCount > cur.crownCount'), 'generator must not select the largest same-name map');
 
 const ui = readFileSync('js/ui/FormationStageDifficultyPatch.js', 'utf8');

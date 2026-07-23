@@ -4,10 +4,11 @@
 // BCU hit effects, then damage/proc/lifecycle runtime wrappers.
 import '../../battle/BattleUnifiedDamageDebugPatch.js';
 import '../../battle/BattleCriticalEffectPatch.js';
-// BCU AB_METALIC (metal-by-ability) crit-cap for dog-player attackers; sole
-// wrapper of DamageAbilityResolver.resolve, so its position is order-free.
+// Normalize unit/enemy Metallic classification before the single base critical roll.
 import '../../battle/DamageAbilityResolverMetalAbiPatch.js';
 import '../../battle/BattleBcuStrictConfigPatch.js';
+// Trail parsing must wrap the base parser before negative-first-spawn post-processing.
+import '../../battle/StageDefinitionTrailParityPatch.js';
 import '../../battle/StageDefinitionNegativeSpawnPatch.js';
 import '../../battle/BattleActorBcuKbTargetPatch.js';
 // BCU Entity.processProcs parity: defines BattleActor.applyBcuProc (P_STOP/P_SLOW/

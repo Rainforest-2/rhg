@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import { FIXED_DATE, comparePackId, loadManifest, writeJson } from './bcu-semantic-utils.mjs';
+import { getBcuStageBackgroundId } from '../js/battle/BcuStageCsvLayout.js';
 
 const BASE_PACK_ID = '000001';
 
@@ -24,10 +25,7 @@ function parseCsvRows(text) {
     .map((line) => line.split(',').map((x) => x.trim()));
 }
 function parseStageBgId(text) {
-  const rows = parseCsvRows(text);
-  const metaRow = rows[1] || [];
-  const bgId = Number(metaRow[4]);
-  return Number.isFinite(bgId) ? bgId : null;
+  return getBcuStageBackgroundId(text);
 }
 function sortedRows(rows) {
   return [...(rows || [])].sort((a, b) => comparePackId(a.packId, b.packId) || String(a.sourceFile).localeCompare(String(b.sourceFile)));

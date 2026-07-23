@@ -21,16 +21,14 @@ npm run agent:find -- --topic "<area>"
 
 ## 現在の優先順位
 
-open Issue と `docs/bcu-migration-status.md` を基準にします。
+現行コード、merged PR、active Issue、`docs/bcu-migration-status.md` を基準にします。
 
-1. Boot を部分 semantics のまま続行させない: #9
-2. stale な stage-runtime check を修復し safe suite に戻す: #10
-3. Damage / trait の source-backed defect を解消する: #12, #13, #14
-4. Stage / spawn / semantic index の defect を解消する: #6, #7, #17, #18
-5. `currentLayer` に基づく paint order を修正する: #8
-6. 上記の correctness 回帰を閉じた後に visual acceptance と performance cleanup を進める
+1. #22: crown/star 選択値を production `StageRuntime` へ一度だけ正しく伝播する
+2. #20: crown倍率を途中の整数percentへ丸めず、BCUの最終変換順を維持する
+3. #23: ranking/trail overtime、spawn停止、dojo score、score-limit outcome を実装する
+4. 上記 correctness 項目を閉じた後に visual acceptance と performance cleanup を進める
 
-Issue を修正したら、Issue 本文の再現条件と BCU 根拠に対応する regression check を追加し、関連する status 行を同じ変更で更新します。
+PR #21 は #6–#18 の実装修正と回帰チェックを main に導入済みです。Issueページのstateだけを見て旧欠陥を再実装せず、`105411944e64cecc06ec89a53a3ad6e038846902` 以降のコードと `check-open-issue-regressions` を確認してください。
 
 ## 変更フロー
 
@@ -93,7 +91,7 @@ npm run check:character-modification:ui
 
 ## ドキュメント更新
 
-- 高水準 status / open issue summary: `docs/bcu-migration-status.md`
+- 高水準 status / active correctness summary: `docs/bcu-migration-status.md`
 - 能力/proc matrix: `docs/ability-logic/current-ability-parity-status.md`
 - 証拠不足・互換性境界: `docs/ability-logic/bcu-unresolved-evidence-blockers.md`
 - 実ブラウザ結果: `docs/ability-logic/bcu-visual-review-checklist.md`

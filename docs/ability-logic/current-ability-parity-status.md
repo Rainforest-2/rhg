@@ -1,19 +1,19 @@
 # BCU 能力・ライフサイクル整合性の現状
 
 更新日: 2026-07-24  
-確認した `main`: `d43f53ea25cc589c16d3b39a5be08913d1ea32f0`
+確認した `main`: `aa6ed5eb82324be4a745a8d85237d4d68775424d`
 
-この文書は ability / proc / damage / lifecycle の状態行だけを所有します。project 全体の open Issue と優先順位は `../bcu-migration-status.md` を参照してください。
+この文書は ability / proc / damage / lifecycle の状態行だけを所有します。project 全体の active correctness 項目と優先順位は `../bcu-migration-status.md` を参照してください。
 
 ## 状態語彙
 
 - `verified-owner`: BCU source owner、現行 JS owner、focused check がある。
-- `known-defect (partial)`: source-backed な open Issue があり、現行 runtime を完了扱いできない。
+- `known-defect (partial)`: source-backed な active Issue があり、現行 runtime を完了扱いできない。
 - `human-visual-review-needed`: logic owner/check はあるが、見た目が未受け入れ。
 - `evidence-blocked`: source/holder/asset/fixture が不足する。
 - `out-of-scope`: 現在の project scope に含まれない。
 
-広い `verified-owner` は個別 open Issue を上書きしません。
+広い `verified-owner` は個別 active Issue を上書きしません。
 
 ## Current runtime coverage
 
@@ -31,10 +31,13 @@
 | SUMMON | `human-visual-review-needed` | proc-object loader と spawn owner はある。entry anim/placement/layer/cleanup 未受け入れ。 |
 | Castle guard / special `EEnemy` base | `verified-owner` | 通常 castle-owned attack は作らない。特殊 base は enemy actor owner。 |
 | Cat cannon / BASE_WALL | `human-visual-review-needed` | runtime owner はある。non-basic sweep/travel と BASE_WALL visual が未受け入れ。 |
-| Metal defender semantics | `known-defect (partial)` | #12 が target Metal と `AB_METALIC` を混同し、#13 が critical を二重抽選する。 |
-| `Trait.targetType/targetForms` compatibility | `known-defect (partial)` | #14 により fully target-traited 判定から Demon / Relic が欠落する。 |
-| Battle deterministic layer RNG | `known-defect (partial)` | #6 により CopRand-derived spawn layer が actor に適用されず `Math.random()` で再抽選される。 |
-| Actor layer rendering | `known-defect (partial)` | #8 により placement の `currentLayer` と paint order が一致しない。 |
+| Metal defender / critical semantics | `verified-owner` | PR #21でenemy Metalとunit `AB_METALIC`を分離し、一回のcritical RNG drawへ統合。 |
+| `Trait.targetType/targetForms` compatibility | `verified-owner` | PR #21でfully target-traitedへDemon/Relicを追加し、loader checkを更新。 |
+| Battle deterministic layer RNG / KC | `verified-owner` | CopRand committed layerとplayer-unit death KC semanticsをPR #21で接続。 |
+| Actor layer rendering | `verified-owner` | `currentLayer`優先、scene insertion順tie-breakのstable paint orderをPR #21で導入。 |
+| Crown selection propagation | `known-defect (partial)` | #22によりadapter runtimeが選択crown/starを100%/★1で上書きする。 |
+| Crown multiplier precision | `known-defect (partial)` | #20によりrow×crownを途中の整数percentへ丸める。 |
+| Ranking/trail overtime and score | `known-defect (partial)` | #23によりtimeLimit/row scoreはparsed metadataのままで、overtime・spawn停止・score ownerがない。 |
 | Wallet / cost / respawn / modifier | `verified-owner` | BCU 式・registry owner はある。Issue が見つかった場合は個別行へ降格する。 |
 | Sound / boss music / SE voice pool | `human-visual-review-needed` | resolver/runtime owner はある。実機多重再生と切替は未受け入れ。 |
 | BCU save / lineup import-export | `out-of-scope` | RHG 自己永続化と RHG JSON だけを所有する。 |
@@ -50,7 +53,8 @@ Character modification は BCU holder ではありません。通常最終値へ
 
 ## 更新規則
 
-- open Issue が存在する領域を `verified-owner` だけで完了扱いしない。
+- active Issue が存在する領域を `verified-owner` だけで完了扱いしない。
+- merged fixと回帰チェックがmainへ入ったら、Issue stateの遅延だけを理由に`known-defect`を残さない。
 - Issue 修正時は regression check と同じ変更で該当行を更新する。
 - browser/実機比較なしに `accepted` を追加しない。
 - source evidence の詳細は `bcu-ability-source-evidence.md`、証拠不足は `bcu-unresolved-evidence-blockers.md` に置く。

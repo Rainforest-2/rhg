@@ -2,39 +2,48 @@
 
 更新日: 2026-07-24  
 対象: `Rainforest-2/rhg`  
-確認した `main`: `d43f53ea25cc589c16d3b39a5be08913d1ea32f0`
+確認した `main`: `aa6ed5eb82324be4a745a8d85237d4d68775424d`
 
 ## 結論
 
-semantic ZIP、主要 battle runtime、character modification、RHG 内部永続化は広く実装されています。一方、2026-07-24 時点で source-backed な correctness / reliability Issue が残っています。したがって、現在の状態を「見た目確認だけが残る」「確認済み Critical 欠陥なし」とは表現しません。
+semantic ZIP、主要 battle runtime、character modification、RHG 内部永続化は広く実装されています。PR #21（merge commit `105411944e64cecc06ec89a53a3ad6e038846902`）により、旧 #6–#18 の boot、verification、Metal/critical、trait、stage spawn/KC、trail parsing、background index、actor layer order の実装差分は修正され、回帰チェックが追加されました。
 
-この文書が project 全体の current status と open Issue 分類の一次情報源です。個別能力は `ability-logic/current-ability-parity-status.md`、証拠不足は `ability-logic/bcu-unresolved-evidence-blockers.md`、見た目結果は `ability-logic/bcu-visual-review-checklist.md` が所有します。
+2026-07-24 時点で現在確認されている未解決の correctness 項目は #20、#22、#23 です。したがって「見た目確認だけが残る」とは表現しません。
 
-## 現在の open Issue
+この文書が project 全体の current status と active correctness 分類の一次情報源です。個別能力は `ability-logic/current-ability-parity-status.md`、証拠不足は `ability-logic/bcu-unresolved-evidence-blockers.md`、見た目結果は `ability-logic/bcu-visual-review-checklist.md` が所有します。
+
+## Active correctness items
 
 | 優先 | Issue | 分野 | 現在の欠陥 |
 |---:|---:|---|---|
-| P0 | #9 | Boot reliability | 必須 battle patch group の import/installer 失敗を記録しても boot を続行し、部分 semantics で戦闘を開始できる |
-| P0 | #10 | Verification | `check-battle-scene-stage-runtime-wiring` が stale assertion で false-fail し、safe suite から外れている |
-| P1 | #12 | Damage / Metal | Metal を対象にする unit trait と、被弾側 `AB_METALIC` を混同する |
-| P1 | #13 | Damage / RNG | `AB_METALIC` fallback が critical を二重抽選し、確率と deterministic RNG 消費を変える |
-| P1 | #14 | Trait compatibility | fully target-traited 判定から Demon / Relic が欠落する |
-| P1 | #6 | Stage spawn RNG | CopRand で決めた spawn layer を捨て、actor 側で `Math.random()` により再抽選する |
-| P1 | #7 | Stage KC | dead actor 自身の spawn row だけを減算し、BCU の global unit-death / castle HP window semantics と異なる |
-| P1 | #17 | Stage parser | ranking/trail stage を通常の castle-HP percentage stage として解釈する |
-| P1 | #18 | Semantic background index | castle row のない main-story stage でも `rows[1]` を header として読み、background id を誤る |
-| P2 | #8 | Renderer | actor paint order が `currentLayer` を使わず、lane depth を反転できる |
+| P0 | #22 | Stage crown wiring | UIから渡された crown/star 選択が adapter runtime の100%/★1既定値で上書きされ、production battleへ届かない |
+| P1 | #20 | Crown precision | row倍率 × crown倍率を途中で整数percentへ丸め、BCUが保持するfloat multiplierと最終HP/ATKがずれる |
+| P1 | #23 | Ranking lifecycle / score | trail認識後の overtime、stage activity/spawn停止、dojo score、score-limit outcome にruntime ownerがない |
 
-Issue の詳細、BCU source、再現条件、期待動作は各 Issue 本文を一次情報源とします。この表は Issue 本文を複製せず、修正順を示すための要約です。
+Issue の詳細、BCU source、再現条件、期待動作は各 Issue 本文を一次情報源とします。この表は本文を複製せず、修正順を示す要約です。
+
+## 2026-07-24 resolved batch
+
+PR #21で次を修正済みです。
+
+- #9: required battle patch group を fail closed に変更
+- #10: stale source-string check を behavior-level stage-runtime check に置換し、main checkへ接続
+- #12 / #13: enemy Metalとunit `AB_METALIC`を正しく分類し、critical RNGを一回だけ抽選
+- #14: fully target-traited 判定へ Demon / Relic を追加
+- #6: CopRandのcommitted spawn layerをactorへ適用し、`Math.random()`再抽選を除去
+- #7: player-unit deathから全KC rowをBCU health window付きで通知
+- #17: trail/ranking stageのtrigger domainとbase damage windowを復元
+- #18: castle row有無を共有CSV layout resolverで判定
+- #8: actor paint orderを`currentLayer`優先のstable orderへ変更
+
+Issueページがopen表示のままでも、これらを現在の欠陥として再掲する前に、mainの修正と `scripts/check-open-issue-regressions.mjs` を確認します。
 
 ## 実行順
 
-1. #9 を直し、必要な patch graph が欠けた状態で boot を成功扱いしない。
-2. #10 を直して stage-runtime wiring check を安全な suite へ戻す。
-3. #12 / #13 / #14 を同じ damage/trait audit として修正し、確率・RNG draw count・trait boundary を固定する。
-4. #6 / #7 / #17 / #18 を stage loader/runtime/index pipeline として順に修正する。
-5. #8 を `currentLayer` placement と paint order の同一契約として修正する。
-6. correctness Issue を閉じた後に、未受け入れ visual 項目と performance cleanup を進める。
+1. #22 を修正し、production `PreviewApp -> BattleScene -> StageRuntimeSceneAdapter` で選択 crown/star を一度だけ保持する。
+2. #20 を修正し、row/crown multiplierを最終stat構築境界までfloat精度で維持する。
+3. #23 を修正し、BCU logic frame基準のovertime、spawn停止、kill score、score-limit outcomeを実装する。
+4. correctness項目を閉じた後に、未受け入れvisual項目とperformance cleanupを進める。
 
 詳細な完了条件は `ability-logic/bcu-parity-codex-workplan.md` を参照してください。
 
@@ -47,13 +56,14 @@ Issue の詳細、BCU source、再現条件、期待動作は各 Issue 本文を
 - wave / mini-wave / surge / mini-surge / blast runtime
 - status、KB、death、standard zombie revive、warp、burrow、summon、spirit
 - castle guard、特殊 `EEnemy` base、basic/non-basic cat cannon runtime
+- deterministic stage spawn layer、unit-death KC、trail trigger domain
 - combo / orb / treasure / talent / PCoin、wallet / cost / respawn
 - formation / custom stage / mobile UI
 - RHG character modification v1、formation v5、custom stage v2、pack v1
 - RHG 内部 storage migration と失敗可視化
 - BCU sound id / stage music / SE voice pool
 
-Issue #6–#18 は上記の一部に具体的な defect があることを示すため、広い `code-complete-candidate` ラベルを個別 Issue より優先しません。
+#20/#22/#23 は上記のstage/crown/ranking領域に具体的なdefectがあることを示すため、広い完了ラベルを個別Issueより優先しません。
 
 ## Character modification
 
@@ -84,9 +94,9 @@ BCU/RHG normal final stats
 
 - Issue の BCU source fact と current JS owner を明示する
 - 回帰を再現する focused check を追加する
-- deterministic RNG の draw order/count を変える場合は明示的に固定する
-- parser/index 修正では実データ fixture と generated artifact の両方を確認する
-- renderer 修正では logical layer、visual Y、paint order を分けて検証する
+- multiplier修正では中間precisionと最終cast/round orderを分けて検証する
+- stage runtime修正ではlegacy/adapterの二重構築とmerge precedenceを確認する
+- ranking修正ではlogic-frame boundary、spawn RNG非消費、kill mode、score formulaを固定する
 - 必要な adjacent check、`npm test`、`npm run build` を実行する
 - Issue を閉じる変更と同じバッチで、この文書と該当 focused status を更新する
 

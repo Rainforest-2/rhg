@@ -36,6 +36,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p tmp/character-modification-ui
+          cp scripts/check-character-modification-ui.mjs tmp/character-modification-ui/check-character-modification-ui.mjs
           npm run verify 2>&1 | tee tmp/character-modification-ui/verify.log
 
       - name: Build

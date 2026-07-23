@@ -1,88 +1,101 @@
-// Regression: AB_METALIC (metal-by-ability, no metal trait) must apply the BCU metal
-// crit-cap / metalKiller block exactly ONCE.
-//
-// The base DamageAbilityResolver.isTargetMetalForDamage already treats an AB_METALIC
-// target as metal for every NON dog-player attacker, so it runs the full metal block.
-// DamageAbilityResolverMetalAbiPatch exists only to cover the dog-player attacker case
-// (where the base keys metal off the trait flag, not AB_METALIC). Before the guard, the
-// patch also fired for enemy-side attackers on top of the base, doubling the metalKiller
-// health-percent burst (700 -> 1200) and re-rolling crit (desyncing the RNG stream).
+// Regression: BCU body classification and critical RNG ownership for Metallic.
+// - Enemy bodies are metal only from the enemy Metal trait.
+// - Unit bodies are metal only from AB_METALIC.
+// - The base DamageAbilityResolver owns exactly one critical roll.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { DamageAbilityResolver } from '../js/battle/DamageAbilityResolver.js';
 import '../js/battle/DamageAbilityResolverMetalAbiPatch.js';
 
 const AB_METALIC = 16;
-const rngPass = () => 0; // critical roll always succeeds (prob 100)
 
-function metalTarget(side) {
-  return { side, hp: 1000, traitFlags: {}, bcuCombatModel: { ability: { abi: AB_METALIC } } };
-}
-function metalAttacker(side) {
-  return { side, bcuCombatModel: { proc: { critical: { prob: 100 }, metalKiller: { mult: 50 } } } };
+function attacker(side, proc = {}) {
+  return { side, bcuCombatModel: { kind: side === 'dog-player' ? 'unit' : 'enemy', proc } };
 }
 
-function countMetalKiller(result) {
-  const details = result.appliedDetails || result.steps || [];
-  return details.filter((d) => d && d.key === 'metalKiller').length;
+function target({ side, kind, abi = 0, traits = [], targetTraits = [] }) {
+  const flags = Object.fromEntries(traits.map((trait) => [trait, true]));
+  return {
+    side,
+    hp: 1000,
+    traitFlags: flags,
+    bcuCombatModel: {
+      kind,
+      ability: { abi },
+      traits: { list: traits, flags },
+      targetTraits: { list: targetTraits, flags: Object.fromEntries(targetTraits.map((trait) => [trait, true])) }
+    }
+  };
 }
 
-// Enemy attacker: the base resolver owns AB_METALIC; the patch must NOT fire again.
-const enemy = DamageAbilityResolver.resolve({
-  attacker: metalAttacker('cat-enemy'),
-  target: metalTarget('dog-player'),
-  baseDamage: 100,
-  targetType: 'actor',
-  event: {},
-  context: { random: rngPass }
-});
-assert.equal(enemy.finalDamage, 700, `enemy attacker AB_METALIC should be 200 crit + 500 metalKiller = 700 (single application), got ${enemy.finalDamage}`);
-assert.equal(enemy.applied.metalKiller, true, 'enemy attacker metalKiller should apply once');
-assert.equal(countMetalKiller(enemy), 1, `metalKiller must be applied exactly once, got ${countMetalKiller(enemy)}`);
-assert.ok(!(enemy.debug && enemy.debug.metalAbiPatch), 'metal-abi patch must not run for enemy-side attacker');
+function resolve({ source, victim, baseDamage = 100, random = () => 0 }) {
+  return DamageAbilityResolver.resolve({
+    attacker: source,
+    target: victim,
+    baseDamage,
+    targetType: 'actor',
+    event: {},
+    context: { random }
+  });
+}
 
-// Dog-player attacker: the base ignores AB_METALIC (trait-keyed), so the patch supplies
-// the single metal block. Same BCU-correct total as the enemy path.
-const player = DamageAbilityResolver.resolve({
-  attacker: metalAttacker('dog-player'),
-  target: metalTarget('cat-enemy'),
-  baseDamage: 100,
-  targetType: 'actor',
-  event: {},
-  context: { random: rngPass }
-});
-assert.equal(player.finalDamage, 700, `dog-player attacker AB_METALIC should total 700 (single application), got ${player.finalDamage}`);
-assert.equal(player.applied.metalKiller, true, 'dog-player metalKiller should apply once');
-assert.ok(player.debug && player.debug.metalAbiPatch, 'metal-abi patch should run for the dog-player attacker case');
-
-// Force the base resolver's non-metal roll to fail and the AB_METALIC patch roll
-// to pass so this exercises the patch's multiplier path, not the base path.
-const criticalDraws = [0.99, 0];
-const modifiedCritical = DamageAbilityResolver.resolve({
-  attacker: {
-    side: 'dog-player',
-    bcuCombatModel: { proc: { critical: { prob: 50, mult: 500 } } }
-  },
-  target: metalTarget('cat-enemy'),
-  baseDamage: 100,
-  targetType: 'actor',
-  event: {},
-  context: { random: () => criticalDraws.shift() ?? 0 }
-});
-assert.equal(modifiedCritical.finalDamage, 500, 'AB_METALIC patch must use modified CRIT.mult=500');
-assert.equal(modifiedCritical.debug?.metalAbiPatch, true);
-assert.equal(
-  modifiedCritical.appliedDetails.find((item) => item.key === 'critical')?.mult,
-  500,
-  'AB_METALIC patch diagnostics expose the modified critical multiplier'
-);
-
-// Runtime wiring: the patch is self-installing, but only if something imports it.
-// It must stay in the battle-core boot group or the browser never applies it.
+// A unit that merely targets Metal is not a Metallic defender.
 {
-  const { readFileSync } = await import('node:fs');
+  let draws = 0;
+  const result = resolve({
+    source: attacker('cat-enemy', { critical: { prob: 0 }, metalKiller: { mult: 50 } }),
+    victim: target({ side: 'dog-player', kind: 'unit', targetTraits: ['metal'] }),
+    random: () => { draws += 1; return 0; }
+  });
+  assert.equal(result.finalDamage, 100, 'Metal-targeting unit without AB_METALIC must take ordinary damage');
+  assert.equal(result.applied.metalKiller, false, 'metal killer must not apply to a merely Metal-targeting unit');
+  assert.equal(draws, 0, '0% critical must consume no RNG');
+  assert.equal(result.debug?.metalBodyClassification, 'unit-non-metallic');
+}
+
+// A unit with AB_METALIC is metal and the failed critical roll occurs exactly once.
+{
+  let draws = 0;
+  const result = resolve({
+    source: attacker('dog-player', { critical: { prob: 50 } }),
+    victim: target({ side: 'cat-enemy', kind: 'unit', abi: AB_METALIC }),
+    random: () => { draws += 1; return 0.99; }
+  });
+  assert.equal(result.finalDamage, 1, 'non-critical damage to an AB_METALIC unit must be capped to 1');
+  assert.equal(draws, 1, 'AB_METALIC resolution must roll critical exactly once');
+  assert.equal(result.debug?.criticalRollOwner, 'DamageAbilityResolver.resolve-single-roll');
+}
+
+// Modified CRIT.mult is applied by the same single roll.
+{
+  let draws = 0;
+  const result = resolve({
+    source: attacker('dog-player', { critical: { prob: 50, mult: 500 } }),
+    victim: target({ side: 'cat-enemy', kind: 'unit', abi: AB_METALIC }),
+    random: () => { draws += 1; return 0; }
+  });
+  assert.equal(result.finalDamage, 500, 'AB_METALIC critical must use modified CRIT.mult=500');
+  assert.equal(draws, 1, 'successful AB_METALIC critical must still use one RNG draw');
+}
+
+// Enemy Metal trait remains the enemy-side body classifier.
+{
+  let draws = 0;
+  const result = resolve({
+    source: attacker('dog-player', { critical: { prob: 50 }, metalKiller: { mult: 50 } }),
+    victim: target({ side: 'cat-enemy', kind: 'enemy', traits: ['metal'] }),
+    random: () => { draws += 1; return 0.99; }
+  });
+  assert.equal(result.finalDamage, 501, 'enemy Metal trait must receive 1 damage plus one metal-killer burst');
+  assert.equal(draws, 1, 'enemy Metal critical must roll once');
+  assert.equal(result.debug?.metalBodyClassification, 'enemy-metal-trait');
+}
+
+// Runtime wiring: the pre-classification patch must remain in the core group.
+{
   const group = readFileSync('js/boot/groups/battleCorePatches.js', 'utf8');
   assert.ok(group.includes('DamageAbilityResolverMetalAbiPatch.js'),
-    'battleCorePatches boot group must import DamageAbilityResolverMetalAbiPatch.js (runtime wiring)');
+    'battleCorePatches must import DamageAbilityResolverMetalAbiPatch.js');
 }
 
 console.log('check-bcu-metal-abi-double-apply: OK');

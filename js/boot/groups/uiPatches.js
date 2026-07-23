@@ -31,6 +31,7 @@ import '../../ui/FormationStageNameBcuPatch.js';
 import '../../ui/CharacterModificationDesignSystemPatch.js';
 import '../../ui/CharacterModificationEmbeddedViewportContractPatch.js';
 import '../../ui/CharacterModificationInteractionContractPatch.js';
+import '../../ui/CharacterModificationMobileInformationArchitecturePatch.js';
 import '../../ui/CharacterModificationReducedMotionContractPatch.js';
 // Must stay last: its motion wrappers need to run outermost around the patched prototype.
 import '../../ui/FormationPremiumMotionPatch.js';

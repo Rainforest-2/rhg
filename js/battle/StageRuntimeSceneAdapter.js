@@ -1,25 +1,28 @@
 import { buildStageRuntime as createStageRuntime } from './StageRuntime.js';
+import { hasConfiguredBcuStageGroups } from './BcuStageGroupRuntime.js';
 
 function toFiniteNumber(value, fallback = null) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function defaultIsGroupAllowed() {
-  return true;
-}
-
 function resolveSpawnGroupAllowed(scene, overrides = {}) {
   if (typeof overrides?.isGroupAllowed === 'function') {
     return { fn: overrides.isGroupAllowed, source: 'overrides.isGroupAllowed' };
   }
-  if (typeof scene?.isStageSpawnGroupAllowed === 'function') {
-    return { fn: scene.isStageSpawnGroupAllowed.bind(scene), source: 'scene.isStageSpawnGroupAllowed' };
+  const runtime = scene?.stage?.runtime || {};
+  const scenePolicyConfigured = typeof scene?.hasStageSpawnGroupPolicy === 'function'
+    ? scene.hasStageSpawnGroupPolicy()
+    : hasConfiguredBcuStageGroups(runtime);
+  if (scenePolicyConfigured && typeof scene?.isStageSpawnGroupAllowed === 'function') {
+    return { fn: scene.isStageSpawnGroupAllowed.bind(scene), source: 'scene.isStageSpawnGroupAllowed-bcu-scgroup' };
   }
-  if (typeof scene?.stage?.runtime?.isGroupAllowed === 'function') {
-    return { fn: scene.stage.runtime.isGroupAllowed, source: 'stage.runtime.isGroupAllowed' };
+  if (typeof runtime?.isGroupAllowed === 'function') {
+    return { fn: runtime.isGroupAllowed, source: 'stage.runtime.isGroupAllowed' };
   }
-  return { fn: defaultIsGroupAllowed, source: 'default-allow' };
+  // Keep this null. BcuStageSpawnRuntime then emits group-gating-not-enforced for
+  // meaningful nonzero groups instead of an always-true callback hiding the gap.
+  return { fn: null, source: 'missing-configured-group-policy' };
 }
 
 function getConfigMaxEnemyCount(scene, fallback = 15) {
@@ -35,10 +38,20 @@ export class StageRuntimeSceneAdapter {
       options.fallbackMaxEnemyCount,
       getConfigMaxEnemyCount(scene, 15)
     );
+    const crownMagnificationPercent = options.crownMagnificationPercent
+      ?? scene?.options?.crownMagnificationPercent
+      ?? scene?.stage?.crownMagnificationPercent
+      ?? stageDefinition?.crownMagnificationPercent;
+    const crownStarIndex = options.crownStarIndex
+      ?? scene?.options?.crownStarIndex
+      ?? scene?.stage?.crownStarIndex
+      ?? stageDefinition?.crownStarIndex;
     const runtime = createStageRuntime(stageDefinition || { ok: false, warnings: ['missing-stage-definition'] }, {
       groundY: toFiniteNumber(options.groundY, toFiniteNumber(scene?.groundY, 330)),
       playerBaseHp: toFiniteNumber(options.playerBaseHp, 1000),
-      maxEnemyCount: fallbackMaxEnemyCount
+      maxEnemyCount: fallbackMaxEnemyCount,
+      crownMagnificationPercent,
+      crownStarIndex
     });
 
     if (!applyStageDefinition.enabled || !applyStageDefinition.applyMaxEnemyCount) {
@@ -66,6 +79,13 @@ export class StageRuntimeSceneAdapter {
     runtime.timeLimit = toFiniteNumber(stageDefinition?.timeLimit ?? stageDefinition?.runtime?.timeLimit, 0);
     runtime.rawEnemyBaseHp = toFiniteNumber(stageDefinition?.rawEnemyBaseHp ?? stageDefinition?.runtime?.rawEnemyBaseHp, null);
     runtime.triggerDomain = runtime.trail ? 'accumulated-enemy-base-damage' : 'enemy-base-hp-percent';
+    runtime.crownSelectionSource = options.crownMagnificationPercent != null || options.crownStarIndex != null
+      ? 'adapter-options'
+      : (scene?.options?.crownMagnificationPercent != null || scene?.options?.crownStarIndex != null
+        ? 'scene.options'
+        : (scene?.stage?.crownMagnificationPercent != null || scene?.stage?.crownStarIndex != null
+          ? 'scene.stage'
+          : 'stage-definition-or-default'));
     return runtime;
   }
 

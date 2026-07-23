@@ -17,6 +17,8 @@ import '../../ui/CharacterModificationViewportStabilityPatch.js';
 import '../../ui/FormationCharacterTuningMobileLandscapePatch.js';
 import '../../ui/FormationCustomStageBattlePatch.js';
 import '../../ui/FormationStageDifficultyPatch.js';
+// Default ★1 with no query includes every map; avoid full crown-index resolution during that render.
+import '../../ui/FormationStageDefaultCrownFastPathPatch.js';
 // Depends on FormationStageDifficultyPatch's scoped flag; it used to poll from index.html.
 import '../../ui/FormationStageDifficultyFilterControlPatch.js';
 import '../../ui/FormationUiRegressionFixPatch.js';

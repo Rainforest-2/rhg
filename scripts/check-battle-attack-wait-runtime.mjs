@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { BattleAttackTimeline } from '../js/battle/BattleAttackTimeline.js';
 import { BCU_BATTLE_TIMER_PERIOD_MS } from '../js/battle/BattleFrameClock.js';
+import { applyCharacterModification } from '../js/character-modification/CharacterModificationResolver.js';
 
 const timelinePath = 'js/battle/BattleAttackTimeline.js';
 const inspectorPath = 'js/battle/DebugBattleInspector.js';
@@ -39,6 +40,29 @@ function makeActor() {
     setAnimation(animId, role) { this.currentAnimId = animId; this.activeAnimRole = role; },
     applyCurrentAnimationFrame() {}
   };
+}
+
+function actorWithModifiedLoop(loopCount) {
+  const actor = makeActor();
+  actor.rawStats = applyCharacterModification(actor.rawStats, {
+    schemaVersion: 1,
+    attackCycle: { loopCount }
+  }, {
+    source: 'formation'
+  });
+  return actor;
+}
+
+function resolveSingleHit(actor, nowMs) {
+  BattleAttackTimeline.beginAttack(actor, {
+    nowMs,
+    target: { label: 'target' },
+    targetType: 'actor'
+  });
+  actor.lastSceneTimeMs = nowMs + 9 * frameMs;
+  const hits = BattleAttackTimeline.getDueHitEvents(actor, actor.lastSceneTimeMs);
+  assert.equal(hits.length, 1, 'single-hit loop test actor must resolve one final hit');
+  BattleAttackTimeline.markHitResolved(actor, hits[0].key);
 }
 
 // BCU contract (Entity.java): waitTime = data.getTBA() is assigned when the final hit
@@ -85,6 +109,41 @@ assert.equal(BattleAttackTimeline.getAttackWaitState(actor, 0).ready, true, 'wai
 BattleAttackTimeline.beginAttack(actor, { nowMs: 5000, target: { label: 'target' }, targetType: 'actor' });
 assert.equal(actor.state, 'attack');
 assert.equal(actor.bcuWaitTimeFrames, 0);
+
+// 6. An unmodified normal actor keeps the existing infinite-loop compatibility
+// guard even when its raw BCU row contains a positive loop count.
+const unmodifiedRawLoop = makeActor();
+unmodifiedRawLoop.rawStats.loop = 3;
+assert.equal(BattleAttackTimeline.getBcuAttackLoopInitial(unmodifiedRawLoop), -1);
+resolveSingleHit(unmodifiedRawLoop, 6000);
+assert.equal(unmodifiedRawLoop.bcuAttacksLeft, -1);
+assert.equal(BattleAttackTimeline.canStartAttack(unmodifiedRawLoop), true);
+assert.equal(unmodifiedRawLoop.bcuAttackLoopSource, 'normal-actor-infinite-attack-loop');
+
+// 7. Explicit loopCount uses BCU Entity.AtkManager semantics:
+// attacksLeft=getAtkLoop, attack start requires attacksLeft!=0, and positive
+// counts decrement after each completed attack.
+const zeroLoop = actorWithModifiedLoop(0);
+assert.equal(BattleAttackTimeline.getBcuAttackLoopInitial(zeroLoop), 0);
+assert.equal(BattleAttackTimeline.canStartAttack(zeroLoop), false, 'explicit loopCount=0 cannot start an attack');
+
+const infiniteLoop = actorWithModifiedLoop(-1);
+assert.equal(BattleAttackTimeline.getBcuAttackLoopInitial(infiniteLoop), -1);
+resolveSingleHit(infiniteLoop, 7000);
+assert.equal(infiniteLoop.bcuAttacksLeft, -1, 'explicit loopCount=-1 remains infinite');
+assert.equal(BattleAttackTimeline.canStartAttack(infiniteLoop), true);
+
+const finiteLoop = actorWithModifiedLoop(3);
+for (let cycle = 0; cycle < 3; cycle += 1) {
+  assert.equal(BattleAttackTimeline.canStartAttack(finiteLoop), true);
+  resolveSingleHit(finiteLoop, 8000 + cycle * 1000);
+  assert.equal(finiteLoop.bcuAttacksLeft, 2 - cycle);
+}
+assert.equal(BattleAttackTimeline.canStartAttack(finiteLoop), false, 'explicit loopCount=3 exhausts after three attacks');
+assert.equal(
+  finiteLoop.bcuAttackLoopSource,
+  'character-modification-absolute-DataEntity.getAtkLoop'
+);
 
 const timelineText = fs.readFileSync(timelinePath, 'utf8');
 const inspectorText = fs.readFileSync(inspectorPath, 'utf8');

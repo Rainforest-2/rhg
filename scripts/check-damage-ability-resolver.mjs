@@ -14,14 +14,25 @@ if (r.enabled !== true || r.finalDamage !== 100 || r.multiplier !== 1) fail('def
 if (!r.notes.includes('no-bcu-damage-ability-applied')) fail('default no-op note missing');
 
 r = DamageAbilityResolver.resolve({
-  attacker: { bcuCombatModel: { proc: { critical: { prob: 100, mult: 200 } } } },
+  attacker: { bcuCombatModel: { proc: { critical: { prob: 100 } } } },
   target: { traitFlags: {} },
   baseDamage: 100,
   targetType: 'actor',
   event: {},
   context: { random: rngPass }
 });
-if (r.finalDamage !== 200 || !r.applied.critical) fail('critical proc did not apply from BCU proc model');
+if (r.finalDamage !== 200 || !r.applied.critical) fail('critical without mult must preserve the BCU 200% default');
+
+r = DamageAbilityResolver.resolve({
+  attacker: { bcuCombatModel: { proc: { critical: { prob: 100, mult: 500 } } } },
+  target: { traitFlags: {} },
+  baseDamage: 100,
+  targetType: 'actor',
+  event: {},
+  context: { random: rngPass }
+});
+if (r.finalDamage !== 500 || !r.applied.critical) fail('critical must use the modified proc.critical.mult value');
+if (r.appliedDetails.find((item) => item.key === 'critical')?.mult !== 500) fail('critical debug details must expose the applied multiplier');
 
 r = DamageAbilityResolver.resolve({
   attacker: { bcuCombatModel: { proc: { critical: { prob: 50, mult: 200 } } } },

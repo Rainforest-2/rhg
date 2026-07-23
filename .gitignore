@@ -4,6 +4,7 @@
 tmp/ui-polish-screens/
 tmp/agent-scratch/
 tmp/playwright-*/
+tmp/character-modification-ui/
 __probe*.mjs
 scratch-*.sh
 /playwright-report/

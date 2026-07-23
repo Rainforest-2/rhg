@@ -30,7 +30,6 @@ for (const e of index.entries) {
   assert.equal(e.stars.length, e.crownCount, 'stars length matches crownCount');
   assert.equal(e.stars[0], 100, '★1 magnification is always 100');
 }
-// Legend stage "伝説の始まり" is a 4-crown map at 100/150/200/300.
 const legend = index.entries.find((e) => e.name.includes('伝説の始まり'));
 assert.ok(legend, 'legend first map present in crown index');
 assert.deepEqual(legend.stars, [100, 150, 200, 300], 'legend map has 4 crowns at 100/150/200/300');
@@ -56,7 +55,6 @@ assert.equal(resolveCrownMagnificationPercent(0, stars), 100, '★1 -> 100%');
 assert.equal(resolveCrownMagnificationPercent(1, stars), 150, '★2 -> 150%');
 assert.equal(resolveCrownMagnificationPercent(2, stars), 200, '★3 -> 200%');
 assert.equal(resolveCrownMagnificationPercent(3, stars), 300, '★4 -> 300%');
-// Out-of-range / single-crown clamps to the available crowns; ★1 baseline forced to 100.
 assert.equal(resolveCrownMagnificationPercent(9, stars), 300, 'over-max crown clamps to highest');
 assert.equal(resolveCrownMagnificationPercent(2, [100]), 100, 'single-crown map always ★1=100%');
 assert.equal(clampCrownIndex(9, stars), 3, 'clampCrownIndex caps at last index');
@@ -88,8 +86,37 @@ assert.equal(crownDataHasStar(byName, 4), true, '4-crown maps match the ★4 sel
 const legendUiLabel = resolveMapCrownData(index, { name: '伝説の始まり', mapId: 0, mapColcId: 0 });
 assert.equal(legendUiLabel.crownCount, 4, 'bare legend UI map label resolves to the 4-crown Legend Story map');
 assert.equal(crownDataHasStar(legendUiLabel, 2), true, 'Legend Story maps remain visible under the ★2 filter');
-const trueLegendByAddress = resolveMapCrownData(index, { name: '真・伝説のはじまり', mapId: 0, mapColcId: 13 });
-assert.equal(trueLegendByAddress.crownCount, 4, 'mapColcId/mapId resolves true-legend global Map_option ids such as 13000');
+
+// Numeric identity belongs to a specific pack revision. Pass the authoritative owner,
+// as FormationStageDifficultyPatch now does, rather than selecting an arbitrary snapshot.
+const trueLegendEntry = index.entries.find((entry) =>
+  Number(entry.mapId) === 13000
+    && JSON.stringify(entry.stars) === JSON.stringify([100, 150, 200, 300]));
+assert.ok(trueLegendEntry, 'true-legend 13000 exact owner exists');
+const trueLegendByAddress = resolveMapCrownData(index, {
+  name: '真・伝説のはじまり',
+  packId: trueLegendEntry.packId,
+  mapId: 0,
+  mapColcId: 13
+});
+assert.equal(trueLegendByAddress.crownCount, 4, 'pack owner + mapColcId/mapId resolves the authored 13000 record');
+assert.equal(trueLegendByAddress.resolvedPackId, trueLegendEntry.packId);
+
+const trueLegendCandidates = index.byMapId?.['13000']?.entries
+  || index.entries.filter((entry) => Number(entry.mapId) === 13000);
+const trueLegendSignatures = new Set(trueLegendCandidates.map((entry) => JSON.stringify(entry.stars)));
+const trueLegendWithoutPack = resolveMapCrownData(index, {
+  name: '真・伝説のはじまり',
+  mapId: 0,
+  mapColcId: 13
+});
+if (trueLegendSignatures.size === 1) {
+  assert.equal(trueLegendWithoutPack.crownCount, 4, 'unowned numeric fallback is safe when all revisions agree');
+} else {
+  assert.equal(trueLegendWithoutPack.source, 'crown-index-ambiguous', 'conflicting revisions fail closed without a pack owner');
+  assert.deepEqual(trueLegendWithoutPack.stars, [100]);
+}
+
 const missing = resolveMapCrownData(index, { name: 'no-such-map-xyzzy' });
 assert.deepEqual(missing.stars, [100], 'absent map defaults to single ★1 crown');
 assert.deepEqual(crownStarsForData(missing), [1], 'maps without difficulty changes are searchable only as ★1');
@@ -115,7 +142,6 @@ assert.equal(star4.crownStarIndex, 3);
 assert.equal(star4.enemyRows[0].hpMagnification, 300, '★4 triples enemy 0 HP magnification');
 assert.equal(star4.enemyRows[1].hpMagnification, 600, '★4 triples enemy 1 HP magnification (200 -> 600)');
 assert.equal(star4.enemyRows[1].attackMagnification, 150, '★4 triples enemy 1 ATK magnification (50 -> 150)');
-// Original stageDefinition rows are untouched (source preserved).
 assert.equal(stageDef.enemyRows[0].hpMagnification, 100, 'crown scaling does not mutate the stage definition rows');
 
 console.log('check-bcu-stage-crown-parity: OK');

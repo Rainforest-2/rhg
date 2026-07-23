@@ -19,17 +19,17 @@ test('status tampering usability patch remains syntax-valid and UI-only', () => 
   assert.doesNotMatch(source, /FormationStore|BattleActorFactory|CharacterModificationResolver|CustomStageStore/);
 });
 
-test('user-facing language and compact command layout are guarded', () => {
+test('user-facing language and compact single-row commands are guarded', () => {
   assert.match(source, /ステータス改竄/);
   assert.match(source, /項目名で検索/);
   assert.match(source, /変更した項目だけ/);
   assert.match(source, /読み込む/);
   assert.match(source, /書き出す/);
   assert.match(source, /すべて元に戻す/);
-  assert.match(source, /cm-more-menu/);
-  assert.match(source, /toggle-more/);
-  assert.match(source, /変更した内容をすべて元に戻しますか/);
-  assert.match(source, /cm-field-title code\{display:none!important\}/);
+  assert.match(source, /cm-utility-command/);
+  assert.match(source, /grid-template-columns:auto auto auto auto minmax\(96px,140px\)/);
+  assert.match(source, /cm-field-title code,.cm-internal-id-hidden\{display:none!important\}/);
+  assert.match(source, /is-compact-unchanged/);
 });
 
 test('software keyboard handling is installed and cleaned up', () => {

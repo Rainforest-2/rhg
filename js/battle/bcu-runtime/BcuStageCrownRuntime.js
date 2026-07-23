@@ -150,20 +150,17 @@ function entriesForName(crownIndex, name) {
   return (crownIndex?.entries || []).filter((entry) => normalizeCrownLookupName(entry?.name) === normalized);
 }
 
-function entriesForMapIds(crownIndex, ids) {
-  const out = [];
-  for (const id of ids) {
-    const indexed = crownIndex?.byMapId?.[String(id)];
-    if (Array.isArray(indexed)) out.push(...indexed);
-    else if (Array.isArray(indexed?.entries)) out.push(...indexed.entries);
-    else out.push(...(crownIndex?.entries || []).filter((entry) => Number(entry?.mapId) === Number(id)));
-  }
-  return out;
+function entriesForMapId(crownIndex, id) {
+  const indexed = crownIndex?.byMapId?.[String(id)];
+  if (Array.isArray(indexed)) return indexed;
+  if (Array.isArray(indexed?.entries)) return indexed.entries;
+  return (crownIndex?.entries || []).filter((entry) => Number(entry?.mapId) === Number(id));
 }
 
-// Identity precedence is strict: exact pack+map, then numeric map identity, then
-// display name only when every matching candidate has the same crown signature.
-// Ambiguous identity fails closed to ★1; it never chooses the largest/newest map.
+// Identity precedence is strict: exact pack+map, composite numeric map identity,
+// local numeric map identity, then display name. A lower-priority id is examined
+// only when the higher-priority id has no candidates; candidate sets from distinct
+// identities are never merged into a synthetic ambiguity.
 export function resolveMapCrownData(crownIndex, { name = null, packId = null, mapId = null, mapColcId = null } = {}) {
   const requested = { name, packId, mapId, mapColcId };
   if (!crownIndex) return { crownCount: 1, stars: [100], source: 'single-crown-default', unresolvedReason: null, diagnostics: { requested } };
@@ -179,13 +176,19 @@ export function resolveMapCrownData(crownIndex, { name = null, packId = null, ma
     const ids = Number.isFinite(numericMapColcId)
       ? [(numericMapColcId * 1000) + numericMapId, numericMapId]
       : [numericMapId];
-    let candidates = entriesForMapIds(crownIndex, ids);
-    if (packId != null) {
-      const packCandidates = candidates.filter((entry) => String(entry?.packId) === String(packId));
-      if (packCandidates.length) candidates = packCandidates;
+    for (const id of ids) {
+      let candidates = entriesForMapId(crownIndex, id);
+      if (packId != null) {
+        const packCandidates = candidates.filter((entry) => String(entry?.packId) === String(packId));
+        if (packCandidates.length) candidates = packCandidates;
+      }
+      const numeric = resolveCandidateSet(candidates, 'crown-index-byMapId', {
+        requested,
+        attemptedIds: ids,
+        resolvedNumericId: id
+      });
+      if (numeric) return numeric;
     }
-    const numeric = resolveCandidateSet(candidates, 'crown-index-byMapId', { requested, ids });
-    if (numeric) return numeric;
   }
 
   const nameCandidates = entriesForName(crownIndex, name);

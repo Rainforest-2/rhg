@@ -21,6 +21,7 @@ const commands = [
   ['node', ['--check', 'scripts/build-bcu-background-index.mjs']],
   ['node', ['--check', 'scripts/build-bcu-stage-crown-index.mjs']],
   ['node', ['scripts/check-bcu-stage-layout-trail-parity.mjs']],
+  ['node', ['scripts/check-bcu-special-base-317.mjs']],
   ['node', ['scripts/check-bcu-stage-spawn-layer-kc-parity.mjs']],
   ['node', ['scripts/check-bcu-stage-crown-precision.mjs']],
   ['node', ['scripts/check-bcu-stage-group-crown-integration.mjs']],

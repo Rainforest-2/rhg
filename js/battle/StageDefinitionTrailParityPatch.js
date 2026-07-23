@@ -6,11 +6,67 @@ export const BCU_TRAIL_BASE_HP = 0x7fffffff;
 const CSV_C0 = 5;
 const CSV_M = 9;
 const CSV_M1 = 11;
+const SPECIAL_BASE_317 = 317;
 
 function finite(value, fallback = null) {
   if (value === undefined || value === null || String(value).trim() === '') return fallback;
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function patchCastle0(row, castle0, warning = null) {
+  if (!row) return row;
+  Object.assign(row, {
+    baseHpTrigger: castle0,
+    baseHpTriggerPercent: castle0,
+    baseHpTriggerLowerPercent: castle0
+  });
+  if (row.scdef) {
+    Object.assign(row.scdef, {
+      baseHpTriggerLowerPercent: castle0,
+      castle_0: castle0
+    });
+  }
+  if (row.scdefRaw?.internal) row.scdefRaw.internal.C0 = castle0;
+  if (warning && Array.isArray(row.warnings) && !row.warnings.includes(warning)) row.warnings.push(warning);
+  if (warning && Array.isArray(row.debug?.warnings) && !row.debug.warnings.includes(warning)) row.debug.warnings.push(warning);
+  return row;
+}
+
+function patchSpecialBase317(definition) {
+  if (!definition?.ok) return definition;
+  const rawBaseId = finite(definition.runtime?.headerRawRow?.[6], null);
+  if (rawBaseId !== SPECIAL_BASE_317) return definition;
+
+  const warning = 'special base 317 forced first CSV enemy row castle_0=0';
+  const collections = [
+    definition.enemyRows,
+    definition.activeEnemies,
+    definition.enemies,
+    definition.runtime?.enemyRows,
+    definition.runtime?.sourceEnemyRows
+  ];
+  const seen = new Set();
+  let patched = 0;
+  for (const rows of collections) {
+    if (!Array.isArray(rows)) continue;
+    for (const row of rows) {
+      if (!row || seen.has(row) || Number(row.originalCsvOrderIndex ?? row.sourceOrder) !== 0) continue;
+      seen.add(row);
+      patchCastle0(row, 0, warning);
+      patched += 1;
+    }
+  }
+
+  definition.debug = {
+    ...(definition.debug || {}),
+    specialBase317: {
+      source: 'BCU Stage.java: header base id 317 forces the first original CSV enemy row castle_0=0',
+      rawBaseId,
+      patchedRepresentations: patched
+    }
+  };
+  return definition;
 }
 
 function patchTrailRow(row) {
@@ -61,6 +117,7 @@ function patchTrailRow(row) {
 
 function patchDefinition(definition) {
   if (!definition?.ok) return definition;
+  patchSpecialBase317(definition);
   const timeLimit = Math.max(0, finite(definition.timeLimit ?? definition.runtime?.headerRawRow?.[7], 0));
   const trail = timeLimit !== 0;
   const rawEnemyBaseHp = finite(

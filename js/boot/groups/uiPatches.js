@@ -27,5 +27,7 @@ import '../../ui/FormationCustomStageBattleApplyHpConfigPatch.js';
 import '../../ui/FormationCustomStageBuilderPatch.js';
 import '../../ui/FormationCustomStageCharacterModificationUiPatch.js';
 import '../../ui/FormationStageNameBcuPatch.js';
+// Loaded after every host-specific UI patch so the shared editor owns its final visual boundary.
+import '../../ui/CharacterModificationDesignSystemPatch.js';
 // Must stay last: its motion wrappers need to run outermost around the patched prototype.
 import '../../ui/FormationPremiumMotionPatch.js';

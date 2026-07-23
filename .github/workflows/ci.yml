@@ -32,12 +32,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Check and test
-        shell: bash
-        run: |
-          set -o pipefail
-          mkdir -p tmp/character-modification-ui
-          cp scripts/check-character-modification-ui.mjs tmp/character-modification-ui/check-character-modification-ui.mjs
-          npm run verify 2>&1 | tee tmp/character-modification-ui/verify.log
+        run: npm run verify
 
       - name: Build
         run: npm run build

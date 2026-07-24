@@ -227,8 +227,14 @@ export class BcuStageSpawnRuntime {
         warnings: []
       };
     });
-    this.globalRespawnTime = bcuStageRespawnTime(this.stageRuntime, rand) - 1;
-    this.lastGlobalRespawnDebug = { source: this.spawnGateSource, initialized: this.globalRespawnTime };
+    // BCU StageBasis.respawnTime starts at the Java integer default (zero). The stage-wide
+    // cooldown is sampled only after a spawn is successfully committed, never at construction.
+    this.globalRespawnTime = 0;
+    this.lastGlobalRespawnDebug = {
+      source: this.spawnGateSource,
+      initialized: 0,
+      initializationSource: 'BCU StageBasis integer default; cooldown begins after successful commit'
+    };
   }
 
   tick(frameOrMs, context = {}) {

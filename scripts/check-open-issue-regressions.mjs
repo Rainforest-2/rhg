@@ -31,6 +31,7 @@ const commands = [
   ['node', ['scripts/check-bcu-stage-layout-trail-parity.mjs']],
   ['node', ['scripts/check-bcu-special-base-317.mjs']],
   ['node', ['scripts/check-bcu-stage-spawn-layer-kc-parity.mjs']],
+  ['node', ['scripts/check-bcu-stage-initial-global-respawn.mjs']],
   ['node', ['scripts/check-bcu-stage-crown-precision.mjs']],
   ['node', ['scripts/check-bcu-stage-group-crown-integration.mjs']],
   ['node', ['scripts/check-bcu-ranking-runtime.mjs']],

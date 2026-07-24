@@ -30,7 +30,6 @@ export function getBcuPlayerCapacityMax(scene) {
   const runtime = stage.runtime || {};
   const definition = stage.definition || {};
   const candidates = [
-    scene?.bcuPlayerCapacityMax,
     runtime.playerCapacityMax,
     runtime.maxCatSpawns,
     runtime.limit?.num,
@@ -42,7 +41,8 @@ export function getBcuPlayerCapacityMax(scene) {
     stage.playerCapacityMax,
     stage.maxCatSpawns,
     stage.limit?.num,
-    stage.stageLimit?.num
+    stage.stageLimit?.num,
+    scene?.bcuPlayerCapacityMax
   ];
   for (const candidate of candidates) {
     const resolved = positiveInt(candidate);

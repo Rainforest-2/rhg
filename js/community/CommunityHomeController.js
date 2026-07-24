@@ -7,17 +7,20 @@ function createElement(documentRef, tagName, className, text = null) {
 
 // Owns only the Phase 2 overlay. It does not route, fetch, or retain game state.
 export class CommunityHomeController {
-  constructor({ documentRef = document, mount, onPlay = null, browseAvailable = false } = {}) {
+  constructor({ documentRef = document, mount, onPlay = null } = {}) {
     if (!documentRef?.createElement) throw new TypeError('CommunityHomeController requires a document');
     if (!mount?.appendChild) throw new TypeError('CommunityHomeController requires a mount element');
     this.document = documentRef;
     this.mountTarget = mount;
     this.onPlay = typeof onPlay === 'function' ? onPlay : null;
-    this.browseAvailable = browseAvailable === true && false; // Phase 2 has no browse route: fail closed.
     this.root = null;
     this.playButton = null;
     this._playStarted = false;
-    this._onPlayClick = () => { void this.requestPlay(); };
+    this._onPlayClick = () => {
+      void this.requestPlay().catch((error) => {
+        console.error('[CommunityHomeController] failed to enter legacy play', error);
+      });
+    };
   }
 
   mount() {
@@ -82,6 +85,10 @@ export class CommunityHomeController {
     try {
       await this.onPlay();
       return true;
+    } catch (error) {
+      this._playStarted = false;
+      if (this.playButton) this.playButton.disabled = false;
+      throw error;
     } finally {
       if (this.playButton) this.playButton.removeAttribute('aria-busy');
     }

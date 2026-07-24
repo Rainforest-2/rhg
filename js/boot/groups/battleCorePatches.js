@@ -16,6 +16,7 @@ import '../../battle/BcuStageRowRespawnBoundaryPatch.js';
 import '../../battle/BcuStageGlobalRespawnBoundaryPatch.js';
 import '../../battle/BcuEnemyEntityBaseFirstHealthSuppressionPatch.js';
 import '../../battle/BattleActorBcuKbTargetPatch.js';
+import '../../battle/BattleSceneBcuBossShockwavePatch.js';
 // BCU Entity.processProcs parity: defines BattleActor.applyBcuProc (P_STOP/P_SLOW/
 // P_WEAK/P_CURSE/P_SEAL/P_WARP/P_POIATK status application + A_POISON effect spawn).
 // Must load before BcuProcImmunityPatch wraps applyBcuProc in the lifecycle group.

@@ -33,11 +33,11 @@ test('community flags are an immutable, fail-closed Phase 2 snapshot', () => {
   assert.equal('unknown' in overridden, false);
 });
 
-test('community home mounts once, fails browse closed, and releases its listener on destroy', async () => {
+test('community home mounts once, keeps browse disabled, and releases its listener on destroy', async () => {
   const documentRef = new FakeDocument();
   const mount = documentRef.createElement('div');
   let plays = 0;
-  const home = new CommunityHomeController({ documentRef, mount, browseAvailable: true, onPlay: async () => { plays += 1; } });
+  const home = new CommunityHomeController({ documentRef, mount, onPlay: async () => { plays += 1; } });
   const firstRoot = home.mount();
   assert.equal(home.mount(), firstRoot);
   assert.equal(mount.children.length, 1);
@@ -61,4 +61,25 @@ test('community home mounts once, fails browse closed, and releases its listener
   button.dispatchEvent(new Event('click'));
   await Promise.resolve();
   assert.equal(plays, 1);
+});
+
+test('failed legacy play transition restores the Play button and permits retry', async () => {
+  const documentRef = new FakeDocument();
+  const mount = documentRef.createElement('div');
+  let attempts = 0;
+  const home = new CommunityHomeController({
+    documentRef,
+    mount,
+    onPlay: async () => {
+      attempts += 1;
+      if (attempts === 1) throw new Error('legacy startup failed');
+    }
+  });
+  home.mount();
+
+  await assert.rejects(home.requestPlay(), /legacy startup failed/);
+  assert.equal(home.playButton.disabled, false);
+  assert.equal(home.playButton.getAttribute('aria-busy'), null);
+  assert.equal(await home.requestPlay(), true);
+  assert.equal(attempts, 2);
 });

@@ -26,6 +26,8 @@
     "agent:run": "node scripts/agent-run.mjs",
     "capture:community-phase0": "node scripts/capture-community-stage-phase0-fixtures.mjs",
     "capture:community-phase0:screens": "node scripts/capture-community-stage-phase0-screenshots.mjs",
+    "check:community-home": "node scripts/check-community-feature-flags.mjs && node scripts/check-community-home-shell.mjs && node --test tests/community-home-shell.test.mjs",
+    "check:community-home:browser": "node scripts/check-community-home-browser.mjs",
     "generate:bcu-stage-crowns": "node scripts/build-bcu-stage-crown-index.mjs",
     "precheck": "npm run generate:bcu-stage-crowns",
     "check": "node scripts/check-bcu-ability-parity-safe-suite.mjs && node scripts/check-open-issue-regressions.mjs && node scripts/check-custom-stage-schema-v3.mjs",

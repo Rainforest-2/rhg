@@ -87,9 +87,15 @@ function bindVisualViewport(element, {
   update();
   viewport.addEventListener('resize', update);
   viewport.addEventListener('scroll', update);
+  // Desktop emulation and a subset of mobile WebViews update the layout
+  // viewport before (or without) emitting visualViewport.resize. The dialog's
+  // CSS variables must follow either signal so an embedded editor cannot keep
+  // its pre-keyboard height.
+  globalThis.addEventListener?.('resize', update);
   return () => {
     viewport.removeEventListener('resize', update);
     viewport.removeEventListener('scroll', update);
+    globalThis.removeEventListener?.('resize', update);
     element.style.removeProperty('--cm-viewport-height');
     element.style.removeProperty('--cm-viewport-top');
     element.style.removeProperty('--cm-keyboard-offset');

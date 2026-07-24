@@ -60,9 +60,14 @@ Current boot lands directly in the existing FormationEditor; there is no communi
 - `screenshots/existing-start-screen-offline-event.png`: same existing screen after an offline event; it establishes that current code has no visible network/offline fallback transition.
 - `screenshots/formation-desktop.png`: formation character-modification editor, desktop.
 - `screenshots/custom-stage-editor-desktop.png`: existing local CustomStage editor.
+- `screenshots/custom-stage-editor-ipad-1024x768.png`, `screenshots/custom-stage-editor-ipad-768x1024.png`: the same existing editor at both iPad-equivalent orientations.
 - `screenshots/iphone-390x844.png`, `screenshots/landscape-667x320.png`: existing responsive editor captures.
 
-The dedicated boot capture completed with no browser errors at 1024×768. The existing broader character-modification UI suite still times out while opening the local CustomStage create action; its partial screenshots and complete log are preserved rather than relabelled as visual acceptance.
+The dedicated boot/custom-stage capture completed with no browser errors. The complete character-modification UI suite now passes its local CustomStage create, save/reload, JSON export/import, accessibility, and responsive paths.
+
+## Baseline-blocking correction
+
+The audit reproduced a pre-existing viewport bug before it could claim a green baseline: `bindVisualViewport` only subscribed to `visualViewport` events, while the test/browser layout viewport can resize without a corresponding `visualViewport.resize`. An embedded character-modification dialog then retained its old 844px height at a 390×500 software-keyboard viewport. `CharacterModificationOverlayHost.bindVisualViewport` now also subscribes to `window.resize` and removes that listener in cleanup. This is the smallest correction that makes the pre-existing UI workflow measurable; it changes no CustomStage schema, JSON format, owner, wrapper order, or Phase-1 feature.
 
 ## Fixtures
 
@@ -80,15 +85,15 @@ No cookie, token, browser profile, or user content is captured.
 | Command | Result |
 |---|---|
 | `git fetch origin main --prune` | success; main/origin match |
-| `npm run verify` | **failed** because its `npm test` invokes the browser design test timeout below |
-| `npm test` | **failed**: 89 pass, 0 fail, 1 cancelled; `tests/character-modification-design-browser.test.mjs` timed out after 240000ms |
-| `npm run build` | success (Vite build); warnings preserved in log |
+| `npm run verify` | **success**; safe parity suite, open-issue regressions, and 90/90 tests |
+| `npm test` | **success**: 90 pass, 0 fail, 0 cancelled (152–158s across reruns) |
+| `npm run build` | success (Vite build); existing unresolved-asset warnings preserved in log |
 | lint | no `lint` script exists in `package.json`; no substitute was claimed |
-| `npm run capture:community-phase0:screens` | success; desktop, iPad-equivalent, and offline-event captures; no browser errors |
-| `npm run check:character-modification:ui` | failed in the existing local-CustomStage create action (`data-custom-builder-new` click timeout); no pass claimed |
+| `npm run capture:community-phase0:screens` | success; desktop, iPad-equivalent (including CustomStage builder), and offline-event captures; no browser errors |
+| `npm run check:character-modification:ui` | success; formation + local-CustomStage lifecycle, JSON import/export, accessibility, and responsive viewports |
 | `npm run capture:community-phase0` | success |
 
-Full output is in `logs/`. `npm run verify` / test did not pass in this baseline, so Phase 0 does **not** claim a green CI baseline.
+Full output is in `logs/`, including the post-correction rerun logs. The generated crown-index build side effect was restored after each validation run.
 
 ## Design-document reconciliation
 
@@ -97,11 +102,10 @@ Full output is in `logs/`. `npm run verify` / test did not pass in this baseline
 | Design assumes schema v3, provenance envelope, and challenge restrictions; main is CustomStage v2. | expected future Phase 1; no discrepancy requiring a Phase-0 patch | schema is explicitly v2 at `CustomStageSchema.js:22`; do not add fields before Phase 1. |
 | Design calls for a new home and community flags; main boots to FormationEditor and has no flag owner. | current code has no owner; later Phase must introduce one deliberately | no inferred manager/store was created. |
 | Design requires Cloudflare/D1/R2/auth/offline fallback; none is present. | Phase 3+ future work | no Functions, D1, R2, auth, or SW code added. |
-| Existing browser CustomStage UI check times out on the create action, preventing a complete local-CustomStage iPad visual baseline. | **must resolve before Phase 1 visual acceptance** | retain logs/captures; do not weaken the test or call partial capture accepted. |
+| Embedded modification dialogs retained stale height when only the layout viewport resized. | **baseline-blocking issue resolved** | `CharacterModificationOverlayHost.bindVisualViewport` now follows both `visualViewport` and `window` resize events; the 390×500 software-keyboard and CustomStage workflows pass. |
 | Existing tests mutate the generated crown index during `precheck`. | known current build side effect; unrelated to community functionality | generated-file worktree delta must be restored or deliberately committed by its owner before a clean Phase-0 documentation commit. |
 
 ## Phase 1 entry gate
 
-1. Resolve or obtain an explicit waiver for the local-CustomStage browser click timeout, then collect the remaining actual iPad (1024×768 and 768×1024) local-custom-stage, JSON import/export, and save/reload screenshots.
-2. Restore the generated crown-index worktree side effect from this audit before committing only the baseline material.
-3. Use the listed owners and the fixture boundaries; do not change CustomStage v2 or create community runtime/store owners until the Phase-1 schema decision is executed.
+1. Use the listed owners and fixture boundaries; do not change CustomStage v2 or create community runtime/store owners until the Phase-1 schema decision is executed.
+2. Treat the existing offline state as a baseline fact, not as an implemented offline contract.

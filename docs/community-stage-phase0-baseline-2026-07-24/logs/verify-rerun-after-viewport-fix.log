@@ -1,0 +1,970 @@
+
+> rhg-bcu-battle@1.0.0 verify
+> npm run check && npm test
+
+
+> rhg-bcu-battle@1.0.0 precheck
+> npm run generate:bcu-stage-crowns
+
+
+> rhg-bcu-battle@1.0.0 generate:bcu-stage-crowns
+> node scripts/build-bcu-stage-crown-index.mjs
+
+wrote public/assets/generated/bcu-stage-crown-index.json: packs=58 rawRows=12957 exactIdentities=12957 ambiguousNames=87 ambiguousMapIds=80
+
+> rhg-bcu-battle@1.0.0 check
+> node scripts/check-bcu-ability-parity-safe-suite.mjs && node scripts/check-open-issue-regressions.mjs
+
+
+$ node --check js/battle/bcu-runtime/BcuDelayRuntime.js
+
+$ node --check js/battle/BcuDelayRuntimePatch.js
+
+$ node --check js/battle/bcu-runtime/BcuWaveInvalidRuntime.js
+
+$ node --check js/battle/BattleSceneBcuWaveInvalidApplyPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuBarrierShieldEffectRuntime.js
+
+$ node --check js/battle/BattleActorBarrierShieldVisualPatch.js
+
+$ node --check js/battle/BattleToxicEffectAssetPatch.js
+
+$ node --check js/battle/BcuProcImmunityVisualPatch.js
+
+$ node --check js/battle/BattleWaveEffectLoader.js
+
+$ node --check js/ui/PlayerProductionBar.js
+
+$ node --check js/ui/ProductionCardSkin.js
+
+$ node --check js/ui/ProductionCardDogIconFitPatch.js
+
+$ node --check js/ui/FormationStageDifficultyPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuUnitLevelRuntime.js
+
+$ node --check js/battle/BattleSceneBcuUnitLevelPatch.js
+
+$ node --check js/ui/FormationEditorBcuUnitLevelPatch.js
+
+$ node --check js/bcu/BcuUnitRepository.js
+
+$ node --check js/battle/PlayableCharacterRegistry.js
+
+$ node --check js/battle/FormationStore.js
+
+$ node --check scripts/build-bcu-core-db-bundle.mjs
+
+$ node --check scripts/build-bcu-wave-effect-bundle.mjs
+
+$ node --check js/battle/BattleSceneBcuWaveOnBlockedHitPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuSummonRuntime.js
+
+$ node --check js/battle/BattleSceneBcuSummonPatch.js
+
+$ node --check js/battle/BattleActorZombieRevivePatch.js
+
+$ node --check js/battle/BcuStorageDiagnostics.js
+
+$ node --check js/battle/StageRegistry.js
+
+$ node --check js/battle/bcu-runtime/BcuCatCannonRuntime.js
+
+$ node --check js/battle/bcu-runtime/BcuCannonLevelCurve.js
+
+$ node --check js/battle/BattleSceneBcuCatCannonPatch.js
+
+$ node --check js/battle/BattleSceneRendererEffectGlowPatch.js
+
+$ node --check js/battle/BattleSceneAttackEffectPatch.js
+
+$ node --check js/battle/bcu-runtime/BcuEnemyCastleBossSpawn.js
+
+$ node --check js/preview/PreviewAppBattleResultOverlayPatch.js
+
+$ node --check scripts/check-production-card-icon-source-parity.mjs
+
+$ node --check scripts/check-bcu-parser-indexes.mjs
+
+$ node --check scripts/check-bcu-delay-runtime.mjs
+
+$ node --check scripts/check-bcu-stage-line-row-parity.mjs
+
+$ node --check scripts/check-bcu-wallet-runtime-parity.mjs
+
+$ node --check scripts/check-bcu-wave-invalid-parity.mjs
+
+$ node --check scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+
+$ node --check scripts/check-bcu-unit-level-runtime-parity.mjs
+
+$ node --check scripts/check-bcu-barrier-shield-effect-parity.mjs
+
+$ node --check scripts/check-bcu-burrow-lifecycle-parity.mjs
+
+$ node --check scripts/check-bcu-castle-guard-parity.mjs
+
+$ node --check scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+
+$ node --check scripts/check-bcu-spirit-lifecycle-parity.mjs
+
+$ node --check scripts/check-bcu-spirit-cooldown-emphasize-parity.mjs
+
+$ node --check scripts/check-bcu-summon-runtime-parity.mjs
+
+$ node --check scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+
+$ node --check scripts/check-bcu-demon-shield-regen-timing.mjs
+
+$ node --check scripts/check-projectile-damage-parity.mjs
+
+$ node --check scripts/check-proc-immunity-resistance-parity.mjs
+
+$ node --check scripts/check-bcu-toxic-effect-parity.mjs
+
+$ node --check scripts/check-effect-bundle-aliases.mjs
+
+$ node --check scripts/check-effect-coordinate-traces.mjs
+
+$ node --check scripts/check-bcu-death-animation-parity.mjs
+
+$ node --check scripts/check-bcu-warp-lifecycle-parity.mjs
+
+$ node --check scripts/check-bcu-warp-interrupt-scene-parity.mjs
+
+$ node --check scripts/check-bcu-combo-proc-duration-parity.mjs
+
+$ node --check scripts/check-bcu-combo-speed-crit-parity.mjs
+
+$ node --check scripts/check-ability-partial-blockers.mjs
+
+$ node --check scripts/check-bcu-wave-surge-point-capture-parity.mjs
+
+$ node --check scripts/check-bcu-metal-abi-double-apply.mjs
+
+$ node --check scripts/check-actor-render-bounds-guard.mjs
+
+$ node --check scripts/check-battle-runtime-lightweight-guards.mjs
+
+$ node --check scripts/check-bcu-canvas-composite-pixel-parity.mjs
+
+$ node --check scripts/check-bcu-glow-queue-equivalence.mjs
+
+$ node --check scripts/check-battle-renderer-bounds-equivalence.mjs
+
+$ node --check scripts/check-battle-render-interpolation.mjs
+
+$ node --check scripts/check-install-gate.mjs
+
+$ node scripts/check-production-card-icon-source-parity.mjs
+check-production-card-icon-source-parity: OK
+
+$ node scripts/check-bcu-parser-indexes.mjs
+check-bcu-parser-indexes: OK
+
+$ node scripts/check-bcu-delay-runtime.mjs
+check-bcu-delay-runtime: OK
+
+$ node scripts/check-bcu-stage-line-row-parity.mjs
+check-bcu-stage-line-row-parity: OK
+
+$ node scripts/check-bcu-wallet-runtime-parity.mjs
+check-bcu-wallet-runtime-parity: OK
+
+$ node scripts/check-bcu-wave-invalid-parity.mjs
+check-bcu-wave-invalid-parity: OK
+
+$ node scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+check-bcu-wave-on-barrier-shield-block-parity: OK
+
+$ node scripts/check-bcu-unit-level-runtime-parity.mjs
+check-bcu-unit-level-runtime-parity: OK
+
+$ node scripts/check-bcu-barrier-shield-effect-parity.mjs
+check-bcu-barrier-shield-effect-parity: OK
+
+$ node scripts/check-bcu-burrow-lifecycle-parity.mjs
+check-bcu-burrow-lifecycle-parity: OK
+
+$ node scripts/check-bcu-castle-guard-parity.mjs
+check-bcu-castle-guard-parity: OK
+
+$ node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+check-bcu-spirit-bundle-manifest-parity: OK spirits=21
+
+$ node scripts/check-bcu-spirit-lifecycle-parity.mjs
+check-bcu-spirit-lifecycle-parity: OK
+
+$ node scripts/check-bcu-summon-runtime-parity.mjs
+check-bcu-summon-runtime-parity: OK
+
+$ node scripts/check-bcu-summon-procobject-loader-parity.mjs
+check-bcu-summon-procobject-loader-parity: OK
+
+$ node scripts/check-bcu-trait-targetforms-loader-parity.mjs
+check-bcu-trait-targetforms-loader-parity: OK
+
+$ node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
+check-bcu-modifier-realdata-sweep-parity: OK
+
+$ node --check scripts/check-bcu-modifier-registry-failure-visibility.mjs
+
+$ node scripts/check-bcu-modifier-registry-failure-visibility.mjs
+[battle boot] combo registry load failed; combos disabled Error: loadBcuComboRegistry: semantic provider core-db unavailable
+    at loadBcuComboRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuComboRegistryLoader.js:44:13)
+    at installBcuComboRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuComboRegistryLoader.js:63:11)
+    at file:///workspaces/rhg/scripts/check-bcu-modifier-registry-failure-visibility.mjs:43:20
+[modifier] combo registry load failed; combo modifiers disabled: loadBcuComboRegistry: semantic provider core-db unavailable
+[battle boot] talent registry load failed; talents disabled Error: loadBcuTalentRegistry: semantic provider core-db unavailable
+    at loadBcuTalentRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuTalentRegistryLoader.js:54:13)
+    at installBcuTalentRegistry (file:///workspaces/rhg/js/battle/bcu-runtime/BcuTalentRegistryLoader.js:76:11)
+    at file:///workspaces/rhg/scripts/check-bcu-modifier-registry-failure-visibility.mjs:61:20
+[modifier] talent registry load failed; talent modifiers disabled: loadBcuTalentRegistry: semantic provider core-db unavailable
+check-bcu-modifier-registry-failure-visibility: OK
+
+$ node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
+check-bcu-zombie-extra-revive-source-range-parity: OK
+
+$ node scripts/check-formation-storage-failure-visibility.mjs
+[storage] formation write failed: quota exceeded
+[storage] formation read failed: read denied
+[storage] stage write failed: quota exceeded
+[storage] stage read failed: read denied
+check-formation-storage-failure-visibility: OK
+
+$ node scripts/check-bcu-battle-sound-effects-parity.mjs
+check-bcu-battle-sound-effects-parity: OK
+
+$ node scripts/check-bcu-counter-surge-reflect-parity.mjs
+check-bcu-counter-surge-reflect-parity: OK
+
+$ node scripts/check-boot-import-progress.mjs
+check-boot-import-progress: OK
+
+$ node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+check-bcu-zombie-corpse-soulstrike-parity: OK
+
+$ node scripts/check-bcu-demon-shield-regen-timing.mjs
+check-bcu-demon-shield-regen-timing: OK
+
+$ node scripts/check-projectile-damage-parity.mjs
+check-projectile-damage-parity: OK
+
+$ node scripts/check-proc-immunity-resistance-parity.mjs
+check-proc-immunity-resistance-parity: OK
+
+$ node scripts/check-bcu-toxic-effect-parity.mjs
+check-bcu-toxic-effect-parity: OK
+
+$ node scripts/check-effect-bundle-aliases.mjs
+check-effect-bundle-aliases: OK
+
+$ node scripts/check-effect-coordinate-traces.mjs
+check-effect-coordinate-traces: OK
+
+$ node scripts/check-bcu-death-animation-parity.mjs
+check-bcu-death-animation-parity: OK
+
+$ node scripts/check-bcu-warp-lifecycle-parity.mjs
+check-bcu-warp-lifecycle-parity: OK
+
+$ node scripts/check-bcu-warp-interrupt-scene-parity.mjs
+check-bcu-warp-interrupt-scene-parity: OK
+
+$ node scripts/check-bcu-combo-proc-duration-parity.mjs
+check-bcu-combo-proc-duration-parity: OK
+
+$ node scripts/check-bcu-combo-speed-crit-parity.mjs
+check-bcu-combo-speed-crit-parity: OK
+
+$ node scripts/check-ability-partial-blockers.mjs
+check-ability-partial-blockers: OK
+
+$ node scripts/check-bcu-wave-surge-point-capture-parity.mjs
+check-bcu-wave-surge-point-capture-parity: OK
+
+$ node scripts/check-bcu-metal-abi-double-apply.mjs
+check-bcu-metal-abi-double-apply: OK
+
+$ node scripts/check-bcu-cat-cannon-runtime-parity.mjs
+check-bcu-cat-cannon-runtime-parity: OK
+
+$ node scripts/check-bcu-cat-cannon-effect-position-parity.mjs
+check-bcu-cat-cannon-effect-position-parity: OK
+
+$ node scripts/check-bcu-cat-cannon-wave-anim-parity.mjs
+check-bcu-cat-cannon-wave-anim-parity: OK
+
+$ node scripts/check-bcu-cannon-level-curve-parity.mjs
+check-bcu-cannon-level-curve-parity: OK
+
+$ node scripts/check-bcu-non-basic-cat-cannon-spec-parity.mjs
+check-bcu-non-basic-cat-cannon-spec-parity: OK
+
+$ node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
+check-bcu-non-basic-cat-cannon-runtime-parity: OK
+
+$ node scripts/check-bcu-non-basic-cat-cannon-anim-parity.mjs
+OK check-bcu-non-basic-cat-cannon-anim-parity: per-cannon BASE/ATK(EXT) eanim mapping + real-anim spawn with observable trace fallback
+
+$ node scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs
+check-bcu-enemy-castle-boss-spawn-parity: OK
+
+$ node --check scripts/check-bcu-enemy-castle-resolution.mjs
+
+$ node scripts/check-bcu-enemy-castle-resolution.mjs
+OK: CH_CASTLES length -> 53
+OK: CH_CASTLES[0] -> 45
+OK: CH_CASTLES[45] -> 0
+OK: CH_CASTLES[46] -> 46
+OK: explicit id 7 -> 7
+OK: explicit id 0 -> 0
+OK: EoC1 Zombie (stageNormal0_0_Z) -> 1045
+OK: EoC2 Zombie (stageNormal0_1_Z) -> 1044
+OK: EoC3 Zombie (stageNormal0_2_Z) -> 1043
+OK: ItF1 (stageNormal1_0) -> 2042
+OK: ItF2 (stageNormal1_1) -> 2041
+OK: CotC1 (stageNormal2_0) -> 3039
+OK: path basename -> 1045
+OK: unknown -1 resolves real castle -> true
+check-bcu-enemy-castle-resolution: OK
+
+$ node scripts/check-actor-render-bounds-guard.mjs
+OK: enemy 393 ラミエル attack renders all 236 frames (peak bounds 15000x11625, old cap 4096)
+OK: actor render bounds guard rejects only non-finite/absurd, passes legitimate large animation frames
+
+$ node scripts/check-battle-runtime-lightweight-guards.mjs
+check-battle-runtime-lightweight-guards: OK
+
+$ node scripts/check-bcu-canvas-composite-pixel-parity.mjs
+check-bcu-canvas-composite-pixel-parity: OK (42 glow/opacity cases, 4096 px each, byte-identical)
+
+$ node scripts/check-bcu-glow-queue-equivalence.mjs
+check-bcu-glow-queue-equivalence: OK
+
+$ node scripts/check-battle-renderer-bounds-equivalence.mjs
+check-battle-renderer-bounds-equivalence: OK (200 randomized draw lists, identical to per-part reference)
+
+$ node scripts/check-battle-render-interpolation.mjs
+check-battle-render-interpolation: OK
+
+$ node scripts/check-install-gate.mjs
+check-install-gate: OK
+
+$ node scripts/check-battle-pause-control.mjs
+check-battle-pause-control: OK (audio settings + pause/option control + sprite parity)
+
+$ node scripts/check-battle-music-and-zombie-killer.mjs
+check-battle-music-and-zombie-killer: OK (music pipeline + stage music + zombie killer SE)
+
+$ node --check scripts/check-bcu-lineup-slide-gesture-parity.mjs
+
+$ node scripts/check-bcu-lineup-slide-gesture-parity.mjs
+check-bcu-lineup-slide-gesture-parity: OK
+
+$ node --check scripts/check-bcu-msd-row-alignment-parity.mjs
+
+$ node scripts/check-bcu-msd-row-alignment-parity.mjs
+check-bcu-msd-row-alignment-parity: OK (9606 stage rows aligned)
+
+$ node --check scripts/check-bcu-maanim-keyframe-integrity.mjs
+
+$ node scripts/check-bcu-maanim-keyframe-integrity.mjs
+check-bcu-maanim-keyframe-integrity: OK (14012 files, 0 junk keyframes, 30 known-corrupt headers)
+
+$ node --check scripts/check-bcu-renderer-patch.mjs
+
+$ node scripts/check-bcu-renderer-patch.mjs
+check-bcu-renderer-patch: OK
+
+$ node --check scripts/check-bcu-castle-runtime-geometry.mjs
+
+$ node scripts/check-bcu-castle-runtime-geometry.mjs
+check-bcu-castle-runtime-geometry: OK
+
+$ node --check scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+
+$ node scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+check-bcu-cat-cannon-wave-immunity-parity: OK
+
+$ node --check scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+
+$ node scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+check-bcu-boss-knockback-castle-limit-parity: OK
+
+$ node --check scripts/check-bcu-boss-shockwave-runtime-parity.mjs
+
+$ node scripts/check-bcu-boss-shockwave-runtime-parity.mjs
+check-bcu-boss-shockwave-runtime-parity: OK
+
+$ node --check scripts/build-bcu-stage-crown-index.mjs
+
+$ node --check scripts/check-bcu-stage-crown-parity.mjs
+
+$ node scripts/check-bcu-stage-crown-parity.mjs
+check-bcu-stage-crown-parity: OK
+
+$ node --check scripts/check-bcu-special-castle-resolution-parity.mjs
+
+$ node scripts/check-bcu-special-castle-resolution-parity.mjs
+check-bcu-special-castle-resolution-parity: OK
+
+$ node --check scripts/build-bcu-slim-indexes.mjs
+
+$ node --check scripts/check-bcu-slim-indexes-sync.mjs
+
+$ node scripts/check-bcu-slim-indexes-sync.mjs
+OK: public/assets/generated/bcu-actor-index.slim.json in sync (4364KB)
+OK: public/assets/generated/bcu-background-index.slim.json in sync (1682KB)
+OK: public/assets/generated/bcu-stage-index.slim.json in sync (11486KB)
+check-bcu-slim-indexes-sync: OK
+
+$ node --check scripts/check-character-modification-schema.mjs
+
+$ node --check scripts/check-character-modification-codec.mjs
+
+$ node --check scripts/check-character-modification-resolver.mjs
+
+$ node --check scripts/check-character-modification-derived-model.mjs
+
+$ node --check scripts/check-character-modification-cache.mjs
+
+$ node --check scripts/check-character-modification-production.mjs
+
+$ node --check scripts/check-custom-stage-character-modification.mjs
+
+$ node --check scripts/check-formation-character-modification.mjs
+
+$ node --check scripts/check-character-modification-import-security.mjs
+
+$ node --check scripts/check-character-modification-runtime-integration.mjs
+
+$ node --check scripts/check-character-modification-ui.mjs
+
+$ node scripts/check-character-modification-schema.mjs
+check-character-modification-schema: OK
+
+$ node scripts/check-character-modification-codec.mjs
+check-character-modification-codec: OK
+
+$ node scripts/check-character-modification-resolver.mjs
+check-character-modification-resolver: OK
+
+$ node scripts/check-character-modification-derived-model.mjs
+check-character-modification-derived-model: OK
+
+$ node scripts/check-character-modification-cache.mjs
+check-character-modification-cache: OK
+
+$ node scripts/check-character-modification-production.mjs
+check-character-modification-production: OK
+
+$ node scripts/check-custom-stage-character-modification.mjs
+[storage] custom-stage read failed: Broken character modification reference: missing-modification
+[storage] custom-stage read failed: Broken character modification reference: missing-modification
+[storage] custom-stage read failed: modifications must be a plain object.
+[storage] custom-stage read failed: modifications must be a plain object.
+check-custom-stage-character-modification: OK
+
+$ node scripts/check-formation-character-modification.mjs
+[storage] formation read failed: read denied
+[storage] formation write failed: quota
+[storage] formation read failed: Unsupported formation version: 6
+[storage] formation read failed: Unsupported formation version: 6
+[storage] formation read failed: stats.maxHp must be at least 1.
+[storage] formation read failed: stats.maxHp must be at least 1.
+[storage] formation read failed: options.characterModifications must be a plain object.
+[storage] formation read failed: options.characterModifications must be a plain object.
+check-formation-character-modification: OK
+
+$ node scripts/check-character-modification-import-security.mjs
+check-character-modification-import-security: OK
+
+$ node scripts/check-character-modification-runtime-integration.mjs
+check-character-modification-runtime-integration: OK
+
+$ node scripts/check-character-modification-ui.mjs
+{
+  "ok": true,
+  "checks": [
+    "formation",
+    "custom-stage",
+    "responsive",
+    "accessibility",
+    "import-export"
+  ],
+  "viewports": [
+    {
+      "width": 320,
+      "height": 568,
+      "label": "minimum-width"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "label": "iphone-portrait"
+    },
+    {
+      "width": 667,
+      "height": 320,
+      "label": "iphone-landscape"
+    },
+    {
+      "width": 800,
+      "height": 360,
+      "label": "android-low-landscape"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "label": "ipad-mini-landscape"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "label": "ipad-portrait"
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "label": "desktop"
+    }
+  ],
+  "screenshots": "tmp/character-modification-ui"
+}
+
+BCU ability parity safe suite summary:
+- OK: node --check js/battle/bcu-runtime/BcuDelayRuntime.js
+- OK: node --check js/battle/BcuDelayRuntimePatch.js
+- OK: node --check js/battle/bcu-runtime/BcuWaveInvalidRuntime.js
+- OK: node --check js/battle/BattleSceneBcuWaveInvalidApplyPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuBarrierShieldEffectRuntime.js
+- OK: node --check js/battle/BattleActorBarrierShieldVisualPatch.js
+- OK: node --check js/battle/BattleToxicEffectAssetPatch.js
+- OK: node --check js/battle/BcuProcImmunityVisualPatch.js
+- OK: node --check js/battle/BattleWaveEffectLoader.js
+- OK: node --check js/ui/PlayerProductionBar.js
+- OK: node --check js/ui/ProductionCardSkin.js
+- OK: node --check js/ui/ProductionCardDogIconFitPatch.js
+- OK: node --check js/ui/FormationStageDifficultyPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuUnitLevelRuntime.js
+- OK: node --check js/battle/BattleSceneBcuUnitLevelPatch.js
+- OK: node --check js/ui/FormationEditorBcuUnitLevelPatch.js
+- OK: node --check js/bcu/BcuUnitRepository.js
+- OK: node --check js/battle/PlayableCharacterRegistry.js
+- OK: node --check js/battle/FormationStore.js
+- OK: node --check scripts/build-bcu-core-db-bundle.mjs
+- OK: node --check scripts/build-bcu-wave-effect-bundle.mjs
+- OK: node --check js/battle/BattleSceneBcuWaveOnBlockedHitPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuSummonRuntime.js
+- OK: node --check js/battle/BattleSceneBcuSummonPatch.js
+- OK: node --check js/battle/BattleActorZombieRevivePatch.js
+- OK: node --check js/battle/BcuStorageDiagnostics.js
+- OK: node --check js/battle/StageRegistry.js
+- OK: node --check js/battle/bcu-runtime/BcuCatCannonRuntime.js
+- OK: node --check js/battle/bcu-runtime/BcuCannonLevelCurve.js
+- OK: node --check js/battle/BattleSceneBcuCatCannonPatch.js
+- OK: node --check js/battle/BattleSceneRendererEffectGlowPatch.js
+- OK: node --check js/battle/BattleSceneAttackEffectPatch.js
+- OK: node --check js/battle/bcu-runtime/BcuEnemyCastleBossSpawn.js
+- OK: node --check js/preview/PreviewAppBattleResultOverlayPatch.js
+- OK: node --check scripts/check-production-card-icon-source-parity.mjs
+- OK: node --check scripts/check-bcu-parser-indexes.mjs
+- OK: node --check scripts/check-bcu-delay-runtime.mjs
+- OK: node --check scripts/check-bcu-stage-line-row-parity.mjs
+- OK: node --check scripts/check-bcu-wallet-runtime-parity.mjs
+- OK: node --check scripts/check-bcu-wave-invalid-parity.mjs
+- OK: node --check scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+- OK: node --check scripts/check-bcu-unit-level-runtime-parity.mjs
+- OK: node --check scripts/check-bcu-barrier-shield-effect-parity.mjs
+- OK: node --check scripts/check-bcu-burrow-lifecycle-parity.mjs
+- OK: node --check scripts/check-bcu-castle-guard-parity.mjs
+- OK: node --check scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+- OK: node --check scripts/check-bcu-spirit-lifecycle-parity.mjs
+- OK: node --check scripts/check-bcu-spirit-cooldown-emphasize-parity.mjs
+- OK: node --check scripts/check-bcu-summon-runtime-parity.mjs
+- OK: node --check scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+- OK: node --check scripts/check-bcu-demon-shield-regen-timing.mjs
+- OK: node --check scripts/check-projectile-damage-parity.mjs
+- OK: node --check scripts/check-proc-immunity-resistance-parity.mjs
+- OK: node --check scripts/check-bcu-toxic-effect-parity.mjs
+- OK: node --check scripts/check-effect-bundle-aliases.mjs
+- OK: node --check scripts/check-effect-coordinate-traces.mjs
+- OK: node --check scripts/check-bcu-death-animation-parity.mjs
+- OK: node --check scripts/check-bcu-warp-lifecycle-parity.mjs
+- OK: node --check scripts/check-bcu-warp-interrupt-scene-parity.mjs
+- OK: node --check scripts/check-bcu-combo-proc-duration-parity.mjs
+- OK: node --check scripts/check-bcu-combo-speed-crit-parity.mjs
+- OK: node --check scripts/check-ability-partial-blockers.mjs
+- OK: node --check scripts/check-bcu-wave-surge-point-capture-parity.mjs
+- OK: node --check scripts/check-bcu-metal-abi-double-apply.mjs
+- OK: node --check scripts/check-actor-render-bounds-guard.mjs
+- OK: node --check scripts/check-battle-runtime-lightweight-guards.mjs
+- OK: node --check scripts/check-bcu-canvas-composite-pixel-parity.mjs
+- OK: node --check scripts/check-bcu-glow-queue-equivalence.mjs
+- OK: node --check scripts/check-battle-renderer-bounds-equivalence.mjs
+- OK: node --check scripts/check-battle-render-interpolation.mjs
+- OK: node --check scripts/check-install-gate.mjs
+- OK: node scripts/check-production-card-icon-source-parity.mjs
+- OK: node scripts/check-bcu-parser-indexes.mjs
+- OK: node scripts/check-bcu-delay-runtime.mjs
+- OK: node scripts/check-bcu-stage-line-row-parity.mjs
+- OK: node scripts/check-bcu-wallet-runtime-parity.mjs
+- OK: node scripts/check-bcu-wave-invalid-parity.mjs
+- OK: node scripts/check-bcu-wave-on-barrier-shield-block-parity.mjs
+- OK: node scripts/check-bcu-unit-level-runtime-parity.mjs
+- OK: node scripts/check-bcu-barrier-shield-effect-parity.mjs
+- OK: node scripts/check-bcu-burrow-lifecycle-parity.mjs
+- OK: node scripts/check-bcu-castle-guard-parity.mjs
+- OK: node scripts/check-bcu-spirit-bundle-manifest-parity.mjs
+- OK: node scripts/check-bcu-spirit-lifecycle-parity.mjs
+- OK: node scripts/check-bcu-summon-runtime-parity.mjs
+- OK: node scripts/check-bcu-summon-procobject-loader-parity.mjs
+- OK: node scripts/check-bcu-trait-targetforms-loader-parity.mjs
+- OK: node scripts/check-bcu-modifier-realdata-sweep-parity.mjs
+- OK: node --check scripts/check-bcu-modifier-registry-failure-visibility.mjs
+- OK: node scripts/check-bcu-modifier-registry-failure-visibility.mjs
+- OK: node scripts/check-bcu-zombie-extra-revive-source-range-parity.mjs
+- OK: node scripts/check-formation-storage-failure-visibility.mjs
+- OK: node scripts/check-bcu-battle-sound-effects-parity.mjs
+- OK: node scripts/check-bcu-counter-surge-reflect-parity.mjs
+- OK: node scripts/check-boot-import-progress.mjs
+- OK: node scripts/check-bcu-zombie-corpse-soulstrike-parity.mjs
+- OK: node scripts/check-bcu-demon-shield-regen-timing.mjs
+- OK: node scripts/check-projectile-damage-parity.mjs
+- OK: node scripts/check-proc-immunity-resistance-parity.mjs
+- OK: node scripts/check-bcu-toxic-effect-parity.mjs
+- OK: node scripts/check-effect-bundle-aliases.mjs
+- OK: node scripts/check-effect-coordinate-traces.mjs
+- OK: node scripts/check-bcu-death-animation-parity.mjs
+- OK: node scripts/check-bcu-warp-lifecycle-parity.mjs
+- OK: node scripts/check-bcu-warp-interrupt-scene-parity.mjs
+- OK: node scripts/check-bcu-combo-proc-duration-parity.mjs
+- OK: node scripts/check-bcu-combo-speed-crit-parity.mjs
+- OK: node scripts/check-ability-partial-blockers.mjs
+- OK: node scripts/check-bcu-wave-surge-point-capture-parity.mjs
+- OK: node scripts/check-bcu-metal-abi-double-apply.mjs
+- OK: node scripts/check-bcu-cat-cannon-runtime-parity.mjs
+- OK: node scripts/check-bcu-cat-cannon-effect-position-parity.mjs
+- OK: node scripts/check-bcu-cat-cannon-wave-anim-parity.mjs
+- OK: node scripts/check-bcu-cannon-level-curve-parity.mjs
+- OK: node scripts/check-bcu-non-basic-cat-cannon-spec-parity.mjs
+- OK: node scripts/check-bcu-non-basic-cat-cannon-runtime-parity.mjs
+- OK: node scripts/check-bcu-non-basic-cat-cannon-anim-parity.mjs
+- OK: node scripts/check-bcu-enemy-castle-boss-spawn-parity.mjs
+- OK: node --check scripts/check-bcu-enemy-castle-resolution.mjs
+- OK: node scripts/check-bcu-enemy-castle-resolution.mjs
+- OK: node scripts/check-actor-render-bounds-guard.mjs
+- OK: node scripts/check-battle-runtime-lightweight-guards.mjs
+- OK: node scripts/check-bcu-canvas-composite-pixel-parity.mjs
+- OK: node scripts/check-bcu-glow-queue-equivalence.mjs
+- OK: node scripts/check-battle-renderer-bounds-equivalence.mjs
+- OK: node scripts/check-battle-render-interpolation.mjs
+- OK: node scripts/check-install-gate.mjs
+- OK: node scripts/check-battle-pause-control.mjs
+- OK: node scripts/check-battle-music-and-zombie-killer.mjs
+- OK: node --check scripts/check-bcu-lineup-slide-gesture-parity.mjs
+- OK: node scripts/check-bcu-lineup-slide-gesture-parity.mjs
+- OK: node --check scripts/check-bcu-msd-row-alignment-parity.mjs
+- OK: node scripts/check-bcu-msd-row-alignment-parity.mjs
+- OK: node --check scripts/check-bcu-maanim-keyframe-integrity.mjs
+- OK: node scripts/check-bcu-maanim-keyframe-integrity.mjs
+- OK: node --check scripts/check-bcu-renderer-patch.mjs
+- OK: node scripts/check-bcu-renderer-patch.mjs
+- OK: node --check scripts/check-bcu-castle-runtime-geometry.mjs
+- OK: node scripts/check-bcu-castle-runtime-geometry.mjs
+- OK: node --check scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+- OK: node scripts/check-bcu-cat-cannon-wave-immunity-parity.mjs
+- OK: node --check scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+- OK: node scripts/check-bcu-boss-knockback-castle-limit-parity.mjs
+- OK: node --check scripts/check-bcu-boss-shockwave-runtime-parity.mjs
+- OK: node scripts/check-bcu-boss-shockwave-runtime-parity.mjs
+- OK: node --check scripts/build-bcu-stage-crown-index.mjs
+- OK: node --check scripts/check-bcu-stage-crown-parity.mjs
+- OK: node scripts/check-bcu-stage-crown-parity.mjs
+- OK: node --check scripts/check-bcu-special-castle-resolution-parity.mjs
+- OK: node scripts/check-bcu-special-castle-resolution-parity.mjs
+- OK: node --check scripts/build-bcu-slim-indexes.mjs
+- OK: node --check scripts/check-bcu-slim-indexes-sync.mjs
+- OK: node scripts/check-bcu-slim-indexes-sync.mjs
+- OK: node --check scripts/check-character-modification-schema.mjs
+- OK: node --check scripts/check-character-modification-codec.mjs
+- OK: node --check scripts/check-character-modification-resolver.mjs
+- OK: node --check scripts/check-character-modification-derived-model.mjs
+- OK: node --check scripts/check-character-modification-cache.mjs
+- OK: node --check scripts/check-character-modification-production.mjs
+- OK: node --check scripts/check-custom-stage-character-modification.mjs
+- OK: node --check scripts/check-formation-character-modification.mjs
+- OK: node --check scripts/check-character-modification-import-security.mjs
+- OK: node --check scripts/check-character-modification-runtime-integration.mjs
+- OK: node --check scripts/check-character-modification-ui.mjs
+- OK: node scripts/check-character-modification-schema.mjs
+- OK: node scripts/check-character-modification-codec.mjs
+- OK: node scripts/check-character-modification-resolver.mjs
+- OK: node scripts/check-character-modification-derived-model.mjs
+- OK: node scripts/check-character-modification-cache.mjs
+- OK: node scripts/check-character-modification-production.mjs
+- OK: node scripts/check-custom-stage-character-modification.mjs
+- OK: node scripts/check-formation-character-modification.mjs
+- OK: node scripts/check-character-modification-import-security.mjs
+- OK: node scripts/check-character-modification-runtime-integration.mjs
+- OK: node scripts/check-character-modification-ui.mjs
+
+check-bcu-ability-parity-safe-suite: OK
+
+$ node --check js/battle/BcuStageCsvLayout.js
+
+$ node --check js/battle/StageDefinitionTrailParityPatch.js
+
+$ node --check js/battle/BcuStageSpawnRuntime.js
+
+$ node --check js/battle/BcuStageGlobalRespawnBoundaryPatch.js
+
+$ node --check js/battle/BcuStageRowRespawnBoundaryPatch.js
+
+$ node --check js/battle/BcuEnemyEntityBaseFirstHealthSuppressionPatch.js
+
+$ node --check js/battle/StageRuntimeBossFlagPatch.js
+
+$ node --check js/battle/BattleSceneBcuBossShockwavePatch.js
+
+$ node --check js/battle/BcuStageGroupRuntime.js
+
+$ node --check js/battle/StageRuntimeSceneAdapter.js
+
+$ node --check js/battle/BattleSceneStageRuntimeWiring.js
+
+$ node --check js/battle/BattleSceneOfficialHpGateInitialDelayPatch.js
+
+$ node --check js/battle/BattleSceneStageUnitDeathKcPatch.js
+
+$ node --check js/battle/BcuRankingRuntime.js
+
+$ node --check js/battle/BattleSceneBcuRankingRuntimePatch.js
+
+$ node --check js/battle/BattleSceneCustomStageTrailParityPatch.js
+
+$ node --check js/custom-stage/CustomStageAdapter.js
+
+$ node --check js/battle/DamageAbilityResolverMetalAbiPatch.js
+
+$ node --check js/battle/BcuTraitCompatibility.js
+
+$ node --check js/battle/BattleSceneActorLayerOrderPatch.js
+
+$ node --check js/battle/ActorStatsModel.js
+
+$ node --check js/battle/bcu-runtime/BcuStageCrownRuntime.js
+
+$ node --check js/battle/bcu-runtime/BcuCastleGuardRuntime.js
+
+$ node --check js/battle/bcu-runtime/BcuPlayerCapacityRuntime.js
+
+$ node --check js/battle/bcu-runtime/BcuRarityCapacityRuntime.js
+
+$ node --check js/battle/BcuPlayerCapacityProductionPatch.js
+
+$ node --check js/battle/BcuMaxUnitSpawnLifetimePatch.js
+
+$ node --check js/battle/BcuRarityCapacityProductionPatch.js
+
+$ node --check js/battle/BcuStageBankLimitPatch.js
+
+$ node --check js/battle/BattleSceneBcuCastleGuardPatch.js
+
+$ node --check js/ui/FormationStageDifficultyPatch.js
+
+$ node --check js/ui/FormationStageDefaultCrownFastPathPatch.js
+
+$ node --check js/boot/installBattlePatches.js
+
+$ node --check scripts/build-bcu-background-index.mjs
+
+$ node --check scripts/build-bcu-stage-crown-index.mjs
+
+$ node scripts/check-bcu-stage-layout-trail-parity.mjs
+check-bcu-stage-layout-trail-parity: OK
+
+$ node scripts/check-bcu-special-base-317.mjs
+check-bcu-special-base-317: OK
+
+$ node scripts/check-bcu-stage-spawn-layer-kc-parity.mjs
+check-bcu-stage-spawn-layer-kc-parity: OK
+
+$ node scripts/check-bcu-stage-initial-global-respawn.mjs
+check-bcu-stage-initial-global-respawn: OK
+
+$ node scripts/check-bcu-stage-global-respawn-boundary.mjs
+check-bcu-stage-global-respawn-boundary: OK
+
+$ node scripts/check-bcu-stage-row-respawn-boundary.mjs
+check-bcu-stage-row-respawn-boundary: OK
+
+$ node scripts/check-bcu-official-hp-gate-initial-delay.mjs
+check-bcu-official-hp-gate-initial-delay: OK
+
+$ node scripts/check-bcu-eenemy-base-first-health-suppression.mjs
+check-bcu-eenemy-base-first-health-suppression: OK
+
+$ node scripts/check-bcu-boss-flag-spawn-coordinate.mjs
+check-bcu-boss-flag-spawn-coordinate: OK
+
+$ node scripts/check-bcu-boss-shockwave.mjs
+check-bcu-boss-shockwave: OK
+
+$ node scripts/check-bcu-stage-crown-precision.mjs
+check-bcu-stage-crown-precision: OK
+
+$ node scripts/check-bcu-stage-group-crown-integration.mjs
+check-bcu-stage-group-crown-integration: OK
+
+$ node scripts/check-bcu-ranking-runtime.mjs
+check-bcu-ranking-runtime: OK
+
+$ node scripts/check-custom-stage-time-limit-parity.mjs
+check-custom-stage-time-limit-parity: OK
+
+$ node scripts/check-custom-stage-trail-domain-parity.mjs
+check-custom-stage-trail-domain-parity: OK
+
+$ node scripts/check-bcu-crown-map-identity.mjs
+check-bcu-crown-map-identity: OK
+
+$ node scripts/check-event-stage-selector-performance.mjs
+check-event-stage-selector-performance: OK
+
+$ node scripts/check-bcu-player-capacity.mjs
+check-bcu-player-capacity: OK
+
+$ node scripts/check-bcu-max-unit-spawn-lifetime.mjs
+check-bcu-max-unit-spawn-lifetime: OK
+
+$ node scripts/check-bcu-rarity-capacity.mjs
+check-bcu-rarity-capacity: OK
+
+$ node scripts/check-custom-stage-max-money.mjs
+check-custom-stage-max-money: OK
+
+$ node scripts/check-bcu-metal-abi-double-apply.mjs
+check-bcu-metal-abi-double-apply: OK
+
+$ node scripts/check-bcu-trait-targetforms-loader-parity.mjs
+check-bcu-trait-targetforms-loader-parity: OK
+
+$ node scripts/check-bcu-actor-layer-order-parity.mjs
+check-bcu-actor-layer-order-parity: OK
+
+$ node scripts/check-battle-patch-install-atomicity.mjs
+check-battle-patch-install-atomicity: OK
+
+$ node scripts/check-battle-scene-stage-runtime-wiring.mjs
+check-battle-scene-stage-runtime-wiring: OK
+
+$ node scripts/check-bcu-enemy-entity-castle-guard.mjs
+check-bcu-enemy-entity-castle-guard: OK
+
+check-open-issue-regressions: OK
+
+> rhg-bcu-battle@1.0.0 test
+> node --test tests/*.test.mjs
+
+✔ AppLoadingOverlay show resets progress for reused overlay instances (3.398656ms)
+✔ damage queue is excused in insertion order (no side/position/key resort) (1.964859ms)
+✔ player-before-enemy insertion order (the BCU direction-pass order) is preserved (0.262099ms)
+✔ BcuCombatModel parses unit full IMU* guard fields (3.679962ms)
+✔ BcuCombatModel parses enemy full IMU* guard fields with confirmed DataEnemy columns (0.74983ms)
+✔ applyBcuProc rejects full immunity status procs without state side effects (2.495549ms)
+✔ applyBcuProc applies partial resistance to status duration and toxic damage (1.666983ms)
+✔ IMUWEAK smartImu follows BCU checkSmartImu direction (0.442275ms)
+✔ applyBcuProc applies partial knockback resistance to proc KB distance (0.649452ms)
+✔ ProcResolver suppresses curse and seal proc groups before runtime apply (2.003812ms)
+✔ guardBcuDamage rejects wave, surge, blast, and toxic queue before damage is pending (1.191334ms)
+✔ queueAttackDamage applies partial wave resistance before enqueueing damage (16.823701ms)
+✔ queueAttackDamage guard rejection does not enqueue pending damage or procs (0.853964ms)
+✔ normal queueAttackDamage still enqueues regular attack damage (2.084953ms)
+✔ curse and seal suppress DamageAbilityResolver trait ability multipliers and restore when expired (1.842891ms)
+✔ seal suppresses strongAttack and critical procs in damage resolver (1.734849ms)
+✔ critical BattleScene wrapper chain remains callable after parity imports (0.468625ms)
+✔ BattleAttackProfile maps per-hit abi flags onto attack events as bcuHitAbi (2.027777ms)
+✔ ProcResolver gates attack procs per hit on bcuHitAbi != 1 (BCU abis[ind] == 1 setProc gate) (2.743313ms)
+✔ ProcResolver keeps entity-level zombieKiller/soulstrike exempt from the hit abi gate (0.460691ms)
+✔ DamageAbilityResolver gates strongAttack/critical procs per hit on bcuHitAbi != 1 (0.468424ms)
+✔ zombie revive enters attack-wait immediately when an enemy is in touch range (BCU update2 checkTouch) (13.009366ms)
+✔ CopRand nextFloat(seed=0) matches BCU/Java float vector exactly (1.88653ms)
+✔ CopRand nextFloat results are exact Java floats (Math.fround stable) (0.297535ms)
+✔ CopRand nextDouble consumes the seed identically to nextFloat (1.384274ms)
+✔ CopRand is reproducible from the same 64-bit seed (1.72441ms)
+✔ CopRand drawCount tracks the number of seeded draws (0.274593ms)
+✔ JavaRandom matches java.util.Random nextInt/nextLong for seed=0 (0.194394ms)
+✔ normalizeBattleSeed parses strings and clamps to signed 64-bit; randomBattleSeed is in range (0.274622ms)
+✔ direction sort is stable: dire -1 (player) before +1 (enemy), insertion order kept on ties (1.692671ms)
+✔ direction sort falls back to side when direction is absent (dog-player => -1) (0.238866ms)
+✔ layer sort is stable: ascending currentLayer, insertion order kept within a layer (0.33723ms)
+✔ same-direction, same-position entities are NOT reordered (no pos/instanceId tiebreak) (0.3212ms)
+✔ will=0 enemy occupies exactly 1 slot (1.080517ms)
+✔ will=2 enemy occupies 3 slots (will + 1) (0.16654ms)
+✔ an enemy in final knockback is still counted (0.160019ms)
+✔ a 'dead' enemy still playing its death animation (not removable) is counted (0.228196ms)
+✔ a 'dead' enemy that is BCU-removable is NOT counted (0.272399ms)
+✔ mixed roster sums will+1 per non-dead enemy and ignores removed/removable ones (0.284561ms)
+✔ boss-as-base (EEnemy) adds will+1; an ECastle base does not (0.260096ms)
+✔ constructor resolves row first-frame only; global respawn starts at zero (1.743246ms)
+✔ successful commit draws row respawn -> spawn layer -> global respawn; spawn frame and layer are exact (2.49038ms)
+✔ a failed spawn (rejectSpawn) consumes no RNG (0.608677ms)
+✔ computeBcuTouchState: Target Only with only an incompatible enemy in range -> touch true, touchEnemy false (2.944458ms)
+✔ computeBcuTouchState: adding a trait-compatible enemy flips touchEnemy true (0.690319ms)
+✔ computeBcuTouchState: Target Only with only the enemy base in range -> touchEnemy true (base counts) (0.415817ms)
+✔ computeBcuTouchState: non-Target-Only unit attacks any in-range enemy (touchEnemy == touch) (0.21931ms)
+✔ computeBcuTouchState: nothing in range -> touch false, touchEnemy false (0.243434ms)
+✔ custom-stage status editor UI patches remain syntax-valid and presentation-only (67.071351ms)
+✔ custom-stage launcher is full-width, localized, and keeps its modification count (0.269163ms)
+✔ embedded custom-stage editor expands to the available viewport width (0.189393ms)
+✔ software keyboard hides footer commands and only reveals obscured inputs (0.269253ms)
+✔ boot order preserves handler wrapping, builder ownership, and PremiumMotion last (0.32671ms)
+✔ formation and custom-stage status editors share a professional visual contract (74267.286924ms)
+✔ status editor design system remains syntax-valid and presentation-only (58.789747ms)
+✔ custom-stage game button styling is explicitly isolated from the shared editor (0.833176ms)
+✔ commercial-grade interaction and responsive constraints stay guarded (0.33728ms)
+✔ embedded custom-stage editor gets the full shared layout and keyboard mode removes actions (0.264083ms)
+✔ boot order gives the shared design the final visual word without violating PremiumMotion-last (0.408683ms)
+✔ status editor contract patches remain syntax-valid and presentation-only (177.6384ms)
+✔ all editor actions keep 44px targets including compact landscape (0.255307ms)
+✔ embedded editor follows measured visual viewport rather than host height (0.541812ms)
+✔ reduced-motion contract uses exact zero durations (0.304268ms)
+✔ contract order remains after design system and PremiumMotion remains last (0.470719ms)
+✔ phone status editor gives the viewport to the editing canvas (68990.26153ms)
+✔ mobile information architecture patch remains syntax-valid and presentation-only (41.381261ms)
+✔ phone editor becomes full-bleed with no application-created top gap (0.317062ms)
+✔ mobile chrome has an explicit compact hierarchy (0.517806ms)
+✔ toolbar, fields and footer prioritize editing over decoration (0.521183ms)
+✔ compact visible controls retain expanded hit zones (0.232093ms)
+✔ low-height landscape reserves most height for the field list (0.208971ms)
+✔ mobile hierarchy runs after generic interaction rules while PremiumMotion stays last (0.399917ms)
+✔ status tampering usability patch remains syntax-valid and UI-only (122.734629ms)
+✔ user-facing language and compact single-row commands are guarded (0.888649ms)
+✔ software keyboard handling is installed, stabilized, and cleaned up (1.289648ms)
+✔ boot order preserves modification, viewport, landscape, and premium contracts (0.367105ms)
+✔ stage ref encode/decode round-trips bcu and custom (2.435818ms)
+✔ seconds<->frames uses 60 internal frames/sec (0.304669ms)
+✔ migration: legacy v1 flat ids -> v2 typed bcu refs, HP options preserved, idempotent (1.14572ms)
+✔ migration: custom entries survive round trip and flat is ground truth (0.329145ms)
+✔ custom stage store: create/save/read/duplicate/delete (2.137922ms)
+✔ validator: hard errors block save; soft warnings allow it (0.850715ms)
+✔ reference resolver: deleted custom ref is surfaced, launch guard stops battle (0.787952ms)
+✔ adapter emits StageDefinition-shaped output with mapped fields (6.827769ms)
+✔ adapter output builds a runtime + unit defs the enemy resolver accepts (8.469959ms)
+✔ spawn runtime schedules first spawn at authored frame and respects count/respawn (3.999428ms)
+✔ custom-stage respawn interval is measured from the previous spawn, not enemy death (2.562424ms)
+✔ castle-HP condition gates the boss row (2.368412ms)
+✔ enemy-side castle override: player-side base keeps its bg/length but adopts the enemy castle (2.53475ms)
+✔ CI retains character-modification visual diagnostics on failure (1.872156ms)
+ℹ tests 90
+ℹ suites 0
+ℹ pass 90
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 152783.18224

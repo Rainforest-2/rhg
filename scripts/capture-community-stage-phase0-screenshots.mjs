@@ -28,6 +28,13 @@ const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
 
+async function openCustomStageBuilder() {
+  await page.locator('[data-action="stage-open"]').click();
+  await page.locator('[data-custom-stage-category]').click();
+  await page.locator('[data-custom-builder-new]').click();
+  await page.waitForSelector('.formation-custom-builder-screen', { state: 'visible' });
+}
+
 try {
   await page.goto(`http://127.0.0.1:${listenPort}/`, { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
@@ -36,6 +43,14 @@ try {
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.waitForTimeout(200);
   await page.screenshot({ path: `${outDir}/existing-start-screen-ipad-1024x768.png`, fullPage: false });
+  await openCustomStageBuilder();
+  await page.screenshot({ path: `${outDir}/custom-stage-editor-ipad-1024x768.png`, fullPage: false });
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: `${outDir}/custom-stage-editor-ipad-768x1024.png`, fullPage: false });
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
   await page.evaluate(() => globalThis.dispatchEvent(new Event('offline')));
   await page.screenshot({ path: `${outDir}/existing-start-screen-offline-event.png`, fullPage: false });
   console.log(JSON.stringify({ ok: errors.length === 0, errors, url: page.url() }, null, 2));

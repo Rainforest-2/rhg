@@ -1,0 +1,52 @@
+
+> rhg-bcu-battle@1.0.0 check:character-modification:ui
+> node scripts/check-character-modification-ui.mjs
+
+{
+  "ok": true,
+  "checks": [
+    "formation",
+    "custom-stage",
+    "responsive",
+    "accessibility",
+    "import-export"
+  ],
+  "viewports": [
+    {
+      "width": 320,
+      "height": 568,
+      "label": "minimum-width"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "label": "iphone-portrait"
+    },
+    {
+      "width": 667,
+      "height": 320,
+      "label": "iphone-landscape"
+    },
+    {
+      "width": 800,
+      "height": 360,
+      "label": "android-low-landscape"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "label": "ipad-mini-landscape"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "label": "ipad-portrait"
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "label": "desktop"
+    }
+  ],
+  "screenshots": "tmp/character-modification-ui"
+}

@@ -55,35 +55,45 @@ try {
     assert.ok(metrics.button && metrics.button.top >= 0 && metrics.button.bottom <= height && metrics.button.left >= 0 && metrics.button.right <= width, `${filename}: Play is reachable`);
     if (filename) await page.screenshot({ path: `${outDir}/${filename}`, fullPage: false });
   }
-  await page.evaluate(() => globalThis.dispatchEvent(new Event('offline')));
+
+  // Exercise the actual browser offline state. Dispatching an `offline` event alone
+  // does not change navigator.onLine or block network access, so it cannot prove the
+  // Phase 2 requirement that the local legacy entry remains usable without online APIs.
+  await context.setOffline(true);
+  assert.equal(await page.evaluate(() => navigator.onLine), false, 'browser context is genuinely offline');
   await page.screenshot({ path: `${outDir}/community-home-offline.png`, fullPage: false });
+
   if (process.env.COMMUNITY_HOME_BROWSER_MODE === 'home-only') {
     assert.deepEqual(requests.filter((requestUrl) => /\/api\//.test(requestUrl)), [], 'Phase 2 emits no community API requests');
     assert.deepEqual(pageErrors, [], `browser errors: ${pageErrors.join('\n')}`);
     await context.close();
     console.log('check-community-home-browser: home-only OK');
   } else {
-  await page.locator('[data-community-play]').click();
-  await page.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
-  await page.waitForSelector('[data-action="stage-open"]', { state: 'visible', timeout: 30000 });
-  assert.equal(await page.locator('[data-community-home="phase-2"]').isHidden(), true, 'hidden home cannot block legacy play');
-  assert.equal(await page.locator('canvas#preview-canvas').count(), 1, 'canvas remains singular');
-  assert.equal(await page.locator('.formation-ui').count(), 1, 'rapid play cannot create a second editor');
-  await page.locator('[data-action="stage-open"]').click();
-  await page.waitForSelector('[data-custom-stage-category]', { state: 'visible', timeout: 30000 });
-  await page.screenshot({ path: `${outDir}/community-home-to-legacy-play.png`, fullPage: false });
-  assert.deepEqual(requests.filter((requestUrl) => /\/api\//.test(requestUrl)), [], 'Phase 2 emits no community API requests');
-  assert.deepEqual(pageErrors, [], `browser errors: ${pageErrors.join('\n')}`);
-  await context.close();
+    await page.locator('[data-community-play]').click();
+    await page.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
+    assert.equal(await page.locator('[data-community-home="phase-2"]').isHidden(), true, 'hidden home cannot block legacy play');
+    assert.equal(await page.locator('canvas#preview-canvas').count(), 1, 'canvas remains singular');
+    assert.equal(await page.locator('.formation-ui').count(), 1, 'rapid play cannot create a second editor');
 
-  const legacyContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  await legacyContext.addInitScript(() => { globalThis.__RHG_COMMUNITY_FEATURE_FLAGS__ = { communityHome: false }; });
-  const legacyPage = await legacyContext.newPage();
-  await legacyPage.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
-  await legacyPage.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
-  assert.equal(await legacyPage.locator('[data-community-home="phase-2"]').count(), 0, 'explicit flag-off preserves direct legacy entry');
-  await legacyContext.close();
-  console.log('check-community-home-browser: OK');
+    // Stage browsing can legitimately read local Vite-served assets. Restore network
+    // only after the offline home -> legacy transition itself has been proven.
+    await context.setOffline(false);
+    await page.waitForSelector('[data-action="stage-open"]', { state: 'visible', timeout: 30000 });
+    await page.locator('[data-action="stage-open"]').click();
+    await page.waitForSelector('[data-custom-stage-category]', { state: 'visible', timeout: 30000 });
+    await page.screenshot({ path: `${outDir}/community-home-to-legacy-play.png`, fullPage: false });
+    assert.deepEqual(requests.filter((requestUrl) => /\/api\//.test(requestUrl)), [], 'Phase 2 emits no community API requests');
+    assert.deepEqual(pageErrors, [], `browser errors: ${pageErrors.join('\n')}`);
+    await context.close();
+
+    const legacyContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await legacyContext.addInitScript(() => { globalThis.__RHG_COMMUNITY_FEATURE_FLAGS__ = { communityHome: false }; });
+    const legacyPage = await legacyContext.newPage();
+    await legacyPage.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await legacyPage.waitForSelector('.formation-ui', { state: 'visible', timeout: 90000 });
+    assert.equal(await legacyPage.locator('[data-community-home="phase-2"]').count(), 0, 'explicit flag-off preserves direct legacy entry');
+    await legacyContext.close();
+    console.log('check-community-home-browser: OK');
   }
 } finally {
   await browser.close();

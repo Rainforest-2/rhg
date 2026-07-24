@@ -1,8 +1,8 @@
 # RHG ドキュメント索引
 
-更新日: 2026-07-24  
+更新日: 2026-07-25  
 対象: `Rainforest-2/rhg`  
-確認した `main`: `aa6ed5eb82324be4a745a8d85237d4d68775424d`
+確認した `main`: `6b8d2cb45ee7b6dd45c390c71012cd071381d91f`
 
 ## 目的
 
@@ -15,7 +15,7 @@
 | 1 | [`../README.md`](../README.md) | 公開向け概要と現在の主要リスク |
 | 2 | [`bcu-migration-status.md`](bcu-migration-status.md) | 現在の高水準 status、active correctness 項目、完了済み領域、次の順序 |
 | 3 | [`RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md`](RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md) | architecture、owner、data flow、単位、検証境界 |
-| 4 | 対象領域の focused document | ability、evidence、visual、character modification など |
+| 4 | 対象領域の focused document | ability、evidence、visual、character modification、community stage など |
 
 ## Current documents
 
@@ -37,6 +37,7 @@
 | 文書 | 用途 |
 |---|---|
 | [`RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md`](RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md) | 中核 architecture と BCU/RHG owner 対応。作成時 HEAD の snapshot であり、current defect ledger ではない |
+| [`RHG_COMMUNITY_STAGE_PLATFORM_COMPLETE_DESIGN_2026-07-24_FINAL.md`](RHG_COMMUNITY_STAGE_PLATFORM_COMPLETE_DESIGN_2026-07-24_FINAL.md) | 「みんなのステージ」の製品仕様、data contract、Phase順、受入条件。current implementation statusではない |
 | [`ability-logic/bcu-ability-source-evidence.md`](ability-logic/bcu-ability-source-evidence.md) | BCU file/class/method/field の根拠一覧 |
 | [`ability-logic/bcu-fact-first-update-procedure.md`](ability-logic/bcu-fact-first-update-procedure.md) | source fact から実装・検証・docs 更新へ進む手順 |
 
@@ -50,6 +51,7 @@
 
 - [`../AGENTS.md`](../AGENTS.md): 最小の必須規則
 - [`agent/README.md`](agent/README.md): agent 補助文書の索引
+- [`agent/community-stage/README.md`](agent/community-stage/README.md): Community Stage Phase 3〜11の実装契約とTerra向け入口
 - `agent/bcu-parity-rules.md`: 根拠階層と guardrail
 - `agent/checks-and-verification.md`: check 選択と検証規則
 - `agent/report-format.md`: 実装レポート形式
@@ -66,3 +68,4 @@
 7. architecture の高水準契約が変わった場合だけ、中核参照書または subsystem architecture を更新する。
 8. 同じ目的の新しい status 文書を作らない。既存 SSOT に追記または置換する。
 9. 日付だけを更新せず、確認した commit SHA と変更理由を記録する。
+10. `agent/community-stage/*` は実装補助であり、Phase完了statusを重複管理しない。

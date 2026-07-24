@@ -16,10 +16,12 @@ function installStorage(initial = {}) {
 
 const {
   encodeStageRef, decodeStageRef, normalizeStageRef, stageRefsEqual, uniqueStageRefs,
-  secondsToFrames, framesToSeconds, createCustomStage
+  secondsToFrames, framesToSeconds, createCustomStage, migrateCustomStage,
+  normalizeChallengeRestrictions, validateChallengeRestrictions
 } = await import('../js/custom-stage/CustomStageSchema.js');
 const battleStore = await import('../js/custom-stage/CustomStageBattleStore.js');
 const stageStore = await import('../js/custom-stage/CustomStageStore.js');
+const provenanceStore = await import('../js/custom-stage/CustomStageProvenanceStore.js');
 const { validateCustomStage } = await import('../js/custom-stage/CustomStageValidator.js');
 const { resolveStageRef, validateBattleLaunch } = await import('../js/custom-stage/CustomStageReferenceResolver.js');
 
@@ -124,6 +126,62 @@ test('validator: hard errors block save; soft warnings allow it', () => {
   assert.strictEqual(r2.ok, true, JSON.stringify(r2.errors));
   assert.ok(r2.warnings.some((w) => w.field === 'musicId'));
   assert.ok(r2.warnings.some((w) => w.field === 'spawns'));
+});
+
+test('custom stage v3 migration, restrictions, and provenance import stay deterministic', () => {
+  const v2 = {
+    schemaVersion: 2, id: 'legacy-v2', name: 'Legacy',
+    battle: { backgroundId: 1, enemyCastleId: 1, musicId: null, stageLength: 4000, enemyBaseHp: 100, maxEnemyCount: 1 },
+    spawns: [], modifications: {}, limits: {}
+  };
+  const before = structuredClone(v2);
+  const migrated = migrateCustomStage(v2);
+  assert.equal(migrated.schemaVersion, 3);
+  assert.equal(migrated.challengeRestrictions, null);
+  assert.deepEqual(v2, before, 'migration never mutates persisted input');
+  assert.deepEqual(migrateCustomStage(migrated), migrated, 'v3 migration is idempotent');
+
+  const restriction = {
+    version: 1, army: 'cat-only',
+    characterPolicy: { whitelistEnabled: true, whitelistCharacterIds: ['cat-a', 'cat-a'], bannedCharacterIds: [] },
+    allowedForms: [1, 2, 2], allowedCatRarities: [0, 0, 5],
+    catLevel: { banAtOrAbove: 50 },
+    dogMultipliers: { hpBanAtOrAbove: null, attackBanAtOrAbove: null },
+    stats: { maxHpBanAtOrAbove: 1000, attackTotalBanAtOrAbove: 2000 },
+    cost: null, maxConcurrentCapacity: 10
+  };
+  assert.equal(validateChallengeRestrictions(restriction).ok, true);
+  assert.deepEqual(normalizeChallengeRestrictions(restriction).allowedForms, [1, 2]);
+  assert.equal(validateChallengeRestrictions({ ...restriction, version: 2 }).ok, false);
+  assert.equal(validateChallengeRestrictions({ ...restriction, allowedCatRarities: ['rare'] }).ok, false);
+  assert.equal(validateChallengeRestrictions({ ...restriction, constructor: true }).ok, false);
+
+  installStorage();
+  const existing = stageStore.createAndSaveCustomStage({ name: '既存', battle: { backgroundId: 1, enemyCastleId: 1 } });
+  const imported = createCustomStage({ ...migrated, id: 'fresh-local-id', challengeRestrictions: restriction });
+  const provenance = { sourceCourseId: 'course-a', parentCourseId: null, rootCourseId: 'course-a', sourceContentHash: 'a'.repeat(64), sourceAuthorUserId: 'user-a', importedAt: 1 };
+  const committed = stageStore.saveImportedCustomStageAtomic(imported, provenance);
+  assert.equal(committed.ok, true);
+  assert.equal(provenanceStore.getCustomStageProvenance('fresh-local-id').sourceCourseId, 'course-a');
+  assert.equal(stageStore.saveImportedCustomStageAtomic(existing, provenance).ok, false, 'imports never overwrite a local stage id');
+
+  const beforeFailure = globalThis.localStorage.getItem(stageStore.CUSTOM_STAGE_STORAGE_KEY);
+  const originalSetItem = globalThis.localStorage.setItem;
+  let failProvenanceOnce = true;
+  globalThis.localStorage.setItem = (key, value) => {
+    if (key === provenanceStore.CUSTOM_STAGE_PROVENANCE_STORAGE_KEY && failProvenanceOnce) {
+      failProvenanceOnce = false;
+      throw new Error('quota');
+    }
+    originalSetItem(key, value);
+  };
+  const failed = stageStore.saveImportedCustomStageAtomic(
+    createCustomStage({ ...migrated, id: 'must-rollback', challengeRestrictions: restriction }), provenance
+  );
+  globalThis.localStorage.setItem = originalSetItem;
+  assert.equal(failed.ok, false);
+  assert.equal(failed.rollbackOk, true);
+  assert.equal(globalThis.localStorage.getItem(stageStore.CUSTOM_STAGE_STORAGE_KEY), beforeFailure, 'provenance write failure restores the exact prior stage key');
 });
 
 test('reference resolver: deleted custom ref is surfaced, launch guard stops battle', () => {

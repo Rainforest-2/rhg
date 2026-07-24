@@ -10,6 +10,7 @@ import {
 import {
   ensureCharacterModificationDiagnostics
 } from './CharacterModificationDiagnostics.js';
+import { migrateCustomStage } from '../custom-stage/CustomStageSchema.js';
 
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 
@@ -117,22 +118,15 @@ export function migrateCustomStageCharacterModificationSchema(stage, options = {
     return { valid: false, stage: null, ...diagnostics.snapshot() };
   }
 
-  const migrated = cloneJsonValue(stage);
-  if (version === 1) {
-    migrated.schemaVersion = CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION;
-    migrated.modifications = {};
-    if (Array.isArray(migrated.spawns)) {
-      migrated.spawns = migrated.spawns.map((spawn) => {
-        const next = { ...(spawn || {}) };
-        delete next.modificationRef;
-        return next;
-      });
-    }
-    diagnostics.migration(1, 2, 'Added an empty modification table to the custom stage.');
-  } else if (!isPlainCharacterModificationObject(migrated.modifications)) {
-    migrated.modifications = {};
+  let migrated;
+  try { migrated = migrateCustomStage(cloneJsonValue(stage)); }
+  catch (error) {
+    diagnostics.error('unsupported-custom-stage-version', String(error?.message || error), { path: 'stage.schemaVersion' });
+    return { valid: false, stage: null, ...diagnostics.snapshot() };
   }
-  migrated.schemaVersion = CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION;
+  if (version === 1) diagnostics.migration(1, 2, 'Added an empty modification table to the custom stage.');
+  if (version <= 2) diagnostics.migration(2, 3, 'Added null challengeRestrictions to the custom stage.');
+  if (!isPlainCharacterModificationObject(migrated.modifications)) migrated.modifications = {};
   const snapshot = diagnostics.snapshot();
   return {
     valid: snapshot.valid,
@@ -179,12 +173,27 @@ export function migrateCharacterModificationEnvelope(envelope, options = {}) {
     return { valid: false, envelope: null, ...diagnostics.snapshot() };
   }
   const migrated = cloneJsonValue(envelope);
+  if (migrated.exportVersion === 3) {
+    if (!isPlainCharacterModificationObject(migrated.stage)
+        || !Object.prototype.hasOwnProperty.call(migrated, 'provenance')) {
+      diagnostics.error('malformed-export-envelope', 'Custom stage v3 export requires stage and provenance.');
+    }
+    for (const key of Object.keys(migrated)) {
+      if (!['exportVersion', 'stage', 'provenance'].includes(key)) {
+        diagnostics.error('unknown-export-envelope-field', `Custom stage v3 export field is not allowed: ${key}`, { path: key });
+      }
+    }
+    const snapshot = diagnostics.snapshot();
+    return { valid: snapshot.valid, envelope: snapshot.valid ? migrated : null, errors: snapshot.errors, warnings: snapshot.warnings, migrations: snapshot.migrations, diagnostics: snapshot };
+  }
   if (migrated.type === 'rhg-custom-stage') {
     if (Number(migrated.version) === 1) {
-      migrated.version = CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION;
+      migrated.version = 2;
       diagnostics.migration(1, 2, 'Migrated custom stage export envelope from version 1 to version 2.');
     }
-    if (Number(migrated.version) !== CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION) {
+    // Version 3 is deliberately not a legacy `type` envelope: it is the strict
+    // `{ exportVersion: 3, stage, provenance }` envelope handled above.
+    if (Number(migrated.version) !== 2) {
       diagnostics.error('unsupported-export-version', `Unsupported custom stage export version: ${migrated.version}`);
     }
   } else if (migrated.type === 'rhg-character-modification-pack') {

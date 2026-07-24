@@ -355,7 +355,8 @@ const stageMigration = migrateCustomStageCharacterModificationSchema({
   spawns: [{ id: 's1', enemyId: 1 }]
 });
 assert.equal(stageMigration.valid, true);
-assert.equal(stageMigration.stage.schemaVersion, 2);
+assert.equal(stageMigration.stage.schemaVersion, 3);
 assert.deepEqual(stageMigration.stage.modifications, {});
+assert.equal(stageMigration.stage.challengeRestrictions, null);
 
 console.log('check-character-modification-schema: OK');

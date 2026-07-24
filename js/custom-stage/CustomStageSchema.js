@@ -2,7 +2,7 @@
 //
 // This module is intentionally free of DOM / localStorage / battle-runtime imports so it can be
 // unit tested under plain node. It owns two shapes:
-//   1. A single user-authored custom stage (schemaVersion 2) that stores references to
+//   1. A single user-authored custom stage (schemaVersion 3) that stores references to
 //      existing BCU assets (background/castle/BGM/enemy ids) plus battle + spawn + limit config.
 //      Character modifications live in a deduped table and spawn rows own references into it.
 //   2. Typed stage references { kind: 'bcu' | 'custom', id } used by the stage-vs-stage battle
@@ -19,7 +19,7 @@ import {
   hashCharacterModification
 } from '../character-modification/CharacterModificationHash.js';
 
-export const CUSTOM_STAGE_SCHEMA_VERSION = 2;
+export const CUSTOM_STAGE_SCHEMA_VERSION = 3;
 export const CUSTOM_STAGE_BATTLE_SCHEMA_VERSION = 2;
 export const CUSTOM_STAGE_FRAMES_PER_SECOND = 60;
 
@@ -28,6 +28,126 @@ export const STAGE_REF_KINDS = Object.freeze(['bcu', 'custom']);
 const DEFAULT_STAGE_LENGTH = 4000;
 const DEFAULT_ENEMY_BASE_HP = 100000;
 const DEFAULT_MAX_ENEMY_COUNT = 20;
+export const CUSTOM_STAGE_RESTRICTION_VERSION = 1;
+export const CUSTOM_STAGE_RESTRICTION_LIMITS = Object.freeze({
+  // The existing import pipeline already caps authored spawn rows at 1,000.  A restriction
+  // cannot usefully name more characters than that local authoring boundary, while the BCU
+  // rarity model has exactly six numeric values (0..5).
+  maxIds: 1000,
+  maxForms: 4,
+  maxRarities: 6,
+  maxCapacity: 10000
+});
+const FORBIDDEN_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
+
+function plainObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+    && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+}
+
+function uniqueStrings(values, limit) {
+  const seen = new Set();
+  const out = [];
+  for (const value of Array.isArray(values) ? values : []) {
+    if (typeof value !== 'string') continue;
+    const id = value.normalize('NFC').trim();
+    if (!id || id.length > 160 || FORBIDDEN_KEYS.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+function uniqueNumbers(values, allowed, limit) {
+  const seen = new Set();
+  const out = [];
+  for (const value of Array.isArray(values) ? values : []) {
+    if (typeof value !== 'number' || !Number.isFinite(value) || !allowed(value) || seen.has(value)) continue;
+    seen.add(value);
+    out.push(Object.is(value, -0) ? 0 : value);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+function nullableFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) && !Object.is(value, -0) ? value : null;
+}
+
+// A null restriction is the sole persisted representation of "no restriction".
+// Validation remains strict; this function only produces a deterministic valid-value shape.
+export function normalizeChallengeRestrictions(raw) {
+  if (raw == null) return null;
+  const source = plainObject(raw) ? raw : {};
+  const policy = plainObject(source.characterPolicy) ? source.characterPolicy : {};
+  const catLevel = plainObject(source.catLevel) ? source.catLevel : {};
+  const dog = plainObject(source.dogMultipliers) ? source.dogMultipliers : {};
+  const stats = plainObject(source.stats) ? source.stats : {};
+  const cost = plainObject(source.cost) ? source.cost : null;
+  return {
+    version: CUSTOM_STAGE_RESTRICTION_VERSION,
+    army: ['any', 'cat-only', 'dog-only'].includes(source.army) ? source.army : 'any',
+    characterPolicy: {
+      whitelistEnabled: source.characterPolicy?.whitelistEnabled === true,
+      whitelistCharacterIds: uniqueStrings(policy.whitelistCharacterIds, CUSTOM_STAGE_RESTRICTION_LIMITS.maxIds),
+      bannedCharacterIds: uniqueStrings(policy.bannedCharacterIds, CUSTOM_STAGE_RESTRICTION_LIMITS.maxIds)
+    },
+    allowedForms: uniqueNumbers(source.allowedForms, (v) => Number.isInteger(v) && v >= 1 && v <= 4, CUSTOM_STAGE_RESTRICTION_LIMITS.maxForms),
+    allowedCatRarities: source.allowedCatRarities == null ? null : uniqueNumbers(
+      source.allowedCatRarities,
+      (v) => Number.isInteger(v) && v >= 0 && v < CUSTOM_STAGE_RESTRICTION_LIMITS.maxRarities,
+      CUSTOM_STAGE_RESTRICTION_LIMITS.maxRarities
+    ),
+    catLevel: { banAtOrAbove: nullableFiniteNumber(catLevel.banAtOrAbove) },
+    dogMultipliers: {
+      hpBanAtOrAbove: nullableFiniteNumber(dog.hpBanAtOrAbove),
+      attackBanAtOrAbove: nullableFiniteNumber(dog.attackBanAtOrAbove)
+    },
+    stats: {
+      maxHpBanAtOrAbove: nullableFiniteNumber(stats.maxHpBanAtOrAbove),
+      attackTotalBanAtOrAbove: nullableFiniteNumber(stats.attackTotalBanAtOrAbove)
+    },
+    cost: cost && ['ban-at-or-above', 'ban-at-or-below'].includes(cost.mode)
+      && typeof cost.value === 'number' && Number.isFinite(cost.value) && !Object.is(cost.value, -0)
+      ? { mode: cost.mode, value: cost.value } : null,
+    maxConcurrentCapacity: nullableFiniteNumber(source.maxConcurrentCapacity)
+  };
+}
+
+export function validateChallengeRestrictions(raw) {
+  const errors = [];
+  const err = (path, code, reason, value) => errors.push({ path, code, reason, value: String(value).slice(0, 160) });
+  const keys = (value, allowed, path) => {
+    if (!plainObject(value)) { err(path, 'invalid-object', 'plain object is required', value); return false; }
+    for (const key of Object.keys(value)) {
+      if (FORBIDDEN_KEYS.has(key) || !allowed.has(key)) err(`${path}.${key}`, FORBIDDEN_KEYS.has(key) ? 'forbidden-key' : 'unknown-field', 'field is not allowed', key);
+    }
+    return true;
+  };
+  if (raw === null) return { ok: true, errors, value: null };
+  if (!keys(raw, new Set(['version','army','characterPolicy','allowedForms','allowedCatRarities','catLevel','dogMultipliers','stats','cost','maxConcurrentCapacity']), 'challengeRestrictions')) return { ok: false, errors };
+  if (raw.version !== 1) err('challengeRestrictions.version', 'unsupported-restriction-version', 'version must be 1', raw.version);
+  if (!['any','cat-only','dog-only'].includes(raw.army)) err('challengeRestrictions.army', 'invalid-enum', 'army is invalid', raw.army);
+  if (keys(raw.characterPolicy, new Set(['whitelistEnabled','whitelistCharacterIds','bannedCharacterIds']), 'challengeRestrictions.characterPolicy')) {
+    if (typeof raw.characterPolicy.whitelistEnabled !== 'boolean') err('challengeRestrictions.characterPolicy.whitelistEnabled','invalid-boolean','boolean is required',raw.characterPolicy.whitelistEnabled);
+    for (const field of ['whitelistCharacterIds','bannedCharacterIds']) {
+      const values = raw.characterPolicy[field];
+      if (!Array.isArray(values) || values.length > CUSTOM_STAGE_RESTRICTION_LIMITS.maxIds) err(`challengeRestrictions.characterPolicy.${field}`,'invalid-id-array','bounded ID array is required',values?.length);
+      else for (const value of values) if (typeof value !== 'string' || !value.trim() || value.trim().length > 160 || FORBIDDEN_KEYS.has(value.trim())) err(`challengeRestrictions.characterPolicy.${field}`,'invalid-id','canonical ID is required',value);
+    }
+    if (raw.characterPolicy.whitelistEnabled === true && raw.characterPolicy.whitelistCharacterIds?.length === 0) err('challengeRestrictions.characterPolicy.whitelistCharacterIds','empty-whitelist','enabled whitelist must not be empty','');
+  }
+  if (!Array.isArray(raw.allowedForms) || raw.allowedForms.length === 0 || raw.allowedForms.length > 4 || raw.allowedForms.some((v) => !Number.isInteger(v) || v < 1 || v > 4)) err('challengeRestrictions.allowedForms','invalid-forms','forms must be a non-empty subset of 1..4',raw.allowedForms);
+  if (raw.allowedCatRarities !== null && (!Array.isArray(raw.allowedCatRarities) || raw.allowedCatRarities.length > CUSTOM_STAGE_RESTRICTION_LIMITS.maxRarities || raw.allowedCatRarities.some((v) => !Number.isInteger(v) || v < 0 || v >= CUSTOM_STAGE_RESTRICTION_LIMITS.maxRarities))) err('challengeRestrictions.allowedCatRarities','invalid-rarities','null or a bounded BCU rarity array (0..5) is required',raw.allowedCatRarities);
+  const finiteThreshold = (value, path, integer = false) => { if (value !== null && (typeof value !== 'number' || !Number.isFinite(value) || Object.is(value,-0) || value <= 0 || Math.abs(value) > Number.MAX_SAFE_INTEGER || (integer && !Number.isSafeInteger(value)))) err(path,'invalid-threshold','positive bounded finite threshold is required',value); };
+  if (keys(raw.catLevel,new Set(['banAtOrAbove']),'challengeRestrictions.catLevel')) finiteThreshold(raw.catLevel.banAtOrAbove,'challengeRestrictions.catLevel.banAtOrAbove',true);
+  if (keys(raw.dogMultipliers,new Set(['hpBanAtOrAbove','attackBanAtOrAbove']),'challengeRestrictions.dogMultipliers')) { finiteThreshold(raw.dogMultipliers.hpBanAtOrAbove,'challengeRestrictions.dogMultipliers.hpBanAtOrAbove'); finiteThreshold(raw.dogMultipliers.attackBanAtOrAbove,'challengeRestrictions.dogMultipliers.attackBanAtOrAbove'); }
+  if (keys(raw.stats,new Set(['maxHpBanAtOrAbove','attackTotalBanAtOrAbove']),'challengeRestrictions.stats')) { finiteThreshold(raw.stats.maxHpBanAtOrAbove,'challengeRestrictions.stats.maxHpBanAtOrAbove',true); finiteThreshold(raw.stats.attackTotalBanAtOrAbove,'challengeRestrictions.stats.attackTotalBanAtOrAbove',true); }
+  if (raw.cost !== null && (!plainObject(raw.cost) || !['ban-at-or-above','ban-at-or-below'].includes(raw.cost.mode) || typeof raw.cost.value !== 'number' || !Number.isFinite(raw.cost.value) || Object.is(raw.cost.value,-0) || raw.cost.value < 0 || !Number.isSafeInteger(raw.cost.value))) err('challengeRestrictions.cost','invalid-cost','null or a valid cost restriction is required',raw.cost);
+  if (raw.maxConcurrentCapacity !== null && (!Number.isSafeInteger(raw.maxConcurrentCapacity) || raw.maxConcurrentCapacity <= 0 || raw.maxConcurrentCapacity > CUSTOM_STAGE_RESTRICTION_LIMITS.maxCapacity)) err('challengeRestrictions.maxConcurrentCapacity','invalid-capacity','positive bounded integer is required',raw.maxConcurrentCapacity);
+  return { ok: errors.length === 0, errors, value: errors.length ? null : normalizeChallengeRestrictions(raw) };
+}
 
 function num(value, fallback) {
   const n = Number(value);
@@ -219,19 +339,24 @@ export function migrateCustomStage(raw = {}) {
     error.supportedSchemaVersion = CUSTOM_STAGE_SCHEMA_VERSION;
     throw error;
   }
-  if (version === CUSTOM_STAGE_SCHEMA_VERSION) return { ...source };
-  return {
-    ...source,
-    schemaVersion: CUSTOM_STAGE_SCHEMA_VERSION,
-    modifications: {},
-    spawns: Array.isArray(source.spawns)
-      ? source.spawns.map((spawn) => {
-        const next = { ...(spawn || {}) };
-        delete next.modificationRef;
-        return next;
-      })
-      : []
-  };
+  const cloned = typeof structuredClone === 'function'
+    ? structuredClone(source)
+    : JSON.parse(JSON.stringify(source));
+  if (version === CUSTOM_STAGE_SCHEMA_VERSION) return cloned;
+  const v2 = version === 1
+    ? {
+      ...cloned,
+      schemaVersion: 2,
+      modifications: {},
+      spawns: Array.isArray(cloned.spawns)
+        ? cloned.spawns.map((spawn) => {
+          const next = { ...(spawn || {}) };
+          delete next.modificationRef;
+          return next;
+        }) : []
+    }
+    : cloned;
+  return { ...v2, schemaVersion: CUSTOM_STAGE_SCHEMA_VERSION, challengeRestrictions: null };
 }
 
 function allocateModificationId(modification, table) {
@@ -309,6 +434,7 @@ export function createCustomStage(partial = {}) {
     },
     spawns: normalizedModifications.spawns,
     modifications: normalizedModifications.modifications,
+    challengeRestrictions: normalizeChallengeRestrictions(p.challengeRestrictions),
     limits: {
       maxMoney: nullableNum(limits.maxMoney),
       maxUnitSpawn: nullableNum(limits.maxUnitSpawn),

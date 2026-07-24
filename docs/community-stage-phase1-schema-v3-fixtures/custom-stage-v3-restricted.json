@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 3,
+  "id": "fixture-stage-v3",
+  "name": "Phase 1 restriction fixture",
+  "description": "",
+  "createdAt": 1784937600000,
+  "updatedAt": 1784937600000,
+  "battle": {
+    "stageLength": 4000,
+    "enemyBaseHp": 100000,
+    "maxEnemyCount": 20,
+    "backgroundId": 1,
+    "enemyCastleId": 1,
+    "enemyCastleAnimBaseId": null,
+    "enemyCastleCannonId": null,
+    "musicId": null,
+    "bossMusicId": null,
+    "timeLimitFrames": 0,
+    "nonContinue": false,
+    "bossGuard": false
+  },
+  "spawns": [],
+  "modifications": {},
+  "challengeRestrictions": {
+    "version": 1,
+    "army": "cat-only",
+    "characterPolicy": {
+      "whitelistEnabled": true,
+      "whitelistCharacterIds": ["cat-fixture-a"],
+      "bannedCharacterIds": []
+    },
+    "allowedForms": [1, 2, 3, 4],
+    "allowedCatRarities": [0, 5],
+    "catLevel": { "banAtOrAbove": 50 },
+    "dogMultipliers": { "hpBanAtOrAbove": null, "attackBanAtOrAbove": null },
+    "stats": { "maxHpBanAtOrAbove": null, "attackTotalBanAtOrAbove": null },
+    "cost": null,
+    "maxConcurrentCapacity": null
+  },
+  "limits": {
+    "maxMoney": null,
+    "maxUnitSpawn": null,
+    "globalCostMultiplier": null,
+    "globalCooldownMultiplier": null,
+    "rarityDeployLimit": null,
+    "bannedCatComboIds": [],
+    "bannedOrbIds": []
+  }
+}

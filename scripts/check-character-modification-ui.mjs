@@ -758,7 +758,8 @@ async function customStageWorkflow(page) {
   await page.locator('[data-custom-builder-save]').click();
   await page.waitForFunction(() => {
     const envelope = JSON.parse(localStorage.getItem('wanko.customStages.v1') || 'null');
-    return envelope?.stages?.[0]?.schemaVersion === 2
+    return envelope?.stages?.[0]?.schemaVersion === 3
+      && envelope.stages[0].challengeRestrictions === null
       && Object.keys(envelope.stages[0].modifications || {}).length === 1;
   });
 
@@ -821,8 +822,9 @@ async function customStageWorkflow(page) {
   const stageDownload = await stageDownloadEvent;
   const stageJson = await downloadText(stageDownload);
   const exported = JSON.parse(stageJson);
-  assert.equal(exported.type, 'rhg-custom-stage');
-  assert.equal(exported.version, 2);
+  assert.equal(exported.exportVersion, 3);
+  assert.equal(exported.stage.schemaVersion, 3);
+  assert.equal(exported.provenance, null);
   assert.equal(stageJson.includes('\n'), false, 'standard custom-stage export is minified');
 
   await page.locator('[data-custom-builder-import-file]').setInputFiles({

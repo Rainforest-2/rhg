@@ -21,7 +21,8 @@ import {
 } from '../custom-stage/CustomStageSchema.js';
 import {
   readCustomStages, getCustomStage, deleteCustomStage,
-  duplicateCustomStage, saveCustomStageAtomic, saveValidatedCustomStageAtomic
+  duplicateCustomStage, saveCustomStageAtomic, saveValidatedCustomStageAtomic,
+  saveImportedCustomStageAtomic
 } from '../custom-stage/CustomStageStore.js';
 import { validateCustomStage } from '../custom-stage/CustomStageValidator.js';
 import {
@@ -45,6 +46,9 @@ import {
   clearStorageFailure,
   reportStorageFailure
 } from '../battle/BcuStorageDiagnostics.js';
+import {
+  getCustomStageProvenance
+} from '../custom-stage/CustomStageProvenanceStore.js';
 
 const PATCH_FLAG = Symbol.for('wanko-formation-custom-stage-builder.v1');
 const BATTLE_LEVEL = 'custom-stage-battle';
@@ -1450,7 +1454,9 @@ function updateChangedFieldDom(editor, field) {
 }
 
 function exportStage(editor, stage) {
-  const encoded = createCustomStageCharacterModificationExport(stage);
+  const encoded = createCustomStageCharacterModificationExport(stage, {
+    provenance: getCustomStageProvenance(stage.id)
+  });
   if (!encoded.ok) {
     const message = encoded.errors?.[0]?.message || 'JSONの書き出しに失敗しました';
     toast(editor, `書き出せません: ${message}`);
@@ -1769,6 +1775,7 @@ function rootChangeHandler(editor, e) {
       const transaction = Object.freeze({
         prepared,
         stage,
+        provenance: prepared.candidate.provenance ?? null,
         errors: prepared.errors || [],
         warnings: prepared.warnings || [],
         migrations: prepared.migrations || []
@@ -1815,9 +1822,11 @@ function commitCustomStageImport(editor) {
     return;
   }
   try {
-    const result = commitPreparedCharacterModificationImport(preview.prepared, () => (
-      saveValidatedCustomStageAtomic(preview.stage, { resolvers: assetResolvers() })
-    ));
+    const result = commitPreparedCharacterModificationImport(preview.prepared, () => {
+      return saveImportedCustomStageAtomic(preview.stage, preview.provenance, {
+        resolvers: assetResolvers()
+      });
+    });
     if (!result?.ok) {
       editor.renderStageSelector();
       toast(editor, '保存領域へ書き込めなかったため、読み込みを確定できませんでした');

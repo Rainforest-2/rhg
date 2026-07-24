@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { StageRuntime } from '../js/battle/StageRuntime.js';
 import { isBcuBossRow } from '../js/battle/StageRuntimeBossFlagPatch.js';
 
-function runtime(bossSpawnWorldX = 1234) {
+function runtime({ bossSpawnWorldX = 1234, includeBossSpawn = true } = {}) {
   const definition = {
     ok: true,
     stageLen: 4000,
@@ -11,7 +11,7 @@ function runtime(bossSpawnWorldX = 1234) {
     maxEnemyCount: 20,
     enemyRows: []
   };
-  if (bossSpawnWorldX !== undefined) definition.bossSpawnWorldX = bossSpawnWorldX;
+  if (includeBossSpawn) definition.bossSpawnWorldX = bossSpawnWorldX;
   return new StageRuntime(definition);
 }
 
@@ -55,7 +55,7 @@ assert.equal(isBcuBossRow(Number.NaN), false);
 
 // Missing castle-specific coordinates must still enter the existing boss fallback branch.
 {
-  const stage = runtime(undefined);
+  const stage = runtime({ includeBossSpawn: false });
   assert.deepEqual(stage.getEnemySpawnWorldX({ bossFlag: 2 }), {
     worldX: 700,
     source: 'stage-runtime-boss-spawn-fallback-700'

@@ -17,6 +17,8 @@ import { BattleCameraInputController } from './BattleCameraInputController.js';
 import { getDefaultStage } from '../battle/StageRegistry.js';
 import { audioEngine } from '../audio/AudioEngine.js';
 import { BATTLE_PRELOAD_SE_IDS, BATTLE_HOT_SE_IDS } from '../audio/BattleSoundEffects.js';
+import { readCommunityFeatureFlagBootstrapOverride, resolveCommunityFeatureFlags } from '../community/CommunityFeatureFlags.js';
+import { CommunityHomeController } from '../community/CommunityHomeController.js';
 
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -76,7 +78,7 @@ async function loadImage(url) {
 }
 
 export class PreviewApp {
-  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.selectedStageId=options.selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.lastBattleRenderAt=0; this.productionBar=null; this.speedControl=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; }
+  constructor(options = {}) { this.bcuDb = options.bcuDb || globalThis.__BCU_DB__ || null; this.assets = PREVIEW_ASSETS; this.loader = new BcuAssetLoader(); this.state = { scale: 1, showParts: false, showPivots: false, showBounds: false, rawMode: false, debugApplied: [], currentAnimLabel: '', loadedFiles: [], missingFiles: [] }; this.selectedStageId=options.selectedStageId || getDefaultStage()?.stageKey || getDefaultStage()?.stageId || null; this.battleSpeedMultiplier=1; this.battleScene = null; this.battleSceneRenderer = new BattleSceneRenderer(); this.battleLoading=false; this.battleInitPromise=null; this.sceneReady=false; this.sceneTransitioning=false; this.lastBattleUiUpdate=0; this.lastBattleFrameErrorMessage=''; this.lastBattleRenderAt=0; this.productionBar=null; this.speedControl=null; this.formationEditor=null; this.loadingOverlay=null; this.simulationClock=new BattleSimulationClock({ fixedStepMs: 33, maxSubStepsPerFrame: 1, catchUpMode: 'bcu-no-catchup' }); this.simulationPausedByVisibility=false; this.maxFrameDtMs=100; this.cameraInputController=null; this.communityFeatureFlags=resolveCommunityFeatureFlags(options.communityFeatureFlags ?? readCommunityFeatureFlagBootstrapOverride()); this.communityHome=null; this._startPromise=null; this._appShellInitialized=false; this._legacyPlayStarted=false; this._renderLoopStarted=false; }
 
   // Snapshot each entity's pre-step world X right before a logic tick mutates it,
   // so the renderer can interpolate between the previous and current logic frame.
@@ -124,29 +126,52 @@ export class PreviewApp {
   }
 
   async start() {
+    if (this._startPromise) return await this._startPromise;
+    this._startPromise = this.startOnce();
+    return await this._startPromise;
+  }
+
+  async startOnce() {
+    try {
+      this.initializeExistingAppShell();
+      if (this.communityFeatureFlags.communityHome) {
+        try {
+          this.showCommunityHome();
+        } catch (error) {
+          console.error('[PreviewApp] community home initialization failed; continuing with legacy play', error);
+          this.enterLegacyPlay();
+        }
+      } else {
+        this.enterLegacyPlay();
+      }
+    } catch (e) { console.error('[PreviewApp] start failed', e); this.loadingOverlay?.setError(e); this.loadingOverlay?.show(); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
+  }
+
+  initializeExistingAppShell() {
+    if (this._appShellInitialized) return;
+    this._appShellInitialized = true;
     this.loadingOverlay = new AppLoadingOverlay({ mount: document.body });
     this.bindVisibilityHandlers();
     this.simulationClock.maxFrameDtMs = this.maxFrameDtMs;
-    try {
-      this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
-      const devUiEnabled = new URLSearchParams(location.search).get('debugUi') === '1' || localStorage.getItem('debugUi') === '1';
-      const controlPanel = document.getElementById('control-panel');
-      const logPanel = document.getElementById('log-panel');
-      if (!devUiEnabled) { controlPanel?.setAttribute('hidden', ''); logPanel?.setAttribute('hidden', ''); }
-      else { controlPanel?.removeAttribute('hidden'); logPanel?.removeAttribute('hidden'); }
-      this.ui = new PreviewUi(controlPanel, document.getElementById('log-list'));
-      this.ui.init(this.assets, {});
-      this.cameraInputController = new BattleCameraInputController(this.renderer.canvas, () => this.battleScene?.camera);
-      this.cameraInputController.attach();
-      const battleMount=document.querySelector('.canvas-panel')||document.body;
-      this.formationEditor = new FormationEditor({ mount:battleMount, selectedStageId:this.selectedStageId, onStageChanged:(stageId)=>{this.selectedStageId=stageId;this.ui?.log('info',`Stage selected: ${stageId}`);}, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${formatFormationForLog(f)}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); }, onSettingChanged:(key)=>{ if(key==='bcu-speed-control') this.speedControl?.setVisible(this.speedControl?.visible); } });
-      this.formationEditor.setVisible(true);
-      this.speedControl = new BattleSpeedControl({ mount: battleMount, onChange: (mult) => { this.battleSpeedMultiplier = mult; } });
-      this.speedControl.setVisible(false);
-      this.productionBar?.setVisible(false);
-      this.sceneReady = false;
-      this.battleScene = null;
-      const loop = (t) => { /* legacy: tick(dt*this.battleSpeedMultiplier) now handled via BattleSimulationClock fixed-step */
+    this.renderer = new PreviewRenderer(document.getElementById('preview-canvas'));
+    const devUiEnabled = new URLSearchParams(location.search).get('debugUi') === '1' || localStorage.getItem('debugUi') === '1';
+    const controlPanel = document.getElementById('control-panel');
+    const logPanel = document.getElementById('log-panel');
+    if (!devUiEnabled) { controlPanel?.setAttribute('hidden', ''); logPanel?.setAttribute('hidden', ''); }
+    else { controlPanel?.removeAttribute('hidden'); logPanel?.removeAttribute('hidden'); }
+    this.ui = new PreviewUi(controlPanel, document.getElementById('log-list'));
+    this.ui.init(this.assets, {});
+    this.cameraInputController = new BattleCameraInputController(this.renderer.canvas, () => this.battleScene?.camera);
+    this.cameraInputController.attach();
+    this.sceneReady = false;
+    this.battleScene = null;
+    this.startRenderLoop();
+  }
+
+  startRenderLoop() {
+    if (this._renderLoopStarted) return;
+    this._renderLoopStarted = true;
+    const loop = (t) => { /* legacy: tick(dt*this.battleSpeedMultiplier) now handled via BattleSimulationClock fixed-step */
         this.renderer.ensureCanvasSize();
         if (this.sceneTransitioning || !this.sceneReady || !this.battleScene) {
           this.renderPlaceholder();
@@ -168,9 +193,36 @@ export class PreviewApp {
           }
         }
         requestAnimationFrame(loop);
-      };
-      requestAnimationFrame(loop);
-    } catch (e) { console.error('[PreviewApp] start failed', e); this.loadingOverlay?.setError(e); this.loadingOverlay?.show(); this.ui?.log('error', `[PreviewApp] start failed: ${e instanceof Error ? e.message : String(e)}`); }
+    };
+    requestAnimationFrame(loop);
+  }
+
+  enterLegacyPlay() {
+    if (this._legacyPlayStarted) return;
+    const battleMount = document.querySelector('.canvas-panel') || document.body;
+    const formationEditor = new FormationEditor({ mount:battleMount, selectedStageId:this.selectedStageId, onStageChanged:(stageId)=>{this.selectedStageId=stageId;this.ui?.log('info',`Stage selected: ${stageId}`);}, onFormationChanged:(f)=>{this.ui?.log('info',`Formation saved: ${formatFormationForLog(f)}`);}, onApplyBattle: async ()=>{ await this.applyFormationToBattle(); }, onSettingChanged:(key)=>{ if(key==='bcu-speed-control') this.speedControl?.setVisible(this.speedControl?.visible); } });
+    const speedControl = new BattleSpeedControl({ mount: battleMount, onChange: (mult) => { this.battleSpeedMultiplier = mult; } });
+    this.formationEditor = formationEditor;
+    this.speedControl = speedControl;
+    this._legacyPlayStarted = true;
+    this.formationEditor.setVisible(true);
+    this.speedControl.setVisible(false);
+    this.productionBar?.setVisible(false);
+  }
+
+  showCommunityHome() {
+    if (!this.communityHome) {
+      const mount = document.querySelector('.canvas-panel') || document.body;
+      this.communityHome = new CommunityHomeController({
+        mount,
+        browseAvailable: this.communityFeatureFlags.communityBrowse,
+        onPlay: () => {
+          this.enterLegacyPlay();
+          this.communityHome?.hide();
+        }
+      });
+    }
+    this.communityHome.show();
   }
 
 

@@ -1,0 +1,26 @@
+
+> rhg-bcu-battle@1.0.0 check:character-modification:ui
+> node scripts/check-character-modification-ui.mjs
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-custom-builder-new]')[22m
+[2m    - locator resolved to <button type="button" class="is-primary" data-custom-builder-new="1">＋ 新しいステージを作る</button>[22m
+[2m  - attempting click action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is visible, enabled and stable[22m
+[2m    - scrolling into view if needed[22m
+[2m    - done scrolling[22m
+[2m    - performing click action[22m
+
+    at customStageWorkflow (/workspaces/rhg/scripts/check-character-modification-ui.mjs:552:51)
+    at async file:///workspaces/rhg/scripts/check-character-modification-ui.mjs:900:3 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.14.0
+exit=1

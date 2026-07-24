@@ -1,0 +1,175 @@
+{
+  "wanko-battle.formation.v2": {
+    "version": 5,
+    "rows": 2,
+    "cols": 5,
+    "pages": [
+      [
+        "dog-enemy-000",
+        "dog-enemy-001",
+        "dog-enemy-002",
+        "cat-unit-000-f",
+        "cat-unit-001-f"
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "slots": [
+      "dog-enemy-000",
+      "dog-enemy-001",
+      "dog-enemy-002",
+      "cat-unit-000-f",
+      "cat-unit-001-f"
+    ],
+    "options": {
+      "bcuCatUnitLevel": {
+        "enabled": true,
+        "prefLevel": 30,
+        "source": "phase0-fixture"
+      },
+      "bcuCatUnitLevels": {
+        "cat-unit-000-f": {
+          "enabled": true,
+          "level": 30,
+          "plusLevel": 20,
+          "source": "phase0-fixture-explicit-level"
+        }
+      },
+      "dogUnitMagnifications": {},
+      "bcuTreasure": {
+        "trea": {
+          "atk": 0,
+          "def": 0
+        },
+        "fruit": {}
+      },
+      "bcuOrbEquipment": {},
+      "bcuTalentLevels": {},
+      "characterModifications": {
+        "cat-unit-000-f": {
+          "schemaVersion": 1,
+          "stats": {
+            "maxHp": 123456
+          },
+          "production": {
+            "cost": 321,
+            "respawnFrames": 180,
+            "deployLimit": 2
+          }
+        }
+      }
+    }
+  },
+  "wanko.customStages.v1": {
+    "version": 1,
+    "schemaVersion": 2,
+    "updatedAt": 1784880000000,
+    "stages": [
+      {
+        "schemaVersion": 2,
+        "id": "phase0-custom-stage",
+        "name": "Phase 0 baseline stage",
+        "description": "Non-personal, deterministic audit fixture.",
+        "createdAt": 1784880000000,
+        "updatedAt": 1784880000000,
+        "battle": {
+          "stageLength": 4000,
+          "enemyBaseHp": 100000,
+          "maxEnemyCount": 20,
+          "backgroundId": 0,
+          "enemyCastleId": 0,
+          "enemyCastleAnimBaseId": null,
+          "enemyCastleCannonId": null,
+          "musicId": null,
+          "bossMusicId": null,
+          "timeLimitFrames": 0,
+          "nonContinue": false,
+          "bossGuard": false
+        },
+        "spawns": [
+          {
+            "id": "phase0-spawn-0",
+            "enemyId": 0,
+            "count": 1,
+            "hpMultiplier": 100,
+            "attackMultiplier": 100,
+            "boss": false,
+            "firstSpawn": {
+              "minFrames": 0,
+              "maxFrames": 0
+            },
+            "respawn": {
+              "enabled": false,
+              "minFrames": 0,
+              "maxFrames": 0
+            },
+            "conditions": {
+              "enemyBaseHp": {
+                "enabled": false,
+                "minPercent": 0,
+                "maxPercent": 100
+              },
+              "layer": {
+                "enabled": false,
+                "min": 0,
+                "max": 0
+              },
+              "groupId": 0,
+              "score": {
+                "enabled": false,
+                "value": 0
+              }
+            },
+            "modificationRef": "m-faf135141b7c14bf"
+          }
+        ],
+        "modifications": {
+          "m-faf135141b7c14bf": {
+            "schemaVersion": 1,
+            "stats": {
+              "maxHp": 123456
+            }
+          }
+        },
+        "limits": {
+          "maxMoney": null,
+          "maxUnitSpawn": 3,
+          "globalCostMultiplier": 1.25,
+          "globalCooldownMultiplier": 1,
+          "rarityDeployLimit": null,
+          "bannedCatComboIds": [],
+          "bannedOrbIds": []
+        }
+      }
+    ]
+  },
+  "wanko.customStageBattle.v1": {
+    "schemaVersion": 2,
+    "mode": "stage-vs-stage-multi",
+    "enabled": true,
+    "enemyStages": [
+      {
+        "kind": "custom",
+        "id": "phase0-custom-stage"
+      }
+    ],
+    "playerStages": [],
+    "enemyStageIds": [
+      "custom:phase0-custom-stage"
+    ],
+    "playerStageIds": [],
+    "baseSource": "enemy",
+    "fixedBaseHpEnabled": false,
+    "fixedBaseHpValue": 10000000,
+    "baseHpDrainEnabled": false,
+    "baseHpDrainPerFrame": 100,
+    "autoBarrierBreakEnabled": false,
+    "autoBarrierBreakMultiplier": 5,
+    "updatedAt": 1784880000000
+  }
+}

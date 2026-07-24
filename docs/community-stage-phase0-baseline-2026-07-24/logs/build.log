@@ -1,0 +1,95 @@
+
+> rhg-bcu-battle@1.0.0 prebuild
+> npm run generate:bcu-stage-crowns
+
+
+> rhg-bcu-battle@1.0.0 generate:bcu-stage-crowns
+> node scripts/build-bcu-stage-crown-index.mjs
+
+wrote public/assets/generated/bcu-stage-crown-index.json: packs=58 rawRows=12957 exactIdentities=12957 ambiguousNames=87 ambiguousMapIds=80
+
+> rhg-bcu-battle@1.0.0 build
+> vite build
+
+vite v8.1.0 building client environment for production...
+[2Ktransforming...
+./assets/vendor/bootstrap-icons/bootstrap-icons.min.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+
+../assets/ui/nyanko-menu-bg.png referenced in ../assets/ui/nyanko-menu-bg.png didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+../assets/ui/nyanko-battle-load-bg.png referenced in ../assets/ui/nyanko-battle-load-bg.png didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+../assets/ui/nyanko-ui-stamp.svg referenced in ../assets/ui/nyanko-ui-stamp.svg didn't resolve at build time, it will remain unchanged to be resolved at runtime
+
+../assets/FOT-大江戸勘亭流 Std E.otf referenced in ../assets/FOT-大江戸勘亭流 Std E.otf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+✓ 348 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/manifest-CSWyWhKs.webmanifest                          0.86 kB
+dist/index.html                                                    3.66 kB │ gzip:   1.68 kB
+dist/assets/nyanko-stage-selector-pro-DQJ5P9my.css                20.21 kB │ gzip:   3.41 kB
+dist/assets/index-B14WF2aM.css                                   178.84 kB │ gzip:  27.91 kB
+dist/assets/installBcuPatches-BT7XMfJ_.js                          0.39 kB │ gzip:   0.27 kB
+dist/assets/BcuModifierDiagnostics-0ktZapK-.js                     0.68 kB │ gzip:   0.41 kB
+dist/assets/BcuImgCut-Dl3DzW60.js                                  0.76 kB │ gzip:   0.49 kB
+dist/assets/installUiPatches-BKW0bIw9.js                           0.82 kB │ gzip:   0.51 kB
+dist/assets/installBattleRendererPatches-CR3kiACL.js               0.83 kB │ gzip:   0.50 kB
+dist/assets/installBattleCorePatches-LKdmcCa8.js                   0.88 kB │ gzip:   0.52 kB
+dist/assets/installBattleProjectilePatches-D7NXaA5z.js             0.89 kB │ gzip:   0.52 kB
+dist/assets/installBattleActorLifecyclePatches-Eb6On90Q.js         0.98 kB │ gzip:   0.57 kB
+dist/assets/BcuComboRegistryLoader-BoSRIusU.js                     1.02 kB │ gzip:   0.58 kB
+dist/assets/BcuExtraActorAnimationBundlePatch-Al14vcDu.js          1.52 kB │ gzip:   0.79 kB
+dist/assets/AudioSettings-CRjt-mVJ.js                              1.67 kB │ gzip:   0.66 kB
+dist/assets/BcuTalentRegistryLoader-C4GkOnCq.js                    1.71 kB │ gzip:   0.88 kB
+dist/assets/installBattleScenePatches-D4k-HX6y.js                  1.74 kB │ gzip:   0.79 kB
+dist/assets/BattleTouchGuard-sEjdcWfn.js                           1.76 kB │ gzip:   0.79 kB
+dist/assets/PreviewAppCustomStageBattleConfigPatch-CVwuHqtL.js     1.97 kB │ gzip:   0.87 kB
+dist/assets/runtimePatches-0O0govaU.js                             2.04 kB │ gzip:   0.85 kB
+dist/assets/PreviewAppBattleMusicPatch-Xq42fzvm.js                 2.12 kB │ gzip:   0.94 kB
+dist/assets/BattleSceneBcuTouchPatch-BMcYFVWy.js                   2.17 kB │ gzip:   0.91 kB
+dist/assets/PreviewAppPageTransitionPatch-gxZb232_.js              2.44 kB │ gzip:   1.00 kB
+dist/assets/BcuWaveBundleEffectSpawner-Uoja6Sq8.js                 3.03 kB │ gzip:   1.48 kB
+dist/assets/BcuAssetDatabase-z22IXhrf.js                           3.35 kB │ gzip:   1.14 kB
+dist/assets/installBattlePatches-CwrDxBRc.js                       3.73 kB │ gzip:   1.37 kB
+dist/assets/BattleSoundEventPatch-B5SyyAVX.js                      4.70 kB │ gzip:   1.98 kB
+dist/assets/BcuResistRuntime-Bn0NStkS.js                           4.90 kB │ gzip:   1.92 kB
+dist/assets/PreviewAppBattleResultOverlayPatch-JfTTbOZ8.js         5.06 kB │ gzip:   2.11 kB
+dist/assets/BcuComboStatModifier-DHuRy_8U.js                       5.10 kB │ gzip:   2.23 kB
+dist/assets/BcuBarrierShieldEffectRuntime-BQM6r1D2.js              6.10 kB │ gzip:   2.11 kB
+dist/assets/BcuWarpLifecycleRuntime-PtgTqvXO.js                    6.67 kB │ gzip:   2.59 kB
+dist/assets/StageRuntimeSceneAdapter-LHM7l7Mc.js                   7.63 kB │ gzip:   2.47 kB
+dist/assets/BcuSpriteText-Cxo1P_3f.js                              8.17 kB │ gzip:   2.59 kB
+dist/assets/StageRuntime-RZ2WxiDw.js                               8.30 kB │ gzip:   2.35 kB
+dist/assets/BattleSoundEffects-UdNGSXkt.js                         9.26 kB │ gzip:   3.37 kB
+dist/assets/BcuCombatModel-CDLYPDrK.js                            10.23 kB │ gzip:   3.71 kB
+dist/assets/BattleSurgeRuntimePatch-DLQugrSF.js                   11.26 kB │ gzip:   4.29 kB
+dist/assets/BcuTalentInfoData-D3Sw8Gm_.js                         12.05 kB │ gzip:   4.03 kB
+dist/assets/battleDirectPatches-BQJwCCn2.js                       12.24 kB │ gzip:   3.72 kB
+dist/assets/BattleWaveEffectLoader-DS5oKvBp.js                    13.22 kB │ gzip:   3.02 kB
+dist/assets/BcuAssetLoader-e-JwP3BN.js                            13.53 kB │ gzip:   4.51 kB
+dist/assets/CustomStageCharacterModificationAdapter-BPH0lrLU.js   14.37 kB │ gzip:   5.08 kB
+dist/assets/PreviewAppBattlePauseOverlayPatch-BQt8hqXO.js         16.01 kB │ gzip:   4.89 kB
+dist/assets/index-B5Q4W1om.js                                     16.20 kB │ gzip:   6.38 kB
+dist/assets/BcuStatusEffectManager-DKuC2ien.js                    21.10 kB │ gzip:   6.92 kB
+dist/assets/RuntimeAssetGuard-WFtpM87c.js                         22.52 kB │ gzip:   7.47 kB
+dist/assets/BcuCatCannonRuntime-BnkNtOqp.js                       24.04 kB │ gzip:   8.10 kB
+dist/assets/battleRendererPatches-D5OSajoJ.js                     24.27 kB │ gzip:   8.44 kB
+dist/assets/BattleSceneRenderer-DKkZm4ax.js                       33.49 kB │ gzip:  10.23 kB
+dist/assets/battleProjectilePatches-RkMXOyoz.js                   42.67 kB │ gzip:  12.22 kB
+dist/assets/BcuBootLoader-DEWSFGXx.js                             44.01 kB │ gzip:  12.29 kB
+dist/assets/ProductionCardSkin-Cg5hIVt9.js                        46.90 kB │ gzip:  14.54 kB
+dist/assets/PreviewApp-Efkym1tM.js                                63.74 kB │ gzip:  19.49 kB
+dist/assets/battleCorePatches-Bgt6OIWT.js                         86.03 kB │ gzip:  25.46 kB
+dist/assets/battleActorLifecyclePatches-ojjjZsbR.js               96.50 kB │ gzip:  27.78 kB
+dist/assets/battleScenePatches-Cb817zFZ.js                       102.57 kB │ gzip:  28.87 kB
+dist/assets/BattleScene-DPYFm9nR.js                              211.89 kB │ gzip:  57.52 kB
+dist/assets/BcuOrbModifier-CW-yL1zx.js                           243.08 kB │ gzip:  69.34 kB
+dist/assets/uiPatches-219x48bn.js                                467.96 kB │ gzip: 111.05 kB
+
+[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - vite:css-post (75%)
+  - vite:css (19%)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+
+✓ built in 11.58s
+exit=0

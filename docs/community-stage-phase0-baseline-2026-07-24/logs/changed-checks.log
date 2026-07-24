@@ -1,0 +1,45 @@
+
+> rhg-bcu-battle@1.0.0 agent:checks
+> node scripts/agent-checks.mjs --changed --run
+
+# Agent Check Plan
+
+## Changed/input files
+- package.json
+- scripts/agent-checks.mjs
+- scripts/agent-changed.mjs
+- scripts/agent-context.mjs
+- scripts/agent-find.mjs
+- scripts/agent-probe.mjs
+- scripts/agent-run.mjs
+
+## Suggested commands
+- node --check scripts/agent-checks.mjs
+- node --check scripts/agent-changed.mjs
+- node --check scripts/agent-context.mjs
+- node --check scripts/agent-find.mjs
+- node --check scripts/agent-probe.mjs
+- node --check scripts/agent-run.mjs
+
+Note: Run only commands relevant to the actual touched subsystem; this planner is a shortcut, not proof of parity.
+
+$ node --check scripts/agent-checks.mjs
+OK: OK
+
+$ node --check scripts/agent-changed.mjs
+OK: OK
+
+$ node --check scripts/agent-context.mjs
+OK: OK
+
+$ node --check scripts/agent-find.mjs
+OK: OK
+
+$ node --check scripts/agent-probe.mjs
+OK: OK
+
+$ node --check scripts/agent-run.mjs
+OK: OK
+
+agent-checks: OK
+exit=0

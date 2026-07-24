@@ -24,6 +24,8 @@
     "agent:checks": "node scripts/agent-checks.mjs",
     "agent:probe": "node scripts/agent-probe.mjs",
     "agent:run": "node scripts/agent-run.mjs",
+    "capture:community-phase0": "node scripts/capture-community-stage-phase0-fixtures.mjs",
+    "capture:community-phase0:screens": "node scripts/capture-community-stage-phase0-screenshots.mjs",
     "generate:bcu-stage-crowns": "node scripts/build-bcu-stage-crown-index.mjs",
     "precheck": "npm run generate:bcu-stage-crowns",
     "check": "node scripts/check-bcu-ability-parity-safe-suite.mjs && node scripts/check-open-issue-regressions.mjs",

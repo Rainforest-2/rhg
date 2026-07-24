@@ -1,0 +1,58 @@
+
+> rhg-bcu-battle@1.0.0 agent:context
+> node scripts/agent-context.mjs --topic custom stage formation level plus capacity character modification persistence service worker
+
+# Agent Context Snapshot
+Topic: custom stage formation level plus capacity character modification persistence service worker
+Workflow: BCU fact -> current JS owner audit -> minimal change -> deterministic check -> focused docs update
+
+## Current docs
+- README.md
+- docs/README.md
+- docs/bcu-migration-status.md
+- docs/RHG_BCU_CORE_ARCHITECTURE_AND_LOGIC_REFERENCE_2026-07-23.md
+- 変更対象に対応する focused document
+
+## Open status rows
+- none matched
+
+## Active blockers
+- none matched
+
+## Visual review queue
+- none matched
+
+## Candidate checks
+- node scripts/check-battle-scene-stage-runtime-wiring.mjs
+- node scripts/check-bcu-cannon-level-curve-parity.mjs
+- node scripts/check-bcu-player-capacity.mjs
+- node scripts/check-bcu-rarity-capacity.mjs
+- node scripts/check-bcu-stage-crown-parity.mjs
+- node scripts/check-bcu-stage-crown-precision.mjs
+- node scripts/check-bcu-stage-global-respawn-boundary.mjs
+- node scripts/check-bcu-stage-group-crown-integration.mjs
+- node scripts/check-bcu-stage-initial-global-respawn.mjs
+- node scripts/check-bcu-stage-layout-trail-parity.mjs
+- node scripts/check-bcu-stage-line-row-parity.mjs
+- node scripts/check-bcu-stage-row-respawn-boundary.mjs
+- node scripts/check-bcu-stage-spawn-layer-kc-parity.mjs
+- node scripts/check-bcu-stage-spawn-runtime.mjs
+- node scripts/check-bcu-unit-level-runtime-parity.mjs
+- node scripts/check-character-modification-cache.mjs
+- node scripts/check-character-modification-codec.mjs
+- node scripts/check-character-modification-derived-model.mjs
+- node scripts/check-character-modification-import-security.mjs
+- node scripts/check-character-modification-production.mjs
+- node scripts/check-character-modification-resolver.mjs
+- node scripts/check-character-modification-runtime-integration.mjs
+- node scripts/check-character-modification-schema.mjs
+- node scripts/check-character-modification-ui.mjs
+- node scripts/check-custom-stage-character-modification.mjs
+- node scripts/check-custom-stage-max-money.mjs
+- node scripts/check-custom-stage-time-limit-parity.mjs
+- node scripts/check-custom-stage-trail-domain-parity.mjs
+- node scripts/check-event-stage-selector-performance.mjs
+- node scripts/check-formation-catalog-grid-layout.mjs
+
+Note: this generated view is an orientation shortcut only; behavior changes still require the source docs and focused checks.
+exit=0

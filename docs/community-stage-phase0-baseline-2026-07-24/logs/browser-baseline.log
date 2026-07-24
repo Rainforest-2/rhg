@@ -1,0 +1,10 @@
+
+> rhg-bcu-battle@1.0.0 capture:community-phase0:screens
+> node scripts/capture-community-stage-phase0-screenshots.mjs
+
+{
+  "ok": true,
+  "errors": [],
+  "url": "http://127.0.0.1:38791/"
+}
+exit=0

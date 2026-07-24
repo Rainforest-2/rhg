@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "stats": {
+    "maxHp": 123456
+  },
+  "production": {
+    "cost": 321,
+    "respawnFrames": 180,
+    "deployLimit": 2
+  }
+}

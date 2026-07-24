@@ -1,0 +1,66 @@
+{
+  "version": 5,
+  "rows": 2,
+  "cols": 5,
+  "pages": [
+    [
+      "dog-enemy-000",
+      "dog-enemy-001",
+      "dog-enemy-002",
+      "cat-unit-000-f",
+      "cat-unit-001-f"
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "slots": [
+    "dog-enemy-000",
+    "dog-enemy-001",
+    "dog-enemy-002",
+    "cat-unit-000-f",
+    "cat-unit-001-f"
+  ],
+  "options": {
+    "bcuCatUnitLevel": {
+      "enabled": true,
+      "prefLevel": 30,
+      "source": "phase0-fixture"
+    },
+    "bcuCatUnitLevels": {
+      "cat-unit-000-f": {
+        "enabled": true,
+        "level": 30,
+        "plusLevel": 20,
+        "source": "phase0-fixture-explicit-level"
+      }
+    },
+    "dogUnitMagnifications": {},
+    "bcuTreasure": {
+      "trea": {
+        "atk": 0,
+        "def": 0
+      },
+      "fruit": {}
+    },
+    "bcuOrbEquipment": {},
+    "bcuTalentLevels": {},
+    "characterModifications": {
+      "cat-unit-000-f": {
+        "schemaVersion": 1,
+        "stats": {
+          "maxHp": 123456
+        },
+        "production": {
+          "cost": 321,
+          "respawnFrames": 180,
+          "deployLimit": 2
+        }
+      }
+    }
+  }
+}

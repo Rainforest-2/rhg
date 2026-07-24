@@ -1,0 +1,8 @@
+{
+  "cat-unit-000-f": {
+    "enabled": true,
+    "level": 30,
+    "plusLevel": 20,
+    "source": "phase0-fixture-explicit-level"
+  }
+}

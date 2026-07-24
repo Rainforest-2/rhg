@@ -147,8 +147,9 @@ export class BcuRankingRuntime {
     if (!actorId || this.scoredActorIds.has(actorId)) return null;
     const killMode = resolveBcuActorKillMode(actor);
     if (killMode !== 'NORMAL' || this.overtime || !this.isActive(scene)) return null;
+    // BCU explicitly scores EEnemy.line == -1 with lineScore = 0. A missing
+    // stage row therefore removes only the row-score term, not the drop term.
     const row = stageRowForActor(scene, actor);
-    if (!row) return null;
     const delta = calculateBcuRankingEnemyScore({
       actor,
       row,
@@ -159,14 +160,14 @@ export class BcuRankingRuntime {
     this.score += delta;
     this.lastScoreEvent = {
       actorId,
-      rowIndex: row.rowIndex ?? null,
+      rowIndex: row?.rowIndex ?? null,
       killMode,
       delta,
       score: this.score,
       elapsedFrames: this.elapsedFrames,
       timeLimitFrames: this.timeLimitFrames,
       timeLimitSource: this.timeLimitSource,
-      rowScore: finite(row.score, 0),
+      rowScore: finite(row?.score, 0),
       dropRaw: enemyDropRaw(actor),
       source: 'BCU EEnemy.kill trail score formula'
     };

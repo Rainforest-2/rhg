@@ -13,6 +13,9 @@ import '../../battle/BattleSceneCustomStageBattlePatch.js';
 // normal-vs-trail health-domain resolver without duplicating its multi-CSV scheduler.
 import '../../battle/BattleSceneCustomStageTrailParityPatch.js';
 import '../../battle/BattleSceneStageSpawnHeaderPatch.js';
+// Official default-pack HP-gated rows consume their authored first-delay RNG draw,
+// but BCU EStage.assign resets a positive stored timer to zero before the first tick.
+import '../../battle/BattleSceneOfficialHpGateInitialDelayPatch.js';
 import '../../battle/BattleSceneBcuAttackPhasePatch.js';
 import '../../battle/BattleSceneProcApplyPatch.js';
 import '../../battle/BattleSceneBcuWaveInvalidApplyPatch.js';

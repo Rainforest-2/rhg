@@ -21,7 +21,6 @@ function findRowState(runtime, eventOrRowIndex) {
 export function installBcuStageRowRespawnBoundaryPatch() {
   const proto = BcuStageSpawnRuntime?.prototype;
   if (!proto || proto[PATCH_FLAG]) return;
-  proto[PATCH_FLAG] = true;
 
   const originalCommitSpawn = proto.commitSpawn;
   if (typeof originalCommitSpawn !== 'function') return;
@@ -55,6 +54,7 @@ export function installBcuStageRowRespawnBoundaryPatch() {
 
     return result;
   };
+  proto[PATCH_FLAG] = true;
 }
 
 installBcuStageRowRespawnBoundaryPatch();

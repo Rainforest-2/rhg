@@ -41,37 +41,32 @@ function bcuLayer(d0, d1, draw) {
   return d0 === d1 ? d0 : d0 + Math.floor(draw * (d1 - d0 + 1));
 }
 
-test('constructor draws row first-frame BEFORE the global respawn (BCU StageBasis order)', () => {
-  // Force a first-frame draw (firstFrameMin != firstFrameMax) so order is observable.
+test('constructor resolves row first-frame only; global respawn starts at zero', () => {
+  // Force a first-frame draw (firstFrameMin != firstFrameMax) so constructor consumption is observable.
   const row = mkRow({ firstFrameMin: 0, firstFrameMax: 4, firstFrame: 0 });
   const scene = new BcuCopRand(0n);
   const draw = () => scene.nextFloat();
   const rt = new BcuStageSpawnRuntime(mkRuntime(row), [mkDef()], { random: draw });
 
   const replay = new BcuCopRand(0n);
-  const d1 = replay.nextFloat(); // row first-frame draw FIRST
-  const d2 = replay.nextFloat(); // then global respawn draw
-  const expectedFirst = 0 + Math.floor((4 - 0) * d1);
-  const expectedGlobal = bcuRespawnTimeFromHeader(3, 7, d2) - 1;
+  const dFirst = replay.nextFloat();
+  const expectedFirst = Math.floor(4 * dFirst);
 
-  assert.equal(rt.rows[0].nextFrame, expectedFirst, 'row first frame uses the FIRST CopRand draw');
-  assert.equal(rt.globalRespawnTime, expectedGlobal, 'global respawn uses the SECOND CopRand draw');
+  assert.equal(rt.rows[0].nextFrame, expectedFirst, 'row first frame uses the first CopRand draw');
+  assert.equal(rt.globalRespawnTime, 0, 'StageBasis global respawn counter starts at the Java default zero');
+  assert.equal(scene.drawCount, 1, 'constructor must not consume a second draw for global respawn');
 });
 
-test('commit draws row respawn -> spawn layer -> global respawn; spawn frame and layer are exact', () => {
+test('successful commit draws row respawn -> spawn layer -> global respawn; spawn frame and layer are exact', () => {
   const row = mkRow();
   const scene = new BcuCopRand(0n);
   const draw = () => scene.nextFloat();
   const rt = new BcuStageSpawnRuntime(mkRuntime(row), [mkDef()], { random: draw });
 
-  // Replay: draw #1 was the constructor global respawn (no first-frame draw here).
-  const replay = new BcuCopRand(0n);
-  const dGlobalInit = replay.nextFloat();
-  const expectedGlobalInit = bcuRespawnTimeFromHeader(3, 7, dGlobalInit) - 1;
-  assert.equal(rt.globalRespawnTime, expectedGlobalInit);
-  assert.equal(expectedGlobalInit, 2, 'seed=0: global init gate is 2 frames');
+  assert.equal(rt.globalRespawnTime, 0);
+  assert.equal(scene.drawCount, 0, 'fixed first-frame construction consumes no RNG');
 
-  // Tick frame-by-frame. Global gate opens at frame == globalInit (2); row is ready at frame 10.
+  // The first spawn is governed only by the row's first frame; there is no battle-start global gate.
   let event = null;
   let spawnFrame = -1;
   for (let f = 0; f <= 10; f += 1) {
@@ -79,9 +74,11 @@ test('commit draws row respawn -> spawn layer -> global respawn; spawn frame and
     if (out.length) { event = out[0]; spawnFrame = f; break; }
   }
   assert.ok(event, 'a spawn must be emitted');
-  assert.equal(spawnFrame, 10, 'spawn frame is exactly 10 (row first frame), gate already open');
+  assert.equal(spawnFrame, 10, 'spawn frame is exactly the row first frame');
+  assert.equal(scene.drawCount, 0, 'tick and first eligibility consume no RNG');
 
-  // Commit consumes draws #2,#3,#4 in order: row respawn, spawn layer, global respawn.
+  // The first three CopRand draws are consumed only after success, in BCU order.
+  const replay = new BcuCopRand(0n);
   const dRow = replay.nextFloat();
   const dLayer = replay.nextFloat();
   const dGlobal = replay.nextFloat();
@@ -90,14 +87,10 @@ test('commit draws row respawn -> spawn layer -> global respawn; spawn frame and
   const expectedNextGlobal = bcuRespawnTimeFromHeader(3, 7, dGlobal) - 1;
 
   const commit = rt.commitSpawn(event, { random: draw });
-  assert.equal(commit.currentLayer, expectedLayer, 'spawn layer = d0 + floor(draw*(d1-d0+1))');
-  assert.equal(commit.currentLayer, 5, 'seed=0 draw#3 => layer 5');
-  assert.equal(rt.rows[0].nextFrame, spawnFrame + expectedInterval + 1, 'next row frame uses row-respawn draw');
-  assert.equal(rt.globalRespawnTime, expectedNextGlobal, 'global respawn uses the LAST draw of the spawn');
-  // Concrete seed=0 values: interval 13 (draw 0.7931), layer 5 (0.9343), next global 3 (0.4606).
-  assert.equal(expectedInterval, 13);
-  assert.equal(rt.rows[0].nextFrame, 24);
-  assert.equal(rt.globalRespawnTime, 3);
+  assert.equal(commit.currentLayer, expectedLayer, 'spawn layer uses the second post-success draw');
+  assert.equal(rt.rows[0].nextFrame, spawnFrame + expectedInterval + 1, 'next row frame uses the first post-success draw');
+  assert.equal(rt.globalRespawnTime, expectedNextGlobal, 'global respawn uses the third and final post-success draw');
+  assert.equal(scene.drawCount, 3, 'successful commit consumes exactly row/layer/global draws');
 });
 
 test('a failed spawn (rejectSpawn) consumes no RNG', () => {

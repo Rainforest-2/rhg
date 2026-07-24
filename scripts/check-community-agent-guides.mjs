@@ -16,11 +16,10 @@ const phases = [
   ['phase-11-acceptance.md', ['# Phase 11', 'G1 repository hygiene', 'G11 documentation/operations', 'Critical/High', 'iPad', 'rollback']]
 ];
 
-const commonHeadings = [
+const commonTokens = [
   '## 0. Phaseの目的',
   '## 1. 開始条件',
   '非目標',
-  'Test matrix',
   '完了条件',
   'Terra用プロンプト'
 ];
@@ -37,9 +36,10 @@ const allTexts = [index];
 for (const [file, tokens] of phases) {
   const text = await readFile(new URL(file, guideDir), 'utf8');
   allTexts.push(text);
-  for (const heading of commonHeadings) {
-    assert.ok(text.toLowerCase().includes(heading.toLowerCase()), `${file} missing ${heading}`);
+  for (const token of commonTokens) {
+    assert.ok(text.includes(token), `${file} missing ${token}`);
   }
+  assert.match(text, /##[^\n]*(?:test|テスト)/i, `${file} missing an explicit test section`);
   for (const token of tokens) {
     assert.ok(text.includes(token), `${file} missing contract token: ${token}`);
   }

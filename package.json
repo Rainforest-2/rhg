@@ -13,10 +13,9 @@
     "node": ">=20"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
+    "@playwright/test": "^1.60.0",
     "playwright": "^1.60.0",
-    "vite": "^8.1.0",
-    "wrangler": "^4.114.0"
+    "vite": "^8.1.0"
   },
   "scripts": {
     "agent:context": "node scripts/agent-context.mjs",

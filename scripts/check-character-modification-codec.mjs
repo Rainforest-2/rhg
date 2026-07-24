@@ -166,8 +166,9 @@ const stage = createCustomStageCharacterModificationExport(validStage({
 }));
 assert.equal(stage.ok, true);
 assert.equal(stage.modificationCount, 1, 'shared row modifications are deduplicated');
-assert.equal(stage.envelope.stage.modifications, undefined, 'export does not duplicate the table inside stage');
-assert.equal(stage.envelope.modifications.unused, undefined, 'unreferenced modifications are removed');
+assert.equal(stage.envelope.exportVersion, 3, 'custom-stage export uses the v3 envelope');
+assert.equal(stage.envelope.provenance, null, 'v3 export canonicalizes absent provenance to null');
+assert.equal(stage.envelope.stage.modifications.unused, undefined, 'unreferenced modifications are removed');
 assert.equal(
   stage.envelope.stage.spawns[0].modificationRef,
   stage.envelope.stage.spawns[1].modificationRef
@@ -191,9 +192,9 @@ assert.ok(brokenStageExport.errors.some(
 
 const importedStage = prepareCharacterModificationImport(stage.json);
 assert.equal(importedStage.ok, true);
-assert.equal(importedStage.candidate.stage.schemaVersion, 2);
+assert.equal(importedStage.candidate.stage.schemaVersion, 3);
 assert.equal(importedStage.candidate.stage.spawns.length, 2);
-assert.deepEqual(importedStage.candidate.stage.modifications, stage.envelope.modifications);
+assert.deepEqual(importedStage.candidate.stage.modifications, stage.envelope.stage.modifications);
 
 const v1StageEnvelope = JSON.stringify({
   type: 'rhg-custom-stage',
@@ -203,7 +204,7 @@ const v1StageEnvelope = JSON.stringify({
 });
 const migrated = prepareCharacterModificationImport(v1StageEnvelope);
 assert.equal(migrated.ok, true);
-assert.equal(migrated.candidate.stage.schemaVersion, 2);
+assert.equal(migrated.candidate.stage.schemaVersion, 3);
 assert.ok(migrated.preview.migrations.some((item) => item.fromVersion === 1 && item.toVersion === 2));
 
 const legacyRaw = JSON.stringify(validStage({
@@ -213,7 +214,7 @@ const legacyRaw = JSON.stringify(validStage({
 }));
 const importedLegacyRaw = prepareCharacterModificationImport(legacyRaw);
 assert.equal(importedLegacyRaw.ok, true, 'legacy raw custom-stage JSON remains importable');
-assert.equal(importedLegacyRaw.candidate.stage.schemaVersion, 2);
+assert.equal(importedLegacyRaw.candidate.stage.schemaVersion, 3);
 assert.ok(importedLegacyRaw.preview.migrations.some(
   (item) => item.fromVersion === 'legacy-raw-custom-stage'
 ));

@@ -1,0 +1,13 @@
+{
+  "key": "wanko.customStageProvenance.v1",
+  "representativeValue": {
+    "custom-local-regenerated-id": {
+      "sourceCourseId": "course-fixture-a",
+      "parentCourseId": null,
+      "rootCourseId": "course-fixture-a",
+      "sourceContentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceAuthorUserId": "author-fixture-a",
+      "importedAt": 1784937600000
+    }
+  }
+}

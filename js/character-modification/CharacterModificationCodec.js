@@ -25,6 +25,10 @@ import {
 import {
   validateCustomStage as validateCustomStageDefault
 } from '../custom-stage/CustomStageValidator.js';
+import { normalizeCustomStage } from '../custom-stage/CustomStageSchema.js';
+import {
+  normalizeCustomStageProvenance
+} from '../custom-stage/CustomStageProvenanceStore.js';
 
 const FORBIDDEN_KEYS = new Set(CHARACTER_MODIFICATION_FORBIDDEN_KEYS);
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -67,11 +71,19 @@ function inspectImportedValue(value, diagnostics, limits, state, path = '$', dep
     diagnostics.error('non-finite-number', 'Import contains NaN or Infinity.', { path, value: String(value) });
     return;
   }
-  if (typeof value === 'string' && FORBIDDEN_NUMBER_STRINGS.has(value.trim())) {
-    diagnostics.error('invalid-numeric-string', 'Import contains a stringified non-finite number.', {
-      path,
-      value
-    });
+  if (typeof value === 'string') {
+    if (value.length > limits.maxStringLength) {
+      diagnostics.error('import-string-limit', `Import string exceeds ${limits.maxStringLength} characters.`, { path, length: value.length });
+    }
+    if (typeof value.isWellFormed === 'function' && !value.isWellFormed()) {
+      diagnostics.error('malformed-unicode', 'Import contains malformed Unicode.', { path });
+    }
+    if (FORBIDDEN_NUMBER_STRINGS.has(value.trim())) {
+      diagnostics.error('invalid-numeric-string', 'Import contains a stringified non-finite number.', {
+        path,
+        value: value.slice(0, 160)
+      });
+    }
     return;
   }
   if (!value || typeof value !== 'object') return;
@@ -82,6 +94,11 @@ function inspectImportedValue(value, diagnostics, limits, state, path = '$', dep
   state.seen.add(value);
 
   if (Array.isArray(value)) {
+    if (value.length > limits.maxArrayLength) {
+      diagnostics.error('import-array-limit', `Import exceeds maximum array length ${limits.maxArrayLength}.`, {
+        path, length: value.length, maxArrayLength: limits.maxArrayLength
+      });
+    }
     value.forEach((item, index) => inspectImportedValue(
       item,
       diagnostics,
@@ -353,6 +370,14 @@ export function createCustomStageCharacterModificationExport(stage, options = {}
   const migration = migrateCustomStageCharacterModificationSchema(stage, { diagnostics });
   if (!migration.valid || !migration.stage) return errorResult(diagnostics);
   const migratedStage = migration.stage;
+  const restrictionValidation = validateCustomStageDefault(migratedStage, {
+    resolvers: options.resolvers || {}
+  });
+  for (const item of restrictionValidation.errors || []) {
+    if (String(item.field || '').startsWith('challengeRestrictions')) {
+      diagnostics.error('custom-stage-restriction-validation', item.message, { path: item.field });
+    }
+  }
   const rawTable = isPlainCharacterModificationObject(migratedStage.modifications)
     ? migratedStage.modifications
     : {};
@@ -405,18 +430,21 @@ export function createCustomStageCharacterModificationExport(stage, options = {}
     else delete next.modificationRef;
     return next;
   });
-  const stageValue = {
+  const stageValue = normalizeCustomStage({
     ...migratedStage,
     schemaVersion: CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION,
-    spawns: exportSpawns
-  };
-  delete stageValue.modifications;
-  const envelope = {
-    type: 'rhg-custom-stage',
-    version: CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION,
-    stage: stageValue,
+    spawns: exportSpawns,
     modifications: deduped.modifications
+  });
+  const envelope = {
+    exportVersion: 3,
+    stage: stageValue,
+    provenance: options.provenance ?? null
   };
+  const provenance = normalizeCustomStageProvenance(envelope.provenance);
+  if (!provenance.ok) {
+    for (const item of provenance.errors) diagnostics.error(item.code, item.reason, { path: item.path, value: item.value });
+  } else envelope.provenance = provenance.value;
   const snapshot = diagnostics.snapshot();
   if (!snapshot.valid) return errorResult(diagnostics);
   return {
@@ -533,6 +561,11 @@ export function encodeCharacterModificationPack(entries, options = {}) {
 }
 
 function prepareCustomStageImport(envelope, options, diagnostics) {
+  const provenance = normalizeCustomStageProvenance(envelope.provenance ?? null);
+  if (!provenance.ok) {
+    for (const item of provenance.errors) diagnostics.error(item.code, item.reason, { path: item.path, value: item.value });
+    return null;
+  }
   const rawStage = envelope.stage;
   const stageMigration = migrateCustomStageCharacterModificationSchema(rawStage, { diagnostics });
   if (!stageMigration.valid || !stageMigration.stage) return null;
@@ -545,7 +578,7 @@ function prepareCustomStageImport(envelope, options, diagnostics) {
       { path: 'stage.spawns', count: spawns.length, maxSpawns: options.limits.maxSpawns }
     );
   }
-  const rawTableInput = envelope.modifications;
+  const rawTableInput = envelope.exportVersion === 3 ? stage.modifications : envelope.modifications;
   const normalized = normalizeModificationTable(rawTableInput, {
     ...options,
     kind: 'enemy',
@@ -566,10 +599,11 @@ function prepareCustomStageImport(envelope, options, diagnostics) {
     modifications: referencedModifications
   };
   const candidate = {
-    type: envelope.type,
-    version: envelope.version,
+    type: envelope.type || 'rhg-custom-stage',
+    version: envelope.exportVersion || envelope.version,
     stage: candidateStage,
-    modifications: referencedModifications
+    modifications: referencedModifications,
+    provenance: provenance.value
   };
   const validateStage = typeof options.validateStage === 'function'
     ? options.validateStage
@@ -716,16 +750,24 @@ export function prepareCharacterModificationImport(text, options = {}) {
     const rawModifications = isPlainCharacterModificationObject(rawStage.modifications)
       ? rawStage.modifications
       : {};
-    delete rawStage.modifications;
     const rawVersion = Number(rawStage.schemaVersion || 1);
-    parsed = {
-      type: 'rhg-custom-stage',
-      version: rawVersion >= CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION
-        ? CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION
-        : 1,
-      stage: rawStage,
-      modifications: rawModifications
-    };
+    if (!Number.isInteger(rawVersion) || rawVersion < 1 || rawVersion > CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION) {
+      diagnostics.error('unsupported-custom-stage-version', `Unsupported custom stage schemaVersion: ${String(rawStage.schemaVersion)}`, {
+        path: 'stage.schemaVersion', value: rawStage.schemaVersion
+      });
+      return errorResult(diagnostics);
+    }
+    parsed = rawVersion === CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION
+      ? { exportVersion: 3, stage: rawStage, provenance: null }
+      : (() => {
+        delete rawStage.modifications;
+        return {
+          type: 'rhg-custom-stage',
+          version: rawVersion,
+          stage: rawStage,
+          modifications: rawModifications
+        };
+      })();
     diagnostics.migration(
       'legacy-raw-custom-stage',
       parsed.version,
@@ -741,7 +783,7 @@ export function prepareCharacterModificationImport(text, options = {}) {
     limits,
     requireResolvedReferences: options.requireResolvedReferences !== false
   };
-  const candidate = envelope.type === 'rhg-custom-stage'
+  const candidate = envelope.exportVersion === 3 || envelope.type === 'rhg-custom-stage'
     ? prepareCustomStageImport(envelope, commonOptions, diagnostics)
     : preparePackImport(envelope, commonOptions, diagnostics);
   const snapshot = diagnostics.snapshot();

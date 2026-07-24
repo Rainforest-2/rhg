@@ -1,0 +1,24 @@
+{
+  "exportVersion": 3,
+  "stage": {
+    "schemaVersion": 3,
+    "id": "source-stage-id-not-reused-locally",
+    "name": "Phase 1 export fixture",
+    "description": "",
+    "createdAt": 1784937600000,
+    "updatedAt": 1784937600000,
+    "battle": { "stageLength": 4000, "enemyBaseHp": 100000, "maxEnemyCount": 20, "backgroundId": 1, "enemyCastleId": 1, "enemyCastleAnimBaseId": null, "enemyCastleCannonId": null, "musicId": null, "bossMusicId": null, "timeLimitFrames": 0, "nonContinue": false, "bossGuard": false },
+    "spawns": [],
+    "modifications": {},
+    "challengeRestrictions": null,
+    "limits": { "maxMoney": null, "maxUnitSpawn": null, "globalCostMultiplier": null, "globalCooldownMultiplier": null, "rarityDeployLimit": null, "bannedCatComboIds": [], "bannedOrbIds": [] }
+  },
+  "provenance": {
+    "sourceCourseId": "course-fixture-a",
+    "parentCourseId": null,
+    "rootCourseId": "course-fixture-a",
+    "sourceContentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceAuthorUserId": "author-fixture-a",
+    "importedAt": 1784937600000
+  }
+}

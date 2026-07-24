@@ -22,6 +22,12 @@ import {
 } from '../character-modification/CharacterModificationSchema.js';
 import { validateCharacterModification } from '../character-modification/CharacterModificationValidator.js';
 import { validateCustomStage } from './CustomStageValidator.js';
+import {
+  getCustomStageProvenance,
+  restoreCustomStageProvenanceStorage,
+  saveCustomStageProvenance,
+  snapshotCustomStageProvenanceStorage
+} from './CustomStageProvenanceStore.js';
 
 function validateStoredCharacterModifications(stage) {
   const hasModifications = stage && typeof stage === 'object'
@@ -88,6 +94,25 @@ const STORE_VERSION = 1;
 
 function getStorage() {
   try { return globalThis.localStorage || null; } catch { return null; }
+}
+
+function snapshotStageStorage() {
+  const storage = getStorage();
+  if (!storage) return { ok: false, exists: false, value: null };
+  try {
+    const value = storage.getItem(CUSTOM_STAGE_STORAGE_KEY);
+    return { ok: true, exists: value !== null, value };
+  } catch { return { ok: false, exists: false, value: null }; }
+}
+
+function restoreStageStorage(snapshot) {
+  const storage = getStorage();
+  if (!storage || !snapshot?.ok) return false;
+  try {
+    if (snapshot.exists) storage.setItem(CUSTOM_STAGE_STORAGE_KEY, snapshot.value);
+    else storage.removeItem(CUSTOM_STAGE_STORAGE_KEY);
+    return true;
+  } catch { return false; }
 }
 
 function readRaw() {
@@ -229,6 +254,37 @@ export function saveValidatedCustomStageAtomic(stage, { resolvers = {}, ...optio
   }
   const result = saveCustomStageAtomic(stage, options);
   return { ...result, validation };
+}
+
+// localStorage has no transaction.  Imported stages receive a new local id before reaching this
+// function, then both independent keys are snapshotted and restored verbatim if either write or
+// the post-write round trip fails.  Existing editor saves intentionally keep their original path.
+export function saveImportedCustomStageAtomic(stage, provenance, { resolvers = {}, ...options } = {}) {
+  if (!stage?.id || getCustomStage(stage.id)) {
+    return { ok: false, stage, error: new Error('duplicate-local-custom-stage-id') };
+  }
+  const stageSnapshot = snapshotStageStorage();
+  const provenanceSnapshot = snapshotCustomStageProvenanceStorage();
+  if (!stageSnapshot.ok || !provenanceSnapshot.ok) {
+    return { ok: false, stage, error: new Error('localStorage-unavailable') };
+  }
+  const rollback = (error) => ({
+    ok: false,
+    stage,
+    error,
+    rollbackOk: restoreStageStorage(stageSnapshot) && restoreCustomStageProvenanceStorage(provenanceSnapshot)
+  });
+  const saved = saveValidatedCustomStageAtomic(stage, { resolvers, ...options });
+  if (!saved.ok) return rollback(saved.error || new Error('stage-save-failed'));
+  const storedProvenance = saveCustomStageProvenance(saved.stage.id, provenance);
+  if (!storedProvenance.ok) return rollback(storedProvenance.error || new Error('provenance-save-failed'));
+  const reloaded = getCustomStage(saved.stage.id);
+  const reloadedProvenance = getCustomStageProvenance(saved.stage.id);
+  if (!reloaded || JSON.stringify(reloaded) !== JSON.stringify(saved.stage)
+      || JSON.stringify(reloadedProvenance) !== JSON.stringify(storedProvenance.provenance)) {
+    return rollback(new Error('custom-stage-import-round-trip-failed'));
+  }
+  return { ...saved, provenance: storedProvenance.provenance };
 }
 
 export function getLastCustomStageStorageError() {

@@ -4,12 +4,16 @@ import {
 } from './CharacterModificationFieldRegistry.js';
 
 export const CHARACTER_MODIFICATION_SCHEMA_VERSION = 1;
-export const CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION = 2;
+export const CUSTOM_STAGE_CHARACTER_MODIFICATION_SCHEMA_VERSION = 3;
 export const CHARACTER_MODIFICATION_PACK_VERSION = 1;
 
 export const CHARACTER_MODIFICATION_IMPORT_LIMITS = Object.freeze({
   maxBytes: 5 * 1024 * 1024,
   maxDepth: 12,
+  // General JSON arrays may contain a sparse hit/proc structure; stage-specific arrays retain
+  // their stricter 1,000-row limits in the custom-stage validator.
+  maxArrayLength: 5000,
+  maxStringLength: 64 * 1024,
   maxSpawns: 1000,
   maxModifications: 500,
   maxObjectKeys: 10_000

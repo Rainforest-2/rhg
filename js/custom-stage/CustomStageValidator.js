@@ -6,7 +6,7 @@
 // IMPORTANT: numeric / structural constraints are checked against the RAW draft, not the normalized
 // stage. The schema factory deliberately repairs invalid values (0 → default) for runtime safety, so
 // validating the normalized object would silently accept a user who cleared a field to 0/blank.
-import { normalizeCustomStage, framesToSeconds } from './CustomStageSchema.js';
+import { normalizeCustomStage, framesToSeconds, validateChallengeRestrictions } from './CustomStageSchema.js';
 import {
   CHARACTER_MODIFICATION_FORBIDDEN_KEYS,
   CHARACTER_MODIFICATION_IMPORT_LIMITS
@@ -130,6 +130,16 @@ export function validateCustomStage(rawStage, { resolvers = {} } = {}) {
   });
 
   const rawLimits = raw.limits || {};
+  if (Number(raw.schemaVersion) === 3
+      && !Object.prototype.hasOwnProperty.call(raw, 'challengeRestrictions')) {
+    err('challengeRestrictions', 'schema v3ではchallengeRestrictionsをnullまたは有効な制限として明示してください');
+  }
+  const restrictionValidation = validateChallengeRestrictions(
+    Object.prototype.hasOwnProperty.call(raw, 'challengeRestrictions') ? raw.challengeRestrictions : null
+  );
+  for (const item of restrictionValidation.errors) {
+    err(item.path, item.reason);
+  }
   const maxUnitSpawn = rawLimits.maxUnitSpawn;
   if (!isBlank(maxUnitSpawn)) {
     const value = rawNum(maxUnitSpawn);

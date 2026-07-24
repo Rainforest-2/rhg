@@ -30,6 +30,7 @@ npm run agent:run -- "command"
 - `checks-and-verification.md`: check 選択、generated asset、visual verification
 - `report-format.md`: 実装バッチの最終レポート形式
 - `md-maintenance-rules.md`: Markdown の SSOT と更新規則
+- [`community-stage/README.md`](community-stage/README.md): 「みんなのステージ」Phase 3〜11の実装実行契約・Terra向け索引
 
 ## 保守規則
 
@@ -37,4 +38,5 @@ npm run agent:run -- "command"
 - active order は `../ability-logic/bcu-parity-codex-workplan.md` に置く。
 - この README に具体的な未解決機能一覧を複製しない。
 - 個別 `*-current-status.md` を増やさない。
+- `community-stage/*` は実装補助契約であり、Phase完了statusや現行ownerを固定する台帳として扱わない。
 - 古い plan/report は historical reference とし、現行コードの defect list に使わない。

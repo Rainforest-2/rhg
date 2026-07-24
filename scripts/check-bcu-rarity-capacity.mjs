@@ -140,7 +140,8 @@ assert.equal(ProductionRuntime.validateRequest({ scene: lifetimeFull, unitDef: u
 const fakeScene = {
   actorFactory: {
     hasTemplate: () => true,
-    createActor: () => ({
+    createActor: (_unitDef, options) => ({
+      side: options.side,
       applyCurrentAnimationFrame() {},
       initializeCombatBodyFrontFromModel() {}
     })

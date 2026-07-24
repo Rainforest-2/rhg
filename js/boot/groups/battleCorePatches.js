@@ -10,8 +10,9 @@ import '../../battle/BattleBcuStrictConfigPatch.js';
 // Trail parsing must wrap the base parser before negative-first-spawn post-processing.
 import '../../battle/StageDefinitionTrailParityPatch.js';
 import '../../battle/StageDefinitionNegativeSpawnPatch.js';
-import '../../battle/BcuStageGlobalRespawnBoundaryPatch.js';
+// Row scheduling must wrap the core commit before the global cooldown wrapper replaces it.
 import '../../battle/BcuStageRowRespawnBoundaryPatch.js';
+import '../../battle/BcuStageGlobalRespawnBoundaryPatch.js';
 import '../../battle/BcuEnemyEntityBaseFirstHealthSuppressionPatch.js';
 import '../../battle/BattleActorBcuKbTargetPatch.js';
 // BCU Entity.processProcs parity: defines BattleActor.applyBcuProc (P_STOP/P_SLOW/

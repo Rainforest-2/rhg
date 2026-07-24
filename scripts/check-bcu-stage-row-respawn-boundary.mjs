@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { BcuStageSpawnRuntime } from '../js/battle/BcuStageSpawnRuntime.js';
-import '../js/battle/BcuStageRowRespawnBoundaryPatch.js';
+import '../js/boot/groups/battleCorePatches.js';
 
 function row(overrides = {}) {
   return {
@@ -50,6 +50,10 @@ for (const [interval, expectedNext] of [[0, 1], [1, 1], [2, 2], [90, 90]]) {
   }, [unitDef()]);
   const state = spawnAndCommit(runtime, 0);
   assert.equal(state.nextFrame, expectedNext, `interval ${interval} boundary`);
+  if (interval > 1) {
+    assert.equal(state.lastRowRespawnBoundaryDebug?.correctedScheduledFrame, expectedNext,
+      'production wrapper chain must retain the row-boundary correction');
+  }
 }
 
 // Verify actual row eligibility independently of the stage-wide gate.
@@ -62,6 +66,7 @@ for (const [interval, expectedNext] of [[0, 1], [1, 1], [2, 2], [90, 90]]) {
   }, [unitDef()]);
   const state = spawnAndCommit(runtime, 10);
   assert.equal(state.nextFrame, 13);
+  assert.equal(runtime.globalRespawnTime, 1, 'global wrapper remains installed after the row wrapper');
   runtime.globalRespawnTime = 0;
   assert.deepEqual(runtime.tick(12, context(12)), []);
   assert.equal(runtime.tick(13, context(13))[0]?.rowIndex, 0);

@@ -4,14 +4,15 @@ import { StageRuntime } from '../js/battle/StageRuntime.js';
 import { isBcuBossRow } from '../js/battle/StageRuntimeBossFlagPatch.js';
 
 function runtime(bossSpawnWorldX = 1234) {
-  return new StageRuntime({
+  const definition = {
     ok: true,
     stageLen: 4000,
     enemyBaseHp: 1000,
     maxEnemyCount: 20,
-    bossSpawnWorldX,
     enemyRows: []
-  });
+  };
+  if (bossSpawnWorldX !== undefined) definition.bossSpawnWorldX = bossSpawnWorldX;
+  return new StageRuntime(definition);
 }
 
 assert.equal(isBcuBossRow(0), false);
@@ -54,7 +55,7 @@ assert.equal(isBcuBossRow(Number.NaN), false);
 
 // Missing castle-specific coordinates must still enter the existing boss fallback branch.
 {
-  const stage = runtime(null);
+  const stage = runtime(undefined);
   assert.deepEqual(stage.getEnemySpawnWorldX({ bossFlag: 2 }), {
     worldX: 700,
     source: 'stage-runtime-boss-spawn-fallback-700'
